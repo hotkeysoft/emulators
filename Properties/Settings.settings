@@ -1,0 +1,28 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="rtmpdumpUI.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="SWFPlayerURL" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://static-
+illicoweb.videotron.com/static/illicoweb/static/webtv/assets/swf/01/player_v17011.swf</Value>
+    </Setting>
+    <Setting Name="RTMPURL" Type="System.String" Scope="User">
+      <Value Profile="(Default)">rtmpe://24.200.251.11/</Value>
+    </Setting>
+    <Setting Name="OutputDir" Type="System.String" Scope="User">
+      <Value Profile="(Default)">D:\Video\TV (fr)\Ramdam\Saison 2 (2002-2003)</Value>
+    </Setting>
+    <Setting Name="OutputFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Ramdam 117</Value>
+    </Setting>
+    <Setting Name="SDPFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">M0_apQ4SfY8Q0meKvf3YkvpFw</Value>
+    </Setting>
+    <Setting Name="FormSize" Type="System.Drawing.Size" Scope="User">
+      <Value Profile="(Default)">0, 0</Value>
+    </Setting>
+    <Setting Name="rtmpPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">D:\Dloads\rtmpdump-2.3-windows\rtmpdump-2.3\rtmpdump.exe</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
