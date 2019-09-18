@@ -2,7 +2,7 @@
 #include "Console.h"
 
 HANDLE Console::m_hConsole;
-CPUDef Console::m_cpuDef;
+CPUInfo&& Console::m_cpuInfo = CPUInfo();
 
 Console::ResourceData Console::GetBinaryResource(DWORD resourceID)
 {
@@ -24,9 +24,9 @@ Console::ResourceData Console::GetBinaryResource(DWORD resourceID)
 	return std::make_tuple(res_data, res_size);
 }
 
-void Console::Init(const CPUDef &cpuDef)
+void Console::Init(const CPUInfo &cpuInfo)
 {
-	m_cpuDef = cpuDef;
+	m_cpuInfo = cpuInfo;
 	m_hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	DWORD dwMode = 0;
@@ -34,7 +34,7 @@ void Console::Init(const CPUDef &cpuDef)
 	dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 	SetConsoleMode(m_hConsole, dwMode);
 
-	ResourceData data = GetBinaryResource(m_cpuDef.guiResourceID);
+	ResourceData data = GetBinaryResource(m_cpuInfo.GetResourceID());
 
 	if (std::get<0>(data)) {
 		DWORD written;

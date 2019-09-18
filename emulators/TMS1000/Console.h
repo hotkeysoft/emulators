@@ -8,13 +8,13 @@ public:
 	Console() {}
 	~Console() {}
 
-	static void Init(const CPUDef &cpuDef);
+	static void Init(const CPUInfo &cpuInfo);
 
 protected:
 	typedef std::tuple<char*, DWORD> ResourceData;
 	static ResourceData GetBinaryResource(DWORD resourceID);
 
 	static HANDLE m_hConsole;
-	static CPUDef m_cpuDef;
+	static CPUInfo&& m_cpuInfo;
 };
 

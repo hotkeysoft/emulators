@@ -149,6 +149,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="CPUInfo.h" />
