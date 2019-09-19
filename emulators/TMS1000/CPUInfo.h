@@ -4,16 +4,29 @@
 #include "json.hpp"
 using json = nlohmann::json;
 
-enum TMS1000Family { TMS1000, TMS1200, TMS1070, TMS1270, TMS1100, TMS1300 };
+enum TMS1000Family { CPU_TMS1000, CPU_TMS1200, CPU_TMS1070, CPU_TMS1270, CPU_TMS1100, CPU_TMS1300 };
 
 class CPUInfo {
 public:
+	struct Coord { 
+		bool IsSet() const { return w != 0 && h != 0; }
+		short x; short y; short w; short h;
+	};
+
 	CPUInfo();
 	CPUInfo(const char* name, const char* configFileName, DWORD guiResourceID);
 	
 	const char* GetName() { return m_name; }
 	DWORD GetResourceID() { return m_guiResourceID; }
 	void LoadConfig();
+
+	int GetRAMWords() const;
+	int GetROMWords() const;
+	int GetRLatches() const;
+	int GetOLatches() const;
+
+	std::string GetANSIFile() const;
+	Coord GetCoord(const char* label) const;
 
 protected:
 
