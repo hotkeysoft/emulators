@@ -58,6 +58,19 @@ namespace TMS1000
 	void Init(TMS1000Family family, CPUInfo* pCPUInfo);
 	void LoadROM(const char* path);
 	void Reset();
+	void Step();
+	void Exec(BYTE opcode);
+
+	BYTE GetB(BYTE opcode);
+	BYTE GetC(BYTE opcode);
+	BYTE GetF(BYTE opcode);
+	BYTE GetW(BYTE opcode);
+
+	BYTE GetM();
+	BYTE GetM(BYTE X, BYTE Y);
+	BYTE GetROM();
+	BYTE GetRAM(BYTE addr = GetM());
+	void PutRAM(BYTE value, BYTE addr = GetM());
 
 	void Disassemble(BYTE opcode, char* line, int lineSize);
 }

@@ -6,5 +6,7 @@ namespace Console
 {
 	void Init(CPUInfo *pCPUInfo);
 	void UpdateStatus();
+
+	int ReadInput();
 };
 

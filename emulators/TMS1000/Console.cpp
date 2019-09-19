@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Console.h"
 #include "TMS1000.h"
+#include <conio.h>
 
 namespace Console 
 {
@@ -39,6 +40,9 @@ namespace Console
 		SetConsoleTitle("TMS1000");
 		SetConsoleCursorPosition(m_hConsole, { 0, 0 });
 
+		CONSOLE_CURSOR_INFO cursorInfo = {1, FALSE };
+		SetConsoleCursorInfo(m_hConsole, &cursorInfo);
+
 		CONSOLE_FONT_INFOEX cfi = { sizeof(cfi) };
 		// Populate cfi with the screen buffer's current font info
 		GetCurrentConsoleFontEx(m_hConsole, FALSE, &cfi);
@@ -67,6 +71,13 @@ namespace Console
 		}
 	}
 
+	void WriteAt(short x, short y, const char* text, int len, WORD attr=15) {
+		SetConsoleCursorPosition(m_hConsole, { x , y });
+		SetConsoleTextAttribute(m_hConsole, attr);
+		DWORD written;
+		WriteConsole(m_hConsole, text, len, &written, NULL);
+	}
+
 	void WriteRegisterValueBin(WORD value, const CPUInfo::Coord& coord) {
 		static char bits[17];
 		bits[16] = 0;
@@ -75,9 +86,7 @@ namespace Console
 			bits[16 - i] = (value & (1 << i)) ? '1' : '0';
 		}
 
-		SetConsoleCursorPosition(m_hConsole, { coord.x - 1, coord.y });
-		DWORD written;
-		WriteConsole(m_hConsole, bits + 17 - coord.w, coord.w, &written, NULL);
+		WriteAt(coord.x - 1, coord.y, bits + 17 - coord.w, coord.w);
 	}
 
 	void WriteRegisterValueHex(WORD value, const CPUInfo::Coord& coord) {
@@ -86,9 +95,7 @@ namespace Console
 		hex[1] = hexDigits[(value & 0x0F)];
 		hex[2] = 0;
 
-		SetConsoleCursorPosition(m_hConsole, { coord.x - 1, coord.y });
-		DWORD written;
-		WriteConsole(m_hConsole, hex + 2 - coord.w, coord.w, &written, NULL);
+		WriteAt(coord.x - 1, coord.y, hex + 2 - coord.w, coord.w, 14);
 	}
 
 	void WriteRegisterValue(WORD value, const char* label) {
@@ -98,11 +105,24 @@ namespace Console
 			WriteRegisterValueBin(value, coord);
 		}
 
+		bool twoBits = (coord.w == 2);
 		std::string hexLabel = label;
 		hexLabel.append(".hex");
 		coord = m_pCPUInfo->GetCoord(hexLabel.c_str());
 		if (coord.IsSet()) {
-			WriteRegisterValueHex(value, coord);
+			WriteRegisterValueHex(twoBits ?(value&0x03):value, coord);
+		}
+	}
+
+	void WriteDecimalValue(BYTE value, const char* label) {
+		static char decimal[3];
+		CPUInfo::Coord coord = m_pCPUInfo->GetCoord(label);
+
+		if (coord.IsSet()) {
+			decimal[0] = (value>99) ? ((value / 100) + '0') : ' ';
+			decimal[1] = (value>9) ? (((value / 10) % 10) + '0') : ' ';
+			decimal[2] = (value % 10) + '0';
+			WriteAt(coord.x - 1, coord.y, decimal + 3 - coord.w, coord.w);
 		}
 	}
 
@@ -117,10 +137,12 @@ namespace Console
 				ramLine[x] = hexDigits[TMS1000::g_memory.RAM[y*lineLen + x] & 0x0F];
 			}
 
-			SetConsoleCursorPosition(m_hConsole, { coord.x - 1, coord.y + y });
-			DWORD written;
-			WriteConsole(m_hConsole, ramLine, lineLen, &written, NULL);
+			WriteAt(coord.x - 1, coord.y + y, ramLine, lineLen);
 		}
+
+		// Highlight current xy
+		char digit = hexDigits[TMS1000::GetRAM()];
+		WriteAt(coord.x - 1 + TMS1000::g_cpu.Y , coord.y + TMS1000::g_cpu.X, &digit, 1, 0xF0);
 	}
 
 	void WriteROM() {
@@ -137,17 +159,12 @@ namespace Console
 				romLine[x * 2 + 1] = hexDigits[TMS1000::g_memory.ROM[y*lineLen + x + baseAddr] & 0x0F];
 			}
 
-			SetConsoleCursorPosition(m_hConsole, { coord.x - 1, coord.y + y });
-			DWORD written;
-			WriteConsole(m_hConsole, romLine, lineLen * 2, &written, NULL);
+			WriteAt(coord.x - 1, coord.y + y, romLine, lineLen * 2);
 		}
 
 		static const CPUInfo::Coord pageCoord = m_pCPUInfo->GetCoord("ROMPage");
 		if (pageCoord.IsSet()) {
-			SetConsoleCursorPosition(m_hConsole, { pageCoord.x - 1, pageCoord.y });
-			DWORD written;
-			romLine[0] = hexDigits[TMS1000::g_cpu.PA];
-			WriteConsole(m_hConsole, romLine, 1, &written, NULL);
+			WriteRegisterValueHex(TMS1000::g_cpu.PA, pageCoord);
 		}
 	}
 
@@ -168,15 +185,12 @@ namespace Console
 			line[1] = hexDigits[((PC + baseAddr) & 0x0F0) >> 4];
 			line[2] = hexDigits[(PC + baseAddr) & 0x00F];
 			
-			SetConsoleCursorPosition(m_hConsole, { coordAddr.x - 1, coordAddr.y + y });
-			DWORD written;
-			WriteConsole(m_hConsole, line, 3, &written, NULL);
+			WriteAt(coordAddr.x - 1, coordAddr.y + y, line, 3, 14);
 
 			BYTE opcode = TMS1000::g_memory.ROM[PC + baseAddr];
 			TMS1000::Disassemble(opcode, line, sizeof(line));
 
-			SetConsoleCursorPosition(m_hConsole, { coordData.x - 1, coordData.y + y });
-			WriteConsole(m_hConsole, line, coordData.w, &written, NULL);
+			WriteAt(coordData.x - 1, coordData.y + y, line, coordData.w);
 		}
 
 	}
@@ -185,7 +199,9 @@ namespace Console
 		WriteRegisterValue(TMS1000::g_cpu.X, "X");
 		WriteRegisterValue(TMS1000::g_cpu.Y, "Y");
 		WriteRegisterValue(TMS1000::g_cpu.A, "A");
-	
+		
+		WriteDecimalValue(TMS1000::GetM(), "M");
+
 		WriteRegisterValue(TMS1000::g_cpu.S, "S");
 		WriteRegisterValue(TMS1000::g_cpu.SL, "SL");
 
@@ -202,5 +218,17 @@ namespace Console
 		WriteRAM();
 		WriteROM();
 		WriteDisassembly();
+	}
+
+	int ReadInput() {
+		int key = _getch();
+		// Special Char
+		if (key == 0 || key == 0xE0)
+		{
+			OutputDebugString("special");
+			key = _getch();
+		}
+		
+		return key;
 	}
 }
