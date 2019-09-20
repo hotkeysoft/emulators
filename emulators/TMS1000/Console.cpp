@@ -7,6 +7,8 @@ namespace Console
 {
 	typedef std::tuple<char*, DWORD> ResourceData;
 
+	long lastTicks = 0;
+	bool running = false;
 	HANDLE m_hConsole;
 	CPUInfo* m_pCPUInfo = nullptr;
 	static const char hexDigits[] = "0123456789ABCDEF";
@@ -192,7 +194,23 @@ namespace Console
 
 			WriteAt(coordData.x - 1, coordData.y + y, line, coordData.w);
 		}
+	}
 
+	void WriteStatus() {
+		static const CPUInfo::Coord coord = m_pCPUInfo->GetCoord("Status");
+		if (!coord.IsSet())
+			return;
+
+		static char status[11];
+
+		if (running) {		
+			sprintf(status, "%d ticks", TMS1000::GetTicks());
+		}
+		else {
+			sprintf(status, "Step Mode");
+		}
+
+		WriteAt(coord.x - 1, coord.y, status, coord.w);
 	}
 
 	void UpdateStatus() {
@@ -218,6 +236,7 @@ namespace Console
 		WriteRAM();
 		WriteROM();
 		WriteDisassembly();
+		WriteStatus();
 	}
 
 	int ReadInput() {
@@ -225,10 +244,14 @@ namespace Console
 		// Special Char
 		if (key == 0 || key == 0xE0)
 		{
-			OutputDebugString("special");
 			key = _getch();
 		}
 		
 		return key;
+	}
+
+	void SetRunMode(bool run) {
+		running = run;
+		WriteStatus();
 	}
 }

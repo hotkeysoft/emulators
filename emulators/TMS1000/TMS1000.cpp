@@ -23,8 +23,12 @@ namespace TMS1000
 		0x25, 0x0A, 0x15, 0x2A, 0x14, 0x28, 0x10, 0x20
 	};
 
+	IOCallbackFunc inputCallback = nullptr;
+	IOCallbackFunc outputCallback = nullptr;
+
 	Instruction TMS1000Opcodes[256];
 
+	long ticks = 0;
 	CPUState g_cpu;
 	Memory g_memory;
 
@@ -224,11 +228,17 @@ namespace TMS1000
 
 	void opKNEZ(BYTE) {
 		// CKP, NE
+		if (inputCallback) {
+			inputCallback();
+		}
 		g_cpu.S = (SET4(g_cpu.K) != 0);
 	}
 
 	void opTKA(BYTE) {
 		// CKP, AUTA
+		if (inputCallback) {
+			inputCallback();
+		}
 		g_cpu.A = SET4(g_cpu.K);
 		g_cpu.S = true;
 	}
@@ -239,6 +249,9 @@ namespace TMS1000
 			g_cpu.R |= (1 << g_cpu.Y);
 		}
 		g_cpu.S = true;
+		if (outputCallback) {
+			outputCallback();
+		}
 	}
 
 	void opRSTR(BYTE) {
@@ -247,18 +260,27 @@ namespace TMS1000
 			g_cpu.R &= (~(1 << g_cpu.Y));
 		}
 		g_cpu.S = true;
+		if (outputCallback) {
+			outputCallback();
+		}
 	}
 
 	void opTDO(BYTE) {
 		// TDO
 		g_cpu.O = (SET4(g_cpu.A) << 1) | (g_cpu.SL ? 1 : 0);
 		g_cpu.S = true;
+		if (outputCallback) {
+			outputCallback();
+		}
 	}
 
 	void opCLO(BYTE) {
 		// CLO
 		g_cpu.O = 0;
 		g_cpu.S = true;
+		if (outputCallback) {
+			outputCallback();
+		}
 	}
 
 	void opLDX(BYTE opcode) {
@@ -463,6 +485,7 @@ namespace TMS1000
 		g_cpu.S = false;
 		g_cpu.SL = false;
 		g_cpu.CL = false;
+		ticks = 0;
 	}
 
 	BYTE inverseSequence(BYTE addr) {
@@ -548,24 +571,24 @@ namespace TMS1000
 	}
 
 	void Disassemble(BYTE opcode, char* line, int lineSize) {
-		memset(line, 'a', lineSize);
+		memset(line, 0, lineSize);
 		Instruction& instr = TMS1000Opcodes[opcode];
 			
 		switch (instr.operandFormat) {
 		case Format1:
-			sprintf(line, "%02X %s %02X", opcode, instr.name, GetW(opcode));
+			sprintf(line, "%s %02X", instr.name, GetW(opcode));
 			break;
 		case Format2:
-			sprintf(line, "%02X %s %d", opcode, instr.name, GetC(opcode));
+			sprintf(line, "%s %d", instr.name, GetC(opcode));
 			break;
 		case Format3:
-			sprintf(line, "%02X %s %d", opcode, instr.name, GetB(opcode));
+			sprintf(line, "%s %d", instr.name, GetB(opcode));
 			break;
 		case Format4:
-			sprintf(line, "%02X %s", opcode, instr.name);
+			sprintf(line, "%s", instr.name);
 			break;
 		case Format5:
-			sprintf(line, "%02X %s %d", opcode, instr.name, GetF(opcode));
+			sprintf(line, "%s %d", instr.name, GetF(opcode));
 			break;
 		default:
 			throw std::exception("invalid operantformat");
@@ -591,5 +614,18 @@ namespace TMS1000
 		if (g_cpu.PC == oldPC) {
 			g_cpu.PC = SET6(g_cpu.PC + 1);
 		}
+		ticks += 6;
+	}
+
+	void SetInputCallback(IOCallbackFunc func) {
+		inputCallback = func;
+	}
+
+	void SetOutputCallback(IOCallbackFunc func) {
+		outputCallback = func;
+	}
+
+	long GetTicks() {
+		return ticks;
 	}
 }

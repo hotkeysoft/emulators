@@ -7,6 +7,8 @@ namespace TMS1000
 	typedef unsigned short WORD;
 	typedef void(*OpcodeFunc)(BYTE);
 
+	typedef void(*IOCallbackFunc)();
+
 	enum OperandFormat {
 		Format1, // W = Branch Address = I(2-7)
 		Format2, // C = Constant Operand I(7-4)
@@ -60,6 +62,7 @@ namespace TMS1000
 	void Reset();
 	void Step();
 	void Exec(BYTE opcode);
+	long GetTicks();
 
 	BYTE GetB(BYTE opcode);
 	BYTE GetC(BYTE opcode);
@@ -71,6 +74,9 @@ namespace TMS1000
 	BYTE GetROM();
 	BYTE GetRAM(BYTE addr = GetM());
 	void PutRAM(BYTE value, BYTE addr = GetM());
+
+	void SetInputCallback(IOCallbackFunc);
+	void SetOutputCallback(IOCallbackFunc);
 
 	void Disassemble(BYTE opcode, char* line, int lineSize);
 }

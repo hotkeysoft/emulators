@@ -824,6 +824,117 @@ void TestCPU() {
 	// BR
 }
 
+void ShowMonitor(CPUInfo &cpuInfo) {
+	Console::Init(&cpuInfo);
+	TMS1000::Reset();
+	Console::UpdateStatus();
+	long lastTicks = 0;
+	bool loop = true;
+	while (loop) {
+		switch (Console::ReadInput()) {
+		case 27: // ESC
+			loop = false;
+			break;
+		case 0x3B: // F1
+			TMS1000::Reset();
+			Console::UpdateStatus();
+			break;
+		case 0x3F: // F5
+			Console::SetRunMode(true);
+			while (!_kbhit()) {
+				TMS1000::Step();
+				if ((TMS1000::GetTicks() - lastTicks) > 10000) {
+					Console::UpdateStatus();
+					lastTicks = TMS1000::GetTicks();
+				}
+			}
+			Console::SetRunMode(false);
+			break;
+		case 0x40: // F6
+			TMS1000::Step();
+			Console::UpdateStatus();
+			break;
+		case 0x3C: // F2
+		case 0x3D: // F3
+		case 0x3E: // F4
+		case 0x41: // F7
+		case 0x42: // F8
+		case 0x43: // F9
+		case 0x44: // F10
+		default:
+			break;
+		}
+	}
+}
+
+// Select Game:  4= Game 1
+
+// R0 (1) : SELECT GAME
+// R1 (2) : COLOR SWITCHES GREEN (K1)/RED (K2)/YELLOW (K4)/BLUE (K8)
+// R2 (4) : START (K1)/LAST (K2)/LONGEST (K4)
+//	  (8)
+// R4 (16) : GREEN
+// R5 (32) : RED
+// R6 (64) : YELLOW 
+// R7 (128): BLUE
+
+// R8: (256): SPKR
+
+// R9: (512): SKILL SWITCH
+
+
+int lastPulse = 0;
+int pulseR = 0;
+int pulseK = 0;
+
+void Pulse(int R, int K) {
+	lastPulse = TMS1000::GetTicks();
+	pulseR = R;
+	pulseK = K;
+}
+
+void onReadInput() {
+	if (lastPulse) {
+		if (TMS1000::g_cpu.R == 1) {
+			std::cout << "Check Select Game" << std::endl;
+			TMS1000::g_cpu.K = 4; // Select game
+		} else if (TMS1000::g_cpu.R == 512) {
+			std::cout << "Check Skill" << std::endl;
+			TMS1000::g_cpu.K = 1; // Skill switch			
+		}
+		else if (TMS1000::g_cpu.R & pulseR) {
+			TMS1000::g_cpu.K = pulseK;
+//			std::cout << "Setting K to " << pulseK;
+		}
+		else {
+			TMS1000::g_cpu.K = 0;
+		}
+	}
+}
+
+void onWriteOutput() {
+	static WORD lastR;
+
+	WORD outBits = TMS1000::g_cpu.R & 0xF0;//& 0x1F0;
+	if (outBits != lastR) {
+		if (outBits) {
+			std::cout
+				<< ((outBits & 16) ? "GREEN" : "")
+				<< ((outBits & 32) ? "RED" : "")
+				<< ((outBits & 64) ? "YELLOW" : "")
+				<< ((outBits & 128) ? "BLUE" : "")
+				//			<< " SPKR: " << ((outBits & 256) ? "1" : "0")
+				<< " t=" << TMS1000::GetTicks()
+				<< std::endl;
+		}
+		else {
+			std::cout << "LED OFF t=" << TMS1000::GetTicks() << std::endl;
+		}
+		lastR = outBits;
+	}
+
+}
+
 int main() {
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -837,36 +948,59 @@ int main() {
 		return 1;
 	}
 
-	Console::Init(&cpuInfo);
 	TMS1000::Init(CPU_TMS1000, &cpuInfo);
-	TMS1000::LoadROM("mp3300.bin");
+	TMS1000::LoadROM("simon.bin");
+
+	//ShowMonitor(cpuInfo);
+
+	TMS1000::SetInputCallback(onReadInput);
+	TMS1000::SetOutputCallback(onWriteOutput);
 	TMS1000::Reset();
-	Console::UpdateStatus();
+	long lastTicks = 0;
 	bool loop = true;
+	std::cout << "Run" << std::endl;
 	while (loop) {
+		while (!_kbhit()) {
+			TMS1000::Step();
+			if (lastPulse && (TMS1000::GetTicks() > lastPulse + 200000)) {
+				lastPulse = 0;
+				std::cout << "Pulse off" << std::endl;
+			}
+			if ((TMS1000::GetTicks() - lastTicks) > 200000) {
+				lastTicks = TMS1000::GetTicks();
+				std::cout << "Ticks:" << lastTicks << std::endl;
+			}
+		}
 		switch (Console::ReadInput()) {
 		case 27: // ESC
 			loop = false;
 			break;
 		case 0x3B: // F1
-			TMS1000::Reset(); 
-			Console::UpdateStatus();
+			TMS1000::Reset();
+			lastTicks = 0;
+			std::cout << "Reset" << std::endl;
 			break;
+		case '1': std::cout << "Pulse GREEN" << std::endl;
+			Pulse(2, 1);
+			break;
+		case '2': std::cout << "Pulse RED" << std::endl; 
+			Pulse(2, 2);
+			break;
+		case '3': std::cout << "Pulse YELLOW" << std::endl; 
+			Pulse(2, 4);
+			break;
+		case '4': std::cout << "Pulse BLUE" << std::endl; 
+			Pulse(2, 8);
+			break;
+		case 's': std::cout << "Pulse START" << std::endl;
+			Pulse(4, 1);
+			break;
+
 		case 0x3F: // F5
-			while (!_kbhit()) {
-				TMS1000::Step();
-				Console::UpdateStatus();
-			}
-			break;
 		case 0x40: // F6
-			TMS1000::Step();
-			Console::UpdateStatus();
-			break;
 		case 0x3C: // F2
 		case 0x3D: // F3
 		case 0x3E: // F4
-
-
 		case 0x41: // F7
 		case 0x42: // F8
 		case 0x43: // F9
@@ -874,6 +1008,7 @@ int main() {
 		default:
 			break;
 		}
+		while (_kbhit()) { _getch(); }
 	}
 
 	return 0;
