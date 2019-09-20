@@ -894,18 +894,31 @@ void Pulse(int R, int K) {
 }
 
 void onReadInput() {
-	if (lastPulse) {
-		if (TMS1000::g_cpu.R == 1) {
+	if (1) {
+		if (TMS1000::g_cpu.R & 1) {
 			std::cout << "Check Select Game" << std::endl;
 			TMS1000::g_cpu.K = 4; // Select game
-		} else if (TMS1000::g_cpu.R == 512) {
+		} else if (TMS1000::g_cpu.R & 512) {
 			std::cout << "Check Skill" << std::endl;
 			TMS1000::g_cpu.K = 1; // Skill switch			
 		}
-		else if (TMS1000::g_cpu.R & pulseR) {
-			TMS1000::g_cpu.K = pulseK;
-//			std::cout << "Setting K to " << pulseK;
+		else if (TMS1000::g_cpu.R & 2) { // COLOR SWITCHES GREEN(K1) / RED(K2) / YELLOW(K4) / BLUE(K8)
+			TMS1000::g_cpu.K = 
+				((GetAsyncKeyState(0x31) & 0x8000) ? 1 : 0) |
+				((GetAsyncKeyState(0x32) & 0x8000) ? 2 : 0)|
+				((GetAsyncKeyState(0x33) & 0x8000) ? 4 : 0)|
+				((GetAsyncKeyState(0x34) & 0x8000) ? 8 : 0);
 		}
+		else if (TMS1000::g_cpu.R & 4) { // START (K1)/LAST (K2)/LONGEST (K4)
+			TMS1000::g_cpu.K =
+				((GetAsyncKeyState(0x53) & 0x8000) ? 1 : 0) |
+				((GetAsyncKeyState(0x4C) & 0x8000) ? 2 : 0) |
+				((GetAsyncKeyState(0x4D) & 0x8000) ? 4 : 0);
+		}
+//		else if (TMS1000::g_cpu.R & pulseR) {
+//			TMS1000::g_cpu.K = pulseK;
+//			std::cout << "Setting K to " << pulseK;			
+//		}
 		else {
 			TMS1000::g_cpu.K = 0;
 		}
@@ -949,9 +962,10 @@ int main() {
 	}
 
 	TMS1000::Init(CPU_TMS1000, &cpuInfo);
-	TMS1000::LoadROM("simon.bin");
+	TMS1000::LoadROM("mp3300.bin");
 
-	//ShowMonitor(cpuInfo);
+//	ShowMonitor(cpuInfo);
+//	return 1;
 
 	TMS1000::SetInputCallback(onReadInput);
 	TMS1000::SetOutputCallback(onWriteOutput);
@@ -962,10 +976,10 @@ int main() {
 	while (loop) {
 		while (!_kbhit()) {
 			TMS1000::Step();
-			if (lastPulse && (TMS1000::GetTicks() > lastPulse + 200000)) {
-				lastPulse = 0;
-				std::cout << "Pulse off" << std::endl;
-			}
+//			if (lastPulse && (TMS1000::GetTicks() > lastPulse + 200000)) {
+//				lastPulse = 0;
+//				std::cout << "Pulse off" << std::endl;
+//			}
 			if ((TMS1000::GetTicks() - lastTicks) > 200000) {
 				lastTicks = TMS1000::GetTicks();
 				std::cout << "Ticks:" << lastTicks << std::endl;
@@ -980,21 +994,21 @@ int main() {
 			lastTicks = 0;
 			std::cout << "Reset" << std::endl;
 			break;
-		case '1': std::cout << "Pulse GREEN" << std::endl;
-			Pulse(2, 1);
-			break;
-		case '2': std::cout << "Pulse RED" << std::endl; 
-			Pulse(2, 2);
-			break;
-		case '3': std::cout << "Pulse YELLOW" << std::endl; 
-			Pulse(2, 4);
-			break;
-		case '4': std::cout << "Pulse BLUE" << std::endl; 
-			Pulse(2, 8);
-			break;
-		case 's': std::cout << "Pulse START" << std::endl;
-			Pulse(4, 1);
-			break;
+		//case '1': std::cout << "Pulse GREEN" << std::endl;
+		//	Pulse(2, 1);
+		//	break;
+		//case '2': std::cout << "Pulse RED" << std::endl; 
+		//	Pulse(2, 2);
+		//	break;
+		//case '3': std::cout << "Pulse YELLOW" << std::endl; 
+		//	Pulse(2, 4);
+		//	break;
+		//case '4': std::cout << "Pulse BLUE" << std::endl; 
+		//	Pulse(2, 8);
+		//	break;
+		//case 's': std::cout << "Pulse START" << std::endl;
+		//	Pulse(4, 1);
+		//	break;
 
 		case 0x3F: // F5
 		case 0x40: // F6

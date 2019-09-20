@@ -41,7 +41,6 @@ namespace TMS1000
 		reg = SET4(sum);
 	}
 
-
 	void opTAY(BYTE) {
 		// ATN, AUTY
 		g_cpu.Y = SET4(g_cpu.A);
@@ -465,7 +464,7 @@ namespace TMS1000
 		g_cpu.SL = false;
 		g_cpu.K = 0;
 		g_cpu.O = 0;
-		g_cpu.R = 0;
+		g_cpu.R = 0x3FF;
 		g_cpu.PA = SET4(0xFF);
 		g_cpu.PB = SET4(0xFF);
 		g_cpu.PC = SET6(0x0);
@@ -591,7 +590,7 @@ namespace TMS1000
 			sprintf(line, "%s %d", instr.name, GetF(opcode));
 			break;
 		default:
-			throw std::exception("invalid operantformat");
+			throw std::exception("invalid operandformat");
 		}
 	}
 
@@ -601,10 +600,7 @@ namespace TMS1000
 	}
 
 	void Exec(BYTE opcode) {
-		Instruction& instr = TMS1000Opcodes[opcode];
-		if (instr.func) {
-			instr.func(opcode);
-		}
+		TMS1000Opcodes[opcode].func(opcode);
 	}
 
 	void Step() {	
