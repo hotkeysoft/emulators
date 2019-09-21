@@ -1036,8 +1036,8 @@ int main() {
 	}
 
 	TMS1000::Init(cpuInfo.GetROMWords(), cpuInfo.GetRAMWords());
-	TMS1000::LoadROM("simon.bin");
-//	TMS1000::SaveROM("simon2.h");
+	TMS1000::LoadROM("roms/TMS1000/Simon/simon.bin");
+//	TMS1000::SaveROM("roms/TMS1000/Simon/simon2.h");
 
 	ShowMonitor(cpuInfo);
 	TestCPU();
