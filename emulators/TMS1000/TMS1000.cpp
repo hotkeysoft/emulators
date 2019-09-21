@@ -145,9 +145,9 @@ namespace TMS1000
 		g_cpu.S = (sum > 0x0F);
 	}
 
-	void opALEC(BYTE opcode) {
+	void opALEC(BYTE value) {
 		// CKP, NATN, CIN, C8
-		BYTE sum = NOT4(g_cpu.A) + GetC(opcode) + 1;
+		BYTE sum = NOT4(g_cpu.A) + value + 1;
 		g_cpu.S = (sum > 0x0F);
 	}
 
@@ -162,36 +162,36 @@ namespace TMS1000
 		g_cpu.SL = g_cpu.S;
 	}
 
-	void opYNEC(BYTE opcode) {
+	void opYNEC(BYTE value) {
 		// YTP, CKN, NE
-		g_cpu.S = (g_cpu.Y != GetC(opcode));
+		g_cpu.S = (g_cpu.Y != value);
 	}
 
-	void opSBIT(BYTE opcode) {
+	void opSBIT(BYTE value) {
 		// SBIT
-		BYTE setBit = 1 << GetB(opcode);
+		BYTE setBit = 1 << value;
 		PutRAM(GetRAM() | setBit);
 	}
 
-	void opRBIT(BYTE opcode) {
+	void opRBIT(BYTE value) {
 		// RBIT
-		BYTE setBit = SET4(~(1 << GetB(opcode)));
+		BYTE setBit = SET4(~(1 << value));
 		PutRAM(GetRAM() & setBit);
 	}
 
-	void opTBIT1(BYTE opcode) {
+	void opTBIT1(BYTE value) {
 		// CKP, CKN, MTP, NE
-		g_cpu.S = (GetRAM() & (1 << GetB(opcode)));
+		g_cpu.S = (GetRAM() & (1 << value));
 	}
 
-	void opTCY(BYTE opcode) {
+	void opTCY(BYTE value) {
 		// CKP, AUTY
-		g_cpu.Y = GetC(opcode);
+		g_cpu.Y = value;
 	}
 
-	void opTCMIY(BYTE opcode) {
+	void opTCMIY(BYTE value) {
 		// CKM, YTP, CIN, AUTY
-		PutRAM(GetC(opcode));
+		PutRAM(value);
 		g_cpu.Y = SET4(g_cpu.Y + 1);
 	}
 
@@ -247,9 +247,9 @@ namespace TMS1000
 		}
 	}
 
-	void opLDX(BYTE opcode) {
+	void opLDX(BYTE value) {
 		// LDX
-		g_cpu.X = GetB(opcode);
+		g_cpu.X = value;
 	}
 
 	void opCOMX() {
@@ -257,9 +257,9 @@ namespace TMS1000
 		g_cpu.X = SET2(~g_cpu.X);
 	}
 
-	void opLDP(BYTE opcode) {
+	void opLDP(BYTE value) {
 		// LDP
-		g_cpu.PB = GetC(opcode);
+		g_cpu.PB = value;
 	}
 
 	void opBR(BYTE opcode) {
@@ -341,36 +341,38 @@ namespace TMS1000
 		ticks = 0;
 	}
 
-	inline BYTE GetW(BYTE opcode) {
+	BYTE GetW(BYTE opcode) {
 		return SET6(opcode);
 	}
-	inline BYTE GetF(BYTE opcode) {
+
+	// GetB, GetC, and GetF are helpers and not used internally because they are a bit costly
+	BYTE GetF(BYTE opcode) {
 		return	(opcode & 1 ? 4 : 0) |
 				(opcode & 2 ? 2 : 0) |
 				(opcode & 4 ? 1 : 0);
 	}
-	inline BYTE GetC(BYTE opcode) {
-		return	(opcode & 1 ? 8 : 0) | 
-				(opcode & 2 ? 4 : 0) |
-				(opcode & 4 ? 2 : 0) |
-				(opcode & 8 ? 1 : 0);
+	BYTE GetC(BYTE opcode) {
+		return	(opcode & 1 ? 8 : 0) |
+			(opcode & 2 ? 4 : 0) |
+			(opcode & 4 ? 2 : 0) |
+			(opcode & 8 ? 1 : 0);
 	}
-	inline BYTE GetB(BYTE opcode) {
+	BYTE GetB(BYTE opcode) {
 		return 
 			(opcode & 1 ? 2 : 0) | 
 			(opcode & 2 ? 1 : 0);
 	}
 
-	inline BYTE GetM() {
+	BYTE GetM() {
 		return GetM(g_cpu.X, g_cpu.Y);
 	}
-	inline BYTE GetM(BYTE x, BYTE y) {
+	BYTE GetM(BYTE x, BYTE y) {
 		return (SET2(x) << 4) | SET4(y);
 	}
-	inline BYTE GetRAM(BYTE addr) {
+	BYTE GetRAM(BYTE addr) {
 		return SET4(g_memory.RAM[addr]);
 	}
-	inline void PutRAM(BYTE value, BYTE addr) {
+	void PutRAM(BYTE value, BYTE addr) {
 		g_memory.RAM[addr] = SET4(value);
 	}
 
@@ -420,31 +422,94 @@ namespace TMS1000
 		// Arithmetic Compare
 		case 0x29: opALEM(); break;
 
-		case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
-		case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
-			opALEC(opcode); break;
+		case 0x70: opALEC(0);  break;
+		case 0x71: opALEC(8);  break;
+		case 0x72: opALEC(4);  break;
+		case 0x73: opALEC(12); break;
+		case 0x74: opALEC(2);  break;
+		case 0x75: opALEC(10); break;
+		case 0x76: opALEC(6);  break;
+		case 0x77: opALEC(14); break;
+		case 0x78: opALEC(1);  break;
+		case 0x79: opALEC(9);  break;
+		case 0x7A: opALEC(5);  break;
+		case 0x7B: opALEC(13); break;
+		case 0x7C: opALEC(3);  break;
+		case 0x7D: opALEC(11); break;
+		case 0x7E: opALEC(7);  break;
+		case 0x7F: opALEC(15); break;
 
 		// Logical Compare
 		case 0x26: opMNEZ(); break;
 		case 0x02: opYNEA(); break;
 
-		case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
-		case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
-			opYNEC(opcode); break;
+		case 0x50: opYNEC(0);  break;
+		case 0x51: opYNEC(8);  break;
+		case 0x52: opYNEC(4);  break;
+		case 0x53: opYNEC(12); break;
+		case 0x54: opYNEC(2);  break;
+		case 0x55: opYNEC(10); break;
+		case 0x56: opYNEC(6);  break;
+		case 0x57: opYNEC(14); break;
+		case 0x58: opYNEC(1);  break;
+		case 0x59: opYNEC(9);  break;
+		case 0x5A: opYNEC(5);  break;
+		case 0x5B: opYNEC(13); break;
+		case 0x5C: opYNEC(3);  break;
+		case 0x5D: opYNEC(11); break;
+		case 0x5E: opYNEC(7);  break;
+		case 0x5F: opYNEC(15); break;
 
 		// Bits in memory
-		case 0x30: case 0x31: case 0x32: case 0x33: opSBIT(opcode); break;
-		case 0x34: case 0x35: case 0x36: case 0x37: opRBIT(opcode); break;
-		case 0x38: case 0x39: case 0x3A: case 0x3B: opTBIT1(opcode); break;
+		case 0x30: opSBIT(0); break;
+		case 0x31: opSBIT(2); break;
+		case 0x32: opSBIT(1); break;
+		case 0x33: opSBIT(3); break;
+
+		case 0x34: opRBIT(0); break;
+		case 0x35: opRBIT(2); break;
+		case 0x36: opRBIT(1); break;
+		case 0x37: opRBIT(3); break;
+
+		case 0x38: opTBIT1(0); break;
+		case 0x39: opTBIT1(2); break;
+		case 0x3A: opTBIT1(1); break;
+		case 0x3B: opTBIT1(3); break;
 
 		// Constants
-		case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47:
-		case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F:
-			opTCY(opcode); break;
+		case 0x40: opTCY(0);  break;
+		case 0x41: opTCY(8);  break;
+		case 0x42: opTCY(4);  break;
+		case 0x43: opTCY(12); break;
+		case 0x44: opTCY(2);  break;
+		case 0x45: opTCY(10); break;
+		case 0x46: opTCY(6);  break;
+		case 0x47: opTCY(14); break;
+		case 0x48: opTCY(1);  break;
+		case 0x49: opTCY(9);  break;
+		case 0x4A: opTCY(5);  break;
+		case 0x4B: opTCY(13); break;
+		case 0x4C: opTCY(3);  break;
+		case 0x4D: opTCY(11); break;
+		case 0x4E: opTCY(7);  break;
+		case 0x4F: opTCY(15); break;
 
-		case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
-		case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
-			opTCMIY(opcode); break;
+		case 0x60: opTCMIY(0);  break;
+		case 0x61: opTCMIY(8);  break;
+		case 0x62: opTCMIY(4);  break;
+		case 0x63: opTCMIY(12); break;
+		case 0x64: opTCMIY(2);  break;
+		case 0x65: opTCMIY(10); break;
+		case 0x66: opTCMIY(6);  break;
+		case 0x67: opTCMIY(14); break;
+		case 0x68: opTCMIY(1);  break;
+		case 0x69: opTCMIY(9);  break;
+		case 0x6A: opTCMIY(5);  break;
+		case 0x6B: opTCMIY(13); break;
+		case 0x6C: opTCMIY(3);  break;
+		case 0x6D: opTCMIY(11); break;
+		case 0x6E: opTCMIY(7);  break;
+		case 0x6F: opTCMIY(15); break;
 
 		// Input
 		case 0x09: opKNEZ(); break;
@@ -457,7 +522,10 @@ namespace TMS1000
 		case 0x0B: opCLO(); break;
 
 		// RAM 'X' Addressing
-		case 0x3C: case 0x3D: case 0x3E: case 0x3F: opLDX(opcode); break;
+		case 0x3C: opLDX(0); break;
+		case 0x3D: opLDX(2); break;
+		case 0x3E: opLDX(1); break;
+		case 0x3F: opLDX(3); break;
 
 		case 0x00: opCOMX(); break;
 
@@ -485,9 +553,22 @@ namespace TMS1000
 		// ROM Addressing
 		case 0x0F: opRETN(); break;
 
-		case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
-		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
-			opLDP(opcode); break;
+		case 0x10: opLDP(0);  break;
+		case 0x11: opLDP(8);  break;
+		case 0x12: opLDP(4);  break;
+		case 0x13: opLDP(12); break;
+		case 0x14: opLDP(2);  break;
+		case 0x15: opLDP(10); break;
+		case 0x16: opLDP(6);  break;
+		case 0x17: opLDP(14); break;
+		case 0x18: opLDP(1);  break;
+		case 0x19: opLDP(9);  break;
+		case 0x1A: opLDP(5);  break;
+		case 0x1B: opLDP(13); break;
+		case 0x1C: opLDP(3);  break;
+		case 0x1D: opLDP(11); break;
+		case 0x1E: opLDP(7);  break;
+		case 0x1F: opLDP(15); break;
 		}
 	}
 

@@ -1051,9 +1051,9 @@ int main() {
 	TMS1000::LoadROM("simon.bin");
 //	TMS1000::SaveROM("simon2.h");
 
-//	ShowMonitor(cpuInfo);
-//	TestCPU();
-//	return 1;
+	ShowMonitor(cpuInfo);
+	TestCPU();
+	return 1;
 
 	TMS1000::SetInputCallback(onReadInput);
 	TMS1000::SetOutputCallback(onWriteOutput);
