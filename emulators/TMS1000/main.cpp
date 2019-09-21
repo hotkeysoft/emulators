@@ -394,7 +394,6 @@ void TestCALL(BYTE opCode, BYTE addr) {
 	assert(TMS1000::g_cpu.CL == true);
 	Console::UpdateStatus();
 
-
 	TMS1000::g_cpu.PA = 0x01;
 	TMS1000::g_cpu.PB = 0x02;
 	TMS1000::g_cpu.PC = (~addr) & 0x3F;
@@ -402,7 +401,7 @@ void TestCALL(BYTE opCode, BYTE addr) {
 	TMS1000::g_cpu.CL = false;
 	BYTE retPC = (TMS1000::g_cpu.PC + 1) & 0x3F;
 
-	// S = 1, CL = 0 : Call
+	// S = 1, CL = 0 : CALL
 	TMS1000::Exec(opCode);
 	assert(TMS1000::g_cpu.PA == 0x02);
 	assert(TMS1000::g_cpu.PB == 0x01);
@@ -410,6 +409,42 @@ void TestCALL(BYTE opCode, BYTE addr) {
 	assert(TMS1000::g_cpu.SR == retPC);
 	assert(TMS1000::g_cpu.S == true);
 	assert(TMS1000::g_cpu.CL == true);
+	Console::UpdateStatus();
+}
+
+void TestRETN() {
+	TMS1000::g_cpu.PA = 0x01;
+	TMS1000::g_cpu.PB = 0x02;
+	TMS1000::g_cpu.PC = 0x03;
+	TMS1000::g_cpu.SR = 0x04;
+	TMS1000::g_cpu.CL = false;
+	TMS1000::g_cpu.S = false;
+
+	// CL = 0
+	TMS1000::Exec(0x0F); // RETN
+	assert(TMS1000::g_cpu.PA == 0x02);
+	assert(TMS1000::g_cpu.PB == 0x02);
+	assert(TMS1000::g_cpu.PC == 0x03);
+	assert(TMS1000::g_cpu.SR == 0x04);
+	assert(TMS1000::g_cpu.S == true);
+	assert(TMS1000::g_cpu.CL == false);
+	Console::UpdateStatus();
+
+	TMS1000::g_cpu.PA = 0x01;
+	TMS1000::g_cpu.PB = 0x02;
+	TMS1000::g_cpu.PC = 0x03;
+	TMS1000::g_cpu.SR = 0x04;
+	TMS1000::g_cpu.CL = true;
+	TMS1000::g_cpu.S = false;
+
+	// CL = 1
+	TMS1000::Exec(0x0F); // RETN
+	assert(TMS1000::g_cpu.PA == 0x02);
+	assert(TMS1000::g_cpu.PB == 0x02);
+	assert(TMS1000::g_cpu.PC == 0x04);
+	assert(TMS1000::g_cpu.SR == 0x04);
+	assert(TMS1000::g_cpu.S == true);
+	assert(TMS1000::g_cpu.CL == false);
 	Console::UpdateStatus();
 }
 
@@ -645,67 +680,18 @@ void TestCPU() {
 	// Arithmetic Compare Instructions
 
 	// ALEM (A <= M)
-	TestALEM(0, 6, true);
-	TestALEM(6, 0, false);
-	TestALEM(6, 6, true);
+	for (int i = 0; i < 16; ++i) {
+		for (int j = 0; j < 16; ++j) {
+			TestALEM(i, j, i <= j);
+		}
+	}
 
-	TestALEM(5, 6, true);
-	TestALEM(6, 5, false);
-	TestALEM(5, 5, true);
-
-	TestALEM(7, 6, false);
-	TestALEM(15, 0, false);
-	TestALEM(0, 15, true);
-	TestALEM(15, 15, true);
-
-	TestALEM(0, 15, true);
-	TestALEM(15, 0, false);
-	TestALEM(0, 0, true);
-
-
-	// ALEC
-	TestALEC(0x70 + TMS1000::GetC(0), 0, true);
-	TestALEC(0x70 + TMS1000::GetC(0), 1, false);
-	TestALEC(0x70 + TMS1000::GetC(0), 15, false);
-
-	TestALEC(0x70 + TMS1000::GetC(1), 0, true);
-	TestALEC(0x70 + TMS1000::GetC(1), 1, true);
-	TestALEC(0x70 + TMS1000::GetC(1), 2, false);
-	TestALEC(0x70 + TMS1000::GetC(1), 15, false);
-
-	TestALEC(0x70 + TMS1000::GetC(2), 0, true);
-	TestALEC(0x70 + TMS1000::GetC(2), 1, true);
-	TestALEC(0x70 + TMS1000::GetC(2), 2, true);
-	TestALEC(0x70 + TMS1000::GetC(2), 3, false);
-	TestALEC(0x70 + TMS1000::GetC(2), 15, false);
-
-	TestALEC(0x70 + TMS1000::GetC(5), 0, true);
-	TestALEC(0x70 + TMS1000::GetC(5), 2, true);
-	TestALEC(0x70 + TMS1000::GetC(5), 5, true);
-	TestALEC(0x70 + TMS1000::GetC(5), 6, false);
-	TestALEC(0x70 + TMS1000::GetC(5), 15, false);
-
-	TestALEC(0x70 + TMS1000::GetC(7), 0, true);
-	TestALEC(0x70 + TMS1000::GetC(7), 2, true);
-	TestALEC(0x70 + TMS1000::GetC(7), 7, true);
-	TestALEC(0x70 + TMS1000::GetC(7), 8, false);
-	TestALEC(0x70 + TMS1000::GetC(7), 15, false);
-
-	TestALEC(0x70 + TMS1000::GetC(8), 0, true);
-	TestALEC(0x70 + TMS1000::GetC(8), 2, true);
-	TestALEC(0x70 + TMS1000::GetC(8), 8, true);
-	TestALEC(0x70 + TMS1000::GetC(8), 9, false);
-	TestALEC(0x70 + TMS1000::GetC(8), 15, false);
-
-	TestALEC(0x70 + TMS1000::GetC(14), 0, true);
-	TestALEC(0x70 + TMS1000::GetC(14), 8, true);
-	TestALEC(0x70 + TMS1000::GetC(14), 14, true);
-	TestALEC(0x70 + TMS1000::GetC(14), 15, false);
-
-	TestALEC(0x70 + TMS1000::GetC(15), 0, true);
-	TestALEC(0x70 + TMS1000::GetC(15), 8, true);
-	TestALEC(0x70 + TMS1000::GetC(15), 14, true);
-	TestALEC(0x70 + TMS1000::GetC(15), 15, true);
+	// ALEC (A <= const)
+	for (int i = 0; i < 16; ++i) {
+		for (int j = 0; j < 16; ++j) {
+			TestALEC(0x70 + TMS1000::GetC(i), j, j <= i);
+		}
+	}
 
 	// Logical Compare Instructions
 
@@ -916,6 +902,8 @@ void TestCPU() {
 		TestCALL(0xC0 + i, i);
 	}
 
+	// RETN
+	TestRETN();
 }
 
 void ShowMonitor(CPUInfo &cpuInfo) {
@@ -1053,7 +1041,7 @@ int main() {
 
 	ShowMonitor(cpuInfo);
 	TestCPU();
-	return 1;
+//	return 1;
 
 	TMS1000::SetInputCallback(onReadInput);
 	TMS1000::SetOutputCallback(onWriteOutput);
