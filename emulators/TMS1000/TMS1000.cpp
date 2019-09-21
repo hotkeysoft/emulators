@@ -433,22 +433,9 @@ namespace TMS1000
 		g_memory.RAM = new BYTE[g_memory.ramSize];
 		memset(g_memory.RAM, 0xAA, g_memory.ramSize);
 	}
-
-	void DeleteROM() {
-		delete[] g_memory.ROM;
-		g_memory.ROM = nullptr;
-	}
-
-	void InitROM() {
-		DeleteROM();
-
-		g_memory.ROM = new BYTE[g_memory.romSize];
-		memset(g_memory.ROM, 0xAA, g_memory.romSize);
-	}
 	
-	void Init(TMS1000Family family, CPUInfo *pCPUInfo) {
+	void Init(TMS1000Family family, WORD romSize, WORD ramSize) {
 		DeleteRAM();
-		DeleteROM();
 
 		switch (family) {
 		case TMS1000Family::CPU_TMS1000:InitTMS1000();
@@ -471,10 +458,9 @@ namespace TMS1000
 		g_cpu.SR = SET6(0x0);
 		g_cpu.CL = false;
 
-		g_memory.ramSize = pCPUInfo->GetRAMWords();
-		g_memory.romSize = pCPUInfo->GetROMWords();
+		g_memory.ramSize = ramSize;
+		g_memory.romSize = romSize;
 		InitRAM();	
-		InitROM();
 	}
 
 	void Reset() {
@@ -527,7 +513,8 @@ namespace TMS1000
 				throw std::exception("ROM size mismatch");
 			}
 			fseek(f, 0, SEEK_SET);
-			InitROM();
+			delete[] g_memory.ROM;
+			g_memory.ROM = new BYTE[g_memory.romSize];
 			if (fread(g_memory.ROM, size, 1, f) != 1) {
 				throw std::exception("Error reading ROM file");
 			}

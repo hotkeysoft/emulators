@@ -57,7 +57,7 @@ namespace TMS1000
 	extern CPUState g_cpu;
 	extern Memory g_memory;
 
-	void Init(TMS1000Family family, CPUInfo* pCPUInfo);
+	void Init(TMS1000Family family, WORD romSize, WORD ramSize);
 	void LoadROM(const char* path);
 	void SaveROM(const char* path);
 	void Reset();
