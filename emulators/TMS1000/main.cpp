@@ -7,6 +7,7 @@
 #include <iostream>
 #include "TMS1000.h"
 #include "TestTMS1000.h"
+#include "TestTMS1100.h"
 
 void LogCallback(const char *str) {
 	fprintf(stderr, str);
@@ -150,7 +151,7 @@ CPUInfo& InitCPU(TMS1000::TMS1000Family model) {
 int main() {
 	Logger::RegisterLogCallback(LogCallback);
 
-	if (1)
+	if (0)
 	{
 		CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
 		TMS1000::LoadROM("roms/TMS1000/Simon/simon.bin");
@@ -158,13 +159,13 @@ int main() {
 		TestTMS1000::Test();
 	}
 
-	if (0)
+	if (1)
 	{
 		CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1100);
 		//TMS1000::LoadROM("roms/TMS1100/test.bin");
 		TMS1000::LoadROM("roms/TMS1100/connect4.bin");
 		ShowMonitor(cpuInfo);
-		//TestTMS1100();
+		TestTMS1100::Test();
 	}
 
 	RunMonitor();
