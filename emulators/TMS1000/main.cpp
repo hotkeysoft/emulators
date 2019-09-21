@@ -869,9 +869,9 @@ void ShowMonitor(CPUInfo &cpuInfo) {
 
 // Select Game:  4= Game 1
 
-// R0 (1) : SELECT GAME
-// R1 (2) : COLOR SWITCHES GREEN (K1)/RED (K2)/YELLOW (K4)/BLUE (K8)
-// R2 (4) : START (K1)/LAST (K2)/LONGEST (K4)
+// R0 (1) : SELECT GAME: GAME1 (K2) / GAME2 (K1) / GAME3 (K4)
+// R1 (2) : COLOR SWITCHES: GREEN (K1) /RED (K2) /YELLOW (K4) /BLUE (K8)
+// R2 (4) : START (K1) / LAST (K2) / LONGEST (K4)
 //	  (8)
 // R4 (16) : GREEN
 // R5 (32) : RED
@@ -880,27 +880,16 @@ void ShowMonitor(CPUInfo &cpuInfo) {
 
 // R8: (256): SPKR
 
-// R9: (512): SKILL SWITCH
-
-
-int lastPulse = 0;
-int pulseR = 0;
-int pulseK = 0;
-
-void Pulse(int R, int K) {
-	lastPulse = TMS1000::GetTicks();
-	pulseR = R;
-	pulseK = K;
-}
+// R9: (512): SKILL SWITCH: LEVEL1 (K2) / LEVEL2 (K4) / LEVEL3 (K8) / LEVEL4 (K1)
 
 void onReadInput() {
 	if (1) {
 		if (TMS1000::g_cpu.R & 1) {
 			std::cout << "Check Select Game" << std::endl;
-			TMS1000::g_cpu.K = 4; // Select game
+			TMS1000::g_cpu.K = 2; // Select game: K1: Game2 / K4: Game3 / K2: Game1
 		} else if (TMS1000::g_cpu.R & 512) {
 			std::cout << "Check Skill" << std::endl;
-			TMS1000::g_cpu.K = 1; // Skill switch			
+			TMS1000::g_cpu.K = 2; // Skill switch: K2 = L1 / K4 = L2 / K8 = L3 / K1 = L4
 		}
 		else if (TMS1000::g_cpu.R & 2) { // COLOR SWITCHES GREEN(K1) / RED(K2) / YELLOW(K4) / BLUE(K8)
 			TMS1000::g_cpu.K = 
@@ -909,16 +898,12 @@ void onReadInput() {
 				((GetAsyncKeyState(0x33) & 0x8000) ? 4 : 0)|
 				((GetAsyncKeyState(0x34) & 0x8000) ? 8 : 0);
 		}
-		else if (TMS1000::g_cpu.R & 4) { // START (K1)/LAST (K2)/LONGEST (K4)
+		else if (TMS1000::g_cpu.R & 4) { // START (K1) /LAST (K2) / LONGEST (K4)
 			TMS1000::g_cpu.K =
 				((GetAsyncKeyState(0x53) & 0x8000) ? 1 : 0) |
 				((GetAsyncKeyState(0x4C) & 0x8000) ? 2 : 0) |
 				((GetAsyncKeyState(0x4D) & 0x8000) ? 4 : 0);
 		}
-//		else if (TMS1000::g_cpu.R & pulseR) {
-//			TMS1000::g_cpu.K = pulseK;
-//			std::cout << "Setting K to " << pulseK;			
-//		}
 		else {
 			TMS1000::g_cpu.K = 0;
 		}
@@ -932,10 +917,10 @@ void onWriteOutput() {
 	if (outBits != lastR) {
 		if (outBits) {
 			std::cout
-				<< ((outBits & 16) ? "GREEN" : "")
-				<< ((outBits & 32) ? "RED" : "")
-				<< ((outBits & 64) ? "YELLOW" : "")
-				<< ((outBits & 128) ? "BLUE" : "")
+				<< ((outBits & 16) ? "GREEN" : "    ")
+				<< ((outBits & 32) ? "RED" : "  ")
+				<< ((outBits & 64) ? "YELLOW" : "      ")
+				<< ((outBits & 128) ? "BLUE" : "    ")
 				//			<< " SPKR: " << ((outBits & 256) ? "1" : "0")
 				<< " t=" << TMS1000::GetTicks()
 				<< std::endl;
@@ -962,7 +947,8 @@ int main() {
 	}
 
 	TMS1000::Init(CPU_TMS1000, &cpuInfo);
-	TMS1000::LoadROM("mp3300.bin");
+	TMS1000::LoadROM("simon.bin");
+//	TMS1000::SaveROM("simon2.h");
 
 //	ShowMonitor(cpuInfo);
 //	return 1;
@@ -976,10 +962,6 @@ int main() {
 	while (loop) {
 		while (!_kbhit()) {
 			TMS1000::Step();
-//			if (lastPulse && (TMS1000::GetTicks() > lastPulse + 200000)) {
-//				lastPulse = 0;
-//				std::cout << "Pulse off" << std::endl;
-//			}
 			if ((TMS1000::GetTicks() - lastTicks) > 200000) {
 				lastTicks = TMS1000::GetTicks();
 				std::cout << "Ticks:" << lastTicks << std::endl;
@@ -994,21 +976,6 @@ int main() {
 			lastTicks = 0;
 			std::cout << "Reset" << std::endl;
 			break;
-		//case '1': std::cout << "Pulse GREEN" << std::endl;
-		//	Pulse(2, 1);
-		//	break;
-		//case '2': std::cout << "Pulse RED" << std::endl; 
-		//	Pulse(2, 2);
-		//	break;
-		//case '3': std::cout << "Pulse YELLOW" << std::endl; 
-		//	Pulse(2, 4);
-		//	break;
-		//case '4': std::cout << "Pulse BLUE" << std::endl; 
-		//	Pulse(2, 8);
-		//	break;
-		//case 's': std::cout << "Pulse START" << std::endl;
-		//	Pulse(4, 1);
-		//	break;
 
 		case 0x3F: // F5
 		case 0x40: // F6

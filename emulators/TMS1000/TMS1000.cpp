@@ -464,7 +464,7 @@ namespace TMS1000
 		g_cpu.SL = false;
 		g_cpu.K = 0;
 		g_cpu.O = 0;
-		g_cpu.R = 0x3FF;
+		g_cpu.R = 0;
 		g_cpu.PA = SET4(0xFF);
 		g_cpu.PB = SET4(0xFF);
 		g_cpu.PC = SET6(0x0);
@@ -532,6 +532,22 @@ namespace TMS1000
 				throw std::exception("Error reading ROM file");
 			}
 			RemapROM();
+		}
+		fclose(f);
+	}
+
+	void SaveROM(const char* path) {
+		FILE* f = fopen(path, "w");
+		if (f) {
+			fprintf(f, "const BYTE rom[] PROGMEM = {\n\t");
+			int lines = g_memory.romSize / 16;
+			for (int y = 0; y < lines; ++y) {
+				for (int x = 0; x < 16; ++x) {
+					fprintf(f, "0x%02X, ", g_memory.ROM[y*16+x]);
+				}
+				fprintf(f, "\n\t" );
+			}
+			fprintf(f, "};\n");
 		}
 		fclose(f);
 	}
