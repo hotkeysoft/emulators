@@ -1046,7 +1046,7 @@ int main() {
 		return 1;
 	}
 
-	TMS1000::Init(CPU_TMS1000, cpuInfo.GetROMWords(), cpuInfo.GetRAMWords());
+	TMS1000::Init(cpuInfo.GetROMWords(), cpuInfo.GetRAMWords());
 	TMS1000::LoadROM("simon.bin");
 //	TMS1000::SaveROM("simon2.h");
 

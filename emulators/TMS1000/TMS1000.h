@@ -1,5 +1,4 @@
 #pragma once
-#include "CPUInfo.h"
 
 namespace TMS1000
 {
@@ -34,7 +33,7 @@ namespace TMS1000
 
 	struct Memory {
 		BYTE* RAM = nullptr;
-		BYTE* ROM = nullptr;
+		const BYTE* ROM = nullptr;
 
 		int ramSize = 0;
 		int romSize = 0;
@@ -43,7 +42,7 @@ namespace TMS1000
 	extern CPUState g_cpu;
 	extern Memory g_memory;
 
-	void Init(TMS1000Family family, WORD romSize, WORD ramSize);
+	void Init(WORD romSize, WORD ramSize);
 	void Reset();
 	void Step();
 	void Exec(BYTE opcode);

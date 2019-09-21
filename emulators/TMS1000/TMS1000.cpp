@@ -1,7 +1,9 @@
-#include "stdafx.h"
-#include "CPUInfo.h"
+#ifdef ARDUINO 
+	#include <avr/pgmspace.h>
+#else
+	#include <iostream>
+#endif
 #include "TMS1000.h"
-#include <iostream>
 
 #define SET2(X) (X & 0x03)
 #define SET4(X) (X & 0x0F)
@@ -17,7 +19,7 @@ namespace TMS1000
 	CPUState g_cpu;
 	Memory g_memory;
 
-	void ADC(BYTE& reg, BYTE val) {
+	void uADC(BYTE& reg, BYTE val) {
 		BYTE sum = reg + val;
 		g_cpu.S = (sum > 0x0F);
 		reg = SET4(sum);
@@ -83,7 +85,7 @@ namespace TMS1000
 
 	void opAMAAC() {
 		// MTP, ATN, C8, AUTA
-		ADC(g_cpu.A, GetRAM());
+		uADC(g_cpu.A, GetRAM());
 	}
 
 	void opSAMAN() {
@@ -96,13 +98,13 @@ namespace TMS1000
 	void opIMAC() {
 		// MTP, CIN, C8, AUTA
 		g_cpu.A = GetRAM();
-		ADC(g_cpu.A, 0x01);
+		uADC(g_cpu.A, 0x01);
 	}
 
 	void opDMAN() {
 		// MTP, 15TN, C8, AUTA
 		g_cpu.A = GetRAM();
-		ADC(g_cpu.A, 0x0F);
+		uADC(g_cpu.A, 0x0F);
 	}
 
 	void opIA() {
@@ -113,31 +115,31 @@ namespace TMS1000
 
 	void opIYC() {
 		// YTP, CIN, C8, AUTY
-		ADC(g_cpu.Y, 0x01);
+		uADC(g_cpu.Y, 0x01);
 	}
 
 	void opDAN() {
 		// CKP, ATN, CIN, C8, AUTA
-		ADC(g_cpu.A, 0x0F);
+		uADC(g_cpu.A, 0x0F);
 	}
 
 	void opDYN() {
 		// YTP, 15TN, C8, AUTY
-		ADC(g_cpu.Y, 0x0F);
+		uADC(g_cpu.Y, 0x0F);
 	}
 
 	void opA6AAC() {
 		// CKP, ATN, C6, AUTA
-		ADC(g_cpu.A, 6);
+		uADC(g_cpu.A, 6);
 	}
 
 	void opA8AAC() {
 		// CKP, ATN, C8, AUTA
-		ADC(g_cpu.A, 8);
+		uADC(g_cpu.A, 8);
 	}
 	void opA10AAC() {
 		// CKP, ATN, C10, AUTA
-		ADC(g_cpu.A, 10);
+		uADC(g_cpu.A, 10);
 	}
 
 	void opCPAIZ() {
@@ -331,18 +333,10 @@ namespace TMS1000
 		DeleteRAM();
 
 		g_memory.RAM = new BYTE[g_memory.ramSize];
-		memset(g_memory.RAM, 0xAA, g_memory.ramSize);
 	}
 	
-	void Init(TMS1000Family family, WORD romSize, WORD ramSize) {
+	void Init(WORD romSize, WORD ramSize) {
 		DeleteRAM();
-
-		switch (family) {
-		case TMS1000Family::CPU_TMS1000: //InitTMS1000();
-			break;
-		default:
-			throw std::exception("Unsupported cpu");
-		}
 
 		g_cpu.X = SET2(0xAA);
 		g_cpu.Y = SET4(0xAA);
@@ -408,7 +402,12 @@ namespace TMS1000
 
 	BYTE GetROM() {
 		WORD baseAddr = (SET4(TMS1000::g_cpu.PA) << 6) + SET6(g_cpu.PC);
+
+#ifdef ARDUINO
+		return pgm_read_byte_near(g_memory.ROM + baseAddr);
+#else
 		return g_memory.ROM[baseAddr];
+#endif
 	}
 
 	void Exec(BYTE opcode) {
@@ -594,7 +593,7 @@ namespace TMS1000
 			fseek(f, 0, SEEK_SET);
 			delete[] g_memory.ROM;
 			g_memory.ROM = new BYTE[g_memory.romSize];
-			if (fread(g_memory.ROM, size, 1, f) != 1) {
+			if (fread(const_cast<TMS1000::BYTE*>(g_memory.ROM), size, 1, f) != 1) {
 				throw std::exception("Error reading ROM file");
 			}
 			RemapROM();
