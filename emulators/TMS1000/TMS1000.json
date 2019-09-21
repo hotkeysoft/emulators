@@ -3,7 +3,10 @@
     "ROMWords": 1024,
     "RAMWords": 64,
     "RLatches": 13,
-    "OLatches": 8
+    "OLatches": 8,
+    "OpCodes": [
+    	"",
+    ]
   },
   "monitor": {
     "ANSIFile": "TMS1000.ANS",

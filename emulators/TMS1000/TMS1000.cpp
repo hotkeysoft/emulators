@@ -10,30 +10,12 @@
 
 namespace TMS1000
 {
-	// The program counter is not linear, it increments in 
-	// this sequence
-	static BYTE PCSequence[64] = {
-		0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x3E,
-		0x3D, 0x3B, 0x37, 0x2F, 0x1E, 0x3C, 0x39, 0x33,
-		0x27, 0x0E, 0x1D, 0x3A, 0x35, 0x2B, 0x16, 0x2C,
-		0x18, 0x30, 0x21, 0x02, 0x05, 0x0B, 0x17, 0x2E,
-		0x1C, 0x38, 0x31, 0x23, 0x06, 0x0D, 0x1B, 0x36,
-		0x2D, 0x1A, 0x34, 0x29, 0x12, 0x24, 0x08, 0x11,
-		0x22, 0x04, 0x09, 0x13, 0x26, 0x0C, 0x19, 0x32,
-		0x25, 0x0A, 0x15, 0x2A, 0x14, 0x28, 0x10, 0x20
-	};
-
 	IOCallbackFunc inputCallback = nullptr;
 	IOCallbackFunc outputCallback = nullptr;
-
-	Instruction TMS1000Opcodes[256];
 
 	long ticks = 0;
 	CPUState g_cpu;
 	Memory g_memory;
-
-	void nullOp(BYTE) {
-	}
 
 	void ADC(BYTE& reg, BYTE val) {
 		BYTE sum = reg + val;
@@ -340,88 +322,6 @@ namespace TMS1000
 		g_cpu.S = true;
 	}
 
-	void InitTMS1000()
-	{
-		// Register to register
-		TMS1000Opcodes[0x24] = { opTAY, Format4, "TAY" };
-		TMS1000Opcodes[0x23] = { opTYA, Format4, "TYA" };
-		TMS1000Opcodes[0x2F] = { opCLA, Format4, "CLA" };
-
-		// Transfer Register to Memory
-		TMS1000Opcodes[0x03] = { opTAM, Format4, "TAM" };
-		TMS1000Opcodes[0x20] = { opTAMIY, Format4, "TAMIY" };
-		TMS1000Opcodes[0x04] = { opTAMZA, Format4, "TAMZA" };
-
-		// Memory to Register
-		TMS1000Opcodes[0x22] = { opTMY, Format4, "TMY" };
-		TMS1000Opcodes[0x21] = { opTMA, Format4, "TMA" };
-		TMS1000Opcodes[0x2E] = { opXMA, Format4, "XMA" };
-
-		// Arithmetic
-		TMS1000Opcodes[0x25] = { opAMAAC, Format4, "AMAAC" };
-		TMS1000Opcodes[0x27] = { opSAMAN, Format4, "SAMAN" };
-		TMS1000Opcodes[0x28] = { opIMAC, Format4, "IMAC" };
-		TMS1000Opcodes[0x2A] = { opDMAN, Format4, "DMAN" };
-		TMS1000Opcodes[0x0E] = { opIA, Format4, "IA" };
-		TMS1000Opcodes[0x2B] = { opIYC, Format4, "IYC" };
-		TMS1000Opcodes[0x07] = { opDAN, Format4, "DAN" };
-		TMS1000Opcodes[0x2C] = { opDYN, Format4, "DYN" };
-		TMS1000Opcodes[0x06] = { opA6AAC, Format4, "A6AAC" };
-		TMS1000Opcodes[0x01] = { opA8AAC, Format4, "A8AAC" };
-		TMS1000Opcodes[0x05] = { opA10AAC, Format4, "A10AAC" };
-		TMS1000Opcodes[0x2D] = { opCPAIZ, Format4, "CPAIZ" };
-
-		// Arithmetic Compare
-		TMS1000Opcodes[0x29] = { opALEM, Format4, "ALEM" };
-
-		// Logical Compare
-		TMS1000Opcodes[0x26] = { opMNEZ, Format4, "MNEZ" };
-		TMS1000Opcodes[0x02] = { opYNEA, Format4, "YNEA" };
-		for (BYTE i = 0; i < 16; ++i) {
-			// ROM Addressing
-			TMS1000Opcodes[0x10 + i] = { opLDP, Format2, "LDP" };
-			// Constants
-			TMS1000Opcodes[0x40 + i] = { opTCY, Format2, "TCY" };
-			// Logical Compare
-			TMS1000Opcodes[0x50 + i] = { opYNEC, Format2, "YNEC" };
-			// Constants
-			TMS1000Opcodes[0x60 + i] = { opTCMIY, Format2, "TCMIY" };
-			// Arithmetic Compare
-			TMS1000Opcodes[0x70 + i] = { opALEC, Format2, "ALEC" };
-		}
-
-		for (BYTE i = 0; i < 4; ++i) {
-			// Bits in memory
-			TMS1000Opcodes[0x30 + i] = { opSBIT, Format3, "SBIT" };
-			TMS1000Opcodes[0x34 + i] = { opRBIT, Format3, "RBIT" };
-			TMS1000Opcodes[0x38 + i] = { opTBIT, Format3, "TBIT" };
-
-			// RAM 'X' ADdressing
-			TMS1000Opcodes[0x3C + i] = { opLDX, Format3, "LDX" };
-		}
-
-		// Input
-		TMS1000Opcodes[0x09] = { opKNEZ, Format4, "KNEZ" };
-		TMS1000Opcodes[0x08] = { opTKA, Format4, "TKA" };
-
-		// Output
-		TMS1000Opcodes[0x0D] = { opSETR, Format4, "SETR" };
-		TMS1000Opcodes[0x0C] = { opRSTR, Format4, "RSTR" };
-		TMS1000Opcodes[0x0A] = { opTDO, Format4, "TDO" };
-		TMS1000Opcodes[0x0B] = { opCLO, Format4, "CLO" };
-
-		// RAM 'X' Addressing
-		TMS1000Opcodes[0x00] = { opCOMX, Format2, "COMX" };
-
-		// ROM Addressing
-		TMS1000Opcodes[0x0F] = { opRETN, Format2, "RETN" };
-
-		for (BYTE i = 0; i < 64; ++i) {
-			TMS1000Opcodes[0x80 + i] = { opBR, Format1, "BR" };
-			TMS1000Opcodes[0xC0 + i] = { opCALL, Format1, "CALL" };
-		}
-	}
-
 	void DeleteRAM() {
 		delete[] g_memory.RAM;
 		g_memory.RAM = nullptr;
@@ -438,7 +338,7 @@ namespace TMS1000
 		DeleteRAM();
 
 		switch (family) {
-		case TMS1000Family::CPU_TMS1000:InitTMS1000();
+		case TMS1000Family::CPU_TMS1000: //InitTMS1000();
 			break;
 		default:
 			throw std::exception("Unsupported cpu");
@@ -472,6 +372,84 @@ namespace TMS1000
 		g_cpu.CL = false;
 		ticks = 0;
 	}
+
+	BYTE GetW(BYTE opcode) {
+		return opcode & 0x3F;
+	}
+	BYTE GetF(BYTE opcode) {
+		return	(opcode & 1 ? 4 : 0) |
+				(opcode & 2 ? 2 : 0) |
+				(opcode & 4 ? 1 : 0);
+	}
+	BYTE GetC(BYTE opcode) {
+		return	(opcode & 1 ? 8 : 0) | 
+				(opcode & 2 ? 4 : 0) |
+				(opcode & 4 ? 2 : 0) |
+				(opcode & 8 ? 1 : 0);
+	}
+	BYTE GetB(BYTE opcode) {
+		return 
+			(opcode & 1 ? 2 : 0) | 
+			(opcode & 2 ? 1 : 0);
+	}
+
+	BYTE GetM() {
+		return GetM(g_cpu.X, g_cpu.Y);
+	}
+	BYTE GetM(BYTE x, BYTE y) {
+		return ((x & 0x03) << 4) + (y & 0x0F);
+	}
+	BYTE GetRAM(BYTE addr) {
+		return g_memory.RAM[addr] & 0x0F;
+	}
+	void PutRAM(BYTE value, BYTE addr) {
+		g_memory.RAM[addr] = (value & 0x0F);
+	}
+
+	BYTE GetROM() {
+		WORD baseAddr = (SET4(TMS1000::g_cpu.PA) * 64) + SET6(g_cpu.PC);
+		return g_memory.ROM[baseAddr];
+	}
+
+	void Exec(BYTE opcode) {
+//		TMS1000Opcodes[opcode].func(opcode);
+	}
+
+	void Step() {	
+		BYTE oldPC = g_cpu.PC;
+		BYTE opCode = GetROM();
+		Exec(opCode);
+		if (g_cpu.PC == oldPC) {
+			g_cpu.PC = SET6(g_cpu.PC + 1);
+		}
+		ticks += 6;
+	}
+
+	void SetInputCallback(IOCallbackFunc func) {
+		inputCallback = func;
+	}
+
+	void SetOutputCallback(IOCallbackFunc func) {
+		outputCallback = func;
+	}
+
+	long GetTicks() {
+		return ticks;
+	}
+
+#ifndef ARDUINO
+	// The program counter is not linear, it increments in 
+	// this sequence
+	static BYTE PCSequence[64] = {
+		0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x3E,
+		0x3D, 0x3B, 0x37, 0x2F, 0x1E, 0x3C, 0x39, 0x33,
+		0x27, 0x0E, 0x1D, 0x3A, 0x35, 0x2B, 0x16, 0x2C,
+		0x18, 0x30, 0x21, 0x02, 0x05, 0x0B, 0x17, 0x2E,
+		0x1C, 0x38, 0x31, 0x23, 0x06, 0x0D, 0x1B, 0x36,
+		0x2D, 0x1A, 0x34, 0x29, 0x12, 0x24, 0x08, 0x11,
+		0x22, 0x04, 0x09, 0x13, 0x26, 0x0C, 0x19, 0x32,
+		0x25, 0x0A, 0x15, 0x2A, 0x14, 0x28, 0x10, 0x20
+	};
 
 	BYTE inverseSequence(BYTE addr) {
 		for (BYTE i = 0; i < 64; ++i) {
@@ -530,101 +508,14 @@ namespace TMS1000
 			int lines = g_memory.romSize / 16;
 			for (int y = 0; y < lines; ++y) {
 				for (int x = 0; x < 16; ++x) {
-					fprintf(f, "0x%02X, ", g_memory.ROM[y*16+x]);
+					fprintf(f, "0x%02X, ", g_memory.ROM[y * 16 + x]);
 				}
-				fprintf(f, "\n\t" );
+				fprintf(f, "\n\t");
 			}
 			fprintf(f, "};\n");
 		}
 		fclose(f);
 	}
+#endif
 
-	BYTE GetW(BYTE opcode) {
-		return opcode & 0x3F;
-	}
-	BYTE GetF(BYTE opcode) {
-		return	(opcode & 1 ? 4 : 0) |
-				(opcode & 2 ? 2 : 0) |
-				(opcode & 4 ? 1 : 0);
-	}
-	BYTE GetC(BYTE opcode) {
-		return	(opcode & 1 ? 8 : 0) | 
-				(opcode & 2 ? 4 : 0) |
-				(opcode & 4 ? 2 : 0) |
-				(opcode & 8 ? 1 : 0);
-	}
-	BYTE GetB(BYTE opcode) {
-		return 
-			(opcode & 1 ? 2 : 0) | 
-			(opcode & 2 ? 1 : 0);
-	}
-
-	BYTE GetM() {
-		return GetM(g_cpu.X, g_cpu.Y);
-	}
-	BYTE GetM(BYTE x, BYTE y) {
-		return ((x & 0x03) << 4) + (y & 0x0F);
-	}
-	BYTE GetRAM(BYTE addr) {
-		return g_memory.RAM[addr] & 0x0F;
-	}
-	void PutRAM(BYTE value, BYTE addr) {
-		g_memory.RAM[addr] = (value & 0x0F);
-	}
-
-	void Disassemble(BYTE opcode, char* line, int lineSize) {
-		memset(line, 0, lineSize);
-		Instruction& instr = TMS1000Opcodes[opcode];
-			
-		switch (instr.operandFormat) {
-		case Format1:
-			sprintf(line, "%s %02X", instr.name, GetW(opcode));
-			break;
-		case Format2:
-			sprintf(line, "%s %d", instr.name, GetC(opcode));
-			break;
-		case Format3:
-			sprintf(line, "%s %d", instr.name, GetB(opcode));
-			break;
-		case Format4:
-			sprintf(line, "%s", instr.name);
-			break;
-		case Format5:
-			sprintf(line, "%s %d", instr.name, GetF(opcode));
-			break;
-		default:
-			throw std::exception("invalid operandformat");
-		}
-	}
-
-	BYTE GetROM() {
-		WORD baseAddr = (SET4(TMS1000::g_cpu.PA) * 64) + SET6(g_cpu.PC);
-		return g_memory.ROM[baseAddr];
-	}
-
-	void Exec(BYTE opcode) {
-		TMS1000Opcodes[opcode].func(opcode);
-	}
-
-	void Step() {	
-		BYTE oldPC = g_cpu.PC;
-		BYTE opCode = GetROM();
-		Exec(opCode);
-		if (g_cpu.PC == oldPC) {
-			g_cpu.PC = SET6(g_cpu.PC + 1);
-		}
-		ticks += 6;
-	}
-
-	void SetInputCallback(IOCallbackFunc func) {
-		inputCallback = func;
-	}
-
-	void SetOutputCallback(IOCallbackFunc func) {
-		outputCallback = func;
-	}
-
-	long GetTicks() {
-		return ticks;
-	}
 }

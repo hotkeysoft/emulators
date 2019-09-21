@@ -9,20 +9,6 @@ namespace TMS1000
 
 	typedef void(*IOCallbackFunc)();
 
-	enum OperandFormat {
-		Format1, // W = Branch Address = I(2-7)
-		Format2, // C = Constant Operand I(7-4)
-		Format3, // B = RAM-X OR BIT ADDRESS I(7,6)
-		Format4, // No operands
-		Format5, // F = File Address I(7-5) (TMS1100 only)
-	};
-
-	struct Instruction {
-		OpcodeFunc func;
-		OperandFormat operandFormat;
-		const char* name;
-	};
-
 	struct CPUState {
 		// Registers
 		BYTE A;
@@ -58,8 +44,6 @@ namespace TMS1000
 	extern Memory g_memory;
 
 	void Init(TMS1000Family family, WORD romSize, WORD ramSize);
-	void LoadROM(const char* path);
-	void SaveROM(const char* path);
 	void Reset();
 	void Step();
 	void Exec(BYTE opcode);
@@ -79,5 +63,10 @@ namespace TMS1000
 	void SetInputCallback(IOCallbackFunc);
 	void SetOutputCallback(IOCallbackFunc);
 
+#ifndef ARDUINO
+	void LoadROM(const char* path);
+	void SaveROM(const char* path);
+
 	void Disassemble(BYTE opcode, char* line, int lineSize);
+#endif
 }
