@@ -28,51 +28,43 @@ namespace TMS1000
 	void opTAY() {
 		// ATN, AUTY
 		g_cpu.Y = SET4(g_cpu.A);
-		g_cpu.S = true;
 	}
 
 	void opTYA() {
 		// YTP, AUTA
 		g_cpu.A = SET4(g_cpu.Y);
-		g_cpu.S = true;
 	}
 
 	void opCLA() {
 		// AUTA
 		g_cpu.A = 0;
-		g_cpu.S = true;
 	}
 
 	void opTAM() {
 		// STO
 		PutRAM(g_cpu.A);
-		g_cpu.S = true;
 	}
 
 	void opTAMIY() {
 		// STO, YTP, CIN, AUTY
 		PutRAM(g_cpu.A);
 		g_cpu.Y = SET4(g_cpu.Y + 1);
-		g_cpu.S = true;
 	}
 
 	void opTAMZA() {
 		// STO, AUTA
 		PutRAM(g_cpu.A);
 		g_cpu.A = 0;
-		g_cpu.S = true;
 	}
 
 	void opTMY() {
 		// MTP, AUTY
 		g_cpu.Y = GetRAM();
-		g_cpu.S = true;
 	}
 
 	void opTMA() {
 		// MTP, AUTA
 		g_cpu.A = GetRAM();
-		g_cpu.S = true;
 	}
 
 	void opXMA() {
@@ -80,7 +72,6 @@ namespace TMS1000
 		BYTE temp = GetRAM();
 		PutRAM(g_cpu.A);
 		g_cpu.A = SET4(temp);
-		g_cpu.S = true;
 	}
 
 	void opAMAAC() {
@@ -110,7 +101,6 @@ namespace TMS1000
 	void opIA() {
 		// ATN, CIN, AUTA
 		g_cpu.A = SET4(g_cpu.A+1);
-		g_cpu.S = true;
 	}
 
 	void opIYC() {
@@ -181,14 +171,12 @@ namespace TMS1000
 		// SBIT
 		BYTE setBit = 1 << GetB(opcode);
 		PutRAM(GetRAM() | setBit);
-		g_cpu.S = true;
 	}
 
 	void opRBIT(BYTE opcode) {
 		// RBIT
 		BYTE setBit = SET4(~(1 << GetB(opcode)));
 		PutRAM(GetRAM() & setBit);
-		g_cpu.S = true;
 	}
 
 	void opTBIT1(BYTE opcode) {
@@ -199,14 +187,12 @@ namespace TMS1000
 	void opTCY(BYTE opcode) {
 		// CKP, AUTY
 		g_cpu.Y = GetC(opcode);
-		g_cpu.S = true;
 	}
 
 	void opTCMIY(BYTE opcode) {
 		// CKM, YTP, CIN, AUTY
 		PutRAM(GetC(opcode));
 		g_cpu.Y = SET4(g_cpu.Y + 1);
-		g_cpu.S = true;
 	}
 
 	void opKNEZ() {
@@ -223,7 +209,6 @@ namespace TMS1000
 			inputCallback();
 		}
 		g_cpu.A = SET4(g_cpu.K);
-		g_cpu.S = true;
 	}
 
 	void opSETR() {
@@ -231,7 +216,6 @@ namespace TMS1000
 		if (g_cpu.Y <= 10) {
 			g_cpu.R |= (1 << g_cpu.Y);
 		}
-		g_cpu.S = true;
 		if (outputCallback) {
 			outputCallback();
 		}
@@ -242,7 +226,6 @@ namespace TMS1000
 		if (g_cpu.Y <= 10) {
 			g_cpu.R &= (~(1 << g_cpu.Y));
 		}
-		g_cpu.S = true;
 		if (outputCallback) {
 			outputCallback();
 		}
@@ -251,7 +234,6 @@ namespace TMS1000
 	void opTDO() {
 		// TDO
 		g_cpu.O = (SET4(g_cpu.A) << 1) | (g_cpu.SL ? 1 : 0);
-		g_cpu.S = true;
 		if (outputCallback) {
 			outputCallback();
 		}
@@ -260,7 +242,6 @@ namespace TMS1000
 	void opCLO() {
 		// CLO
 		g_cpu.O = 0;
-		g_cpu.S = true;
 		if (outputCallback) {
 			outputCallback();
 		}
@@ -269,19 +250,16 @@ namespace TMS1000
 	void opLDX(BYTE opcode) {
 		// LDX
 		g_cpu.X = GetB(opcode);
-		g_cpu.S = true;
 	}
 
 	void opCOMX() {
 		// COMX
 		g_cpu.X = SET2(~g_cpu.X);
-		g_cpu.S = true;
 	}
 
 	void opLDP(BYTE opcode) {
 		// LDP
 		g_cpu.PB = GetC(opcode);
-		g_cpu.S = true;
 	}
 
 	void opBR(BYTE opcode) {
@@ -313,15 +291,11 @@ namespace TMS1000
 	}
 
 	void opRETN() {
+		g_cpu.PA = g_cpu.PB;
 		if (g_cpu.CL) {
 			g_cpu.PC = g_cpu.SR;
-			g_cpu.PA = g_cpu.PB;
 			g_cpu.CL = false;
 		}
-		else {
-			g_cpu.PA = g_cpu.PB;
-		}
-		g_cpu.S = true;
 	}
 
 	void DeleteRAM() {
@@ -367,42 +341,41 @@ namespace TMS1000
 		ticks = 0;
 	}
 
-	BYTE GetW(BYTE opcode) {
-		return opcode & 0x3F;
+	inline BYTE GetW(BYTE opcode) {
+		return SET6(opcode);
 	}
-	BYTE GetF(BYTE opcode) {
+	inline BYTE GetF(BYTE opcode) {
 		return	(opcode & 1 ? 4 : 0) |
 				(opcode & 2 ? 2 : 0) |
 				(opcode & 4 ? 1 : 0);
 	}
-	BYTE GetC(BYTE opcode) {
+	inline BYTE GetC(BYTE opcode) {
 		return	(opcode & 1 ? 8 : 0) | 
 				(opcode & 2 ? 4 : 0) |
 				(opcode & 4 ? 2 : 0) |
 				(opcode & 8 ? 1 : 0);
 	}
-	BYTE GetB(BYTE opcode) {
+	inline BYTE GetB(BYTE opcode) {
 		return 
 			(opcode & 1 ? 2 : 0) | 
 			(opcode & 2 ? 1 : 0);
 	}
 
-	BYTE GetM() {
+	inline BYTE GetM() {
 		return GetM(g_cpu.X, g_cpu.Y);
 	}
-	BYTE GetM(BYTE x, BYTE y) {
+	inline BYTE GetM(BYTE x, BYTE y) {
 		return (SET2(x) << 4) | SET4(y);
 	}
-	BYTE GetRAM(BYTE addr) {
+	inline BYTE GetRAM(BYTE addr) {
 		return SET4(g_memory.RAM[addr]);
 	}
-	void PutRAM(BYTE value, BYTE addr) {
+	inline void PutRAM(BYTE value, BYTE addr) {
 		g_memory.RAM[addr] = SET4(value);
 	}
 
 	BYTE GetROM() {
 		WORD baseAddr = (SET4(TMS1000::g_cpu.PA) << 6) + SET6(g_cpu.PC);
-
 #ifdef ARDUINO
 		return pgm_read_byte_near(g_memory.ROM + baseAddr);
 #else
@@ -411,6 +384,9 @@ namespace TMS1000
 	}
 
 	void Exec(BYTE opcode) {
+		if (!(opcode & 0x80)) {
+			g_cpu.S = true;
+		}
 		switch (opcode) {
 		// Register to register
 		case 0x24: opTAY(); break;

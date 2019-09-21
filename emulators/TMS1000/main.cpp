@@ -415,6 +415,7 @@ void TestCALL(BYTE opCode, BYTE addr) {
 
 void TestCPU() {
 	// Unit tests
+	memset(TMS1000::g_memory.RAM, 0xAA, TMS1000::g_memory.ramSize);
 
 	// Register <=> Register
 
