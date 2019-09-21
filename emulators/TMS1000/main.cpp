@@ -1013,15 +1013,26 @@ void onWriteOutput() {
 				<< ((outBits & 64) ? "YELLOW" : "      ")
 				<< ((outBits & 128) ? "BLUE" : "    ")
 				//			<< " SPKR: " << ((outBits & 256) ? "1" : "0")
-				<< " t=" << TMS1000::GetTicks()
 				<< std::endl;
 		}
 		else {
-			std::cout << "LED OFF t=" << TMS1000::GetTicks() << std::endl;
+			std::cout << "LED OFF" << std::endl;
 		}
 		lastR = outBits;
 	}
 }
+
+void uSleep(int waitTime) {
+	__int64 time1 = 0, time2 = 0, freq = 0;
+
+	QueryPerformanceCounter((LARGE_INTEGER *)&time1);
+	QueryPerformanceFrequency((LARGE_INTEGER *)&freq);
+
+	do {
+		QueryPerformanceCounter((LARGE_INTEGER *)&time2);
+	} while ((time2 - time1) < waitTime);
+}
+
 int main() {
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -1047,47 +1058,23 @@ int main() {
 	TMS1000::SetOutputCallback(onWriteOutput);
 	TMS1000::Reset();
 	long lastTicks = 0;
-	const int hbInterval = 200000;
+	const int hbInterval = 1000000;
 	uint64_t start = GetTickCount64();
 
 	bool loop = true;
 	std::cout << "Run" << std::endl;
-	while (loop) {
-		while (!_kbhit()) {
-			TMS1000::Step();
-			long deltaCPU = TMS1000::GetTicks() - lastTicks;
-			if (deltaCPU > hbInterval) {
-				lastTicks = TMS1000::GetTicks();
-				uint64_t end = GetTickCount64();
-				std::cout << "Ticks:" << lastTicks
-					<< " ("  << (deltaCPU * 1000 / (end - start)) 
-					<< " ticks/s)" << std::endl;
-				start = end;
-			}
+	while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000)) {
+		TMS1000::Step();
+		uSleep(200);
+		long deltaCPU = TMS1000::GetTicks() - lastTicks;
+		if (deltaCPU > hbInterval) {
+			lastTicks = TMS1000::GetTicks();
+			uint64_t end = GetTickCount64();
+			std::cout << "Ticks:" << lastTicks
+				<< " ("  << ((end-start) ? (deltaCPU * 1000 / (end - start)) : -1)
+				<< " ticks/s)" << std::endl;
+			start = end;
 		}
-		switch (Console::ReadInput()) {
-		case 27: // ESC
-			loop = false;
-			break;
-		case 0x3B: // F1
-			TMS1000::Reset();
-			lastTicks = 0;
-			start = GetTickCount64();
-			std::cout << "Reset" << std::endl;
-			break;
-		case 0x3F: // F5
-		case 0x40: // F6
-		case 0x3C: // F2
-		case 0x3D: // F3
-		case 0x3E: // F4
-		case 0x41: // F7
-		case 0x42: // F8
-		case 0x43: // F9
-		case 0x44: // F10
-		default:
-			break;
-		}
-		while (_kbhit()) { _getch(); }
 	}
 
 	return 0;
