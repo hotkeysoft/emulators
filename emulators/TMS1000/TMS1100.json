@@ -1,7 +1,7 @@
 {
   "cpu": {
-    "ROMWords": 1024,
-    "RAMWords": 64,
+    "ROMWords": 2048,
+    "RAMWords": 128,
     "RLatches": 11,
     "OLatches": 8,
     "OpCodes": [
