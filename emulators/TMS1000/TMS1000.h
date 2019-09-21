@@ -66,7 +66,5 @@ namespace TMS1000
 #ifndef ARDUINO
 	void LoadROM(const char* path);
 	void SaveROM(const char* path);
-
-	void Disassemble(BYTE opcode, char* line, int lineSize);
 #endif
 }

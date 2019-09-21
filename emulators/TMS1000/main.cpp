@@ -328,6 +328,91 @@ void TestLDP(BYTE opCode, BYTE value) {
 	Console::UpdateStatus();
 }
 
+void TestBR(BYTE opCode, BYTE addr) {
+	TMS1000::g_cpu.PA = 0x01;
+	TMS1000::g_cpu.PB = 0x02;
+	TMS1000::g_cpu.PC = (~addr)&0x3F;
+	TMS1000::g_cpu.CL = false;
+	TMS1000::g_cpu.S = false;
+
+	// S = 0 : No branch
+	TMS1000::Exec(opCode);
+	assert(TMS1000::g_cpu.PA == 0x01);
+	assert(TMS1000::g_cpu.PB == 0x02);
+	assert(TMS1000::g_cpu.PC == ((~addr) & 0x3F));
+	assert(TMS1000::g_cpu.S == true);
+	assert(TMS1000::g_cpu.CL == false);
+	Console::UpdateStatus();
+
+	TMS1000::g_cpu.CL = true;
+	// S = 1, CL = 0 : Branch
+	TMS1000::Exec(opCode);
+	assert(TMS1000::g_cpu.PA == 0x01);
+	assert(TMS1000::g_cpu.PB == 0x02);
+	assert(TMS1000::g_cpu.PC == addr);
+	assert(TMS1000::g_cpu.S == true);
+	assert(TMS1000::g_cpu.CL == true);
+	Console::UpdateStatus();
+
+	TMS1000::g_cpu.CL = false;
+	// S = 1, CL = 0 : Branch
+	TMS1000::Exec(opCode);
+	assert(TMS1000::g_cpu.PA == 0x02);
+	assert(TMS1000::g_cpu.PB == 0x02);
+	assert(TMS1000::g_cpu.PC == addr);
+	assert(TMS1000::g_cpu.S == true);
+	assert(TMS1000::g_cpu.CL == false);
+	Console::UpdateStatus();
+}
+
+void TestCALL(BYTE opCode, BYTE addr) {
+	TMS1000::g_cpu.PA = 0x01;
+	TMS1000::g_cpu.PB = 0x02;
+	TMS1000::g_cpu.PC = (~addr) & 0x3F;
+	TMS1000::g_cpu.SR = 0x03;
+	TMS1000::g_cpu.CL = false;
+	TMS1000::g_cpu.S = false;
+
+	// S = 0 : No call
+	TMS1000::Exec(opCode);
+	assert(TMS1000::g_cpu.PA == 0x01);
+	assert(TMS1000::g_cpu.PB == 0x02);
+	assert(TMS1000::g_cpu.PC == ((~addr) & 0x3F));
+	assert(TMS1000::g_cpu.S == true);
+	assert(TMS1000::g_cpu.SR == 0x03);
+	assert(TMS1000::g_cpu.CL == false);
+	Console::UpdateStatus();
+
+	TMS1000::g_cpu.CL = true;
+	// S = 1, CL = 0 : Call
+	TMS1000::Exec(opCode);
+	assert(TMS1000::g_cpu.PA == 0x01);
+	assert(TMS1000::g_cpu.PB == 0x01);
+	assert(TMS1000::g_cpu.PC == addr);
+	assert(TMS1000::g_cpu.S == true);
+	assert(TMS1000::g_cpu.SR == 0x03);
+	assert(TMS1000::g_cpu.CL == true);
+	Console::UpdateStatus();
+
+
+	TMS1000::g_cpu.PA = 0x01;
+	TMS1000::g_cpu.PB = 0x02;
+	TMS1000::g_cpu.PC = (~addr) & 0x3F;
+	TMS1000::g_cpu.SR = 0x03;
+	TMS1000::g_cpu.CL = false;
+	BYTE retPC = (TMS1000::g_cpu.PC + 1) & 0x3F;
+
+	// S = 1, CL = 0 : Call
+	TMS1000::Exec(opCode);
+	assert(TMS1000::g_cpu.PA == 0x02);
+	assert(TMS1000::g_cpu.PB == 0x01);
+	assert(TMS1000::g_cpu.PC == addr);
+	assert(TMS1000::g_cpu.SR == retPC);
+	assert(TMS1000::g_cpu.S == true);
+	assert(TMS1000::g_cpu.CL == true);
+	Console::UpdateStatus();
+}
+
 void TestCPU() {
 	// Unit tests
 
@@ -755,7 +840,7 @@ void TestCPU() {
 	for (int i = 0; i < 16; ++i) {
 		TestTCMIY(0x60 + TMS1000::GetC(15), 15);
 	}
-	
+
 	// Input Instructions
 
 	// KNEZ
@@ -815,13 +900,21 @@ void TestCPU() {
 	TextCOMX(3, 0);
 
 	// ROM Addressing Instructions
-
 	// LDP
 	for (int i = 0; i < 16; ++i) {
 		TestLDP(0x10 + TMS1000::GetC(i), i);
 	}
 
 	// BR
+	for (int i = 0; i < 64; ++i) {
+		TestBR(0x80 + i, i);
+	}
+
+	// CALL
+	for (int i = 0; i < 64; ++i) {
+		TestCALL(0xC0 + i, i);
+	}
+
 }
 
 void ShowMonitor(CPUInfo &cpuInfo) {

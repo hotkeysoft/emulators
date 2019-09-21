@@ -190,7 +190,9 @@ namespace Console
 			WriteAt(coordAddr.x - 1, coordAddr.y + y, line, 3, 14);
 
 			BYTE opcode = TMS1000::g_memory.ROM[PC + baseAddr];
-			TMS1000::Disassemble(opcode, line, sizeof(line));
+			std::string instr = m_pCPUInfo->Disassemble(opcode);
+			memset(line, 0, 16);
+			strcpy(line, instr.c_str());
 
 			WriteAt(coordData.x - 1, coordData.y + y, line, coordData.w);
 		}

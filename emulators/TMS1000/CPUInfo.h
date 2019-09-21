@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <string>
 #include "json.hpp"
 using json = nlohmann::json;
 
@@ -27,6 +28,7 @@ public:
 
 	std::string GetANSIFile() const;
 	Coord GetCoord(const char* label) const;
+	std::string Disassemble(BYTE opcode) const;
 
 protected:
 

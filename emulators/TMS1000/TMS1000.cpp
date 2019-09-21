@@ -23,57 +23,57 @@ namespace TMS1000
 		reg = SET4(sum);
 	}
 
-	void opTAY(BYTE) {
+	void opTAY() {
 		// ATN, AUTY
 		g_cpu.Y = SET4(g_cpu.A);
 		g_cpu.S = true;
 	}
 
-	void opTYA(BYTE) {
+	void opTYA() {
 		// YTP, AUTA
 		g_cpu.A = SET4(g_cpu.Y);
 		g_cpu.S = true;
 	}
 
-	void opCLA(BYTE) {
+	void opCLA() {
 		// AUTA
 		g_cpu.A = 0;
 		g_cpu.S = true;
 	}
 
-	void opTAM(BYTE) {
+	void opTAM() {
 		// STO
 		PutRAM(g_cpu.A);
 		g_cpu.S = true;
 	}
 
-	void opTAMIY(BYTE) {
+	void opTAMIY() {
 		// STO, YTP, CIN, AUTY
 		PutRAM(g_cpu.A);
 		g_cpu.Y = SET4(g_cpu.Y + 1);
 		g_cpu.S = true;
 	}
 
-	void opTAMZA(BYTE) {
+	void opTAMZA() {
 		// STO, AUTA
 		PutRAM(g_cpu.A);
 		g_cpu.A = 0;
 		g_cpu.S = true;
 	}
 
-	void opTMY(BYTE) {
+	void opTMY() {
 		// MTP, AUTY
 		g_cpu.Y = GetRAM();
 		g_cpu.S = true;
 	}
 
-	void opTMA(BYTE) {
+	void opTMA() {
 		// MTP, AUTA
 		g_cpu.A = GetRAM();
 		g_cpu.S = true;
 	}
 
-	void opXMA(BYTE) {
+	void opXMA() {
 		// MTP, STO, AUTA
 		BYTE temp = GetRAM();
 		PutRAM(g_cpu.A);
@@ -81,73 +81,73 @@ namespace TMS1000
 		g_cpu.S = true;
 	}
 
-	void opAMAAC(BYTE) {
+	void opAMAAC() {
 		// MTP, ATN, C8, AUTA
 		ADC(g_cpu.A, GetRAM());
 	}
 
-	void opSAMAN(BYTE) {
+	void opSAMAN() {
 		// MTP, NATN, CIN, C8, AUTA
 		BYTE sum = NOT4(g_cpu.A) + GetRAM() + 1;
 		g_cpu.S = (sum > 0x0F);
 		g_cpu.A = SET4(sum);
 	}
 
-	void opIMAC(BYTE) {
+	void opIMAC() {
 		// MTP, CIN, C8, AUTA
 		g_cpu.A = GetRAM();
 		ADC(g_cpu.A, 0x01);
 	}
 
-	void opDMAN(BYTE) {
+	void opDMAN() {
 		// MTP, 15TN, C8, AUTA
 		g_cpu.A = GetRAM();
 		ADC(g_cpu.A, 0x0F);
 	}
 
-	void opIA(BYTE) {
+	void opIA() {
 		// ATN, CIN, AUTA
 		g_cpu.A = SET4(g_cpu.A+1);
 		g_cpu.S = true;
 	}
 
-	void opIYC(BYTE) {
+	void opIYC() {
 		// YTP, CIN, C8, AUTY
 		ADC(g_cpu.Y, 0x01);
 	}
 
-	void opDAN(BYTE) {
+	void opDAN() {
 		// CKP, ATN, CIN, C8, AUTA
 		ADC(g_cpu.A, 0x0F);
 	}
 
-	void opDYN(BYTE) {
+	void opDYN() {
 		// YTP, 15TN, C8, AUTY
 		ADC(g_cpu.Y, 0x0F);
 	}
 
-	void opA6AAC(BYTE) {
+	void opA6AAC() {
 		// CKP, ATN, C6, AUTA
 		ADC(g_cpu.A, 6);
 	}
 
-	void opA8AAC(BYTE) {
+	void opA8AAC() {
 		// CKP, ATN, C8, AUTA
 		ADC(g_cpu.A, 8);
 	}
-	void opA10AAC(BYTE) {
+	void opA10AAC() {
 		// CKP, ATN, C10, AUTA
 		ADC(g_cpu.A, 10);
 	}
 
-	void opCPAIZ(BYTE) {
+	void opCPAIZ() {
 		// NATN, CIN, C8, AUTA
 		BYTE sum = NOT4(g_cpu.A) + 1;
 		g_cpu.S = (sum > 0x0F);
 		g_cpu.A = SET4(sum);
 	}
 
-	void opALEM(BYTE) {
+	void opALEM() {
 		// MTP, NATN, CIN, C8
 		BYTE sum = NOT4(g_cpu.A) + GetRAM() + 1;
 		g_cpu.S = (sum > 0x0F);
@@ -159,12 +159,12 @@ namespace TMS1000
 		g_cpu.S = (sum > 0x0F);
 	}
 
-	void opMNEZ(BYTE) {
+	void opMNEZ() {
 		// MTP, NE
 		g_cpu.S = (GetRAM() != 0);
 	}
 
-	void opYNEA(BYTE) {
+	void opYNEA() {
 		// YTP, ATN, NE, STSL
 		g_cpu.S = (g_cpu.A != g_cpu.Y);
 		g_cpu.SL = g_cpu.S;
@@ -189,7 +189,7 @@ namespace TMS1000
 		g_cpu.S = true;
 	}
 
-	void opTBIT(BYTE opcode) {
+	void opTBIT1(BYTE opcode) {
 		// CKP, CKN, MTP, NE
 		g_cpu.S = (GetRAM() & (1 << GetB(opcode)));
 	}
@@ -207,7 +207,7 @@ namespace TMS1000
 		g_cpu.S = true;
 	}
 
-	void opKNEZ(BYTE) {
+	void opKNEZ() {
 		// CKP, NE
 		if (inputCallback) {
 			inputCallback();
@@ -215,7 +215,7 @@ namespace TMS1000
 		g_cpu.S = (SET4(g_cpu.K) != 0);
 	}
 
-	void opTKA(BYTE) {
+	void opTKA() {
 		// CKP, AUTA
 		if (inputCallback) {
 			inputCallback();
@@ -224,7 +224,7 @@ namespace TMS1000
 		g_cpu.S = true;
 	}
 
-	void opSETR(BYTE) {
+	void opSETR() {
 		// SETR
 		if (g_cpu.Y <= 10) {
 			g_cpu.R |= (1 << g_cpu.Y);
@@ -235,7 +235,7 @@ namespace TMS1000
 		}
 	}
 
-	void opRSTR(BYTE) {
+	void opRSTR() {
 		// RSTR
 		if (g_cpu.Y <= 10) {
 			g_cpu.R &= (~(1 << g_cpu.Y));
@@ -246,7 +246,7 @@ namespace TMS1000
 		}
 	}
 
-	void opTDO(BYTE) {
+	void opTDO() {
 		// TDO
 		g_cpu.O = (SET4(g_cpu.A) << 1) | (g_cpu.SL ? 1 : 0);
 		g_cpu.S = true;
@@ -255,7 +255,7 @@ namespace TMS1000
 		}
 	}
 
-	void opCLO(BYTE) {
+	void opCLO() {
 		// CLO
 		g_cpu.O = 0;
 		g_cpu.S = true;
@@ -270,7 +270,7 @@ namespace TMS1000
 		g_cpu.S = true;
 	}
 
-	void opCOMX(BYTE) {
+	void opCOMX() {
 		// COMX
 		g_cpu.X = SET2(~g_cpu.X);
 		g_cpu.S = true;
@@ -310,7 +310,7 @@ namespace TMS1000
 		g_cpu.S = true;
 	}
 
-	void opRETN(BYTE) {
+	void opRETN() {
 		if (g_cpu.CL) {
 			g_cpu.PC = g_cpu.SR;
 			g_cpu.PA = g_cpu.PB;
@@ -397,22 +397,123 @@ namespace TMS1000
 		return GetM(g_cpu.X, g_cpu.Y);
 	}
 	BYTE GetM(BYTE x, BYTE y) {
-		return ((x & 0x03) << 4) + (y & 0x0F);
+		return (SET2(x) << 4) | SET4(y);
 	}
 	BYTE GetRAM(BYTE addr) {
-		return g_memory.RAM[addr] & 0x0F;
+		return SET4(g_memory.RAM[addr]);
 	}
 	void PutRAM(BYTE value, BYTE addr) {
-		g_memory.RAM[addr] = (value & 0x0F);
+		g_memory.RAM[addr] = SET4(value);
 	}
 
 	BYTE GetROM() {
-		WORD baseAddr = (SET4(TMS1000::g_cpu.PA) * 64) + SET6(g_cpu.PC);
+		WORD baseAddr = (SET4(TMS1000::g_cpu.PA) << 6) + SET6(g_cpu.PC);
 		return g_memory.ROM[baseAddr];
 	}
 
 	void Exec(BYTE opcode) {
-//		TMS1000Opcodes[opcode].func(opcode);
+		switch (opcode) {
+		// Register to register
+		case 0x24: opTAY(); break;
+		case 0x23: opTYA(); break;
+		case 0x2F: opCLA(); break;
+
+		// Transfer Register to Memory
+		case 0x03: opTAM(); break;
+		case 0x20: opTAMIY(); break;
+		case 0x04: opTAMZA(); break;
+
+		// Memory to Register
+		case 0x22: opTMY(); break;
+		case 0x21: opTMA(); break;
+		case 0x2E: opXMA(); break;
+
+		// Arithmetic
+		case 0x25: opAMAAC(); break;
+		case 0x27: opSAMAN(); break;
+		case 0x28: opIMAC(); break;
+		case 0x2A: opDMAN(); break;
+		case 0x0E: opIA(); break;
+		case 0x2B: opIYC(); break;
+		case 0x07: opDAN(); break;
+		case 0x2C: opDYN(); break;
+		case 0x06: opA6AAC(); break;
+		case 0x01: opA8AAC(); break;
+		case 0x05: opA10AAC(); break;
+		case 0x2D: opCPAIZ(); break;
+
+		// Arithmetic Compare
+		case 0x29: opALEM(); break;
+
+		case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
+		case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
+			opALEC(opcode); break;
+
+		// Logical Compare
+		case 0x26: opMNEZ(); break;
+		case 0x02: opYNEA(); break;
+
+		case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
+		case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
+			opYNEC(opcode); break;
+
+		// Bits in memory
+		case 0x30: case 0x31: case 0x32: case 0x33: opSBIT(opcode); break;
+		case 0x34: case 0x35: case 0x36: case 0x37: opRBIT(opcode); break;
+		case 0x38: case 0x39: case 0x3A: case 0x3B: opTBIT1(opcode); break;
+
+		// Constants
+		case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47:
+		case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F:
+			opTCY(opcode); break;
+
+		case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
+		case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
+			opTCMIY(opcode); break;
+
+		// Input
+		case 0x09: opKNEZ(); break;
+		case 0x08: opTKA(); break;
+
+		// Output
+		case 0x0D: opSETR(); break;
+		case 0x0C: opRSTR(); break;
+		case 0x0A: opTDO(); break;
+		case 0x0B: opCLO(); break;
+
+		// RAM 'X' Addressing
+		case 0x3C: case 0x3D: case 0x3E: case 0x3F: opLDX(opcode); break;
+
+		case 0x00: opCOMX(); break;
+
+		// ROM Addressing
+		case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
+		case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F:
+		case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
+		case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F:
+		case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
+		case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
+		case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
+		case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
+			opBR(opcode); break;
+
+		case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
+		case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
+		case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7:
+		case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
+		case 0xE0: case 0xE1: case 0xE2: case 0xE3: case 0xE4: case 0xE5: case 0xE6: case 0xE7:
+		case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF:
+		case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7:
+		case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFE: case 0xFF:
+			opCALL(opcode); break;
+
+		// ROM Addressing
+		case 0x0F: opRETN(); break;
+
+		case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
+		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
+			opLDP(opcode); break;
+		}
 	}
 
 	void Step() {	

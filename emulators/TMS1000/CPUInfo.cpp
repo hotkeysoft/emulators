@@ -33,6 +33,14 @@ void CPUInfo::LoadConfig()
 	else {
 		throw std::exception("file not found");
 	}
+
+	if (m_config["cpu"]["OpCodes"].size() != 256) {
+		throw std::exception("opcode list incomplete");
+	}
+}
+
+std::string CPUInfo::Disassemble(BYTE opcode) const {
+	return m_config["cpu"]["OpCodes"][opcode].get<std::string>();
 }
 
 int CPUInfo::GetRAMWords() const {
