@@ -6,9 +6,173 @@
 #include <conio.h>
 #include <iostream>
 #include "TMS1000.h"
+#include "main.h"
 
 void LogCallback(const char *str) {
 	fprintf(stderr, str);
+}
+
+void TestTAY()
+{
+	TMS1000::g_cpu.X = 0;
+	TMS1000::g_cpu.Y = 5;
+	TMS1000::g_cpu.A = 0xE;
+	TMS1000::g_cpu.S = false;
+	TMS1000::Exec(0x24); // TAY
+	assert(TMS1000::g_cpu.X == 0);
+	assert(TMS1000::g_cpu.Y == 0xE);
+	assert(TMS1000::g_cpu.A == 0xE);
+	assert(TMS1000::g_cpu.S);
+	Console::UpdateStatus();
+}
+
+void TestTYA()
+{
+	TMS1000::g_cpu.X = 2;
+	TMS1000::g_cpu.Y = 9;
+	TMS1000::g_cpu.A = 6;
+	TMS1000::g_cpu.S = false;
+	TMS1000::Exec(0x23); // TYA
+	assert(TMS1000::g_cpu.X == 2);
+	assert(TMS1000::g_cpu.Y == 9);
+	assert(TMS1000::g_cpu.A == 9);
+	assert(TMS1000::g_cpu.S);
+	Console::UpdateStatus();
+}
+
+void TestCLA()
+{
+	TMS1000::g_cpu.X = 1;
+	TMS1000::g_cpu.Y = 4;
+	TMS1000::g_cpu.A = 7;
+	TMS1000::g_cpu.S = false;
+	TMS1000::Exec(0x2F); // CLA
+	assert(TMS1000::g_cpu.X == 1);
+	assert(TMS1000::g_cpu.Y == 4);
+	assert(TMS1000::g_cpu.A == 0);
+	assert(TMS1000::g_cpu.S);
+	Console::UpdateStatus();
+}
+
+void TestTAM()
+{
+	TMS1000::g_cpu.X = 0;
+	TMS1000::g_cpu.Y = 6;
+	TMS1000::g_cpu.A = 4;
+	TMS1000::g_cpu.S = false;
+	TMS1000::Exec(0x03); // TAM
+	assert(TMS1000::g_cpu.X == 0);
+	assert(TMS1000::g_cpu.Y == 6);
+	assert(TMS1000::g_cpu.A == 4);
+	assert(TMS1000::g_cpu.S);
+	assert(TMS1000::GetRAM(TMS1000::GetM(0, 6)) == 4);
+	Console::UpdateStatus();
+}
+
+void TestTAMIY()
+{
+	TMS1000::g_cpu.X = 3;
+	TMS1000::g_cpu.Y = 9;
+	TMS1000::g_cpu.A = 0;
+	TMS1000::g_cpu.S = false;
+	TMS1000::Exec(0x20); // TAMIY
+	assert(TMS1000::g_cpu.X == 3);
+	assert(TMS1000::g_cpu.Y == 0xA);
+	assert(TMS1000::g_cpu.A == 0);
+	assert(TMS1000::g_cpu.S);
+	assert(TMS1000::GetRAM(TMS1000::GetM(3, 9)) == 0);
+	Console::UpdateStatus();
+}
+
+void TestTAMZA()
+{
+	TMS1000::g_cpu.X = 0;
+	TMS1000::g_cpu.Y = 0xE;
+	TMS1000::g_cpu.A = 0xB;
+	TMS1000::g_cpu.S = false;
+	TMS1000::Exec(0x04); // TAMZA
+	assert(TMS1000::g_cpu.X == 0);
+	assert(TMS1000::g_cpu.Y == 0xE);
+	assert(TMS1000::g_cpu.A == 0);
+	assert(TMS1000::g_cpu.S);
+	assert(TMS1000::GetRAM(TMS1000::GetM(0, 0xE)) == 0xB);
+	Console::UpdateStatus();
+}
+
+void TestTMY()
+{
+	TMS1000::g_cpu.X = 1;
+	TMS1000::g_cpu.Y = 3;
+	TMS1000::g_cpu.A = 9;
+	TMS1000::g_cpu.S = false;
+	assert(TMS1000::GetRAM(TMS1000::GetM(1, 3)) == 0xA);
+	TMS1000::Exec(0x22); // TMY
+	assert(TMS1000::g_cpu.X == 1);
+	assert(TMS1000::g_cpu.Y == 0xA);
+	assert(TMS1000::g_cpu.A == 9);
+	assert(TMS1000::g_cpu.S);
+	Console::UpdateStatus();
+}
+
+void TestTMA()
+{
+	TMS1000::g_cpu.X = 0;
+	TMS1000::g_cpu.Y = 9;
+	TMS1000::g_cpu.A = 3;
+	TMS1000::g_cpu.S = false;
+	assert(TMS1000::GetRAM(TMS1000::GetM(0, 9)) == 0xA);
+	TMS1000::Exec(0x21); // TMA
+	assert(TMS1000::g_cpu.X == 0);
+	assert(TMS1000::g_cpu.Y == 9);
+	assert(TMS1000::g_cpu.A == 0xA);
+	assert(TMS1000::GetRAM(TMS1000::GetM(0, 9)) == 0xA);
+	assert(TMS1000::g_cpu.S);
+	Console::UpdateStatus();
+}
+
+void TestXMA()
+{
+	TMS1000::g_cpu.X = 1;
+	TMS1000::g_cpu.Y = 9;
+	TMS1000::g_cpu.A = 3;
+	TMS1000::g_cpu.S = false;
+	assert(TMS1000::GetRAM(TMS1000::GetM(1, 9)) == 0xA);
+	TMS1000::Exec(0x2E); // XMA
+	assert(TMS1000::g_cpu.X == 1);
+	assert(TMS1000::g_cpu.Y == 9);
+	assert(TMS1000::g_cpu.A == 0xA);
+	assert(TMS1000::GetRAM(TMS1000::GetM(1, 9)) == 3);
+	assert(TMS1000::g_cpu.S);
+	Console::UpdateStatus();
+}
+
+void TestAMAAC()
+{
+	TMS1000::g_cpu.X = 2;
+	TMS1000::g_cpu.Y = 8;
+	TMS1000::g_cpu.A = 1;
+	TMS1000::g_cpu.S = false;
+	TMS1000::PutRAM(15);
+	TMS1000::Exec(0x25); // AMAAC
+	assert(TMS1000::g_cpu.X == 2);
+	assert(TMS1000::g_cpu.Y == 8);
+	assert(TMS1000::g_cpu.A == 0); // (15 + 1) MOD 16
+	assert(TMS1000::GetRAM(TMS1000::GetM(2, 8)) == 15);
+	assert(TMS1000::g_cpu.S); // Carry set
+	Console::UpdateStatus();
+
+	TMS1000::g_cpu.X = 2;
+	TMS1000::g_cpu.Y = 9;
+	TMS1000::g_cpu.A = 0;
+	TMS1000::g_cpu.S = false;
+	TMS1000::PutRAM(15);
+	TMS1000::Exec(0x25); // AMAAC
+	assert(TMS1000::g_cpu.X == 2);
+	assert(TMS1000::g_cpu.Y == 9);
+	assert(TMS1000::g_cpu.A == 15); // (15 + 0) MOD 16
+	assert(TMS1000::GetRAM(TMS1000::GetM(2, 9)) == 15);
+	assert(!TMS1000::g_cpu.S); // Carry clear
+	Console::UpdateStatus();
 }
 
 void TestIMAC(BYTE m, BYTE expect, bool carry) {
@@ -448,159 +612,45 @@ void TestRETN() {
 	Console::UpdateStatus();
 }
 
-void TestCPU() {
+void TestTMS1000() {
 	// Unit tests
 	memset(TMS1000::g_memory.RAM, 0xAA, TMS1000::g_memory.ramSize);
 
 	// Register <=> Register
 
 	// TAY
-	TMS1000::g_cpu.X = 0;
-	TMS1000::g_cpu.Y = 5;
-	TMS1000::g_cpu.A = 0xE;
-	TMS1000::g_cpu.S = false;
-	TMS1000::Exec(0x24); // TAY
-	assert(TMS1000::g_cpu.X == 0);
-	assert(TMS1000::g_cpu.Y == 0xE);
-	assert(TMS1000::g_cpu.A == 0xE);
-	assert(TMS1000::g_cpu.S);
-	Console::UpdateStatus();
+	TestTAY();
 
 	// TYA
-	TMS1000::g_cpu.X = 2;
-	TMS1000::g_cpu.Y = 9;
-	TMS1000::g_cpu.A = 6;
-	TMS1000::g_cpu.S = false;
-	TMS1000::Exec(0x23); // TYA
-	assert(TMS1000::g_cpu.X == 2);
-	assert(TMS1000::g_cpu.Y == 9);
-	assert(TMS1000::g_cpu.A == 9);
-	assert(TMS1000::g_cpu.S);
-	Console::UpdateStatus();
+	TestTYA();
 
 	// CLA
-	TMS1000::g_cpu.X = 1;
-	TMS1000::g_cpu.Y = 4;
-	TMS1000::g_cpu.A = 7;
-	TMS1000::g_cpu.S = false;
-	TMS1000::Exec(0x2F); // CLA
-	assert(TMS1000::g_cpu.X == 1);
-	assert(TMS1000::g_cpu.Y == 4);
-	assert(TMS1000::g_cpu.A == 0);
-	assert(TMS1000::g_cpu.S);
-	Console::UpdateStatus();
+	TestCLA();
 
 	// Register <=> Memory
 
 	// TAM
-	TMS1000::g_cpu.X = 0;
-	TMS1000::g_cpu.Y = 6;
-	TMS1000::g_cpu.A = 4;
-	TMS1000::g_cpu.S = false;
-	TMS1000::Exec(0x03); // TAM
-	assert(TMS1000::g_cpu.X == 0);
-	assert(TMS1000::g_cpu.Y == 6);
-	assert(TMS1000::g_cpu.A == 4);
-	assert(TMS1000::g_cpu.S);
-	assert(TMS1000::GetRAM(TMS1000::GetM(0, 6)) == 4);
-	Console::UpdateStatus();
+	TestTAM();
 
 	// TAMIY
-	TMS1000::g_cpu.X = 3;
-	TMS1000::g_cpu.Y = 9;
-	TMS1000::g_cpu.A = 0;
-	TMS1000::g_cpu.S = false;
-	TMS1000::Exec(0x20); // TAMIY
-	assert(TMS1000::g_cpu.X == 3);
-	assert(TMS1000::g_cpu.Y == 0xA);
-	assert(TMS1000::g_cpu.A == 0);
-	assert(TMS1000::g_cpu.S);
-	assert(TMS1000::GetRAM(TMS1000::GetM(3, 9)) == 0);
-	Console::UpdateStatus();
+	TestTAMIY();
 
 	// TAMZA
-	TMS1000::g_cpu.X = 0;
-	TMS1000::g_cpu.Y = 0xE;
-	TMS1000::g_cpu.A = 0xB;
-	TMS1000::g_cpu.S = false;
-	TMS1000::Exec(0x04); // TAMZA
-	assert(TMS1000::g_cpu.X == 0);
-	assert(TMS1000::g_cpu.Y == 0xE);
-	assert(TMS1000::g_cpu.A == 0);
-	assert(TMS1000::g_cpu.S);
-	assert(TMS1000::GetRAM(TMS1000::GetM(0, 0xE)) == 0xB);
-	Console::UpdateStatus();
+	TestTAMZA();
 
 	// TMY
-	TMS1000::g_cpu.X = 1;
-	TMS1000::g_cpu.Y = 3;
-	TMS1000::g_cpu.A = 9;
-	TMS1000::g_cpu.S = false;
-	assert(TMS1000::GetRAM(TMS1000::GetM(1, 3)) == 0xA);
-	TMS1000::Exec(0x22); // TMY
-	assert(TMS1000::g_cpu.X == 1);
-	assert(TMS1000::g_cpu.Y == 0xA);
-	assert(TMS1000::g_cpu.A == 9);
-	assert(TMS1000::g_cpu.S);
-	Console::UpdateStatus();
+	TestTMY();
 
 	// TMA
-	TMS1000::g_cpu.X = 0;
-	TMS1000::g_cpu.Y = 9;
-	TMS1000::g_cpu.A = 3;
-	TMS1000::g_cpu.S = false;
-	assert(TMS1000::GetRAM(TMS1000::GetM(0, 9)) == 0xA);
-	TMS1000::Exec(0x21); // TMA
-	assert(TMS1000::g_cpu.X == 0);
-	assert(TMS1000::g_cpu.Y == 9);
-	assert(TMS1000::g_cpu.A == 0xA);
-	assert(TMS1000::GetRAM(TMS1000::GetM(0, 9)) == 0xA);
-	assert(TMS1000::g_cpu.S);
-	Console::UpdateStatus();
+	TestTMA();
 
 	// XMA
-	TMS1000::g_cpu.X = 1;
-	TMS1000::g_cpu.Y = 9;
-	TMS1000::g_cpu.A = 3;
-	TMS1000::g_cpu.S = false;
-	assert(TMS1000::GetRAM(TMS1000::GetM(1, 9)) == 0xA);
-	TMS1000::Exec(0x2E); // XMA
-	assert(TMS1000::g_cpu.X == 1);
-	assert(TMS1000::g_cpu.Y == 9);
-	assert(TMS1000::g_cpu.A == 0xA);
-	assert(TMS1000::GetRAM(TMS1000::GetM(1, 9)) == 3);
-	assert(TMS1000::g_cpu.S);
-	Console::UpdateStatus();
+	TestXMA();
 
 	// Arithmetic instructions
 
 	// AMAAC
-	TMS1000::g_cpu.X = 2;
-	TMS1000::g_cpu.Y = 8;
-	TMS1000::g_cpu.A = 1;
-	TMS1000::g_cpu.S = false;
-	TMS1000::PutRAM(15);
-	TMS1000::Exec(0x25); // AMAAC
-	assert(TMS1000::g_cpu.X == 2);
-	assert(TMS1000::g_cpu.Y == 8);
-	assert(TMS1000::g_cpu.A == 0); // (15 + 1) MOD 16
-	assert(TMS1000::GetRAM(TMS1000::GetM(2, 8)) == 15);
-	assert(TMS1000::g_cpu.S); // Carry set
-	Console::UpdateStatus();
-
-	// AMAAC (2)
-	TMS1000::g_cpu.X = 2;
-	TMS1000::g_cpu.Y = 9;
-	TMS1000::g_cpu.A = 0;
-	TMS1000::g_cpu.S = false;
-	TMS1000::PutRAM(15);
-	TMS1000::Exec(0x25); // AMAAC
-	assert(TMS1000::g_cpu.X == 2);
-	assert(TMS1000::g_cpu.Y == 9);
-	assert(TMS1000::g_cpu.A == 15); // (15 + 0) MOD 16
-	assert(TMS1000::GetRAM(TMS1000::GetM(2, 9)) == 15);
-	assert(!TMS1000::g_cpu.S); // Carry clear
-	Console::UpdateStatus();
+	TestAMAAC();
 
 	// SAMAN
 	TestSAMAN(15, 0, 15, true);
@@ -1040,8 +1090,10 @@ int main() {
 //	TMS1000::SaveROM("roms/TMS1000/Simon/simon2.h");
 
 	ShowMonitor(cpuInfo);
-	TestCPU();
-//	return 1;
+	TestTMS1000();
+
+
+	return 0;
 
 	TMS1000::SetInputCallback(onReadInput);
 	TMS1000::SetOutputCallback(onWriteOutput);

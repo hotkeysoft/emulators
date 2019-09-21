@@ -49,7 +49,7 @@
     ]
   },
   "monitor": {
-    "ANSIFile": "TMS1000.ANS",
+    "ANSIFile": "TMS1100.ANS",
     "coords": {
         "X": {"x":8, "y":2, "w":2},
         "Y": {"x":8, "y":3, "w":4},

@@ -5,32 +5,11 @@
 
 namespace Console 
 {
-	typedef std::tuple<char*, DWORD> ResourceData;
-
 	long lastTicks = 0;
 	bool running = false;
 	HANDLE m_hConsole;
 	CPUInfo* m_pCPUInfo = nullptr;
 	static const char hexDigits[] = "0123456789ABCDEF";
-
-	ResourceData GetBinaryResource(DWORD resourceID) {
-		HRSRC		res;
-		HGLOBAL		res_handle = NULL;
-		char *      res_data;
-		DWORD       res_size;
-
-		res = FindResource(GetModuleHandle(NULL), MAKEINTRESOURCE(resourceID), RT_RCDATA);
-		if (!res)
-			return std::make_tuple(nullptr, 0);
-		res_handle = LoadResource(NULL, res);
-		if (!res_handle)
-			return std::make_tuple(nullptr, 0);
-
-		res_data = (char*)LockResource(res_handle);
-		res_size = SizeofResource(NULL, res);
-
-		return std::make_tuple(res_data, res_size);
-	}
 
 	void Init(CPUInfo* pCPUInfo) {
 		m_pCPUInfo = pCPUInfo;
@@ -61,13 +40,13 @@ namespace Console
 		dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 		SetConsoleMode(m_hConsole, dwMode);
 
-		ResourceData data = GetBinaryResource(m_pCPUInfo->GetResourceID());
+		std::string ansiFile = m_pCPUInfo->GetANSIFile();
 
-		if (std::get<0>(data)) {
+		if (ansiFile.size()) {
 			DWORD written;
 			WriteConsole(m_hConsole,
-				std::get<0>(data),
-				std::get<1>(data),
+				ansiFile.c_str(),
+				(DWORD)ansiFile.size(),
 				&written,
 				NULL);
 		}

@@ -15,10 +15,9 @@ public:
 	};
 
 	CPUInfo();
-	CPUInfo(const char* name, const char* configFileName, DWORD guiResourceID);
+	CPUInfo(const char* name, const char* configFileName);
 	
 	const char* GetName() { return m_name; }
-	DWORD GetResourceID() { return m_guiResourceID; }
 	void LoadConfig();
 
 	int GetRAMWords() const;
@@ -34,7 +33,6 @@ protected:
 
 	const char* m_name;
 	const char* m_configFileName;
-	DWORD m_guiResourceID;
 
 	json m_config;
 };

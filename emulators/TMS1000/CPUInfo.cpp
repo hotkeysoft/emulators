@@ -1,26 +1,25 @@
 #include "stdafx.h"
 #include "CPUInfo.h"
-#include "resource.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 CPUInfoMap g_tms1000Info = {
-	{ CPU_TMS1000, CPUInfo("TMS1000", "TMS1000.json", IDR_TMS1000)},
-	{ CPU_TMS1200, CPUInfo("TMS1200", "TMS1000.json", IDR_TMS1000)},
-	{ CPU_TMS1070, CPUInfo("TMS1070", "TMS1000.json", IDR_TMS1000)},
-	{ CPU_TMS1270, CPUInfo("TMS1270", "TMS1000.json", IDR_TMS1000)},
-	{ CPU_TMS1100, CPUInfo("TMS1100", "TMS1100.json", IDR_TMS1000)},
-	{ CPU_TMS1300, CPUInfo("TMS1300", "TMS1000.json", IDR_TMS1000)}
+	{ CPU_TMS1000, CPUInfo("TMS1000", "TMS1000.json")},
+	{ CPU_TMS1200, CPUInfo("TMS1200", "TMS1000.json")},
+	{ CPU_TMS1070, CPUInfo("TMS1070", "TMS1000.json")},
+	{ CPU_TMS1270, CPUInfo("TMS1270", "TMS1000.json")},
+	{ CPU_TMS1100, CPUInfo("TMS1100", "TMS1100.json")},
+	{ CPU_TMS1300, CPUInfo("TMS1300", "TMS1000.json")}
 };
 
-CPUInfo::CPUInfo() : CPUInfo(nullptr, nullptr, 0) 
+CPUInfo::CPUInfo() : CPUInfo(nullptr, nullptr) 
 {
 }
 
-CPUInfo::CPUInfo(const char * name, const char * configFileName, DWORD guiResourceID) :
+CPUInfo::CPUInfo(const char * name, const char * configFileName) :
 	m_name(name), 
-	m_configFileName(configFileName), 
-	m_guiResourceID(guiResourceID) 
+	m_configFileName(configFileName)
 {
 }
 
@@ -57,7 +56,18 @@ int CPUInfo::GetOLatches() const {
 }
 
 std::string CPUInfo::GetANSIFile() const {
-	return m_config["monitor"]["ANSIFile"].get<std::string>();
+	std::string fileName = m_config["monitor"]["ANSIFile"].get<std::string>();
+
+	std::string ansiFileData;
+	std::ifstream ansiFile("config/" + std::string(fileName));
+	if (ansiFile) {
+		std::ostringstream ss;
+		ss << ansiFile.rdbuf();
+		return ss.str();
+	}
+	else {
+		throw std::exception("file not found");
+	}
 }
 
 CPUInfo::Coord CPUInfo::GetCoord(const char* label) const {

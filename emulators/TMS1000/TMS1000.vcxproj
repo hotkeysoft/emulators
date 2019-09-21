@@ -155,7 +155,7 @@
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="CPUInfo.h" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TMS1000.h" />
@@ -182,12 +182,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="TMS1000.ANS" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="TMS1000.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
