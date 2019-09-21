@@ -9,7 +9,7 @@ CPUInfoMap g_tms1000Info = {
 	{ CPU_TMS1200, CPUInfo("TMS1200", "TMS1000.json", IDR_TMS1000)},
 	{ CPU_TMS1070, CPUInfo("TMS1070", "TMS1000.json", IDR_TMS1000)},
 	{ CPU_TMS1270, CPUInfo("TMS1270", "TMS1000.json", IDR_TMS1000)},
-	{ CPU_TMS1100, CPUInfo("TMS1100", "TMS1000.json", IDR_TMS1000)},
+	{ CPU_TMS1100, CPUInfo("TMS1100", "TMS1100.json", IDR_TMS1000)},
 	{ CPU_TMS1300, CPUInfo("TMS1300", "TMS1000.json", IDR_TMS1000)}
 };
 
@@ -26,7 +26,7 @@ CPUInfo::CPUInfo(const char * name, const char * configFileName, DWORD guiResour
 
 void CPUInfo::LoadConfig()
 {
-	std::ifstream configFile(m_configFileName);
+	std::ifstream configFile("config/" + std::string(m_configFileName));
 	if (configFile) {
 		configFile >> m_config;
 	}
