@@ -5,22 +5,30 @@
     "RLatches": 11,
     "OLatches": 8,
     "OpCodes": [
-			"MNEA",    "ALEM",    "YNEA",    "XMA",     "DYN",     "IYC",     "AMAAC",   "DMAN",
-			"TKA",     "COMX",    "TDO",     "COMC",    "RSTR",    "SETR",    "KNEZ",    "RETN",
+			"COMX",    "A8AAC",   "YNEA",    "TAM",     "TAMZA",   "A10AAC",  "A6AAC",   "DAN",
+			"TKA",     "KNEZ",    "TDO",     "CLO",     "RSTR",    "SETR",    "IA",      "RETN",
+			
 			"LDP 0",   "LDP 8",   "LDP 4",   "LDP C",   "LDP 2",   "LDP A",   "LDP 6",   "LDP E",
 			"LDP 1",   "LDP 9",   "LDP 5",   "LDP D",   "LDP 3",   "LDP B",   "LDP 7",   "LDP F",
-			"TAY",     "TMA",     "TMY",     "TYA",     "TAMDYN",  "TAMIYC",  "TAMZA",   "TAM",
-			"LDX 0",   "LDX 4",   "LDX 2",   "LDX 6",   "LDX 1",   "LDX 5",   "LDX 3",   "LDX 7",
+			
+			"TAMIY",   "TMA",     "TMY",     "TYA",     "TAY",     "AMAAC",   "MNEZ",    "SAMAN",
+			"IMAC",    "ALEM",    "DMAN",    "IYC",     "DYN",     "CPAIZ",   "XMA",     "CLA",
+			
 			"SBIT 0",  "SBIT 2",  "SBIT 1",  "SBIT 3",  "RBIT 0",  "RBIT 2",  "RBIT 1",  "RBIT 3",
-			"TBIT1 0", "TBIT1 2", "TBIT1 1", "TBIT1 3", "SAMAN",   "CPAIZ",   "IMAC",    "MNEZ",
+			"TBIT1 0", "TBIT1 2", "TBIT1 1", "TBIT1 3", "LDX 0",   "LDX 2",   "LDX 1",   "LDX 3",
+			
 			"TCY 0",   "TCY 8",   "TCY 4",   "TCY C",   "TCY 2",   "TCY A",   "TCY 6",   "TCY E",
 			"TCY 1",   "TCY 9",   "TCY 5",   "TCY D",   "TCY 3",   "TCY B",   "TCY 7",   "TCY F",
+			
 			"YNEC 0",  "YNEC 8",  "YNEC 4",  "YNEC C",  "YNEC 2",  "YNEC A",  "YNEC 6",  "YNEC E",
 			"YNEC 1",  "YNEC 9",  "YNEC 5",  "YNEC D",  "YNEC 3",  "YNEC B",  "YNEC 7",  "YNEC F",
+			
 			"TCMIY 0", "TCMIY 8", "TCMIY 4", "TCMIY C", "TCMIY 2", "TCMIY A", "TCMIY 6", "TCMIY E",
 			"TCMIY 1", "TCMIY 9", "TCMIY 5", "TCMIY D", "TCMIY 3", "TCMIY B", "TCMIY 7", "TCMIY F",
-			"IAC",     "A9AAC",   "A5AAC",   "A13AAC",  "A3AAC",   "A11AAC",  "A7AAC",   "DAN",
-			"A2AAC",   "A10AAC",  "A6AAC",   "A14AAC",  "A4AAC",   "A12AAC",  "A8AAC",   "CLA",
+			
+			"ALEC 0",  "ALEC 8",  "ALEC 4",  "ALEC C",  "ALEC 2",  "ALEC A",  "ALEC 6",  "ALEC E",
+			"ALEC 1",  "ALEC 9",  "ALEC 5",  "ALEC D",  "ALEC 3",  "ALEC B",  "ALEC 7",  "ALEC F",
+						
 			"BR 0",    "BR 1",    "BR 2",    "BR 3",    "BR 4",    "BR 5",    "BR 6",    "BR 7",
 			"BR 8",    "BR 9",    "BR A",    "BR B",    "BR C",    "BR D",    "BR E",    "BR F",
 			"BR 10",   "BR 11",   "BR 12",   "BR 13",   "BR 14",   "BR 15",   "BR 16",   "BR 17",
@@ -29,6 +37,7 @@
 			"BR 28",   "BR 29",   "BR 2A",   "BR 2B",   "BR 2C",   "BR 2D",   "BR 2E",   "BR 2F",
 			"BR 30",   "BR 31",   "BR 32",   "BR 33",   "BR 34",   "BR 35",   "BR 36",   "BR 37",
 			"BR 38",   "BR 39",   "BR 3A",   "BR 3B",   "BR 3C",   "BR 3D",   "BR 3E",   "BR 3F",
+			
 			"CALL 0",  "CALL 1",  "CALL 2",  "CALL 3",  "CALL 4",  "CALL 5",  "CALL 6",  "CALL 7",
 			"CALL 8",  "CALL 9",  "CALL A",  "CALL B",  "CALL C",  "CALL D",  "CALL E",  "CALL F",
 			"CALL 10", "CALL 11", "CALL 12", "CALL 13", "CALL 14", "CALL 15", "CALL 16", "CALL 17",
