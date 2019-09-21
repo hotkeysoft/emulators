@@ -5,19 +5,20 @@
 #include <sstream>
 
 CPUInfoMap g_tms1000Info = {
-	{ CPU_TMS1000, CPUInfo("TMS1000", "TMS1000.json")},
-	{ CPU_TMS1200, CPUInfo("TMS1200", "TMS1000.json")},
-	{ CPU_TMS1070, CPUInfo("TMS1070", "TMS1000.json")},
-	{ CPU_TMS1270, CPUInfo("TMS1270", "TMS1000.json")},
-	{ CPU_TMS1100, CPUInfo("TMS1100", "TMS1100.json")},
-	{ CPU_TMS1300, CPUInfo("TMS1300", "TMS1000.json")}
+	{ TMS1000::CPU_TMS1000, CPUInfo(TMS1000::CPU_TMS1000, "TMS1000", "TMS1000.json")},
+	{ TMS1000::CPU_TMS1200, CPUInfo(TMS1000::CPU_TMS1200, "TMS1200", "TMS1000.json")},
+	{ TMS1000::CPU_TMS1070, CPUInfo(TMS1000::CPU_TMS1070, "TMS1070", "TMS1000.json")},
+	{ TMS1000::CPU_TMS1270, CPUInfo(TMS1000::CPU_TMS1270, "TMS1270", "TMS1000.json")},
+	{ TMS1000::CPU_TMS1100, CPUInfo(TMS1000::CPU_TMS1100, "TMS1100", "TMS1100.json")},
+	{ TMS1000::CPU_TMS1300, CPUInfo(TMS1000::CPU_TMS1300, "TMS1300", "TMS1000.json")}
 };
 
-CPUInfo::CPUInfo() : CPUInfo(nullptr, nullptr) 
+CPUInfo::CPUInfo() : CPUInfo(TMS1000::CPU_TMS1000, nullptr, nullptr)
 {
 }
 
-CPUInfo::CPUInfo(const char * name, const char * configFileName) :
+CPUInfo::CPUInfo(TMS1000::TMS1000Family model, const char * name, const char * configFileName) :
+	m_model(model),
 	m_name(name), 
 	m_configFileName(configFileName)
 {

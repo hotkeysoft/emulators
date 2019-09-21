@@ -4,8 +4,7 @@
 #include <string>
 #include "json.hpp"
 using json = nlohmann::json;
-
-enum TMS1000Family { CPU_TMS1000, CPU_TMS1200, CPU_TMS1070, CPU_TMS1270, CPU_TMS1100, CPU_TMS1300 };
+#include "TMS1000.h"
 
 class CPUInfo {
 public:
@@ -15,10 +14,12 @@ public:
 	};
 
 	CPUInfo();
-	CPUInfo(const char* name, const char* configFileName);
+	CPUInfo(TMS1000::TMS1000Family model, const char* name, const char* configFileName);
 	
 	const char* GetName() { return m_name; }
 	void LoadConfig();
+
+	TMS1000::TMS1000Family GetModel() const { return m_model; }
 
 	int GetRAMWords() const;
 	int GetROMWords() const;
@@ -30,13 +31,13 @@ public:
 	std::string Disassemble(BYTE opcode) const;
 
 protected:
-
+	TMS1000::TMS1000Family m_model;
 	const char* m_name;
 	const char* m_configFileName;
 
 	json m_config;
 };
 
-typedef std::map<TMS1000Family, CPUInfo> CPUInfoMap;
+typedef std::map<TMS1000::TMS1000Family, CPUInfo> CPUInfoMap;
 
 extern CPUInfoMap g_tms1000Info;

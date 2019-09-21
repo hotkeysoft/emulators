@@ -15,25 +15,29 @@ namespace Console
 		m_pCPUInfo = pCPUInfo;
 		m_hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		SetConsoleScreenBufferSize(m_hConsole, { 80, 25 });
-		SMALL_RECT windowSize = { 0, 0, 80, 25 };
-		SetConsoleWindowInfo(m_hConsole, TRUE, &windowSize);	
-		SetConsoleTitle("TMS1000");
-		SetConsoleCursorPosition(m_hConsole, { 0, 0 });
-
-		CONSOLE_CURSOR_INFO cursorInfo = {1, FALSE };
-		SetConsoleCursorInfo(m_hConsole, &cursorInfo);
-
 		CONSOLE_FONT_INFOEX cfi = { sizeof(cfi) };
 		// Populate cfi with the screen buffer's current font info
 		GetCurrentConsoleFontEx(m_hConsole, FALSE, &cfi);
 
 		// Modify the font size in cfi
-		cfi.dwFontSize.X *= 2;
-		cfi.dwFontSize.Y *= 2;
+		cfi.dwFontSize.X = 18;
+		cfi.dwFontSize.Y = 18;
 
 		// Use cfi to set the screen buffer's new font
 		SetCurrentConsoleFontEx(m_hConsole, FALSE, &cfi);
+
+
+		SMALL_RECT windowSize = { 0, 0, 79, 25 };
+		if (!SetConsoleWindowInfo(m_hConsole, TRUE, &windowSize)) {
+			fprintf(stderr, "SetConsoleWindowInfo failed %d\n", GetLastError());
+		}
+		if (!SetConsoleScreenBufferSize(m_hConsole, { 80, 26 })) {
+			fprintf(stderr, "SetConsoleScreenBufferSize failed %d\n", GetLastError());
+		}
+		SetConsoleTitle(pCPUInfo->GetName());
+
+		CONSOLE_CURSOR_INFO cursorInfo = {1, FALSE };
+		SetConsoleCursorInfo(m_hConsole, &cursorInfo);
 
 		DWORD dwMode = 0;
 		GetConsoleMode(m_hConsole, &dwMode);
@@ -41,7 +45,7 @@ namespace Console
 		SetConsoleMode(m_hConsole, dwMode);
 
 		std::string ansiFile = m_pCPUInfo->GetANSIFile();
-
+		SetConsoleCursorPosition(m_hConsole, { 0, 0 });
 		if (ansiFile.size()) {
 			DWORD written;
 			WriteConsole(m_hConsole,
@@ -53,7 +57,7 @@ namespace Console
 	}
 
 	void WriteAt(short x, short y, const char* text, int len, WORD attr=15) {
-		SetConsoleCursorPosition(m_hConsole, { x , y });
+		SetConsoleCursorPosition(m_hConsole, { x-1 , y-1 });
 		SetConsoleTextAttribute(m_hConsole, attr);
 		DWORD written;
 		WriteConsole(m_hConsole, text, len, &written, NULL);
@@ -67,7 +71,7 @@ namespace Console
 			bits[16 - i] = (value & (1 << i)) ? '1' : '0';
 		}
 
-		WriteAt(coord.x - 1, coord.y, bits + 17 - coord.w, coord.w);
+		WriteAt(coord.x, coord.y, bits + 17 - coord.w, coord.w);
 	}
 
 	void WriteRegisterValueHex(WORD value, const CPUInfo::Coord& coord) {
@@ -76,7 +80,7 @@ namespace Console
 		hex[1] = hexDigits[(value & 0x0F)];
 		hex[2] = 0;
 
-		WriteAt(coord.x - 1, coord.y, hex + 2 - coord.w, coord.w, 14);
+		WriteAt(coord.x, coord.y, hex + 2 - coord.w, coord.w, 14);
 	}
 
 	void WriteRegisterValue(WORD value, const char* label) {
@@ -103,7 +107,7 @@ namespace Console
 			decimal[0] = (value>99) ? ((value / 100) + '0') : ' ';
 			decimal[1] = (value>9) ? (((value / 10) % 10) + '0') : ' ';
 			decimal[2] = (value % 10) + '0';
-			WriteAt(coord.x - 1, coord.y, decimal + 3 - coord.w, coord.w);
+			WriteAt(coord.x, coord.y, decimal + 3 - coord.w, coord.w);
 		}
 	}
 
@@ -118,20 +122,24 @@ namespace Console
 				ramLine[x] = hexDigits[TMS1000::g_memory.RAM[y*lineLen + x] & 0x0F];
 			}
 
-			WriteAt(coord.x - 1, coord.y + y, ramLine, lineLen);
+			WriteAt(coord.x, coord.y + y, ramLine, lineLen);
 		}
 
 		// Highlight current xy
 		char digit = hexDigits[TMS1000::GetRAM()];
-		WriteAt(coord.x - 1 + TMS1000::g_cpu.Y , coord.y + TMS1000::g_cpu.X, &digit, 1, 0xF0);
+		WriteAt(coord.x + TMS1000::g_cpu.Y , coord.y + TMS1000::g_cpu.X, &digit, 1, 0xF0);
 	}
 
 	void WriteROM() {
+		if (TMS1000::g_memory.ROM == nullptr) {
+			return;
+		}
+
 		const short lineLen = 16; // 16 words * 2 char/word
 		static const CPUInfo::Coord coord = m_pCPUInfo->GetCoord("ROM");
 		const short lines = 64 / lineLen;
 
-		WORD baseAddr = TMS1000::g_cpu.PA * 64;
+		WORD baseAddr = (TMS1000::g_cpu.PA & 0x0F) * 64;
 
 		static char romLine[lineLen * 2];
 		for (short y = 0; y < lines; ++y) {
@@ -140,16 +148,25 @@ namespace Console
 				romLine[x * 2 + 1] = hexDigits[TMS1000::g_memory.ROM[y*lineLen + x + baseAddr] & 0x0F];
 			}
 
-			WriteAt(coord.x - 1, coord.y + y, romLine, lineLen * 2);
+			WriteAt(coord.x, coord.y + y, romLine, lineLen * 2);
 		}
 
 		static const CPUInfo::Coord pageCoord = m_pCPUInfo->GetCoord("ROMPage");
 		if (pageCoord.IsSet()) {
 			WriteRegisterValueHex(TMS1000::g_cpu.PA, pageCoord);
 		}
+
+		static const CPUInfo::Coord chapterCord = m_pCPUInfo->GetCoord("ROMChapter");
+		if (chapterCord.IsSet()) {
+			WriteRegisterValueHex(TMS1000::g_cpu.CA, chapterCord);
+		}
 	}
 
 	void WriteDisassembly() {
+		if (TMS1000::g_memory.ROM == nullptr) {
+			return;
+		}
+
 		static const CPUInfo::Coord coordAddr = m_pCPUInfo->GetCoord("DAddr");
 		static const CPUInfo::Coord coordData = m_pCPUInfo->GetCoord("DData");
 		if (!coordData.IsSet() || !coordAddr.IsSet())
@@ -157,7 +174,7 @@ namespace Console
 
 		static char line[16];
 
-		WORD baseAddr = TMS1000::g_cpu.PA * 64;
+		WORD baseAddr = (TMS1000::g_cpu.CA << 10) | (TMS1000::g_cpu.PA << 6);
 		const int height = 12; // Heights are hardcoded for now
 		for (short y = 0; y < height; ++y) {
 			WORD PC = (TMS1000::g_cpu.PC -4 + y) & 0x3F;
@@ -166,14 +183,14 @@ namespace Console
 			line[1] = hexDigits[((PC + baseAddr) & 0x0F0) >> 4];
 			line[2] = hexDigits[(PC + baseAddr) & 0x00F];
 			
-			WriteAt(coordAddr.x - 1, coordAddr.y + y, line, 3, 14);
+			WriteAt(coordAddr.x, coordAddr.y + y, line, 3, 14);
 
 			BYTE opcode = TMS1000::g_memory.ROM[PC + baseAddr];
 			std::string instr = m_pCPUInfo->Disassemble(opcode);
 			memset(line, 0, 16);
 			strcpy(line, instr.c_str());
 
-			WriteAt(coordData.x - 1, coordData.y + y, line, coordData.w);
+			WriteAt(coordData.x, coordData.y + y, line, coordData.w);
 		}
 	}
 
@@ -191,7 +208,7 @@ namespace Console
 			sprintf(status, "Step Mode");
 		}
 
-		WriteAt(coord.x - 1, coord.y, status, coord.w);
+		WriteAt(coord.x, coord.y, status, coord.w);
 	}
 
 	void UpdateStatus() {
@@ -213,6 +230,14 @@ namespace Console
 		WriteRegisterValue(TMS1000::g_cpu.PC, "PC");
 		WriteRegisterValue(TMS1000::g_cpu.SR, "SR");
 		WriteRegisterValue(TMS1000::g_cpu.CL, "CL");
+
+		if (m_pCPUInfo->GetModel() && TMS1000::CPU_TMS1100 ||
+			m_pCPUInfo->GetModel() && TMS1000::CPU_TMS1300)
+		{
+			WriteRegisterValue(TMS1000::g_cpu.CA, "CA");
+			WriteRegisterValue(TMS1000::g_cpu.CB, "CB");
+			WriteRegisterValue(TMS1000::g_cpu.CS, "CS");
+		}
 
 		WriteRAM();
 		WriteROM();

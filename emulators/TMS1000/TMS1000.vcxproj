@@ -155,9 +155,9 @@
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="CPUInfo.h" />
-    <ClInclude Include="main.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TestTMS1000.h" />
     <ClInclude Include="TMS1000.h" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +176,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TestTMS1000.cpp" />
     <ClCompile Include="TMS1000.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

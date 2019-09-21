@@ -2,6 +2,8 @@
 
 namespace TMS1000
 {
+	enum TMS1000Family { CPU_TMS1000, CPU_TMS1200, CPU_TMS1070, CPU_TMS1270, CPU_TMS1100, CPU_TMS1300 };
+
 	typedef unsigned char BYTE;
 	typedef unsigned short WORD;
 	typedef void(*OpcodeFunc)(BYTE);
@@ -29,6 +31,11 @@ namespace TMS1000
 		BYTE K;
 		BYTE O;
 		WORD R;
+
+		// TMS1100/TMS1300
+		bool CA; // Chapter Address Latch
+		bool CB; // Chapter Buffer latch
+		bool CS; // Chapter Subroutine latch
 	};
 
 	struct Memory {
@@ -42,9 +49,11 @@ namespace TMS1000
 	extern CPUState g_cpu;
 	extern Memory g_memory;
 
-	void Init(WORD romSize, WORD ramSize);
+	void Init(TMS1000Family model, WORD romSize, WORD ramSize);
+
 	void Reset();
 	void Step();
+
 	void Exec(BYTE opcode);
 	long GetTicks();
 
