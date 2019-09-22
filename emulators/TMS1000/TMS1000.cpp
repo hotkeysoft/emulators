@@ -292,7 +292,8 @@ namespace TMS1000
 
 	void opTDO() {
 		// TDO
-		g_cpu.O = (SET4(g_cpu.A) << 1) | (g_cpu.SL ? 1 : 0);
+		// (GetC flips the bits LSB <=> MSB)
+		g_cpu.O = (SET4(GetC(g_cpu.A)) << 1) | (g_cpu.SL ? 1 : 0);
 		if (outputCallback) {
 			outputCallback();
 		}

@@ -42,36 +42,35 @@ namespace GameMerlin
 	
 
 	void onReadInput() {
-//		char output[16] = "trest";
-///		sprintf(output, "output = %02x\n", TMS1000::g_cpu.O);
-//		Console::SetColor(15);
-//		fprintf(stderr, output);
-//		Console::GotoXY(1, 2);
-//		Console::Write(output);
-		//if (TMS1000::g_cpu.R & 1) {
-		//	//std::cout << "Check Select Game" << std::endl;
-		//	TMS1000::g_cpu.K = 2; // Select game: K1: Game2 / K4: Game3 / K2: Game1
-		//}
-		//else if (TMS1000::g_cpu.R & 512) {
-		//	//std::cout << "Check Skill" << std::endl;
-		//	TMS1000::g_cpu.K = 2; // Skill switch: K2 = L1 / K4 = L2 / K8 = L3 / K1 = L4
-		//}
-		//else if (TMS1000::g_cpu.R & 2) { // COLOR SWITCHES GREEN(K1) / RED(K2) / YELLOW(K4) / BLUE(K8)
-		//	TMS1000::g_cpu.K =
-		//		((GetAsyncKeyState(0x31) & 0x8000) ? 1 : 0) |
-		//		((GetAsyncKeyState(0x32) & 0x8000) ? 2 : 0) |
-		//		((GetAsyncKeyState(0x33) & 0x8000) ? 4 : 0) |
-		//		((GetAsyncKeyState(0x34) & 0x8000) ? 8 : 0);
-		//}
-		//else if (TMS1000::g_cpu.R & 4) { // START (K1) /LAST (K2) / LONGEST (K4)
-		//	TMS1000::g_cpu.K =
-		//		((GetAsyncKeyState(0x53) & 0x8000) ? 1 : 0) | //S
-		//		((GetAsyncKeyState(0x4C) & 0x8000) ? 2 : 0) | //T
-		//		((GetAsyncKeyState(0x54) & 0x8000) ? 4 : 0);  //L
-		//}
-		//else {
-		//	TMS1000::g_cpu.K = 0;
-		//}
+		switch (TMS1000::g_cpu.O & 6) {
+		case 0: // O0: K1(R0), K2(R1), K8(R2), K4(R3)
+			TMS1000::g_cpu.K =
+				((GetAsyncKeyState(VK_OEM_3) & 0x8000) ? 1 : 0) | // '~
+				((GetAsyncKeyState(0x31) & 0x8000) ? 2 : 0) | // 1
+				((GetAsyncKeyState(0x32) & 0x8000) ? 8 : 0) | // 2
+				((GetAsyncKeyState(0x33) & 0x8000) ? 4 : 0);  // 3
+			break;
+		case 4: // O1: K1(R4), K2(R5), K8(R6), K4(R7)
+			TMS1000::g_cpu.K =
+				((GetAsyncKeyState(0x34) & 0x8000) ? 1 : 0) | // 4
+				((GetAsyncKeyState(0x35) & 0x8000) ? 2 : 0) | // 5
+				((GetAsyncKeyState(0x36) & 0x8000) ? 8 : 0) | // 6
+				((GetAsyncKeyState(0x37) & 0x8000) ? 4 : 0);  // 7
+			break;
+		case 2: // O2: K1(R8), K2(R9), K8(R10), K4(SG)
+			TMS1000::g_cpu.K =
+				((GetAsyncKeyState(0x38) & 0x8000) ? 1 : 0) | // 8
+				((GetAsyncKeyState(0x39) & 0x8000) ? 2 : 0) | // 9
+				((GetAsyncKeyState(0x30) & 0x8000) ? 8 : 0) | // 0
+				((GetAsyncKeyState(0x53) & 0x8000) ? 4 : 0);  // S
+			break;
+		case 6: // O3:         K2(CT), K8(NG), K4(HM)
+			TMS1000::g_cpu.K =
+				((GetAsyncKeyState(0x43) & 0x8000) ? 2 : 0) | // C
+				((GetAsyncKeyState(0x4E) & 0x8000) ? 8 : 0) | // S
+				((GetAsyncKeyState(0x48) & 0x8000) ? 4 : 0);  // H
+			break;
+		}
 	}
 
 	void ShowButtons(WORD r) {
@@ -90,27 +89,30 @@ namespace GameMerlin
 	void onWriteOutput() {
 		static WORD lastR;
 
-		WORD outBits = TMS1000::g_cpu.R & 0x7FF;;
+		WORD outBits = TMS1000::g_cpu.R & 0x7FF;
 		if (outBits != lastR) {
 			ShowButtons(outBits);
 			lastR = outBits;
 		}
 
-		char output[16] = "trest";
-		sprintf(output, "output = %02x\n", TMS1000::g_cpu.O);
-		Console::SetColor(15);
-		fprintf(stderr, output);
+		char output[] = "BUZZ";
+		static bool lastSound = false;
+		bool sound = TMS1000::g_cpu.O & 0x10;
+
+		if (sound && !lastSound) {
+			Console::WriteAt(1, 2, output, 4, 15);
+			lastSound = true;
+		}
+		else if (!sound && lastSound) { 
+			Console::WriteAt(1, 2, output, 4, 7);
+			lastSound = false;
+		}
 	}
 
 	void Init() {
 		Console::Init();
 		ShowButtons(0);
-		//Console::SetColor(0, 7);
-		//Console::GotoXY(7, 3);
-		//Console::Write("  S: Start      L: Last      T: Longest  ");
 
-		//Console::GotoXY(7, 9);
-		//Console::Write("      1         2         3         4    ");
 		TMS1000::LoadROM("roms/TMS1100/Merlin/mp3404.bin");
 
 		TMS1000::SetInputCallback(onReadInput);
