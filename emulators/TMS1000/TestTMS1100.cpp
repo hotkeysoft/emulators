@@ -1116,17 +1116,17 @@ namespace TestTMS1100
 
 		// SETR
 		for (int i = 0; i <= 10; ++i) {
-			for (int i = 0; i < 8; ++i) {
-				TMS1000::g_cpu.X = i;
-				TestSETR(i, i<=3);
+			for (int x = 0; x < 8; ++x) {
+				TMS1000::g_cpu.X = x;
+				TestSETR(i, x<=3);
 			}
 		}
 
 		// RSTR
 		for (int i = 0; i <= 10; ++i) {
-			for (int i = 0; i < 8; ++i) {
-				TMS1000::g_cpu.X = i;
-				TestRSTR(i, i<=3);
+			for (int x = 0; x < 8; ++x) {
+				TMS1000::g_cpu.X = x;
+				TestRSTR(i, x<=3);
 			}
 		}
 

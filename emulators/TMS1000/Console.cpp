@@ -11,8 +11,7 @@ namespace Console
 	CPUInfo* m_pCPUInfo = nullptr;
 	static const char hexDigits[] = "0123456789ABCDEF";
 
-	void Init(CPUInfo* pCPUInfo) {
-		m_pCPUInfo = pCPUInfo;
+	void Init() {
 		m_hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 		CONSOLE_FONT_INFOEX cfi = { sizeof(cfi) };
@@ -34,15 +33,21 @@ namespace Console
 		if (!SetConsoleScreenBufferSize(m_hConsole, { 80, 26 })) {
 			fprintf(stderr, "SetConsoleScreenBufferSize failed %d\n", GetLastError());
 		}
-		SetConsoleTitle(pCPUInfo->GetName());
 
-		CONSOLE_CURSOR_INFO cursorInfo = {1, FALSE };
+		CONSOLE_CURSOR_INFO cursorInfo = { 1, FALSE };
 		SetConsoleCursorInfo(m_hConsole, &cursorInfo);
 
 		DWORD dwMode = 0;
 		GetConsoleMode(m_hConsole, &dwMode);
 		dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 		SetConsoleMode(m_hConsole, dwMode);
+	}
+
+	void Init(CPUInfo* pCPUInfo) {
+		Init();
+
+		m_pCPUInfo = pCPUInfo;
+		SetConsoleTitle(pCPUInfo->GetName());
 
 		std::string ansiFile = m_pCPUInfo->GetANSIFile();
 		SetConsoleCursorPosition(m_hConsole, { 0, 0 });
@@ -56,7 +61,22 @@ namespace Console
 		}
 	}
 
-	void WriteAt(short x, short y, const char* text, int len, WORD attr=15) {
+	void GotoXY(short x, short y) {
+		SetConsoleCursorPosition(m_hConsole, { x - 1 , y - 1 });
+	}
+	void SetColor(BYTE fore, BYTE back) {
+		SetColor(back << 4 | fore);
+	}
+	void SetColor(short attr) {
+		SetConsoleTextAttribute(m_hConsole, attr);
+	}
+	void Write(const char* text) {
+		if (text) {
+			DWORD written;
+			WriteConsole(m_hConsole, text, (DWORD)strlen(text), &written, NULL);
+		}
+	}
+	void WriteAt(short x, short y, const char* text, int len, WORD attr) {
 		SetConsoleCursorPosition(m_hConsole, { x-1 , y-1 });
 		SetConsoleTextAttribute(m_hConsole, attr);
 		DWORD written;
