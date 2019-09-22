@@ -7,13 +7,47 @@
 
 namespace GameMerlin
 {
+	std::tuple<short, short> LEDPosition[] = {
+		       { 20,  4 },
+	{ 10,  8 },{ 20,  8 },{ 30,  8 },
+	{ 10, 12 },{ 20, 12 },{ 30, 12 },
+	{ 10, 16 },{ 20, 16 },{ 30, 16 },
+	           { 20, 20 }
+	};
+
 	//       R0
 	//	R1   R2   R3
 	//	R4   R5   R6
 	//	R7   R8   R9
 	//	     R10
 
+//       +----+  +----+  +----+  +----+
+//O0 o---| R0 |--| R1 |--| R2 |--| R3 |
+//       +----+  +----+  +----+  +----+
+//          |       |       |       |
+//       +----+  +----+  +----+  +----+
+//O1 o---| R4 |--| R5 |--| R6 |--| R7 |
+//       +----+  +----+  +----+  +----+
+//          |       |       |       |
+//       +----+  +----+  +----+  +----+
+//O2 o---| R8 |--| R9 |--|R10 |--| SG |
+//       +----+  +----+  +----+  +----+
+//          |       |       |       |
+//          |    +----+  +----+  +----+
+//O3 o------+----| CT |--| NG |--| HM |
+//          |    +----+  +----+  +----+
+//          |       |       |       |
+//          o       o       o       o
+//         K1      K2      K8      K4
+	
+
 	void onReadInput() {
+//		char output[16] = "trest";
+///		sprintf(output, "output = %02x\n", TMS1000::g_cpu.O);
+//		Console::SetColor(15);
+//		fprintf(stderr, output);
+//		Console::GotoXY(1, 2);
+//		Console::Write(output);
 		//if (TMS1000::g_cpu.R & 1) {
 		//	//std::cout << "Check Select Game" << std::endl;
 		//	TMS1000::g_cpu.K = 2; // Select game: K1: Game2 / K4: Game3 / K2: Game1
@@ -41,12 +75,15 @@ namespace GameMerlin
 	}
 
 	void ShowButtons(WORD r) {
-		static char button[] = { 219, 219 };
+		static uint8_t button[] = { 219, 219 };
 		for (int i = 0; i < 11; ++i)
 		{
-			Console::GotoXY(10+(4*i), 10);
+			std::tuple<short, short>& pos = LEDPosition[i];
+			Console::GotoXY(
+				std::get<0>(pos),
+				std::get<1>(pos));
 			Console::SetColor((r & (1 << i)) ? 12 : 4);
-			Console::Write(button);
+			Console::Write((const char *)button);
 		}
 	}
 
@@ -58,6 +95,11 @@ namespace GameMerlin
 			ShowButtons(outBits);
 			lastR = outBits;
 		}
+
+		char output[16] = "trest";
+		sprintf(output, "output = %02x\n", TMS1000::g_cpu.O);
+		Console::SetColor(15);
+		fprintf(stderr, output);
 	}
 
 	void Init() {
