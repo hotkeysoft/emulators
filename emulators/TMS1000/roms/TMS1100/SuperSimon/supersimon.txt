@@ -1,0 +1,66 @@
+Milton Bradley Super Simon
+
+Chip labeled 
+MP3476NLL
+4050
+WE 8022
+PHILIPPINES
+
+die labeled
+MP3476
+
+12 buttons:
+  Player 1 red, blue, green, yellow
+  Player 2 red, blue, green, yellow
+  Decision, Longest, Last, Start
+3 switches: Speed, Game, Skill Level
+8 lamps (R G B Y for each player)
+speaker
+
+
+TMS1100 pinout
+1  R8   - Speaker
+2  R9   - Skill switch 1-4
+3  R10  - Skill switch Head-to-Head
+4  VDD  - 9v battery negative
+5  K1   - button matrix
+6  K2   - button matrix
+7  K4   - button matrix
+8  K8   - button matrix
+9  INIT - diode and cap
+10 O7   - N/C
+11 O6   - N/C
+12 O5   - N/C
+13 O4   - N/C
+14 O3   - N/C
+15 O2   - N/C
+16 O1   - N/C
+17 O0   - N/C
+18 OSC1 - connected to OSC2 and 100pF disc cap (to VSS) + different resistor depending on speed switch
+19 OSC2 - OSC1
+20 VSS  - 9v battery positive via power switch
+21 R0   - Game switch
+22 R1   - Player 2 buttons
+23 R2   - Start, Last, Longest, Decision buttons
+24 R3   - Player 1 buttons
+25 R4   - yellow lamps
+26 R5   - green lamps
+27 R6   - blue lamps
+28 R7   - red lamps
+
+
+button and switch matrix
+        K1          K2           K4           K8         N/C
+R0    Game 1      Game 2       Game 3       Game 4      Game 4
+R1   P2 Yellow   P2 Green      P2 Blue      P2 Red
+R2    Start        Last        Longest     Decision
+R3   P1 Yellow   P1 Green      P1 Blue      P1 Red
+R9    Skill 4     Skill 1      Skill 2      Skill 3
+R10            Head-to-Head
+
+Speed switch
+Simple = 51K resistor
+Normal = 37K resistor
+Super  = 22K resistor
+
+The unit I got was not working, but I measured a 1K signal on pins 22, 23, 24

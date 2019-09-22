@@ -155,6 +155,7 @@
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="CPUInfo.h" />
+    <ClInclude Include="GameMerlin.h" />
     <ClInclude Include="GameSimon.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -171,6 +172,7 @@
     </ClCompile>
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="CPUInfo.cpp" />
+    <ClCompile Include="GameMerlin.cpp" />
     <ClCompile Include="GameSimon.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stdafx.cpp">

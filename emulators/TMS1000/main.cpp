@@ -10,6 +10,7 @@
 #include "TestTMS1100.h"
 
 #include "GameSimon.h"
+#include "GameMerlin.h"
 
 void LogCallback(const char *str) {
 	fprintf(stderr, str);
@@ -111,8 +112,12 @@ int main() {
 	//RunMonitor();
 	//return 0;
 
-	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
-	GameSimon::Init();
+//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
+//	GameSimon::Init();
+
+	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1100);
+	GameMerlin::Init();
+
 
 	TMS1000::Reset();
 	long lastTicks = 0;

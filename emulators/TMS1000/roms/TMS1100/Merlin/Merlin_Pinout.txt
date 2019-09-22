@@ -1,0 +1,67 @@
+                              Merlin Pinout
+                              -------------
+
+10302012 
+K.Horton
+----
+
+V2.00
+updated 11032012 to fix matrix pinout
+
+The merlin is a handheld game released some time in the early 80's.  It's red
+(sometimes blue) with 15 buttons, 11 LEDs, and a speaker.
+
+Inside is a TMS1100 (marked MP3404) which contains the "brains".  There's very
+little in the way of electronics.
+
+The TMS1100's R outputs drive the 11 LEDs:
+
+(front view, with 4 game control buttons at the bottom)
+
+      R0
+ R1   R2   R3
+ R4   R5   R6
+ R7   R8   R9
+      R10
+
+
+When that particular R output is high, that LED is on.
+
+The keypad is a 4*4 matrix, connected like so:
+
+
+       +----+  +----+  +----+  +----+
+O0 o---| R0 |--| R1 |--| R2 |--| R3 |
+       +----+  +----+  +----+  +----+
+          |       |       |       |
+       +----+  +----+  +----+  +----+
+O1 o---| R4 |--| R5 |--| R6 |--| R7 |
+       +----+  +----+  +----+  +----+
+          |       |       |       |
+       +----+  +----+  +----+  +----+
+O2 o---| R8 |--| R9 |--|R10 |--| SG |
+       +----+  +----+  +----+  +----+
+          |       |       |       |
+          |    +----+  +----+  +----+
+O3 o------+----| CT |--| NG |--| HM |
+          |    +----+  +----+  +----+
+          |       |       |       |
+          o       o       o       o
+         K1      K2      K8      K4
+
+
+SG = same game, CT = comp turn, NG = new game, HM = hit me
+
+The speaker is connected to O4 through O6.  The 3 outputs are paralleled for
+increased current driving capability.  They are passed thru a 220 ohm resistor
+and then to the speaker, which has the other side grounded.  The software then
+toggles these lines to make sounds and noises. (There is no audio generator
+other than toggling it with a software delay between to make tones).
+
+O7 is not used and is NC.
+
+That's all there is to the hookup of the TMS1100.  Other parts include the
+RC oscillator (100pf and 27K) and a simple cap/diode reset circuit and a power
+switch.
+
+
