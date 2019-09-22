@@ -26,6 +26,7 @@ namespace TMS1000
 		BYTE PC;
 		BYTE SR;
 		bool CL;
+		bool jump;
 
 		// IO
 		BYTE K;

@@ -334,6 +334,7 @@ namespace TMS1000
 
 	void opBR(BYTE opcode) {
 		if (g_cpu.S) {
+			g_cpu.jump = true;
 			g_cpu.CA = g_cpu.CB;
 			g_cpu.PC = GetW(opcode);
 			
@@ -346,19 +347,23 @@ namespace TMS1000
 	}
 
 	void opCALL(BYTE opcode) {
-		if (g_cpu.S && !g_cpu.CL) {
-			g_cpu.CS = g_cpu.CA;
+		if (g_cpu.S) {
+			g_cpu.jump = true;
+			if (g_cpu.CL) {
+				g_cpu.PB = g_cpu.PA;
+			} else {
+				g_cpu.CS = g_cpu.CA;
+				g_cpu.SR = SET6(g_cpu.PC + 1);
+
+				// PB <=> PA
+				BYTE temp = g_cpu.PB;
+				g_cpu.PB = g_cpu.PA;
+				g_cpu.PA = temp;
+
+				g_cpu.CL = true;
+			}
 			g_cpu.CA = g_cpu.CB;
-			g_cpu.SR = SET6(g_cpu.PC + 1);
-			BYTE temp = g_cpu.PB;
-			g_cpu.PB = g_cpu.PA;
-			g_cpu.PA = temp;
 			g_cpu.PC = GetW(opcode);
-			g_cpu.CL = true;
-		} else if (g_cpu.S && g_cpu.CL) {
-			g_cpu.CA = g_cpu.CB;
-			g_cpu.PC = GetW(opcode);
-			g_cpu.PB = g_cpu.PA;
 		}
 
 		g_cpu.S = true;
@@ -367,6 +372,7 @@ namespace TMS1000
 	void opRETN() {
 		g_cpu.PA = g_cpu.PB;
 		if (g_cpu.CL) {
+			g_cpu.jump = true;
 			g_cpu.CA = g_cpu.CS;
 			g_cpu.PC = g_cpu.SR;
 			g_cpu.CL = false;
@@ -870,11 +876,13 @@ namespace TMS1000
 		}
 	}
 
-	void Step() {	
+	void Step() {
 		BYTE oldPC = g_cpu.PC;
 		BYTE opCode = GetROM();
+		g_cpu.jump = false;
 		l_execFunc(opCode);
-		if (g_cpu.PC == oldPC) {
+
+		if (!g_cpu.jump) {
 			g_cpu.PC = SET6(g_cpu.PC + 1);
 		}
 		ticks += 6;

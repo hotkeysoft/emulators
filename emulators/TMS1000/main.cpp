@@ -109,8 +109,8 @@ int main() {
 		TestTMS1100::Test();
 	}
 
-	//RunMonitor();
-	//return 0;
+//	RunMonitor();
+//	return 0;
 
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
 //	GameSimon::Init();

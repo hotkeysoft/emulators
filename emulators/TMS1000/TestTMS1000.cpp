@@ -444,7 +444,7 @@ namespace TestTMS1000
 		TMS1000::g_cpu.S = false;
 
 		TMS1000::Exec(0x0A); // TDO
-		assert(TMS1000::g_cpu.O == ((a << 1) + (SL ? 1 : 0)));
+		assert(TMS1000::g_cpu.O == (((TMS1000::GetC(a)) << 1) + (SL ? 1 : 0)));
 		assert(TMS1000::g_cpu.S == true);
 		Console::UpdateStatus();
 	}

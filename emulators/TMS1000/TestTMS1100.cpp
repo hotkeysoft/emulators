@@ -578,7 +578,7 @@ namespace TestTMS1100
 		TMS1000::g_cpu.S = false;
 
 		TMS1000::Exec(0x0A); // TDO
-		assert(TMS1000::g_cpu.O == ((a << 1) + (SL ? 1 : 0)));
+		assert(TMS1000::g_cpu.O == ((TMS1000::GetC(a) << 1) + (SL ? 1 : 0)));
 		assert(TMS1000::g_cpu.S == true);
 		Console::UpdateStatus();
 	}
@@ -633,9 +633,9 @@ namespace TestTMS1100
 		TMS1000::g_cpu.PA = 0x01;
 		TMS1000::g_cpu.PB = 0x02;
 		TMS1000::g_cpu.PC = (~addr) & 0x3F;
-		TMS1000::g_cpu.CL = false;
 		TMS1000::g_cpu.CA = false;
 		TMS1000::g_cpu.CB = true;
+		TMS1000::g_cpu.CL = false;
 		TMS1000::g_cpu.S = false;
 
 		// S = 0 : No branch
