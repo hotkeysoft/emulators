@@ -485,8 +485,12 @@ namespace TMS1000
 		g_memory.RAM[addr] = SET4(value);
 	}
 
-	BYTE GetROM() {
-		WORD baseAddr = (TMS1000::g_cpu.CA << 10) | (TMS1000::g_cpu.PA << 6) | g_cpu.PC;
+	WORD GetROMAddress() {
+		return (TMS1000::g_cpu.CA << 10) | (TMS1000::g_cpu.PA << 6) | g_cpu.PC;
+	}
+
+	BYTE GetROMData() {
+		WORD baseAddr = GetROMAddress();
 #ifdef ARDUINO
 		return pgm_read_byte_near(g_memory.ROM + baseAddr);
 #else
@@ -877,10 +881,8 @@ namespace TMS1000
 	}
 
 	void Step() {
-		BYTE oldPC = g_cpu.PC;
-		BYTE opCode = GetROM();
 		g_cpu.jump = false;
-		l_execFunc(opCode);
+		l_execFunc(GetROMData());
 
 		if (!g_cpu.jump) {
 			g_cpu.PC = SET6(g_cpu.PC + 1);

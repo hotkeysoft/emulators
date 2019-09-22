@@ -50,26 +50,26 @@ namespace GameSimon
 	}
 
 	void ShowColors(bool green, bool red, bool yellow, bool blue) {
-		static char offBlock[] = { 0xb2, 0xb2, 0xb2, 0xb2, 0xb2, 0xb2, 0xb2 };
-		static char onBlock[] = { 219, 219, 219, 219, 219, 219, 219 };
+		static const uint8_t offBlock[] = { 0xb2, 0xb2, 0xb2, 0xb2, 0xb2, 0xb2, 0xb2 };
+		static const uint8_t onBlock[] = { 219, 219, 219, 219, 219, 219, 219 };
 
 		for (int i = 0; i < 3; ++i)
 		{
 			Console::GotoXY(10, 5+i);
 			Console::SetColor(green ? 10 : 2);
-			Console::Write(green ? onBlock : offBlock);
+			Console::Write((const char*)(green ? onBlock : offBlock));
 
 			Console::GotoXY(20, 5+i);
 			Console::SetColor(red ? 12 : 4);
-			Console::Write(red ? onBlock : offBlock);
+			Console::Write((const char*)(red ? onBlock : offBlock));
 
 			Console::GotoXY(30, 5+i);
 			Console::SetColor(yellow ? 14 : 6);
-			Console::Write(yellow ? onBlock : offBlock);
+			Console::Write((const char*)(yellow ? onBlock : offBlock));
 
 			Console::GotoXY(40, 5+i);
 			Console::SetColor(blue ? 9 : 1);
-			Console::Write(blue ? onBlock : offBlock);
+			Console::Write((const char*)(blue ? onBlock : offBlock));
 		}
 	}
 

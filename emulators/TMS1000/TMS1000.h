@@ -65,7 +65,8 @@ namespace TMS1000
 
 	BYTE GetM();
 	BYTE GetM(BYTE X, BYTE Y);
-	BYTE GetROM();
+	WORD GetROMAddress();
+	BYTE GetROMData();
 	BYTE GetRAM(BYTE addr = GetM());
 	void PutRAM(BYTE value, BYTE addr = GetM());
 

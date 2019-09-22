@@ -22,6 +22,11 @@ void ShowMonitor(CPUInfo &cpuInfo) {
 	Console::UpdateStatus();
 }
 
+bool IsBreakpoint() {
+//	return (TMS1000::GetROMAddress() == 1085) && (TMS1000::g_cpu.PC = 61);
+	return false;
+}
+
 void RunMonitor() {
 	long lastTicks = 0;
 	bool loop = true;
@@ -36,7 +41,7 @@ void RunMonitor() {
 			break;
 		case 0x3F: // F5
 			Console::SetRunMode(true);
-			while (!_kbhit()) {
+			while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000) && !IsBreakpoint()) {
 				TMS1000::Step();
 				if ((TMS1000::GetTicks() - lastTicks) > 10000) {
 					Console::UpdateStatus();
@@ -44,6 +49,7 @@ void RunMonitor() {
 				}
 			}
 			Console::SetRunMode(false);
+			Console::UpdateStatus();
 			break;
 		case 0x40: // F6
 			TMS1000::Step();
@@ -117,7 +123,8 @@ int main() {
 
 	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1100);
 	GameMerlin::Init();
-
+//	ShowMonitor(cpuInfo);
+//	RunMonitor();
 
 	TMS1000::Reset();
 	long lastTicks = 0;
