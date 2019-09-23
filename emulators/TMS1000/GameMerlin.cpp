@@ -41,7 +41,7 @@ namespace GameMerlin
 //         K1      K2      K8      K4
 	
 
-	void onReadInput() {
+	void onReadKInput() {
 		switch (TMS1000::g_cpu.O & 6) {
 		case 0: // O0: K1(R0), K2(R1), K8(R2), K4(R3)
 			TMS1000::g_cpu.K =
@@ -73,49 +73,46 @@ namespace GameMerlin
 		}
 	}
 
-	void ShowButtons(WORD r) {
+	void onWriteROutput(BYTE bit, bool state) {
 		static uint8_t button[] = { 219, 219 };
-		for (int i = 0; i < 11; ++i)
-		{
-			std::tuple<short, short>& pos = LEDPosition[i];
-			Console::GotoXY(
-				std::get<0>(pos),
-				std::get<1>(pos));
-			Console::SetColor((r & (1 << i)) ? 12 : 4);
-			Console::Write((const char *)button);
-		}
+
+		std::tuple<short, short>& pos = LEDPosition[bit];
+		Console::GotoXY(
+			std::get<0>(pos),
+			std::get<1>(pos));
+		Console::SetColor(state ? 12 : 4);
+		Console::Write((const char *)button);
 	}
 
-	void onWriteOutput() {
-		static WORD lastR;
-
-		WORD outBits = TMS1000::g_cpu.R & 0x7FF;
-		if (outBits != lastR) {
-			ShowButtons(outBits);
-			lastR = outBits;
-		}
-
+	void onWriteOOutput(BYTE o) {
 		char output[] = "BUZZ";
 		static bool lastSound = false;
-		bool sound = TMS1000::g_cpu.O & 0x10;
+		bool sound = o & 0x10;
 
 		if (sound && !lastSound) {
 			Console::WriteAt(1, 2, output, 4, 15);
 			lastSound = true;
 		}
-		else if (!sound && lastSound) { 
+		else if (!sound && lastSound) {
 			Console::WriteAt(1, 2, output, 4, 7);
 			lastSound = false;
 		}
 	}
 
+	void ResetButtons() {
+		for (int i = 0; i < 10; ++i) {
+			onWriteROutput(i, false);
+		}
+	}
+
 	void Init() {
 		Console::Init();
-		ShowButtons(0);
+		ResetButtons();
 
 		TMS1000::LoadROM("roms/TMS1100/Merlin/mp3404.bin");
 
-		TMS1000::SetInputCallback(onReadInput);
-		TMS1000::SetOutputCallback(onWriteOutput);
+		TMS1000::SetInputKCallback(onReadKInput);
+		TMS1000::SetOutputRCallback(onWriteROutput);
+		TMS1000::SetOutputOCallback(onWriteOOutput);
 	}
 }

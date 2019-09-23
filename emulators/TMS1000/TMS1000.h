@@ -8,7 +8,9 @@ namespace TMS1000
 	typedef unsigned short WORD;
 	typedef void(*OpcodeFunc)(BYTE);
 
-	typedef void(*IOCallbackFunc)();
+	typedef void(*KCallbackFunc)();
+	typedef void(*OCallbackFunc)(BYTE);
+	typedef void(*RCallbackFunc)(BYTE, bool);
 
 	struct CPUState {
 		// Registers
@@ -70,8 +72,13 @@ namespace TMS1000
 	BYTE GetRAM(BYTE addr = GetM());
 	void PutRAM(BYTE value, BYTE addr = GetM());
 
-	void SetInputCallback(IOCallbackFunc);
-	void SetOutputCallback(IOCallbackFunc);
+	void SetInputKCallback(KCallbackFunc);
+
+	// For O Callback, first parameter is 'A' (four bits), bool is SL flag.
+	void SetOutputOCallback(OCallbackFunc);
+
+	// R Callback, first parameter is bit to flip, bool is SET(true) / RESET(false)
+	void SetOutputRCallback(RCallbackFunc);
 
 #ifndef ARDUINO
 	void LoadROM(const char* path);

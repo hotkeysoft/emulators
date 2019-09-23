@@ -18,8 +18,13 @@ namespace TMS1000
 	void Exec1000(BYTE opcode);
 	void Exec1100(BYTE opcode);
 
-	IOCallbackFunc inputCallback = nullptr;
-	IOCallbackFunc outputCallback = nullptr;
+	void nullInputKCallback() {}
+	void nullOutputOCallback(BYTE) {}
+	void nullOutputRCallback(BYTE, bool) {}
+
+	KCallbackFunc inputKCallback = nullInputKCallback;
+	OCallbackFunc outputOCallback = nullOutputOCallback;
+	RCallbackFunc outputRCallback = nullOutputRCallback;
 
 	long ticks = 0;
 	CPUState g_cpu;
@@ -256,37 +261,29 @@ namespace TMS1000
 
 	void opKNEZ() {
 		// CKP, NE
-		if (inputCallback) {
-			inputCallback();
-		}
+		inputKCallback();
 		g_cpu.S = (SET4(g_cpu.K) != 0);
 	}
 
 	void opTKA() {
 		// CKP, AUTA
-		if (inputCallback) {
-			inputCallback();
-		}
+		inputKCallback();
 		g_cpu.A = SET4(g_cpu.K);
 	}
 
 	void opSETR() {
 		// SETR
 		if (g_cpu.X <= 3 && g_cpu.Y <= 10) { // TODO: 15 on TMS1300
+			outputRCallback(g_cpu.Y, true);
 			g_cpu.R |= (1 << g_cpu.Y);
-		}
-		if (outputCallback) {
-			outputCallback();
 		}
 	}
 
 	void opRSTR() {
 		// RSTR
 		if (g_cpu.X <= 3 && g_cpu.Y <= 10) { // TODO: 15 on TMS1300
+			outputRCallback(g_cpu.Y, false);
 			g_cpu.R &= (~(1 << g_cpu.Y));
-		}
-		if (outputCallback) {
-			outputCallback();
 		}
 	}
 
@@ -294,17 +291,13 @@ namespace TMS1000
 		// TDO
 		// (GetC flips the bits LSB <=> MSB)
 		g_cpu.O = (SET4(GetC(g_cpu.A)) << 1) | (g_cpu.SL ? 1 : 0);
-		if (outputCallback) {
-			outputCallback();
-		}
+		outputOCallback(g_cpu.O);
 	}
 
 	void opCLO() {
 		// CLO
 		g_cpu.O = 0;
-		if (outputCallback) {
-			outputCallback();
-		}
+		outputOCallback(g_cpu.O);
 	}
 
 	void opLDX(BYTE value) {
@@ -410,6 +403,8 @@ namespace TMS1000
 		g_cpu.CA = false;
 		g_cpu.CB = false;
 		g_cpu.CS = false;
+
+
 
 		g_memory.ramSize = ramSize;
 		g_memory.romSize = romSize;
@@ -890,12 +885,16 @@ namespace TMS1000
 		ticks += 6;
 	}
 
-	void SetInputCallback(IOCallbackFunc func) {
-		inputCallback = func;
+	void SetInputKCallback(KCallbackFunc func) {
+		inputKCallback = func;
 	}
 
-	void SetOutputCallback(IOCallbackFunc func) {
-		outputCallback = func;
+	void SetOutputOCallback(OCallbackFunc func) {
+		outputOCallback = func;
+	}
+
+	void SetOutputRCallback(RCallbackFunc func) {
+		outputRCallback = func;
 	}
 
 	long GetTicks() {

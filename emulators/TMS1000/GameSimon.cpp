@@ -22,7 +22,7 @@ namespace GameSimon
 
 	// R9: (512): SKILL SWITCH: LEVEL1 (K2) / LEVEL2 (K4) / LEVEL3 (K8) / LEVEL4 (K1)
 
-	void onReadInput() {
+	void onReadKInput() {
 		if (TMS1000::g_cpu.R & 1) {
 			//std::cout << "Check Select Game" << std::endl;
 			TMS1000::g_cpu.K = 2; // Select game: K1: Game2 / K4: Game3 / K2: Game1
@@ -49,43 +49,58 @@ namespace GameSimon
 		}
 	}
 
-	void ShowColors(bool green, bool red, bool yellow, bool blue) {
+	void onWriteROutput(BYTE bit, bool set) {
 		static const uint8_t offBlock[] = { 0xb2, 0xb2, 0xb2, 0xb2, 0xb2, 0xb2, 0xb2 };
 		static const uint8_t onBlock[] = { 219, 219, 219, 219, 219, 219, 219 };
 
-		for (int i = 0; i < 3; ++i)
-		{
-			Console::GotoXY(10, 5+i);
-			Console::SetColor(green ? 10 : 2);
-			Console::Write((const char*)(green ? onBlock : offBlock));
+		char output[] = "BUZZ";
 
-			Console::GotoXY(20, 5+i);
-			Console::SetColor(red ? 12 : 4);
-			Console::Write((const char*)(red ? onBlock : offBlock));
+		short x;
+		bool color = true;
+		switch (bit) {
+		case 4:
+			x = 10;
+			Console::SetColor(set ? 10 : 2);
+			break;
+		case 5:
+			x = 20;
+			Console::SetColor(set ? 12 : 4);
+			break;
+		case 6:
+			x = 30;
+			Console::SetColor(set ? 14 : 6);
+			break;
+		case 7:
+			x = 40;
+			Console::SetColor(set? 9 : 1);
+			break;
+		case 8: Console::WriteAt(1, 2, output, 4, set ? 15 : 7);
+			// fallthrough
+		default: 
+			color = false;
+		}
 
-			Console::GotoXY(30, 5+i);
-			Console::SetColor(yellow ? 14 : 6);
-			Console::Write((const char*)(yellow ? onBlock : offBlock));
 
-			Console::GotoXY(40, 5+i);
-			Console::SetColor(blue ? 9 : 1);
-			Console::Write((const char*)(blue ? onBlock : offBlock));
+		if (color) {
+			for (int i = 0; i < 3; ++i)
+			{
+				Console::GotoXY(x, 5 + i);
+				Console::Write((const char*)(set ? onBlock : offBlock));
+			}
 		}
 	}
 
-	void onWriteOutput() {
-		static WORD lastR;
-
-		WORD outBits = TMS1000::g_cpu.R & 0xF0;//& 0x1F0;
-		if (outBits != lastR) {
-			ShowColors(outBits & 16, outBits & 32, outBits & 64, outBits & 128);
-			lastR = outBits;
-		}
+	void ResetColors(){		
+		onWriteROutput(4, false);
+		onWriteROutput(5, false);
+		onWriteROutput(6, false);
+		onWriteROutput(7, false);
 	}
 
 	void Init() {
 		Console::Init();
-		ShowColors(false, false, false, false);
+		ResetColors();
+
 		Console::SetColor(0, 7);
 		Console::GotoXY(7, 3);
 		Console::Write("  S: Start      L: Last      T: Longest  ");
@@ -94,7 +109,7 @@ namespace GameSimon
 		Console::Write("      1         2         3         4    ");
 		TMS1000::LoadROM("roms/TMS1000/Simon/simon.bin");
 
-		TMS1000::SetInputCallback(onReadInput);
-		TMS1000::SetOutputCallback(onWriteOutput);
+		TMS1000::SetInputKCallback(onReadKInput);
+		TMS1000::SetOutputRCallback(onWriteROutput);
 	}
 }
