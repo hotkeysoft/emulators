@@ -9,36 +9,36 @@ namespace GameSimon
 {
 	// Select Game:  4= Game 1
 
-	// R0 (1) : SELECT GAME: GAME1 (K2) / GAME2 (K1) / GAME3 (K4)
-	// R1 (2) : COLOR SWITCHES: GREEN (K1) /RED (K2) /YELLOW (K4) /BLUE (K8)
-	// R2 (4) : START (K1) / LAST (K2) / LONGEST (K4)
-	//	  (8)
-	// R4 (16) : GREEN
-	// R5 (32) : RED
-	// R6 (64) : YELLOW 
-	// R7 (128): BLUE
+	// R0: SELECT GAME: GAME1 (K2) / GAME2 (K1) / GAME3 (K4)
+	// R1: COLOR SWITCHES: GREEN (K1) /RED (K2) /YELLOW (K4) /BLUE (K8)
+	// R2: START (K1) / LAST (K2) / LONGEST (K4)
+	//	 
+	// R4: GREEN
+	// R5: RED
+	// R6: YELLOW 
+	// R7: BLUE
 
-	// R8: (256): SPKR
+	// R8: SPKR
 
-	// R9: (512): SKILL SWITCH: LEVEL1 (K2) / LEVEL2 (K4) / LEVEL3 (K8) / LEVEL4 (K1)
+	// R9: SKILL SWITCH: LEVEL1 (K2) / LEVEL2 (K4) / LEVEL3 (K8) / LEVEL4 (K1)
 
 	void onReadKInput() {
-		if (TMS1000::g_cpu.R & 1) {
+		if (TMS1000::g_cpu.R[0]) {
 			//std::cout << "Check Select Game" << std::endl;
 			TMS1000::g_cpu.K = 2; // Select game: K1: Game2 / K4: Game3 / K2: Game1
 		}
-		else if (TMS1000::g_cpu.R & 512) {
+		else if (TMS1000::g_cpu.R[9]) {
 			//std::cout << "Check Skill" << std::endl;
 			TMS1000::g_cpu.K = 2; // Skill switch: K2 = L1 / K4 = L2 / K8 = L3 / K1 = L4
 		}
-		else if (TMS1000::g_cpu.R & 2) { // COLOR SWITCHES GREEN(K1) / RED(K2) / YELLOW(K4) / BLUE(K8)
+		else if (TMS1000::g_cpu.R[1]) { // COLOR SWITCHES GREEN(K1) / RED(K2) / YELLOW(K4) / BLUE(K8)
 			TMS1000::g_cpu.K =
 				((GetAsyncKeyState(0x31) & 0x8000) ? 1 : 0) |
 				((GetAsyncKeyState(0x32) & 0x8000) ? 2 : 0) |
 				((GetAsyncKeyState(0x33) & 0x8000) ? 4 : 0) |
 				((GetAsyncKeyState(0x34) & 0x8000) ? 8 : 0);
 		}
-		else if (TMS1000::g_cpu.R & 4) { // START (K1) /LAST (K2) / LONGEST (K4)
+		else if (TMS1000::g_cpu.R[2]) { // START (K1) /LAST (K2) / LONGEST (K4)
 			TMS1000::g_cpu.K =
 				((GetAsyncKeyState(0x53) & 0x8000) ? 1 : 0) | //S
 				((GetAsyncKeyState(0x4C) & 0x8000) ? 2 : 0) | //T

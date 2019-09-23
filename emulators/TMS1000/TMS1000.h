@@ -2,6 +2,8 @@
 
 namespace TMS1000
 {
+	const int RWidth = 15;
+
 	enum TMS1000Family { CPU_TMS1000, CPU_TMS1200, CPU_TMS1070, CPU_TMS1270, CPU_TMS1100, CPU_TMS1300 };
 
 	typedef unsigned char BYTE;
@@ -32,7 +34,8 @@ namespace TMS1000
 		// IO
 		BYTE K;
 		BYTE O;
-		WORD R;
+
+		bool R[RWidth];
 
 		// TMS1100/TMS1300
 		bool CA; // Chapter Address Latch

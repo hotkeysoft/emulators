@@ -40,12 +40,12 @@ namespace TMS1000
 
 	void opTAY() {
 		// ATN, AUTY
-		g_cpu.Y = SET4(g_cpu.A);
+		g_cpu.Y = g_cpu.A;
 	}
 
 	void opTYA() {
 		// YTP, AUTA
-		g_cpu.A = SET4(g_cpu.Y);
+		g_cpu.A = g_cpu.Y;
 	}
 
 	void opCLA() {
@@ -100,7 +100,7 @@ namespace TMS1000
 		// MTP, STO, AUTA
 		BYTE temp = CURR_RAM;
 		CURR_RAM = g_cpu.A;
-		g_cpu.A = SET4(temp);
+		g_cpu.A = temp;
 	}
 
 	void opAMAAC() {
@@ -129,7 +129,7 @@ namespace TMS1000
 
 	void opIA() {
 		// ATN, CIN, AUTA
-		g_cpu.A = SET4(g_cpu.A+1);
+		g_cpu.A = SET4(g_cpu.A + 1);
 	}
 
 	// TMS1100
@@ -277,7 +277,7 @@ namespace TMS1000
 		// SETR
 		if (g_cpu.X <= 3 && g_cpu.Y <= 10) { // TODO: 15 on TMS1300
 			outputRCallback(g_cpu.Y, true);
-			g_cpu.R |= (1 << g_cpu.Y);
+			g_cpu.R[g_cpu.Y] = true;
 		}
 	}
 
@@ -285,7 +285,7 @@ namespace TMS1000
 		// RSTR
 		if (g_cpu.X <= 3 && g_cpu.Y <= 10) { // TODO: 15 on TMS1300
 			outputRCallback(g_cpu.Y, false);
-			g_cpu.R &= (~(1 << g_cpu.Y));
+			g_cpu.R[g_cpu.Y] = false;
 		}
 	}
 
@@ -314,7 +314,7 @@ namespace TMS1000
 
 	void opCOMX1100() {
 		// COMX
-		g_cpu.X = SET3(g_cpu.X^0x4);
+		g_cpu.X ^=4;
 	}
 
 	void opLDP(BYTE value) {
@@ -388,7 +388,6 @@ namespace TMS1000
 		g_cpu.SL = false;
 		g_cpu.K = 0;
 		g_cpu.O = 0;
-		g_cpu.R = 0;
 		g_cpu.PA = SET4(0xFF);
 		g_cpu.PB = SET4(0xFF);
 		g_cpu.PC = SET6(0x0);
@@ -397,6 +396,10 @@ namespace TMS1000
 		g_cpu.CA = false;
 		g_cpu.CB = false;
 		g_cpu.CS = false;
+
+		for (int i = 0; i < RWidth; ++i) {
+			g_cpu.R[i] = false;
+		}
 
 		g_memory.ramSize = ramSize;
 		g_memory.romSize = romSize;

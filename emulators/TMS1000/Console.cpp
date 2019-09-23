@@ -242,7 +242,7 @@ namespace Console
 		WriteRegisterValue(TMS1000::g_cpu.SL, "SL");
 
 		WriteRegisterValue(TMS1000::g_cpu.O, "O");
-		WriteRegisterValue(TMS1000::g_cpu.R, "R");
+//		WriteRegisterValue(TMS1000::g_cpu.R, "R");
 		WriteRegisterValue(TMS1000::g_cpu.K, "K");
 
 		WriteRegisterValue(TMS1000::g_cpu.PA, "PA");

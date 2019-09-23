@@ -417,23 +417,23 @@ namespace TestTMS1000
 	}
 
 	void TestSETR(BYTE r) {
-		TMS1000::g_cpu.R = 0;
+		TMS1000::g_cpu.R[r] = false;
 		TMS1000::g_cpu.Y = r;
 		TMS1000::g_cpu.S = false;
 
 		TMS1000::Exec(0x0D); // SETR
-		assert(TMS1000::g_cpu.R & (1 << r));
+		assert(TMS1000::g_cpu.R[r]);
 		assert(TMS1000::g_cpu.S == true);
 		Console::UpdateStatus();
 	}
 
 	void TestRSTR(BYTE r) {
-		TMS1000::g_cpu.R = 0x3FF;
+		TMS1000::g_cpu.R[r] = true;
 		TMS1000::g_cpu.Y = r;
 		TMS1000::g_cpu.S = false;
 
 		TMS1000::Exec(0x0C); // RSTR
-		assert(!(TMS1000::g_cpu.R & (1 << r)));
+		assert(!(TMS1000::g_cpu.R[r]));
 		assert(TMS1000::g_cpu.S == true);
 		Console::UpdateStatus();
 	}
