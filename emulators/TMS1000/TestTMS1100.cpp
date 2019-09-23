@@ -578,7 +578,7 @@ namespace TestTMS1100
 		TMS1000::g_cpu.S = false;
 
 		TMS1000::Exec(0x0A); // TDO
-		assert(TMS1000::g_cpu.O == ((TMS1000::GetC(a) << 1) + (SL ? 1 : 0)));
+		assert(TMS1000::g_cpu.O == (a | (SL ? 0x10 : 0)));
 		assert(TMS1000::g_cpu.S == true);
 		Console::UpdateStatus();
 	}
@@ -722,7 +722,8 @@ namespace TestTMS1100
 		TMS1000::g_cpu.CB = true;
 		TMS1000::g_cpu.CS = true;
 		TMS1000::g_cpu.CL = false;
-		BYTE retPC = (TMS1000::g_cpu.PC + 1) & 0x3F;
+		// PC incremented in Step, so SR will be = PC if exec is call directly
+		BYTE retPC = TMS1000::g_cpu.PC;
 
 		// S = 1, CL = 0 : CALL
 		TMS1000::Exec(opCode);

@@ -289,8 +289,8 @@ namespace TMS1000
 
 	void opTDO() {
 		// TDO
-		// (GetC flips the bits LSB <=> MSB)
-		g_cpu.O = (SET4(GetC(g_cpu.A)) << 1) | (g_cpu.SL ? 1 : 0);
+		// LSB <=> MSB Inverted relative to fuse map (SL = MSB)
+		g_cpu.O = g_cpu.A | (g_cpu.SL ? 0x10 : 0);
 		outputOCallback(g_cpu.O);
 	}
 
@@ -326,46 +326,35 @@ namespace TMS1000
 	}
 
 	void opBR(BYTE opcode) {
-		if (g_cpu.S) {
-			g_cpu.jump = true;
-			g_cpu.CA = g_cpu.CB;
-			g_cpu.PC = GetW(opcode);
+		g_cpu.CA = g_cpu.CB;
+		g_cpu.PC = GetW(opcode);
 			
-			if (!g_cpu.CL) {
-				g_cpu.PA = g_cpu.PB;
-			}
+		if (!g_cpu.CL) {
+			g_cpu.PA = g_cpu.PB;
 		}
-		
-		g_cpu.S = true;
 	}
 
 	void opCALL(BYTE opcode) {
-		if (g_cpu.S) {
-			g_cpu.jump = true;
-			if (g_cpu.CL) {
-				g_cpu.PB = g_cpu.PA;
-			} else {
-				g_cpu.CS = g_cpu.CA;
-				g_cpu.SR = SET6(g_cpu.PC + 1);
+		if (g_cpu.CL) {
+			g_cpu.PB = g_cpu.PA;
+		} else {
+			g_cpu.CS = g_cpu.CA;
+			g_cpu.SR = g_cpu.PC;
 
-				// PB <=> PA
-				BYTE temp = g_cpu.PB;
-				g_cpu.PB = g_cpu.PA;
-				g_cpu.PA = temp;
+			// PB <=> PA
+			BYTE temp = g_cpu.PB;
+			g_cpu.PB = g_cpu.PA;
+			g_cpu.PA = temp;
 
-				g_cpu.CL = true;
-			}
-			g_cpu.CA = g_cpu.CB;
-			g_cpu.PC = GetW(opcode);
+			g_cpu.CL = true;
 		}
-
-		g_cpu.S = true;
+		g_cpu.CA = g_cpu.CB;
+		g_cpu.PC = GetW(opcode);
 	}
 
 	void opRETN() {
 		g_cpu.PA = g_cpu.PB;
 		if (g_cpu.CL) {
-			g_cpu.jump = true;
 			g_cpu.CA = g_cpu.CS;
 			g_cpu.PC = g_cpu.SR;
 			g_cpu.CL = false;
@@ -498,9 +487,9 @@ namespace TMS1000
 	}
 
 	void Exec1100(BYTE opcode) {
-		if (!(opcode & 0x80)) {
-			g_cpu.S = true;
-		}
+		bool lastStatus = g_cpu.S;
+		g_cpu.S = true;
+
 		switch (opcode) {
 			// Register to register
 		case 0x20: opTAY(); break;
@@ -652,7 +641,7 @@ namespace TMS1000
 		case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
 		case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
 		case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
-			opBR(opcode); break;
+			if (lastStatus) opBR(opcode); break;
 
 		case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
 		case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
@@ -662,7 +651,7 @@ namespace TMS1000
 		case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF:
 		case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7:
 		case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFE: case 0xFF:
-			opCALL(opcode); break;
+			if (lastStatus) opCALL(opcode); break;
 
 			// ROM Addressing
 		case 0x0F: opRETN(); break;
@@ -689,9 +678,9 @@ namespace TMS1000
 	}
 
 	void Exec1000(BYTE opcode) {
-		if (!(opcode & 0x80)) {
-			g_cpu.S = true;
-		}
+		bool lastStatus = g_cpu.S;
+		g_cpu.S = true;
+
 		switch (opcode) {
 			// Register to register
 		case 0x24: opTAY(); break;
@@ -841,7 +830,7 @@ namespace TMS1000
 		case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
 		case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
 		case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
-			opBR(opcode); break;
+			if (lastStatus) opBR(opcode); break;
 
 		case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
 		case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
@@ -851,7 +840,7 @@ namespace TMS1000
 		case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF:
 		case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7:
 		case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFE: case 0xFF:
-			opCALL(opcode); break;
+			if (lastStatus) opCALL(opcode); break;
 
 			// ROM Addressing
 		case 0x0F: opRETN(); break;
@@ -876,12 +865,9 @@ namespace TMS1000
 	}
 
 	void Step() {
-		g_cpu.jump = false;
-		l_execFunc(GetROMData());
-
-		if (!g_cpu.jump) {
-			g_cpu.PC = SET6(g_cpu.PC + 1);
-		}
+		BYTE opCode = GetROMData();
+		g_cpu.PC = SET6(g_cpu.PC + 1);
+		l_execFunc(opCode);
 		ticks += 6;
 	}
 
