@@ -11,6 +11,8 @@
 #define SET6(X) (X & 0x3F)
 #define NOT4(X) ((~X) & 0x0F)
 
+#define CURR_RAM (g_memory.RAM[(g_cpu.X << 4) | g_cpu.Y])
+
 namespace TMS1000
 {
 	void(*l_execFunc)(BYTE);
@@ -53,19 +55,19 @@ namespace TMS1000
 
 	void opTAM() {
 		// STO
-		PutRAM(g_cpu.A);
+		CURR_RAM = g_cpu.A;
 	}
 
 	void opTAMIY() {
 		// STO, YTP, CIN, AUTY
-		PutRAM(g_cpu.A);
+		CURR_RAM = g_cpu.A;
 		g_cpu.Y = SET4(g_cpu.Y + 1);
 	}
 
 	// TMS1100
 	void opTAMIYC() {
 		// STO, YTP, CIN, C8, AUTY
-		PutRAM(g_cpu.A);
+		CURR_RAM = g_cpu.A;
 		g_cpu.S = (g_cpu.Y == 0x0F);
 		g_cpu.Y = SET4(g_cpu.Y + 1);
 	}
@@ -73,55 +75,55 @@ namespace TMS1000
 	// TMS1100
 	void opTAMDYN() {
 		// STO, YTP, CIN, C8, AUTY
-		PutRAM(g_cpu.A);
+		CURR_RAM = g_cpu.A;
 		g_cpu.S = (g_cpu.Y >= 1);
 		g_cpu.Y = SET4(g_cpu.Y - 1);
 	}
 
 	void opTAMZA() {
 		// STO, AUTA
-		PutRAM(g_cpu.A);
+		CURR_RAM = g_cpu.A;
 		g_cpu.A = 0;
 	}
 
 	void opTMY() {
 		// MTP, AUTY
-		g_cpu.Y = GetRAM();
+		g_cpu.Y = CURR_RAM;
 	}
 
 	void opTMA() {
 		// MTP, AUTA
-		g_cpu.A = GetRAM();
+		g_cpu.A = CURR_RAM;
 	}
 
 	void opXMA() {
 		// MTP, STO, AUTA
-		BYTE temp = GetRAM();
-		PutRAM(g_cpu.A);
+		BYTE temp = CURR_RAM;
+		CURR_RAM = g_cpu.A;
 		g_cpu.A = SET4(temp);
 	}
 
 	void opAMAAC() {
 		// MTP, ATN, C8, AUTA
-		uADC(g_cpu.A, GetRAM());
+		uADC(g_cpu.A, CURR_RAM);
 	}
 
 	void opSAMAN() {
 		// MTP, NATN, CIN, C8, AUTA
-		BYTE sum = NOT4(g_cpu.A) + GetRAM() + 1;
+		BYTE sum = NOT4(g_cpu.A) + CURR_RAM + 1;
 		g_cpu.S = (sum > 0x0F);
 		g_cpu.A = SET4(sum);
 	}
 
 	void opIMAC() {
 		// MTP, CIN, C8, AUTA
-		g_cpu.A = GetRAM();
+		g_cpu.A = CURR_RAM;
 		uADC(g_cpu.A, 0x01);
 	}
 
 	void opDMAN() {
 		// MTP, 15TN, C8, AUTA
-		g_cpu.A = GetRAM();
+		g_cpu.A = CURR_RAM;
 		uADC(g_cpu.A, 0x0F);
 	}
 
@@ -200,7 +202,7 @@ namespace TMS1000
 
 	void opALEM() {
 		// MTP, NATN, CIN, C8
-		BYTE sum = NOT4(g_cpu.A) + GetRAM() + 1;
+		BYTE sum = NOT4(g_cpu.A) + CURR_RAM + 1;
 		g_cpu.S = (sum > 0x0F);
 	}
 
@@ -212,12 +214,12 @@ namespace TMS1000
 
 	void opMNEA() {
 		// MTP, ATN, NE
-		g_cpu.S = (GetRAM() != g_cpu.A);
+		g_cpu.S = (CURR_RAM != g_cpu.A);
 	}
 
 	void opMNEZ() {
 		// MTP, NE
-		g_cpu.S = (GetRAM() != 0);
+		g_cpu.S = (CURR_RAM != 0);
 	}
 
 	void opYNEA() {
@@ -234,18 +236,18 @@ namespace TMS1000
 	void opSBIT(BYTE value) {
 		// SBIT
 		BYTE setBit = 1 << value;
-		PutRAM(GetRAM() | setBit);
+		CURR_RAM |= setBit;
 	}
 
 	void opRBIT(BYTE value) {
 		// RBIT
 		BYTE setBit = SET4(~(1 << value));
-		PutRAM(GetRAM() & setBit);
+		CURR_RAM &= setBit;
 	}
 
 	void opTBIT1(BYTE value) {
 		// CKP, CKN, MTP, NE
-		g_cpu.S = (GetRAM() & (1 << value));
+		g_cpu.S = (CURR_RAM & (1 << value));
 	}
 
 	void opTCY(BYTE value) {
@@ -255,7 +257,7 @@ namespace TMS1000
 
 	void opTCMIY(BYTE value) {
 		// CKM, YTP, CIN, AUTY
-		PutRAM(value);
+		CURR_RAM = value;
 		g_cpu.Y = SET4(g_cpu.Y + 1);
 	}
 
@@ -370,6 +372,9 @@ namespace TMS1000
 		DeleteRAM();
 
 		g_memory.RAM = new BYTE[g_memory.ramSize];
+		for (int i = 0; i < g_memory.ramSize; ++i) {
+			g_memory.RAM[i] = SET4(0xAA);
+		}
 	}
 	
 	void Init1000(WORD romSize, WORD ramSize) {
@@ -392,8 +397,6 @@ namespace TMS1000
 		g_cpu.CA = false;
 		g_cpu.CB = false;
 		g_cpu.CS = false;
-
-
 
 		g_memory.ramSize = ramSize;
 		g_memory.romSize = romSize;

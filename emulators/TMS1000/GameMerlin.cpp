@@ -42,7 +42,7 @@ namespace GameMerlin
 	
 
 	void onReadKInput() {
-		switch (TMS1000::g_cpu.O & 6) {
+		switch (TMS1000::g_cpu.O & 15) {
 		case 0: // O0: K1(R0), K2(R1), K8(R2), K4(R3)
 			TMS1000::g_cpu.K =
 				((GetAsyncKeyState(VK_OEM_3) & 0x8000) ? 1 : 0) | // '~
@@ -57,14 +57,14 @@ namespace GameMerlin
 				((GetAsyncKeyState(0x36) & 0x8000) ? 8 : 0) | // 6
 				((GetAsyncKeyState(0x37) & 0x8000) ? 4 : 0);  // 7
 			break;
-		case 2: // O2: K1(R8), K2(R9), K8(R10), K4(SG)
+		case 8: // O2: K1(R8), K2(R9), K8(R10), K4(SG)
 			TMS1000::g_cpu.K =
 				((GetAsyncKeyState(0x38) & 0x8000) ? 1 : 0) | // 8
 				((GetAsyncKeyState(0x39) & 0x8000) ? 2 : 0) | // 9
 				((GetAsyncKeyState(0x30) & 0x8000) ? 8 : 0) | // 0
 				((GetAsyncKeyState(0x53) & 0x8000) ? 4 : 0);  // S
 			break;
-		case 6: // O3:         K2(CT), K8(NG), K4(HM)
+		case 12: // O3:         K2(CT), K8(NG), K4(HM)
 			TMS1000::g_cpu.K =
 				((GetAsyncKeyState(0x43) & 0x8000) ? 2 : 0) | // C
 				((GetAsyncKeyState(0x4E) & 0x8000) ? 8 : 0) | // S
@@ -87,7 +87,7 @@ namespace GameMerlin
 	void onWriteOOutput(BYTE o) {
 		char output[] = "BUZZ";
 		static bool lastSound = false;
-		bool sound = o & 0x10;
+		bool sound = o & 1;
 
 		if (sound && !lastSound) {
 			Console::WriteAt(1, 2, output, 4, 15);
