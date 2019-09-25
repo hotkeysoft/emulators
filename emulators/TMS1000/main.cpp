@@ -121,10 +121,13 @@ int main() {
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
 //	GameSimon::Init();
 
-	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1100);
-	GameMerlin::Init();
+	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+	GameMerlin::Init(true);
 //	ShowMonitor(cpuInfo);
-//	RunMonitor();
+//	while (1) RunMonitor();
+
+//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+//	GameMerlin::Init(true);
 
 	TMS1000::Reset();
 	long lastTicks = 0;

@@ -5,6 +5,7 @@
 #endif
 #include "TMS1000.h"
 
+#define SET1(X) (X & 0x01)
 #define SET2(X) (X & 0x03)
 #define SET3(X) (X & 0x07)
 #define SET4(X) (X & 0x0F)
@@ -15,6 +16,10 @@
 
 namespace TMS1000
 {
+	void(*opCALL)(BYTE opcode, bool S);
+	void(*opRETN)();
+	void(*opBR)(BYTE opcode);
+	void(*op0x0B)();
 	void(*l_execFunc)(BYTE);
 
 	void Exec1000(BYTE opcode);
@@ -322,12 +327,17 @@ namespace TMS1000
 		g_cpu.PB = value;
 	}
 
-	// 1100
+	// TMS1100
 	void opCOMC() {
-		g_cpu.CB = !g_cpu.CB;
+		g_cpu.CB = SET1(~g_cpu.CB);
 	}
 
-	void opBR(BYTE opcode) {
+	// TMS1400
+	void opTPC() {
+		g_cpu.CB = SET2(g_cpu.PB);
+	}
+
+	void opBR1000(BYTE opcode) {
 		g_cpu.CA = g_cpu.CB;
 		g_cpu.PC = GetW(opcode);
 			
@@ -336,30 +346,88 @@ namespace TMS1000
 		}
 	}
 
-	void opCALL(BYTE opcode) {
-		if (g_cpu.CL) {
-			g_cpu.PB = g_cpu.PA;
-		} else {
-			g_cpu.CS = g_cpu.CA;
-			g_cpu.SR = g_cpu.PC;
-
-			// PB <=> PA
-			BYTE temp = g_cpu.PB;
-			g_cpu.PB = g_cpu.PA;
-			g_cpu.PA = temp;
-
-			g_cpu.CL = true;
-		}
+	void opBR1400(BYTE opcode) {
 		g_cpu.CA = g_cpu.CB;
 		g_cpu.PC = GetW(opcode);
+		g_cpu.PA = g_cpu.PB;
 	}
 
-	void opRETN() {
+	void opCALL1000(BYTE opcode, bool S) {
+		if (S) {
+			if (g_cpu.CL) {
+				g_cpu.PB = g_cpu.PA;
+			}
+			else {
+				g_cpu.CS = g_cpu.CA;
+				g_cpu.SR = g_cpu.PC;
+
+				// PB <=> PA
+				BYTE temp = g_cpu.PB;
+				g_cpu.PB = g_cpu.PA;
+				g_cpu.PA = temp;
+
+				g_cpu.CL = true;
+			}
+			g_cpu.CA = g_cpu.CB;
+			g_cpu.PC = GetW(opcode);
+		}
+	}
+
+	void opCALL1400(BYTE opcode, bool S) {
+		if (S) {
+			g_cpu.SR3 = g_cpu.SR2;
+			g_cpu.SR2 = g_cpu.SR1;
+			g_cpu.SR1 = g_cpu.PC;
+			g_cpu.PC = GetW(opcode);
+
+			g_cpu.PSR3 = g_cpu.PSR2;
+			g_cpu.PSR2 = g_cpu.PSR1;
+			g_cpu.PSR1 = g_cpu.PA;
+			g_cpu.PA = g_cpu.PB;
+
+			g_cpu.CL3 = g_cpu.CL2;
+			g_cpu.CL2 = g_cpu.CL1;
+			g_cpu.CL1 = true;
+
+			g_cpu.CSR3 = g_cpu.CSR2;
+			g_cpu.CSR2 = g_cpu.CSR1;
+			g_cpu.CSR1 = g_cpu.CA;
+			g_cpu.CA = g_cpu.CB;
+		}
+		else {
+			g_cpu.PB = g_cpu.PA;
+			g_cpu.CB = g_cpu.CA;
+		}
+	}
+
+	void opRETN1000() {
 		g_cpu.PA = g_cpu.PB;
 		if (g_cpu.CL) {
 			g_cpu.CA = g_cpu.CS;
 			g_cpu.PC = g_cpu.SR;
 			g_cpu.CL = false;
+		}
+	}
+
+	void opRETN1400() {
+		if (g_cpu.CL1) {
+			g_cpu.PC = g_cpu.SR1;
+			g_cpu.SR1 = g_cpu.SR2;
+			g_cpu.SR2 = g_cpu.SR3;
+
+			g_cpu.PA = g_cpu.PSR1;
+			g_cpu.PB = g_cpu.PSR1;
+			g_cpu.PSR1 = g_cpu.PSR2;
+			g_cpu.PSR2 = g_cpu.PSR3;
+
+			g_cpu.CL1 = g_cpu.CL2;
+			g_cpu.CL2 = g_cpu.CL3;
+			g_cpu.CL3 = false;
+
+			g_cpu.CA = g_cpu.CSR1;
+			g_cpu.CB = g_cpu.CSR1;
+			g_cpu.CSR1 = g_cpu.CSR2;
+			g_cpu.CSR2 = g_cpu.CSR3;
 		}
 	}
 
@@ -379,6 +447,10 @@ namespace TMS1000
 	
 	void Init1000(WORD romSize, WORD ramSize) {
 		l_execFunc = Exec1000;
+		opBR = opBR1000;
+		opCALL = opCALL1000;
+		opRETN = opRETN1000;
+
 		DeleteRAM();
 
 		g_cpu.X = SET2(0xAA);
@@ -390,12 +462,29 @@ namespace TMS1000
 		g_cpu.O = 0;
 		g_cpu.PA = SET4(0xFF);
 		g_cpu.PB = SET4(0xFF);
-		g_cpu.PC = SET6(0x0);
-		g_cpu.SR = SET6(0x0);
+		g_cpu.PC = 0;
+		g_cpu.SR = 0;
 		g_cpu.CL = false;
-		g_cpu.CA = false;
-		g_cpu.CB = false;
-		g_cpu.CS = false;
+		g_cpu.CA = 0;
+		g_cpu.CB = 0;
+		g_cpu.CS = 0;
+
+		// TMS1400
+		g_cpu.SR1 = 0;
+		g_cpu.SR2 = 0;
+		g_cpu.SR3 = 0;
+
+		g_cpu.PSR1 = 0;
+		g_cpu.PSR2 = 0;
+		g_cpu.PSR3 = 0;
+
+		g_cpu.CL1 = false;
+		g_cpu.CL2 = false;
+		g_cpu.CL3 = false;
+
+		g_cpu.CSR1 = 0;
+		g_cpu.CSR2 = 0;
+		g_cpu.CSR3 = 0;
 
 		for (int i = 0; i < RWidth; ++i) {
 			g_cpu.R[i] = false;
@@ -409,7 +498,16 @@ namespace TMS1000
 	void Init1100(WORD romSize, WORD ramSize) {
 		Init1000(romSize, ramSize);
 		g_cpu.X = SET3(0xAA);
+		op0x0B = opCOMC;
 		l_execFunc = Exec1100;
+	}
+
+	void Init1400(WORD romSize, WORD ramSize) {
+		Init1100(romSize, ramSize);
+		op0x0B = opTPC;
+		opBR = opBR1400;
+		opCALL = opCALL1400;
+		opRETN = opRETN1400;
 	}
 
 	void Init(TMS1000Family model, WORD romSize, WORD ramSize) {
@@ -424,6 +522,9 @@ namespace TMS1000
 		case CPU_TMS1300:
 			Init1100(romSize, ramSize);
 			break;
+		case CPU_TMS1400:
+			Init1400(romSize, ramSize);
+			break;
 		}
 	}
 
@@ -434,9 +535,27 @@ namespace TMS1000
 		g_cpu.S = false;
 		g_cpu.SL = false;
 		g_cpu.CL = false;
-		g_cpu.CA = false;
-		g_cpu.CB = false;
-		g_cpu.CS = false;
+		g_cpu.CA = 0;
+		g_cpu.CB = 0;
+		g_cpu.CS = 0;
+
+		// TMS1400
+		g_cpu.SR1 = 0;
+		g_cpu.SR2 = 0;
+		g_cpu.SR3 = 0;
+
+		g_cpu.PSR1 = 0;
+		g_cpu.PSR2 = 0;
+		g_cpu.PSR3 = 0;
+
+		g_cpu.CL1 = false;
+		g_cpu.CL2 = false;
+		g_cpu.CL3 = false;
+
+		g_cpu.CSR1 = 0;
+		g_cpu.CSR2 = 0;
+		g_cpu.CSR3 = 0;
+
 		ticks = 0;
 	}
 
@@ -657,7 +776,7 @@ namespace TMS1000
 		case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF:
 		case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7:
 		case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFE: case 0xFF:
-			if (lastStatus) opCALL(opcode); break;
+			opCALL(opcode, lastStatus); break;
 
 			// ROM Addressing
 		case 0x0F: opRETN(); break;
@@ -679,7 +798,7 @@ namespace TMS1000
 		case 0x1E: opLDP(7);  break;
 		case 0x1F: opLDP(15); break;
 
-		case 0x0B: opCOMC(); break;
+		case 0x0B: op0x0B(); break; // opCOMC on TMS1100, opTPC on TMS1400
 		}
 	}
 
@@ -846,7 +965,7 @@ namespace TMS1000
 		case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF:
 		case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7:
 		case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFE: case 0xFF:
-			if (lastStatus) opCALL(opcode); break;
+			opCALL(opcode, lastStatus); break;
 
 			// ROM Addressing
 		case 0x0F: opRETN(); break;

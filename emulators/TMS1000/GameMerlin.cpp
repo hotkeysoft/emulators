@@ -100,16 +100,16 @@ namespace GameMerlin
 	}
 
 	void ResetButtons() {
-		for (int i = 0; i < 10; ++i) {
+		for (int i = 0; i < 11; ++i) {
 			onWriteROutput(i, false);
 		}
 	}
 
-	void Init() {
+	void Init(bool super) {
 		Console::Init();
 		ResetButtons();
 
-		TMS1000::LoadROM("roms/TMS1100/Merlin/mp3404.bin");
+		TMS1000::LoadROM(super ? "roms/TMS1400/MasterMerlin/mp7351.bin": "roms/TMS1100/Merlin/mp3404.bin");		
 
 		TMS1000::SetInputKCallback(onReadKInput);
 		TMS1000::SetOutputRCallback(onWriteROutput);

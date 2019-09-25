@@ -612,7 +612,7 @@ namespace TestTMS1000
 
 	void Test() {
 		// Unit tests
-		memset(TMS1000::g_memory.RAM, 0xAA, TMS1000::g_memory.ramSize);
+		memset(TMS1000::g_memory.RAM, 0xA, TMS1000::g_memory.ramSize);
 
 		// Register <=> Register
 

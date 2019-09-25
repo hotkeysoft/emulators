@@ -4,7 +4,7 @@ namespace TMS1000
 {
 	const int RWidth = 15;
 
-	enum TMS1000Family { CPU_TMS1000, CPU_TMS1200, CPU_TMS1070, CPU_TMS1270, CPU_TMS1100, CPU_TMS1300 };
+	enum TMS1000Family { CPU_TMS1000, CPU_TMS1200, CPU_TMS1070, CPU_TMS1270, CPU_TMS1100, CPU_TMS1300, CPU_TMS1400 };
 
 	typedef unsigned char BYTE;
 	typedef unsigned short WORD;
@@ -37,10 +37,16 @@ namespace TMS1000
 
 		bool R[RWidth];
 
-		// TMS1100/TMS1300
-		bool CA; // Chapter Address Latch
-		bool CB; // Chapter Buffer latch
-		bool CS; // Chapter Subroutine latch
+		// TMS1100/TMS1300 (1 bit) / TMS1400 (2 bits)
+		BYTE CA; // Chapter Address Latch/Buffer
+		BYTE CB; // Chapter Buffer latch/Buffer
+		BYTE CS; // Chapter Subroutine latch/buffer 
+
+		// TMS1400
+		BYTE SR1, SR2, SR3;	
+		BYTE PSR1, PSR2, PSR3;
+		bool CL1, CL2, CL3;
+		BYTE CSR1, CSR2, CSR3;
 	};
 
 	struct Memory {

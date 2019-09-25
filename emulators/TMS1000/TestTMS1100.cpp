@@ -614,18 +614,18 @@ namespace TestTMS1100
 	}
 
 	void TestCOMC() {
-		TMS1000::g_cpu.CB = false;
+		TMS1000::g_cpu.CB = 0;
 		
 		TMS1000::Exec(0x0B);
-		assert(TMS1000::g_cpu.CB == true);
+		assert(TMS1000::g_cpu.CB == 1);
 		Console::UpdateStatus();
 
 		TMS1000::Exec(0x0B);
-		assert(TMS1000::g_cpu.CB == false);
+		assert(TMS1000::g_cpu.CB == 0);
 		Console::UpdateStatus();
 
 		TMS1000::Exec(0x0B);
-		assert(TMS1000::g_cpu.CB == true);
+		assert(TMS1000::g_cpu.CB == 1);
 		Console::UpdateStatus();
 	}
 
@@ -633,8 +633,8 @@ namespace TestTMS1100
 		TMS1000::g_cpu.PA = 0x01;
 		TMS1000::g_cpu.PB = 0x02;
 		TMS1000::g_cpu.PC = (~addr) & 0x3F;
-		TMS1000::g_cpu.CA = false;
-		TMS1000::g_cpu.CB = true;
+		TMS1000::g_cpu.CA = 0;
+		TMS1000::g_cpu.CB = 1;
 		TMS1000::g_cpu.CL = false;
 		TMS1000::g_cpu.S = false;
 
@@ -644,8 +644,8 @@ namespace TestTMS1100
 		assert(TMS1000::g_cpu.PB == 0x02);
 		assert(TMS1000::g_cpu.PC == ((~addr) & 0x3F));
 		assert(TMS1000::g_cpu.S == true);
-		assert(TMS1000::g_cpu.CA == false);
-		assert(TMS1000::g_cpu.CB == true);
+		assert(TMS1000::g_cpu.CA == 0);
+		assert(TMS1000::g_cpu.CB == 1);
 		assert(TMS1000::g_cpu.CL == false);
 		Console::UpdateStatus();
 
@@ -656,22 +656,22 @@ namespace TestTMS1100
 		assert(TMS1000::g_cpu.PB == 0x02);
 		assert(TMS1000::g_cpu.PC == addr);
 		assert(TMS1000::g_cpu.S == true);
-		assert(TMS1000::g_cpu.CA == true);
-		assert(TMS1000::g_cpu.CB == true);
+		assert(TMS1000::g_cpu.CA == 1);
+		assert(TMS1000::g_cpu.CB == 1);
 		assert(TMS1000::g_cpu.CL == true);
 		Console::UpdateStatus();
 
 		TMS1000::g_cpu.CL = false;
 		TMS1000::g_cpu.CA = false;
-		TMS1000::g_cpu.CB = true;
+		TMS1000::g_cpu.CB = 1;
 		// S = 1, CL = 0 : Branch
 		TMS1000::Exec(opCode);
 		assert(TMS1000::g_cpu.PA == 0x02);
 		assert(TMS1000::g_cpu.PB == 0x02);
 		assert(TMS1000::g_cpu.PC == addr);
 		assert(TMS1000::g_cpu.S == true);
-		assert(TMS1000::g_cpu.CA == true);
-		assert(TMS1000::g_cpu.CB == true);
+		assert(TMS1000::g_cpu.CA == 1);
+		assert(TMS1000::g_cpu.CB == 1);
 		assert(TMS1000::g_cpu.CL == false);
 		Console::UpdateStatus();
 	}
@@ -681,9 +681,9 @@ namespace TestTMS1100
 		TMS1000::g_cpu.PB = 0x02;
 		TMS1000::g_cpu.PC = (~addr) & 0x3F;
 		TMS1000::g_cpu.SR = 0x03;
-		TMS1000::g_cpu.CA = false;
-		TMS1000::g_cpu.CB = true;
-		TMS1000::g_cpu.CS = true;
+		TMS1000::g_cpu.CA = 0;
+		TMS1000::g_cpu.CB = 1;
+		TMS1000::g_cpu.CS = 1;
 		TMS1000::g_cpu.CL = false;
 		TMS1000::g_cpu.S = false;
 
@@ -694,9 +694,9 @@ namespace TestTMS1100
 		assert(TMS1000::g_cpu.PC == ((~addr) & 0x3F));
 		assert(TMS1000::g_cpu.S == true);
 		assert(TMS1000::g_cpu.SR == 0x03);
-		assert(TMS1000::g_cpu.CA == false);
-		assert(TMS1000::g_cpu.CB == true);
-		assert(TMS1000::g_cpu.CS == true);
+		assert(TMS1000::g_cpu.CA == 0);
+		assert(TMS1000::g_cpu.CB == 1);
+		assert(TMS1000::g_cpu.CS == 1);
 		assert(TMS1000::g_cpu.CL == false);
 		Console::UpdateStatus();
 
@@ -708,9 +708,9 @@ namespace TestTMS1100
 		assert(TMS1000::g_cpu.PC == addr);
 		assert(TMS1000::g_cpu.S == true);
 		assert(TMS1000::g_cpu.SR == 0x03);
-		assert(TMS1000::g_cpu.CA == true);
-		assert(TMS1000::g_cpu.CB == true);
-		assert(TMS1000::g_cpu.CS == true);
+		assert(TMS1000::g_cpu.CA == 1);
+		assert(TMS1000::g_cpu.CB == 1);
+		assert(TMS1000::g_cpu.CS == 1);
 		assert(TMS1000::g_cpu.CL == true);
 		Console::UpdateStatus();
 
@@ -718,9 +718,9 @@ namespace TestTMS1100
 		TMS1000::g_cpu.PB = 0x02;
 		TMS1000::g_cpu.PC = (~addr) & 0x3F;
 		TMS1000::g_cpu.SR = 0x03;
-		TMS1000::g_cpu.CA = false;
-		TMS1000::g_cpu.CB = true;
-		TMS1000::g_cpu.CS = true;
+		TMS1000::g_cpu.CA = 0;
+		TMS1000::g_cpu.CB = 1;
+		TMS1000::g_cpu.CS = 1;
 		TMS1000::g_cpu.CL = false;
 		// PC incremented in Step, so SR will be = PC if exec is call directly
 		BYTE retPC = TMS1000::g_cpu.PC;
@@ -732,9 +732,9 @@ namespace TestTMS1100
 		assert(TMS1000::g_cpu.PC == addr);
 		assert(TMS1000::g_cpu.SR == retPC);
 		assert(TMS1000::g_cpu.S == true);
-		assert(TMS1000::g_cpu.CA == true);
-		assert(TMS1000::g_cpu.CB == true);
-		assert(TMS1000::g_cpu.CS == false);
+		assert(TMS1000::g_cpu.CA == 1);
+		assert(TMS1000::g_cpu.CB == 1);
+		assert(TMS1000::g_cpu.CS == 0);
 		assert(TMS1000::g_cpu.CL == true);
 		Console::UpdateStatus();
 	}
@@ -745,8 +745,8 @@ namespace TestTMS1100
 		TMS1000::g_cpu.PC = 0x03;
 		TMS1000::g_cpu.SR = 0x04;
 		TMS1000::g_cpu.CL = false;
-		TMS1000::g_cpu.CA = false;
-		TMS1000::g_cpu.CS = true;
+		TMS1000::g_cpu.CA = 0;
+		TMS1000::g_cpu.CS = 1;
 		TMS1000::g_cpu.S = false;
 
 		// CL = 0
@@ -756,8 +756,8 @@ namespace TestTMS1100
 		assert(TMS1000::g_cpu.PC == 0x03);
 		assert(TMS1000::g_cpu.SR == 0x04);
 		assert(TMS1000::g_cpu.CL == false);
-		assert(TMS1000::g_cpu.CA == false);
-		assert(TMS1000::g_cpu.CS == true);
+		assert(TMS1000::g_cpu.CA == 0);
+		assert(TMS1000::g_cpu.CS == 1);
 		assert(TMS1000::g_cpu.S == true);
 		Console::UpdateStatus();
 
@@ -775,15 +775,15 @@ namespace TestTMS1100
 		assert(TMS1000::g_cpu.PC == 0x04);
 		assert(TMS1000::g_cpu.SR == 0x04);
 		assert(TMS1000::g_cpu.CL == false);
-		assert(TMS1000::g_cpu.CA == true);
-		assert(TMS1000::g_cpu.CS == true);
+		assert(TMS1000::g_cpu.CA == 1);
+		assert(TMS1000::g_cpu.CS == 1);
 		assert(TMS1000::g_cpu.S == true);
 		Console::UpdateStatus();
 	}
 
 	void Test() {
 		// Unit tests
-		memset(TMS1000::g_memory.RAM, 0xAA, TMS1000::g_memory.ramSize);
+		memset(TMS1000::g_memory.RAM, 0xA, TMS1000::g_memory.ramSize);
 		assert(TMS1000::g_memory.ramSize == 128);
 		assert(TMS1000::g_memory.romSize == 2048);
 

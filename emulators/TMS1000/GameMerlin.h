@@ -1,7 +1,7 @@
 #pragma once
 namespace GameMerlin
 {
-	void Init();
+	void Init(bool super);
 
 }
 

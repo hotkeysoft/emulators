@@ -1,0 +1,54 @@
+Parker Brothers Master Merlin
+
+Chip labeled 
+MP7351-N2LL
+C 1982 P.B.
+DCRS 8223
+PHILIPPINES
+
+die labeled
+MP7351
+1400CR
+
+15 buttons: 0-10, New Game, Same Game, Score, Comp Turn
+11 LEDs
+speaker
+
+TMS1400CR pinout
+
+1  R8   - LED 8
+2  R9   - LED 9
+3  R10  - LED 10
+4  VDD  - battery - 
+5  K1   - button matrix
+6  K2   - button matrix
+7  K4   - button matrix
+8  K8   - button matrix
+9  INIT - VDD
+10 O7   - N/C
+11 O6   - 12, 13, speaker
+12 O5   - 11, 13, speaker
+13 O4   - 11, 12, speaker
+14 O3   - button matrix
+15 O2   - button matrix
+16 O1   - button matrix
+17 O0   - button matrix
+18 OSC1 - 100pF disc cap to VSS and 30K resistor to VDD
+19 OSC2 - OSC1
+20 VSS  - battery +
+21 R0   - LED 0
+22 R1   - LED 1
+23 R2   - LED 2
+24 R3   - LED 3
+25 R4   - LED 4
+26 R5   - LED 5
+27 R6   - LED 6
+28 R7   - LED 7
+
+
+keypad matrix
+    K1        K2        K4        K8
+O0  0         1         3         2
+O1  4         5         7         6
+O2  8         9      Same Game    10
+O3  -     Comp Turn   Score    New Game

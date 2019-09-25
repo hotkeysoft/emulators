@@ -1,0 +1,96 @@
+Parker Brothers Split Second
+
+Chip labeled 
+TMS1400NLL
+MP7314-N2
+W 8027
+Philippines
+
+die labeled
+MP7314
+
+6 buttons: UDLR, game select and game start
+53 LEDs
+speaker
+
+Power on beeps and displays 1
+Pressing select cycles 1-8 with beeps
+Pressing start plays ascending tones then starts selected game
+
+TMS1400 pinout (pin names are guesses)
+
+1  R0   LED column 8
+2  R1   LED column 7
+3  R2   LED column 6
+4  R3   LED column 5
+5  R4   LED column 4
+6  R5   LED column 3
+7  R6   LED column 2
+8  R7   LED column 1
+9  R8   resistor to transistor to speaker
+10 R9   keypad row 1
+11 R10  keypad row 2
+12 Vdd  9v battery negative
+13 Init diode and cap
+14 K1   keypad column 1
+15 K2   keypad column 2
+16 K4   keypad column 3
+17 N/C  (K8)
+18 N/C  (O output 7)
+19 O6   LED row 1
+20 O5   LED row 2
+21 O4   LED row 3
+22 O3   LED row 4
+23 O2   LED row 5
+24 O1   LED row 6
+25 O0   LED row 7
+26 OSC  pin 27 and 100pF cap to batt+ and 24K resistor to batt-
+27 OSC  pin 26 and cap and resistor
+28 Vss  9v battery positive
+
+
+keypad matrix
+     K1     K2     K4
+R9  Right  Up     Left
+R10 Down   Select Start
+
+LEDs
+
+ - - -
+|.|.|.|
+ - - -
+|.|.|.|
+ - - -
+|.|.|.|
+ - - -
+|.|.|.|
+ - - -
+|.|.|.|
+ - - -
+ 
+ 
+ LED numbering
+ 
+    1     2     3
+ 4  5  6  7  8  9 10  
+    11    12    13
+14 15 16 17 18 19 20
+    21    22    23
+24 25 26 27 28 29 30
+    31    32    33    
+34 35 36 37 38 39 40
+    41    42    43
+44 45 46 47 48 49 50
+    51    52    53
+    
+
+LED matrix
+
+    R7  R6  R5  R4  R3  R2  R1  R0
+O6  51  45  44  34  24  14   4   1
+O5  41  35  31  25  21  15  11   5
+O4  52  47  46  36  26  16   6   2
+O3  42  37  32  27  22  17  12   7
+O2  53  49  48  38  28  18   8   3
+O1  43  39  33  29  23  19  13   9
+O0  -   -   50  40  30  20  10   -  
