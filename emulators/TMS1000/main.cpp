@@ -11,6 +11,7 @@
 
 #include "GameSimon.h"
 #include "GameMerlin.h"
+#include "GameSplitSecond.h"
 
 void LogCallback(const char *str) {
 	fprintf(stderr, str);
@@ -115,19 +116,23 @@ int main() {
 		TestTMS1100::Test();
 	}
 
+//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
+//	ShowMonitor(cpuInfo);
 //	RunMonitor();
 //	return 0;
 
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
 //	GameSimon::Init();
 
-	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
-	GameMerlin::Init(true);
-//	ShowMonitor(cpuInfo);
-//	while (1) RunMonitor();
+//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+//	GameMerlin::Init(true);
 
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameMerlin::Init(true);
+
+	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+	GameSplitSecond::Init();
+
 
 	TMS1000::Reset();
 	long lastTicks = 0;
@@ -139,7 +144,7 @@ int main() {
 	memset(statusLine, 0, 79);
 	while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000)) {
 		TMS1000::Step();
-		uSleep(200);
+		uSleep(20);
 		long deltaCPU = TMS1000::GetTicks() - lastTicks;
 		if (deltaCPU > hbInterval) {
 			lastTicks = TMS1000::GetTicks();

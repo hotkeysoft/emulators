@@ -47,6 +47,9 @@
     <ClInclude Include="GameMerlin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GameSplitSecond.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -77,6 +80,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GameMerlin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSplitSecond.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -25,7 +25,6 @@ namespace Console
 		// Use cfi to set the screen buffer's new font
 		SetCurrentConsoleFontEx(m_hConsole, FALSE, &cfi);
 
-
 		SMALL_RECT windowSize = { 0, 0, 79, 25 };
 		if (!SetConsoleWindowInfo(m_hConsole, TRUE, &windowSize)) {
 			fprintf(stderr, "SetConsoleWindowInfo failed %d\n", GetLastError());
@@ -36,6 +35,8 @@ namespace Console
 
 		CONSOLE_CURSOR_INFO cursorInfo = { 1, FALSE };
 		SetConsoleCursorInfo(m_hConsole, &cursorInfo);
+
+		SetConsoleOutputCP(437);
 
 		DWORD dwMode = 0;
 		GetConsoleMode(m_hConsole, &dwMode);
