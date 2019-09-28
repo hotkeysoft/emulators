@@ -157,6 +157,7 @@
     <ClInclude Include="Console.h" />
     <ClInclude Include="CPUInfo.h" />
     <ClInclude Include="GameMerlin.h" />
+    <ClInclude Include="GameRSPocketRepeat.h" />
     <ClInclude Include="GameSimon.h" />
     <ClInclude Include="GameSplitSecond.h" />
     <ClInclude Include="stdafx.h" />
@@ -175,6 +176,7 @@
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="CPUInfo.cpp" />
     <ClCompile Include="GameMerlin.cpp" />
+    <ClCompile Include="GameRSPocketRepeat.cpp" />
     <ClCompile Include="GameSimon.cpp" />
     <ClCompile Include="GameSplitSecond.cpp" />
     <ClCompile Include="main.cpp" />

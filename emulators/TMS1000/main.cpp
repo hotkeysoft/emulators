@@ -12,6 +12,7 @@
 #include "GameSimon.h"
 #include "GameMerlin.h"
 #include "GameSplitSecond.h"
+#include "GameRSPocketRepeat.h"
 
 void LogCallback(const char *str) {
 	fprintf(stderr, str);
@@ -132,8 +133,8 @@ int main() {
 	}
 
 	if (0) {
-		CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
-		GameSplitSecond::Init();
+		CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1700);
+		GameRSPocketRepeat::Init();
 		ShowMonitor(cpuInfo);
 		while (1) {
 			RunMonitor();
@@ -147,8 +148,11 @@ int main() {
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameMerlin::Init(true);
 
-	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
-	GameSplitSecond::Init();
+//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+//	GameSplitSecond::Init();
+
+	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1700);
+	GameRSPocketRepeat::Init();
 
 	TMS1000::Reset();
 	long lastTicks = 0;
@@ -160,7 +164,7 @@ int main() {
 	memset(statusLine, 0, 79);
 	while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000)) {
 		TMS1000::Step();
-		uSleep(20);
+		uSleep(200);
 		long deltaCPU = TMS1000::GetTicks() - lastTicks;
 		if (deltaCPU > hbInterval) {
 			lastTicks = TMS1000::GetTicks();

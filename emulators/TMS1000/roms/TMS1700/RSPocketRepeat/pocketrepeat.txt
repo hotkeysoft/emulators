@@ -1,0 +1,48 @@
+Radio Shack Pocket Repeat Model 60-2152
+
+Chip labeled 
+MP1801-N2LL
+DS8505
+PHILIPPINES
+
+die labeled
+MP1801
+
+4 buttons: Yellow, Blue, Orange, Red
+4 LEDs
+Piezo buzzer
+
+
+1  R8   - N/C
+2  R9   - N/C
+3  R10  - N/C
+4  VDD  - batt - via switch
+5  K1   - yellow button (beginner/game 1)
+6  K2   - blue button (amateur/game 2)
+7  K4   - orange button (expert/last)
+8  K8   - red button (champ/again)
+9  INIT - cap/diode
+10 O7   - N/C
+11 O6   - Piezo and 1K resistor to VDD
+12 O5   - Piezo and 1K resistor to VDD
+13 O4   - N/C
+14 O3   - N/C
+15 O2   - N/C
+16 O1   - N/C
+17 O0   - N/C
+18 OSC1 - OSC2 and 47 cap to VSS, 100K resistor to VDD
+19 OSC2 - OSC1 and cap and resistor
+20 VSS  - batt +
+21 R0   - yellow LED
+22 R1   - blue LED
+23 R2   - orange LED
+24 R3   - red LED
+25 R4   - N/C
+26 R5   - N/C
+27 R6   - N/C
+28 R7   - N/C
+
+
+button matrix
+           K1              K2             K4             K8
+VSS   yellow button    blue button   orange button   red button

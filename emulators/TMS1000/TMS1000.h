@@ -4,7 +4,16 @@ namespace TMS1000
 {
 	const int RWidth = 15;
 
-	enum TMS1000Family { CPU_TMS1000, CPU_TMS1200, CPU_TMS1070, CPU_TMS1270, CPU_TMS1100, CPU_TMS1300, CPU_TMS1400 };
+	enum TMS1000Family { 
+		CPU_TMS1000, 
+		CPU_TMS1200, 
+		CPU_TMS1070, 
+		CPU_TMS1270, 
+		CPU_TMS1100, 
+		CPU_TMS1300, 
+		CPU_TMS1400,
+		CPU_TMS1700
+	};
 
 	typedef unsigned char BYTE;
 	typedef unsigned short WORD;

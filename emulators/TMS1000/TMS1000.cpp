@@ -540,6 +540,7 @@ namespace TMS1000
 		case CPU_TMS1200:
 		case CPU_TMS1070:
 		case CPU_TMS1270:
+		case CPU_TMS1700:
 			Init1000(romSize, ramSize);
 			break;
 		case CPU_TMS1100:
@@ -553,8 +554,14 @@ namespace TMS1000
 	}
 
 	void Reset() {
-		g_cpu.PA = SET4(0xff);
-		g_cpu.PB = SET4(0xff);
+		if (g_memory.romSize < 1024) {
+			g_cpu.PA = SET3(0xff);
+			g_cpu.PB = SET3(0xff);
+		}
+		else {
+			g_cpu.PA = SET4(0xff);
+			g_cpu.PB = SET4(0xff);
+		}
 		g_cpu.PC = SET6(0x00);
 		g_cpu.S = false;
 		g_cpu.SL = false;
