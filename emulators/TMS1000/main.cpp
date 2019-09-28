@@ -96,6 +96,21 @@ CPUInfo& InitCPU(TMS1000::TMS1000Family model) {
 	return cpuInfo;
 }
 
+void WriteASMFile(const CPUInfo &info, const char* path) {
+	FILE* f = fopen(path, "w");
+	if (f) {
+		int pages = TMS1000::g_memory.romSize / 64;
+		for (int p = 0; p < pages; ++p) {
+			fprintf(f, "; Page %X\n", p);
+
+			for (int b = 0; b < 64; ++b) {
+				fprintf(f, "%X:%02X\t%s\n", p, b, info.Disassemble(TMS1000::g_memory.ROM[p * 64 + b]).c_str());
+			}
+		}
+	}
+	fclose(f);
+}
+
 int main() {
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -116,13 +131,15 @@ int main() {
 		TestTMS1100::Test();
 	}
 
-//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
-//	ShowMonitor(cpuInfo);
-//	RunMonitor();
-//	return 0;
+	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
+	GameSimon::Init();
 
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
-//	GameSimon::Init();
+	ShowMonitor(cpuInfo);
+	while (1) {
+		RunMonitor();
+	}
+	return 0;
 
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameMerlin::Init(true);
@@ -130,8 +147,8 @@ int main() {
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameMerlin::Init(true);
 
-	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
-	GameSplitSecond::Init();
+//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+//	GameSplitSecond::Init();
 
 
 	TMS1000::Reset();

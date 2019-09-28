@@ -132,6 +132,17 @@ namespace Console
 		}
 	}
 
+	void WriteRRegister() {
+		static const CPUInfo::Coord coord = m_pCPUInfo->GetCoord("R");
+		static char r[16];
+		if (coord.IsSet()) {
+			for (int i = 0; i < coord.w; ++i) {
+				r[i] = TMS1000::g_cpu.R[(coord.w - 1) - i] ? '1' : '0';
+			}
+			WriteAt(coord.x, coord.y, r, coord.w);
+		}
+	}
+
 	void WriteRAM() {
 		const short lineLen = 16;
 		static const CPUInfo::Coord coord = m_pCPUInfo->GetCoord("RAM");
@@ -199,12 +210,17 @@ namespace Console
 		const int height = 12; // Heights are hardcoded for now
 		for (short y = 0; y < height; ++y) {
 			WORD PC = (TMS1000::g_cpu.PC -4 + y) & 0x3F;
+			// PAGE:PC
+			// 0000:000000
 
-			line[0] = hexDigits[((PC + baseAddr) & 0xF00) >> 8];
-			line[1] = hexDigits[((PC + baseAddr) & 0x0F0) >> 4];
-			line[2] = hexDigits[(PC + baseAddr) & 0x00F];
+			// Page
+			line[0] = hexDigits[((PC + baseAddr) & 0x3C0) >> 6];
+			// PC
+			line[1] = ':';
+			line[2] = hexDigits[((PC + baseAddr) & 0x030) >> 4];
+			line[3] = hexDigits[(PC + baseAddr) & 0x00F];
 			
-			WriteAt(coordAddr.x, coordAddr.y + y, line, 3, 14);
+			WriteAt(coordAddr.x, coordAddr.y + y, line, 4, 14);
 
 			BYTE opcode = TMS1000::g_memory.ROM[PC + baseAddr];
 			std::string instr = m_pCPUInfo->Disassemble(opcode);
@@ -243,7 +259,6 @@ namespace Console
 		WriteRegisterValue(TMS1000::g_cpu.SL, "SL");
 
 		WriteRegisterValue(TMS1000::g_cpu.O, "O");
-//		WriteRegisterValue(TMS1000::g_cpu.R, "R");
 		WriteRegisterValue(TMS1000::g_cpu.K, "K");
 
 		WriteRegisterValue(TMS1000::g_cpu.PA, "PA");
@@ -251,6 +266,8 @@ namespace Console
 		WriteRegisterValue(TMS1000::g_cpu.PC, "PC");
 		WriteRegisterValue(TMS1000::g_cpu.SR, "SR");
 		WriteRegisterValue(TMS1000::g_cpu.CL, "CL");
+
+		WriteRRegister();
 
 		if (m_pCPUInfo->GetModel() && TMS1000::CPU_TMS1100 ||
 			m_pCPUInfo->GetModel() && TMS1000::CPU_TMS1300)
