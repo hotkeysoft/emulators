@@ -51,11 +51,11 @@ namespace TMS1000
 		BYTE CB; // Chapter Buffer latch/Buffer
 		BYTE CS; // Chapter Subroutine latch/buffer 
 
-		// TMS1400
-		BYTE SR1, SR2, SR3;	
-		BYTE PSR1, PSR2, PSR3;
-		bool CL1, CL2, CL3;
-		BYTE CSR1, CSR2, CSR3;
+		// TMS1400 - Three level stack
+		uint32_t SR1400; // PC Stack: 3 * 6 bits = 18
+		uint16_t PSR1400; // Page Stack: 3 * 4 bits = 12
+		uint8_t CSR1400; // Chapter stack: 3 * 2 bits = 6	
+		uint8_t CL1400; // Call latch stack: 3 bits
 	};
 
 	struct Memory {

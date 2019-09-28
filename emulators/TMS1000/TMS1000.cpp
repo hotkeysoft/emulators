@@ -393,23 +393,19 @@ namespace TMS1000
 
 	void opCALL1400(BYTE opcode, bool S) {
 		if (S) {
-			g_cpu.SR3 = g_cpu.SR2;
-			g_cpu.SR2 = g_cpu.SR1;
-			g_cpu.SR1 = g_cpu.PC;
+			g_cpu.SR1400 <<= 6;
+			g_cpu.SR1400 |= g_cpu.PC;
 			g_cpu.PC = GetW(opcode);
 
-			g_cpu.PSR3 = g_cpu.PSR2;
-			g_cpu.PSR2 = g_cpu.PSR1;
-			g_cpu.PSR1 = g_cpu.PA;
+			g_cpu.PSR1400 <<= 4;
+			g_cpu.PSR1400 |= g_cpu.PA;
 			g_cpu.PA = g_cpu.PB;
 
-			g_cpu.CL3 = g_cpu.CL2;
-			g_cpu.CL2 = g_cpu.CL1;
-			g_cpu.CL1 = true;
+			g_cpu.CL1400 <<= 1;
+			g_cpu.CL1400 |= 1;
 
-			g_cpu.CSR3 = g_cpu.CSR2;
-			g_cpu.CSR2 = g_cpu.CSR1;
-			g_cpu.CSR1 = g_cpu.CA;
+			g_cpu.CSR1400 <<= 2;
+			g_cpu.CSR1400 |= g_cpu.CA;
 			g_cpu.CA = g_cpu.CB;
 		}
 		else {
@@ -428,24 +424,18 @@ namespace TMS1000
 	}
 
 	void opRETN1400() {
-		if (g_cpu.CL1) {
-			g_cpu.PC = g_cpu.SR1;
-			g_cpu.SR1 = g_cpu.SR2;
-			g_cpu.SR2 = g_cpu.SR3;
+		if (g_cpu.CL1400 & 1) {
+			g_cpu.PC = SET6(g_cpu.SR1400);
+			g_cpu.SR1400 >>= 6;
 
-			g_cpu.PA = g_cpu.PSR1;
-			g_cpu.PB = g_cpu.PSR1;
-			g_cpu.PSR1 = g_cpu.PSR2;
-			g_cpu.PSR2 = g_cpu.PSR3;
+			g_cpu.PA = g_cpu.PB = SET4(g_cpu.PSR1400);
+			g_cpu.PSR1400 >>= 4;
 
-			g_cpu.CL1 = g_cpu.CL2;
-			g_cpu.CL2 = g_cpu.CL3;
-			g_cpu.CL3 = false;
+			g_cpu.CL1400 >>= 1;
+			g_cpu.CL1400 &= 3;
 
-			g_cpu.CA = g_cpu.CSR1;
-			g_cpu.CB = g_cpu.CSR1;
-			g_cpu.CSR1 = g_cpu.CSR2;
-			g_cpu.CSR2 = g_cpu.CSR3;
+			g_cpu.CA = g_cpu.CB = SET2(g_cpu.CSR1400);
+			g_cpu.CSR1400 >>= 2;
 		}
 	}
 
@@ -490,21 +480,10 @@ namespace TMS1000
 		g_cpu.CS = 0;
 
 		// TMS1400
-		g_cpu.SR1 = 0;
-		g_cpu.SR2 = 0;
-		g_cpu.SR3 = 0;
-
-		g_cpu.PSR1 = 0;
-		g_cpu.PSR2 = 0;
-		g_cpu.PSR3 = 0;
-
-		g_cpu.CL1 = false;
-		g_cpu.CL2 = false;
-		g_cpu.CL3 = false;
-
-		g_cpu.CSR1 = 0;
-		g_cpu.CSR2 = 0;
-		g_cpu.CSR3 = 0;
+		g_cpu.SR1400 = 0;
+		g_cpu.PSR1400 = 0;
+		g_cpu.CL1400 = 0;
+		g_cpu.CSR1400 = 0;
 
 		for (int i = 0; i < RWidth; ++i) {
 			g_cpu.R[i] = false;
@@ -571,21 +550,10 @@ namespace TMS1000
 		g_cpu.CS = 0;
 
 		// TMS1400
-		g_cpu.SR1 = 0;
-		g_cpu.SR2 = 0;
-		g_cpu.SR3 = 0;
-
-		g_cpu.PSR1 = 0;
-		g_cpu.PSR2 = 0;
-		g_cpu.PSR3 = 0;
-
-		g_cpu.CL1 = false;
-		g_cpu.CL2 = false;
-		g_cpu.CL3 = false;
-
-		g_cpu.CSR1 = 0;
-		g_cpu.CSR2 = 0;
-		g_cpu.CSR3 = 0;
+		g_cpu.SR1400 = 0;
+		g_cpu.PSR1400 = 0;
+		g_cpu.CL1400 = 0;
+		g_cpu.CSR1400 = 0;
 
 		ticks = 0;
 	}

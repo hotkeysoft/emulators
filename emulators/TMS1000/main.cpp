@@ -126,15 +126,14 @@ int main() {
 	if (0)
 	{
 		CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1100);
-		//TMS1000::LoadROM("roms/TMS1100/test.bin");
 		TMS1000::LoadROM("roms/TMS1100/connect4.bin");
 		ShowMonitor(cpuInfo);
 		TestTMS1100::Test();
 	}
 
 	if (0) {
-		CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1700);
-		GameRSPocketRepeat::Init();
+		CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+		GameSplitSecond::Init();
 		ShowMonitor(cpuInfo);
 		while (1) {
 			RunMonitor();
@@ -145,14 +144,14 @@ int main() {
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameMerlin::Init(true);
 
-//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
-//	GameMerlin::Init(true);
+	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+	GameMerlin::Init(true);
 
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameSplitSecond::Init();
 
-	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1700);
-	GameRSPocketRepeat::Init();
+//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1700);
+//	GameRSPocketRepeat::Init();
 
 	TMS1000::Reset();
 	long lastTicks = 0;
