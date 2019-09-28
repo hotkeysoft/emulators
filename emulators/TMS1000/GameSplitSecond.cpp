@@ -52,17 +52,17 @@ namespace GameSplitSecond
 
 
 	const char* LED[LEDcount] = {
-		" \xcd\xcd", 				" \xcd\xcd", 				" \xcd\xcd",
+		" \xcd\xcd ", 				" \xcd\xcd", 				" \xcd\xcd",
 		"\xba",		"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba",
-		" \xcd\xcd", 				" \xcd\xcd", 				" \xcd\xcd",
+		" \xcd\xcd ", 				" \xcd\xcd", 				" \xcd\xcd ",
 		"\xba",		"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba",
-		" \xcd\xcd", 				" \xcd\xcd", 				" \xcd\xcd",
+		" \xcd\xcd ", 				" \xcd\xcd", 				" \xcd\xcd ",
 		"\xba",		"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba",
-		" \xcd\xcd", 				" \xcd\xcd", 				" \xcd\xcd",
+		" \xcd\xcd ", 				" \xcd\xcd", 				" \xcd\xcd ",
 		"\xba",		"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba",
-		" \xcd\xcd", 				" \xcd\xcd", 				" \xcd\xcd",
+		" \xcd\xcd ", 				" \xcd\xcd", 				" \xcd\xcd ",
 		"\xba",		"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba", 	"\xde\xdd", 	"\xba",
-		" \xcd\xcd", 				" \xcd\xcd", 				" \xcd\xcd",
+		" \xcd\xcd ", 				" \xcd\xcd", 				" \xcd\xcd ",
 	};
 
 	// keypad matrix
@@ -93,21 +93,24 @@ namespace GameSplitSecond
 		Console::GotoXY(
 			std::get<0>(pos)+10,
 			std::get<1>(pos)+5);
-		Console::SetColor(state ? 12 : 7);
+		Console::SetColor(state ? (1*16)+14 : (1*16)+0);
 		Console::Write((const char *)LED[id]);
 	}
 
 	void onWriteROutput(BYTE bit, bool state) {
-		
-		return;
-		static uint8_t button[] = { 219, 219 };
+		const char output[] = "BUZZ";
+		static bool lastSound = false;
+		bool sound = (bit == 8) && state;
 
-		std::tuple<short, short>& pos = LEDPosition[bit];
-		Console::GotoXY(
-			std::get<0>(pos),
-			std::get<1>(pos));
-		Console::SetColor(state ? 12 : 4);
-		Console::Write((const char *)button);
+		if (sound && !lastSound) {
+			Console::WriteAt(1, 2, output, 4, 15);
+			lastSound = true;
+		}
+		else if (!sound && lastSound) {
+			Console::WriteAt(1, 2, output, 4, 0);
+			lastSound = false;
+		}
+
 	}
 	
 	//     R7  R6  R5  R4  R3  R2  R1  R0
@@ -127,30 +130,14 @@ namespace GameSplitSecond
 				writeLED(ROMap[(o & 7)-1][7-i] - 1, TMS1000::g_cpu.R[i]);
 			}
 		}
-
-		return;
-		char output[] = "BUZZ";
-		static bool lastSound = false;
-		bool sound = o & 1;
-
-		if (sound && !lastSound) {
-			Console::WriteAt(1, 2, output, 4, 15);
-			lastSound = true;
-		}
-		else if (!sound && lastSound) {
-			Console::WriteAt(1, 2, output, 4, 7);
-			lastSound = false;
-		}
 	}
 
 	void ResetButtons() {
 		for (int i = 0; i < LEDcount; ++i) {
 			writeLED(i, true);
-			Sleep(10);
 		}
 		for (int i = 0; i < LEDcount; ++i) {
 			writeLED(i, false);
-			Sleep(10);
 		}
 	}
 

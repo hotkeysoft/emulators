@@ -131,15 +131,15 @@ int main() {
 		TestTMS1100::Test();
 	}
 
-	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
-	GameSimon::Init();
-
-//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1000);
-	ShowMonitor(cpuInfo);
-	while (1) {
-		RunMonitor();
+	if (0) {
+		CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+		GameSplitSecond::Init();
+		ShowMonitor(cpuInfo);
+		while (1) {
+			RunMonitor();
+		}
+		return 0;
 	}
-	return 0;
 
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameMerlin::Init(true);
@@ -147,9 +147,8 @@ int main() {
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameMerlin::Init(true);
 
-//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
-//	GameSplitSecond::Init();
-
+	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
+	GameSplitSecond::Init();
 
 	TMS1000::Reset();
 	long lastTicks = 0;

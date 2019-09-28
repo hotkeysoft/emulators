@@ -18,6 +18,8 @@ namespace TMS1000
 {
 	void(*opCALL)(BYTE opcode, bool S);
 	void(*opRETN)();
+	void(*opSETR)();
+	void(*opRSTR)();
 	void(*opBR)(BYTE opcode);
 	void(*op0x0B)();
 	void(*l_execFunc)(BYTE);
@@ -278,7 +280,23 @@ namespace TMS1000
 		g_cpu.A = SET4(g_cpu.K);
 	}
 
-	void opSETR() {
+	void opSETR1000() {
+		// SETR
+		if (g_cpu.Y <= 10) { // TODO: 15 on TMS1300
+			outputRCallback(g_cpu.Y, true);
+			g_cpu.R[g_cpu.Y] = true;
+		}
+	}
+
+	void opRSTR1000() {
+		// RSTR
+		if (g_cpu.Y <= 10) { // TODO: 15 on TMS1300
+			outputRCallback(g_cpu.Y, false);
+			g_cpu.R[g_cpu.Y] = false;
+		}
+	}
+
+	void opSETR1100() {
 		// SETR
 		if (g_cpu.X <= 3 && g_cpu.Y <= 10) { // TODO: 15 on TMS1300
 			outputRCallback(g_cpu.Y, true);
@@ -286,7 +304,7 @@ namespace TMS1000
 		}
 	}
 
-	void opRSTR() {
+	void opRSTR1100() {
 		// RSTR
 		if (g_cpu.X <= 3 && g_cpu.Y <= 10) { // TODO: 15 on TMS1300
 			outputRCallback(g_cpu.Y, false);
@@ -450,6 +468,8 @@ namespace TMS1000
 		opBR = opBR1000;
 		opCALL = opCALL1000;
 		opRETN = opRETN1000;
+		opSETR = opSETR1000;
+		opRSTR = opRSTR1000;
 
 		DeleteRAM();
 
@@ -499,12 +519,16 @@ namespace TMS1000
 		Init1000(romSize, ramSize);
 		g_cpu.X = SET3(0xAA);
 		op0x0B = opCOMC;
+		opSETR = opSETR1100; // On TMS1100 X must be <=3 for SETR/RSTR
+		opRSTR = opRSTR1100;
 		l_execFunc = Exec1100;
 	}
 
 	void Init1400(WORD romSize, WORD ramSize) {
 		Init1100(romSize, ramSize);
 		op0x0B = opTPC;
+		opSETR = opSETR1000; // On TMS1400 no restriction on X for SETR/RSTR
+		opRSTR = opRSTR1000;
 		opBR = opBR1400;
 		opCALL = opCALL1400;
 		opRETN = opRETN1400;
