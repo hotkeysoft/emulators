@@ -16,20 +16,20 @@
 
 namespace TMS1000
 {
-	void(*opCALL)(BYTE opcode, bool S);
+	void(*opCALL)(uint8_t opcode, bool S);
 	void(*opRETN)();
 	void(*opSETR)();
 	void(*opRSTR)();
-	void(*opBR)(BYTE opcode);
+	void(*opBR)(uint8_t opcode);
 	void(*op0x0B)();
-	void(*l_execFunc)(BYTE);
+	void(*l_execFunc)(uint8_t);
 
-	void Exec1000(BYTE opcode);
-	void Exec1100(BYTE opcode);
+	void Exec1000(uint8_t opcode);
+	void Exec1100(uint8_t opcode);
 
 	void nullInputKCallback() {}
-	void nullOutputOCallback(BYTE) {}
-	void nullOutputRCallback(BYTE, bool) {}
+	void nullOutputOCallback(uint8_t) {}
+	void nullOutputRCallback(uint8_t, bool) {}
 
 	KCallbackFunc inputKCallback = nullInputKCallback;
 	OCallbackFunc outputOCallback = nullOutputOCallback;
@@ -39,8 +39,8 @@ namespace TMS1000
 	CPUState g_cpu;
 	Memory g_memory;
 
-	void uADC(BYTE& reg, BYTE val) {
-		BYTE sum = reg + val;
+	void uADC(uint8_t& reg, uint8_t val) {
+		uint8_t sum = reg + val;
 		g_cpu.S = (sum > 0x0F);
 		reg = SET4(sum);
 	}
@@ -105,7 +105,7 @@ namespace TMS1000
 
 	void opXMA() {
 		// MTP, STO, AUTA
-		BYTE temp = CURR_RAM;
+		uint8_t temp = CURR_RAM;
 		CURR_RAM = g_cpu.A;
 		g_cpu.A = temp;
 	}
@@ -117,7 +117,7 @@ namespace TMS1000
 
 	void opSAMAN() {
 		// MTP, NATN, CIN, C8, AUTA
-		BYTE sum = NOT4(g_cpu.A) + CURR_RAM + 1;
+		uint8_t sum = NOT4(g_cpu.A) + CURR_RAM + 1;
 		g_cpu.S = (sum > 0x0F);
 		g_cpu.A = SET4(sum);
 	}
@@ -202,20 +202,20 @@ namespace TMS1000
 
 	void opCPAIZ() {
 		// NATN, CIN, C8, AUTA
-		BYTE sum = NOT4(g_cpu.A) + 1;
+		uint8_t sum = NOT4(g_cpu.A) + 1;
 		g_cpu.S = (sum > 0x0F);
 		g_cpu.A = SET4(sum);
 	}
 
 	void opALEM() {
 		// MTP, NATN, CIN, C8
-		BYTE sum = NOT4(g_cpu.A) + CURR_RAM + 1;
+		uint8_t sum = NOT4(g_cpu.A) + CURR_RAM + 1;
 		g_cpu.S = (sum > 0x0F);
 	}
 
-	void opALEC(BYTE value) {
+	void opALEC(uint8_t value) {
 		// CKP, NATN, CIN, C8
-		BYTE sum = NOT4(g_cpu.A) + value + 1;
+		uint8_t sum = NOT4(g_cpu.A) + value + 1;
 		g_cpu.S = (sum > 0x0F);
 	}
 
@@ -235,34 +235,34 @@ namespace TMS1000
 		g_cpu.SL = g_cpu.S;
 	}
 
-	void opYNEC(BYTE value) {
+	void opYNEC(uint8_t value) {
 		// YTP, CKN, NE
 		g_cpu.S = (g_cpu.Y != value);
 	}
 
-	void opSBIT(BYTE value) {
+	void opSBIT(uint8_t value) {
 		// SBIT
-		BYTE setBit = 1 << value;
+		uint8_t setBit = 1 << value;
 		CURR_RAM |= setBit;
 	}
 
-	void opRBIT(BYTE value) {
+	void opRBIT(uint8_t value) {
 		// RBIT
-		BYTE setBit = SET4(~(1 << value));
+		uint8_t setBit = SET4(~(1 << value));
 		CURR_RAM &= setBit;
 	}
 
-	void opTBIT1(BYTE value) {
+	void opTBIT1(uint8_t value) {
 		// CKP, CKN, MTP, NE
 		g_cpu.S = (CURR_RAM & (1 << value));
 	}
 
-	void opTCY(BYTE value) {
+	void opTCY(uint8_t value) {
 		// CKP, AUTY
 		g_cpu.Y = value;
 	}
 
-	void opTCMIY(BYTE value) {
+	void opTCMIY(uint8_t value) {
 		// CKM, YTP, CIN, AUTY
 		CURR_RAM = value;
 		g_cpu.Y = SET4(g_cpu.Y + 1);
@@ -325,7 +325,7 @@ namespace TMS1000
 		outputOCallback(g_cpu.O);
 	}
 
-	void opLDX(BYTE value) {
+	void opLDX(uint8_t value) {
 		// LDX
 		g_cpu.X = value;
 	}
@@ -340,7 +340,7 @@ namespace TMS1000
 		g_cpu.X ^=4;
 	}
 
-	void opLDP(BYTE value) {
+	void opLDP(uint8_t value) {
 		// LDP
 		g_cpu.PB = value;
 	}
@@ -355,7 +355,7 @@ namespace TMS1000
 		g_cpu.CB = SET2(g_cpu.PB);
 	}
 
-	void opBR1000(BYTE opcode) {
+	void opBR1000(uint8_t opcode) {
 		g_cpu.CA = g_cpu.CB;
 		g_cpu.PC = GetW(opcode);
 			
@@ -364,13 +364,13 @@ namespace TMS1000
 		}
 	}
 
-	void opBR1400(BYTE opcode) {
+	void opBR1400(uint8_t opcode) {
 		g_cpu.CA = g_cpu.CB;
 		g_cpu.PC = GetW(opcode);
 		g_cpu.PA = g_cpu.PB;
 	}
 
-	void opCALL1000(BYTE opcode, bool S) {
+	void opCALL1000(uint8_t opcode, bool S) {
 		if (S) {
 			if (g_cpu.CL) {
 				g_cpu.PB = g_cpu.PA;
@@ -380,7 +380,7 @@ namespace TMS1000
 				g_cpu.SR = g_cpu.PC;
 
 				// PB <=> PA
-				BYTE temp = g_cpu.PB;
+				uint8_t temp = g_cpu.PB;
 				g_cpu.PB = g_cpu.PA;
 				g_cpu.PA = temp;
 
@@ -391,7 +391,7 @@ namespace TMS1000
 		}
 	}
 
-	void opCALL1400(BYTE opcode, bool S) {
+	void opCALL1400(uint8_t opcode, bool S) {
 		if (S) {
 			g_cpu.SR1400 <<= 6;
 			g_cpu.SR1400 |= g_cpu.PC;
@@ -447,13 +447,13 @@ namespace TMS1000
 	void InitRAM() {
 		DeleteRAM();
 
-		g_memory.RAM = new BYTE[g_memory.ramSize];
+		g_memory.RAM = new uint8_t[g_memory.ramSize];
 		for (int i = 0; i < g_memory.ramSize; ++i) {
 			g_memory.RAM[i] = SET4(0xAA);
 		}
 	}
 	
-	void Init1000(WORD romSize, WORD ramSize) {
+	void Init1000(uint16_t romSize, uint16_t ramSize) {
 		l_execFunc = Exec1000;
 		opBR = opBR1000;
 		opCALL = opCALL1000;
@@ -494,7 +494,7 @@ namespace TMS1000
 		InitRAM();	
 	}
 
-	void Init1100(WORD romSize, WORD ramSize) {
+	void Init1100(uint16_t romSize, uint16_t ramSize) {
 		Init1000(romSize, ramSize);
 		g_cpu.X = SET3(0xAA);
 		op0x0B = opCOMC;
@@ -503,7 +503,7 @@ namespace TMS1000
 		l_execFunc = Exec1100;
 	}
 
-	void Init1400(WORD romSize, WORD ramSize) {
+	void Init1400(uint16_t romSize, uint16_t ramSize) {
 		Init1100(romSize, ramSize);
 		op0x0B = opTPC;
 		opSETR = opSETR1000; // On TMS1400 no restriction on X for SETR/RSTR
@@ -513,7 +513,7 @@ namespace TMS1000
 		opRETN = opRETN1400;
 	}
 
-	void Init(TMS1000Family model, WORD romSize, WORD ramSize) {
+	void Init(TMS1000Family model, uint16_t romSize, uint16_t ramSize) {
 		switch (model) {
 		case CPU_TMS1000:
 		case CPU_TMS1200:
@@ -558,59 +558,59 @@ namespace TMS1000
 		ticks = 0;
 	}
 
-	BYTE GetW(BYTE opcode) {
+	uint8_t GetW(uint8_t opcode) {
 		return SET6(opcode);
 	}
 
 	// GetB, GetC, and GetF are helpers and not used internally because they are a bit costly
-	BYTE GetF(BYTE opcode) {
+	uint8_t GetF(uint8_t opcode) {
 		return	(opcode & 1 ? 4 : 0) |
 				(opcode & 2 ? 2 : 0) |
 				(opcode & 4 ? 1 : 0);
 	}
-	BYTE GetC(BYTE opcode) {
+	uint8_t GetC(uint8_t opcode) {
 		return	(opcode & 1 ? 8 : 0) |
 			(opcode & 2 ? 4 : 0) |
 			(opcode & 4 ? 2 : 0) |
 			(opcode & 8 ? 1 : 0);
 	}
-	BYTE GetB(BYTE opcode) {
+	uint8_t GetB(uint8_t opcode) {
 		return 
 			(opcode & 1 ? 2 : 0) | 
 			(opcode & 2 ? 1 : 0);
 	}
 
-	BYTE GetM() {
+	uint8_t GetM() {
 		return GetM(g_cpu.X, g_cpu.Y);
 	}
-	BYTE GetM(BYTE x, BYTE y) {
+	uint8_t GetM(uint8_t x, uint8_t y) {
 		return (SET3(x) << 4) | SET4(y);
 	}
-	BYTE GetRAM(BYTE addr) {
+	uint8_t GetRAM(uint8_t addr) {
 		return SET4(g_memory.RAM[addr]);
 	}
-	void PutRAM(BYTE value, BYTE addr) {
+	void PutRAM(uint8_t value, uint8_t addr) {
 		g_memory.RAM[addr] = SET4(value);
 	}
 
-	WORD GetROMAddress() {
+	uint16_t GetROMAddress() {
 		return (TMS1000::g_cpu.CA << 10) | (TMS1000::g_cpu.PA << 6) | g_cpu.PC;
 	}
 
-	BYTE GetROMData() {
-		WORD baseAddr = GetROMAddress();
+	uint8_t GetROMData() {
+		uint16_t baseAddr = GetROMAddress();
 #ifdef ARDUINO
-		return pgm_read_byte_near(g_memory.ROM + baseAddr);
+		return pgm_read_uint8_t_near(g_memory.ROM + baseAddr);
 #else
 		return g_memory.ROM[baseAddr];
 #endif
 	}
 
-	void Exec(BYTE opcode) {
+	void Exec(uint8_t opcode) {
 		l_execFunc(opcode);
 	}
 
-	void Exec1100(BYTE opcode) {
+	void Exec1100(uint8_t opcode) {
 		bool lastStatus = g_cpu.S;
 		g_cpu.S = true;
 
@@ -801,7 +801,7 @@ namespace TMS1000
 		}
 	}
 
-	void Exec1000(BYTE opcode) {
+	void Exec1000(uint8_t opcode) {
 		bool lastStatus = g_cpu.S;
 		g_cpu.S = true;
 
@@ -989,7 +989,7 @@ namespace TMS1000
 	}
 
 	void Step() {
-		BYTE opCode = GetROMData();
+		uint8_t opCode = GetROMData();
 		g_cpu.PC = SET6(g_cpu.PC + 1);
 		l_execFunc(opCode);
 		ticks += 6;
@@ -1014,7 +1014,7 @@ namespace TMS1000
 #ifndef ARDUINO
 	// The program counter is not linear, it increments in 
 	// this sequence
-	static BYTE PCSequence[64] = {
+	static uint8_t PCSequence[64] = {
 		0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x3E,
 		0x3D, 0x3B, 0x37, 0x2F, 0x1E, 0x3C, 0x39, 0x33,
 		0x27, 0x0E, 0x1D, 0x3A, 0x35, 0x2B, 0x16, 0x2C,
@@ -1025,8 +1025,8 @@ namespace TMS1000
 		0x25, 0x0A, 0x15, 0x2A, 0x14, 0x28, 0x10, 0x20
 	};
 
-	BYTE inverseSequence(BYTE addr) {
-		for (BYTE i = 0; i < 64; ++i) {
+	uint8_t inverseSequence(uint8_t addr) {
+		for (uint8_t i = 0; i < 64; ++i) {
 			if (PCSequence[i] == addr) {
 				return i;
 			}
@@ -1038,7 +1038,7 @@ namespace TMS1000
 	// so it appear as linear (and then we can simply 
 	// increment PC)
 	void RemapROM() {
-		BYTE *remappedROM = new BYTE[g_memory.romSize];
+		uint8_t *remappedROM = new uint8_t[g_memory.romSize];
 
 		for (int i = 0; i < g_memory.romSize; ++i) {
 			// Remap memory addresses
@@ -1046,7 +1046,7 @@ namespace TMS1000
 
 			// Remap branch and jump instructions
 			if (remappedROM[i] & 0x80) {
-				BYTE newAddress = inverseSequence(remappedROM[i] & 0x3F);
+				uint8_t newAddress = inverseSequence(remappedROM[i] & 0x3F);
 				remappedROM[i] &= 0xC0; // Keep opcode
 				remappedROM[i] |= newAddress; // new operand
 			}
@@ -1066,8 +1066,8 @@ namespace TMS1000
 			}
 			fseek(f, 0, SEEK_SET);
 			delete[] g_memory.ROM;
-			g_memory.ROM = new BYTE[g_memory.romSize];
-			if (fread(const_cast<TMS1000::BYTE*>(g_memory.ROM), size, 1, f) != 1) {
+			g_memory.ROM = new uint8_t[g_memory.romSize];
+			if (fread(const_cast<uint8_t*>(g_memory.ROM), size, 1, f) != 1) {
 				throw std::exception("Error reading ROM file");
 			}
 			RemapROM();
@@ -1078,7 +1078,7 @@ namespace TMS1000
 	void SaveROM(const char* path) {
 		FILE* f = fopen(path, "w");
 		if (f) {
-			fprintf(f, "const BYTE rom[] PROGMEM = {\n\t");
+			fprintf(f, "const uint8_t rom[] PROGMEM = {\n\t");
 			int lines = g_memory.romSize / 16;
 			for (int y = 0; y < lines; ++y) {
 				for (int x = 0; x < 16; ++x) {

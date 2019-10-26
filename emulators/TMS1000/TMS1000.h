@@ -15,41 +15,39 @@ namespace TMS1000
 		CPU_TMS1700
 	};
 
-	typedef unsigned char BYTE;
-	typedef unsigned short WORD;
-	typedef void(*OpcodeFunc)(BYTE);
+	typedef void(*OpcodeFunc)(uint8_t);
 
 	typedef void(*KCallbackFunc)();
-	typedef void(*OCallbackFunc)(BYTE);
-	typedef void(*RCallbackFunc)(BYTE, bool);
+	typedef void(*OCallbackFunc)(uint8_t);
+	typedef void(*RCallbackFunc)(uint8_t, bool);
 
 	struct CPUState {
 		// Registers
-		BYTE A;
-		BYTE X;
-		BYTE Y;
+		uint8_t A;
+		uint8_t X;
+		uint8_t Y;
 
 		// Status
 		bool S;
 		bool SL;
 
 		// ROM Addressing
-		BYTE PA;
-		BYTE PB;
-		BYTE PC;
-		BYTE SR;
+		uint8_t PA;
+		uint8_t PB;
+		uint8_t PC;
+		uint8_t SR;
 		bool CL;
 
 		// IO
-		BYTE K;
-		BYTE O;
+		uint8_t K;
+		uint8_t O;
 
 		bool R[RWidth];
 
 		// TMS1100/TMS1300 (1 bit) / TMS1400 (2 bits)
-		BYTE CA; // Chapter Address Latch/Buffer
-		BYTE CB; // Chapter Buffer latch/Buffer
-		BYTE CS; // Chapter Subroutine latch/buffer 
+		uint8_t CA; // Chapter Address Latch/Buffer
+		uint8_t CB; // Chapter Buffer latch/Buffer
+		uint8_t CS; // Chapter Subroutine latch/buffer 
 
 		// TMS1400 - Three level stack
 		uint32_t SR1400; // PC Stack: 3 * 6 bits = 18
@@ -59,8 +57,8 @@ namespace TMS1000
 	};
 
 	struct Memory {
-		BYTE* RAM = nullptr;
-		const BYTE* ROM = nullptr;
+		uint8_t* RAM = nullptr;
+		const uint8_t* ROM = nullptr;
 
 		int ramSize = 0;
 		int romSize = 0;
@@ -69,25 +67,25 @@ namespace TMS1000
 	extern CPUState g_cpu;
 	extern Memory g_memory;
 
-	void Init(TMS1000Family model, WORD romSize, WORD ramSize);
+	void Init(TMS1000Family model, uint16_t romSize, uint16_t ramSize);
 
 	void Reset();
 	void Step();
 
-	void Exec(BYTE opcode);
+	void Exec(uint8_t opcode);
 	long GetTicks();
 
-	BYTE GetB(BYTE opcode);
-	BYTE GetC(BYTE opcode);
-	BYTE GetF(BYTE opcode);
-	BYTE GetW(BYTE opcode);
+	uint8_t GetB(uint8_t opcode);
+	uint8_t GetC(uint8_t opcode);
+	uint8_t GetF(uint8_t opcode);
+	uint8_t GetW(uint8_t opcode);
 
-	BYTE GetM();
-	BYTE GetM(BYTE X, BYTE Y);
-	WORD GetROMAddress();
-	BYTE GetROMData();
-	BYTE GetRAM(BYTE addr = GetM());
-	void PutRAM(BYTE value, BYTE addr = GetM());
+	uint8_t GetM();
+	uint8_t GetM(uint8_t X, uint8_t Y);
+	uint16_t GetROMAddress();
+	uint8_t GetROMData();
+	uint8_t GetRAM(uint8_t addr = GetM());
+	void PutRAM(uint8_t value, uint8_t addr = GetM());
 
 	void SetInputKCallback(KCallbackFunc);
 

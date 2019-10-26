@@ -6,9 +6,6 @@
 
 namespace TestTMS1000
 {
-	using TMS1000::BYTE;
-	using TMS1000::WORD;
-
 	void TestTAY()
 	{
 		TMS1000::g_cpu.X = 0;
@@ -172,7 +169,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestIMAC(BYTE m, BYTE expect, bool carry) {
+	void TestIMAC(uint8_t m, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.X = 0;
 		TMS1000::g_cpu.Y = 1;
 		TMS1000::g_cpu.A = 0;
@@ -187,7 +184,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestDMAN(BYTE m, BYTE expect, bool carry) {
+	void TestDMAN(uint8_t m, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.X = 0;
 		TMS1000::g_cpu.Y = 2;
 		TMS1000::g_cpu.A = 0;
@@ -202,7 +199,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestSAMAN(BYTE m, BYTE a, BYTE res, bool carry) {
+	void TestSAMAN(uint8_t m, uint8_t a, uint8_t res, bool carry) {
 		TMS1000::g_cpu.X = 2;
 		TMS1000::g_cpu.Y = 15;
 		TMS1000::PutRAM(m);
@@ -218,7 +215,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestIA(BYTE a, BYTE expect) {
+	void TestIA(uint8_t a, uint8_t expect) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.S = false;
 		TMS1000::Exec(0x0E); // IA
@@ -227,7 +224,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestIYC(BYTE y, BYTE expect, bool carry) {
+	void TestIYC(uint8_t y, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.Y = y;
 		TMS1000::g_cpu.S = false;
 		TMS1000::Exec(0x2B); // IA
@@ -236,7 +233,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestDAN(BYTE a, BYTE expect, bool carry) {
+	void TestDAN(uint8_t a, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.S = false;
 		TMS1000::Exec(0x07); // DAN
@@ -245,7 +242,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestDYN(BYTE a, BYTE expect, bool carry) {
+	void TestDYN(uint8_t a, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.Y = a;
 		TMS1000::g_cpu.S = false;
 		TMS1000::Exec(0x2C); // DYN
@@ -254,7 +251,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestA6AAC(BYTE a, BYTE expect, bool carry) {
+	void TestA6AAC(uint8_t a, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.S = false;
 		TMS1000::Exec(0x06); // A6AAC
@@ -263,7 +260,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestA8AAC(BYTE a, BYTE expect, bool carry) {
+	void TestA8AAC(uint8_t a, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.S = false;
 		TMS1000::Exec(0x01); // A8AAC
@@ -272,7 +269,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestA10AAC(BYTE a, BYTE expect, bool carry) {
+	void TestA10AAC(uint8_t a, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.S = false;
 		TMS1000::Exec(0x05); // A10AAC
@@ -281,7 +278,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestCPAIZ(BYTE a, BYTE expect, bool carry) {
+	void TestCPAIZ(uint8_t a, uint8_t expect, bool carry) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.S = false;
 		TMS1000::Exec(0x2D); // CPAIZ
@@ -290,7 +287,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestALEM(BYTE a, BYTE m, bool carry) {
+	void TestALEM(uint8_t a, uint8_t m, bool carry) {
 		TMS1000::g_cpu.X = 2;
 		TMS1000::g_cpu.Y = 10;
 		TMS1000::PutRAM(m);
@@ -306,7 +303,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestALEC(BYTE opCode, BYTE a, bool carry) {
+	void TestALEC(uint8_t opCode, uint8_t a, bool carry) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.S = false;
 
@@ -316,7 +313,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestMNEZ(BYTE m, bool status) {
+	void TestMNEZ(uint8_t m, bool status) {
 		TMS1000::g_cpu.X = 3;
 		TMS1000::g_cpu.Y = 3;
 		TMS1000::PutRAM(m);
@@ -330,7 +327,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestYNEA(BYTE y, BYTE a, bool status) {
+	void TestYNEA(uint8_t y, uint8_t a, bool status) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.Y = y;
 		TMS1000::g_cpu.S = false;
@@ -342,7 +339,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestYNEC(BYTE opCode, BYTE y, bool carry) {
+	void TestYNEC(uint8_t opCode, uint8_t y, bool carry) {
 		TMS1000::g_cpu.Y = y & 0x0F;
 		TMS1000::g_cpu.S = false;
 
@@ -352,7 +349,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestSRBIT(BYTE opCode, BYTE m, BYTE expected) {
+	void TestSRBIT(uint8_t opCode, uint8_t m, uint8_t expected) {
 		TMS1000::g_cpu.X = 1;
 		TMS1000::g_cpu.Y = 2;
 		TMS1000::PutRAM(m);
@@ -364,7 +361,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestTBIT(BYTE opCode, BYTE m, bool status) {
+	void TestTBIT(uint8_t opCode, uint8_t m, bool status) {
 		TMS1000::g_cpu.X = 1;
 		TMS1000::g_cpu.Y = 3;
 		TMS1000::PutRAM(m);
@@ -375,7 +372,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestTCY(BYTE opCode, BYTE y) {
+	void TestTCY(uint8_t opCode, uint8_t y) {
 		TMS1000::g_cpu.Y = 0;
 		TMS1000::g_cpu.S = false;
 
@@ -385,8 +382,8 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestTCMIY(BYTE opCode, BYTE value) {
-		BYTE oldY = TMS1000::g_cpu.Y;
+	void TestTCMIY(uint8_t opCode, uint8_t value) {
+		uint8_t oldY = TMS1000::g_cpu.Y;
 		TMS1000::g_cpu.S = false;
 
 		TMS1000::Exec(opCode);
@@ -396,7 +393,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestKNEZ(BYTE value, bool status) {
+	void TestKNEZ(uint8_t value, bool status) {
 		TMS1000::g_cpu.K = value;
 		TMS1000::g_cpu.S = false;
 
@@ -405,7 +402,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestTKA(BYTE value) {
+	void TestTKA(uint8_t value) {
 		TMS1000::g_cpu.K = value;
 		TMS1000::g_cpu.A = ~value;
 		TMS1000::g_cpu.S = false;
@@ -416,7 +413,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestSETR(BYTE r) {
+	void TestSETR(uint8_t r) {
 		TMS1000::g_cpu.R[r] = false;
 		TMS1000::g_cpu.Y = r;
 		TMS1000::g_cpu.S = false;
@@ -427,7 +424,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestRSTR(BYTE r) {
+	void TestRSTR(uint8_t r) {
 		TMS1000::g_cpu.R[r] = true;
 		TMS1000::g_cpu.Y = r;
 		TMS1000::g_cpu.S = false;
@@ -438,7 +435,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestTDO(BYTE a, bool SL) {
+	void TestTDO(uint8_t a, bool SL) {
 		TMS1000::g_cpu.A = a;
 		TMS1000::g_cpu.SL = SL;
 		TMS1000::g_cpu.S = false;
@@ -459,7 +456,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestLDX(BYTE opCode, BYTE value) {
+	void TestLDX(uint8_t opCode, uint8_t value) {
 		TMS1000::g_cpu.X = ~value;
 		TMS1000::g_cpu.S = false;
 
@@ -469,7 +466,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TextCOMX(BYTE x, BYTE notX) {
+	void TextCOMX(uint8_t x, uint8_t notX) {
 		TMS1000::g_cpu.X = x;
 		TMS1000::g_cpu.S = false;
 
@@ -479,7 +476,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestLDP(BYTE opCode, BYTE value) {
+	void TestLDP(uint8_t opCode, uint8_t value) {
 		TMS1000::g_cpu.PB = ~value;
 		TMS1000::g_cpu.S = false;
 
@@ -489,7 +486,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestBR(BYTE opCode, BYTE addr) {
+	void TestBR(uint8_t opCode, uint8_t addr) {
 		TMS1000::g_cpu.PA = 0x01;
 		TMS1000::g_cpu.PB = 0x02;
 		TMS1000::g_cpu.PC = (~addr) & 0x3F;
@@ -526,7 +523,7 @@ namespace TestTMS1000
 		Console::UpdateStatus();
 	}
 
-	void TestCALL(BYTE opCode, BYTE addr) {
+	void TestCALL(uint8_t opCode, uint8_t addr) {
 		TMS1000::g_cpu.PA = 0x01;
 		TMS1000::g_cpu.PB = 0x02;
 		TMS1000::g_cpu.PC = (~addr) & 0x3F;
@@ -561,7 +558,7 @@ namespace TestTMS1000
 		TMS1000::g_cpu.SR = 0x03;
 		TMS1000::g_cpu.CL = false;
 		// PC incremented in Step, so SR will be = PC if exec is call directly
-		BYTE retPC = TMS1000::g_cpu.PC;
+		uint8_t retPC = TMS1000::g_cpu.PC;
 
 		// S = 1, CL = 0 : CALL
 		TMS1000::Exec(opCode);
@@ -767,10 +764,10 @@ namespace TestTMS1000
 		// Bit Manipulation in Memory
 
 		// SBIT
-		const BYTE SBIT0 = 0x30;
-		const BYTE SBIT2 = 0x31;
-		const BYTE SBIT1 = 0x32;
-		const BYTE SBIT3 = 0x33;
+		const uint8_t SBIT0 = 0x30;
+		const uint8_t SBIT2 = 0x31;
+		const uint8_t SBIT1 = 0x32;
+		const uint8_t SBIT3 = 0x33;
 
 		TestSRBIT(SBIT0, 0, 1);
 		TestSRBIT(SBIT1, 0, 2);
@@ -778,10 +775,10 @@ namespace TestTMS1000
 		TestSRBIT(SBIT3, 0, 8);
 
 		// RBIT
-		const BYTE RBIT0 = 0x34;
-		const BYTE RBIT2 = 0x35;
-		const BYTE RBIT1 = 0x36;
-		const BYTE RBIT3 = 0x37;
+		const uint8_t RBIT0 = 0x34;
+		const uint8_t RBIT2 = 0x35;
+		const uint8_t RBIT1 = 0x36;
+		const uint8_t RBIT3 = 0x37;
 
 		TestSRBIT(RBIT0, 0xF, 0xE);
 		TestSRBIT(RBIT1, 0xF, 0xD);
@@ -789,10 +786,10 @@ namespace TestTMS1000
 		TestSRBIT(RBIT3, 0xF, 0x7);
 
 		// TBIT
-		const BYTE TBIT0 = 0x38;
-		const BYTE TBIT2 = 0x39;
-		const BYTE TBIT1 = 0x3A;
-		const BYTE TBIT3 = 0x3B;
+		const uint8_t TBIT0 = 0x38;
+		const uint8_t TBIT2 = 0x39;
+		const uint8_t TBIT1 = 0x3A;
+		const uint8_t TBIT3 = 0x3B;
 
 		TestTBIT(TBIT0, 0xF, true);
 		TestTBIT(TBIT1, 0xF, true);
@@ -817,22 +814,22 @@ namespace TestTMS1000
 		// Constrant Transfer Instructions
 
 		// TCY
-		const BYTE TCY0 = 0x40;
-		const BYTE TCY8 = 0x41;
-		const BYTE TCY4 = 0x42;
-		const BYTE TCY12 = 0x43;
-		const BYTE TCY2 = 0x44;
-		const BYTE TCY10 = 0x45;
-		const BYTE TCY6 = 0x46;
-		const BYTE TCY14 = 0x47;
-		const BYTE TCY1 = 0x48;
-		const BYTE TCY9 = 0x49;
-		const BYTE TCY5 = 0x4a;
-		const BYTE TCY13 = 0x4b;
-		const BYTE TCY3 = 0x4c;
-		const BYTE TCY11 = 0x4d;
-		const BYTE TCY7 = 0x4e;
-		const BYTE TCY15 = 0x4f;
+		const uint8_t TCY0 = 0x40;
+		const uint8_t TCY8 = 0x41;
+		const uint8_t TCY4 = 0x42;
+		const uint8_t TCY12 = 0x43;
+		const uint8_t TCY2 = 0x44;
+		const uint8_t TCY10 = 0x45;
+		const uint8_t TCY6 = 0x46;
+		const uint8_t TCY14 = 0x47;
+		const uint8_t TCY1 = 0x48;
+		const uint8_t TCY9 = 0x49;
+		const uint8_t TCY5 = 0x4a;
+		const uint8_t TCY13 = 0x4b;
+		const uint8_t TCY3 = 0x4c;
+		const uint8_t TCY11 = 0x4d;
+		const uint8_t TCY7 = 0x4e;
+		const uint8_t TCY15 = 0x4f;
 
 		TestTCY(TCY0, 0);
 		TestTCY(TCY1, 1);
@@ -918,10 +915,10 @@ namespace TestTMS1000
 		// RAM X Addressing Instructions
 
 		// LDX
-		const BYTE LDX0 = 0x3C;
-		const BYTE LDX2 = 0x3D;
-		const BYTE LDX1 = 0x3E;
-		const BYTE LDX3 = 0x3F;
+		const uint8_t LDX0 = 0x3C;
+		const uint8_t LDX2 = 0x3D;
+		const uint8_t LDX1 = 0x3E;
+		const uint8_t LDX3 = 0x3F;
 
 		TestLDX(LDX0, 0);
 		TestLDX(LDX1, 1);

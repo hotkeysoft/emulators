@@ -141,17 +141,19 @@ int main() {
 		return 0;
 	}
 
+//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1100);
+//	GameMerlin::Init(false);
+
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
 //	GameMerlin::Init(true);
 
 	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
-	GameMerlin::Init(true);
-
-//	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1400);
-//	GameSplitSecond::Init();
+	GameSplitSecond::Init();
+	TMS1000::SaveROM("splitSecond.h");
 
 //	CPUInfo &cpuInfo = InitCPU(TMS1000::CPU_TMS1700);
 //	GameRSPocketRepeat::Init();
+
 
 	TMS1000::Reset();
 	long lastTicks = 0;
