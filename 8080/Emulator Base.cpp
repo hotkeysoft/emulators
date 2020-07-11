@@ -301,14 +301,13 @@ int main(void)
 	mmap.EnableLog(false);
 
 	std::vector<MemoryBlock> monitorRom;
-	if (readIntelHex("../basic/main/main.ihx", monitorRom))
-	//if (readIntelHex("../basic/integer/integer.ihx", monitorRom))
+	if (readIntelHex("data/main.ihx", monitorRom))
 	{
 		for (int i=0; i<monitorRom.size(); i++)
 			memory.Allocate(&(monitorRom[i]));
 	}
 
-	if (!readMapFile("../basic/main/main.map", mmap))
+	if (!readMapFile("data/main.map", mmap))
 	{
 		fprintf(stderr, "Error reading map file\n");
 	}

@@ -1,0 +1,333 @@
+ASxxxx Linker V03.00,  page 1.
+Hexidecimal  [16-Bits]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+.  .ABS.                   0000        0000 =           0. bytes (ABS,OVR)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+          0000  s_BOOT                          
+          0000  .__.ABS.                           main
+          0000  FALSE                              main
+          0000  K_NONE                             common
+          0001  DEBUG                              main
+          0001  SID_CINT                           common
+          0002  SID_CFLOAT                         common
+          0004  SID_CSTR                           common
+          0008  SID_VAR                            common
+          0010  SID_GOSUB                          common
+          0020  SID_FOR                            common
+          003B  l_BOOT                          
+          0040  s__CODE                         
+          0080  SID_FBASE                          common
+          0080  K_POWER                            common
+          0081  K_NEGATE                           common
+          0082  K_MULTIPLY                         common
+          0083  K_DIVIDE                           common
+          0084  K_ADD                              common
+          0085  K_SUBSTRACT                        common
+          0086  K_NOTEQUAL                         common
+          0087  K_LESSEQUAL                        common
+          0088  K_GREATEREQUAL                     common
+          0089  K_LESS                             common
+          008A  K_GREATER                          common
+          008B  K_EQUAL                            common
+          008C  K_NOT                              common
+          008D  K_AND                              common
+          008E  K_OR                               common
+          008F  K_XOR                              common
+          00A0  K_ABS                              common
+          00A1  K_ASC                              common
+          00A2  K_FRE                              common
+          00A3  K_LEN                              common
+          00A4  K_PEEK                             common
+          00A5  K_RND                              common
+          00A6  K_SGN                              common
+          00A7  K_SQR                              common
+          00A8  K_VAL                              common
+          00B0  K_CHR                              common
+          00B1  K_LEFT                             common
+          00B2  K_MID                              common
+          00B3  K_RIGHT                            common
+          00B4  K_STR                              common
+          00C0  K_BEEP                             common
+          00C1  K_CLR                              common
+          00C2  K_CLS                              common
+          00C3  K_COLOR                            common
+          00C4  K_ELSE                             common
+          00C5  K_END                              common
+ASxxxx Linker V03.00,  page 2.
+Hexidecimal  [16-Bits]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+.  .ABS.                   0000        0000 =           0. bytes (ABS,OVR)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+          00C6  K_FOR                              common
+          00C7  K_GOSUB                            common
+          00C8  K_GOTO                             common
+          00C9  K_GOTOXY                           common
+          00CA  K_IF                               common
+          00CB  K_INPUT                            common
+          00CC  K_LET                              common
+          00CD  K_LIST                             common
+          00CE  K_NEW                              common
+          00CF  K_NEXT                             common
+          00D0  K_POKE                             common
+          00D1  K_PRINT                            common
+          00D2  K_REM                              common
+          00D3  K_RETURN                           common
+          00D4  K_RUN                              common
+          00D5  K_SLEEP                            common
+          00D6  K_SOUND                            common
+          00D7  K_STEP                             common
+          00D8  K_SYS                              common
+          00D9  K_THEN                             common
+          00DA  K_TO                               common
+          00E0  K_DUMPVAR                          common
+          00E1  K_DUMPSTR                          common
+          0120  l_DATA                          
+          248F  l__CODE                         
+          8000  s_DATA                          
+          FFFF  TRUE                               main
+          FFFF  STACK                              main
+
+ASxxxx Linker V03.00,  page 3.
+Hexidecimal  [16-Bits]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+_CODE                      0040        248F =        9359. bytes (REL,CON)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+          008F  EXECUTE                            main
+          014A  K_TABLE                            common
+          024C  C_TAG2NAME                         common
+          0265  C_NAME2TAG                         common
+          02A4  C_ISALPHA                          common
+          02BC  C_ISDIGIT                          common
+          02CA  C_MEMSET                           common
+          02E6  C_MEMCPYF                          common
+          0309  C_MEMCPY                           common
+          0328  ERR_BREAK                          error
+          032F  ERR_UNKNOWN                        error
+          0336  ERR_NOENDSTR                       error
+          033D  ERR_INVALIDCHAR                    error
+          0344  ERR_STACKOVERFLOW                  error
+          034B  ERR_STACKUNDERFLOW                 error
+          0352  ERR_TYPEMISMATCH                   error
+          0359  ERR_OVERFLOW                       error
+          0360  ERR_ILLEGAL                        error
+          0367  ERR_SYNTAX                         error
+          036E  ERR_ELSEWITHOUTIF                  error
+          0375  ERR_LINENOTFOUND                   error
+          037C  ERR_STRTOOLONG                     error
+          0383  ERR_DIVZERO                        error
+          038A  ERR_RETURNWITHOUTGOSUB             error
+          0391  ERR_NEXTWITHOUTFOR                 error
+          0398  ERR_FORWITHOUTNEXT                 error
+          039F  ERR_OUTOFMEMORY                    error
+          051D  EVAL_EVALUATE                      evaluate
+          0670  EVAL_UNARYOP                       evaluate
+          0676  EVAL_BINARYOP                      evaluate
+          0697  EVAL_BINARYCALC                    evaluate
+          073C  EVAL_BINARYREL                     evaluate
+          07DC  EVAL_BINARYLOG                     evaluate
+          0826  EVAL_NEGATE                        evaluate
+          083B  EVAL_NOT                           evaluate
+          0850  EVAL_ABS                           evaluate
+          0865  EVAL_SGN                           evaluate
+          087A  EVAL_PEEK                          evaluate
+          0893  EVAL_RND                           evaluate
+          08B0  EVAL_SQR                           evaluate
+          08CB  EVAL_LEN                           evaluate
+          08E4  EVAL_ASC                           evaluate
+          090B  EVAL_VAL                           evaluate
+          0932  EVAL_CHR                           evaluate
+          0961  EVAL_STR                           evaluate
+          098F  EVAL_LEFT                          evaluate
+          09D1  EVAL_RIGHT                         evaluate
+          0A25  EVAL_MID                           evaluate
+          0AA2  EVAL_FRE                           evaluate
+          0B43  EXP_INIT                           expreval
+ASxxxx Linker V03.00,  page 4.
+Hexidecimal  [16-Bits]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+_CODE                      0040        248F =        9359. bytes (REL,CON)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+          0B4A  EXP_EXPREVAL                       expreval
+          107A  EXP_DO_INPUT                       expreval
+          1120  EXP_L0                             expreval
+          12A9  EXP_SKIPWHITESPACE                 expreval
+          12C1  EXP_CLRSTACK                       expreval
+          12CA  EXP_ISSTACKEMPTY                   expreval
+          12E0  EXP_PUSH                           expreval
+          1312  EXP_POP                            expreval
+          132B  EXP_POPPUSH                        expreval
+          1341  EXP_CLEARSTACK                     expreval
+          134A  EXP_READLINE                       expreval
+          138B  INT_INIT                           integer
+          139E  INT_NEG                            integer
+          13BD  INT_ADD                            integer
+          13EF  INT_SUB                            integer
+          13F9  INT_CMP                            integer
+          141E  INT_ZERO                           integer
+          1425  INT_AND                            integer
+          1436  INT_OR                             integer
+          1447  INT_XOR                            integer
+          1458  INT_NOT                            integer
+          14A5  INT_MUL                            integer
+          1525  INT_DIV                            integer
+          15C0  INT_ITOA                           integer
+          1685  INT_ITOA_U8                        integer
+          16F1  INT_ATOI                           integer
+          1754  INT_ABS                            integer
+          175D  INT_SGN                            integer
+          177A  INT_RND                            integer
+          179A  INT_RANDOMIZE                      integer
+          179E  INT_SQR                            integer
+          17DB  IO_INIT                            io
+          17F0  IO_INITKBBUF                       io
+          1841  IO_XON                             io
+          1848  IO_XOFF                            io
+          184F  IO_GETCHAR                         io
+          1876  IO_PUTC                            io
+          1882  IO_PUTCR                           io
+          1887  IO_PUTS                            io
+          1899  IO_PUTSN                           io
+          18AA  IO_PUTCB                           io
+          18C4  IO_PUTCH                           io
+          18E2  IO_PUTHLHEX                        io
+          18EB  IO_CLS                             io
+          18F6  IO_HOME                            io
+          1901  IO_GOTOXY                          io
+          1914  IO_SETFG                           io
+          1923  IO_SETBG                           io
+          1936  IO_SETCOLOR                        io
+          1949  IO_SETINPUTMODE                    io
+          1954  IO_SETINTERACTIVEMODE              io
+ASxxxx Linker V03.00,  page 5.
+Hexidecimal  [16-Bits]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+_CODE                      0040        248F =        9359. bytes (REL,CON)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+          198D  IO_BEEP                            io
+          199B  IO_SOUNDON                         io
+          19B8  IO_SOUNDOFF                        io
+          19C1  IO_DELAY                           io
+          1A83  PRG_INIT                           program
+          1AC0  PRG_RESET                          program
+          1ADB  PRG_CLR                            program
+          1AED  PRG_NEW                            program
+          1AFD  PRG_LIST                           program
+          1B34  PRG_FIND                           program
+          1B75  PRG_INSERT                         program
+          1BD6  PRG_REMOVE                         program
+          1C26  PRG_RUN                            program
+          1C53  PRG_RUNIMMEDIATE                   program
+          1C6E  PRG_GOTO                           program
+          1C78  PRG_GOSUB                          program
+          1CB4  PRG_RETURN                         program
+          1CEA  PRG_END                            program
+          1CF0  PRG_FOR                            program
+          1D76  ENDLOOP                            program
+          1D84  PRG_NEXT                           program
+          1D9B  PRG_DOIT                           program
+          1E7D  STR_ALLOCATE                       strings
+          1EBE  STR_FREE                           strings
+          1EDC  STR_COPY                           strings
+          1EE7  STR_CMP                            strings
+          1F16  STR_GETUNIQUEPTR                   strings
+          1F73  STR_DUMPSTRINGS                    strings
+          1FD6  STR_GARBAGECOLLECTION              strings
+          2110  TOK_FINDTOKENID                    tokenize
+          212D  TOK_FINDTOKENSTR                   tokenize
+          2148  TOK_TOKENIZE1                      tokenize
+          21EC  TOK_TOKENIZE2                      tokenize
+          22CF  TOK_UNTOKENIZE                     tokenize
+          233B  VAR_GET                            variable
+          2383  VAR_SET                            variable
+          23F6  VAR_INTERNALNEW                    variable
+          240C  VAR_INTERNALGET                    variable
+          243A  VAR_DUMPVARS                       variable
+ASxxxx Linker V03.00,  page 6.
+Hexidecimal  [16-Bits]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+BOOT                       0000        003B =          59. bytes (ABS,OVR)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+ASxxxx Linker V03.00,  page 7.
+Hexidecimal  [16-Bits]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+DATA                       8000        0120 =         288. bytes (REL,CON)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+          8000  ERR_RESTARTPTR                     error
+          8003  EXP_INBUFFERLEN                    expreval
+          8004  EXP_INBUFFER                       expreval
+          80BA  EXP_STACKTEMP                      expreval
+          80C0  INT_OVERFLOW                       integer
+          80C1  INT_ACC0                           integer
+          80C3  INT_ACC1                           integer
+          80C5  INT_ACC2                           integer
+          80C7  INT_ACC3                           integer
+          80C9  INT_ACCSTR                         integer
+          80D6  TICNT                              io
+          80EB  PRG_LOPTR                          program
+          80ED  PRG_HIPTR                          program
+          80EF  PRG_CURRLINE                       program
+          80F7  PRG_INIF                           program
+          80F8  PRG_ISEND                          program
+          80F9  PRG_ISNEXT                         program
+          80FA  STR_LOPTR                          strings
+          80FC  STR_HIPTR                          strings
+          8104  TOK_CURRTOKEN                      tokenize
+          8105  TOK_CURRTOKENLEN                   tokenize
+          810B  VAR_TEMP1                          variable
+          810F  VAR_TEMP2                          variable
+          8113  VAR_TEMP3                          variable
+          8117  VAR_LOPTR                          variable
+          8119  VAR_HIPTR                          variable
+
+ASxxxx Linker V03.00,  page 8.
+
+Files Linked                              [ module(s) ]
+
+main                                      [ main ]
+..\common\common                          [ common ]
+..\error\error                            [ error ]
+..\expreval\evaluate                      [ evaluate ]
+..\expreval\expreval                      [ expreval ]
+..\integer\integer                        [ integer ]
+..\io\io                                  [ io ]
+..\program\program                        [ program ]
+..\strings\strings                        [ strings ]
+..\tokenize\tokenize                      [ tokenize ]
+..\variables\variable                     [ variable ]
+
+ASxxxx Linker V03.00,  page 9.
+
+User Base Address Definitions
+
+DATA   = 0x8000
+_CODE  = 0x0040
+
+
