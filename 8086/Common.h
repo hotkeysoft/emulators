@@ -1,6 +1,9 @@
 #pragma once
+#include <cstdint>
 
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
-typedef unsigned long DWORD;
-
+namespace emul
+{
+	typedef uint8_t BYTE;
+	typedef uint16_t WORD;
+	typedef uint32_t DWORD;
+}

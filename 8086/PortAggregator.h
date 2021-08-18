@@ -1,12 +1,15 @@
 #pragma once
 #include "PortConnector.h"
 
-class PortAggregator : public PortConnector
+namespace emul
 {
-public:
-	PortAggregator() : Logger("PORTS") {}
-	virtual ~PortAggregator() {}
 
-	void Connect(PortConnector &ports);
-};
+	class PortAggregator : public PortConnector
+	{
+	public:
+		PortAggregator() : Logger("PORTS") {}
+		virtual ~PortAggregator() {}
 
+		void Connect(PortConnector& ports);
+	};
+}

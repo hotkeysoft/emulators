@@ -4,66 +4,69 @@
 #include "Common.h"
 #include "Logger.h"
 
-class CPU;
-typedef void(*CPUCallbackFunc)(CPU* cpu, WORD addr);
-
-struct WatchItem
+namespace emul
 {
-	WORD addr;
-	CPUCallbackFunc onCall;
-	CPUCallbackFunc onRet;
-};
+	class CPU;
+	typedef void(*CPUCallbackFunc)(CPU* cpu, WORD addr);
 
-class CPU : virtual public Logger
-{
-public:
-	CPU(Memory &memory, MemoryMap &mmap);
-	virtual ~CPU();
+	struct WatchItem
+	{
+		WORD addr;
+		CPUCallbackFunc onCall;
+		CPUCallbackFunc onRet;
+	};
 
-	virtual void Reset();
-	void Run();
-	virtual bool Step();
+	class CPU : virtual public Logger
+	{
+	public:
+		CPU(Memory& memory, MemoryMap& mmap);
+		virtual ~CPU();
 
-	unsigned long getTime() { return m_timeTicks; };
+		virtual void Reset();
+		void Run();
+		virtual bool Step();
 
-	void DumpUnassignedOpcodes();
+		unsigned long getTime() { return m_timeTicks; };
 
-	// Watches
-	void AddWatch(WORD address, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
-	void AddWatch(const char* label, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
-	void RemoveWatch(WORD address);
-	void RemoveWatch(const char* label);
+		void DumpUnassignedOpcodes();
 
-protected:
-	typedef void (CPU::*OPCodeFunction)(BYTE);
+		// Watches
+		void AddWatch(WORD address, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
+		void AddWatch(const char* label, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
+		void RemoveWatch(WORD address);
+		void RemoveWatch(const char* label);
 
-	void AddOpcode(BYTE, OPCodeFunction);
+	protected:
+		typedef void (CPU::* OPCodeFunction)(BYTE);
 
-	enum CPUState {STOP, RUN, STEP};
+		void AddOpcode(BYTE, OPCodeFunction);
 
-	CPUState m_state;
-	Memory &m_memory;
-	MemoryMap &m_mmap;
+		enum class CPUState { STOP, RUN, STEP };
 
-	unsigned long m_timeTicks;
-	unsigned int m_programCounter;
+		CPUState m_state;
+		Memory& m_memory;
+		MemoryMap& m_mmap;
 
-	// Helper functions
-	BYTE getLByte(WORD w) { return BYTE(w&0x00FF); };
-	BYTE getHByte(WORD w) {return BYTE((w>>8)&0x00FF); };
-	WORD getWord(BYTE h, BYTE l) { return (((WORD)h)<<8) + l; };
+		unsigned long m_timeTicks;
+		unsigned int m_programCounter;
 
-	bool isParityOdd(BYTE b);
-	bool isParityEven(BYTE b) { return !isParityOdd(b); };
+		// Helper functions
+		BYTE getLByte(WORD w) { return BYTE(w & 0x00FF); };
+		BYTE getHByte(WORD w) { return BYTE((w >> 8) & 0x00FF); };
+		WORD getWord(BYTE h, BYTE l) { return (((WORD)h) << 8) + l; };
 
-	void OnCall(WORD caller, WORD target);
-	void OnReturn(WORD address);
+		bool isParityOdd(BYTE b);
+		bool isParityEven(BYTE b) { return !isParityOdd(b); };
 
-private:
-	typedef std::map<WORD, WatchItem > WatchList;
-	WatchList m_callWatches;
-	WatchList m_returnWatches;
+		void OnCall(WORD caller, WORD target);
+		void OnReturn(WORD address);
 
-	OPCodeFunction m_opcodesTable[256];
-	void UnknownOpcode(BYTE);
-};
+	private:
+		typedef std::map<WORD, WatchItem > WatchList;
+		WatchList m_callWatches;
+		WatchList m_returnWatches;
+
+		OPCodeFunction m_opcodesTable[256];
+		void UnknownOpcode(BYTE);
+	};
+}

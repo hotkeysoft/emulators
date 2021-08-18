@@ -20,15 +20,16 @@ void LogCallback(const char *str)
 	fprintf(stderr, str);
 }
 
-
 unsigned long elapsed;
 
-void onCall(CPU* cpu, WORD addr)
+
+
+void onCall(emul::CPU* cpu, emul::WORD addr)
 {
 	elapsed = cpu->getTime();
 }
 
-void onRet(CPU* cpu, WORD addr)
+void onRet(emul::CPU* cpu, emul::WORD addr)
 {
 	fprintf(stderr, "\tELAPSED: %ul\n", cpu->getTime()-elapsed);
 }
@@ -37,15 +38,15 @@ int main(void)
 {
 	Logger::RegisterLogCallback(LogCallback);
 
-	Memory memory;
+	emul::Memory memory;
 	memory.EnableLog(false);
-	MemoryMap mmap;
+	emul::MemoryMap mmap;
 	mmap.EnableLog(false);
 
-	MemoryBlock buffer_memory(0x8000, 0x8000, RAM);
+	emul::MemoryBlock buffer_memory(0x8000, 0x8000, emul::MemoryType::RAM);
 	memory.Allocate(&buffer_memory);
 
-	CPU8086 cpu(memory, mmap);
+	emul::CPU8086 cpu(memory, mmap);
 
 //	cpu.AddWatch("EXECUTE", onCall, onRet);
 
@@ -57,7 +58,14 @@ int main(void)
 	time_t startTime, stopTime;
 	time(&startTime);
 
-	while (cpu.Step()) {};
+	try
+	{
+		while (cpu.Step()) {};
+	}
+	catch (std::exception e)
+	{
+		fprintf(stderr, "Error while running cpu\n");
+	}
 
 	time(&stopTime);
 

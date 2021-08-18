@@ -1,28 +1,31 @@
 #include "PortAggregator.h"
 
-void PortAggregator::Connect(PortConnector &ports)
+namespace emul
 {
-	InputPortMap &inputs = ports.GetInputPorts();
-
-	for (InputPortMap::iterator it = inputs.begin(); it != inputs.end(); ++it)
+	void PortAggregator::Connect(PortConnector& ports)
 	{
-		if (m_inputPorts.find(it->first) != m_inputPorts.end())
+		InputPortMap& inputs = ports.GetInputPorts();
+
+		for (InputPortMap::iterator it = inputs.begin(); it != inputs.end(); ++it)
 		{
-			LogPrintf(LOG_ERROR, "Input Port 0x%02X already exists\n", it->first);
+			if (m_inputPorts.find(it->first) != m_inputPorts.end())
+			{
+				LogPrintf(LOG_ERROR, "Input Port 0x%02X already exists\n", it->first);
+			}
+
+			m_inputPorts[it->first] = it->second;
 		}
 
-		m_inputPorts[it->first] = it->second;
-	}
+		OutputPortMap& outputs = ports.GetOutputPorts();
 
-	OutputPortMap &outputs = ports.GetOutputPorts();
-
-	for (OutputPortMap::iterator it = outputs.begin(); it != outputs.end(); ++it)
-	{
-		if (m_outputPorts.find(it->first) != m_outputPorts.end())
+		for (OutputPortMap::iterator it = outputs.begin(); it != outputs.end(); ++it)
 		{
-			LogPrintf(LOG_ERROR, "Output Port 0x%02X already exists\n", it->first);
-		}
+			if (m_outputPorts.find(it->first) != m_outputPorts.end())
+			{
+				LogPrintf(LOG_ERROR, "Output Port 0x%02X already exists\n", it->first);
+			}
 
-		m_outputPorts[it->first] = it->second;
+			m_outputPorts[it->first] = it->second;
+		}
 	}
 }
