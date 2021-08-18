@@ -3,11 +3,11 @@
 
 namespace emul
 {
-	CPU::CPU(Memory& memory, MemoryMap& mmap) : Logger("CPU"), 
+	CPU::CPU(size_t addressBits, Memory& memory, MemoryMap& mmap) : Logger("CPU"), 
 		m_state(CPUState::STOP),
 		m_memory(memory),
 		m_mmap(mmap),
-		m_programCounter(0),
+		m_programCounter(),
 		m_timeTicks(0)
 	{
 		for (int i = 0; i < 256; i++)
@@ -22,7 +22,7 @@ namespace emul
 
 	void CPU::Reset()
 	{
-		m_programCounter = 0;
+		m_programCounter = GetResetAddress();
 		m_state = CPUState::STOP;
 		m_timeTicks = 0;
 	}
@@ -93,7 +93,7 @@ namespace emul
 		return (parity != 0);
 	}
 
-	void CPU::AddWatch(WORD address, CPUCallbackFunc onCall, CPUCallbackFunc onRet)
+	void CPU::AddWatch(ADDRESS address, CPUCallbackFunc onCall, CPUCallbackFunc onRet)
 	{
 		LogPrintf(LOG_INFO, "Adding watch at address 0x%04X", address);
 		WatchItem item;
@@ -114,7 +114,7 @@ namespace emul
 			LogPrintf(LOG_WARNING, "AddWatch: Undefined label %s", label);
 		}
 	}
-	void CPU::RemoveWatch(WORD address)
+	void CPU::RemoveWatch(ADDRESS address)
 	{
 		LogPrintf(LOG_INFO, "Removing watch at address 0x%04X", address);
 		m_callWatches.erase(address);
@@ -133,7 +133,7 @@ namespace emul
 		}
 	}
 
-	void CPU::OnCall(WORD caller, WORD target)
+	void CPU::OnCall(ADDRESS caller, ADDRESS target)
 	{
 		auto it = m_callWatches.find(target);
 		if (it != m_callWatches.end())
@@ -146,7 +146,7 @@ namespace emul
 			}
 		}
 	}
-	void CPU::OnReturn(WORD address)
+	void CPU::OnReturn(ADDRESS address)
 	{
 		auto it = m_returnWatches.find(address);
 		if (it != m_returnWatches.end())

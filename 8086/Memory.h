@@ -12,22 +12,24 @@ namespace emul
 	class Memory : public Logger
 	{
 	public:
-		Memory();
+		Memory(size_t addressBits);
 		virtual ~Memory();
 
 		bool Allocate(MemoryBlock* block);
 		bool Free(MemoryBlock* block);
 
-		void Read(WORD address, BYTE& value);
-		void Write(WORD address, BYTE value);
+		void Read(ADDRESS address, BYTE& value);
+		void Write(ADDRESS address, BYTE value);
 
 	private:
+		const size_t m_addressBits;
+
 		MemoryListType m_memory;
 
-		MemoryBlock* FindBlock(WORD address);
+		MemoryBlock* FindBlock(ADDRESS address);
 		MemoryBlock* FindOverlap(const MemoryBlock* block);
 
 		MemoryBlock* m_currBlock;
-		WORD m_currMin, m_currMax;
+		ADDRESS m_currMin, m_currMax;
 	};
 }

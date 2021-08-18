@@ -13,6 +13,8 @@
 #include <fstream>
 #include <time.h>
 
+#include <inttypes.h>
+
 #include <Windows.h>
 
 void LogCallback(const char *str)
@@ -21,8 +23,6 @@ void LogCallback(const char *str)
 }
 
 unsigned long elapsed;
-
-
 
 void onCall(emul::CPU* cpu, emul::WORD addr)
 {
@@ -34,14 +34,29 @@ void onRet(emul::CPU* cpu, emul::WORD addr)
 	fprintf(stderr, "\tELAPSED: %ul\n", cpu->getTime()-elapsed);
 }
 
+inline emul::ADDRESS S2A(WORD segment, WORD offset = 0) 
+{
+	return (segment << 4) + offset;
+}
+
 int main(void)
 {
 	Logger::RegisterLogCallback(LogCallback);
 
-	emul::Memory memory;
-	memory.EnableLog(false);
+	emul::Memory memory(emul::CPU8086_ADDRESS_BITS);
+	memory.EnableLog(true);
 	emul::MemoryMap mmap;
 	mmap.EnableLog(false);
+
+	fprintf(stderr, "\nMax address: 0x%" PRIx64"\n", emul::GetMaxAddress(emul::CPU8086_ADDRESS_BITS));
+
+	emul::MemoryBlock biosF000(S2A(0xF000), 0x8000, emul::MemoryType::ROM);
+	biosF000.LoadBinary("data/BIOS_5160_V3_F000.BIN");
+	memory.Allocate(&biosF000);
+
+	emul::MemoryBlock biosF800(S2A(0xF800), 0x8000, emul::MemoryType::ROM);
+	biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
+	memory.Allocate(&biosF800);
 
 	emul::MemoryBlock buffer_memory(0x8000, 0x8000, emul::MemoryType::RAM);
 	memory.Allocate(&buffer_memory);

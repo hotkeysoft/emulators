@@ -1,32 +1,35 @@
 #pragma once
 
 #include "Common.h"
+#include "Logger.h"
 #include <vector>
 
 namespace emul
 {
 	enum class MemoryType { RAM, ROM };
 
-	class MemoryBlock
+	class MemoryBlock : public Logger
 	{
 	public:
-		MemoryBlock(WORD baseAddress, WORD size, MemoryType type = MemoryType::RAM);
-		MemoryBlock(WORD baseAddress, const std::vector<BYTE>data, MemoryType type = MemoryType::RAM);
+		MemoryBlock(ADDRESS baseAddress, WORD size, MemoryType type = MemoryType::RAM);
+		MemoryBlock(ADDRESS baseAddress, const std::vector<BYTE>data, MemoryType type = MemoryType::RAM);
 		MemoryBlock(const MemoryBlock& block);
 
 		virtual ~MemoryBlock();
 
 		void Clear(BYTE filler = 0xFF);
 
-		WORD GetBaseAddress() const { return m_baseAddress; };
+		ADDRESS GetBaseAddress() const { return m_baseAddress; };
 		WORD GetSize() const { return m_size; };
 		MemoryType GetType() const { return m_type; };
 
-		virtual BYTE read(WORD address);
-		virtual void write(WORD address, char data);
+		bool LoadBinary(const char* file);
+
+		virtual BYTE read(ADDRESS address);
+		virtual void write(ADDRESS address, char data);
 
 	protected:
-		WORD m_baseAddress;
+		ADDRESS m_baseAddress;
 		WORD m_size;
 		MemoryType m_type;
 

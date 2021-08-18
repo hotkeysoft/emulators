@@ -3,11 +3,12 @@
 
 namespace emul
 {
-	Memory::Memory() : Logger("MEM")
+	Memory::Memory(size_t addressBits) : Logger("MEM"),
+		m_addressBits(addressBits),
+		m_currBlock(NULL),
+		m_currMin(0),
+		m_currMax(0)
 	{
-		m_currBlock = NULL;
-		m_currMin = 0;
-		m_currMax = 0;
 	}
 
 	Memory::~Memory()
@@ -18,6 +19,14 @@ namespace emul
 	bool Memory::Allocate(MemoryBlock* block)
 	{
 		LogPrintf(LOG_INFO, "Request to allocate block at %X, size = %d bytes", block->GetBaseAddress(), block->GetSize());
+
+		if (!CheckAddressRange(block->GetBaseAddress(), m_addressBits) || 
+			!CheckAddressRange(block->GetBaseAddress() + block->GetSize() - 1, m_addressBits))
+		{
+			LogPrintf(LOG_ERROR, "Address out of range: block at %X, size = %d bytes", block->GetBaseAddress(), block->GetSize());
+			LogPrintf(LOG_ERROR, "CPU Max address: %X", GetMaxAddress(m_addressBits));
+			return false;
+		}
 
 		MemoryBlock* overlap = FindOverlap(block);
 		if (overlap != NULL)
@@ -40,7 +49,7 @@ namespace emul
 		return true;
 	}
 
-	void Memory::Read(WORD address, BYTE& value)
+	void Memory::Read(ADDRESS address, BYTE& value)
 	{
 		LogPrintf(LOG_INFO, "Read(%X)", address);
 
@@ -75,7 +84,7 @@ namespace emul
 		}
 	}
 
-	void Memory::Write(WORD address, BYTE value)
+	void Memory::Write(ADDRESS address, BYTE value)
 	{
 		LogPrintf(LOG_INFO, "Write(%X, %X)", address, value);
 
@@ -118,14 +127,14 @@ namespace emul
 		}
 	}
 
-	MemoryBlock* Memory::FindBlock(WORD address)
+	MemoryBlock* Memory::FindBlock(ADDRESS address)
 	{
 		MemoryListType::const_iterator i;
 
 		for (i = m_memory.begin(); i != m_memory.end(); i++)
 		{
-			WORD currMin = (*i)->GetBaseAddress();
-			WORD currMax = currMin + (*i)->GetSize() - 1;
+			ADDRESS currMin = (*i)->GetBaseAddress();
+			ADDRESS currMax = currMin + (*i)->GetSize() - 1;
 
 			if (address >= currMin && address <= currMax)
 			{
@@ -141,15 +150,15 @@ namespace emul
 
 	MemoryBlock* Memory::FindOverlap(const MemoryBlock* block)
 	{
-		WORD min = block->GetBaseAddress();
-		WORD max = min + block->GetSize() - 1;
+		ADDRESS min = block->GetBaseAddress();
+		ADDRESS max = min + block->GetSize() - 1;
 
 		MemoryListType::const_iterator i;
 
 		for (i = m_memory.begin(); i != m_memory.end(); i++)
 		{
-			WORD currMin = (*i)->GetBaseAddress();
-			WORD currMax = currMin + (*i)->GetSize() - 1;
+			ADDRESS currMin = (*i)->GetBaseAddress();
+			ADDRESS currMax = currMin + (*i)->GetSize() - 1;
 
 			if ((min >= currMin && min <= currMax) || (max >= currMin && max <= currMax))
 			{

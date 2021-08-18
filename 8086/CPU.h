@@ -7,11 +7,11 @@
 namespace emul
 {
 	class CPU;
-	typedef void(*CPUCallbackFunc)(CPU* cpu, WORD addr);
+	typedef void(*CPUCallbackFunc)(CPU* cpu, ADDRESS addr);
 
 	struct WatchItem
 	{
-		WORD addr;
+		ADDRESS addr;
 		CPUCallbackFunc onCall;
 		CPUCallbackFunc onRet;
 	};
@@ -19,8 +19,11 @@ namespace emul
 	class CPU : virtual public Logger
 	{
 	public:
-		CPU(Memory& memory, MemoryMap& mmap);
+		CPU(size_t addressBits, Memory& memory, MemoryMap& mmap);
 		virtual ~CPU();
+
+		virtual const size_t GetAddressBits() const = 0;
+		virtual const ADDRESS GetResetAddress() const = 0;
 
 		virtual void Reset();
 		void Run();
@@ -31,9 +34,9 @@ namespace emul
 		void DumpUnassignedOpcodes();
 
 		// Watches
-		void AddWatch(WORD address, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
+		void AddWatch(ADDRESS address, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
 		void AddWatch(const char* label, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
-		void RemoveWatch(WORD address);
+		void RemoveWatch(ADDRESS address);
 		void RemoveWatch(const char* label);
 
 	protected:
@@ -48,7 +51,7 @@ namespace emul
 		MemoryMap& m_mmap;
 
 		unsigned long m_timeTicks;
-		unsigned int m_programCounter;
+		ADDRESS m_programCounter;
 
 		// Helper functions
 		BYTE getLByte(WORD w) { return BYTE(w & 0x00FF); };
@@ -58,11 +61,11 @@ namespace emul
 		bool isParityOdd(BYTE b);
 		bool isParityEven(BYTE b) { return !isParityOdd(b); };
 
-		void OnCall(WORD caller, WORD target);
-		void OnReturn(WORD address);
+		void OnCall(ADDRESS caller, ADDRESS target);
+		void OnReturn(ADDRESS address);
 
 	private:
-		typedef std::map<WORD, WatchItem > WatchList;
+		typedef std::map<ADDRESS, WatchItem > WatchList;
 		WatchList m_callWatches;
 		WatchList m_returnWatches;
 

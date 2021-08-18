@@ -4,7 +4,7 @@
 namespace emul
 {
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
-		: CPU(memory, mmap), Logger("CPU8086")
+		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
 	{
 		//	AddOpcode(0100, (OPCodeFunction)(&CPU8086::MOVrr));	// B,B
 
