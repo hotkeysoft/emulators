@@ -23,13 +23,8 @@ void Logger::RegisterModuleID(const char* moduleID)
 	{
 		throw std::exception("Logger: ModuleID is null");
 	}
-
-	if (m_moduleList.find(moduleID) != m_moduleList.end())
-	{
-		throw std::exception("ModuleID already defined");
-	}
 	
-	m_moduleList[moduleID] = this;
+	m_moduleList.insert(std::pair<std::string, Logger*>(moduleID, this));
 }
 
 void Logger::EnableLog(bool enable)
@@ -75,10 +70,5 @@ void Logger::LogPrintf(SEVERITY sev, const char *msg, ...)
 	if (m_logCallbackFunc)
 	{
 		m_logCallbackFunc(m_logBuffer);
-	}
-
-	if (sev == LOG_ERROR)
-	{
-		throw std::exception(m_logBuffer);
 	}
 }

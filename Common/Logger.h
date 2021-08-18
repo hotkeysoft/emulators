@@ -20,7 +20,7 @@ protected:
 private:
 	Logger();
 
-	typedef std::map<std::string, Logger*> ModuleList;
+	typedef std::multimap<std::string, Logger*> ModuleList;
 
 	void RegisterModuleID(const char* moduleID);
 
