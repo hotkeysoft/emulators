@@ -34,11 +34,6 @@ void onRet(emul::CPU* cpu, emul::WORD addr)
 	fprintf(stderr, "\tELAPSED: %ul\n", cpu->getTime()-elapsed);
 }
 
-inline emul::ADDRESS S2A(WORD segment, WORD offset = 0) 
-{
-	return (segment << 4) + offset;
-}
-
 int main(void)
 {
 	Logger::RegisterLogCallback(LogCallback);
@@ -50,11 +45,11 @@ int main(void)
 
 	fprintf(stderr, "\nMax address: 0x%" PRIx64"\n", emul::GetMaxAddress(emul::CPU8086_ADDRESS_BITS));
 
-	emul::MemoryBlock biosF000(S2A(0xF000), 0x8000, emul::MemoryType::ROM);
+	emul::MemoryBlock biosF000(emul::S2A(0xF000), 0x8000, emul::MemoryType::ROM);
 	biosF000.LoadBinary("data/BIOS_5160_V3_F000.BIN");
 	memory.Allocate(&biosF000);
 
-	emul::MemoryBlock biosF800(S2A(0xF800), 0x8000, emul::MemoryType::ROM);
+	emul::MemoryBlock biosF800(emul::S2A(0xF800), 0x8000, emul::MemoryType::ROM);
 	biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
 	memory.Allocate(&biosF800);
 

@@ -22,8 +22,8 @@ namespace emul
 		CPU(size_t addressBits, Memory& memory, MemoryMap& mmap);
 		virtual ~CPU();
 
-		virtual const size_t GetAddressBits() const = 0;
-		virtual const ADDRESS GetResetAddress() const = 0;
+		virtual size_t GetAddressBits() const = 0;
+		virtual ADDRESS GetCurrentAddress() const = 0;
 
 		virtual void Reset();
 		void Run();
@@ -51,7 +51,6 @@ namespace emul
 		MemoryMap& m_mmap;
 
 		unsigned long m_timeTicks;
-		ADDRESS m_programCounter;
 
 		// Helper functions
 		BYTE getLByte(WORD w) { return BYTE(w & 0x00FF); };

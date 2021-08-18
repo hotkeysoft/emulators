@@ -7,7 +7,6 @@ namespace emul
 		m_state(CPUState::STOP),
 		m_memory(memory),
 		m_mmap(mmap),
-		m_programCounter(),
 		m_timeTicks(0)
 	{
 		for (int i = 0; i < 256; i++)
@@ -22,7 +21,6 @@ namespace emul
 
 	void CPU::Reset()
 	{
-		m_programCounter = GetResetAddress();
 		m_state = CPUState::STOP;
 		m_timeTicks = 0;
 	}
@@ -40,14 +38,14 @@ namespace emul
 			// Fetch opcode
 			unsigned char opcode;
 			m_state = CPUState::RUN;
-			m_memory.Read(m_programCounter, opcode);
+			m_memory.Read(GetCurrentAddress(), opcode);
 
 			// Execute instruction
 			(this->*m_opcodesTable[opcode])(opcode);
 		}
 		catch (std::exception e)
 		{
-			LogPrintf(LOG_ERROR, "Error processing instruction at 0x%04X! Stopping CPU.\n", m_programCounter);
+			LogPrintf(LOG_ERROR, "Error processing instruction at 0x%04X! Stopping CPU.\n", GetCurrentAddress());
 			m_state = CPUState::STOP;
 		}
 
@@ -77,7 +75,7 @@ namespace emul
 
 	void CPU::UnknownOpcode(BYTE opcode)
 	{
-		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X! Stopping CPU.\n", opcode, m_programCounter);
+		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X! Stopping CPU.\n", opcode, GetCurrentAddress());
 		m_state = CPUState::STOP;
 	}
 

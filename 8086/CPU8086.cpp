@@ -23,6 +23,13 @@ namespace emul
 	void CPU8086::Reset()
 	{
 		CPU::Reset();
+
+		ClearFlags();
+		regIP = 0x0000;
+		regCS = 0xFFFF;
+		regDS = 0x0000;
+		regSS = 0x0000;
+		regES = 0x0000;
 	}
 
 	void CPU8086::Dump()
@@ -31,4 +38,8 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "\n");
 	}
 
+	void CPU8086::ClearFlags()
+	{
+		flags = FLAG_R1 | FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15;
+	}
 }
