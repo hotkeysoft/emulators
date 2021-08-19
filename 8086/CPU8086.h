@@ -13,8 +13,8 @@ namespace emul
 	{
 		WORD x;
 		struct {
-			BYTE h; 
 			BYTE l;
+			BYTE h;
 		} hl;
 	};
 	#pragma pack(pop)
@@ -89,8 +89,19 @@ namespace emul
 		void SetFlag(FLAG f, bool v) { if (v) flags |= f; else flags &= ~f; };
 
 		// Helper functions
+		BYTE fetchByte();
+		WORD fetchWord();
 
 		// Opcodes
+		void JMPfar(BYTE);
+
+		void CLC(BYTE);
+		void CMC(BYTE);
+		void STC(BYTE);
+		void CLD(BYTE);
+		void STD(BYTE);
+		void CLI(BYTE);
+		void STI(BYTE);
 		void HLT(BYTE);
 
 		void NotImplemented(BYTE);

@@ -364,7 +364,7 @@ namespace emul
 		AddOpcode(0xEB, (OPCodeFunction)(&CPU8086::HLT));
 
 		// JUMP Far (5)
-		AddOpcode(0xEA, (OPCodeFunction)(&CPU8086::HLT));
+		AddOpcode(0xEA, (OPCodeFunction)(&CPU8086::JMPfar));
 
 		//----------
 		// RET
@@ -445,19 +445,19 @@ namespace emul
 		// Processor Control
 
 		// CLC (1)
-		AddOpcode(0xF8, (OPCodeFunction)(&CPU8086::HLT));
+		AddOpcode(0xF8, (OPCodeFunction)(&CPU8086::CLC));
 		// CMC (1)
-		AddOpcode(0xF5, (OPCodeFunction)(&CPU8086::HLT));
+		AddOpcode(0xF5, (OPCodeFunction)(&CPU8086::CMC));
 		// STC (1)
-		AddOpcode(0xF9, (OPCodeFunction)(&CPU8086::HLT));
+		AddOpcode(0xF9, (OPCodeFunction)(&CPU8086::STC));
 		// CLD (1)
-		AddOpcode(0xFC, (OPCodeFunction)(&CPU8086::HLT));
+		AddOpcode(0xFC, (OPCodeFunction)(&CPU8086::CLD));
 		// STD (1)
-		AddOpcode(0xFD, (OPCodeFunction)(&CPU8086::HLT));
+		AddOpcode(0xFD, (OPCodeFunction)(&CPU8086::STD));
 		// CLI (1)
-		AddOpcode(0xFA, (OPCodeFunction)(&CPU8086::HLT));
+		AddOpcode(0xFA, (OPCodeFunction)(&CPU8086::CLI));
 		// STI (1)
-		AddOpcode(0xFB, (OPCodeFunction)(&CPU8086::HLT));
+		AddOpcode(0xFB, (OPCodeFunction)(&CPU8086::STI));
 
 		// HLT (1)
 		AddOpcode(0xF4, (OPCodeFunction)(&CPU8086::HLT));
@@ -535,6 +535,7 @@ namespace emul
 	void CPU8086::Dump()
 	{
 		//	LogPrintf(LOG_DEBUG, "PC = %04X\n", m_programCounter);
+		LogPrintf(LOG_DEBUG, "CS|IP %04X|%04X", regCS, regIP);
 		LogPrintf(LOG_DEBUG, "\n");
 	}
 
@@ -543,12 +544,90 @@ namespace emul
 		flags = FLAG_R1 | FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15;
 	}
 
+	BYTE CPU8086::fetchByte()
+	{
+		BYTE b = GetCurrentAddress();
+		++regIP;
+		return b;
+	}
+	WORD CPU8086::fetchWord()
+	{
+		Register r;
+		m_memory.Read(GetCurrentAddress(), r.hl.l);
+		++regIP;
+		m_memory.Read(GetCurrentAddress(), r.hl.h);
+		++regIP;
+
+		return r.x;
+	}
+
+	void CPU8086::CLC(BYTE)
+	{
+		LogPrintf(LOG_DEBUG, "CLC");
+		++regIP;
+		SetFlag(FLAG_CF, false);
+	}
+
+	void CPU8086::CMC(BYTE)
+	{
+		LogPrintf(LOG_DEBUG, "CMC");
+		++regIP;
+		SetFlag(FLAG_CF, !GetFlag(FLAG_CF));
+	}
+
+	void CPU8086::STC(BYTE)
+	{
+		LogPrintf(LOG_DEBUG, "STC");
+		++regIP;
+		SetFlag(FLAG_CF, true);
+	}
+
+	void CPU8086::CLD(BYTE)
+	{
+		LogPrintf(LOG_DEBUG, "CLD");
+		++regIP;
+		SetFlag(FLAG_DF, false);
+	}
+
+	void CPU8086::STD(BYTE)
+	{
+		LogPrintf(LOG_DEBUG, "STD");
+		++regIP;
+		SetFlag(FLAG_DF, true);
+	}
+
+	void CPU8086::CLI(BYTE)
+	{
+		LogPrintf(LOG_DEBUG, "CLI");
+		++regIP;
+		SetFlag(FLAG_IF, false);
+		//TODO
+	}
+
+	void CPU8086::STI(BYTE)
+	{
+		LogPrintf(LOG_DEBUG, "STI");
+		++regIP;
+		SetFlag(FLAG_IF, true);
+		//TODO
+	}
+
 	void CPU8086::HLT(BYTE op)
 	{
 		LogPrintf(LOG_ERROR, "HALT op=%x", op);
 		m_state = CPUState::STOP;
 	}
 	
+	void CPU8086::JMPfar(BYTE op)
+	{
+		LogPrintf(LOG_DEBUG, "JMPfar op=%x", op);
+		++regIP;
+		WORD offset = fetchWord();
+		WORD segment = fetchWord();
+		regCS = segment;
+		regIP = offset;
+	}
+
 	void CPU8086::NotImplemented(BYTE op)
 	{
 		LogPrintf(LOG_ERROR, "Not implemented op=%x", op);

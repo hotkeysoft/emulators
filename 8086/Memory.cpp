@@ -57,7 +57,7 @@ namespace emul
 
 		if (m_currBlock && address >= m_currMin && address <= m_currMax)
 		{
-			LogPrintf(LOG_INFO, "\tUsing cached block. ret = %X", m_currBlock->read(address));
+			//LogPrintf(LOG_INFO, "\tUsing cached block. ret = %X", m_currBlock->read(address));
 			block = m_currBlock;
 		}
 		else
@@ -65,7 +65,7 @@ namespace emul
 			MemoryBlock* newBlock = FindBlock(address);
 			if (newBlock)
 			{
-				LogPrintf(LOG_INFO, "\tNew block put in cache.  ret = %X", newBlock->read(address));
+				//LogPrintf(LOG_INFO, "\tNew block put in cache.  ret = %X", newBlock->read(address));
 				block = newBlock;
 			}
 			else
