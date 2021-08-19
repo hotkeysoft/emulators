@@ -91,5 +91,8 @@ namespace emul
 		// Helper functions
 
 		// Opcodes
+		void HLT(BYTE);
+
+		void NotImplemented(BYTE);
 	};
 }

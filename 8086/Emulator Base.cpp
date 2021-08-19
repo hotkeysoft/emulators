@@ -43,7 +43,7 @@ int main(void)
 	emul::MemoryMap mmap;
 	mmap.EnableLog(false);
 
-	fprintf(stderr, "\nMax address: 0x%" PRIx64"\n", emul::GetMaxAddress(emul::CPU8086_ADDRESS_BITS));
+	fprintf(stderr, "\nMax address: 0x%" PRIx64"\n", (uint64_t)emul::GetMaxAddress(emul::CPU8086_ADDRESS_BITS));
 
 	emul::MemoryBlock biosF000(emul::S2A(0xF000), 0x8000, emul::MemoryType::ROM);
 	biosF000.LoadBinary("data/BIOS_5160_V3_F000.BIN");
