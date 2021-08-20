@@ -5,6 +5,7 @@
 #include "MemoryBlock.h"
 #include "MemoryMap.h"
 #include "CPU8086.h"
+#include "Device8255.h"
 #include <conio.h>
 #include <vector>
 #include <string>
@@ -56,10 +57,15 @@ int main(void)
 	emul::MemoryBlock buffer_memory(0x8000, 0x8000, emul::MemoryType::RAM);
 	memory.Allocate(&buffer_memory);
 
+	emul::Device8255 ppi(0x60);
+	ppi.Init();
+	ppi.EnableLog(true);
+
 	emul::CPU8086 cpu(memory, mmap);
 
 //	cpu.AddWatch("EXECUTE", onCall, onRet);
 
+	cpu.AddDevice(ppi);
 	cpu.Reset();
 
 	fprintf(stderr, "Press any key to continue\n");
