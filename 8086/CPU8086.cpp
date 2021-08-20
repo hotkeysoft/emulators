@@ -282,29 +282,29 @@ namespace emul
 		case 0x5F: NotImplemented(opcode); break;
 
 		// JO (2)
-		case 0x70: NotImplemented(opcode); break;
+		case 0x70: JMPif(GetFlag(FLAG_O)); break;
 		// JNO (2)
-		case 0x71: NotImplemented(opcode); break;
-		// JB/JNAE (2)
-		case 0x72: NotImplemented(opcode); break;
-		// JNB/JAE (2)
-		case 0x73: NotImplemented(opcode); break;
+		case 0x71: JMPif(!GetFlag(FLAG_O)); break;
+		// JB/JNAE/JC (2)
+		case 0x72: JMPif(GetFlag(FLAG_C)); break;
+		// JNB/JAE/JNC (2)
+		case 0x73: JMPif(!GetFlag(FLAG_C)); break;
 		// JE/JZ (2)
-		case 0x74: NotImplemented(opcode); break;
+		case 0x74: JMPif(GetFlag(FLAG_Z)); break;
 		// JNE/JNZ (2)
-		case 0x75: NotImplemented(opcode); break;
+		case 0x75: JMPif(!GetFlag(FLAG_Z)); break;
 		// JBE/JNA (2)
 		case 0x76: NotImplemented(opcode); break;
 		// JNBE/JA (2)
 		case 0x77: NotImplemented(opcode); break;
 		// JS (2)
-		case 0x78: NotImplemented(opcode); break;
+		case 0x78: JMPif(GetFlag(FLAG_S)); break;
 		// JNS (2)
-		case 0x79: NotImplemented(opcode); break;
+		case 0x79: JMPif(!GetFlag(FLAG_S)); break;
 		// JP/JPE (2)
-		case 0x7A: NotImplemented(opcode); break;
+		case 0x7A: JMPif(GetFlag(FLAG_P)); break;
 		// JNP/JPO (2)
-		case 0x7B: NotImplemented(opcode); break;
+		case 0x7B: JMPif(!GetFlag(FLAG_P)); break;
 		// JL/JNGE (2)
 		case 0x7C: NotImplemented(opcode); break;
 		// JNL/JGE (2)
@@ -877,4 +877,15 @@ namespace emul
 		regA.hl.h = (flags & 0x00FF);
 		Dump();
 	}
+
+	void CPU8086::JMPif(bool cond)
+	{
+		LogPrintf(LOG_DEBUG, "JMPif %d", cond);
+		BYTE offset = FetchByte();
+		if (cond)
+		{
+			regIP += offset;
+		}
+	}
+
 }

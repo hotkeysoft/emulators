@@ -123,6 +123,8 @@ namespace emul
 		void SAHF();
 		void LAHF();
 
+		void JMPif(bool cond);
+
 		void NotImplemented(BYTE);
 	};
 }
