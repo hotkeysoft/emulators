@@ -89,8 +89,8 @@ namespace emul
 		void SetFlag(FLAG f, bool v) { if (v) flags |= f; else flags &= ~f; };
 
 		// Helper functions
-		BYTE fetchByte();
-		WORD fetchWord();
+		BYTE FetchByte();
+		WORD FetchWord();
 
 		// Opcodes
 		void JMPfar(BYTE);
