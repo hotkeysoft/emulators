@@ -357,7 +357,7 @@ namespace emul
 		// MOV sr=>rm (4)
 		// ----------
 		// MOV REG16/MEM16, SEGREG
-		case 0x8C: NotImplemented(opcode); break;
+		case 0x8C: MOV16(GetModRegRM16(FetchByte(), false, true)); break;
 
 		// LEA (4)
 		// ----------
@@ -366,8 +366,8 @@ namespace emul
 
 		// MOV rm=>sr (4)
 		// ----------
-		// MOV SEGREG, REG16/MEM16
-		case 0x8E: NotImplemented(opcode); break;
+		// MOV SEGREG, REG16/MEM16		
+		case 0x8E: MOV16(GetModRegRM16(FetchByte(), true, true)); break;
 
 		// POP rm (4)
 		// ----------
@@ -676,15 +676,18 @@ namespace emul
 	void CPU8086::Dump()
 	{
 		//	LogPrintf(LOG_DEBUG, "PC = %04X\n", m_programCounter);
-		LogPrintf(LOG_DEBUG,
-			"AH|AL %02X|%02X\n"
-			"BH|BL %02X|%02X\n"
-			"CH|CL %02X|%02X\n"
-			"DH|DL %02X|%02X\n"
-			"\n"
-			"CS|IP %04X|%04X\n"
+		LogPrintf(LOG_DEBUG, "\n"
+			"\tAH|AL %02X|%02X\n"
+			"\tBH|BL %02X|%02X\n"
+			"\tCH|CL %02X|%02X\n"
+			"\tDH|DL %02X|%02X\n"
+			"\t---------------\n"
+			"\tCS|IP %04X|%04X\n"
+			"\tDS|SI %04X|%04X\n"
+			"\tES|DI %04X|%04X\n"
+			"\tSS|BP %04X|%04X\n"
 			"FLAGS xxxxODITSZxAxPxC\n"
-			"      " PRINTF_BIN_PATTERN_INT16 
+			"      " PRINTF_BIN_PATTERN_INT16
 			"\n"
 			"\n",
 			regA.hl.h, regA.hl.l,
@@ -692,6 +695,9 @@ namespace emul
 			regC.hl.h, regC.hl.l,
 			regD.hl.h, regD.hl.l,
 			regCS, regIP,
+			regDS, regSI,
+			regES, regDI,
+			regSS, regBP,
 			PRINTF_BYTE_TO_BIN_INT16(flags));
 	}
 
@@ -764,14 +770,14 @@ namespace emul
 		throw std::exception("GetReg8: invalid reg value");
 	}
 
-	const char* CPU8086::GetReg16Str(BYTE reg)
+	const char* CPU8086::GetReg16Str(BYTE reg, bool segReg)
 	{
 		switch (reg & 7)
 		{
-		case 0: return "AX";
-		case 1: return "CX";
-		case 2: return "DX";
-		case 3: return "BX";
+		case 0: return segReg ? "ES" : "AX";
+		case 1: return segReg ? "CS" : "CX";
+		case 2: return segReg ? "SS" : "DX";
+		case 3: return segReg ? "DS" : "BX";
 
 		case 4: return "SP";
 		case 5: return "BP";
@@ -781,14 +787,14 @@ namespace emul
 		throw std::exception("GetReg16: invalid reg value");
 	}
 
-	WORD* CPU8086::GetReg16(BYTE reg)
+	WORD* CPU8086::GetReg16(BYTE reg, bool segReg)
 	{
 		switch (reg & 7)
 		{
-		case 0: return &regA.x;
-		case 1: return &regC.x;
-		case 2: return &regD.x;
-		case 3: return &regB.x;
+		case 0: return segReg ? &regES : &regA.x;
+		case 1: return segReg ? &regCS : &regC.x;
+		case 2: return segReg ? &regSS : &regD.x;
+		case 3: return segReg ? &regDS : &regB.x;
 
 		case 4: return &regSP;
 		case 5: return &regBP;
@@ -826,15 +832,15 @@ namespace emul
 		return sd;
 	}
 
-	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool swap)
+	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool swap, bool segReg)
 	{
 		LogPrintf(LOG_DEBUG, "GetModRegRM16: modregrm=%d, swap=%d", modregrm, swap);
 
 		SourceDest16 sd;
 
 		// reg part
-		LogPrintf(LOG_DEBUG, "GetModRegRM16: REG %s", GetReg16Str(modregrm >> 3));
-		WORD* reg = GetReg16(modregrm >> 3);
+		LogPrintf(LOG_DEBUG, "GetModRegRM16: REG %s", GetReg16Str(modregrm >> 3, segReg));
+		WORD* reg = GetReg16(modregrm >> 3, segReg);
 
 		// modrm
 		WORD* modrm;
@@ -988,6 +994,15 @@ namespace emul
 		//        nnnnnnnnn
 		Dump();
 	}
+	void CPU8086::MOV8(SourceDest8 sd)
+	{
+		LogPrintf(LOG_DEBUG, "MOV8");
+
+		*(sd.dest) = *(sd.source);
+		// Flags: ODITSZAPC
+		//        nnnnnnnnn
+		Dump();
+	}
 
 	void CPU8086::MOV16(WORD& d, WORD s)
 	{
@@ -998,6 +1013,17 @@ namespace emul
 		//        nnnnnnnnn
 		Dump();
 	}
+	void CPU8086::MOV16(SourceDest16 sd)
+	{
+		LogPrintf(LOG_DEBUG, "MOV16");
+
+		*(sd.dest) = *(sd.source);
+		// Flags: ODITSZAPC
+		//        nnnnnnnnn
+		Dump();
+	}
+
+
 	void CPU8086::SAHF()
 	{
 		LogPrintf(LOG_DEBUG, "SAHF");

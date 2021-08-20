@@ -124,12 +124,12 @@ namespace emul
 		//WORD* GetModRM16(BYTE modrm);
 
 		SourceDest8 GetModRegRM8(BYTE modregrm, bool swap);
-		SourceDest16 GetModRegRM16(BYTE modregrm, bool swap);
+		SourceDest16 GetModRegRM16(BYTE modregrm, bool swap, bool segReg = false);
 
 		BYTE* GetReg8(BYTE reg);
-		WORD* GetReg16(BYTE reg);
+		WORD* GetReg16(BYTE reg, bool segReg = false);
 		const char* GetReg8Str(BYTE reg); // For logging
-		const char* GetReg16Str(BYTE reg); // For logging
+		const char* GetReg16Str(BYTE reg, bool segReg = false); // For logging
 
 		// Opcodes
 		void JMPfar();
@@ -148,6 +148,9 @@ namespace emul
 
 		void MOV8(BYTE& d, BYTE s);
 		void MOV16(WORD& d, WORD s);
+
+		void MOV8(SourceDest8 sd);
+		void MOV16(SourceDest16 sd);
 
 		void SAHF();
 		void LAHF();
