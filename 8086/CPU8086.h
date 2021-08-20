@@ -145,6 +145,10 @@ namespace emul
 		void STI();
 		void HLT();
 
+		void INCDEC8(BYTE op2);
+		void INC8(BYTE&);
+		void DEC8(BYTE&);
+
 		void INC16(WORD&);
 		void DEC16(WORD&);
 
@@ -162,6 +166,8 @@ namespace emul
 		void SHIFTROT8(BYTE op2, BYTE count);
 		void SHIFTROT16(BYTE op2, BYTE count);
 
+		void ADD8(SourceDest8 sd);
+		void ADD16(SourceDest16 sd);
 		void OR8(SourceDest8 sd);
 		void OR16(SourceDest16 sd);
 		void XOR8(SourceDest8 sd);

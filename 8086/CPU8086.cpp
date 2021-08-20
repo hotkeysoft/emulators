@@ -22,13 +22,13 @@ namespace emul
 		// ADD rm+r=>rm (4)
 		// --------
 		// REG8/MEM8, REG8
-		case 0x00: NotImplemented(opcode); break;
+		case 0x00: ADD8(GetModRegRM8(FetchByte(), false)); break;
 		// REG16/MEM16, REG16
-		case 0x01: NotImplemented(opcode); break;
+		case 0x01: ADD16(GetModRegRM16(FetchByte(), false)); break;
 		// REG8, REG8/MEM8
-		case 0x02: NotImplemented(opcode); break;
+		case 0x02: ADD8(GetModRegRM8(FetchByte(), true)); break;
 		// REG16, REG16/MEM16
-		case 0x03: NotImplemented(opcode); break;
+		case 0x03: ADD16(GetModRegRM16(FetchByte(), true)); break;
 
 		// ADD i=>a (2-3)
 		// --------
@@ -647,7 +647,7 @@ namespace emul
 		// INC/DEC/---/---/---/---/---/---
 		// --------
 		// REG8/MEM8
-		case 0xFE: NotImplemented(opcode); break;
+		case 0xFE: INCDEC8(FetchByte()); break;
 
 		// INC/DEC/CALL/CALL/JMP/JMP/PUSH/---
 		case 0xFF: NotImplemented(opcode); break;
@@ -676,7 +676,7 @@ namespace emul
 	void CPU8086::Dump()
 	{
 		//	LogPrintf(LOG_DEBUG, "PC = %04X\n", m_programCounter);
-		LogPrintf(LOG_DEBUG, "\n"
+		LogPrintf(LOG_DEBUG, "REGISTER DUMP\n"
 			"\tAH|AL %02X|%02X\n"
 			"\tBH|BL %02X|%02X\n"
 			"\tCH|CL %02X|%02X\n"
@@ -689,7 +689,6 @@ namespace emul
 			"\t   BP %04X\n"
 			"FLAGS xxxxODITSZxAxPxC\n"
 			"      " PRINTF_BIN_PATTERN_INT16
-			"\n"
 			"\n",
 			regA.hl.h, regA.hl.l,
 			regB.hl.h, regB.hl.l,
@@ -974,6 +973,56 @@ namespace emul
 		m_state = CPUState::STOP;
 	}
 
+	void CPU8086::INCDEC8(BYTE op2)
+	{
+		BYTE* dest = GetModRM8(op2);
+
+		switch (op2 & 0x38)
+		{
+		case 0: // INC
+			INC8(*dest);
+			break;
+		case 8: // DEC
+			DEC8(*dest);
+			break;
+		default:
+			throw std::exception("INCDEC8: invalid op2");
+		}
+
+		Dump();
+	}
+
+	void CPU8086::INC8(BYTE& b)
+	{
+		LogPrintf(LOG_DEBUG, "INC8");
+		BYTE before = b;
+
+		++b;
+
+		// Flags: ODITSZAPC
+		//        XnnnXXXXn
+		SetFlag(FLAG_O, getMSB(before) != getMSB(b));
+		AdjustSign(b);
+		AdjustZero(b);
+		SetFlag(FLAG_A, ((before ^ b) & 0x18) == 0x18);
+		AdjustParity(b);
+	}
+	void CPU8086::DEC8(BYTE& b)
+	{
+		LogPrintf(LOG_DEBUG, "DEC8");
+		BYTE before = b;
+
+		--b;
+
+		// Flags: ODITSZAPC
+		//        XnnnXXXXn
+		SetFlag(FLAG_O, getMSB(before) != getMSB(b));
+		AdjustSign(b);
+		AdjustZero(b);
+		SetFlag(FLAG_A, ((before ^ b) & 0x18) == 0x18);
+		AdjustParity(b);
+	}
+
 	void CPU8086::INC16(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "INC16");
@@ -1085,19 +1134,19 @@ namespace emul
 		{
 		case 0x00: // ROL
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
-			m_state = CPUState::STOP;
+			throw(std::exception("SHIFTROT8 ROL not implemented"));
 			break;
 		case 0x08: // ROR
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
-			m_state = CPUState::STOP;
+			throw(std::exception("SHIFTROT8 ROR not implemented"));
 			break;
 		case 0x10: // RCL
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
-			m_state = CPUState::STOP;
+			throw(std::exception("SHIFTROT8 RCL not implemented"));
 			break;
 		case 0x18: // RCR
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-			m_state = CPUState::STOP;
+			throw(std::exception("SHIFTROT8 RCR not implemented"));
 			break;
 		case 0x20: // SHL/SAL
 			// Flags: ODITSZAPC
@@ -1123,7 +1172,7 @@ namespace emul
 			break;
 		case 0x38: // SAR
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
-			m_state = CPUState::STOP;
+			throw(std::exception("SHIFTROT8 SAR not implemented"));
 			break;
 		default: 
 			break;
@@ -1141,12 +1190,47 @@ namespace emul
 	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
 	{
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
-		m_state = CPUState::STOP;
+		throw(std::exception("SHIFTROT16 not implemented"));
+	}
 
+	void CPU8086::ADD8(SourceDest8 sd)
+	{
+		LogPrintf(LOG_DEBUG, "ADD8");
+		BYTE& source = *(sd.source);
+		BYTE& dest = *(sd.dest);
+		BYTE before = dest;
+
+		dest += source;
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
+		AdjustSign(dest);
+		AdjustZero(dest);
+		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+		AdjustParity(dest);
+
+		Dump();
+	}
+	void CPU8086::ADD16(SourceDest16 sd)
+	{
+		LogPrintf(LOG_DEBUG, "ADD16");
+		WORD& source = *(sd.source);
+		WORD& dest = *(sd.dest);
+		WORD before = dest;
+
+		dest += source;
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
+		AdjustSign(dest);
+		AdjustZero(dest);
+		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+		AdjustParity(dest);
+
+		Dump();
 	}
 
 	void CPU8086::OR8(SourceDest8 sd)
 	{
+		LogPrintf(LOG_DEBUG, "OR8");
 		BYTE& source = *(sd.source);
 		BYTE& dest = *(sd.dest);
 		BYTE before = dest;
@@ -1163,6 +1247,7 @@ namespace emul
 	}
 	void CPU8086::OR16(SourceDest16 sd)
 	{
+		LogPrintf(LOG_DEBUG, "OR16");
 		WORD& source = *(sd.source);
 		WORD& dest = *(sd.dest);
 		WORD before = dest;
@@ -1180,6 +1265,7 @@ namespace emul
 
 	void CPU8086::XOR8(SourceDest8 sd)
 	{
+		LogPrintf(LOG_DEBUG, "XOR8");
 		BYTE& source = *(sd.source);
 		BYTE& dest = *(sd.dest);
 		BYTE before = dest;
@@ -1196,6 +1282,7 @@ namespace emul
 	}
 	void CPU8086::XOR16(SourceDest16 sd)
 	{
+		LogPrintf(LOG_DEBUG, "XOR16");
 		WORD& source = *(sd.source);
 		WORD& dest = *(sd.dest);
 		WORD before = dest;
