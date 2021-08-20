@@ -10,9 +10,9 @@ namespace emul
 	{
 	}
 
-	bool PortConnector::Connect(BYTE portNb, INFunction inFunc)
+	bool PortConnector::Connect(WORD portNb, INFunction inFunc)
 	{
-		LogPrintf(LOG_INFO, "Connect input port 0x%02X", portNb);
+		LogPrintf(LOG_INFO, "Connect input port 0x%04X", portNb);
 
 		auto it = m_inputPorts.find(portNb);
 		if (it != m_inputPorts.end())
@@ -26,9 +26,9 @@ namespace emul
 		return true;
 	}
 
-	bool PortConnector::Connect(BYTE portNb, OUTFunction outFunc)
+	bool PortConnector::Connect(WORD portNb, OUTFunction outFunc)
 	{
-		LogPrintf(LOG_INFO, "Connect output port 0x%02X", portNb);
+		LogPrintf(LOG_INFO, "Connect output port 0x%04X", portNb);
 
 		auto it = m_outputPorts.find(portNb);
 		if (it != m_outputPorts.end())
@@ -42,12 +42,12 @@ namespace emul
 		return true;
 	}
 
-	bool PortConnector::In(BYTE port, BYTE& value)
+	bool PortConnector::In(WORD port, BYTE& value)
 	{
 		auto it = m_inputPorts.find(port);
 		if (it == m_inputPorts.end())
 		{
-			LogPrintf(LOG_WARNING, "PortConnector::In: port 0x%02X not allocated", port);
+			LogPrintf(LOG_WARNING, "PortConnector::In: port 0x%04X not allocated", port);
 			return false;
 		}
 
@@ -59,12 +59,12 @@ namespace emul
 		return true;
 	}
 
-	bool PortConnector::Out(BYTE port, BYTE value)
+	bool PortConnector::Out(WORD port, BYTE value)
 	{
 		auto it = m_outputPorts.find(port);
 		if (it == m_outputPorts.end())
 		{
-			LogPrintf(LOG_WARNING, "PortConnector::Out: port 0x%02X not allocated", port);
+			LogPrintf(LOG_WARNING, "PortConnector::Out: port 0x%04X not allocated", port);
 			return false;
 		}
 

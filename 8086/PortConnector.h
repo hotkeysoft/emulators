@@ -17,18 +17,18 @@ namespace emul
 		typedef BYTE(PortConnector::* INFunction)();
 
 
-		typedef std::map<BYTE, std::tuple<PortConnector*, OUTFunction> > OutputPortMap;
-		typedef std::map<BYTE, std::tuple<PortConnector*, INFunction > > InputPortMap;
+		typedef std::map<WORD, std::tuple<PortConnector*, OUTFunction> > OutputPortMap;
+		typedef std::map<WORD, std::tuple<PortConnector*, INFunction > > InputPortMap;
 
-		bool In(BYTE port, BYTE& value);
-		bool Out(BYTE port, BYTE value);
+		bool In(WORD port, BYTE& value);
+		bool Out(WORD port, BYTE value);
 
 		InputPortMap& GetInputPorts() { return m_inputPorts; }
 		OutputPortMap& GetOutputPorts() { return m_outputPorts; }
 
 	protected:
-		bool Connect(BYTE portNb, INFunction inFunc);
-		bool Connect(BYTE portNb, OUTFunction outFunc);
+		bool Connect(WORD portNb, INFunction inFunc);
+		bool Connect(WORD portNb, OUTFunction outFunc);
 
 	protected:
 		OutputPortMap m_outputPorts;
