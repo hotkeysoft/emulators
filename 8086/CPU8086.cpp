@@ -584,9 +584,9 @@ namespace emul
 
 		// OUT fixed (2)
 		// --------
-		// OUT AL, IMM8
-		case 0xE6: NotImplemented(opcode); break;
-		// OUT AX, IMM8
+		// OUT PORT8, AL
+		case 0xE6: OUT8(FetchByte(), regA.hl.l); break;
+		// OUT PORT8, AX
 		case 0xE7: NotImplemented(opcode); break;
 
 		// CALL Near (3)
@@ -608,7 +608,7 @@ namespace emul
 		// OUT variable (1)
 		// --------
 		// OUT AL, DX
-		case 0xEE: NotImplemented(opcode); break;
+		case 0xEE: OUT8(regD.x, regA.hl.l); break;
 		// OUT AX, DX
 		case 0xEF: NotImplemented(opcode); break;
 
@@ -1209,6 +1209,12 @@ namespace emul
 		AdjustParity(dest);
 
 		Dump();
+	}
+
+	void CPU8086::OUT8(WORD port, BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "OUT8 %04X, %02X", port, value);
+		m_ports.Out(port, value);
 	}
 
 }

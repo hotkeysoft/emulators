@@ -167,6 +167,8 @@ namespace emul
 		void XOR8(SourceDest8 sd);
 		void XOR16(SourceDest16 sd);
 
+		void OUT8(WORD port, BYTE value);
+
 		void NotImplemented(BYTE);
 	};
 }
