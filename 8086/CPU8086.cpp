@@ -294,9 +294,9 @@ namespace emul
 		// JNE/JNZ (2)
 		case 0x75: JMPif(!GetFlag(FLAG_Z)); break;
 		// JBE/JNA (2)
-		case 0x76: NotImplemented(opcode); break;
+		case 0x76: JMPif(GetFlagNotAbove()); break;
 		// JNBE/JA (2)
-		case 0x77: NotImplemented(opcode); break;
+		case 0x77: JMPif(!GetFlagNotAbove()); break;
 		// JS (2)
 		case 0x78: JMPif(GetFlag(FLAG_S)); break;
 		// JNS (2)
@@ -306,13 +306,13 @@ namespace emul
 		// JNP/JPO (2)
 		case 0x7B: JMPif(!GetFlag(FLAG_P)); break;
 		// JL/JNGE (2)
-		case 0x7C: NotImplemented(opcode); break;
+		case 0x7C: JMPif(!GetFlagNotLess()); break;
 		// JNL/JGE (2)
-		case 0x7D: NotImplemented(opcode); break;
+		case 0x7D: JMPif(GetFlagNotLess()); break;
 		// JLE/JNG (2)
-		case 0x7E: NotImplemented(opcode); break;
+		case 0x7E: JMPif(GetFlagGreater()); break;
 		// JNLE/JG (2)
-		case 0x7F: NotImplemented(opcode); break;
+		case 0x7F: JMPif(GetFlagGreater()); break;
 
 		//----------
 		// ADD/OR/ADC/SBB/AND/SUB/XOR/CMP i=>rm (5-6)
@@ -845,29 +845,31 @@ namespace emul
 	void CPU8086::INC16(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "INC16");
+		WORD before = w;
 
 		++w;
 
 		// Flags: ODITSZAPC
 		//        XnnnXXXXn
-		SetFlag(FLAG_O, w==0); // TODO Check
+		SetFlag(FLAG_O, getMSB(before) != getMSB(w));
 		AdjustSign(w);
 		AdjustZero(w);
-		SetFlag(FLAG_A, (w & 0x0F) == 0);
+		SetFlag(FLAG_A, ((before ^ w) & 0x18) == 0x18 );
 		AdjustParity(w);
 	}
 	void CPU8086::DEC16(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "DEC16");
+		WORD before = w;
 
 		--w;
 
 		// Flags: ODITSZAPC
 		//        XnnnXXXXn
-		SetFlag(FLAG_O, w=0xFFFF); // TODO CHECK
+		SetFlag(FLAG_O, getMSB(before) != getMSB(w));
 		AdjustSign(w);
 		AdjustZero(w);
-		SetFlag(FLAG_A, (w & 0x0F) != 0x0F);
+		SetFlag(FLAG_A, ((before ^ w) & 0x18) == 0x18);
 		AdjustParity(w);
 	}
 

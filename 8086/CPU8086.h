@@ -89,6 +89,12 @@ namespace emul
 		bool GetFlag(FLAG f) { return (flags & f) ? true : false; };
 		void SetFlag(FLAG f, bool v) { if (v) flags |= f; else flags &= ~f; };
 
+		// Pseudo flags
+		// ----------
+		bool GetFlagNotAbove() { return GetFlag(FLAG_C) || GetFlag(FLAG_Z); }
+		bool GetFlagNotLess() { return GetFlag(FLAG_S) == GetFlag(FLAG_O); }
+		bool GetFlagGreater() { return (GetFlag(FLAG_S) == GetFlag(FLAG_O)) && GetFlag(FLAG_Z); }
+
 		// Helper functions
 
 		void AdjustParity(BYTE data);
