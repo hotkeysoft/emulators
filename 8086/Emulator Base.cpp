@@ -40,7 +40,7 @@ int main(void)
 	Logger::RegisterLogCallback(LogCallback);
 
 	emul::Memory memory(emul::CPU8086_ADDRESS_BITS);
-	memory.EnableLog(true);
+	memory.EnableLog(false);
 	emul::MemoryMap mmap;
 	mmap.EnableLog(false);
 

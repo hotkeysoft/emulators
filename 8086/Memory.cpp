@@ -57,7 +57,6 @@ namespace emul
 
 		if (m_currBlock && address >= m_currMin && address <= m_currMax)
 		{
-			//LogPrintf(LOG_INFO, "\tUsing cached block. ret = %X", m_currBlock->read(address));
 			block = m_currBlock;
 		}
 		else
@@ -65,7 +64,6 @@ namespace emul
 			MemoryBlock* newBlock = FindBlock(address);
 			if (newBlock)
 			{
-				//LogPrintf(LOG_INFO, "\tNew block put in cache.  ret = %X", newBlock->read(address));
 				block = newBlock;
 			}
 			else
@@ -77,6 +75,39 @@ namespace emul
 		if (block)
 		{
 			value = block->read(address);
+		}
+		else
+		{
+			throw std::exception();
+		}
+	}
+
+	BYTE* Memory::GetPtr8(ADDRESS address)
+	{
+		LogPrintf(LOG_INFO, "GetPtr8(%X)", address);
+
+		MemoryBlock* block = NULL;
+
+		if (m_currBlock && address >= m_currMin && address <= m_currMax)
+		{
+			block = m_currBlock;
+		}
+		else
+		{
+			MemoryBlock* newBlock = FindBlock(address);
+			if (newBlock)
+			{
+				block = newBlock;
+			}
+			else
+			{
+				LogPrintf(LOG_ERROR, "Reading unallocated memory space (%X)", address);
+			}
+		}
+
+		if (block)
+		{
+			return block->getPtr(address);
 		}
 		else
 		{

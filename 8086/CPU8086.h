@@ -3,6 +3,7 @@
 #include "CPU.h"
 #include "PortConnector.h"
 #include "PortAggregator.h"
+#include <tuple>
 
 namespace emul
 {
@@ -30,6 +31,8 @@ namespace emul
 		WORD* source;
 		WORD* dest;
 	};
+
+	typedef std::tuple<WORD, WORD> SegmentOffset;
 
 	inline ADDRESS S2A(WORD segment, WORD offset = 0)
 	{
@@ -126,6 +129,9 @@ namespace emul
 		SourceDest8 GetModRegRM8(BYTE modregrm, bool toReg);
 		SourceDest16 GetModRegRM16(BYTE modregrm, bool toReg, bool segReg = false);
 
+		SegmentOffset GetEA(BYTE modregrm);
+		const char* GetEAStr(BYTE modregrm);
+
 		BYTE* GetReg8(BYTE reg);
 		WORD* GetReg16(BYTE reg, bool segReg = false);
 		const char* GetReg8Str(BYTE reg); // For logging
@@ -174,6 +180,8 @@ namespace emul
 		void XOR16(SourceDest16 sd);
 
 		void OUT8(WORD port, BYTE value);
+
+		void LOOP(BYTE offset);
 
 		void NotImplemented(BYTE);
 	};

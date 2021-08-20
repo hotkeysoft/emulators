@@ -571,7 +571,7 @@ namespace emul
 		// LOOPZ/LOOPE (2)
 		case 0xE1: NotImplemented(opcode); break;
 		// LOOP (2)
-		case 0xE2: NotImplemented(opcode); break;
+		case 0xE2: LOOP(FetchByte()); break;
 		// JCXZ (2)
 		case 0xE3: NotImplemented(opcode); break;
 
@@ -805,6 +805,38 @@ namespace emul
 		throw std::exception("GetReg16: invalid reg value");
 	}
 
+	SegmentOffset CPU8086::GetEA(BYTE modregrm)
+	{
+		switch (modregrm & 7)
+		{
+		case 0: return std::make_tuple(regDS, regB.x + regSI);
+		case 1: return std::make_tuple(regDS, regB.x + regDI);
+		case 2: return std::make_tuple(regSS, regBP + regSI);
+		case 3: return std::make_tuple(regSS, regBP + regDI);
+		case 4: return std::make_tuple(regDS, regSI);
+		case 5: return std::make_tuple(regDS, regDI);
+		case 6: return std::make_tuple(regSS, regBP);
+		case 7: return std::make_tuple(regDS, regB.x);
+		}
+		throw std::exception("GetReg16: impossible modregrm value");
+	}
+
+	const char* CPU8086::GetEAStr(BYTE modregrm)
+	{
+		switch (modregrm & 7)
+		{
+		case 0: return "(BX)+(SI)";
+		case 1: return "(BX)+(DI)";
+		case 2: return "(BP)+(SI)";
+		case 3: return "(BP)+(DI)";
+		case 4: return "(SI)";
+		case 5: return "(DI)";
+		case 6: return "(BP)";
+		case 7: return "(BX)";
+		}
+		throw std::exception("GetReg16: impossible modregrm value");
+	}
+
 	SourceDest8 CPU8086::GetModRegRM8(BYTE modregrm, bool toReg)
 	{
 		LogPrintf(LOG_DEBUG, "GetModRegRM8: modregrm=%d, toReg=%d", modregrm, toReg);
@@ -816,15 +848,56 @@ namespace emul
 		BYTE* reg = GetReg8(modregrm >> 3);
 
 		// modrm
-		BYTE* modrm;
+		BYTE* modrm = 0;
+		WORD displacement = 0;
+		bool mem = true;
+		bool direct = false;
 		switch (modregrm & 0xC0)
 		{
 		case 0xC0: // REG
-			LogPrintf(LOG_DEBUG, "GetModRM8: RM=>REG %s", GetReg8Str(modregrm));
+			LogPrintf(LOG_DEBUG, "GetModRegRM8: RM=>REG %s", GetReg8Str(modregrm));
 			modrm = GetReg8(modregrm);
+			mem = false;
+			break;
+		case 0x00: // NO DISP (or DIRECT)
+			if ((modregrm & 7) == 6) // Direct 
+			{
+				direct = true;
+				displacement = FetchWord();
+			}
+			else
+			{
+				LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM disp=0");
+			}
+			break;
+		case 0x40:
+			displacement = widen(FetchByte());
+			LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM disp8=%04X", displacement);
+			break;
+		case 0x80:
+			displacement = FetchWord();
+			throw std::exception("GetModRegRM8: MEM disp16=%04X", displacement);
 			break;
 		default:
 			throw std::exception("GetModRegRM8: not implemented");
+		}
+
+		if (mem)
+		{
+			SegmentOffset segoff = GetEA(modregrm);
+			WORD& segment = std::get<0>(segoff);
+			WORD& offset = std::get<1>(segoff);
+
+			offset = (direct ? 0 : offset) + displacement;
+			if (direct)
+			{
+				LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM ea= %04X", offset);
+			}
+			else
+			{
+				LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM ea=%s+%04X=%04X", GetEAStr(modregrm), displacement, offset);
+			}
+			modrm = m_memory.GetPtr8(S2A(segment, offset));
 		}
 
 		sd.source = toReg ? modrm : reg;
@@ -952,12 +1025,7 @@ namespace emul
 	void CPU8086::JMPNear(BYTE offset)
 	{
 		LogPrintf(LOG_DEBUG, "JMPNear Byte offset %02X", offset);
-		WORD wideOffset = offset;
-		if (getMSB(offset))
-		{
-			wideOffset |= 0xFF00;
-		}
-		regIP += wideOffset;
+		regIP += widen(offset);
 		Dump();
 	}
 	void CPU8086::JMPNear(WORD offset)
@@ -1207,8 +1275,6 @@ namespace emul
 		AdjustZero(dest);
 		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 		AdjustParity(dest);
-
-		Dump();
 	}
 	void CPU8086::ADD16(SourceDest16 sd)
 	{
@@ -1224,8 +1290,6 @@ namespace emul
 		AdjustZero(dest);
 		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 		AdjustParity(dest);
-
-		Dump();
 	}
 
 	void CPU8086::OR8(SourceDest8 sd)
@@ -1242,8 +1306,6 @@ namespace emul
 		AdjustZero(dest);
 		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 		AdjustParity(dest);
-
-		Dump();
 	}
 	void CPU8086::OR16(SourceDest16 sd)
 	{
@@ -1259,8 +1321,6 @@ namespace emul
 		AdjustZero(dest);
 		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 		AdjustParity(dest);
-
-		Dump();
 	}
 
 	void CPU8086::XOR8(SourceDest8 sd)
@@ -1277,8 +1337,6 @@ namespace emul
 		AdjustZero(dest);
 		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 		AdjustParity(dest);
-
-		Dump();
 	}
 	void CPU8086::XOR16(SourceDest16 sd)
 	{
@@ -1294,14 +1352,21 @@ namespace emul
 		AdjustZero(dest);
 		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 		AdjustParity(dest);
-
-		Dump();
 	}
 
 	void CPU8086::OUT8(WORD port, BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "OUT8 %04X, %02X", port, value);
 		m_ports.Out(port, value);
+	}
+
+	void CPU8086::LOOP(BYTE offset)
+	{
+		--regC.x;
+		if (regC.x)
+		{
+			regIP += widen(offset);
+		}
 	}
 
 }

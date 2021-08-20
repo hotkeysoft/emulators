@@ -64,6 +64,14 @@ namespace emul
 			return m_data[address - m_baseAddress];
 	}
 
+	BYTE* MemoryBlock::getPtr(ADDRESS address)
+	{
+		if (address < m_baseAddress || address >= m_baseAddress + m_size)
+			return 0;
+		else
+			return m_data+(address - m_baseAddress);
+	}
+
 	void MemoryBlock::write(ADDRESS address, char data)
 	{
 		if (address < m_baseAddress || address >= m_baseAddress + m_size)

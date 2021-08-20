@@ -55,6 +55,15 @@ namespace emul
 		bool getLSB(WORD b) { return b & 1; }
 		bool getMSB(WORD b) { return b & 32768; }
 		bool getMSB(BYTE b) { return b & 128; }
+		WORD widen(BYTE b)
+		{
+			WORD w = b;
+			if (getMSB(b))
+			{
+				w |= 0xFF00;
+			}
+			return w;
+		}
 
 		bool IsParityOdd(BYTE b);
 		bool IsParityEven(BYTE b) { return !IsParityOdd(b); };

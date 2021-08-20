@@ -26,6 +26,7 @@ namespace emul
 		bool LoadBinary(const char* file);
 
 		virtual BYTE read(ADDRESS address);
+		virtual BYTE* getPtr(ADDRESS address);
 		virtual void write(ADDRESS address, char data);
 
 	protected:

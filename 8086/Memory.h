@@ -21,6 +21,8 @@ namespace emul
 		void Read(ADDRESS address, BYTE& value);
 		void Write(ADDRESS address, BYTE value);
 
+		BYTE* GetPtr8(ADDRESS address);
+
 	private:
 		const size_t m_addressBits;
 
