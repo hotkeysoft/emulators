@@ -110,6 +110,8 @@ namespace emul
 
 		BYTE& GetModRM8(BYTE modrm);
 		BYTE& GetReg8(BYTE reg);
+		const char* GetReg8Str(BYTE reg); // For logging
+
 		//WORD& GetModRM16(BYTE modrm);
 
 		// Opcodes

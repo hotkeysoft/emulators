@@ -723,11 +723,29 @@ namespace emul
 		switch (modrm & 0xC0)
 		{
 		case 0xC0: // REG
-			LogPrintf(LOG_DEBUG, "GetModRM8: REG");
+			LogPrintf(LOG_DEBUG, "GetModRM8: REG %s", GetReg8Str(modrm & 0x07));
 			return GetReg8(modrm & 0x07);
 		default:
 			throw std::exception("GetModRM8: not implemented");
 		}
+	}
+
+
+	const char* CPU8086::GetReg8Str(BYTE reg)
+	{
+		switch (reg & 7)
+		{
+		case 0: return "AL";
+		case 1: return "CL";
+		case 2: return "DL";
+		case 3: return "BL";
+
+		case 4: return "AH";
+		case 5: return "CH";
+		case 6: return "DH";
+		case 7: return "BH";
+		}
+		throw std::exception("GetReg8: invalid reg value");
 	}
 
 	BYTE& CPU8086::GetReg8(BYTE reg)
@@ -763,7 +781,7 @@ namespace emul
 
 	void CPU8086::AdjustParity(WORD data)
 	{
-		SetFlag(FLAG_P, IsParityEven(data));
+		AdjustParity(getLByte(data));
 	}
 	void CPU8086::AdjustSign(WORD data)
 	{
@@ -923,44 +941,67 @@ namespace emul
 	void CPU8086::SHIFTROT8(BYTE op2, BYTE count)
 	{
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
-		BYTE& b = GetModRM8(op2);
+		if (count == 0)
+			return; // TODO
 
+		BYTE& b = GetModRM8(op2);
+		BYTE before = b;
+		bool carry;
 		switch (op2 & 0x38)
 		{
 		case 0x00: // ROL
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
+			m_state = CPUState::STOP;
 			break;
 		case 0x08: // ROR
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
+			m_state = CPUState::STOP;
 			break;
 		case 0x10: // RCL
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
+			m_state = CPUState::STOP;
 			break;
 		case 0x18: // RCR
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
+			m_state = CPUState::STOP;
 			break;
 		case 0x20: // SHL/SAL
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
-			b <<= count;
 			// Flags: ODITSZAPC
 			//        XnnnnnnnX
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
+			if (count > 1) {
+				b <<= (count - 1);
+			}
+			before = b;
+			SetFlag(FLAG_C, getMSB(b));
+			b <<= 1;
 			break;
 		case 0x28: // SHR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
-			b >>= count;
 			// Flags: ODITSZAPC
 			//        XnnnnnnnX
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
+			if (count > 1) {
+				b >>= (count - 1);
+			}
+			before = b;
+			SetFlag(FLAG_C, getLSB(b));
+			b >>= 1;
 			break;
 		case 0x38: // SAR
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
+			m_state = CPUState::STOP;
 			break;
 		default: 
 			break;
 		}
 
-		Dump();
-		m_state = CPUState::STOP;
+		SetFlag(FLAG_O, getMSB(before) != getMSB(b));
+		AdjustSign(b);
+		AdjustZero(b);
+		SetFlag(FLAG_A, ((before ^ b) & 0x18) == 0x18);
+		AdjustParity(b);
 
+		Dump();
 	}
 
 	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
