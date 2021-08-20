@@ -45,13 +45,13 @@ namespace emul
 		// OR rm+r=>rm (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x08: NotImplemented(opcode); break;
+		case 0x08: OR8(GetModRegRM8(FetchByte(), false)); break;
 		// REG16/MEM16, REG16
-		case 0x09: NotImplemented(opcode); break;
+		case 0x09: OR16(GetModRegRM16(FetchByte(), false)); break;
 		// REG8, REG8/MEM8
-		case 0x0A: NotImplemented(opcode); break;
+		case 0x0A: OR8(GetModRegRM8(FetchByte(), true)); break;
 		// REG16, REG16/MEM16
-		case 0x0B: NotImplemented(opcode); break;
+		case 0x0B: OR16(GetModRegRM16(FetchByte(), true)); break;
 
 		// OR i=>a (2-3)
 		// ----------
@@ -346,13 +346,13 @@ namespace emul
 		// MOV rm<=>r (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x88: NotImplemented(opcode); break;
+		case 0x88: MOV8(GetModRegRM8(FetchByte(), false)); break;
 		// REG16/MEM16, REG16
-		case 0x89: NotImplemented(opcode); break;
+		case 0x89: MOV16(GetModRegRM16(FetchByte(), false)); break;
 		// REG8, REG8/MEM8
-		case 0x8A: NotImplemented(opcode); break;
+		case 0x8A: MOV8(GetModRegRM8(FetchByte(), true)); break;
 		// REG16, REG16/MEM16
-		case 0x8B: NotImplemented(opcode); break;
+		case 0x8B: MOV16(GetModRegRM16(FetchByte(), true)); break;
 
 		// MOV sr=>rm (4)
 		// ----------
@@ -592,11 +592,11 @@ namespace emul
 		// CALL Near (3)
 		case 0xE8: NotImplemented(opcode); break;
 		// JUMP Near (3)
-		case 0xE9: NotImplemented(opcode); break;
+		case 0xE9: JMPNear(FetchWord()); break;
 		// JUMP Far (5)
 		case 0xEA: JMPfar(); break;
 		// JUMP Near Short (2)
-		case 0xEB: NotImplemented(opcode); break;
+		case 0xEB: JMPNear(FetchByte()); break;
 
 		// IN variable (1)
 		// --------
@@ -685,7 +685,8 @@ namespace emul
 			"\tCS|IP %04X|%04X\n"
 			"\tDS|SI %04X|%04X\n"
 			"\tES|DI %04X|%04X\n"
-			"\tSS|BP %04X|%04X\n"
+			"\tSS|SP %04X|%04X\n"
+			"\t   BP %04X\n"
 			"FLAGS xxxxODITSZxAxPxC\n"
 			"      " PRINTF_BIN_PATTERN_INT16
 			"\n"
@@ -697,7 +698,8 @@ namespace emul
 			regCS, regIP,
 			regDS, regSI,
 			regES, regDI,
-			regSS, regBP,
+			regSS, regSP,
+			regBP,
 			PRINTF_BYTE_TO_BIN_INT16(flags));
 	}
 
@@ -804,9 +806,9 @@ namespace emul
 		throw std::exception("GetReg16: invalid reg value");
 	}
 
-	SourceDest8 CPU8086::GetModRegRM8(BYTE modregrm, bool swap)
+	SourceDest8 CPU8086::GetModRegRM8(BYTE modregrm, bool toReg)
 	{
-		LogPrintf(LOG_DEBUG, "GetModRegRM8: modregrm=%d, swap=%d", modregrm, swap);
+		LogPrintf(LOG_DEBUG, "GetModRegRM8: modregrm=%d, toReg=%d", modregrm, toReg);
 
 		SourceDest8 sd;
 
@@ -826,15 +828,15 @@ namespace emul
 			throw std::exception("GetModRegRM8: not implemented");
 		}
 
-		sd.source = swap ? modrm : reg;
-		sd.dest = swap ? reg : modrm;
+		sd.source = toReg ? modrm : reg;
+		sd.dest = toReg ? reg : modrm;
 
 		return sd;
 	}
 
-	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool swap, bool segReg)
+	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool toReg, bool segReg)
 	{
-		LogPrintf(LOG_DEBUG, "GetModRegRM16: modregrm=%d, swap=%d", modregrm, swap);
+		LogPrintf(LOG_DEBUG, "GetModRegRM16: modregrm=%d, toReg=%d", modregrm, toReg);
 
 		SourceDest16 sd;
 
@@ -854,8 +856,8 @@ namespace emul
 			throw std::exception("GetModRegRM16: not implemented");
 		}
 
-		sd.source = swap ? modrm : reg;
-		sd.dest = swap ? reg : modrm;
+		sd.source = toReg ? modrm : reg;
+		sd.dest = toReg ? reg : modrm;
 
 		return sd;
 	}
@@ -941,11 +943,29 @@ namespace emul
 	
 	void CPU8086::JMPfar()
 	{
-		LogPrintf(LOG_DEBUG, "JMPfar");
 		WORD offset = FetchWord();
 		WORD segment = FetchWord();
+		LogPrintf(LOG_DEBUG, "JMPfar %02X|%02X", segment, offset);
 		regCS = segment;
 		regIP = offset;
+	}
+
+	void CPU8086::JMPNear(BYTE offset)
+	{
+		LogPrintf(LOG_DEBUG, "JMPNear Byte offset %02X", offset);
+		WORD wideOffset = offset;
+		if (getMSB(offset))
+		{
+			wideOffset |= 0xFF00;
+		}
+		regIP += wideOffset;
+		Dump();
+	}
+	void CPU8086::JMPNear(WORD offset)
+	{
+		LogPrintf(LOG_DEBUG, "JMPNear Word offset %04X", offset);
+		regIP += offset;
+		Dump();
 	}
 
 	void CPU8086::NotImplemented(BYTE op)
@@ -1123,6 +1143,39 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
 		m_state = CPUState::STOP;
 
+	}
+
+	void CPU8086::OR8(SourceDest8 sd)
+	{
+		BYTE& source = *(sd.source);
+		BYTE& dest = *(sd.dest);
+		BYTE before = dest;
+
+		dest |= source;
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
+		AdjustSign(dest);
+		AdjustZero(dest);
+		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+		AdjustParity(dest);
+
+		Dump();
+	}
+	void CPU8086::OR16(SourceDest16 sd)
+	{
+		WORD& source = *(sd.source);
+		WORD& dest = *(sd.dest);
+		WORD before = dest;
+
+		dest |= source;
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
+		AdjustSign(dest);
+		AdjustZero(dest);
+		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+		AdjustParity(dest);
+
+		Dump();
 	}
 
 	void CPU8086::XOR8(SourceDest8 sd)
