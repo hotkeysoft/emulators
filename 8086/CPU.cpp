@@ -9,10 +9,6 @@ namespace emul
 		m_mmap(mmap),
 		m_timeTicks(0)
 	{
-		for (int i = 0; i < 256; i++)
-		{
-			m_opcodesTable[i] = &CPU::UnknownOpcode;
-		}
 	}
 
 	CPU::~CPU()
@@ -39,9 +35,8 @@ namespace emul
 			unsigned char opcode;
 			m_state = CPUState::RUN;
 			m_memory.Read(GetCurrentAddress(), opcode);
-
 			// Execute instruction
-			(this->*m_opcodesTable[opcode])(opcode);
+			Exec(opcode);
 		}
 		catch (std::exception e)
 		{
@@ -52,37 +47,28 @@ namespace emul
 		return (m_state == CPUState::RUN);
 	}
 
-	void CPU::DumpUnassignedOpcodes()
-	{
-		for (int i = 0; i < 256; ++i)
-		{
-			if (m_opcodesTable[i] == &CPU::UnknownOpcode)
-			{
-				LogPrintf(LOG_INFO, "Unassigned: 0x%02X\t0%03o\n", i, i);
-			}
-		}
-	}
-
-	void CPU::AddOpcode(BYTE opcode, OPCodeFunction f)
-	{
-		if (m_opcodesTable[opcode] != &CPU::UnknownOpcode)
-		{
-			LogPrintf(LOG_ERROR, "CPU: Opcode (0x%02X) already defined!\n", opcode);
-		}
-
-		m_opcodesTable[opcode] = f;
-	}
-
 	void CPU::UnknownOpcode(BYTE opcode)
 	{
 		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X! Stopping CPU.\n", opcode, GetCurrentAddress());
 		m_state = CPUState::STOP;
 	}
 
-	bool CPU::isParityOdd(BYTE b)
+	bool CPU::IsParityOdd(BYTE b)
 	{
 		BYTE parity = 0;
-		for (int i = 0; i < 8; i++)
+		for (size_t i = 0; i < 8; i++)
+		{
+			parity ^= (b & 1);
+			b = b >> 1;
+		}
+
+		return (parity != 0);
+	}
+
+	bool CPU::IsParityOdd(WORD b)
+	{
+		BYTE parity = 0;
+		for (size_t i = 0; i < 16; i++)
 		{
 			parity ^= (b & 1);
 			b = b >> 1;

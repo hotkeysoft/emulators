@@ -24,14 +24,13 @@ namespace emul
 
 		virtual size_t GetAddressBits() const = 0;
 		virtual ADDRESS GetCurrentAddress() const = 0;
+		virtual void Exec(BYTE opcode) = 0;
 
 		virtual void Reset();
 		void Run();
 		virtual bool Step();
 
 		unsigned long getTime() { return m_timeTicks; };
-
-		void DumpUnassignedOpcodes();
 
 		// Watches
 		void AddWatch(ADDRESS address, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
@@ -40,10 +39,6 @@ namespace emul
 		void RemoveWatch(const char* label);
 
 	protected:
-		typedef void (CPU::* OPCodeFunction)(BYTE);
-
-		void AddOpcode(BYTE, OPCodeFunction);
-
 		enum class CPUState { STOP, RUN, STEP };
 
 		CPUState m_state;
@@ -57,18 +52,20 @@ namespace emul
 		BYTE getHByte(WORD w) { return BYTE((w >> 8) & 0x00FF); };
 		WORD getWord(BYTE h, BYTE l) { return (((WORD)h) << 8) + l; };
 
-		bool isParityOdd(BYTE b);
-		bool isParityEven(BYTE b) { return !isParityOdd(b); };
+		bool IsParityOdd(BYTE b);
+		bool IsParityEven(BYTE b) { return !IsParityOdd(b); };
+		bool IsParityOdd(WORD w);
+		bool IsParityEven(WORD w) { return !IsParityOdd(w); };
+
 
 		void OnCall(ADDRESS caller, ADDRESS target);
 		void OnReturn(ADDRESS address);
+
+		void UnknownOpcode(BYTE opcode);
 
 	private:
 		typedef std::map<ADDRESS, WatchItem > WatchList;
 		WatchList m_callWatches;
 		WatchList m_returnWatches;
-
-		OPCodeFunction m_opcodesTable[256];
-		void UnknownOpcode(BYTE);
 	};
 }

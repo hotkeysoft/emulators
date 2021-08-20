@@ -32,6 +32,7 @@ namespace emul
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
 		virtual ADDRESS GetCurrentAddress() const { return S2A(regCS, regIP); }
+		virtual void Exec(BYTE opcode);
 
 		void AddDevice(PortConnector& ports);
 
@@ -63,15 +64,15 @@ namespace emul
 
 		enum FLAG : WORD
 		{
-			FLAG_CF = 0x0001, // Carry
-			FLAG_PF = 0x0004, // Parity
-			FLAG_AF = 0x0010, // Auxiliary Carry
-			FLAG_ZF = 0x0040, // Zero
-			FLAG_SF = 0x0080, // Sign
-			FLAG_TF = 0x0100, // Trap
-			FLAG_IF = 0x0200, // Interrupt Enable
-			FLAG_DF = 0x0400, // Direction
-			FLAG_OF = 0x0800, // Overflow
+			FLAG_C = 0x0001, // Carry
+			FLAG_P = 0x0004, // Parity
+			FLAG_A = 0x0010, // Auxiliary Carry
+			FLAG_Z = 0x0040, // Zero
+			FLAG_S = 0x0080, // Sign
+			FLAG_T = 0x0100, // Trap
+			FLAG_I = 0x0200, // Interrupt Enable
+			FLAG_D = 0x0400, // Direction
+			FLAG_O = 0x0800, // Overflow
 
 			FLAG_R1 = 0x0002,
 			FLAG_R3 = 0x0008,
@@ -89,20 +90,38 @@ namespace emul
 		void SetFlag(FLAG f, bool v) { if (v) flags |= f; else flags &= ~f; };
 
 		// Helper functions
+
+		void AdjustParity(BYTE data);
+		void AdjustSign(BYTE data);
+		void AdjustZero(BYTE data);
+
+		void AdjustParity(WORD data);
+		void AdjustSign(WORD data);
+		void AdjustZero(WORD data);
+
 		BYTE FetchByte();
 		WORD FetchWord();
 
 		// Opcodes
-		void JMPfar(BYTE);
+		void JMPfar();
 
-		void CLC(BYTE);
-		void CMC(BYTE);
-		void STC(BYTE);
-		void CLD(BYTE);
-		void STD(BYTE);
-		void CLI(BYTE);
-		void STI(BYTE);
-		void HLT(BYTE);
+		void CLC();
+		void CMC();
+		void STC();
+		void CLD();
+		void STD();
+		void CLI();
+		void STI();
+		void HLT();
+
+		void INC16(WORD&);
+		void DEC16(WORD&);
+
+		void MOV8(BYTE& d, BYTE s);
+		void MOV16(WORD& d, WORD s);
+
+		void SAHF();
+		void LAHF();
 
 		void NotImplemented(BYTE);
 	};
