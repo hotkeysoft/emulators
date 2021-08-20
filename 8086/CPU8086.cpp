@@ -507,9 +507,9 @@ namespace emul
 		case 0xBF: MOV16(regDI, FetchWord()); break;
 
 		// RET SP+IMM16 (3)
-		case 0xC2: NotImplemented(opcode); break;
+		case 0xC2: RETNear(true, FetchWord()); break;
 		// RET Near (1)
-		case 0xC3: NotImplemented(opcode); break;
+		case 0xC3: RETNear(); break;
 
 		// LES REG16, MEM16 (4)
 		case 0xC4: NotImplemented(opcode); break;
@@ -1367,6 +1367,23 @@ namespace emul
 		{
 			regIP += widen(offset);
 		}
+	}
+
+	void CPU8086::RETNear(bool pop, WORD value)
+	{
+		EnableLog(true);
+
+		LogPrintf(LOG_DEBUG, "RETNear [%s][%d]", pop?"Pop":"NoPop", value);
+
+		Dump();
+
+		BYTE ipLo, ipHi;
+		m_memory.Read(S2A(regSS, regSP++), ipLo);
+		m_memory.Read(S2A(regSS, regSP++), ipHi);
+		regIP = getWord(ipHi, ipLo);
+		regSP += value;
+
+		Dump();
 	}
 
 }

@@ -67,6 +67,7 @@ int main(void)
 
 	cpu.AddDevice(ppi);
 	cpu.Reset();
+	cpu.EnableLog(false);  // Enabled internally
 
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();

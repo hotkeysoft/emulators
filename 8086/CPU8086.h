@@ -183,6 +183,8 @@ namespace emul
 
 		void LOOP(BYTE offset);
 
+		void RETNear(bool pop = false, WORD value = 0);
+
 		void NotImplemented(BYTE);
 	};
 }
