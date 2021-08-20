@@ -540,13 +540,13 @@ namespace emul
 		// ROL/ROR/RCL/RCR/SAL|SHL/SHR/---/SAR
 		// ----------
 		// REG8/MEM8, 1
-		case 0xD0: NotImplemented(opcode); break;
+		case 0xD0: SHIFTROT8(FetchByte(), 1); break;
 		// REG16/MEM16, 1
-		case 0xD1: NotImplemented(opcode); break;
+		case 0xD1: SHIFTROT16(FetchByte(), 1); break;
 		// REG8/MEM8, CL
-		case 0xD2: NotImplemented(opcode); break;
+		case 0xD2: SHIFTROT8(FetchByte(), regC.hl.l); break;
 		// REG16/MEM16, CL
-		case 0xD3: NotImplemented(opcode); break;
+		case 0xD3: SHIFTROT16(FetchByte(), regC.hl.l); break;
 
 		// AAM
 		case 0xD4: NotImplemented(opcode); break;
@@ -718,6 +718,36 @@ namespace emul
 		return r.x;
 	}
 
+	BYTE& CPU8086::GetModRM8(BYTE modrm)
+	{
+		switch (modrm & 0xC0)
+		{
+		case 0xC0: // REG
+			LogPrintf(LOG_DEBUG, "GetModRM8: REG");
+			return GetReg8(modrm & 0x07);
+		default:
+			throw std::exception("GetModRM8: not implemented");
+		}
+	}
+
+	BYTE& CPU8086::GetReg8(BYTE reg)
+	{
+		switch (reg & 7)
+		{
+		case 0: return regA.hl.l;
+		case 1: return regC.hl.l;
+		case 2: return regD.hl.l;
+		case 3: return regB.hl.l;
+
+		case 4: return regA.hl.h;
+		case 5: return regC.hl.h;
+		case 6: return regD.hl.h;
+		case 7: return regB.hl.h;
+		}
+		throw std::exception("GetReg8: invalid reg value");
+	}
+
+
 	void CPU8086::AdjustParity(BYTE data)
 	{
 		SetFlag(FLAG_P, IsParityEven(data));
@@ -886,6 +916,56 @@ namespace emul
 		{
 			regIP += offset;
 		}
+	}
+
+	void CPU8086::SHIFTROT8(BYTE op2, BYTE count)
+	{
+		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
+		BYTE& b = GetModRM8(op2);
+
+		switch (op2 & 0x38)
+		{
+		case 0x00: // ROL
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
+			break;
+		case 0x08: // ROR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
+			break;
+		case 0x10: // RCL
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
+			break;
+		case 0x18: // RCR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
+			break;
+		case 0x20: // SHL/SAL
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
+			b <<= count;
+			// Flags: ODITSZAPC
+			//        XnnnnnnnX
+			break;
+		case 0x28: // SHR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
+			b >>= count;
+			// Flags: ODITSZAPC
+			//        XnnnnnnnX
+			break;
+		case 0x38: // SAR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
+			break;
+		default: 
+			break;
+		}
+
+		Dump();
+		m_state = CPUState::STOP;
+
+	}
+
+	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
+	{
+		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
+		m_state = CPUState::STOP;
+
 	}
 
 }

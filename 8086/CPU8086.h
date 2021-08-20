@@ -102,6 +102,10 @@ namespace emul
 		BYTE FetchByte();
 		WORD FetchWord();
 
+		BYTE& GetModRM8(BYTE modrm);
+		BYTE& GetReg8(BYTE reg);
+		//WORD& GetModRM16(BYTE modrm);
+
 		// Opcodes
 		void JMPfar();
 
@@ -124,6 +128,9 @@ namespace emul
 		void LAHF();
 
 		void JMPif(bool cond);
+
+		void SHIFTROT8(BYTE op2, BYTE count);
+		void SHIFTROT16(BYTE op2, BYTE count);
 
 		void NotImplemented(BYTE);
 	};
