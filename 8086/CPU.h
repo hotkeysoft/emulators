@@ -58,9 +58,6 @@ namespace emul
 
 		bool IsParityOdd(BYTE b);
 		bool IsParityEven(BYTE b) { return !IsParityOdd(b); };
-		bool IsParityOdd(WORD w);
-		bool IsParityEven(WORD w) { return !IsParityOdd(w); };
-
 
 		void OnCall(ADDRESS caller, ADDRESS target);
 		void OnReturn(ADDRESS address);
