@@ -160,13 +160,13 @@ namespace emul
 		// XOR rm+r=>rm (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x30: NotImplemented(opcode); break;
+		case 0x30: XOR8(GetModRegRM8(FetchByte(), false)); break;
 		// REG16/MEM16, REG16
-		case 0x31: NotImplemented(opcode); break;
+		case 0x31: XOR16(GetModRegRM16(FetchByte(), false)); break;
 		// REG8, REG8/MEM8
-		case 0x32: NotImplemented(opcode); break;
+		case 0x32: XOR8(GetModRegRM8(FetchByte(), true)); break;
 		// REG16, REG16/MEM16
-		case 0x33: NotImplemented(opcode); break;
+		case 0x33: XOR16(GetModRegRM16(FetchByte(), true)); break;
 
 		// XOR i=>a (2-3)
 		// ----------
@@ -718,18 +718,17 @@ namespace emul
 		return r.x;
 	}
 
-	BYTE& CPU8086::GetModRM8(BYTE modrm)
+	BYTE* CPU8086::GetModRM8(BYTE modrm)
 	{
 		switch (modrm & 0xC0)
 		{
 		case 0xC0: // REG
-			LogPrintf(LOG_DEBUG, "GetModRM8: REG %s", GetReg8Str(modrm & 0x07));
-			return GetReg8(modrm & 0x07);
+			LogPrintf(LOG_DEBUG, "GetModRM8: REG %s", GetReg8Str(modrm));
+			return GetReg8(modrm);
 		default:
 			throw std::exception("GetModRM8: not implemented");
 		}
 	}
-
 
 	const char* CPU8086::GetReg8Str(BYTE reg)
 	{
@@ -748,23 +747,112 @@ namespace emul
 		throw std::exception("GetReg8: invalid reg value");
 	}
 
-	BYTE& CPU8086::GetReg8(BYTE reg)
+	BYTE* CPU8086::GetReg8(BYTE reg)
 	{
 		switch (reg & 7)
 		{
-		case 0: return regA.hl.l;
-		case 1: return regC.hl.l;
-		case 2: return regD.hl.l;
-		case 3: return regB.hl.l;
+		case 0: return &regA.hl.l;
+		case 1: return &regC.hl.l;
+		case 2: return &regD.hl.l;
+		case 3: return &regB.hl.l;
 
-		case 4: return regA.hl.h;
-		case 5: return regC.hl.h;
-		case 6: return regD.hl.h;
-		case 7: return regB.hl.h;
+		case 4: return &regA.hl.h;
+		case 5: return &regC.hl.h;
+		case 6: return &regD.hl.h;
+		case 7: return &regB.hl.h;
 		}
 		throw std::exception("GetReg8: invalid reg value");
 	}
 
+	const char* CPU8086::GetReg16Str(BYTE reg)
+	{
+		switch (reg & 7)
+		{
+		case 0: return "AX";
+		case 1: return "CX";
+		case 2: return "DX";
+		case 3: return "BX";
+
+		case 4: return "SP";
+		case 5: return "BP";
+		case 6: return "SI";
+		case 7: return "DI";
+		}
+		throw std::exception("GetReg16: invalid reg value");
+	}
+
+	WORD* CPU8086::GetReg16(BYTE reg)
+	{
+		switch (reg & 7)
+		{
+		case 0: return &regA.x;
+		case 1: return &regC.x;
+		case 2: return &regD.x;
+		case 3: return &regB.x;
+
+		case 4: return &regSP;
+		case 5: return &regBP;
+		case 6: return &regSI;
+		case 7: return &regDI;
+		}
+		throw std::exception("GetReg16: invalid reg value");
+	}
+
+	SourceDest8 CPU8086::GetModRegRM8(BYTE modregrm, bool swap)
+	{
+		LogPrintf(LOG_DEBUG, "GetModRegRM8: modregrm=%d, swap=%d", modregrm, swap);
+
+		SourceDest8 sd;
+
+		// reg part
+		LogPrintf(LOG_DEBUG, "GetModRegRM8: REG %s", GetReg8Str(modregrm >> 3));
+		BYTE* reg = GetReg8(modregrm >> 3);
+
+		// modrm
+		BYTE* modrm;
+		switch (modregrm & 0xC0)
+		{
+		case 0xC0: // REG
+			LogPrintf(LOG_DEBUG, "GetModRM8: RM=>REG %s", GetReg8Str(modregrm));
+			modrm = GetReg8(modregrm);
+			break;
+		default:
+			throw std::exception("GetModRegRM8: not implemented");
+		}
+
+		sd.source = swap ? modrm : reg;
+		sd.dest = swap ? reg : modrm;
+
+		return sd;
+	}
+
+	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool swap)
+	{
+		LogPrintf(LOG_DEBUG, "GetModRegRM16: modregrm=%d, swap=%d", modregrm, swap);
+
+		SourceDest16 sd;
+
+		// reg part
+		LogPrintf(LOG_DEBUG, "GetModRegRM16: REG %s", GetReg16Str(modregrm >> 3));
+		WORD* reg = GetReg16(modregrm >> 3);
+
+		// modrm
+		WORD* modrm;
+		switch (modregrm & 0xC0)
+		{
+		case 0xC0: // REG
+			LogPrintf(LOG_DEBUG, "GetModRM16: RM=>REG %s", GetReg16Str(modregrm));
+			modrm = GetReg16(modregrm);
+			break;
+		default:
+			throw std::exception("GetModRegRM16: not implemented");
+		}
+
+		sd.source = swap ? modrm : reg;
+		sd.dest = swap ? reg : modrm;
+
+		return sd;
+	}
 
 	void CPU8086::AdjustParity(BYTE data)
 	{
@@ -944,9 +1032,9 @@ namespace emul
 		if (count == 0)
 			return; // TODO
 
-		BYTE& b = GetModRM8(op2);
-		BYTE before = b;
-		bool carry;
+		BYTE* b = GetModRM8(op2);
+		BYTE& dest = *b;
+		BYTE before = dest;
 		switch (op2 & 0x38)
 		{
 		case 0x00: // ROL
@@ -970,22 +1058,22 @@ namespace emul
 			//        XnnnnnnnX
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
 			if (count > 1) {
-				b <<= (count - 1);
+				dest <<= (count - 1);
 			}
-			before = b;
-			SetFlag(FLAG_C, getMSB(b));
-			b <<= 1;
+			before = dest;
+			SetFlag(FLAG_C, getMSB(dest));
+			dest <<= 1;
 			break;
 		case 0x28: // SHR
 			// Flags: ODITSZAPC
 			//        XnnnnnnnX
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
 			if (count > 1) {
-				b >>= (count - 1);
+				dest >>= (count - 1);
 			}
-			before = b;
-			SetFlag(FLAG_C, getLSB(b));
-			b >>= 1;
+			before = dest;
+			SetFlag(FLAG_C, getLSB(dest));
+			dest >>= 1;
 			break;
 		case 0x38: // SAR
 			LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
@@ -995,11 +1083,11 @@ namespace emul
 			break;
 		}
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(b));
-		AdjustSign(b);
-		AdjustZero(b);
-		SetFlag(FLAG_A, ((before ^ b) & 0x18) == 0x18);
-		AdjustParity(b);
+		SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
+		AdjustSign(dest);
+		AdjustZero(dest);
+		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+		AdjustParity(dest);
 
 		Dump();
 	}
@@ -1009,6 +1097,39 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
 		m_state = CPUState::STOP;
 
+	}
+
+	void CPU8086::XOR8(SourceDest8 sd)
+	{
+		BYTE& source = *(sd.source);
+		BYTE& dest = *(sd.dest);
+		BYTE before = dest;
+
+		dest ^= source;
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
+		AdjustSign(dest);
+		AdjustZero(dest);
+		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+		AdjustParity(dest);
+
+		Dump();
+	}
+	void CPU8086::XOR16(SourceDest16 sd)
+	{
+		WORD& source = *(sd.source);
+		WORD& dest = *(sd.dest);
+		WORD before = dest;
+
+		dest ^= source;
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
+		AdjustSign(dest);
+		AdjustZero(dest);
+		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+		AdjustParity(dest);
+
+		Dump();
 	}
 
 }

@@ -19,6 +19,18 @@ namespace emul
 	};
 	#pragma pack(pop)
 
+	struct SourceDest8
+	{
+		BYTE* source;
+		BYTE* dest;
+	};
+
+	struct SourceDest16
+	{
+		WORD* source;
+		WORD* dest;
+	};
+
 	inline ADDRESS S2A(WORD segment, WORD offset = 0)
 	{
 		return (segment << 4) + offset;
@@ -108,11 +120,16 @@ namespace emul
 		BYTE FetchByte();
 		WORD FetchWord();
 
-		BYTE& GetModRM8(BYTE modrm);
-		BYTE& GetReg8(BYTE reg);
-		const char* GetReg8Str(BYTE reg); // For logging
+		BYTE* GetModRM8(BYTE modrm);
+		//WORD* GetModRM16(BYTE modrm);
 
-		//WORD& GetModRM16(BYTE modrm);
+		SourceDest8 GetModRegRM8(BYTE modregrm, bool swap);
+		SourceDest16 GetModRegRM16(BYTE modregrm, bool swap);
+
+		BYTE* GetReg8(BYTE reg);
+		WORD* GetReg16(BYTE reg);
+		const char* GetReg8Str(BYTE reg); // For logging
+		const char* GetReg16Str(BYTE reg); // For logging
 
 		// Opcodes
 		void JMPfar();
@@ -139,6 +156,9 @@ namespace emul
 
 		void SHIFTROT8(BYTE op2, BYTE count);
 		void SHIFTROT16(BYTE op2, BYTE count);
+
+		void XOR8(SourceDest8 sd);
+		void XOR16(SourceDest16 sd);
 
 		void NotImplemented(BYTE);
 	};
