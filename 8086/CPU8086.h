@@ -117,6 +117,10 @@ namespace emul
 		bool GetFlagNotLess() { return GetFlag(FLAG_S) == GetFlag(FLAG_O); }
 		bool GetFlagGreater() { return (GetFlag(FLAG_S) == GetFlag(FLAG_O)) && GetFlag(FLAG_Z); }
 
+		// REP flags
+		bool inRep;
+		WORD repIP;
+
 		// Helper functions
 
 		void AdjustParity(BYTE data);
@@ -201,6 +205,8 @@ namespace emul
 
 		void LODS8();
 		void LODS16();
+
+		void REP(bool z);
 
 		void NotImplemented(BYTE);
 	};

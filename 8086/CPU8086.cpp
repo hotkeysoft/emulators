@@ -632,9 +632,10 @@ namespace emul
 		// LOCK (1)
 		case 0xF0: NotImplemented(opcode); break;
 
-		// REP (1)
-		case 0xF2: NotImplemented(opcode); break;
-		case 0xF3: NotImplemented(opcode); break;
+		// REPNZ/REPNE (1)
+		case 0xF2: REP(false); break;
+		// REPZ/REPE (1)
+		case 0xF3: REP(true); break;
 
 		// HLT (1)
 		case 0xF4: HLT(); break;
@@ -688,6 +689,9 @@ namespace emul
 		regDS = 0x0000;
 		regSS = 0x0000;
 		regES = 0x0000;
+
+		inRep = false;
+		repIP = 0x0000;
 	}
 
 	void CPU8086::Dump()
@@ -1490,6 +1494,12 @@ namespace emul
 
 		m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
 		m_memory.Read(S2A(regDS, regSI++), regA.hl.h);
+	}
+
+	void CPU8086::REP(bool z)
+	{
+		LogPrintf(LOG_DEBUG, "REP, Z=%d", z);
+		m_state = CPUState::STOP;
 	}
 
 }
