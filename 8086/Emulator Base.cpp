@@ -5,6 +5,7 @@
 #include "MemoryBlock.h"
 #include "MemoryMap.h"
 #include "CPU8086.h"
+#include "Device8254.h"
 #include "Device8255.h"
 #include <conio.h>
 #include <vector>
@@ -57,6 +58,10 @@ int main(void)
 	emul::MemoryBlock buffer_memory(0x8000, 0x8000, emul::MemoryType::RAM);
 	memory.Allocate(&buffer_memory);
 
+	pit::Device8254 pit(0x40);
+	pit.Init();
+	pit.EnableLog(true);
+
 	emul::Device8255 ppi(0x60);
 	ppi.Init();
 	ppi.EnableLog(true);
@@ -65,6 +70,7 @@ int main(void)
 
 //	cpu.AddWatch("EXECUTE", onCall, onRet);
 
+	cpu.AddDevice(pit);
 	cpu.AddDevice(ppi);
 	cpu.Reset();
 	cpu.EnableLog(false);  // Enabled internally
@@ -77,7 +83,10 @@ int main(void)
 
 	try
 	{
-		while (cpu.Step()) {};
+		while (cpu.Step())
+		{
+			pit.Tick();
+		};
 	}
 	catch (std::exception e)
 	{
