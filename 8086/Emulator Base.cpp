@@ -7,6 +7,7 @@
 #include "CPU8086.h"
 #include "Device8254.h"
 #include "Device8255.h"
+#include "Device8237.h"
 #include <conio.h>
 #include <vector>
 #include <string>
@@ -66,12 +67,17 @@ int main(void)
 	ppi.Init();
 	ppi.EnableLog(true);
 
+	dma::Device8237 dma(0x00);
+	dma.Init();
+	dma.EnableLog(true);
+
 	emul::CPU8086 cpu(memory, mmap);
 
 //	cpu.AddWatch("EXECUTE", onCall, onRet);
 
 	cpu.AddDevice(pit);
 	cpu.AddDevice(ppi);
+	cpu.AddDevice(dma);
 	cpu.Reset();
 	cpu.EnableLog(false);  // Enabled internally
 

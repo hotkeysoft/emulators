@@ -1,4 +1,5 @@
 #include "PortConnector.h"
+#include "PortAggregator.h"
 
 namespace emul
 {
@@ -8,6 +9,12 @@ namespace emul
 
 	PortConnector::~PortConnector()
 	{
+	}
+
+	bool PortConnector::ConnectTo(PortAggregator& dest)
+	{
+		dest.Connect(*this);
+		return true;
 	}
 
 	bool PortConnector::Connect(WORD portNb, INFunction inFunc)

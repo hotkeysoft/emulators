@@ -675,7 +675,7 @@ namespace emul
 
 	void CPU8086::AddDevice(PortConnector& ports)
 	{
-		return m_ports.Connect(ports);
+		ports.ConnectTo(m_ports);
 	}
 
 	void CPU8086::Reset()

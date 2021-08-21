@@ -1,0 +1,70 @@
+#pragma once
+
+#include "Common.h"
+#include "PortConnector.h"
+
+using emul::PortConnector;
+using emul::BYTE;
+using emul::WORD;
+
+class emul::PortAggregator;
+
+namespace dma
+{
+	class Device8237;
+
+	class DMAChannel : public PortConnector
+	{
+	public:
+		DMAChannel(Device8237* parent, WORD id, const char* label);
+
+		DMAChannel() = delete;
+		DMAChannel(const DMAChannel&) = delete;
+		DMAChannel& operator=(const DMAChannel&) = delete;
+		DMAChannel(DMAChannel&&) = delete;
+		DMAChannel& operator=(DMAChannel&&) = delete;
+
+		void Init();
+		void Reset();
+
+		BYTE ADDR_IN();
+		void ADDR_OUT(BYTE value);
+
+		BYTE COUNT_IN();
+		void COUNT_OUT(BYTE value);
+
+	private:
+		Device8237* m_parent;
+		WORD m_id;
+
+		WORD m_address;
+		WORD m_count;
+	};
+
+	class Device8237 : public PortConnector
+	{
+	public:
+		Device8237(WORD baseAddress);
+
+		Device8237() = delete;
+		Device8237(const Device8237&) = delete;
+		Device8237& operator=(const Device8237&) = delete;
+		Device8237(Device8237&&) = delete;
+		Device8237& operator=(Device8237&&) = delete;
+
+		WORD GetBaseAdress() { return m_baseAddress; }
+
+		void Init();
+		void Reset();
+
+		virtual bool ConnectTo(emul::PortAggregator& dest);
+
+	protected:
+		const WORD m_baseAddress;
+
+		DMAChannel m_channel0;
+		DMAChannel m_channel1;
+		DMAChannel m_channel2;
+		DMAChannel m_channel3;
+	};
+}
