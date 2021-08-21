@@ -32,8 +32,8 @@ namespace emul
 		WORD* dest;
 	};
 
-	typedef void(*RawOpFunc8)(SourceDest8);
-	typedef void(*RawOpFunc16)(SourceDest16);
+	typedef BYTE(*RawOpFunc8)(SourceDest8);
+	typedef WORD(*RawOpFunc16)(SourceDest16);
 
 	typedef std::tuple<WORD, WORD> SegmentOffset;
 

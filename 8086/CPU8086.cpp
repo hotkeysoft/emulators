@@ -3,23 +3,23 @@
 
 namespace emul
 {
-	void rawAdd8(SourceDest8 sd) { *(sd.dest) += *(sd.source); }
-	void rawOr8(SourceDest8 sd) { *(sd.dest) |= *(sd.source); }
-	void rawAdc8(SourceDest8 sd) { throw(std::exception("rawAdc8 not implemented")); }
-	void rawSbb8(SourceDest8 sd) { throw(std::exception("rawSbb8 not implemented")); }
-	void rawAnd8(SourceDest8 sd) { *(sd.dest) &= *(sd.source); }
-	void rawSub8(SourceDest8 sd) { *(sd.dest) -= *(sd.source); }
-	void rawXor8(SourceDest8 sd) { *(sd.dest) ^= *(sd.source); }
-	void rawCmp8(SourceDest8 sd) { throw(std::exception("rawCmp8 not implemented")); }
+	BYTE rawAdd8(SourceDest8 sd) { *(sd.dest) += *(sd.source); return *(sd.dest); }
+	BYTE rawOr8(SourceDest8 sd) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
+	BYTE rawAdc8(SourceDest8 sd) { throw(std::exception("rawAdc8 not implemented")); }
+	BYTE rawSbb8(SourceDest8 sd) { throw(std::exception("rawSbb8 not implemented")); }
+	BYTE rawAnd8(SourceDest8 sd) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
+	BYTE rawSub8(SourceDest8 sd) { *(sd.dest) -= *(sd.source); return *(sd.dest); }
+	BYTE rawXor8(SourceDest8 sd) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
+	BYTE rawCmp8(SourceDest8 sd) { return *(sd.dest)-*(sd.source); }
 
-	void rawAdd16(SourceDest16 sd) { *(sd.dest) += *(sd.source); }
-	void rawOr16(SourceDest16 sd) { *(sd.dest) |= *(sd.source); }
-	void rawAdc16(SourceDest16 sd) { throw(std::exception("rawAdc16 not implemented")); }
-	void rawSbb16(SourceDest16 sd) { throw(std::exception("rawSbb16 not implemented")); }
-	void rawAnd16(SourceDest16 sd) { *(sd.dest) &= *(sd.source); }
-	void rawSub16(SourceDest16 sd) { *(sd.dest) -= *(sd.source); }
-	void rawXor16(SourceDest16 sd) { *(sd.dest) ^= *(sd.source); }
-	void rawCmp16(SourceDest16 sd) { throw(std::exception("rawCmp16 not implemented")); }
+	WORD rawAdd16(SourceDest16 sd) { *(sd.dest) += *(sd.source); return *(sd.dest); }
+	WORD rawOr16(SourceDest16 sd) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
+	WORD rawAdc16(SourceDest16 sd) { throw(std::exception("rawAdc16 not implemented")); }
+	WORD rawSbb16(SourceDest16 sd) { throw(std::exception("rawSbb16 not implemented")); }
+	WORD rawAnd16(SourceDest16 sd) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
+	WORD rawSub16(SourceDest16 sd) { *(sd.dest) -= *(sd.source); return *(sd.dest); }
+	WORD rawXor16(SourceDest16 sd) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
+	WORD rawCmp16(SourceDest16 sd) { return *(sd.dest) - *(sd.source); }
 
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
@@ -1263,31 +1263,25 @@ namespace emul
 
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
 	{
-		BYTE& source = *(sd.source);
-		BYTE& dest = *(sd.dest);
-		BYTE before = dest;
+		BYTE before = *(sd.dest);
+		BYTE after = func(sd);
 
-		func(sd);
-
-		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
-		AdjustSign(dest);
-		AdjustZero(dest);
-		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
-		AdjustParity(dest);
+		SetFlag(FLAG_O, getMSB(before) != getMSB(after));
+		AdjustSign(after);
+		AdjustZero(after);
+		SetFlag(FLAG_A, ((before ^ after) & 0x18) == 0x18);
+		AdjustParity(after);
 	}
 	void CPU8086::Arithmetic16(SourceDest16 sd, RawOpFunc16 func)
 	{
-		WORD& source = *(sd.source);
-		WORD& dest = *(sd.dest);
-		WORD before = dest;
+		WORD before = *(sd.dest);
+		WORD after = func(sd);
 
-		func(sd);
-
-		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
-		AdjustSign(dest);
-		AdjustZero(dest);
-		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
-		AdjustParity(dest);
+		SetFlag(FLAG_O, getMSB(before) != getMSB(after));
+		AdjustSign(after);
+		AdjustZero(after);
+		SetFlag(FLAG_A, ((before ^ after) & 0x18) == 0x18);
+		AdjustParity(after);
 	}
 
 	void CPU8086::OUT8(WORD port, BYTE value)
@@ -1326,13 +1320,6 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticImm8");
 
-		SourceDest8 sd;
-		sd.source = &imm;
-		sd.dest = GetModRM8(op2);
-
-		BYTE& dest = *(sd.dest);
-		BYTE before = dest;
-
 		RawOpFunc8 func;
 
 		switch (op2 & 0x38)
@@ -1349,13 +1336,18 @@ namespace emul
 			throw(std::exception("not possible"));
 		}
 
-		func(sd);
+		SourceDest8 sd;
+		sd.source = &imm;
+		sd.dest = GetModRM8(op2);
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
-		AdjustSign(dest);
-		AdjustZero(dest);
-		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
-		AdjustParity(dest);
+		BYTE before = *(sd.dest);
+		BYTE after = func(sd);
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(after));
+		AdjustSign(after);
+		AdjustZero(after);
+		SetFlag(FLAG_A, ((before ^ after) & 0x18) == 0x18);
+		AdjustParity(after);
 
 	}
 	void CPU8086::ArithmeticImm16(BYTE op2, WORD imm)
