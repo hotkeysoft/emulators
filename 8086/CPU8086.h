@@ -188,6 +188,11 @@ namespace emul
 
 		void RETNear(bool pop = false, WORD value = 0);
 
+		void XCHG16(WORD& w1, WORD& w2);
+
+		void PUSH(WORD& w);
+		void POP(WORD& w);
+
 		void NotImplemented(BYTE);
 	};
 }

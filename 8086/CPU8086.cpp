@@ -130,13 +130,13 @@ namespace emul
 		// AND rm+r=>rm (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x20: NotImplemented(opcode); break;
+		case 0x20: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAnd8); break;
 		// REG16/MEM16, REG16
-		case 0x21: NotImplemented(opcode); break;
+		case 0x21: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAnd16); break;
 		// REG8, REG8/MEM8
-		case 0x22: NotImplemented(opcode); break;
+		case 0x22: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAnd8); break;
 		// REG16, REG16/MEM16
-		case 0x23: NotImplemented(opcode); break;
+		case 0x23: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAnd16); break;
 
 		// AND i=>a (2-3)
 		// ----------
@@ -264,40 +264,40 @@ namespace emul
 		// PUSH r (1)
 		// ----------
 		// PUSH AX
-		case 0x50: NotImplemented(opcode); break;
+		case 0x50: PUSH(regA.x); break;
 		// PUSH CX
-		case 0x51: NotImplemented(opcode); break;
+		case 0x51: PUSH(regC.x); break;
 		// PUSH DX
-		case 0x52: NotImplemented(opcode); break;
+		case 0x52: PUSH(regD.x); break;
 		// PUSH BX
-		case 0x53: NotImplemented(opcode); break;
+		case 0x53: PUSH(regB.x); break;
 		// PUSH SP
-		case 0x54: NotImplemented(opcode); break;
+		case 0x54: PUSH(regSP); break;
 		// PUSH BP
-		case 0x55: NotImplemented(opcode); break;
+		case 0x55: PUSH(regBP); break;
 		// PUSH SI
-		case 0x56: NotImplemented(opcode); break;
+		case 0x56: PUSH(regSI); break;
 		// PUSH DI
-		case 0x57: NotImplemented(opcode); break;
+		case 0x57: PUSH(regDI); break;
 
 		// POP r (1)
 		// ----------
 		// POP AX
-		case 0x58: NotImplemented(opcode); break;
+		case 0x58: POP(regA.x); break;
 		// POP CX
-		case 0x59: NotImplemented(opcode); break;
+		case 0x59: POP(regC.x); break;
 		// POP DX
-		case 0x5A: NotImplemented(opcode); break;
+		case 0x5A: POP(regD.x); break;
 		// POP BX
-		case 0x5B: NotImplemented(opcode); break;
+		case 0x5B: POP(regB.x); break;
 		// POP SP
-		case 0x5C: NotImplemented(opcode); break;
+		case 0x5C: POP(regSP); break;
 		// POP BP
-		case 0x5D: NotImplemented(opcode); break;
+		case 0x5D: POP(regBP); break;
 		// POP SI
-		case 0x5E: NotImplemented(opcode); break;
+		case 0x5E: POP(regSI); break;
 		// POP DI
-		case 0x5F: NotImplemented(opcode); break;
+		case 0x5F: POP(regDI); break;
 
 		// JO (2)
 		case 0x70: JMPif(GetFlag(FLAG_O)); break;
@@ -395,21 +395,21 @@ namespace emul
 		// XCHG rm<=>a (1)
 		// ----------
 		// XCHG AX, AX (NOP)
-		case 0x90: NotImplemented(opcode); break;
+		case 0x90: XCHG16(regA.x, regA.x); break;
 		// XCHG AX, CX
-		case 0x91: NotImplemented(opcode); break;
+		case 0x91: XCHG16(regA.x, regC.x); break;
 		// XCHG AX, DX
-		case 0x92: NotImplemented(opcode); break;
+		case 0x92: XCHG16(regA.x, regD.x); break;
 		// XCHG AX, BX
-		case 0x93: NotImplemented(opcode); break;
+		case 0x93: XCHG16(regA.x, regB.x); break;
 		// XCHG AX, SP
-		case 0x94: NotImplemented(opcode); break;
+		case 0x94: XCHG16(regA.x, regSP); break;
 		// XCHG AX, BP
-		case 0x95: NotImplemented(opcode); break;
+		case 0x95: XCHG16(regA.x, regBP); break;
 		// XCHG AX, SI
-		case 0x96: NotImplemented(opcode); break;
+		case 0x96: XCHG16(regA.x, regSI); break;
 		// XCHG AX, DI
-		case 0x97: NotImplemented(opcode); break;
+		case 0x97: XCHG16(regA.x, regDI); break;
 
 		// CBW
 		case 0x98: NotImplemented(opcode); break;
@@ -1357,6 +1357,28 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticImm16");
 		throw(std::exception("ArithmeticImm16 not implemented"));
+	}
+
+	void CPU8086::XCHG16(WORD& w1, WORD& w2)
+	{
+		LogPrintf(LOG_DEBUG, "XCHG16");
+		WORD temp = w1;
+		w1 = w2;
+		w2 = temp;
+	}
+
+	void CPU8086::PUSH(WORD& w)
+	{
+		LogPrintf(LOG_DEBUG, "PUSH %04X", w);
+		Dump();
+		throw(std::exception("wip"));
+	}
+
+	void CPU8086::POP(WORD& w)
+	{
+		LogPrintf(LOG_DEBUG, "POP %04X", w);
+		Dump();
+		throw(std::exception("wip"));
 	}
 
 }
