@@ -338,14 +338,14 @@ namespace emul
 		// REG8/MEM8, IMM8
 		case 0x80: ArithmeticImm8(FetchByte()); break;
 		// REG16/MEM16, IMM16
-		case 0x81: ArithmeticImm16(FetchByte()); break;
+		case 0x81: ArithmeticImm16(FetchByte(), false); break; // imm data = word
 
-		// ADD/--/ADC/SBB/---/SUB/---/CMP i=>rm (5-6)??
+		// ADD/--/ADC/SBB/---/SUB/---/CMP i=>rm w/sign Extension (5-6)
 		// ----------
-		// REG8/MEM8, IMM8 ?
-		case 0x82: NotImplemented(opcode); break;
+		// REG8/MEM8, IMM8 TODO, validate sign extension=1 but wide=0 == 0x80?
+		case 0x82: ArithmeticImm8(FetchByte()); break;
 		// REG16/MEM16, IMM16 ?
-		case 0x83: NotImplemented(opcode); break;
+		case 0x83: ArithmeticImm16(FetchByte(), true); break; // imm data = sign-extended byte
 
 		// TEST rm+r (4)
 		// ----------
@@ -948,8 +948,6 @@ namespace emul
 			throw std::exception("GetModRM16: not implemented");
 		}
 
-		Dump();
-
 		SegmentOffset segoff = GetEA(modrm, direct);
 		WORD& segment = std::get<0>(segoff);
 		WORD& offset = std::get<1>(segoff);
@@ -1383,14 +1381,14 @@ namespace emul
 
 		switch (op2 & 0x38)
 		{
-		case 0x00: func = rawAdd8; break;
-		case 0x08: func = rawOr8; break;
-		case 0x10: func = rawAdc8; break;
-		case 0x18: func = rawSbb8; break;
-		case 0x20: func = rawAnd8; break;
-		case 0x28: func = rawSub8; break;
-		case 0x30: func = rawXor8; break;
-		case 0x38: func = rawCmp8; LogPrintf(LOG_INFO, "CMP8"); break;
+		case 0x00: func = rawAdd8; LogPrintf(LOG_DEBUG, "add"); break;
+		case 0x08: func = rawOr8;  LogPrintf(LOG_DEBUG, "or");  break;
+		case 0x10: func = rawAdc8; LogPrintf(LOG_DEBUG, "adc"); break;
+		case 0x18: func = rawSbb8; LogPrintf(LOG_DEBUG, "sbb"); break;
+		case 0x20: func = rawAnd8; LogPrintf(LOG_DEBUG, "and"); break;
+		case 0x28: func = rawSub8; LogPrintf(LOG_DEBUG, "sub"); break;
+		case 0x30: func = rawXor8; LogPrintf(LOG_DEBUG, "xor"); break;
+		case 0x38: func = rawCmp8; LogPrintf(LOG_DEBUG, "cmp"); break;
 		default:
 			throw(std::exception("not possible"));
 		}
@@ -1408,12 +1406,40 @@ namespace emul
 		AdjustZero(after);
 		SetFlag(FLAG_A, ((before ^ after) & 0x18) == 0x18);
 		AdjustParity(after);
-
 	}
-	void CPU8086::ArithmeticImm16(BYTE op2)
+	void CPU8086::ArithmeticImm16(BYTE op2, bool signExtend)
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticImm16");
-		throw(std::exception("ArithmeticImm16 not implemented"));
+
+		RawOpFunc16 func;
+
+		switch (op2 & 0x38)
+		{
+		case 0x00: func = rawAdd16; LogPrintf(LOG_DEBUG, "add"); break;
+		case 0x08: func = rawOr16;  LogPrintf(LOG_DEBUG, "or");  break;
+		case 0x10: func = rawAdc16; LogPrintf(LOG_DEBUG, "adc"); break;
+		case 0x18: func = rawSbb16; LogPrintf(LOG_DEBUG, "sbb"); break;
+		case 0x20: func = rawAnd16; LogPrintf(LOG_DEBUG, "and"); break;
+		case 0x28: func = rawSub16; LogPrintf(LOG_DEBUG, "sub"); break;
+		case 0x30: func = rawXor16; LogPrintf(LOG_DEBUG, "xor"); break;
+		case 0x38: func = rawCmp16; LogPrintf(LOG_DEBUG, "cmp"); break;
+		default:
+			throw(std::exception("not possible"));
+		}
+
+		WORD imm = signExtend ? widen(FetchByte()) : FetchWord();
+		SourceDest16 sd;
+		sd.source = &imm;
+		sd.dest = GetModRM16(op2);
+
+		WORD before = *(sd.dest);
+		WORD after = func(sd);
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(after));
+		AdjustSign(after);
+		AdjustZero(after);
+		SetFlag(FLAG_A, ((before ^ after) & 0x18) == 0x18);
+		AdjustParity(after);
 	}
 
 	void CPU8086::XCHG16(WORD& w1, WORD& w2)

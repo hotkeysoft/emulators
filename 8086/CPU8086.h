@@ -185,7 +185,7 @@ namespace emul
 		void Arithmetic16Imm(WORD& dest, WORD imm, RawOpFunc16 func);
 
 		void ArithmeticImm8(BYTE op2);
-		void ArithmeticImm16(BYTE op2);
+		void ArithmeticImm16(BYTE op2, bool signExtend);
 
 		void IN8(WORD port);
 		void OUT8(WORD port);
