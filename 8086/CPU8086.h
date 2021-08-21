@@ -22,12 +22,16 @@ namespace emul
 
 	struct SourceDest8
 	{
+		SourceDest8() {}
+		SourceDest8(BYTE* d, BYTE* s) : dest(d), source(s) {}
 		BYTE* source;
 		BYTE* dest;
 	};
 
 	struct SourceDest16
 	{
+		SourceDest16() {}
+		SourceDest16(WORD* d, WORD* s) : dest(d), source(s) {}
 		WORD* source;
 		WORD* dest;
 	};
@@ -177,6 +181,8 @@ namespace emul
 
 		void Arithmetic8(SourceDest8 sd, RawOpFunc8 func);
 		void Arithmetic16(SourceDest16 sd, RawOpFunc16 func);
+		void Arithmetic8Imm(BYTE& dest, BYTE imm, RawOpFunc8 func);
+		void Arithmetic16Imm(WORD& dest, WORD imm, RawOpFunc16 func);
 
 		void ArithmeticImm8(BYTE op2);
 		void ArithmeticImm16(BYTE op2);
@@ -192,6 +198,9 @@ namespace emul
 
 		void PUSH(WORD& w);
 		void POP(WORD& w);
+
+		void LODS8();
+		void LODS16();
 
 		void NotImplemented(BYTE);
 	};

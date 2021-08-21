@@ -51,9 +51,9 @@ namespace emul
 		// ADD i=>a (2-3)
 		// --------
 		// AL, IMMED8
-		case 0x04: NotImplemented(opcode); break;
-		// AL, IMMED16
-		case 0x05: NotImplemented(opcode); break;
+		case 0x04: Arithmetic8Imm(regA.hl.l, FetchByte(), rawAdd8); break;
+		// AX, IMMED16
+		case 0x05: Arithmetic16Imm(regA.x, FetchWord(), rawAdd16); break;
 
 		// PUSH ES (1)
 		case 0x06: NotImplemented(opcode); break;
@@ -74,9 +74,9 @@ namespace emul
 		// OR i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x0C: NotImplemented(opcode); break;
+		case 0x0C: Arithmetic8Imm(regA.hl.l, FetchByte(), rawOr8); break;
 		// AX, IMMED16
-		case 0x0D: NotImplemented(opcode); break;
+		case 0x0D: Arithmetic16Imm(regA.x, FetchWord(), rawOr16); break;
 
 		// PUSH CS (1)
 		case 0x0E: NotImplemented(opcode); break;
@@ -95,9 +95,9 @@ namespace emul
 		// ADC i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x14: NotImplemented(opcode); break;
+		case 0x14: Arithmetic8Imm(regA.hl.l, FetchByte(), rawAdc8); break;
 		// AX, IMMED16
-		case 0x15: NotImplemented(opcode); break;
+		case 0x15: Arithmetic16Imm(regA.x, FetchWord(), rawAdc16); break;
 
 		// PUSH SS (1)
 		case 0x16: NotImplemented(opcode); break;
@@ -118,9 +118,9 @@ namespace emul
 		// SBB i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x1C: NotImplemented(opcode); break;
+		case 0x1C: Arithmetic8Imm(regA.hl.l, FetchByte(), rawSbb8); break;
 		// AX, IMMED16
-		case 0x1D: NotImplemented(opcode); break;
+		case 0x1D: Arithmetic16Imm(regA.x, FetchWord(), rawSbb16); break;
 
 		// PUSH DS (1)
 		case 0x1E: NotImplemented(opcode); break;
@@ -141,9 +141,9 @@ namespace emul
 		// AND i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x24: NotImplemented(opcode); break;
+		case 0x24: Arithmetic8Imm(regA.hl.l, FetchByte(), rawAnd8); break;
 		// AX, IMMED16
-		case 0x25: NotImplemented(opcode); break;
+		case 0x25: Arithmetic16Imm(regA.x, FetchWord(), rawAnd16); break;
 
 		// ES Segment Override
 		case 0x26: NotImplemented(opcode); break;
@@ -165,9 +165,9 @@ namespace emul
 		// SUB i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x2C: NotImplemented(opcode); break;
+		case 0x2C: Arithmetic8Imm(regA.hl.l, FetchByte(), rawSub8); break;
 		// AX, IMMED16
-		case 0x2D: NotImplemented(opcode); break;
+		case 0x2D: Arithmetic16Imm(regA.x, FetchWord(), rawSub16); break;
 
 		// CS Segment Override
 		case 0x2E: NotImplemented(opcode); break;
@@ -475,10 +475,10 @@ namespace emul
 
 		// LODS (1)
 		// ----------
-		// LDOS SRC-STR8
-		case 0xAC: NotImplemented(opcode); break;
-		// LDOS SRC-STR16
-		case 0xAD: NotImplemented(opcode); break;
+		// LODS SRC-STR8
+		case 0xAC: LODS8(); break;
+		// LODS SRC-STR16
+		case 0xAD: LODS16(); break;
 
 		// SCAS (1)
 		// ----------
@@ -1182,7 +1182,9 @@ namespace emul
 		BYTE offset = FetchByte();
 		if (cond)
 		{
-			regIP += offset;
+			Dump();
+			regIP += widen(offset);
+			Dump();
 		}
 	}
 
@@ -1279,6 +1281,17 @@ namespace emul
 		AdjustZero(after);
 		SetFlag(FLAG_A, ((before ^ after) & 0x18) == 0x18);
 		AdjustParity(after);
+	}
+
+	void CPU8086::Arithmetic8Imm(BYTE& dest, BYTE imm, RawOpFunc8 func)
+	{
+		SourceDest8 sd(&dest, &imm);
+		Arithmetic8(sd, func);
+	}
+	void CPU8086::Arithmetic16Imm(WORD& dest, WORD imm, RawOpFunc16 func)
+	{
+		SourceDest16 sd(&dest, &imm);
+		Arithmetic16(sd, func);
 	}
 
 	void CPU8086::IN8(WORD port)
@@ -1388,6 +1401,20 @@ namespace emul
 		w = getWord(hi, lo);
 
 		Dump();
+	}
+
+	void CPU8086::LODS8()
+	{
+		LogPrintf(LOG_DEBUG, "LODS8");
+
+		m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
+	}
+	void CPU8086::LODS16()
+	{
+		LogPrintf(LOG_DEBUG, "LODS16");
+
+		m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
+		m_memory.Read(S2A(regDS, regSI++), regA.hl.h);
 	}
 
 }
