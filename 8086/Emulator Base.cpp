@@ -56,8 +56,9 @@ int main(void)
 	biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
 	memory.Allocate(&biosF800);
 
-	emul::MemoryBlock buffer_memory(0x8000, 0x8000, emul::MemoryType::RAM);
-	memory.Allocate(&buffer_memory);
+	emul::MemoryBlock base32K(0, 0x8000, emul::MemoryType::RAM);
+	base32K.Clear(0xA5);
+	memory.Allocate(&base32K);
 
 	pit::Device8254 pit(0x40);
 	pit.Init();
@@ -96,10 +97,12 @@ int main(void)
 	}
 	catch (std::exception e)
 	{
-		fprintf(stderr, "Error while running cpu\n");
+		fprintf(stderr, "Error while running cpu [%s]\n", e.what());
 	}
 
 	time(&stopTime);
+
+	cpu.Dump();
 
 	fprintf(stderr, "Time elapsed: %I64u\n", stopTime-startTime);
 	cpu.getTime();
