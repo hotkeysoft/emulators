@@ -3,6 +3,19 @@
 
 namespace emul
 {
+	void rawAdd8(SourceDest8 sd) { *(sd.dest) += *(sd.source); }
+	void rawSub8(SourceDest8 sd) { *(sd.dest) -= *(sd.source); }
+	void rawAnd8(SourceDest8 sd) { *(sd.dest) &= *(sd.source); }
+	void rawOr8(SourceDest8 sd) { *(sd.dest) |= *(sd.source); }
+	void rawXor8(SourceDest8 sd) { *(sd.dest) ^= *(sd.source); }
+
+	void rawAdd16(SourceDest16 sd) { *(sd.dest) += *(sd.source); }
+	void rawSub16(SourceDest16 sd) { *(sd.dest) -= *(sd.source); }
+	void rawAnd16(SourceDest16 sd) { *(sd.dest) &= *(sd.source); }
+	void rawOr16(SourceDest16 sd) { *(sd.dest) |= *(sd.source); }
+	void rawXor16(SourceDest16 sd) { *(sd.dest) ^= *(sd.source); }
+
+
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
 	{
@@ -22,13 +35,13 @@ namespace emul
 		// ADD rm+r=>rm (4)
 		// --------
 		// REG8/MEM8, REG8
-		case 0x00: ADD8(GetModRegRM8(FetchByte(), false)); break;
+		case 0x00: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdd8); break;
 		// REG16/MEM16, REG16
-		case 0x01: ADD16(GetModRegRM16(FetchByte(), false)); break;
+		case 0x01: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdd16); break;
 		// REG8, REG8/MEM8
-		case 0x02: ADD8(GetModRegRM8(FetchByte(), true)); break;
+		case 0x02: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdd8); break;
 		// REG16, REG16/MEM16
-		case 0x03: ADD16(GetModRegRM16(FetchByte(), true)); break;
+		case 0x03: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdd16); break;
 
 		// ADD i=>a (2-3)
 		// --------
@@ -45,13 +58,13 @@ namespace emul
 		// OR rm+r=>rm (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x08: OR8(GetModRegRM8(FetchByte(), false)); break;
+		case 0x08: Arithmetic8(GetModRegRM8(FetchByte(), false), rawOr8); break;
 		// REG16/MEM16, REG16
-		case 0x09: OR16(GetModRegRM16(FetchByte(), false)); break;
+		case 0x09: Arithmetic16(GetModRegRM16(FetchByte(), false), rawOr16); break;
 		// REG8, REG8/MEM8
-		case 0x0A: OR8(GetModRegRM8(FetchByte(), true)); break;
+		case 0x0A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawOr8); break;
 		// REG16, REG16/MEM16
-		case 0x0B: OR16(GetModRegRM16(FetchByte(), true)); break;
+		case 0x0B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawOr16); break;
 
 		// OR i=>a (2-3)
 		// ----------
@@ -136,13 +149,13 @@ namespace emul
 		// SUB rm+r=>rm (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x28: NotImplemented(opcode); break;
-		// REG16/MEM16, REG16
-		case 0x29: NotImplemented(opcode); break;
-		// REG8, REG8/MEM8
-		case 0x2A: NotImplemented(opcode); break;
-		// REG16, REG16/MEM16
-		case 0x2B: NotImplemented(opcode); break;
+		case 0x28: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSub8); break;
+			// REG16/MEM16, REG16
+		case 0x29: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSub16); break;
+			// REG8, REG8/MEM8
+		case 0x2A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSub8); break;
+			// REG16, REG16/MEM16
+		case 0x2B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSub16); break;
 
 		// SUB i=>a (2-3)
 		// ----------
@@ -160,13 +173,13 @@ namespace emul
 		// XOR rm+r=>rm (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x30: XOR8(GetModRegRM8(FetchByte(), false)); break;
+		case 0x30: Arithmetic8(GetModRegRM8(FetchByte(), false), rawXor8); break;
 		// REG16/MEM16, REG16
-		case 0x31: XOR16(GetModRegRM16(FetchByte(), false)); break;
+		case 0x31: Arithmetic16(GetModRegRM16(FetchByte(), false), rawXor16); break;
 		// REG8, REG8/MEM8
-		case 0x32: XOR8(GetModRegRM8(FetchByte(), true)); break;
+		case 0x32: Arithmetic8(GetModRegRM8(FetchByte(), true), rawXor8); break;
 		// REG16, REG16/MEM16
-		case 0x33: XOR16(GetModRegRM16(FetchByte(), true)); break;
+		case 0x33: Arithmetic16(GetModRegRM16(FetchByte(), true), rawXor16); break;
 
 		// XOR i=>a (2-3)
 		// ----------
@@ -468,7 +481,6 @@ namespace emul
 		case 0xAE: NotImplemented(opcode); break;
 		// SCAS DEST-STR16
 		case 0xAF: NotImplemented(opcode); break;
-
 
 		// MOV i=>r (2-3)
 		// ----------
@@ -960,7 +972,6 @@ namespace emul
 		SetFlag(FLAG_Z, (data == 0));
 	}
 
-
 	// =============================================
 
 	void CPU8086::CLC()
@@ -1261,14 +1272,13 @@ namespace emul
 		throw(std::exception("SHIFTROT16 not implemented"));
 	}
 
-	void CPU8086::ADD8(SourceDest8 sd)
+	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
 	{
-		LogPrintf(LOG_DEBUG, "ADD8");
 		BYTE& source = *(sd.source);
 		BYTE& dest = *(sd.dest);
 		BYTE before = dest;
 
-		dest += source;
+		func(sd);
 
 		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
 		AdjustSign(dest);
@@ -1276,76 +1286,13 @@ namespace emul
 		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 		AdjustParity(dest);
 	}
-	void CPU8086::ADD16(SourceDest16 sd)
+	void CPU8086::Arithmetic16(SourceDest16 sd, RawOpFunc16 func)
 	{
-		LogPrintf(LOG_DEBUG, "ADD16");
 		WORD& source = *(sd.source);
 		WORD& dest = *(sd.dest);
 		WORD before = dest;
 
-		dest += source;
-
-		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
-		AdjustSign(dest);
-		AdjustZero(dest);
-		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
-		AdjustParity(dest);
-	}
-
-	void CPU8086::OR8(SourceDest8 sd)
-	{
-		LogPrintf(LOG_DEBUG, "OR8");
-		BYTE& source = *(sd.source);
-		BYTE& dest = *(sd.dest);
-		BYTE before = dest;
-
-		dest |= source;
-
-		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
-		AdjustSign(dest);
-		AdjustZero(dest);
-		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
-		AdjustParity(dest);
-	}
-	void CPU8086::OR16(SourceDest16 sd)
-	{
-		LogPrintf(LOG_DEBUG, "OR16");
-		WORD& source = *(sd.source);
-		WORD& dest = *(sd.dest);
-		WORD before = dest;
-
-		dest |= source;
-
-		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
-		AdjustSign(dest);
-		AdjustZero(dest);
-		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
-		AdjustParity(dest);
-	}
-
-	void CPU8086::XOR8(SourceDest8 sd)
-	{
-		LogPrintf(LOG_DEBUG, "XOR8");
-		BYTE& source = *(sd.source);
-		BYTE& dest = *(sd.dest);
-		BYTE before = dest;
-
-		dest ^= source;
-
-		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
-		AdjustSign(dest);
-		AdjustZero(dest);
-		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
-		AdjustParity(dest);
-	}
-	void CPU8086::XOR16(SourceDest16 sd)
-	{
-		LogPrintf(LOG_DEBUG, "XOR16");
-		WORD& source = *(sd.source);
-		WORD& dest = *(sd.dest);
-		WORD before = dest;
-
-		dest ^= source;
+		func(sd);
 
 		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
 		AdjustSign(dest);

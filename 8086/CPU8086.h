@@ -32,6 +32,9 @@ namespace emul
 		WORD* dest;
 	};
 
+	typedef void(*RawOpFunc8)(SourceDest8);
+	typedef void(*RawOpFunc16)(SourceDest16);
+
 	typedef std::tuple<WORD, WORD> SegmentOffset;
 
 	inline ADDRESS S2A(WORD segment, WORD offset = 0)
@@ -172,12 +175,8 @@ namespace emul
 		void SHIFTROT8(BYTE op2, BYTE count);
 		void SHIFTROT16(BYTE op2, BYTE count);
 
-		void ADD8(SourceDest8 sd);
-		void ADD16(SourceDest16 sd);
-		void OR8(SourceDest8 sd);
-		void OR16(SourceDest16 sd);
-		void XOR8(SourceDest8 sd);
-		void XOR16(SourceDest16 sd);
+		void Arithmetic8(SourceDest8 sd, RawOpFunc8 func);
+		void Arithmetic16(SourceDest16 sd, RawOpFunc16 func);
 
 		void OUT8(WORD port, BYTE value);
 
