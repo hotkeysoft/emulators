@@ -4,17 +4,22 @@
 namespace emul
 {
 	void rawAdd8(SourceDest8 sd) { *(sd.dest) += *(sd.source); }
-	void rawSub8(SourceDest8 sd) { *(sd.dest) -= *(sd.source); }
-	void rawAnd8(SourceDest8 sd) { *(sd.dest) &= *(sd.source); }
 	void rawOr8(SourceDest8 sd) { *(sd.dest) |= *(sd.source); }
+	void rawAdc8(SourceDest8 sd) { throw(std::exception("rawAdc8 not implemented")); }
+	void rawSbb8(SourceDest8 sd) { throw(std::exception("rawSbb8 not implemented")); }
+	void rawAnd8(SourceDest8 sd) { *(sd.dest) &= *(sd.source); }
+	void rawSub8(SourceDest8 sd) { *(sd.dest) -= *(sd.source); }
 	void rawXor8(SourceDest8 sd) { *(sd.dest) ^= *(sd.source); }
+	void rawCmp8(SourceDest8 sd) { throw(std::exception("rawCmp8 not implemented")); }
 
 	void rawAdd16(SourceDest16 sd) { *(sd.dest) += *(sd.source); }
-	void rawSub16(SourceDest16 sd) { *(sd.dest) -= *(sd.source); }
-	void rawAnd16(SourceDest16 sd) { *(sd.dest) &= *(sd.source); }
 	void rawOr16(SourceDest16 sd) { *(sd.dest) |= *(sd.source); }
+	void rawAdc16(SourceDest16 sd) { throw(std::exception("rawAdc16 not implemented")); }
+	void rawSbb16(SourceDest16 sd) { throw(std::exception("rawSbb16 not implemented")); }
+	void rawAnd16(SourceDest16 sd) { *(sd.dest) &= *(sd.source); }
+	void rawSub16(SourceDest16 sd) { *(sd.dest) -= *(sd.source); }
 	void rawXor16(SourceDest16 sd) { *(sd.dest) ^= *(sd.source); }
-
+	void rawCmp16(SourceDest16 sd) { throw(std::exception("rawCmp16 not implemented")); }
 
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
@@ -331,9 +336,9 @@ namespace emul
 		// ADD/OR/ADC/SBB/AND/SUB/XOR/CMP i=>rm (5-6)
 		// ----------
 		// REG8/MEM8, IMM8
-		case 0x80: NotImplemented(opcode); break;
+		case 0x80: ArithmeticImm8(FetchByte(), FetchByte()); break;
 		// REG16/MEM16, IMM16
-		case 0x81: NotImplemented(opcode); break;
+		case 0x81: ArithmeticImm16(FetchByte(), FetchWord()); break;
 
 		// ADD/--/ADC/SBB/---/SUB/---/CMP i=>rm (5-6)??
 		// ----------
@@ -737,18 +742,6 @@ namespace emul
 		return r.x;
 	}
 
-	BYTE* CPU8086::GetModRM8(BYTE modrm)
-	{
-		switch (modrm & 0xC0)
-		{
-		case 0xC0: // REG
-			LogPrintf(LOG_DEBUG, "GetModRM8: REG %s", GetReg8Str(modrm));
-			return GetReg8(modrm);
-		default:
-			throw std::exception("GetModRM8: not implemented");
-		}
-	}
-
 	const char* CPU8086::GetReg8Str(BYTE reg)
 	{
 		switch (reg & 7)
@@ -849,6 +842,54 @@ namespace emul
 		throw std::exception("GetReg16: impossible modregrm value");
 	}
 
+	BYTE* CPU8086::GetModRM8(BYTE modrm)
+	{
+		WORD displacement = 0;
+		bool direct = false;
+		switch (modrm & 0xC0)
+		{
+		case 0xC0: // REG
+			LogPrintf(LOG_DEBUG, "GetModRM8: RM=>REG %s", GetReg8Str(modrm));
+			return GetReg8(modrm);
+		case 0x00: // NO DISP (or DIRECT)
+			if ((modrm & 7) == 6) // Direct 
+			{
+				direct = true;
+				displacement = FetchWord();
+			}
+			else
+			{
+				LogPrintf(LOG_DEBUG, "GetModRM8: MEM disp=0");
+			}
+			break;
+		case 0x40:
+			displacement = widen(FetchByte());
+			LogPrintf(LOG_DEBUG, "GetModRM8: MEM disp8=%04X", displacement);
+			break;
+		case 0x80:
+			displacement = FetchWord();
+			throw std::exception("GetModRM8: MEM disp16=%04X", displacement);
+			break;
+		default:
+			throw std::exception("GetModRM8: not implemented");
+		}
+
+		SegmentOffset segoff = GetEA(modrm);
+		WORD& segment = std::get<0>(segoff);
+		WORD& offset = std::get<1>(segoff);
+
+		offset = (direct ? 0 : offset) + displacement;
+		if (direct)
+		{
+			LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM ea= %04X", offset);
+		}
+		else
+		{
+			LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM ea=%s+%04X=%04X", GetEAStr(modrm), displacement, offset);
+		}
+		return m_memory.GetPtr8(S2A(segment, offset));
+	}
+
 	SourceDest8 CPU8086::GetModRegRM8(BYTE modregrm, bool toReg)
 	{
 		LogPrintf(LOG_DEBUG, "GetModRegRM8: modregrm=%d, toReg=%d", modregrm, toReg);
@@ -858,59 +899,7 @@ namespace emul
 		// reg part
 		LogPrintf(LOG_DEBUG, "GetModRegRM8: REG %s", GetReg8Str(modregrm >> 3));
 		BYTE* reg = GetReg8(modregrm >> 3);
-
-		// modrm
-		BYTE* modrm = 0;
-		WORD displacement = 0;
-		bool mem = true;
-		bool direct = false;
-		switch (modregrm & 0xC0)
-		{
-		case 0xC0: // REG
-			LogPrintf(LOG_DEBUG, "GetModRegRM8: RM=>REG %s", GetReg8Str(modregrm));
-			modrm = GetReg8(modregrm);
-			mem = false;
-			break;
-		case 0x00: // NO DISP (or DIRECT)
-			if ((modregrm & 7) == 6) // Direct 
-			{
-				direct = true;
-				displacement = FetchWord();
-			}
-			else
-			{
-				LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM disp=0");
-			}
-			break;
-		case 0x40:
-			displacement = widen(FetchByte());
-			LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM disp8=%04X", displacement);
-			break;
-		case 0x80:
-			displacement = FetchWord();
-			throw std::exception("GetModRegRM8: MEM disp16=%04X", displacement);
-			break;
-		default:
-			throw std::exception("GetModRegRM8: not implemented");
-		}
-
-		if (mem)
-		{
-			SegmentOffset segoff = GetEA(modregrm);
-			WORD& segment = std::get<0>(segoff);
-			WORD& offset = std::get<1>(segoff);
-
-			offset = (direct ? 0 : offset) + displacement;
-			if (direct)
-			{
-				LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM ea= %04X", offset);
-			}
-			else
-			{
-				LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM ea=%s+%04X=%04X", GetEAStr(modregrm), displacement, offset);
-			}
-			modrm = m_memory.GetPtr8(S2A(segment, offset));
-		}
+		BYTE* modrm = GetModRM8(modregrm);
 
 		sd.source = toReg ? modrm : reg;
 		sd.dest = toReg ? reg : modrm;
@@ -1332,5 +1321,48 @@ namespace emul
 
 		Dump();
 	}
+
+	void CPU8086::ArithmeticImm8(BYTE op2, BYTE imm)
+	{
+		LogPrintf(LOG_DEBUG, "ArithmeticImm8");
+
+		SourceDest8 sd;
+		sd.source = &imm;
+		sd.dest = GetModRM8(op2);
+
+		BYTE& dest = *(sd.dest);
+		BYTE before = dest;
+
+		RawOpFunc8 func;
+
+		switch (op2 & 0x38)
+		{
+		case 0x00: func = rawAdd8; break;
+		case 0x08: func = rawOr8; break;
+		case 0x10: func = rawAdc8; break;
+		case 0x18: func = rawSbb8; break;
+		case 0x20: func = rawAnd8; break;
+		case 0x28: func = rawSub8; break;
+		case 0x30: func = rawXor8; break;
+		case 0x38: func = rawCmp8; break;
+		default:
+			throw(std::exception("not possible"));
+		}
+
+		func(sd);
+
+		SetFlag(FLAG_O, getMSB(before) != getMSB(*(sd.dest)));
+		AdjustSign(dest);
+		AdjustZero(dest);
+		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+		AdjustParity(dest);
+
+	}
+	void CPU8086::ArithmeticImm16(BYTE op2, WORD imm)
+	{
+		LogPrintf(LOG_DEBUG, "ArithmeticImm16");
+		throw(std::exception("ArithmeticImm16 not implemented"));
+	}
+
 
 }
