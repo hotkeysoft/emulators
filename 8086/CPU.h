@@ -49,7 +49,7 @@ namespace emul
 
 		// Helper functions
 		BYTE getLByte(WORD w) { return BYTE(w & 0x00FF); };
-		BYTE getHByte(WORD w) { return BYTE((w >> 8) & 0x00FF); };
+		BYTE getHByte(WORD w) { return BYTE(w >> 8); };
 		WORD getWord(BYTE h, BYTE l) { return (((WORD)h) << 8) + l; };
 		bool getLSB(BYTE b) { return b & 1; }
 		bool getLSB(WORD b) { return b & 1; }

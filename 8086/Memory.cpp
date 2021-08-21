@@ -144,8 +144,7 @@ namespace emul
 		{
 			if (block->GetType() == MemoryType::ROM)
 			{
-				LogPrintf(LOG_ERROR, "Attempting to write in ROM block at %X, size = %d bytes", block->GetBaseAddress(), block->GetSize());
-				throw std::exception();
+				LogPrintf(LOG_WARNING, "Attempting to write in ROM block at %X, size = %d bytes", block->GetBaseAddress(), block->GetSize());
 			}
 			else
 			{

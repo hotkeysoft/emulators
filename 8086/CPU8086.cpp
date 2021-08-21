@@ -202,13 +202,13 @@ namespace emul
 		// CMP rm+r=>r (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x38: NotImplemented(opcode); break;
+		case 0x38: Arithmetic8(GetModRegRM8(FetchByte(), false), rawCmp8); break;
 		// REG16/MEM16, REG16
-		case 0x39: NotImplemented(opcode); break;
+		case 0x39: Arithmetic16(GetModRegRM16(FetchByte(), false), rawCmp16); break;
 		// REG8, REG8/MEM8
-		case 0x3A: NotImplemented(opcode); break;
+		case 0x3A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawCmp8); break;
 		// REG16, REG16/MEM16
-		case 0x3B: NotImplemented(opcode); break;
+		case 0x3B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawCmp16); break;
 
 		// CMP i=>a (2)
 		// ----------
@@ -1306,13 +1306,9 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "RETNear [%s][%d]", pop?"Pop":"NoPop", value);
 
-		EnableLog(true);
 		Dump();
 
-		BYTE ipLo, ipHi;
-		m_memory.Read(S2A(regSS, regSP++), ipLo);
-		m_memory.Read(S2A(regSS, regSP++), ipHi);
-		regIP = getWord(ipHi, ipLo);
+		POP(regIP);
 		regSP += value;
 
 		Dump();
@@ -1370,15 +1366,28 @@ namespace emul
 	void CPU8086::PUSH(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "PUSH %04X", w);
+
+		EnableLog(true);
+
+		m_memory.Write(S2A(regSS, --regSP), getHByte(w));
+		m_memory.Write(S2A(regSS, --regSP), getLByte(w));
+
 		Dump();
-		throw(std::exception("wip"));
 	}
 
 	void CPU8086::POP(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "POP %04X", w);
+
+		EnableLog(true);
 		Dump();
-		throw(std::exception("wip"));
+
+		BYTE lo, hi;
+		m_memory.Read(S2A(regSS, regSP++), lo);
+		m_memory.Read(S2A(regSS, regSP++), hi);
+		w = getWord(hi, lo);
+
+		Dump();
 	}
 
 }
