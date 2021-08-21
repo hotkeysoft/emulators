@@ -810,8 +810,13 @@ namespace emul
 		throw std::exception("GetReg16: invalid reg value");
 	}
 
-	SegmentOffset CPU8086::GetEA(BYTE modregrm)
+	SegmentOffset CPU8086::GetEA(BYTE modregrm, bool direct)
 	{
+		if (direct)
+		{
+			return std::make_tuple(regDS, 0);
+		}
+
 		switch (modregrm & 7)
 		{
 		case 0: return std::make_tuple(regDS, regB.x + regSI);
@@ -826,18 +831,22 @@ namespace emul
 		throw std::exception("GetReg16: impossible modregrm value");
 	}
 
-	const char* CPU8086::GetEAStr(BYTE modregrm)
+	const char* CPU8086::GetEAStr(BYTE modregrm, bool direct)
 	{
+		if (direct)
+		{
+			return "DS:(DIRECT)";
+		}
 		switch (modregrm & 7)
 		{
-		case 0: return "(BX)+(SI)";
-		case 1: return "(BX)+(DI)";
-		case 2: return "(BP)+(SI)";
-		case 3: return "(BP)+(DI)";
-		case 4: return "(SI)";
-		case 5: return "(DI)";
-		case 6: return "(BP)";
-		case 7: return "(BX)";
+		case 0: return "DS:BX+SI";
+		case 1: return "DS:BX+DI";
+		case 2: return "SS:BP+SI";
+		case 3: return "SS:BP+DI";
+		case 4: return "DS:SI";
+		case 5: return "DS:DI";
+		case 6: return "SS:BP";
+		case 7: return "DS:BX";
 		}
 		throw std::exception("GetReg16: impossible modregrm value");
 	}
@@ -874,7 +883,7 @@ namespace emul
 			throw std::exception("GetModRM8: not implemented");
 		}
 
-		SegmentOffset segoff = GetEA(modrm);
+		SegmentOffset segoff = GetEA(modrm, direct);
 		WORD& segment = std::get<0>(segoff);
 		WORD& offset = std::get<1>(segoff);
 
@@ -885,7 +894,7 @@ namespace emul
 		}
 		else
 		{
-			LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM ea=%s+%04X=%04X", GetEAStr(modrm), displacement, offset);
+			LogPrintf(LOG_DEBUG, "GetModRegRM8: MEM ea=%s+%04X=%04X", GetEAStr(modrm, direct), displacement, offset);
 		}
 		return m_memory.GetPtr8(S2A(segment, offset));
 	}
@@ -941,7 +950,7 @@ namespace emul
 
 		Dump();
 
-		SegmentOffset segoff = GetEA(modrm);
+		SegmentOffset segoff = GetEA(modrm, direct);
 		WORD& segment = std::get<0>(segoff);
 		WORD& offset = std::get<1>(segoff);
 
@@ -952,10 +961,9 @@ namespace emul
 		}
 		else
 		{
-			LogPrintf(LOG_DEBUG, "GetModRegRM16: MEM ea=%s+%04X=%04X", GetEAStr(modrm), displacement, offset);
+			LogPrintf(LOG_DEBUG, "GetModRegRM16: MEM ea=%s+%04X=%04X", GetEAStr(modrm, direct), displacement, offset);
 		}
-		throw std::exception("GetModRegRM16: notimpl");
-		//return m_memory.GetPtr16(S2A(segment, offset));
+		return m_memory.GetPtr16(S2A(segment, offset));
 	}
 
 	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool toReg, bool segReg)

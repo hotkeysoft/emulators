@@ -22,8 +22,11 @@ namespace emul
 		void Write(ADDRESS address, BYTE value);
 
 		BYTE* GetPtr8(ADDRESS address);
+		WORD* GetPtr16(ADDRESS address);
 
 	private:
+		static WORD s_uninitialized;
+
 		const size_t m_addressBits;
 
 		MemoryListType m_memory;

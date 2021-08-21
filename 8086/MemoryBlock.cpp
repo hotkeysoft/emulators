@@ -64,12 +64,25 @@ namespace emul
 			return m_data[address - m_baseAddress];
 	}
 
-	BYTE* MemoryBlock::getPtr(ADDRESS address)
+	BYTE* MemoryBlock::getPtr8(ADDRESS address)
 	{
 		if (address < m_baseAddress || address >= m_baseAddress + m_size)
 			return 0;
 		else
 			return m_data+(address - m_baseAddress);
+	}
+
+	WORD* MemoryBlock::getPtr16(ADDRESS address)
+	{
+		if (address < m_baseAddress || address + 1 >= m_baseAddress + m_size)
+		{
+			throw std::exception("Not implemented: can not cross memory block boundary with WORD access");
+			return 0;
+		}
+		else
+		{
+			return (WORD*)(m_data + (address - m_baseAddress));
+		}
 	}
 
 	void MemoryBlock::write(ADDRESS address, char data)

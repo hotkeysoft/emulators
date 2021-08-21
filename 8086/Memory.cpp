@@ -3,6 +3,8 @@
 
 namespace emul
 {
+	WORD Memory::s_uninitialized = 0xF00F;
+
 	Memory::Memory(size_t addressBits) : Logger("MEM"),
 		m_addressBits(addressBits),
 		m_currBlock(NULL),
@@ -49,39 +51,6 @@ namespace emul
 		return true;
 	}
 
-	void Memory::Read(ADDRESS address, BYTE& value)
-	{
-		LogPrintf(LOG_INFO, "Read(%X)", address);
-
-		MemoryBlock* block = NULL;
-
-		if (m_currBlock && address >= m_currMin && address <= m_currMax)
-		{
-			block = m_currBlock;
-		}
-		else
-		{
-			MemoryBlock* newBlock = FindBlock(address);
-			if (newBlock)
-			{
-				block = newBlock;
-			}
-			else
-			{
-				LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
-			}
-		}
-
-		if (block)
-		{
-			value = block->read(address);
-		}
-		else
-		{
-			LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
-		}
-	}
-
 	BYTE* Memory::GetPtr8(ADDRESS address)
 	{
 		LogPrintf(LOG_INFO, "GetPtr8(%X)", address);
@@ -107,12 +76,53 @@ namespace emul
 
 		if (block)
 		{
-			return block->getPtr(address);
+			return block->getPtr8(address);
 		}
 		else
 		{
-			throw std::exception();
+			return (BYTE*)&Memory::s_uninitialized;
 		}
+	}
+
+	WORD* Memory::GetPtr16(ADDRESS address)
+	{
+		LogPrintf(LOG_INFO, "GetPtr16(%X)", address);
+
+		MemoryBlock* block = NULL;
+
+		if (m_currBlock && address >= m_currMin && address+1 <= m_currMax)
+		{
+			block = m_currBlock;
+		}
+		else
+		{
+			MemoryBlock* newBlock = FindBlock(address);
+			if (newBlock)
+			{
+				block = newBlock;
+			}
+			else
+			{
+				LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
+			}
+		}
+
+		if (block)
+		{
+			return block->getPtr16(address);
+		}
+		else
+		{
+			return &Memory::s_uninitialized;
+		}
+	}
+
+	void Memory::Read(ADDRESS address, BYTE& value)
+	{
+		LogPrintf(LOG_INFO, "Read(%X)", address);
+
+		BYTE* mem = GetPtr8(address);
+		value = *mem;
 	}
 
 	void Memory::Write(ADDRESS address, BYTE value)

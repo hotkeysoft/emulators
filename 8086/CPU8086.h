@@ -136,8 +136,8 @@ namespace emul
 		SourceDest8 GetModRegRM8(BYTE modregrm, bool toReg);
 		SourceDest16 GetModRegRM16(BYTE modregrm, bool toReg, bool segReg = false);
 
-		SegmentOffset GetEA(BYTE modregrm);
-		const char* GetEAStr(BYTE modregrm);
+		SegmentOffset GetEA(BYTE modregrm, bool direct);
+		const char* GetEAStr(BYTE modregrm, bool direct);
 
 		BYTE* GetReg8(BYTE reg);
 		WORD* GetReg16(BYTE reg, bool segReg = false);
