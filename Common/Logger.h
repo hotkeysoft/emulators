@@ -8,9 +8,9 @@ public:
 	Logger(const char* moduleID);
 	virtual ~Logger();
 
-	enum SEVERITY { LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG };
+	enum SEVERITY { LOG_DEBUG = 0, LOG_INFO, LOG_WARNING, LOG_ERROR };
 
-	void EnableLog(bool enable);
+	void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
 
 	static void RegisterLogCallback(void(*)(const char *));
 
@@ -25,6 +25,7 @@ private:
 	void RegisterModuleID(const char* moduleID);
 
 	bool m_enabled;
+	SEVERITY m_minSeverity;
 	std::string m_moduleID;
 
 	static ModuleList m_moduleList;

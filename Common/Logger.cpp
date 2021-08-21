@@ -8,7 +8,10 @@ void(*Logger::m_logCallbackFunc)(const char *str);
 char Logger::m_logBuffer[1024];
 Logger::ModuleList Logger::m_moduleList;
 
-Logger::Logger(const char* moduleID) : m_moduleID(moduleID), m_enabled(true)
+Logger::Logger(const char* moduleID) : 
+	m_moduleID(moduleID), 
+	m_enabled(true), 
+	m_minSeverity(SEVERITY::LOG_DEBUG)
 {
 	RegisterModuleID(moduleID);
 }
@@ -27,9 +30,10 @@ void Logger::RegisterModuleID(const char* moduleID)
 	m_moduleList.insert(std::pair<std::string, Logger*>(moduleID, this));
 }
 
-void Logger::EnableLog(bool enable)
+void Logger::EnableLog(bool enable, SEVERITY minSev)
 {
 	m_enabled = enable;
+	m_minSeverity = minSev;
 }
 
 void Logger::RegisterLogCallback(void(*logCallbackFunc)(const char *))
@@ -39,7 +43,7 @@ void Logger::RegisterLogCallback(void(*logCallbackFunc)(const char *))
 
 void Logger::LogPrintf(SEVERITY sev, const char *msg, ...)
 {
-	if (!m_enabled)
+	if (!m_enabled || sev < m_minSeverity)
 		return;
 
 	va_list args;
