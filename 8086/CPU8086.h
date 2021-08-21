@@ -181,7 +181,8 @@ namespace emul
 		void ArithmeticImm8(BYTE op2, BYTE imm);
 		void ArithmeticImm16(BYTE op2, WORD imm);
 
-		void OUT8(WORD port, BYTE value);
+		void IN8(WORD port);
+		void OUT8(WORD port);
 
 		void LOOP(BYTE offset);
 

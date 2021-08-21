@@ -595,14 +595,14 @@ namespace emul
 		// IN fixed (2)
 		// --------
 		// IN AL, IMM8
-		case 0xE4: NotImplemented(opcode); break;
+		case 0xE4: IN8(FetchByte()); break;
 		// IN AX, IMM8
 		case 0xE5: NotImplemented(opcode); break;
 
 		// OUT fixed (2)
 		// --------
 		// OUT PORT8, AL
-		case 0xE6: OUT8(FetchByte(), regA.hl.l); break;
+		case 0xE6: OUT8(FetchByte()); break;
 		// OUT PORT8, AX
 		case 0xE7: NotImplemented(opcode); break;
 
@@ -618,14 +618,14 @@ namespace emul
 		// IN variable (1)
 		// --------
 		// IN AL, DX
-		case 0xEC: NotImplemented(opcode); break;
+		case 0xEC: IN8(regD.x); break;
 		// IN AX, DX
 		case 0xED: NotImplemented(opcode); break;
 
 		// OUT variable (1)
 		// --------
 		// OUT AL, DX
-		case 0xEE: OUT8(regD.x, regA.hl.l); break;
+		case 0xEE: OUT8(regD.x); break;
 		// OUT AX, DX
 		case 0xEF: NotImplemented(opcode); break;
 
@@ -1010,6 +1010,8 @@ namespace emul
 	void CPU8086::HLT()
 	{
 		LogPrintf(LOG_ERROR, "HALT");
+		EnableLog(true);
+		Dump();
 		m_state = CPUState::STOP;
 	}
 	
@@ -1129,7 +1131,6 @@ namespace emul
 		d = s;
 		// Flags: ODITSZAPC
 		//        nnnnnnnnn
-		Dump();
 	}
 	void CPU8086::MOV8(SourceDest8 sd)
 	{
@@ -1138,7 +1139,6 @@ namespace emul
 		*(sd.dest) = *(sd.source);
 		// Flags: ODITSZAPC
 		//        nnnnnnnnn
-		Dump();
 	}
 
 	void CPU8086::MOV16(WORD& d, WORD s)
@@ -1148,7 +1148,6 @@ namespace emul
 		d = s;
 		// Flags: ODITSZAPC
 		//        nnnnnnnnn
-		Dump();
 	}
 	void CPU8086::MOV16(SourceDest16 sd)
 	{
@@ -1157,9 +1156,7 @@ namespace emul
 		*(sd.dest) = *(sd.source);
 		// Flags: ODITSZAPC
 		//        nnnnnnnnn
-		Dump();
 	}
-
 
 	void CPU8086::SAHF()
 	{
@@ -1284,10 +1281,14 @@ namespace emul
 		AdjustParity(after);
 	}
 
-	void CPU8086::OUT8(WORD port, BYTE value)
+	void CPU8086::IN8(WORD port)
 	{
-		LogPrintf(LOG_DEBUG, "OUT8 %04X, %02X", port, value);
-		m_ports.Out(port, value);
+		m_ports.In(port, regA.hl.l);
+	}
+
+	void CPU8086::OUT8(WORD port)
+	{
+		m_ports.Out(port, regA.hl.l);
 	}
 
 	void CPU8086::LOOP(BYTE offset)
@@ -1301,8 +1302,6 @@ namespace emul
 
 	void CPU8086::RETNear(bool pop, WORD value)
 	{
-		EnableLog(true);
-
 		LogPrintf(LOG_DEBUG, "RETNear [%s][%d]", pop?"Pop":"NoPop", value);
 
 		Dump();
@@ -1355,6 +1354,5 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "ArithmeticImm16");
 		throw(std::exception("ArithmeticImm16 not implemented"));
 	}
-
 
 }
