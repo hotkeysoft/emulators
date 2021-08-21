@@ -5,7 +5,7 @@
 
 namespace emul
 {
-	MemoryBlock::MemoryBlock(ADDRESS baseAddress, WORD size, MemoryType type) :
+	MemoryBlock::MemoryBlock(ADDRESS baseAddress, size_t size, MemoryType type) :
 		Logger("MEMBLK"),
 		m_baseAddress(baseAddress),
 		m_size(size),
@@ -23,15 +23,15 @@ namespace emul
 		m_baseAddress(baseAddress),
 		m_type(type)
 	{
-		if (data.size() == 0 || data.size() > 0xFFFF)
+		if (data.size() == 0 || data.size() > MaxBlockSize)
 			throw std::exception("Invalid block size");
-		m_size = (WORD)data.size();
+		m_size = data.size();
 
 		m_invalid = 0xFA;
 
 		m_data = new BYTE[m_size];
 
-		for (int i = 0; i < m_size; i++)
+		for (size_t i = 0; i < m_size; i++)
 			m_data[i] = data[i];
 	}
 

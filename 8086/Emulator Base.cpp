@@ -42,9 +42,9 @@ int main(void)
 	Logger::RegisterLogCallback(LogCallback);
 
 	emul::Memory memory(emul::CPU8086_ADDRESS_BITS);
-	memory.EnableLog(true, Logger::LOG_WARNING);
+	memory.EnableLog(true, Logger::LOG_INFO);
 	emul::MemoryMap mmap;
-	mmap.EnableLog(true, Logger::LOG_WARNING);
+	mmap.EnableLog(true, Logger::LOG_INFO);
 
 	fprintf(stderr, "\nMax address: 0x%" PRIx64"\n", (uint64_t)emul::GetMaxAddress(emul::CPU8086_ADDRESS_BITS));
 
@@ -56,21 +56,21 @@ int main(void)
 	biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
 	memory.Allocate(&biosF800);
 
-	emul::MemoryBlock base32K(0, 0x8000, emul::MemoryType::RAM);
-	base32K.Clear(0xA5);
-	memory.Allocate(&base32K);
+	emul::MemoryBlock base64K(0, 0x10000, emul::MemoryType::RAM);
+	base64K.Clear(0xA5);
+	memory.Allocate(&base64K);
 
 	pit::Device8254 pit(0x40);
 	pit.Init();
-	pit.EnableLog(true);
+	pit.EnableLog(true, Logger::LOG_DEBUG);
 
 	emul::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true);
+	ppi.EnableLog(true, Logger::LOG_DEBUG);
 
 	dma::Device8237 dma(0x00);
 	dma.Init();
-	dma.EnableLog(true);
+	dma.EnableLog(true, Logger::LOG_DEBUG);
 
 	emul::CPU8086 cpu(memory, mmap);
 

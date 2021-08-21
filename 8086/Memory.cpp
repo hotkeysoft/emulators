@@ -53,7 +53,7 @@ namespace emul
 
 	BYTE* Memory::GetPtr8(ADDRESS address)
 	{
-		LogPrintf(LOG_INFO, "GetPtr8(%X)", address);
+		LogPrintf(LOG_DEBUG, "GetPtr8(%X)", address);
 
 		MemoryBlock* block = NULL;
 
@@ -86,7 +86,7 @@ namespace emul
 
 	WORD* Memory::GetPtr16(ADDRESS address)
 	{
-		LogPrintf(LOG_INFO, "GetPtr16(%X)", address);
+		LogPrintf(LOG_DEBUG, "GetPtr16(%X)", address);
 
 		MemoryBlock* block = NULL;
 
@@ -119,7 +119,7 @@ namespace emul
 
 	void Memory::Read(ADDRESS address, BYTE& value)
 	{
-		LogPrintf(LOG_INFO, "Read(%X)", address);
+		LogPrintf(LOG_DEBUG, "Read(%X)", address);
 
 		BYTE* mem = GetPtr8(address);
 		value = *mem;
@@ -127,13 +127,13 @@ namespace emul
 
 	void Memory::Write(ADDRESS address, BYTE value)
 	{
-		LogPrintf(LOG_INFO, "Write(%X, %X)", address, value);
+		LogPrintf(LOG_DEBUG, "Write(%X, %X)", address, value);
 
 		MemoryBlock* block = NULL;
 
 		if (m_currBlock && address >= m_currMin && address <= m_currMax)
 		{
-			LogPrintf(LOG_INFO, "\tUsing cached block.");
+			LogPrintf(LOG_DEBUG, "\tUsing cached block.");
 			block = m_currBlock;
 		}
 		else
@@ -141,7 +141,7 @@ namespace emul
 			MemoryBlock* newBlock = FindBlock(address);
 			if (newBlock)
 			{
-				LogPrintf(LOG_INFO, "\tNew block put in cache.");
+				LogPrintf(LOG_DEBUG, "\tNew block put in cache.");
 				block = newBlock;
 			}
 			else
