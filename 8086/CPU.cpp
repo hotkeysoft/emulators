@@ -39,7 +39,8 @@ namespace emul
 			Exec(opcode);
 		}
 		catch (std::exception e)
-		{			
+		{	
+			EnableLog(true);
 			LogPrintf(LOG_ERROR, "Error processing instruction at 0x%04X! [%s] Stopping CPU.\n", GetCurrentAddress(), e.what());
 			m_state = CPUState::STOP;
 		}

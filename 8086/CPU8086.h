@@ -178,8 +178,8 @@ namespace emul
 		void Arithmetic8(SourceDest8 sd, RawOpFunc8 func);
 		void Arithmetic16(SourceDest16 sd, RawOpFunc16 func);
 
-		void ArithmeticImm8(BYTE op2, BYTE imm);
-		void ArithmeticImm16(BYTE op2, WORD imm);
+		void ArithmeticImm8(BYTE op2);
+		void ArithmeticImm16(BYTE op2);
 
 		void IN8(WORD port);
 		void OUT8(WORD port);

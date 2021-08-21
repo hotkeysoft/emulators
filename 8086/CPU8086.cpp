@@ -336,9 +336,9 @@ namespace emul
 		// ADD/OR/ADC/SBB/AND/SUB/XOR/CMP i=>rm (5-6)
 		// ----------
 		// REG8/MEM8, IMM8
-		case 0x80: ArithmeticImm8(FetchByte(), FetchByte()); break;
+		case 0x80: ArithmeticImm8(FetchByte()); break;
 		// REG16/MEM16, IMM16
-		case 0x81: ArithmeticImm16(FetchByte(), FetchWord()); break;
+		case 0x81: ArithmeticImm16(FetchByte()); break;
 
 		// ADD/--/ADC/SBB/---/SUB/---/CMP i=>rm (5-6)??
 		// ----------
@@ -1283,7 +1283,9 @@ namespace emul
 
 	void CPU8086::IN8(WORD port)
 	{
+		LogPrintf(LOG_DEBUG, "IN port %04X", port);
 		m_ports.In(port, regA.hl.l);
+		Dump();
 	}
 
 	void CPU8086::OUT8(WORD port)
@@ -1304,6 +1306,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "RETNear [%s][%d]", pop?"Pop":"NoPop", value);
 
+		EnableLog(true);
 		Dump();
 
 		BYTE ipLo, ipHi;
@@ -1315,7 +1318,7 @@ namespace emul
 		Dump();
 	}
 
-	void CPU8086::ArithmeticImm8(BYTE op2, BYTE imm)
+	void CPU8086::ArithmeticImm8(BYTE op2)
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticImm8");
 
@@ -1330,11 +1333,12 @@ namespace emul
 		case 0x20: func = rawAnd8; break;
 		case 0x28: func = rawSub8; break;
 		case 0x30: func = rawXor8; break;
-		case 0x38: func = rawCmp8; break;
+		case 0x38: func = rawCmp8; LogPrintf(LOG_INFO, "CMP8"); break;
 		default:
 			throw(std::exception("not possible"));
 		}
 
+		BYTE imm = FetchByte();
 		SourceDest8 sd;
 		sd.source = &imm;
 		sd.dest = GetModRM8(op2);
@@ -1349,7 +1353,7 @@ namespace emul
 		AdjustParity(after);
 
 	}
-	void CPU8086::ArithmeticImm16(BYTE op2, WORD imm)
+	void CPU8086::ArithmeticImm16(BYTE op2)
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticImm16");
 		throw(std::exception("ArithmeticImm16 not implemented"));
