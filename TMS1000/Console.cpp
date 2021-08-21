@@ -224,7 +224,7 @@ namespace Console
 
 			BYTE opcode = TMS1000::g_memory.ROM[PC + baseAddr];
 			std::string instr = m_pCPUInfo->Disassemble(opcode);
-			memset(line, 0, 16);
+			memset(line, ' ', 16);
 			strcpy(line, instr.c_str());
 
 			WriteAt(coordData.x, coordData.y + y, line, coordData.w);
