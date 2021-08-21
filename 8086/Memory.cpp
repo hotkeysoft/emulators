@@ -68,7 +68,7 @@ namespace emul
 			}
 			else
 			{
-				LogPrintf(LOG_ERROR, "Reading unallocated memory space (%X)", address);
+				LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
 			}
 		}
 
@@ -78,7 +78,7 @@ namespace emul
 		}
 		else
 		{
-			throw std::exception();
+			LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
 		}
 	}
 
@@ -101,7 +101,7 @@ namespace emul
 			}
 			else
 			{
-				LogPrintf(LOG_ERROR, "Reading unallocated memory space (%X)", address);
+				LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
 			}
 		}
 

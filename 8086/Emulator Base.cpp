@@ -42,9 +42,9 @@ int main(void)
 	Logger::RegisterLogCallback(LogCallback);
 
 	emul::Memory memory(emul::CPU8086_ADDRESS_BITS);
-	memory.EnableLog(false);
+	memory.EnableLog(true, Logger::LOG_WARNING);
 	emul::MemoryMap mmap;
-	mmap.EnableLog(false);
+	mmap.EnableLog(true, Logger::LOG_WARNING);
 
 	fprintf(stderr, "\nMax address: 0x%" PRIx64"\n", (uint64_t)emul::GetMaxAddress(emul::CPU8086_ADDRESS_BITS));
 
