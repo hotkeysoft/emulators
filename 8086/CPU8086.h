@@ -131,7 +131,7 @@ namespace emul
 		WORD FetchWord();
 
 		BYTE* GetModRM8(BYTE modrm);
-		//WORD* GetModRM16(BYTE modrm);
+		WORD* GetModRM16(BYTE modrm);
 
 		SourceDest8 GetModRegRM8(BYTE modregrm, bool toReg);
 		SourceDest16 GetModRegRM16(BYTE modregrm, bool toReg, bool segReg = false);

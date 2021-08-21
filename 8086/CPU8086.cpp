@@ -155,11 +155,11 @@ namespace emul
 		// ----------
 		// REG8/MEM8, REG8
 		case 0x28: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSub8); break;
-			// REG16/MEM16, REG16
+		// REG16/MEM16, REG16
 		case 0x29: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSub16); break;
-			// REG8, REG8/MEM8
+		// REG8, REG8/MEM8
 		case 0x2A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSub8); break;
-			// REG16, REG16/MEM16
+		// REG16, REG16/MEM16
 		case 0x2B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSub16); break;
 
 		// SUB i=>a (2-3)
@@ -907,6 +907,57 @@ namespace emul
 		return sd;
 	}
 
+	WORD* CPU8086::GetModRM16(BYTE modrm)
+	{
+		WORD displacement = 0;
+		bool direct = false;
+		switch (modrm & 0xC0)
+		{
+		case 0xC0: // REG
+			LogPrintf(LOG_DEBUG, "GetModRM16: RM=>REG %s", GetReg8Str(modrm));
+			return GetReg16(modrm);
+		case 0x00: // NO DISP (or DIRECT)
+			if ((modrm & 7) == 6) // Direct 
+			{
+				direct = true;
+				displacement = FetchWord();
+			}
+			else
+			{
+				LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp=0");
+			}
+			break;
+		case 0x40:
+			displacement = widen(FetchByte());
+			LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp8=%04X", displacement);
+			break;
+		case 0x80:
+			displacement = FetchWord();
+			throw std::exception("GetModRM16: MEM disp16=%04X", displacement);
+			break;
+		default:
+			throw std::exception("GetModRM16: not implemented");
+		}
+
+		Dump();
+
+		SegmentOffset segoff = GetEA(modrm);
+		WORD& segment = std::get<0>(segoff);
+		WORD& offset = std::get<1>(segoff);
+
+		offset = (direct ? 0 : offset) + displacement;
+		if (direct)
+		{
+			LogPrintf(LOG_DEBUG, "GetModRegRM16: DIRECT MEM ea=%04X", offset);
+		}
+		else
+		{
+			LogPrintf(LOG_DEBUG, "GetModRegRM16: MEM ea=%s+%04X=%04X", GetEAStr(modrm), displacement, offset);
+		}
+		throw std::exception("GetModRegRM16: notimpl");
+		//return m_memory.GetPtr16(S2A(segment, offset));
+	}
+
 	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool toReg, bool segReg)
 	{
 		LogPrintf(LOG_DEBUG, "GetModRegRM16: modregrm=%d, toReg=%d", modregrm, toReg);
@@ -914,20 +965,9 @@ namespace emul
 		SourceDest16 sd;
 
 		// reg part
-		LogPrintf(LOG_DEBUG, "GetModRegRM16: REG %s", GetReg16Str(modregrm >> 3, segReg));
+		LogPrintf(LOG_DEBUG, "GetModRegRM16: REG %s", GetReg16Str(modregrm >> 3));
 		WORD* reg = GetReg16(modregrm >> 3, segReg);
-
-		// modrm
-		WORD* modrm;
-		switch (modregrm & 0xC0)
-		{
-		case 0xC0: // REG
-			LogPrintf(LOG_DEBUG, "GetModRM16: RM=>REG %s", GetReg16Str(modregrm));
-			modrm = GetReg16(modregrm);
-			break;
-		default:
-			throw std::exception("GetModRegRM16: not implemented");
-		}
+		WORD* modrm = GetModRM16(modregrm);
 
 		sd.source = toReg ? modrm : reg;
 		sd.dest = toReg ? reg : modrm;
@@ -1392,7 +1432,6 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "POP %04X", w);
 
-		EnableLog(true);
 		Dump();
 
 		BYTE lo, hi;
@@ -1412,6 +1451,8 @@ namespace emul
 	void CPU8086::LODS16()
 	{
 		LogPrintf(LOG_DEBUG, "LODS16");
+
+		EnableLog(true, Logger::LOG_DEBUG);
 
 		m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
 		m_memory.Read(S2A(regDS, regSI++), regA.hl.h);
