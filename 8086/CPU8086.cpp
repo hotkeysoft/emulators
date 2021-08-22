@@ -1612,11 +1612,7 @@ namespace emul
 
 		if (regC.x == 0)
 		{
-			EnableLog(true, LOG_DEBUG);
 			LogPrintf(LOG_DEBUG, "PreRep, end loop");
-			Dump();
-			EnableLog(true, LOG_ERROR);
-
 			inRep = false;
 			return false;
 		}

@@ -10,7 +10,7 @@ public:
 
 	enum SEVERITY { LOG_DEBUG = 0, LOG_INFO, LOG_WARNING, LOG_ERROR };
 
-	void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
+	virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
 
 	static void RegisterLogCallback(void(*)(const char *));
 

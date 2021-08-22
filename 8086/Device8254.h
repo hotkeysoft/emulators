@@ -13,7 +13,7 @@ namespace pit
 	enum class RWMode { RW_LSB, RW_MSB, RW_MSBLSB };
 	enum class CounterMode { Mode0, Mode1, Mode2, Mode3, Mode4, Mode5 };
 
-	class Counter : Logger
+	class Counter : public Logger
 	{
 	public:
 		Counter(const char* label);
@@ -63,6 +63,8 @@ namespace pit
 		Device8254& operator=(const Device8254&) = delete;
 		Device8254(Device8254&&) = delete;
 		Device8254& operator=(Device8254&&) = delete;
+
+		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
 
 		void Init();
 		void Reset();

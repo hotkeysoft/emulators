@@ -42,9 +42,9 @@ int main(void)
 	Logger::RegisterLogCallback(LogCallback);
 
 	emul::Memory memory(emul::CPU8086_ADDRESS_BITS);
-	memory.EnableLog(true, Logger::LOG_INFO);
+	memory.EnableLog(true, Logger::LOG_ERROR);
 	emul::MemoryMap mmap;
-	mmap.EnableLog(true, Logger::LOG_INFO);
+	mmap.EnableLog(true, Logger::LOG_ERROR);
 
 	fprintf(stderr, "\nMax address: 0x%" PRIx64"\n", (uint64_t)emul::GetMaxAddress(emul::CPU8086_ADDRESS_BITS));
 
@@ -65,15 +65,15 @@ int main(void)
 
 	pit::Device8254 pit(0x40);
 	pit.Init();
-	pit.EnableLog(true, Logger::LOG_DEBUG);
+	pit.EnableLog(true, Logger::LOG_INFO);
 
-	emul::Device8255 ppi(0x60);
+	ppi::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true, Logger::LOG_DEBUG);
+	ppi.EnableLog(true, Logger::LOG_INFO);
 
 	dma::Device8237 dma(0x00);
 	dma.Init();
-	dma.EnableLog(true, Logger::LOG_DEBUG);
+	dma.EnableLog(false);
 
 	emul::CPU8086 cpu(memory, mmap);
 
@@ -107,7 +107,7 @@ int main(void)
 
 	cpu.Dump();
 	fprintf(stderr, "\n");
-	for (size_t a = 0x400; a < 0x400 + 32; ++a)
+	for (emul::ADDRESS a = 0x400; a < 0x400 + 32; ++a)
 	{
 		BYTE val;
 		memory.Read(a, val);

@@ -59,6 +59,14 @@ namespace dma
 		Reset();
 	}
 
+	void Device8237::EnableLog(bool enable, SEVERITY minSev)
+	{
+		m_channel0.EnableLog(enable, minSev);
+		m_channel1.EnableLog(enable, minSev);
+		m_channel2.EnableLog(enable, minSev);
+		m_channel3.EnableLog(enable, minSev);
+	}
+
 	void Device8237::Reset()
 	{
 

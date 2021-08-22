@@ -152,6 +152,13 @@ namespace pit
 		Reset();
 	}
 
+	void Device8254::EnableLog(bool enable, SEVERITY minSev)
+	{
+		m_counter0.EnableLog(enable, minSev);
+		m_counter1.EnableLog(enable, minSev);
+		m_counter2.EnableLog(enable, minSev);
+	}
+
 	void Device8254::Reset()
 	{
 

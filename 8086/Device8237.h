@@ -4,10 +4,9 @@
 #include "PortConnector.h"
 
 using emul::PortConnector;
+class emul::PortAggregator;
 using emul::BYTE;
 using emul::WORD;
-
-class emul::PortAggregator;
 
 namespace dma
 {
@@ -53,6 +52,8 @@ namespace dma
 		Device8237& operator=(Device8237&&) = delete;
 
 		WORD GetBaseAdress() { return m_baseAddress; }
+
+		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
 
 		void Init();
 		void Reset();
