@@ -245,21 +245,21 @@ namespace emul
 		// DEC r (1)
 		// ----------
 		// DEC AX
-		case 0x48: NotImplemented(opcode); break;
+		case 0x48: DEC16(regA.x); break;
 		// DEC CX
-		case 0x49: NotImplemented(opcode); break;
+		case 0x49: DEC16(regC.x); break;
 		// DEC DX
-		case 0x4A: NotImplemented(opcode); break;
+		case 0x4A: DEC16(regD.x); break;
 		// DEC BX
-		case 0x4B: NotImplemented(opcode); break;
+		case 0x4B: DEC16(regB.x); break;
 		// DEC SP
-		case 0x4C: NotImplemented(opcode); break;
+		case 0x4C: DEC16(regSP); break;
 		// DEC BP
-		case 0x4D: NotImplemented(opcode); break;
+		case 0x4D: DEC16(regBP); break;
 		// DEC SI
-		case 0x4E: NotImplemented(opcode); break;
+		case 0x4E: DEC16(regSI); break;
 		// DEC DI
-		case 0x4F: NotImplemented(opcode); break;
+		case 0x4F: DEC16(regDI); break;
 
 		// PUSH r (1)
 		// ----------
@@ -584,9 +584,9 @@ namespace emul
 		case 0xDF: NotImplemented(opcode); break;
 
 		// LOOPNZ/LOOPNE (2)
-		case 0xE0: NotImplemented(opcode); break;
+		case 0xE0: LOOP(FetchByte(), GetFlag(FLAG_Z) == false); break;
 		// LOOPZ/LOOPE (2)
-		case 0xE1: NotImplemented(opcode); break;
+		case 0xE1: LOOP(FetchByte(), GetFlag(FLAG_Z) == true); break;
 		// LOOP (2)
 		case 0xE2: LOOP(FetchByte()); break;
 		// JCXZ (2)
@@ -1357,10 +1357,10 @@ namespace emul
 		m_ports.Out(port, regA.hl.l);
 	}
 
-	void CPU8086::LOOP(BYTE offset)
+	void CPU8086::LOOP(BYTE offset, bool cond)
 	{
 		--regC.x;
-		if (regC.x)
+		if (regC.x && cond)
 		{
 			regIP += widen(offset);
 		}
@@ -1487,7 +1487,8 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
+			m_memory.Read(S2A(regDS, regSI), regA.hl.l);
+			IndexIncDec(regSI);
 		}
 		PostREP();
 	}
@@ -1497,8 +1498,10 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
-			m_memory.Read(S2A(regDS, regSI++), regA.hl.h);
+			m_memory.Read(S2A(regDS, regSI), regA.hl.l);
+			IndexIncDec(regSI);
+			m_memory.Read(S2A(regDS, regSI), regA.hl.h);
+			IndexIncDec(regSI);
 		}
 		PostREP();
 	}
@@ -1510,6 +1513,7 @@ namespace emul
 		if (PreREP())
 		{
 			m_memory.Write(S2A(regES, regDI++), regA.hl.l);
+			IndexIncDec(regDI);
 		}
 		PostREP();
 	}
@@ -1519,8 +1523,10 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Write(S2A(regES, regDI++), regA.hl.l);
-			m_memory.Write(S2A(regES, regDI++), regA.hl.h);
+			m_memory.Write(S2A(regES, regDI), regA.hl.l);
+			IndexIncDec(regDI);
+			m_memory.Write(S2A(regES, regDI), regA.hl.h);
+			IndexIncDec(regDI);
 		}
 		PostREP();
 	}

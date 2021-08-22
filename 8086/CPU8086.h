@@ -132,6 +132,8 @@ namespace emul
 		void AdjustSign(WORD data);
 		void AdjustZero(WORD data);
 
+		void IndexIncDec(WORD& idx) { GetFlag(FLAG_D) ? --idx : ++idx; }
+
 		BYTE FetchByte();
 		WORD FetchWord();
 
@@ -195,7 +197,7 @@ namespace emul
 		void IN8(WORD port);
 		void OUT8(WORD port);
 
-		void LOOP(BYTE offset);
+		void LOOP(BYTE offset, bool cond = true);
 
 		void RETNear(bool pop = false, WORD value = 0);
 
