@@ -60,6 +60,9 @@ int main(void)
 	base64K.Clear(0xA5);
 	memory.Allocate(&base64K);
 
+	//emul::MemoryBlock extraRam(0x10000, 0x40000, emul::MemoryType::RAM);
+	//memory.Allocate(&extraRam);
+
 	pit::Device8254 pit(0x40);
 	pit.Init();
 	pit.EnableLog(true, Logger::LOG_DEBUG);
@@ -103,6 +106,15 @@ int main(void)
 	time(&stopTime);
 
 	cpu.Dump();
+	fprintf(stderr, "\n");
+	for (size_t a = 0x400; a < 0x400 + 32; ++a)
+	{
+		BYTE val;
+		memory.Read(a, val);
+		fprintf(stderr, "%02X ", val);
+	}
+	fprintf(stderr, "\n");
+	
 
 	fprintf(stderr, "Time elapsed: %I64u\n", stopTime-startTime);
 	cpu.getTime();
