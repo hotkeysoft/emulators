@@ -1262,70 +1262,75 @@ namespace emul
 		}
 	}
 
+	// Rotate left: n = (n << d)|(n >> (BITS - d))
+	// Rotate right: n = (n >> d)|(n << (BITS - d))
+
 	void CPU8086::SHIFTROT8(BYTE op2, BYTE count)
 	{
+		EnableLog(true, LOG_DEBUG);
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
+		Dump();
 		if (count == 0)
-			return; // TODO
-
-		BYTE* b = GetModRM8(op2);
-		BYTE& dest = *b;
-		BYTE before = dest;
-		switch (op2 & 0x38)
 		{
-		case 0x00: // ROL
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
-			throw(std::exception("SHIFTROT8 ROL not implemented"));
-			break;
-		case 0x08: // ROR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
-			throw(std::exception("SHIFTROT8 ROR not implemented"));
-			break;
-		case 0x10: // RCL
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
-			throw(std::exception("SHIFTROT8 RCL not implemented"));
-			break;
-		case 0x18: // RCR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-			throw(std::exception("SHIFTROT8 RCR not implemented"));
-			break;
-		case 0x20: // SHL/SAL
-			// Flags: ODITSZAPC
-			//        XnnnnnnnX
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
-			if (count > 1) {
-				dest <<= (count - 1);
-			}
-			before = dest;
-			SetFlag(FLAG_C, getMSB(dest));
-			dest <<= 1;
-			break;
-		case 0x28: // SHR
-			// Flags: ODITSZAPC
-			//        XnnnnnnnX
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
-			if (count > 1) {
-				dest >>= (count - 1);
-			}
-			before = dest;
-			SetFlag(FLAG_C, getLSB(dest));
-			dest >>= 1;
-			break;
-		case 0x38: // SAR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
-			throw(std::exception("SHIFTROT8 SAR not implemented"));
-			break;
-		default: 
-			break;
+			throw std::exception("SHIFTROT8 count==0 not implemented");
 		}
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
-		AdjustSign(dest);
-		AdjustZero(dest);
-		SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
-		AdjustParity(dest);
+		// TODO: Ugly but approximates what i8086 does
+		BYTE* b = GetModRM8(op2);
+		BYTE& dest = *b;
+		LogPrintf(LOG_DEBUG, "SHIFTROT8 before=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
+		for (BYTE i = 0; i < count; ++i)
+		{
+			BYTE before = dest;
+			switch (op2 & 0x38)
+			{
+			case 0x00: // ROL
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
+				SetFlag(FLAG_C, getMSB(dest));
+				dest = (dest << 1) | (dest >> 7);
+				break;
+			case 0x08: // ROR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
+				SetFlag(FLAG_C, getLSB(dest));
+				dest = (dest >> 1) | (dest << 7);
+				break;
+			case 0x10: // RCL
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
+				throw(std::exception("SHIFTROT8 RCL not implemented"));
+				break;
+			case 0x18: // RCR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
+				throw(std::exception("SHIFTROT8 RCR not implemented"));
+				break;
+			case 0x20: // SHL/SAL
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
+				SetFlag(FLAG_C, getMSB(dest));
+				dest <<= 1;
+				break;
+			case 0x28: // SHR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
+				SetFlag(FLAG_C, getLSB(dest));
+				dest >>= 1;
+				break;
+			case 0x38: // SAR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
+				throw(std::exception("SHIFTROT8 SAR not implemented"));
+				break;
+			default:
+				break;
+			}
 
+			// Flags: ODITSZAPC
+			//        XnnnnnnnX
+			SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
+			AdjustSign(dest);
+			AdjustZero(dest);
+			SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+			AdjustParity(dest);
+		}
+		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
 		Dump();
+		EnableLog(true, LOG_ERROR);
 	}
 
 	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
