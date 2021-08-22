@@ -122,6 +122,10 @@ namespace emul
 		WORD repIP;
 		bool repZ;
 
+		// segment Override
+		bool inSegOverride;
+		WORD segOverride;
+
 		// Helper functions
 
 		void AdjustParity(BYTE data);
@@ -215,6 +219,8 @@ namespace emul
 		void REP(bool z);
 		bool PreREP();
 		void PostREP();
+
+		void SEGOVERRIDE(WORD);
 
 		void NotImplemented(BYTE);
 	};

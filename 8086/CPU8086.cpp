@@ -35,6 +35,9 @@ namespace emul
 	{
 		++regIP;
 
+		// Disable override after next instruction
+		bool clearSegOverride = inSegOverride;
+
 		switch(opcode)
 		{
 		// ADD rm+r=>rm (4)
@@ -146,7 +149,7 @@ namespace emul
 		case 0x25: Arithmetic16Imm(regA.x, FetchWord(), rawAnd16); break;
 
 		// ES Segment Override
-		case 0x26: NotImplemented(opcode); break;
+		case 0x26: SEGOVERRIDE(regES); break;
 
 		// DAA (1)
 		case 0x27: NotImplemented(opcode); break;
@@ -170,7 +173,7 @@ namespace emul
 		case 0x2D: Arithmetic16Imm(regA.x, FetchWord(), rawSub16); break;
 
 		// CS Segment Override
-		case 0x2E: NotImplemented(opcode); break;
+		case 0x2E: SEGOVERRIDE(regCS); break;
 
 		// DAS (1)
 		case 0x2F: NotImplemented(opcode); break;
@@ -194,7 +197,7 @@ namespace emul
 		case 0x35: NotImplemented(opcode); break;
 
 		// SS Segment Override
-		case 0x36: NotImplemented(opcode); break;
+		case 0x36: SEGOVERRIDE(regSS); break;
 
 		// AAA (1)
 		case 0x37: NotImplemented(opcode); break;
@@ -218,7 +221,7 @@ namespace emul
 		case 0x3D: NotImplemented(opcode); break;
 
 		// DS Segment Override
-		case 0x3E: NotImplemented(opcode); break;
+		case 0x3E: SEGOVERRIDE(regDS); break;
 
 		// AAS (1)
 		case 0x3F: NotImplemented(opcode); break;
@@ -672,6 +675,12 @@ namespace emul
 		default:
 			UnknownOpcode(opcode);
 		}
+
+		// Disable override after next instruction
+		if (clearSegOverride)
+		{
+			inSegOverride = false;
+		}
 	}
 
 	void CPU8086::AddDevice(PortConnector& ports)
@@ -692,6 +701,9 @@ namespace emul
 
 		inRep = false;
 		repIP = 0x0000;
+
+		inSegOverride = false;
+		segOverride = 0x000;
 	}
 
 	void CPU8086::Dump()
@@ -881,7 +893,7 @@ namespace emul
 			break;
 		case 0x80:
 			displacement = FetchWord();
-			throw std::exception("GetModRM8: MEM disp16=%04X", displacement);
+			LogPrintf(LOG_DEBUG, "GetModRM8: MEM disp16=%04X", displacement);
 			break;
 		default:
 			throw std::exception("GetModRM8: not implemented");
@@ -890,6 +902,13 @@ namespace emul
 		SegmentOffset segoff = GetEA(modrm, direct);
 		WORD& segment = std::get<0>(segoff);
 		WORD& offset = std::get<1>(segoff);
+
+		if (inSegOverride)
+		{
+			// TODO: Validate
+			LogPrintf(LOG_DEBUG, "GetModRM8: Segment override =%04X", segOverride);
+			segment = segOverride;
+		}
 
 		offset = (direct ? 0 : offset) + displacement;
 		if (direct)
@@ -955,6 +974,13 @@ namespace emul
 		SegmentOffset segoff = GetEA(modrm, direct);
 		WORD& segment = std::get<0>(segoff);
 		WORD& offset = std::get<1>(segoff);
+
+		if (inSegOverride)
+		{
+			// TODO: Validate
+			LogPrintf(LOG_DEBUG, "GetModRM8: Segment override =%04X", segOverride);
+			segment = segOverride;
+		}
 
 		offset = (direct ? 0 : offset) + displacement;
 		if (direct)
@@ -1487,6 +1513,7 @@ namespace emul
 
 		if (PreREP())
 		{
+			// TODO: Segment override?
 			m_memory.Read(S2A(regDS, regSI), regA.hl.l);
 			IndexIncDec(regSI);
 		}
@@ -1498,6 +1525,7 @@ namespace emul
 
 		if (PreREP())
 		{
+			// TODO: Segment override?
 			m_memory.Read(S2A(regDS, regSI), regA.hl.l);
 			IndexIncDec(regSI);
 			m_memory.Read(S2A(regDS, regSI), regA.hl.h);
@@ -1577,5 +1605,16 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "PostRep, end loop");
 			inRep = false;
 		}
+	}
+
+	void CPU8086::SEGOVERRIDE(WORD val)
+	{
+		EnableLog(true, LOG_DEBUG);
+		LogPrintf(LOG_DEBUG, "Segment Override, val=%04X", val);
+		Dump();
+		EnableLog(true, LOG_ERROR);
+
+		inSegOverride = true;
+		segOverride = val;
 	}
 }
