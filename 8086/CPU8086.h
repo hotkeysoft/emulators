@@ -156,6 +156,9 @@ namespace emul
 		const char* GetReg16Str(BYTE reg, bool segReg = false); // For logging
 
 		// Opcodes
+
+		void CALLNear(WORD offset);
+
 		void JMPfar();
 		void JMPNear(BYTE offset);
 		void JMPNear(WORD offset);

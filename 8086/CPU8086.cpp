@@ -611,7 +611,7 @@ namespace emul
 		case 0xE7: NotImplemented(opcode); break;
 
 		// CALL Near (3)
-		case 0xE8: NotImplemented(opcode); break;
+		case 0xE8: CALLNear(FetchWord()); break;
 		// JUMP Near (3)
 		case 0xE9: JMPNear(FetchWord()); break;
 		// JUMP Far (5)
@@ -1087,11 +1087,19 @@ namespace emul
 	void CPU8086::HLT()
 	{
 		LogPrintf(LOG_ERROR, "HALT");
-		EnableLog(true);
+		EnableLog(true, LOG_DEBUG);
 		Dump();
 		m_state = CPUState::STOP;
 	}
 	
+	void CPU8086::CALLNear(WORD offset)
+	{
+		EnableLog(true, LOG_DEBUG);
+		LogPrintf(LOG_DEBUG, "CALLNear Byte offset %02X", offset);
+		PUSH(regIP);
+		regIP += offset;
+	}
+
 	void CPU8086::JMPfar()
 	{
 		WORD offset = FetchWord();
@@ -1105,13 +1113,11 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "JMPNear Byte offset %02X", offset);
 		regIP += widen(offset);
-		Dump();
 	}
 	void CPU8086::JMPNear(WORD offset)
 	{
 		LogPrintf(LOG_DEBUG, "JMPNear Word offset %04X", offset);
 		regIP += offset;
-		Dump();
 	}
 
 	void CPU8086::NotImplemented(BYTE op)
@@ -1482,27 +1488,17 @@ namespace emul
 	void CPU8086::PUSH(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "PUSH %04X", w);
-
-		EnableLog(true);
-
 		m_memory.Write(S2A(regSS, --regSP), getHByte(w));
 		m_memory.Write(S2A(regSS, --regSP), getLByte(w));
-
-		Dump();
 	}
 
 	void CPU8086::POP(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "POP %04X", w);
-
-		Dump();
-
 		BYTE lo, hi;
 		m_memory.Read(S2A(regSS, regSP++), lo);
 		m_memory.Read(S2A(regSS, regSP++), hi);
 		w = getWord(hi, lo);
-
-		Dump();
 	}
 
 	void CPU8086::LODS8()
