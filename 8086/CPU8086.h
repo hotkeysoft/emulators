@@ -176,8 +176,8 @@ namespace emul
 		void INC16(WORD&);
 		void DEC16(WORD&);
 
-		void MOV8(BYTE& d, BYTE s);
-		void MOV16(WORD& d, WORD s);
+		void MOV8(BYTE* d, BYTE s);
+		void MOV16(WORD* d, WORD s);
 
 		void MOV8(SourceDest8 sd);
 		void MOV16(SourceDest16 sd);

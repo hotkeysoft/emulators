@@ -445,9 +445,9 @@ namespace emul
 		// MOV a=>m (3)
 		// ----------
 		// MOV MEM8, AL
-		case 0xA2: NotImplemented(opcode); break;
+		case 0xA2: MOV8(m_memory.GetPtr8(FetchWord()), regA.hl.l); break;
 		// MOV MEM16, AX
-		case 0xA3: NotImplemented(opcode); break;
+		case 0xA3: MOV16(m_memory.GetPtr16(FetchWord()), regA.x); break;
 
 		// MOVS (1)
 		// ----------
@@ -494,38 +494,38 @@ namespace emul
 		// MOV i=>r (2-3)
 		// ----------
 		// MOV AL, IMM8
-		case 0xB0: MOV8(regA.hl.l, FetchByte()); break;
+		case 0xB0: MOV8(&regA.hl.l, FetchByte()); break;
 		// MOV CL, IMM8
-		case 0xB1: MOV8(regC.hl.l, FetchByte()); break;
+		case 0xB1: MOV8(&regC.hl.l, FetchByte()); break;
 		// MOV DL, IMM8
-		case 0xB2: MOV8(regD.hl.l, FetchByte()); break;
+		case 0xB2: MOV8(&regD.hl.l, FetchByte()); break;
 		// MOV BL, IMM8
-		case 0xB3: MOV8(regB.hl.l, FetchByte()); break;
+		case 0xB3: MOV8(&regB.hl.l, FetchByte()); break;
 		// MOV AH, IMM8
-		case 0xB4: MOV8(regA.hl.h, FetchByte()); break;
+		case 0xB4: MOV8(&regA.hl.h, FetchByte()); break;
 		// MOV CH, IMM8
-		case 0xB5: MOV8(regC.hl.h, FetchByte()); break;
+		case 0xB5: MOV8(&regC.hl.h, FetchByte()); break;
 		// MOV DH, IMM8
-		case 0xB6: MOV8(regD.hl.h, FetchByte()); break;
+		case 0xB6: MOV8(&regD.hl.h, FetchByte()); break;
 		// MOV BH, IMM8
-		case 0xB7: MOV8(regB.hl.h, FetchByte()); break;
+		case 0xB7: MOV8(&regB.hl.h, FetchByte()); break;
 
 		// MOV AX, IMM16
-		case 0xB8: MOV16(regA.x, FetchWord()); break;
+		case 0xB8: MOV16(&regA.x, FetchWord()); break;
 		// MOV CX, IMM16
-		case 0xB9: MOV16(regC.x, FetchWord()); break;
+		case 0xB9: MOV16(&regC.x, FetchWord()); break;
 		// MOV DX, IMM16
-		case 0xBA: MOV16(regD.x, FetchWord()); break;
+		case 0xBA: MOV16(&regD.x, FetchWord()); break;
 		// MOV BX, IMM16
-		case 0xBB: MOV16(regB.x, FetchWord()); break;
+		case 0xBB: MOV16(&regB.x, FetchWord()); break;
 		// MOV SP, IMM16
-		case 0xBC: MOV16(regSP, FetchWord()); break;
+		case 0xBC: MOV16(&regSP, FetchWord()); break;
 		// MOV BP, IMM16
-		case 0xBD: MOV16(regBP, FetchWord()); break;
+		case 0xBD: MOV16(&regBP, FetchWord()); break;
 		// MOV SI, IMM16
-		case 0xBE: MOV16(regSI, FetchWord()); break;
+		case 0xBE: MOV16(&regSI, FetchWord()); break;
 		// MOV DI, IMM16
-		case 0xBF: MOV16(regDI, FetchWord()); break;
+		case 0xBF: MOV16(&regDI, FetchWord()); break;
 
 		// RET SP+IMM16 (3)
 		case 0xC2: RETNear(true, FetchWord()); break;
@@ -540,7 +540,6 @@ namespace emul
 		// MOV i=>rm (5-6)
 		// ----------
 		// MOV MEM8, IMM8
-			
 		case 0xC6: MOVIMM8(GetModRM8(FetchByte())); break;
 		// MOV MEM16, IMM16
 		case 0xC7: MOVIMM16(GetModRM16(FetchByte())); break;
@@ -1203,11 +1202,9 @@ namespace emul
 		AdjustParity(w);
 	}
 
-	void CPU8086::MOV8(BYTE& d, BYTE s)
+	void CPU8086::MOV8(BYTE* d, BYTE s)
 	{
-		LogPrintf(LOG_DEBUG, "MOV8");
-
-		d = s;
+		*d = s;
 	}
 	void CPU8086::MOV8(SourceDest8 sd)
 	{
@@ -1218,15 +1215,14 @@ namespace emul
 		*(dest) = FetchByte();
 	}
 
-	void CPU8086::MOV16(WORD& d, WORD s)
+	void CPU8086::MOV16(WORD* d, WORD s)
 	{
-		d = s;
+		*d = s;
 	}
 	void CPU8086::MOV16(SourceDest16 sd)
 	{
 		*(sd.dest) = *(sd.source);
 	}
-
 	void CPU8086::MOVIMM16(WORD* dest)
 	{
 		*(dest) = FetchWord();
