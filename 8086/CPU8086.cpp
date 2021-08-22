@@ -59,9 +59,9 @@ namespace emul
 		case 0x05: Arithmetic16Imm(regA.x, FetchWord(), rawAdd16); break;
 
 		// PUSH ES (1)
-		case 0x06: NotImplemented(opcode); break;
+		case 0x06: PUSH(regES); break;
 		// POP ES (1)
-		case 0x07: NotImplemented(opcode); break;
+		case 0x07: POP(regES); break;
 
 		// OR rm+r=>rm (4)
 		// ----------
@@ -82,18 +82,19 @@ namespace emul
 		case 0x0D: Arithmetic16Imm(regA.x, FetchWord(), rawOr16); break;
 
 		// PUSH CS (1)
-		case 0x0E: NotImplemented(opcode); break;
+		case 0x0E: PUSH(regCS); break;
 
 		// ADC rm+r=>rm (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x10: NotImplemented(opcode); break;
+		case 0x10: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdc8); break;
 		// REG16/MEM16, REG16
-		case 0x11: NotImplemented(opcode); break;
+		case 0x11: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdc16); break;
 		// REG8, REG8/MEM8
-		case 0x12: NotImplemented(opcode); break;
+		case 0x12: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdc8); break;
 		// REG16, REG16/MEM16
-		case 0x13: NotImplemented(opcode); break;
+		case 0x13: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdc16); break;
+
 
 		// ADC i=>a (2-3)
 		// ----------
@@ -103,20 +104,20 @@ namespace emul
 		case 0x15: Arithmetic16Imm(regA.x, FetchWord(), rawAdc16); break;
 
 		// PUSH SS (1)
-		case 0x16: NotImplemented(opcode); break;
+		case 0x16: PUSH(regSS); break;
 		// POP SS (1)
-		case 0x17: NotImplemented(opcode); break;
+		case 0x17: POP(regSS); break;
 
 		// SBB rm+r=>rm (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x18: NotImplemented(opcode); break;
+		case 0x18: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSbb8); break;
 		// REG16/MEM16, REG16
-		case 0x19: NotImplemented(opcode); break;
+		case 0x19: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSbb16); break;
 		// REG8, REG8/MEM8
-		case 0x1A: NotImplemented(opcode); break;
+		case 0x1A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSbb8); break;
 		// REG16, REG16/MEM16
-		case 0x1B: NotImplemented(opcode); break;
+		case 0x1B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSbb16); break;
 
 		// SBB i=>a (2-3)
 		// ----------
@@ -126,9 +127,9 @@ namespace emul
 		case 0x1D: Arithmetic16Imm(regA.x, FetchWord(), rawSbb16); break;
 
 		// PUSH DS (1)
-		case 0x1E: NotImplemented(opcode); break;
+		case 0x1E: PUSH(regDS); break;
 		// POP DS (1)
-		case 0x1F: NotImplemented(opcode); break;
+		case 0x1F: POP(regDS); break;
 
 		// AND rm+r=>rm (4)
 		// ----------
@@ -451,9 +452,9 @@ namespace emul
 		// MOVS (1)
 		// ----------
 		// MOVS DEST-STR8, SRC-STR8
-		case 0xA4: NotImplemented(opcode); break;
+		case 0xA4: MOVS8(); break;
 		// MOVS DEST-STR16, SRC-STR16
-		case 0xA5: NotImplemented(opcode); break;
+		case 0xA5: MOVS16(); break;
 
 		// CMPS (1)
 		// ----------
@@ -539,9 +540,10 @@ namespace emul
 		// MOV i=>rm (5-6)
 		// ----------
 		// MOV MEM8, IMM8
-		case 0xC6: NotImplemented(opcode); break;
+			
+		case 0xC6: MOVIMM8(GetModRM8(FetchByte())); break;
 		// MOV MEM16, IMM16
-		case 0xC7: NotImplemented(opcode); break;
+		case 0xC7: MOVIMM16(GetModRM16(FetchByte())); break;
 
 		// RET Far SP+IMM16 (3)
 		case 0xCA: NotImplemented(opcode); break;
@@ -1206,33 +1208,28 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "MOV8");
 
 		d = s;
-		// Flags: ODITSZAPC
-		//        nnnnnnnnn
 	}
 	void CPU8086::MOV8(SourceDest8 sd)
 	{
-		LogPrintf(LOG_DEBUG, "MOV8");
-
 		*(sd.dest) = *(sd.source);
-		// Flags: ODITSZAPC
-		//        nnnnnnnnn
+	}
+	void CPU8086::MOVIMM8(BYTE* dest)
+	{
+		*(dest) = FetchByte();
 	}
 
 	void CPU8086::MOV16(WORD& d, WORD s)
 	{
-		LogPrintf(LOG_DEBUG, "MOV16");
-
 		d = s;
-		// Flags: ODITSZAPC
-		//        nnnnnnnnn
 	}
 	void CPU8086::MOV16(SourceDest16 sd)
 	{
-		LogPrintf(LOG_DEBUG, "MOV16");
-
 		*(sd.dest) = *(sd.source);
-		// Flags: ODITSZAPC
-		//        nnnnnnnnn
+	}
+
+	void CPU8086::MOVIMM16(WORD* dest)
+	{
+		*(dest) = FetchWord();
 	}
 
 	void CPU8086::SAHF()
@@ -1513,19 +1510,20 @@ namespace emul
 
 		if (PreREP())
 		{
-			// TODO: Segment override?
+			// TODO: Segment override
 			m_memory.Read(S2A(regDS, regSI), regA.hl.l);
 			IndexIncDec(regSI);
 		}
 		PostREP();
 	}
+
 	void CPU8086::LODS16()
 	{
 		LogPrintf(LOG_DEBUG, "LODS16");
 
 		if (PreREP())
 		{
-			// TODO: Segment override?
+			// TODO: Segment override
 			m_memory.Read(S2A(regDS, regSI), regA.hl.l);
 			IndexIncDec(regSI);
 			m_memory.Read(S2A(regDS, regSI), regA.hl.h);
@@ -1540,7 +1538,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Write(S2A(regES, regDI++), regA.hl.l);
+			m_memory.Write(S2A(regES, regDI), regA.hl.l);
 			IndexIncDec(regDI);
 		}
 		PostREP();
@@ -1551,9 +1549,46 @@ namespace emul
 
 		if (PreREP())
 		{
+			// TODO: Segment override?
 			m_memory.Write(S2A(regES, regDI), regA.hl.l);
 			IndexIncDec(regDI);
 			m_memory.Write(S2A(regES, regDI), regA.hl.h);
+			IndexIncDec(regDI);
+		}
+		PostREP();
+	}
+
+	void CPU8086::MOVS8()
+	{
+		LogPrintf(LOG_DEBUG, "MOVS8");
+
+		if (PreREP())
+		{
+			// TODO: Segment override
+			BYTE val;
+			m_memory.Read(S2A(regDS, regSI), val);
+			m_memory.Write(S2A(regES, regDI), val);
+			IndexIncDec(regSI);
+			IndexIncDec(regDI);
+		}
+		PostREP();
+	}
+	void CPU8086::MOVS16()
+	{
+		LogPrintf(LOG_DEBUG, "MOVS16");
+
+		if (PreREP())
+		{
+			// TODO: Segment override
+			BYTE val;
+			m_memory.Read(S2A(regDS, regSI), val);
+			m_memory.Write(S2A(regES, regDI), val);
+			IndexIncDec(regSI);
+			IndexIncDec(regDI);
+
+			m_memory.Read(S2A(regDS, regSI), val);
+			m_memory.Write(S2A(regES, regDI), val);
+			IndexIncDec(regSI);
 			IndexIncDec(regDI);
 		}
 		PostREP();

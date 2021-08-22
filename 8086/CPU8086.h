@@ -182,6 +182,9 @@ namespace emul
 		void MOV8(SourceDest8 sd);
 		void MOV16(SourceDest16 sd);
 
+		void MOVIMM8(BYTE* dest);
+		void MOVIMM16(WORD* dest);
+
 		void SAHF();
 		void LAHF();
 
@@ -215,6 +218,9 @@ namespace emul
 
 		void STOS8();
 		void STOS16();
+
+		void MOVS8();
+		void MOVS16();
 
 		void REP(bool z);
 		bool PreREP();
