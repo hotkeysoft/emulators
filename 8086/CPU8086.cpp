@@ -54,9 +54,9 @@ namespace emul
 		// ADD i=>a (2-3)
 		// --------
 		// AL, IMMED8
-		case 0x04: Arithmetic8Imm(regA.hl.l, FetchByte(), rawAdd8); break;
+		case 0x04: ArithmeticImm8(regA.hl.l, FetchByte(), rawAdd8); break;
 		// AX, IMMED16
-		case 0x05: Arithmetic16Imm(regA.x, FetchWord(), rawAdd16); break;
+		case 0x05: ArithmeticImm16(regA.x, FetchWord(), rawAdd16); break;
 
 		// PUSH ES (1)
 		case 0x06: PUSH(regES); break;
@@ -77,9 +77,9 @@ namespace emul
 		// OR i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x0C: Arithmetic8Imm(regA.hl.l, FetchByte(), rawOr8); break;
+		case 0x0C: ArithmeticImm8(regA.hl.l, FetchByte(), rawOr8); break;
 		// AX, IMMED16
-		case 0x0D: Arithmetic16Imm(regA.x, FetchWord(), rawOr16); break;
+		case 0x0D: ArithmeticImm16(regA.x, FetchWord(), rawOr16); break;
 
 		// PUSH CS (1)
 		case 0x0E: PUSH(regCS); break;
@@ -99,9 +99,9 @@ namespace emul
 		// ADC i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x14: Arithmetic8Imm(regA.hl.l, FetchByte(), rawAdc8); break;
+		case 0x14: ArithmeticImm8(regA.hl.l, FetchByte(), rawAdc8); break;
 		// AX, IMMED16
-		case 0x15: Arithmetic16Imm(regA.x, FetchWord(), rawAdc16); break;
+		case 0x15: ArithmeticImm16(regA.x, FetchWord(), rawAdc16); break;
 
 		// PUSH SS (1)
 		case 0x16: PUSH(regSS); break;
@@ -122,9 +122,9 @@ namespace emul
 		// SBB i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x1C: Arithmetic8Imm(regA.hl.l, FetchByte(), rawSbb8); break;
+		case 0x1C: ArithmeticImm8(regA.hl.l, FetchByte(), rawSbb8); break;
 		// AX, IMMED16
-		case 0x1D: Arithmetic16Imm(regA.x, FetchWord(), rawSbb16); break;
+		case 0x1D: ArithmeticImm16(regA.x, FetchWord(), rawSbb16); break;
 
 		// PUSH DS (1)
 		case 0x1E: PUSH(regDS); break;
@@ -145,9 +145,9 @@ namespace emul
 		// AND i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x24: Arithmetic8Imm(regA.hl.l, FetchByte(), rawAnd8); break;
+		case 0x24: ArithmeticImm8(regA.hl.l, FetchByte(), rawAnd8); break;
 		// AX, IMMED16
-		case 0x25: Arithmetic16Imm(regA.x, FetchWord(), rawAnd16); break;
+		case 0x25: ArithmeticImm16(regA.x, FetchWord(), rawAnd16); break;
 
 		// ES Segment Override
 		case 0x26: SEGOVERRIDE(regES); break;
@@ -169,9 +169,9 @@ namespace emul
 		// SUB i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x2C: Arithmetic8Imm(regA.hl.l, FetchByte(), rawSub8); break;
+		case 0x2C: ArithmeticImm8(regA.hl.l, FetchByte(), rawSub8); break;
 		// AX, IMMED16
-		case 0x2D: Arithmetic16Imm(regA.x, FetchWord(), rawSub16); break;
+		case 0x2D: ArithmeticImm16(regA.x, FetchWord(), rawSub16); break;
 
 		// CS Segment Override
 		case 0x2E: SEGOVERRIDE(regCS); break;
@@ -650,9 +650,9 @@ namespace emul
 		// TEST/---/NOT/NEG/MUL/IMUL/DIV/IDIV
 		// --------
 		// REG8/MEM8 (, IMM8 {TEST})
-		case 0xF6: NotImplemented(opcode); break;
+		case 0xF6: ArithmeticMulti8(FetchByte()); break;
 		// REG16/MEM16 (, IMM16 {TEST})
-		case 0xF7: NotImplemented(opcode); break;
+		case 0xF7: ArithmeticMulti16(FetchByte()); break;
 
 		case 0xF8: CLC(); break;
 		// STC (1)
@@ -1094,7 +1094,6 @@ namespace emul
 	
 	void CPU8086::CALLNear(WORD offset)
 	{
-		EnableLog(true, LOG_DEBUG);
 		LogPrintf(LOG_DEBUG, "CALLNear Byte offset %02X", offset);
 		PUSH(regIP);
 		regIP += offset;
@@ -1364,12 +1363,12 @@ namespace emul
 		AdjustParity(after);
 	}
 
-	void CPU8086::Arithmetic8Imm(BYTE& dest, BYTE imm, RawOpFunc8 func)
+	void CPU8086::ArithmeticImm8(BYTE& dest, BYTE imm, RawOpFunc8 func)
 	{
 		SourceDest8 sd(&dest, &imm);
 		Arithmetic8(sd, func);
 	}
-	void CPU8086::Arithmetic16Imm(WORD& dest, WORD imm, RawOpFunc16 func)
+	void CPU8086::ArithmeticImm16(WORD& dest, WORD imm, RawOpFunc16 func)
 	{
 		SourceDest16 sd(&dest, &imm);
 		Arithmetic16(sd, func);
@@ -1475,6 +1474,80 @@ namespace emul
 		AdjustZero(after);
 		SetFlag(FLAG_A, ((before ^ after) & 0x18) == 0x18);
 		AdjustParity(after);
+	}
+
+	void CPU8086::ArithmeticMulti8(BYTE op2)
+	{
+		LogPrintf(LOG_DEBUG, "ArithmeticMulti8");
+
+		//RawOpFunc8 func;
+
+		BYTE* dest = GetModRM8(op2);
+
+		switch (op2 & 0x38)
+		{
+		case 0x00:
+		{
+			LogPrintf(LOG_DEBUG, "test");
+			BYTE imm = FetchByte();
+			SourceDest8 sd;
+			sd.dest = dest;
+			sd.source = &imm;
+			BYTE after = rawAnd8(sd);
+			SetFlag(FLAG_O, false);
+			AdjustSign(after);
+			AdjustZero(after);
+			AdjustParity(after);
+			break;
+		}
+		case 0x08: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "---"); // break;
+		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); // break;
+		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); // break;
+		case 0x20: /*func = rawMul16;*/ LogPrintf(LOG_ERROR, "mul"); // break;
+		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); // break;
+		case 0x30: /*func = rawDiv16;*/ LogPrintf(LOG_ERROR, "div"); // break;
+		case 0x38: /*func = rawIDiv16;*/ LogPrintf(LOG_ERROR, "idiv"); // break;
+			throw(std::exception("not implemented"));
+		default:
+			throw(std::exception("not possible"));
+		}
+	}
+
+	void CPU8086::ArithmeticMulti16(BYTE op2)
+	{
+		LogPrintf(LOG_DEBUG, "ArithmeticMulti16");
+
+		//RawOpFunc16 func;
+
+		WORD* dest = GetModRM16(op2);
+
+		switch (op2 & 0x38)
+		{
+		case 0x00: 
+		{
+			LogPrintf(LOG_DEBUG, "test");
+			WORD imm = FetchWord();
+			SourceDest16 sd;
+			sd.dest = dest;
+			sd.source = &imm;
+			WORD after = rawAnd16(sd);
+			SetFlag(FLAG_O, false);
+			AdjustSign(after);
+			AdjustZero(after);
+			AdjustParity(after);
+			break;
+		}
+		case 0x08: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "---"); // break;
+		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); // break;
+		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); // break;
+		case 0x20: /*func = rawMul16;*/ LogPrintf(LOG_ERROR, "mul"); // break;
+		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); // break;
+		case 0x30: /*func = rawDiv16;*/ LogPrintf(LOG_ERROR, "div"); // break;
+		case 0x38: /*func = rawIDiv16;*/ LogPrintf(LOG_ERROR, "idiv"); // break;
+			throw(std::exception("not implemented"));
+		default:
+			throw(std::exception("not possible"));
+		}
 	}
 
 	void CPU8086::XCHG16(WORD& w1, WORD& w2)
