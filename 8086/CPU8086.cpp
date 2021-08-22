@@ -418,7 +418,7 @@ namespace emul
 		case 0x97: XCHG16(regA.x, regDI); break;
 
 		// CBW
-		case 0x98: NotImplemented(opcode); break;
+		case 0x98: CBW(); break;
 		// CWD
 		case 0x99: NotImplemented(opcode); break;
 
@@ -674,9 +674,9 @@ namespace emul
 		case 0xFE: INCDEC8(FetchByte()); break;
 
 		// INC/DEC/CALL/CALL/JMP/JMP/PUSH/---
-		case 0xFF: NotImplemented(opcode); break;
-		default:
-			UnknownOpcode(opcode);
+		case 0xFF: MultiFunc(FetchByte()); break;
+
+		default: UnknownOpcode(opcode);
 		}
 
 		// Disable override after next instruction
@@ -968,7 +968,7 @@ namespace emul
 			break;
 		case 0x80:
 			displacement = FetchWord();
-			throw std::exception("GetModRM16: MEM disp16=%04X", displacement);
+			LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp16=%04X", displacement);
 			break;
 		default:
 			throw std::exception("GetModRM16: not implemented");
@@ -1026,7 +1026,6 @@ namespace emul
 	{
 		SetFlag(FLAG_Z, (data == 0));
 	}
-
 	void CPU8086::AdjustParity(WORD data)
 	{
 		AdjustParity(getLByte(data));
@@ -1086,6 +1085,18 @@ namespace emul
 		//TODO
 	}
 
+	void CPU8086::CBW()
+	{
+		LogPrintf(LOG_DEBUG, "CBW");
+		regA.hl.h = getMSB(regA.hl.l) ? 0xFF : 0;
+	}
+
+	void CPU8086::CWD()
+	{
+		LogPrintf(LOG_DEBUG, "CWD");
+		regD.x = getMSB(regA.x) ? 0xFFFF : 0;
+	}
+
 	void CPU8086::HLT()
 	{
 		LogPrintf(LOG_ERROR, "HALT");
@@ -1119,6 +1130,11 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "JMPNear Word offset %04X", offset);
 		regIP += offset;
+	}
+
+	void CPU8086::JMPIntra(WORD address)
+	{
+		regIP = address;
 	}
 
 	void CPU8086::NotImplemented(BYTE op)
@@ -1334,8 +1350,70 @@ namespace emul
 
 	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
 	{
-		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
-		throw(std::exception("SHIFTROT16 not implemented"));
+		EnableLog(true, LOG_DEBUG);
+		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT16 ", count=%d", PRINTF_BYTE_TO_BIN_INT16(op2), count);
+		Dump();
+		if (count == 0)
+		{
+			throw std::exception("SHIFTROT16 count==0 not implemented");
+		}
+
+		// TODO: Ugly but approximates what i8086 does
+		WORD* b = GetModRM16(op2);
+		WORD& dest = *b;
+		LogPrintf(LOG_DEBUG, "SHIFTROT16 before=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
+		for (BYTE i = 0; i < count; ++i)
+		{
+			WORD before = dest;
+			switch (op2 & 0x38)
+			{
+			case 0x00: // ROL
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROL");
+				SetFlag(FLAG_C, getMSB(dest));
+				dest = (dest << 1) | (dest >> 15);
+				break;
+			case 0x08: // ROR
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROR");
+				SetFlag(FLAG_C, getLSB(dest));
+				dest = (dest >> 1) | (dest << 15);
+				break;
+			case 0x10: // RCL
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCL");
+				throw(std::exception("SHIFTROT16 RCL not implemented"));
+				break;
+			case 0x18: // RCR
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCR");
+				throw(std::exception("SHIFTROT16 RCR not implemented"));
+				break;
+			case 0x20: // SHL/SAL
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
+				SetFlag(FLAG_C, getMSB(dest));
+				dest <<= 1;
+				break;
+			case 0x28: // SHR
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHR");
+				SetFlag(FLAG_C, getLSB(dest));
+				dest >>= 1;
+				break;
+			case 0x38: // SAR
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
+				throw(std::exception("SHIFTROT16 SAR not implemented"));
+				break;
+			default:
+				break;
+			}
+
+			// Flags: ODITSZAPC
+			//        XnnnnnnnX
+			SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
+			AdjustSign(dest);
+			AdjustZero(dest);
+			SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
+			AdjustParity(dest);
+		}
+		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
+		Dump();
+		EnableLog(true, LOG_ERROR);
 	}
 
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
@@ -1524,14 +1602,13 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
-		case 0x08: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "---"); // break;
-		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); // break;
-		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); // break;
-		case 0x20: /*func = rawMul16;*/ LogPrintf(LOG_ERROR, "mul"); // break;
-		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); // break;
-		case 0x30: /*func = rawDiv16;*/ LogPrintf(LOG_ERROR, "div"); // break;
-		case 0x38: /*func = rawIDiv16;*/ LogPrintf(LOG_ERROR, "idiv"); // break;
-			throw(std::exception("not implemented"));
+		case 0x08: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "---"); HLT(); break;
+		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); HLT(); break;
+		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); HLT(); break;
+		case 0x20: /*func = rawMul16;*/ LogPrintf(LOG_ERROR, "mul"); HLT(); break;
+		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); HLT(); break;
+		case 0x30: /*func = rawDiv16;*/ LogPrintf(LOG_ERROR, "div"); HLT(); break;
+		case 0x38: /*func = rawIDiv16;*/ LogPrintf(LOG_ERROR, "idiv"); HLT(); break;
 		default:
 			throw(std::exception("not possible"));
 		}
@@ -1728,5 +1805,32 @@ namespace emul
 		regCS = *m_memory.GetPtr16(interruptAddress + 2);
 		regIP = *m_memory.GetPtr16(interruptAddress);
 		EnableLog(true, LOG_DEBUG);
+	}
+
+	void CPU8086::MultiFunc(BYTE op2)
+	{
+		LogPrintf(LOG_DEBUG, "Multifunc, op=%02X", op2);
+
+		WORD* dest = GetModRM16(op2);
+
+		switch (op2 & 0x38)
+		{
+			// INC/DEC MEM16
+		case 0x00: LogPrintf(LOG_ERROR, "INC MEM16");  HLT(); break;
+		case 0x08: LogPrintf(LOG_ERROR, "DEC MEM16");  HLT(); break;
+			// CALL RM16(intra) / CALL MEM16(intersegment)
+		case 0x10: LogPrintf(LOG_ERROR, "CALL RM16(intra)");  HLT(); break;
+		case 0x18: LogPrintf(LOG_ERROR, "CALL MEM16(inter)");  HLT(); break;
+			// JMP RM16(intra) // JMP MEM16(intersegment)
+		case 0x20: JMPIntra(*dest); break;
+		case 0x28: LogPrintf(LOG_ERROR, "JMP MEM16(inter)");  HLT(); break;
+			// PUSH MEM16
+		case 0x30: LogPrintf(LOG_ERROR, "PUSH MEM16");  HLT(); break;
+			// not used
+		case 0x38: LogPrintf(LOG_ERROR, "not used");  HLT(); break;
+
+		default:
+			throw(std::exception("not possible"));
+		}
 	}
 }

@@ -162,6 +162,7 @@ namespace emul
 		void JMPfar();
 		void JMPNear(BYTE offset);
 		void JMPNear(WORD offset);
+		void JMPIntra(WORD address);
 
 		void CLC();
 		void CMC();
@@ -170,6 +171,10 @@ namespace emul
 		void STD();
 		void CLI();
 		void STI();
+
+		void CBW();
+		void CWD();
+
 		void HLT();
 
 		void INCDEC8(BYTE op2);
@@ -235,6 +240,8 @@ namespace emul
 		void SEGOVERRIDE(WORD);
 
 		void INT(BYTE interrupt);
+
+		void MultiFunc(BYTE op2);
 
 		void NotImplemented(BYTE);
 	};
