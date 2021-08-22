@@ -69,7 +69,7 @@ int main(void)
 
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true, Logger::LOG_INFO);
+	ppi.EnableLog(true, Logger::LOG_DEBUG);
 
 	dma::Device8237 dma(0x00);
 	dma.Init();
