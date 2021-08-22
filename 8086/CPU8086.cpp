@@ -1507,11 +1507,14 @@ namespace emul
 	void CPU8086::LODS8()
 	{
 		LogPrintf(LOG_DEBUG, "LODS8");
+		if (inSegOverride)
+		{
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+		}
 
 		if (PreREP())
 		{
-			// TODO: Segment override
-			m_memory.Read(S2A(regDS, regSI), regA.hl.l);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), regA.hl.l);
 			IndexIncDec(regSI);
 		}
 		PostREP();
@@ -1520,13 +1523,16 @@ namespace emul
 	void CPU8086::LODS16()
 	{
 		LogPrintf(LOG_DEBUG, "LODS16");
+		if (inSegOverride)
+		{
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+		}
 
 		if (PreREP())
 		{
-			// TODO: Segment override
-			m_memory.Read(S2A(regDS, regSI), regA.hl.l);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), regA.hl.l);
 			IndexIncDec(regSI);
-			m_memory.Read(S2A(regDS, regSI), regA.hl.h);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), regA.hl.h);
 			IndexIncDec(regSI);
 		}
 		PostREP();
@@ -1549,7 +1555,6 @@ namespace emul
 
 		if (PreREP())
 		{
-			// TODO: Segment override?
 			m_memory.Write(S2A(regES, regDI), regA.hl.l);
 			IndexIncDec(regDI);
 			m_memory.Write(S2A(regES, regDI), regA.hl.h);
@@ -1561,12 +1566,15 @@ namespace emul
 	void CPU8086::MOVS8()
 	{
 		LogPrintf(LOG_DEBUG, "MOVS8");
+		if (inSegOverride)
+		{
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+		}
 
 		if (PreREP())
 		{
-			// TODO: Segment override
 			BYTE val;
-			m_memory.Read(S2A(regDS, regSI), val);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), val);
 			m_memory.Write(S2A(regES, regDI), val);
 			IndexIncDec(regSI);
 			IndexIncDec(regDI);
@@ -1576,17 +1584,20 @@ namespace emul
 	void CPU8086::MOVS16()
 	{
 		LogPrintf(LOG_DEBUG, "MOVS16");
+		if (inSegOverride)
+		{
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+		}
 
 		if (PreREP())
 		{
-			// TODO: Segment override
 			BYTE val;
-			m_memory.Read(S2A(regDS, regSI), val);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), val);
 			m_memory.Write(S2A(regES, regDI), val);
 			IndexIncDec(regSI);
 			IndexIncDec(regDI);
 
-			m_memory.Read(S2A(regDS, regSI), val);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), val);
 			m_memory.Write(S2A(regES, regDI), val);
 			IndexIncDec(regSI);
 			IndexIncDec(regDI);
@@ -1596,9 +1607,7 @@ namespace emul
 
 	void CPU8086::REP(bool z)
 	{
-		EnableLog(true, LOG_DEBUG);
 		LogPrintf(LOG_DEBUG, "REP, Z=%d, cx=%04X", z, regC.x);
-		EnableLog(true, LOG_ERROR);
 
 		inRep = true;
 		repZ = z;
@@ -1640,10 +1649,8 @@ namespace emul
 
 	void CPU8086::SEGOVERRIDE(WORD val)
 	{
-		EnableLog(true, LOG_DEBUG);
 		LogPrintf(LOG_DEBUG, "Segment Override, val=%04X", val);
 		Dump();
-		EnableLog(true, LOG_ERROR);
 
 		inSegOverride = true;
 		segOverride = val;
