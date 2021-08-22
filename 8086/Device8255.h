@@ -9,6 +9,9 @@ using emul::WORD;
 
 namespace ppi
 {
+	enum class RAMSIZE { RAM_64K, RAM_128K, RAM_192K, RAM_256K };
+	enum class DISPLAY { COLOR_40x25, COLOR_80x25, MONO_80x25 };
+
 	class Device8255 : public PortConnector
 	{
 	public:
@@ -23,6 +26,34 @@ namespace ppi
 		void Init();
 		void Reset();
 
+		void SetControlWord(BYTE ctrl);
+
+		// TODO: Should be in child class
+		enum CONFIG_SW
+		{
+			// PB3 == LOW
+			SW_POST_LOOP =   0x01, // SW1
+			SW_COPROCESSOR = 0x02, // SW2
+			SW_RAM_L =       0x04, // SW3
+			SW_RAM_H =       0x08, // SW4
+
+			SW_DISPLAY_L =   0x10, // SW5
+			SW_DISPLAY_H =   0x20, // SW6
+			SW_FLOPPY_L =    0x40, // SW7
+			SW_FLOPPY_H =    0x80, // SW8
+		};
+	
+		// Amount of memory on system board
+		void SetRAMConfig(RAMSIZE);
+
+		// Display at power up
+		void SetDisplayConfig(DISPLAY);
+
+		void SetFloppyCount(BYTE);
+		void SetPOSTLoop(bool);
+		void SetMathCoprocessor(bool);
+
+	protected:
 		BYTE PORTA_IN();
 		void PORTA_OUT(BYTE value);
 
@@ -35,9 +66,6 @@ namespace ppi
 		BYTE CONTROL_IN();
 		void CONTROL_OUT(BYTE value);
 
-		void SetControlWord(BYTE ctrl);
-
-	protected:
 		const WORD m_baseAddress;
 
 		enum CTRL {
@@ -72,5 +100,8 @@ namespace ppi
 		BYTE m_portCData;
 
 		BYTE m_controlWord;
+
+		// Motherboard configuration switches
+		BYTE m_switches;
 	};
 }

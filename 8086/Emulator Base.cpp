@@ -71,6 +71,16 @@ int main(void)
 	ppi.Init();
 	ppi.EnableLog(true, Logger::LOG_DEBUG);
 
+	// Configuration switches
+	{
+		ppi.SetPOSTLoop(false);
+		ppi.SetMathCoprocessor(false);
+
+		ppi.SetRAMConfig(ppi::RAMSIZE::RAM_64K);
+		ppi.SetDisplayConfig(ppi::DISPLAY::COLOR_80x25);
+		ppi.SetFloppyCount(1);
+	}
+
 	dma::Device8237 dma(0x00);
 	dma.Init();
 	dma.EnableLog(false);

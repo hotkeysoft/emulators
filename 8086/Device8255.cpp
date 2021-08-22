@@ -2,7 +2,7 @@
 
 namespace ppi
 {
-	Device8255::Device8255(WORD baseAddress) : Logger("8255"), m_baseAddress(baseAddress)
+	Device8255::Device8255(WORD baseAddress) : Logger("8255"), m_baseAddress(baseAddress), m_switches(0)
 	{
 		Reset();
 	}
@@ -100,8 +100,22 @@ namespace ppi
 
 	BYTE Device8255::PORTC_IN()
 	{
-		LogPrintf(LOG_DEBUG, "PORTC IN");
-		return 0;
+		// TODO: PC4-7 == 0 for now
+
+		bool PB6 = (m_portBData & 0x08);
+
+		BYTE ret;
+		if (PB6)
+		{
+			ret = (m_switches & 0xF0) >> 4;
+		}
+		else
+		{
+			ret = (m_switches & 0x0F);
+		}
+
+		LogPrintf(LOG_DEBUG, "PORTC IN, ret=%02X", ret);
+		return ret;
 	}
 	void Device8255::PORTC_OUT(BYTE value)
 	{
@@ -169,4 +183,56 @@ namespace ppi
 		return;
 	}
 
+	void Device8255::SetRAMConfig(RAMSIZE r)
+	{
+		m_switches &= ~(SW_RAM_H | SW_RAM_L);
+		switch (r)
+		{
+		case RAMSIZE::RAM_128K: m_switches |= SW_RAM_L; break;
+		case RAMSIZE::RAM_192K: m_switches |= SW_RAM_H; break;
+		case RAMSIZE::RAM_256K: m_switches |= (SW_RAM_H | SW_RAM_L); break;
+
+		case RAMSIZE::RAM_64K:
+		default:
+			break;
+		}
+	}
+
+	void Device8255::SetDisplayConfig(DISPLAY d)
+	{
+		m_switches &= ~(SW_DISPLAY_H | SW_DISPLAY_L);
+		switch (d)
+		{
+		case DISPLAY::COLOR_40x25: m_switches |= SW_DISPLAY_L; break;
+		case DISPLAY::COLOR_80x25: m_switches |= SW_DISPLAY_H; break;
+		case DISPLAY::MONO_80x25: m_switches |= (SW_DISPLAY_H | SW_DISPLAY_L); break;
+		}
+	}
+
+	void Device8255::SetFloppyCount(BYTE count)
+	{
+		m_switches &= ~(SW_FLOPPY_H | SW_FLOPPY_L);
+		switch (count)
+		{		
+		case 2: m_switches |= SW_FLOPPY_L; break;
+		case 3: m_switches |= SW_FLOPPY_H; break;
+		case 4: m_switches |= (SW_FLOPPY_H | SW_FLOPPY_L); break;
+
+		case 1:
+		default: 
+			break;
+		}
+	}
+
+	void Device8255::SetPOSTLoop(bool set)
+	{
+		m_switches &= ~SW_POST_LOOP;
+		m_switches |= (set ? SW_POST_LOOP : 0);
+	}
+
+	void Device8255::SetMathCoprocessor(bool set)
+	{
+		m_switches &= ~SW_COPROCESSOR;
+		m_switches |= (set ? SW_COPROCESSOR : 0);
+	}
 }
