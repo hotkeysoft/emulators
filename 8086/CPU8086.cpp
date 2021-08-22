@@ -469,9 +469,9 @@ namespace emul
 		// STOS (1)
 		// ----------
 		// STOS DEST-STR8
-		case 0xAA: NotImplemented(opcode); break;
+		case 0xAA: STOS8(); break;
 		// STOS DEST-STR16
-		case 0xAB: NotImplemented(opcode); break;
+		case 0xAB: STOS16(); break;
 
 		// LODS (1)
 		// ----------
@@ -1089,6 +1089,7 @@ namespace emul
 
 	void CPU8086::NotImplemented(BYTE op)
 	{
+		EnableLog(true, LOG_DEBUG);
 		LogPrintf(LOG_ERROR, "Not implemented op=%x", op);
 		m_state = CPUState::STOP;
 	}
@@ -1484,22 +1485,91 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "LODS8");
 
-		m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
+		if (PreREP())
+		{
+			m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
+		}
+		PostREP();
 	}
 	void CPU8086::LODS16()
 	{
 		LogPrintf(LOG_DEBUG, "LODS16");
 
-		EnableLog(true, Logger::LOG_DEBUG);
+		if (PreREP())
+		{
+			m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
+			m_memory.Read(S2A(regDS, regSI++), regA.hl.h);
+		}
+		PostREP();
+	}
 
-		m_memory.Read(S2A(regDS, regSI++), regA.hl.l);
-		m_memory.Read(S2A(regDS, regSI++), regA.hl.h);
+	void CPU8086::STOS8()
+	{
+		LogPrintf(LOG_DEBUG, "STOS8");
+
+		if (PreREP())
+		{
+			m_memory.Write(S2A(regES, regDI++), regA.hl.l);
+		}
+		PostREP();
+	}
+	void CPU8086::STOS16()
+	{
+		LogPrintf(LOG_DEBUG, "STOS16");
+
+		if (PreREP())
+		{
+			m_memory.Write(S2A(regES, regDI++), regA.hl.l);
+			m_memory.Write(S2A(regES, regDI++), regA.hl.h);
+		}
+		PostREP();
 	}
 
 	void CPU8086::REP(bool z)
 	{
-		LogPrintf(LOG_DEBUG, "REP, Z=%d", z);
-		m_state = CPUState::STOP;
+		EnableLog(true, LOG_DEBUG);
+		LogPrintf(LOG_DEBUG, "REP, Z=%d, cx=%04X", z, regC.x);
+		EnableLog(true, LOG_ERROR);
+
+		inRep = true;
+		repZ = z;
+		repIP = regIP;
 	}
 
+	bool CPU8086::PreREP()
+	{
+		if (!inRep)
+			return true;
+
+		if (regC.x == 0)
+		{
+			EnableLog(true, LOG_DEBUG);
+			LogPrintf(LOG_DEBUG, "PreRep, end loop");
+			Dump();
+			EnableLog(true, LOG_ERROR);
+
+			inRep = false;
+			return false;
+		}
+		return true;
+	}
+	void CPU8086::PostREP()
+	{
+		if (!inRep)
+		{
+			return;
+		}
+
+		--regC.x;
+		LogPrintf(LOG_DEBUG, "PostRep, cx=%04X", regC.x);
+		if (GetFlag(FLAG_Z) == repZ)
+		{ 
+			regIP = repIP;
+		}
+		else
+		{
+			LogPrintf(LOG_DEBUG, "PostRep, end loop");
+			inRep = false;
+		}
+	}
 }

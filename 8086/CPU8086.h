@@ -120,6 +120,7 @@ namespace emul
 		// REP flags
 		bool inRep;
 		WORD repIP;
+		bool repZ;
 
 		// Helper functions
 
@@ -206,7 +207,12 @@ namespace emul
 		void LODS8();
 		void LODS16();
 
+		void STOS8();
+		void STOS16();
+
 		void REP(bool z);
+		bool PreREP();
+		void PostREP();
 
 		void NotImplemented(BYTE);
 	};
