@@ -80,6 +80,7 @@ namespace emul
 		}
 		else
 		{
+			s_uninitialized = 0xF00F; // Reset 'initialized' value in case someone wrote in it
 			return (BYTE*)&Memory::s_uninitialized;
 		}
 	}
@@ -113,6 +114,7 @@ namespace emul
 		}
 		else
 		{
+			s_uninitialized = 0xF00F; // Reset 'initialized' value in case someone wrote in it
 			return &Memory::s_uninitialized;
 		}
 	}
@@ -146,7 +148,7 @@ namespace emul
 			}
 			else
 			{
-				LogPrintf(LOG_ERROR, "Writing unallocated memory space (%X)", address);
+				LogPrintf(LOG_WARNING, "Writing unallocated memory space (%X)", address);
 			}
 		}
 
@@ -160,10 +162,6 @@ namespace emul
 			{
 				block->write(address, value);
 			}
-		}
-		else
-		{
-			throw std::exception();
 		}
 	}
 
