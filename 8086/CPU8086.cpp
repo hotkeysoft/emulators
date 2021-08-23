@@ -3,25 +3,25 @@
 
 namespace emul
 {
-	WORD rawAdd8(SourceDest8 sd) { WORD r = *(sd.dest) + *(sd.source); *(sd.dest) = (BYTE)r; return r; }
-	WORD rawSub8(SourceDest8 sd) { WORD r = *(sd.dest) - *(sd.source); *(sd.dest) = (BYTE)r; return r; }
-	WORD rawCmp8(SourceDest8 sd) { return *(sd.dest) - *(sd.source); }
-	WORD rawAdc8(SourceDest8 sd) { throw(std::exception("rawAdc8 not implemented")); }
-	WORD rawSbb8(SourceDest8 sd) { throw(std::exception("rawSbb8 not implemented")); }
+	WORD rawAdd8(SourceDest8 sd, bool) { WORD r = *(sd.dest) + *(sd.source); *(sd.dest) = (BYTE)r; return r; }
+	WORD rawSub8(SourceDest8 sd, bool) { WORD r = *(sd.dest) - *(sd.source); *(sd.dest) = (BYTE)r; return r; }
+	WORD rawCmp8(SourceDest8 sd, bool) { return *(sd.dest) - *(sd.source); }
+	WORD rawAdc8(SourceDest8 sd, bool c) { WORD r = *(sd.dest) + *(sd.source) + (BYTE)c; *(sd.dest) = (BYTE)r; return r; }
+	WORD rawSbb8(SourceDest8 sd, bool b) { throw(std::exception("rawSbb8 not implemented")); }
 
-	WORD rawAnd8(SourceDest8 sd) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
-	WORD rawOr8(SourceDest8 sd) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
-	WORD rawXor8(SourceDest8 sd) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
+	WORD rawAnd8(SourceDest8 sd, bool) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
+	WORD rawOr8(SourceDest8 sd, bool) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
+	WORD rawXor8(SourceDest8 sd, bool) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
 
-	DWORD rawAdd16(SourceDest16 sd) { DWORD r = *(sd.dest) + *(sd.source); (*sd.dest) = (WORD)r; return r; }
-	DWORD rawSub16(SourceDest16 sd) { DWORD r = *(sd.dest) - *(sd.source); (*sd.dest) = (WORD)r; return r; }
-	DWORD rawCmp16(SourceDest16 sd) { return *(sd.dest) - *(sd.source); }
-	DWORD rawAdc16(SourceDest16 sd) { throw(std::exception("rawAdc16 not implemented")); }
-	DWORD rawSbb16(SourceDest16 sd) { throw(std::exception("rawSbb16 not implemented")); }
+	DWORD rawAdd16(SourceDest16 sd, bool) { DWORD r = *(sd.dest) + *(sd.source); (*sd.dest) = (WORD)r; return r; }
+	DWORD rawSub16(SourceDest16 sd, bool) { DWORD r = *(sd.dest) - *(sd.source); (*sd.dest) = (WORD)r; return r; }
+	DWORD rawCmp16(SourceDest16 sd, bool) { return *(sd.dest) - *(sd.source); }
+	DWORD rawAdc16(SourceDest16 sd, bool c) { DWORD r = *(sd.dest) + *(sd.source) + WORD(c); (*sd.dest) = (WORD)r; return r; }
+	DWORD rawSbb16(SourceDest16 sd, bool b) { throw(std::exception("rawSbb16 not implemented")); }
 
-	DWORD rawAnd16(SourceDest16 sd) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
-	DWORD rawOr16(SourceDest16 sd) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
-	DWORD rawXor16(SourceDest16 sd) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
+	DWORD rawAnd16(SourceDest16 sd, bool) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
+	DWORD rawOr16(SourceDest16 sd, bool) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
+	DWORD rawXor16(SourceDest16 sd, bool) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
 
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
@@ -596,7 +596,7 @@ namespace emul
 		// LOOP (2)
 		case 0xE2: LOOP(FetchByte()); break;
 		// JCXZ (2)
-		case 0xE3: NotImplemented(opcode); break;
+		case 0xE3: JMPif(regC.x == 0); break;
 
 		// IN fixed (2)
 		// --------
@@ -1412,7 +1412,7 @@ namespace emul
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
 	{
 		BYTE before = *(sd.dest);
-		WORD after = func(sd);
+		WORD after = func(sd, GetFlag(FLAG_C));
 		BYTE afterB = (BYTE)after;
 		SetFlag(FLAG_C, after > 255);
 
@@ -1425,7 +1425,7 @@ namespace emul
 	void CPU8086::Arithmetic16(SourceDest16 sd, RawOpFunc16 func)
 	{
 		WORD before = *(sd.dest);
-		DWORD after = func(sd);
+		DWORD after = func(sd, GetFlag(FLAG_C));
 		WORD afterW = (BYTE)after;
 		SetFlag(FLAG_C, after > 65535);
 
@@ -1546,7 +1546,7 @@ namespace emul
 			SourceDest8 sd;
 			sd.dest = dest;
 			sd.source = &imm;
-			BYTE after = (BYTE)rawAnd8(sd);
+			BYTE after = (BYTE)rawAnd8(sd, false);
 			SetFlag(FLAG_O, false);
 			SetFlag(FLAG_C, false);
 			AdjustSign(after);
@@ -1584,7 +1584,7 @@ namespace emul
 			SourceDest16 sd;
 			sd.dest = dest;
 			sd.source = &imm;
-			WORD after = rawAnd16(sd);
+			WORD after = rawAnd16(sd, GetFlag(FLAG_C));
 			SetFlag(FLAG_O, false);
 			AdjustSign(after);
 			AdjustZero(after);
