@@ -6,3 +6,7 @@ Keyboard
 - Diagnostics
 - Interrupt
 
+POST failures:
+- LINE TEST
+- CRT INTERFACE LINES TEST
+- 8259 INTERRUPT CONTROLLER TEST

@@ -147,8 +147,19 @@ int main(void)
 		memory.Read(a, val);
 		fprintf(stderr, "%02X ", val);
 	}
+	fprintf(stderr, "\n\n");
+
+	fprintf(stderr, "SCREEN MEMORY DUMP\n");
+
+	for (WORD offset= 0; offset<800; offset+=2)
+	{
+		BYTE val;
+		memory.Read(emul::S2A(0xB800, offset), val);
+		fprintf(stderr, "%c ", val);
+	}
 	fprintf(stderr, "\n");
-	
+
+
 	if (logFile)
 	{
 		fclose(logFile);

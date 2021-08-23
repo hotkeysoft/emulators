@@ -1107,8 +1107,8 @@ namespace emul
 
 	void CPU8086::HLT()
 	{
-		LogPrintf(LOG_ERROR, "HALT");
 		EnableLog(true, LOG_DEBUG);
+		LogPrintf(LOG_ERROR, "HALT");
 		Dump();
 		m_state = CPUState::STOP;
 	}
@@ -1368,6 +1368,7 @@ namespace emul
 		for (BYTE i = 0; i < count; ++i)
 		{
 			WORD before = dest;
+			WORD sign;
 			switch (op2 & 0x38)
 			{
 			case 0x00: // ROL
@@ -1400,10 +1401,12 @@ namespace emul
 				break;
 			case 0x38: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
-				throw(std::exception("SHIFTROT16 SAR not implemented"));
+				sign = (dest & 32768);
+				dest >>= 1;
+				dest |= sign;
 				break;
 			default:
-				break;
+				throw(std::exception("not possible"));
 			}
 
 			// Flags: ODITSZAPC
@@ -1587,7 +1590,7 @@ namespace emul
 		{
 		case 0x00:
 		{
-			LogPrintf(LOG_DEBUG, "test");
+			LogPrintf(LOG_DEBUG, "TEST8");
 			BYTE imm = FetchByte();
 			SourceDest8 sd;
 			sd.dest = dest;
@@ -1600,14 +1603,22 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
+		case 0x20:
+		{
+			LogPrintf(LOG_DEBUG, "MUL8");
+			WORD result = regA.hl.l * (*dest);
+			regA.x = result;
+			SetFlag(FLAG_O, regA.hl.h != 0);
+			SetFlag(FLAG_C, regA.hl.h != 0);
+			break;
+		}
 		case 0x08: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "---"); // break;
 		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); // break;
 		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); // break;
-		case 0x20: /*func = rawMul16;*/ LogPrintf(LOG_ERROR, "mul"); // break;
 		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); // break;
 		case 0x30: /*func = rawDiv16;*/ LogPrintf(LOG_ERROR, "div"); // break;
 		case 0x38: /*func = rawIDiv16;*/ LogPrintf(LOG_ERROR, "idiv"); // break;
-			throw(std::exception("not implemented"));
+			throw(std::exception("ArithmeticMulti8 not implemented"));
 		default:
 			throw(std::exception("not possible"));
 		}
@@ -1617,21 +1628,20 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticMulti16");
 
-		//RawOpFunc16 func;
-
 		WORD* dest = GetModRM16(op2);
 
 		switch (op2 & 0x38)
 		{
 		case 0x00: 
 		{
-			LogPrintf(LOG_DEBUG, "test");
+			LogPrintf(LOG_DEBUG, "TEST16");
 			WORD imm = FetchWord();
 			SourceDest16 sd;
 			sd.dest = dest;
 			sd.source = &imm;
-			WORD after = rawAnd16(sd, GetFlag(FLAG_C));
+			WORD after = rawAnd16(sd, false);
 			SetFlag(FLAG_O, false);
+			SetFlag(FLAG_C, false);
 			AdjustSign(after);
 			AdjustZero(after);
 			AdjustParity(after);
@@ -1644,6 +1654,7 @@ namespace emul
 		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); HLT(); break;
 		case 0x30: /*func = rawDiv16;*/ LogPrintf(LOG_ERROR, "div"); HLT(); break;
 		case 0x38: /*func = rawIDiv16;*/ LogPrintf(LOG_ERROR, "idiv"); HLT(); break;
+			throw(std::exception("ArithmeticMulti16 not implemented"));
 		default:
 			throw(std::exception("not possible"));
 		}
