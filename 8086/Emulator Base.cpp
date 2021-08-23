@@ -8,6 +8,7 @@
 #include "Device8254.h"
 #include "Device8255.h"
 #include "Device8237.h"
+#include "Device8259.h"
 #include "DeviceCGA.h"
 #include <conio.h>
 #include <vector>
@@ -82,6 +83,10 @@ int main(void)
 	pit.Init();
 	pit.EnableLog(true, Logger::LOG_DEBUG);
 
+	pic::Device8259 pic(0x20);
+	pic.Init();
+	pic.EnableLog(true, Logger::LOG_DEBUG);
+
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();
 	ppi.EnableLog(true, Logger::LOG_INFO);
@@ -108,6 +113,7 @@ int main(void)
 
 //	cpu.AddWatch("EXECUTE", onCall, onRet);
 
+	cpu.AddDevice(pic);
 	cpu.AddDevice(pit);
 	cpu.AddDevice(ppi);
 	cpu.AddDevice(dma);
@@ -155,10 +161,9 @@ int main(void)
 	{
 		BYTE val;
 		memory.Read(emul::S2A(0xB800, offset), val);
-		fprintf(stderr, "%c ", val);
+		fprintf(stderr, "%c", val);
 	}
 	fprintf(stderr, "\n");
-
 
 	if (logFile)
 	{

@@ -60,6 +60,9 @@
     <ClCompile Include="DeviceCGA.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Device8259.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
@@ -102,6 +105,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DeviceCGA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Device8259.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
