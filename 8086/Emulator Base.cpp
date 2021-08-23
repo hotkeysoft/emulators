@@ -40,6 +40,9 @@ void onRet(emul::CPU* cpu, emul::WORD addr)
 	fprintf(stderr, "\tELAPSED: %ul\n", cpu->getTime()-elapsed);
 }
 
+const emul::ADDRESS testROMAddress = 0xB000;
+const std::vector<BYTE> testROM = { 0xBA, 0x00, 0xC8, 0x81, 0xEA, 0x00, 0xC8, 0xC4 };
+
 int main(void)
 {
 //	logFile = fopen("./dump.log", "w");
@@ -68,6 +71,9 @@ int main(void)
 	// 16K screen buffer
 	emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM);
 	memory.Allocate(&screenB800);
+
+	emul::MemoryBlock test(emul::S2A(testROMAddress), testROM, emul::MemoryType::ROM);
+	//memory.Allocate(&test);
 
 	//emul::MemoryBlock extraRam(0x10000, 0x40000, emul::MemoryType::RAM);
 	//memory.Allocate(&extraRam);
@@ -109,6 +115,8 @@ int main(void)
 	cpu.Reset();
 	cpu.EnableLog(false);
 //	cpu.EnableLog(true, Logger::LOG_DEBUG);
+
+	//cpu.Reset(emul::S2A(testROMAddress));
 
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();
