@@ -334,7 +334,7 @@ namespace emul
 		// JNL/JGE (2)
 		case 0x7D: JMPif(GetFlagNotLess()); break;
 		// JLE/JNG (2)
-		case 0x7E: JMPif(GetFlagGreater()); break;
+		case 0x7E: JMPif(!GetFlagGreater()); break;
 		// JNLE/JG (2)
 		case 0x7F: JMPif(GetFlagGreater()); break;
 
@@ -707,6 +707,14 @@ namespace emul
 
 		inSegOverride = false;
 		segOverride = 0x000;
+	}
+
+	void CPU8086::Reset(ADDRESS startFrom)
+	{
+		CPU8086::Reset();
+		regCS = startFrom / 16;
+		regIP = startFrom % 16;
+		LogPrintf(LOG_DEBUG, "RESET AT CS=%04X, IP=%04X", regCS, regIP);
 	}
 
 	void CPU8086::Dump()
@@ -1411,12 +1419,31 @@ namespace emul
 
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
 	{
+		const BYTE& source = *(sd.source);
 		BYTE before = *(sd.dest);
 		WORD after = func(sd, GetFlag(FLAG_C));
 		BYTE afterB = (BYTE)after;
 		SetFlag(FLAG_C, after > 255);
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(afterB));
+		// TODO: improve this
+		if (func == rawAdd8 || func == rawAdc8)
+		{
+			// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative), 
+			// then overflow occurs if and only if the result has the opposite sign. 
+			// Overflow never occurs when adding operands with different signs. 
+			SetFlag(FLAG_O, (getMSB(source) == getMSB(before)) && (getMSB(afterB) != getMSB(source)));
+		}
+		else if (func == rawSub8 || func == rawSbb8)
+		{
+			// If 2 Two's Complement numbers are subtracted, and their signs are different, 
+			// then overflow occurs if and only if the result has the same sign as what is being subtracted.
+			SetFlag(FLAG_O, (getMSB(source) != getMSB(before)) && (getMSB(afterB) == getMSB(source)));
+		}
+		else
+		{
+			SetFlag(FLAG_O, false);
+		}
+
 		AdjustSign(afterB);
 		AdjustZero(afterB);
 		SetFlag(FLAG_A, ((before ^ afterB) & 0x18) == 0x18);
@@ -1424,12 +1451,31 @@ namespace emul
 	}
 	void CPU8086::Arithmetic16(SourceDest16 sd, RawOpFunc16 func)
 	{
+		const WORD& source = *(sd.source);
 		WORD before = *(sd.dest);
 		DWORD after = func(sd, GetFlag(FLAG_C));
-		WORD afterW = (BYTE)after;
+		WORD afterW = (WORD)after;
 		SetFlag(FLAG_C, after > 65535);
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(afterW));
+		// TODO: improve this
+		if (func == rawAdd16 || func == rawAdc16)
+		{
+			// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative), 
+			// then overflow occurs if and only if the result has the opposite sign. 
+			// Overflow never occurs when adding operands with different signs. 
+			SetFlag(FLAG_O, (getMSB(source) == getMSB(before)) && (getMSB(before) != getMSB(afterW)));
+		}
+		else if (func == rawSub16 || func == rawSbb16)
+		{
+			// If 2 Two's Complement numbers are subtracted, and their signs are different, 
+			// then overflow occurs if and only if the result has the same sign as what is being subtracted.
+			SetFlag(FLAG_O, (getMSB(source) != getMSB(before)) && (getMSB(afterW) == getMSB(source)));
+		}
+		else
+		{
+			SetFlag(FLAG_O, false);
+		}
+
 		AdjustSign(afterW);
 		AdjustZero(afterW);
 		SetFlag(FLAG_A, ((before ^ afterW) & 0x18) == 0x18);

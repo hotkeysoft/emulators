@@ -61,6 +61,7 @@ namespace emul
 		void Dump();
 
 		virtual void Reset();
+		void Reset(ADDRESS);
 
 	protected:
 		PortAggregator m_ports;
