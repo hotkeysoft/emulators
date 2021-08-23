@@ -949,7 +949,7 @@ namespace emul
 		switch (modrm & 0xC0)
 		{
 		case 0xC0: // REG
-			LogPrintf(LOG_DEBUG, "GetModRM16: RM=>REG %s", GetReg8Str(modrm));
+			LogPrintf(LOG_DEBUG, "GetModRM16: RM=>REG %s", GetReg16Str(modrm));
 			return GetReg16(modrm);
 		case 0x00: // NO DISP (or DIRECT)
 			if ((modrm & 7) == 6) // Direct 
@@ -1672,8 +1672,8 @@ namespace emul
 		if (PreREP())
 		{
 			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), regA.hl.l);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI+1), regA.hl.h);
 			IndexIncDec(regSI);
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), regA.hl.h);
 			IndexIncDec(regSI);
 		}
 		PostREP();
@@ -1697,8 +1697,8 @@ namespace emul
 		if (PreREP())
 		{
 			m_memory.Write(S2A(regES, regDI), regA.hl.l);
+			m_memory.Write(S2A(regES, regDI+1), regA.hl.h);
 			IndexIncDec(regDI);
-			m_memory.Write(S2A(regES, regDI), regA.hl.h);
 			IndexIncDec(regDI);
 		}
 		PostREP();
@@ -1735,12 +1735,14 @@ namespace emul
 			BYTE val;
 			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), val);
 			m_memory.Write(S2A(regES, regDI), val);
-			IndexIncDec(regSI);
-			IndexIncDec(regDI);
 
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), val);
-			m_memory.Write(S2A(regES, regDI), val);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI+1), val);
+			m_memory.Write(S2A(regES, regDI+1), val);
+
 			IndexIncDec(regSI);
+			IndexIncDec(regSI);
+
+			IndexIncDec(regDI);
 			IndexIncDec(regDI);
 		}
 		PostREP();
