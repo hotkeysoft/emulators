@@ -78,7 +78,7 @@ int main(void)
 
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true, Logger::LOG_DEBUG);
+	ppi.EnableLog(true, Logger::LOG_INFO);
 
 	// Configuration switches
 	{
@@ -93,6 +93,7 @@ int main(void)
 	dma::Device8237 dma(0x00);
 	dma.Init();
 	dma.EnableLog(false);
+	//dma.EnableLog(true, Logger::LOG_DEBUG);
 
 	cga::DeviceCGA cga(0x3D0);
 	cga.Init();
@@ -120,6 +121,7 @@ int main(void)
 		while (cpu.Step())
 		{
 			pit.Tick();
+			dma.Tick();
 		};
 	}
 	catch (std::exception e)

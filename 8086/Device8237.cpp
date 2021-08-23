@@ -19,7 +19,6 @@ namespace dma
 
 		Connect(m_parent->GetBaseAdress() + (m_id * 2) + 1, static_cast<PortConnector::INFunction>(&DMAChannel::COUNT_IN));
 		Connect(m_parent->GetBaseAdress() + (m_id * 2) + 1, static_cast<PortConnector::OUTFunction>(&DMAChannel::COUNT_OUT));
-
 	}
 	void DMAChannel::Reset()
 	{
@@ -33,7 +32,7 @@ namespace dma
 
 	BYTE DMAChannel::ADDR_IN()
 	{
-		LogPrintf(LOG_DEBUG, "Read ADDR");
+		LogPrintf(LOG_DEBUG, "Read ADDR, value = %02X", m_address);
 		return m_address;
 	}
 	void DMAChannel::ADDR_OUT(BYTE value)
@@ -67,6 +66,8 @@ namespace dma
 
 	void Device8237::EnableLog(bool enable, SEVERITY minSev)
 	{
+		Logger::EnableLog(enable, minSev);
+
 		m_channel0.EnableLog(enable, minSev);
 		m_channel1.EnableLog(enable, minSev);
 		m_channel2.EnableLog(enable, minSev);
@@ -84,6 +85,13 @@ namespace dma
 		m_channel1.Init();
 		m_channel2.Init();
 		m_channel3.Init();
+
+		// Dummy control/etc channels
+		for (int i = 0; i < 8; ++i)
+		{
+			Connect(GetBaseAdress() + 8 + i, static_cast<PortConnector::INFunction>(&Device8237::TEMP_IN));
+			Connect(GetBaseAdress() + 8 + i, static_cast<PortConnector::OUTFunction>(&Device8237::TEMP_OUT));
+		}
 	}
 
 	void Device8237::Tick()
@@ -107,14 +115,13 @@ namespace dma
 		return PortConnector::ConnectTo(dest);
 	}
 
-	//BYTE Device8237::CONTROL_IN()
-	//{
-	//	LogPrintf(LOG_DEBUG, "CONTROL IN");
-	//	return 0;
-	//}
-	//void Device8237::CONTROL_OUT(BYTE value)
-	//{
-	//	LogPrintf(LOG_DEBUG, "CONTROL OUT, value=%02X", value);
-	//}
-
+	BYTE Device8237::TEMP_IN()
+	{
+		LogPrintf(LOG_DEBUG, "TEMP IN");
+		return 0;
+	}
+	void Device8237::TEMP_OUT(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "TEMP OUT, value=%02X", value);
+	}
 }

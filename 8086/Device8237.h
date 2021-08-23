@@ -67,6 +67,9 @@ namespace dma
 	protected:
 		const WORD m_baseAddress;
 
+		BYTE TEMP_IN();
+		void TEMP_OUT(BYTE value);
+
 		DMAChannel m_channel0;
 		DMAChannel m_channel1;
 		DMAChannel m_channel2;
