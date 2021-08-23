@@ -429,9 +429,9 @@ namespace emul
 		case 0x9B: NotImplemented(opcode); break;
 
 		// PUSHF (1)
-		case 0x9C: NotImplemented(opcode); break;
+		case 0x9C: PUSH(flags); break;
 		// POPF (1)
-		case 0x9D: NotImplemented(opcode); break;
+		case 0x9D: POP(flags); break;
 		// SAHF (1)
 		case 0x9E: SAHF(); break;
 		// LAHF (1)
@@ -558,7 +558,7 @@ namespace emul
 		// INTO (1)
 		case 0xCE: NotImplemented(opcode); break;
 		// IRET (1)
-		case 0xCF: NotImplemented(opcode); break;
+		case 0xCF: IRET(); break;
 
 		// ROL/ROR/RCL/RCR/SAL|SHL/SHR/---/SAR
 		// ----------
@@ -1134,6 +1134,7 @@ namespace emul
 
 	void CPU8086::JMPIntra(WORD address)
 	{
+		LogPrintf(LOG_DEBUG, "JMPNear newIP=%04X", address);
 		regIP = address;
 	}
 
@@ -1146,6 +1147,8 @@ namespace emul
 
 	void CPU8086::INCDEC8(BYTE op2)
 	{
+		LogPrintf(LOG_DEBUG, "INCDEC8");
+
 		BYTE* dest = GetModRM8(op2);
 
 		switch (op2 & 0x38)
@@ -1159,8 +1162,6 @@ namespace emul
 		default:
 			throw std::exception("INCDEC8: invalid op2");
 		}
-
-		Dump();
 	}
 
 	void CPU8086::INC8(BYTE& b)
@@ -1282,9 +1283,7 @@ namespace emul
 
 	void CPU8086::SHIFTROT8(BYTE op2, BYTE count)
 	{
-		EnableLog(true, LOG_DEBUG);
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
-		Dump();
 		if (count == 0)
 		{
 			throw std::exception("SHIFTROT8 count==0 not implemented");
@@ -1344,15 +1343,11 @@ namespace emul
 			AdjustParity(dest);
 		}
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
-		Dump();
-		EnableLog(true, LOG_ERROR);
 	}
 
 	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
 	{
-		EnableLog(true, LOG_DEBUG);
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
-		Dump();
 		if (count == 0)
 		{
 			throw std::exception("SHIFTROT16 count==0 not implemented");
@@ -1412,8 +1407,6 @@ namespace emul
 			AdjustParity(dest);
 		}
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
-		Dump();
-		EnableLog(true, LOG_ERROR);
 	}
 
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
@@ -1458,7 +1451,6 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "IN port %04X", port);
 		m_ports.In(port, regA.hl.l);
-		Dump();
 	}
 
 	void CPU8086::OUT8(WORD port)
@@ -1469,6 +1461,7 @@ namespace emul
 	void CPU8086::LOOP(BYTE offset, bool cond)
 	{
 		--regC.x;
+		LogPrintf(LOG_DEBUG, "LOOP, CX=%04X", regC.x);
 		if (regC.x && cond)
 		{
 			regIP += widen(offset);
@@ -1479,12 +1472,8 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "RETNear [%s][%d]", pop?"Pop":"NoPop", value);
 
-		Dump();
-
 		POP(regIP);
 		regSP += value;
-
-		Dump();
 	}
 
 	void CPU8086::ArithmeticImm8(BYTE op2)
@@ -1658,7 +1647,7 @@ namespace emul
 
 	void CPU8086::LODS8()
 	{
-		LogPrintf(LOG_DEBUG, "LODS8");
+		LogPrintf(LOG_DEBUG, "LODS8, SI=%04X", regSI);
 		if (inSegOverride)
 		{
 			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
@@ -1674,7 +1663,7 @@ namespace emul
 
 	void CPU8086::LODS16()
 	{
-		LogPrintf(LOG_DEBUG, "LODS16");
+		LogPrintf(LOG_DEBUG, "LODS16, SI=%04X", regSI);
 		if (inSegOverride)
 		{
 			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
@@ -1692,7 +1681,7 @@ namespace emul
 
 	void CPU8086::STOS8()
 	{
-		LogPrintf(LOG_DEBUG, "STOS8");
+		LogPrintf(LOG_DEBUG, "STOS8, DI=%04X", regDI);
 
 		if (PreREP())
 		{
@@ -1703,7 +1692,7 @@ namespace emul
 	}
 	void CPU8086::STOS16()
 	{
-		LogPrintf(LOG_DEBUG, "STOS16");
+		LogPrintf(LOG_DEBUG, "STOS16, DI=%04X", regDI);
 
 		if (PreREP())
 		{
@@ -1717,7 +1706,7 @@ namespace emul
 
 	void CPU8086::MOVS8()
 	{
-		LogPrintf(LOG_DEBUG, "MOVS8");
+		LogPrintf(LOG_DEBUG, "MOVS8, SI=%04X, DI=%04X", regSI, regDI);
 		if (inSegOverride)
 		{
 			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
@@ -1735,7 +1724,7 @@ namespace emul
 	}
 	void CPU8086::MOVS16()
 	{
-		LogPrintf(LOG_DEBUG, "MOVS16");
+		LogPrintf(LOG_DEBUG, "MOVS16, SI=%04X, DI=%04X", regSI, regDI);
 		if (inSegOverride)
 		{
 			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
@@ -1802,7 +1791,6 @@ namespace emul
 	void CPU8086::SEGOVERRIDE(WORD val)
 	{
 		LogPrintf(LOG_DEBUG, "Segment Override, val=%04X", val);
-		Dump();
 
 		inSegOverride = true;
 		segOverride = val;
@@ -1822,7 +1810,14 @@ namespace emul
 		ADDRESS interruptAddress = interrupt * 4;
 		regCS = *m_memory.GetPtr16(interruptAddress + 2);
 		regIP = *m_memory.GetPtr16(interruptAddress);
-		EnableLog(true, LOG_DEBUG);
+	}
+
+	void CPU8086::IRET()
+	{
+		LogPrintf(LOG_DEBUG, "IRET");
+		POP(regIP);
+		POP(regCS);
+		POP(flags);
 	}
 
 	void CPU8086::MultiFunc(BYTE op2)

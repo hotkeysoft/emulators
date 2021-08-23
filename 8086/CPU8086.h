@@ -245,6 +245,8 @@ namespace emul
 
 		void INT(BYTE interrupt);
 
+		void IRET();
+
 		void MultiFunc(BYTE op2);
 
 		void LoadPTR(WORD& destSegment, SourceDest16 modRegRm);

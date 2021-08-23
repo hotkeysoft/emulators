@@ -8,6 +8,7 @@
 #include "Device8254.h"
 #include "Device8255.h"
 #include "Device8237.h"
+#include "DeviceCGA.h"
 #include <conio.h>
 #include <vector>
 #include <string>
@@ -20,9 +21,11 @@
 
 #include <Windows.h>
 
+FILE* logFile = nullptr;
+
 void LogCallback(const char *str)
 {
-	fprintf(stderr, str);
+	fprintf(logFile ? logFile : stderr, str);
 }
 
 unsigned long elapsed;
@@ -39,6 +42,8 @@ void onRet(emul::CPU* cpu, emul::WORD addr)
 
 int main(void)
 {
+//	logFile = fopen("./dump.log", "w");
+
 	Logger::RegisterLogCallback(LogCallback);
 
 	emul::Memory memory(emul::CPU8086_ADDRESS_BITS);
@@ -89,6 +94,9 @@ int main(void)
 	dma.Init();
 	dma.EnableLog(false);
 
+	cga::DeviceCGA cga(0x3D0);
+	cga.Init();
+
 	emul::CPU8086 cpu(memory, mmap);
 
 //	cpu.AddWatch("EXECUTE", onCall, onRet);
@@ -96,8 +104,10 @@ int main(void)
 	cpu.AddDevice(pit);
 	cpu.AddDevice(ppi);
 	cpu.AddDevice(dma);
+	cpu.AddDevice(cga);
 	cpu.Reset();
-	cpu.EnableLog(false);  // Enabled internally
+	cpu.EnableLog(false);
+//	cpu.EnableLog(true, Logger::LOG_DEBUG);
 
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();
@@ -129,6 +139,10 @@ int main(void)
 	}
 	fprintf(stderr, "\n");
 	
+	if (logFile)
+	{
+		fclose(logFile);
+	}
 
 	fprintf(stderr, "Time elapsed: %I64u\n", stopTime-startTime);
 	cpu.getTime();
