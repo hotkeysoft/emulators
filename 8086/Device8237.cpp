@@ -25,6 +25,12 @@ namespace dma
 	{
 	}
 
+	void DMAChannel::Tick()
+	{
+		// Fake memory refresh
+		++m_address;
+	}
+
 	BYTE DMAChannel::ADDR_IN()
 	{
 		LogPrintf(LOG_DEBUG, "Read ADDR");
@@ -78,6 +84,17 @@ namespace dma
 		m_channel1.Init();
 		m_channel2.Init();
 		m_channel3.Init();
+	}
+
+	void Device8237::Tick()
+	{
+		static size_t div = 0;
+
+		if (div++ == 15)
+		{
+			div = 0;
+			m_channel0.Tick();
+		}
 	}
 
 	bool Device8237::ConnectTo(emul::PortAggregator& dest)

@@ -26,6 +26,8 @@ namespace dma
 		void Init();
 		void Reset();
 
+		void Tick();
+
 		BYTE ADDR_IN();
 		void ADDR_OUT(BYTE value);
 
@@ -57,6 +59,8 @@ namespace dma
 
 		void Init();
 		void Reset();
+
+		void Tick();
 
 		virtual bool ConnectTo(emul::PortAggregator& dest);
 

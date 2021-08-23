@@ -60,8 +60,8 @@ int main(void)
 	base64K.Clear(0xA5);
 	memory.Allocate(&base64K);
 
-	// 4K screen buffer
-	emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x1000, emul::MemoryType::RAM);
+	// 16K screen buffer
+	emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM);
 	memory.Allocate(&screenB800);
 
 	//emul::MemoryBlock extraRam(0x10000, 0x40000, emul::MemoryType::RAM);
@@ -69,7 +69,7 @@ int main(void)
 
 	pit::Device8254 pit(0x40);
 	pit.Init();
-	pit.EnableLog(true, Logger::LOG_INFO);
+	pit.EnableLog(true, Logger::LOG_DEBUG);
 
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();

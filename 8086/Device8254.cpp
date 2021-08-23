@@ -55,12 +55,12 @@ namespace pit
 		switch (m_rwMode)
 		{
 		case RWMode::RW_LSB:
+		case RWMode::RW_MSB:
+		case RWMode::RW_MSBLSB:
 			LogPrintf(LOG_DEBUG, "SetLSB: %02X", value);
 			SetLSB(value);
 			break;
 
-		case RWMode::RW_MSB:
-		case RWMode::RW_MSBLSB:
 		default:
 			throw std::exception("Set:RWMode: Not implemented");
 		}
@@ -110,7 +110,13 @@ namespace pit
 			break;
 
 		case RWMode::RW_MSB:
+			LogPrintf(LOG_DEBUG, "SetRWMode: LSB");
+			break;
+
 		case RWMode::RW_MSBLSB:
+			LogPrintf(LOG_DEBUG, "SetRWMode: MSBLSB");
+			break;
+
 		default:
 			throw std::exception("SetRWMode: Not implemented");
 		}
@@ -122,14 +128,21 @@ namespace pit
 
 		switch (mode)
 		{
+		case CounterMode::Mode1:
+			LogPrintf(LOG_DEBUG, "SetMode: 1");
+			break;
 		case CounterMode::Mode2:
 			LogPrintf(LOG_DEBUG, "SetMode: 2");
 			break;
-
-		case CounterMode::Mode1:
 		case CounterMode::Mode3:
+			LogPrintf(LOG_DEBUG, "SetMode: 3");
+			break;
 		case CounterMode::Mode4:
+			LogPrintf(LOG_DEBUG, "SetMode: 4");
+			break;
 		case CounterMode::Mode5:
+			LogPrintf(LOG_DEBUG, "SetMode: 5");
+			break;
 		default:
 			throw std::exception("SetMode: Not implemented");
 		}
