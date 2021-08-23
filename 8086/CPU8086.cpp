@@ -363,7 +363,7 @@ namespace emul
 		// XCHG rm<=>r (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x86: NotImplemented(opcode); break;
+		case 0x86: XCHG8(GetModRegRM8(FetchByte())); break;
 		// REG16/MEM16, REG16
 		case 0x87: NotImplemented(opcode); break;
 
@@ -537,7 +537,7 @@ namespace emul
 		// LES REG16, MEM16 (4)
 		case 0xC4: NotImplemented(opcode); break;
 		// LDS REG16, MEM16 (4)
-		case 0xC5: NotImplemented(opcode); break;
+		case 0xC5: LoadPTR(regDS, GetModRegRM16(FetchByte(), true)); break;
 
 		// MOV i=>rm (5-6)
 		// ----------
@@ -1351,7 +1351,7 @@ namespace emul
 	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
 	{
 		EnableLog(true, LOG_DEBUG);
-		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT16 ", count=%d", PRINTF_BYTE_TO_BIN_INT16(op2), count);
+		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
 		Dump();
 		if (count == 0)
 		{
@@ -1614,6 +1614,24 @@ namespace emul
 		}
 	}
 
+	void CPU8086::XCHG8(SourceDest8 sd)
+	{
+		XCHG8(*(sd.source), *(sd.dest));
+	}
+
+	void CPU8086::XCHG8(BYTE& b1, BYTE& b2)
+	{
+		LogPrintf(LOG_DEBUG, "XCHG8");
+		BYTE temp = b1;
+		b1 = b2;
+		b2 = temp;
+	}
+
+	void CPU8086::XCHG16(SourceDest16 sd)
+	{
+		XCHG16(*(sd.source), *(sd.dest));
+	}
+
 	void CPU8086::XCHG16(WORD& w1, WORD& w2)
 	{
 		LogPrintf(LOG_DEBUG, "XCHG16");
@@ -1832,5 +1850,23 @@ namespace emul
 		default:
 			throw(std::exception("not possible"));
 		}
+	}
+
+	void CPU8086::LoadPTR(WORD& destSegment, SourceDest16 regMem)
+	{
+		LogPrintf(LOG_DEBUG, "LoadPtr");
+
+		// TODO: This should fail if modrm is register
+		// otherwise we will read data in this instead of memory
+
+		// Target register -> offset
+		*(regMem.dest) = *(regMem.source);
+		
+		// Read segment
+		regMem.source++;
+		destSegment = *(regMem.source);
+
+		LogPrintf(LOG_DEBUG, "LoadPtr Loaded [%04X:%04X]", *(regMem.dest));
+
 	}
 }

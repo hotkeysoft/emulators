@@ -144,8 +144,8 @@ namespace emul
 		BYTE* GetModRM8(BYTE modrm);
 		WORD* GetModRM16(BYTE modrm);
 
-		SourceDest8 GetModRegRM8(BYTE modregrm, bool toReg);
-		SourceDest16 GetModRegRM16(BYTE modregrm, bool toReg, bool segReg = false);
+		SourceDest8 GetModRegRM8(BYTE modregrm, bool toReg = true);
+		SourceDest16 GetModRegRM16(BYTE modregrm, bool toReg = true, bool segReg = false);
 
 		SegmentOffset GetEA(BYTE modregrm, bool direct);
 		const char* GetEAStr(BYTE modregrm, bool direct);
@@ -219,6 +219,10 @@ namespace emul
 
 		void RETNear(bool pop = false, WORD value = 0);
 
+		void XCHG8(SourceDest8 sd);
+		void XCHG8(BYTE& b1, BYTE& b2);
+
+		void XCHG16(SourceDest16 sd);
 		void XCHG16(WORD& w1, WORD& w2);
 
 		void PUSH(WORD& w);
@@ -242,6 +246,8 @@ namespace emul
 		void INT(BYTE interrupt);
 
 		void MultiFunc(BYTE op2);
+
+		void LoadPTR(WORD& destSegment, SourceDest16 modRegRm);
 
 		void NotImplemented(BYTE);
 	};
