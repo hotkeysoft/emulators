@@ -71,7 +71,7 @@ namespace emul
 		auto it = m_outputPorts.find(port);
 		if (it == m_outputPorts.end())
 		{
-			LogPrintf(LOG_WARNING, "PortConnector::Out: port 0x%04X not allocated", port);
+			LogPrintf(LOG_WARNING, "PortConnector::Out(0x%04X, 0x%02X): port not allocated", port, value);
 			return false;
 		}
 
