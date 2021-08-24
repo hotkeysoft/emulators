@@ -1545,10 +1545,12 @@ namespace emul
 			throw(std::exception("not possible"));
 		}
 
-		BYTE imm = FetchByte();
 		SourceDest8 sd;
-		sd.source = &imm;
 		sd.dest = GetModRM8(op2);
+
+		BYTE imm = FetchByte();
+		sd.source = &imm;
+
 		Arithmetic8(sd, func);
 	}
 	void CPU8086::ArithmeticImm16(BYTE op2, bool signExtend)
@@ -1571,10 +1573,12 @@ namespace emul
 			throw(std::exception("not possible"));
 		}
 
-		WORD imm = signExtend ? widen(FetchByte()) : FetchWord();
 		SourceDest16 sd;
-		sd.source = &imm;
 		sd.dest = GetModRM16(op2);
+
+		WORD imm = signExtend ? widen(FetchByte()) : FetchWord();
+		sd.source = &imm;
+
 		Arithmetic16(sd, func);
 	}
 
