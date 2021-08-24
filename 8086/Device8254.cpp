@@ -128,6 +128,9 @@ namespace pit
 
 		switch (mode)
 		{
+		case CounterMode::Mode0:
+			LogPrintf(LOG_DEBUG, "SetMode: 0");
+			break;
 		case CounterMode::Mode1:
 			LogPrintf(LOG_DEBUG, "SetMode: 1");
 			break;
