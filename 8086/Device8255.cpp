@@ -41,7 +41,7 @@ namespace ppi
 	BYTE Device8255::PORTA_IN()
 	{
 		LogPrintf(LOG_DEBUG, "PORTA IN");
-		return 0;
+		return 0xFF;
 	}
 	void Device8255::PORTA_OUT(BYTE value)
 	{

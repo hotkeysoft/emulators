@@ -51,9 +51,9 @@ int main(void)
 	Logger::RegisterLogCallback(LogCallback);
 
 	emul::Memory memory(emul::CPU8086_ADDRESS_BITS);
-	memory.EnableLog(true, Logger::LOG_WARNING);
+	memory.EnableLog(true, Logger::LOG_ERROR);
 	emul::MemoryMap mmap;
-	mmap.EnableLog(true, Logger::LOG_WARNING);
+	mmap.EnableLog(true, Logger::LOG_ERROR);
 
 	fprintf(stderr, "\nMax address: 0x%" PRIx64"\n", (uint64_t)emul::GetMaxAddress(emul::CPU8086_ADDRESS_BITS));
 
@@ -89,7 +89,7 @@ int main(void)
 
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true, Logger::LOG_INFO);
+	ppi.EnableLog(true, Logger::LOG_DEBUG);
 
 	// Configuration switches
 	{

@@ -117,11 +117,11 @@ namespace dma
 
 	BYTE Device8237::TEMP_IN()
 	{
-		LogPrintf(LOG_DEBUG, "TEMP IN");
+		LogPrintf(LOG_INFO, "TEMP IN");
 		return 0;
 	}
 	void Device8237::TEMP_OUT(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "TEMP OUT, value=%02X", value);
+		LogPrintf(LOG_INFO, "TEMP OUT, value=%02X", value);
 	}
 }

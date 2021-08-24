@@ -54,11 +54,14 @@ void Logger::LogPrintf(SEVERITY sev, const char *msg, ...)
 
 	switch (sev)
 	{
+	case LOG_DEBUG:
+		pos = strcat(pos, "[DBG]") + 5;
+		break;
 	case LOG_INFO:
-		pos = strcat(pos, "[INFO]") + 6;
+		pos = strcat(pos, "[INF]") + 5;
 		break;
 	case LOG_WARNING:
-		pos = strcat(pos, "[WARN]") + 6;
+		pos = strcat(pos, "[WRN]") + 5;
 		break;
 	case LOG_ERROR:
 		pos = strcat(pos, "[ERR]") + 5;
