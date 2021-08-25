@@ -62,17 +62,41 @@ namespace dma
 
 		void Tick();
 
+		void DMARequest(size_t channel, bool state);
+		bool DMAAcknowledged(size_t channel);
+
 		virtual bool ConnectTo(emul::PortAggregator& dest);
 
 	protected:
 		const WORD m_baseAddress;
 
-		BYTE TEMP_IN();
-		void TEMP_OUT(BYTE value);
+		enum CMD {
+			CMD_DACK_SENSE = 128,
+			CMD_DREQ_SENSE = 64,
+			CMD_WRITE_SEL = 32,
+			CMD_PRIORITY = 16,
+			CMD_TIMING = 8,
+			CMD_DISABLE = 4,
+			CMD_DMA0_HOLD = 2,
+			CMD_MEM2MEM = 1,
+		};
+
+		BYTE ReadStatus();
+		BYTE ReadTemp();
+
+		void WriteCommand(BYTE value);
+		void WriteRequest(BYTE value);
+		void WriteSingleMaskBit(BYTE value);
+		void WriteMode(BYTE value);
+		void ClearFlipFlop(BYTE value);
+		void MasterClear(BYTE value);
+		void WriteAllMaskBits(BYTE value);
 
 		DMAChannel m_channel0;
 		DMAChannel m_channel1;
 		DMAChannel m_channel2;
 		DMAChannel m_channel3;
+
+		BYTE m_commandReg;
 	};
 }

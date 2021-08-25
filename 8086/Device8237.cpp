@@ -4,7 +4,7 @@
 namespace dma
 {
 	DMAChannel::DMAChannel(Device8237* parent, WORD id, const char* label) :
-		Logger(label), 
+		Logger(label),
 		m_parent(parent),
 		m_id(id),
 		m_address(0x1234),
@@ -81,17 +81,36 @@ namespace dma
 
 	void Device8237::Init()
 	{
+		// Registers port 0..7
 		m_channel0.Init();
 		m_channel1.Init();
 		m_channel2.Init();
 		m_channel3.Init();
 
-		// Dummy control/etc channels
-		for (int i = 0; i < 8; ++i)
-		{
-			Connect(GetBaseAdress() + 8 + i, static_cast<PortConnector::INFunction>(&Device8237::TEMP_IN));
-			Connect(GetBaseAdress() + 8 + i, static_cast<PortConnector::OUTFunction>(&Device8237::TEMP_OUT));
-		}
+		// Ports 8..16, control, etc.
+
+		// base+8: Command Register (write), Status Register (read)
+		Connect(GetBaseAdress() + 8, static_cast<PortConnector::INFunction>(&Device8237::ReadStatus));
+		Connect(GetBaseAdress() + 8, static_cast<PortConnector::OUTFunction>(&Device8237::WriteCommand));
+
+		// base+9: Request (write)
+		Connect(GetBaseAdress() + 9, static_cast<PortConnector::OUTFunction>(&Device8237::WriteRequest));
+
+		// base+10: Single Mask Bit (write)
+		Connect(GetBaseAdress() + 10, static_cast<PortConnector::OUTFunction>(&Device8237::WriteSingleMaskBit));
+
+		// base+11: Mode (write)
+		Connect(GetBaseAdress() + 11, static_cast<PortConnector::OUTFunction>(&Device8237::WriteMode));
+
+		// base+12: Clear Byte Flip-flop (write)
+		Connect(GetBaseAdress() + 12, static_cast<PortConnector::OUTFunction>(&Device8237::ClearFlipFlop));
+
+		// base+13: Master Clear (write), Temporary Register (read)
+		Connect(GetBaseAdress() + 13, static_cast<PortConnector::INFunction>(&Device8237::ReadTemp));
+		Connect(GetBaseAdress() + 13, static_cast<PortConnector::OUTFunction>(&Device8237::MasterClear));
+
+		// base+15: All Mask Bits (write)
+		Connect(GetBaseAdress() + 15, static_cast<PortConnector::OUTFunction>(&Device8237::WriteAllMaskBits));
 	}
 
 	void Device8237::Tick()
@@ -115,13 +134,83 @@ namespace dma
 		return PortConnector::ConnectTo(dest);
 	}
 
-	BYTE Device8237::TEMP_IN()
+	BYTE Device8237::ReadStatus()
 	{
-		LogPrintf(LOG_INFO, "TEMP IN");
+		LogPrintf(LOG_DEBUG, "Read Status");
 		return 0;
 	}
-	void Device8237::TEMP_OUT(BYTE value)
+	BYTE Device8237::ReadTemp()
 	{
-		LogPrintf(LOG_INFO, "TEMP OUT, value=%02X", value);
+		LogPrintf(LOG_DEBUG, "Read Temporary");
+		return 0;
 	}
+
+	void Device8237::WriteCommand(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write Command, value=%02X", value);
+		m_commandReg = value;
+
+		LogPrintf(LOG_DEBUG, "Controller: %s", (m_commandReg & CMD_DISABLE) ? "Disabled" : "Enabled");
+		if (m_commandReg & CMD_DISABLE)
+			return;
+
+		LogPrintf(LOG_DEBUG, "Memory to Memory: %s", (m_commandReg & CMD_MEM2MEM) ? "Enabled" : "Disabled");
+
+		if (m_commandReg & CMD_MEM2MEM)
+		{
+			LogPrintf(LOG_DEBUG, "Channel 0 Address Hold: %s", (m_commandReg & CMD_DMA0_HOLD) ? "Enabled" : "Disabled");
+		}
+
+		if (!(m_commandReg & CMD_MEM2MEM))
+		{
+			LogPrintf(LOG_DEBUG, "Timing: %s", (m_commandReg & CMD_TIMING) ? "Compressed" : "Normal");
+		}
+
+		LogPrintf(LOG_DEBUG, "Priority: %s", (m_commandReg & CMD_PRIORITY) ? "Rotating" : "Fixed");
+
+		if (!(m_commandReg & CMD_TIMING))
+		{
+			LogPrintf(LOG_DEBUG, "Write Selection: %s", (m_commandReg & CMD_WRITE_SEL) ? "Extended" : "Late");
+		}
+
+		LogPrintf(LOG_DEBUG, "DREQ Sense Active: %s", (m_commandReg & CMD_DREQ_SENSE) ? "LOW" : "HIGH");
+		LogPrintf(LOG_DEBUG, "DACK Sense Active: %s", (m_commandReg & CMD_DACK_SENSE) ? "LOW" : "HIGH");
+	}
+	void Device8237::WriteRequest(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write Request, value=%02X", value);
+	}
+	void Device8237::WriteSingleMaskBit(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write Single Mask Bit, value=%02X", value);
+	}
+	void Device8237::WriteMode(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write Mode, value=%02X", value);
+	}
+	void Device8237::ClearFlipFlop(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Clear Byte Flip-flop, value=%02X", value);
+	}
+	void Device8237::MasterClear(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Master Clear, value=%02X", value);
+	}
+	void Device8237::WriteAllMaskBits(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write All Mask Bits, value=%02X", value);
+	}
+
+	void Device8237::DMARequest(size_t channel, bool state)
+	{
+		if (channel > 3) throw std::exception("invalid dma channel");
+		// TODO
+	}
+	bool Device8237::DMAAcknowledged(size_t channel)
+	{
+		if (channel > 3) throw std::exception("invalid dma channel");
+		// TODO
+		return false;
+	}
+
 }
