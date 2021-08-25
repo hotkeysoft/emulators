@@ -79,7 +79,7 @@ int main(void)
 	//emul::MemoryBlock extraRam(0x10000, 0x40000, emul::MemoryType::RAM);
 	//memory.Allocate(&extraRam);
 
-	pit::Device8254 pit(0x40);
+	pit::Device8254 pit(0x40, 1193182);
 	pit.Init();
 	pit.EnableLog(true, Logger::LOG_DEBUG);
 
@@ -89,7 +89,7 @@ int main(void)
 
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true, Logger::LOG_DEBUG);
+	ppi.EnableLog(true, Logger::LOG_INFO);
 
 	// Configuration switches
 	{
@@ -104,7 +104,7 @@ int main(void)
 	dma::Device8237 dma(0x00);
 	dma.Init();
 	dma.EnableLog(false);
-	//dma.EnableLog(true, Logger::LOG_DEBUG);
+	dma.EnableLog(true, Logger::LOG_DEBUG);
 
 	cga::DeviceCGA cga(0x3D0);
 	cga.Init();

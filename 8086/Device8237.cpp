@@ -27,7 +27,7 @@ namespace dma
 	void DMAChannel::Tick()
 	{
 		// Fake memory refresh
-		++m_address;
+		//++m_address;
 	}
 
 	BYTE DMAChannel::ADDR_IN()

@@ -10,6 +10,8 @@ using emul::BYTE;
 
 namespace pit
 {
+	static size_t s_clockSpeed = 1000000;
+
 	enum class RWMode { RW_LSB, RW_MSB, RW_MSBLSB };
 	enum class CounterMode { Mode0, Mode1, Mode2, Mode3, Mode4, Mode5 };
 
@@ -29,6 +31,8 @@ namespace pit
 		BYTE Get();
 		void Set(BYTE);
 
+		void SetGate(bool gate) { m_gate = gate; }
+
 		void LatchValue();
 
 		void SetRWMode(RWMode rw);
@@ -36,8 +40,10 @@ namespace pit
 		void SetBCD(bool bcd);
 
 	protected:
-		BYTE GetMSB();
-		BYTE GetLSB();
+		WORD GetMaxValue()
+		{
+			return m_rwMode == RWMode::RW_LSB ? 255 : 65535;
+		}
 
 		void SetMSB(BYTE value);
 		void SetLSB(BYTE value);
@@ -46,6 +52,11 @@ namespace pit
 		CounterMode m_mode;
 		bool m_bcd;
 
+		bool m_gate;
+		bool m_out;
+		bool m_run;
+		bool m_newValue;
+		bool m_lsbmsbFlipFlop;
 		WORD m_n;
 		WORD m_value;
 
@@ -56,7 +67,7 @@ namespace pit
 	class Device8254 : public PortConnector
 	{
 	public:
-		Device8254(WORD baseAddress);
+		Device8254(WORD baseAddress, size_t clockSpeedHz = 1000000);
 
 		Device8254() = delete;
 		Device8254(const Device8254&) = delete;

@@ -6,6 +6,11 @@ namespace pit
 		m_rwMode(RWMode::RW_LSB),
 		m_mode(CounterMode::Mode0),
 		m_bcd(false),
+		m_gate(false),
+		m_out(false),
+		m_run(false),
+		m_lsbmsbFlipFlop(false),
+		m_newValue(false),
 		m_n(0),
 		m_value(0),
 		m_latched(false),
@@ -15,11 +20,81 @@ namespace pit
 
 	void Counter::Tick()
 	{
-		// TODO: Mode 2, LSB only
-		--m_value;
-		if ((m_value & 0x00FF) == 0)
+		if (!m_gate)
 		{
-			m_value = m_n;
+			return;
+		}
+
+		if (m_newValue)
+		{
+			m_newValue = false;
+			m_run = true;
+
+			switch (m_mode)
+			{
+			case CounterMode::Mode0:
+			{
+				m_value = m_n;
+				size_t ticks = 1 + (m_n ? m_n : GetMaxValue());
+				float intervalMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
+				LogPrintf(LOG_INFO, "Starting Count, interval = %0.2fus", intervalMicro);
+				// Start counting on next tick
+				return;
+			}
+			case CounterMode::Mode2:
+			{
+				size_t ticks = m_n ? m_n : GetMaxValue();
+				float intervalMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
+				LogPrintf(LOG_INFO, "Starting Count, period = %0.2fus", intervalMicro);
+				break;
+			}
+			case CounterMode::Mode3:
+			{
+				size_t ticks = m_n ? m_n : GetMaxValue();
+				float freq = (float)s_clockSpeed / (float)ticks;
+				LogPrintf(LOG_INFO, "Frequency = %0.2fHz", freq);
+				break;
+			}
+			}
+		}
+
+		if (!m_run)
+		{
+			return;
+		}
+
+		// Decrease counter, wrap if 0
+		if (m_value == 0)
+		{
+			m_value = GetMaxValue();
+		}
+		else
+		{
+			--m_value;
+		}
+
+		switch (m_mode)
+		{
+		case CounterMode::Mode0:
+			if (m_value == 0)
+			{
+				m_run = false;
+				m_out = true;
+			}
+			break;
+		case CounterMode::Mode2:
+			if (m_value == 1)
+			{
+				m_out = false;
+			}
+			else if (m_value == 0)
+			{
+				m_value = m_n;
+				m_out = true;
+			}
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -52,15 +127,19 @@ namespace pit
 
 	void Counter::Set(BYTE value)
 	{
+		m_newValue = true;
 		switch (m_rwMode)
 		{
-		case RWMode::RW_LSB:
-		case RWMode::RW_MSB:
 		case RWMode::RW_MSBLSB:
-			LogPrintf(LOG_DEBUG, "SetLSB: %02X", value);
-			SetLSB(value);
+			// TODO
+			throw std::exception("Get:RWMode: MSBLSB Not implemented");
 			break;
-
+		case RWMode::RW_LSB: 
+			SetLSB(value); 
+			break;
+		case RWMode::RW_MSB: 
+			SetMSB(value); 
+			break;
 		default:
 			throw std::exception("Set:RWMode: Not implemented");
 		}
@@ -75,17 +154,6 @@ namespace pit
 			m_latchedValue = m_value;
 			m_latched = true;
 		}
-	}
-
-	BYTE Counter::GetMSB()
-	{
-		LogPrintf(LOG_DEBUG, "GetMSB");
-		return 0;
-	}
-	BYTE Counter::GetLSB()
-	{
-		LogPrintf(LOG_DEBUG, "GetLSB");
-		return 0;
 	}
 
 	void Counter::SetMSB(BYTE value)
@@ -110,11 +178,12 @@ namespace pit
 			break;
 
 		case RWMode::RW_MSB:
-			LogPrintf(LOG_DEBUG, "SetRWMode: LSB");
+			LogPrintf(LOG_DEBUG, "SetRWMode: MSB");
 			break;
 
 		case RWMode::RW_MSBLSB:
 			LogPrintf(LOG_DEBUG, "SetRWMode: MSBLSB");
+			m_lsbmsbFlipFlop = false;
 			break;
 
 		default:
@@ -126,25 +195,32 @@ namespace pit
 	{
 		m_mode = mode;
 
+		m_newValue = false;
+		m_run = false;
+
 		switch (mode)
 		{
 		case CounterMode::Mode0:
-			LogPrintf(LOG_DEBUG, "SetMode: 0");
+			LogPrintf(LOG_INFO, "SetMode: 0 - INTERRUPT ON TERMINAL COUNT");
+			m_out = false;
 			break;
 		case CounterMode::Mode1:
-			LogPrintf(LOG_DEBUG, "SetMode: 1");
+			LogPrintf(LOG_INFO, "SetMode: 1 - HARDWARE RETRIGGERABLE ONE-SHOT");
 			break;
 		case CounterMode::Mode2:
-			LogPrintf(LOG_DEBUG, "SetMode: 2");
+			LogPrintf(LOG_INFO, "SetMode: 2 - RATE GENERATOR");
+			m_out = false;
 			break;
 		case CounterMode::Mode3:
-			LogPrintf(LOG_DEBUG, "SetMode: 3");
+			LogPrintf(LOG_INFO, "SetMode: 3 - SQUARE WAVE MODE");
 			break;
 		case CounterMode::Mode4:
-			LogPrintf(LOG_DEBUG, "SetMode: 4");
+			LogPrintf(LOG_INFO, "SetMode: 4 - SOFTWARE TRIGGERED MODE");
+			LogPrintf(LOG_ERROR, "Mode 4 Not implemented");
 			break;
 		case CounterMode::Mode5:
-			LogPrintf(LOG_DEBUG, "SetMode: 5");
+			LogPrintf(LOG_INFO, "SetMode: 5 - HARDWARE TRIGGERED STROBE");
+			LogPrintf(LOG_ERROR, "Mode 5 Not implemented");
 			break;
 		default:
 			throw std::exception("SetMode: Not implemented");
@@ -155,10 +231,14 @@ namespace pit
 	{
 		LogPrintf(LOG_DEBUG, "SetBCD: %d", bcd);
 		m_bcd = bcd;
+		if (m_bcd)
+		{
+			LogPrintf(LOG_ERROR, "BCD mode not implemented");
+		}
 	}
 
 
-	Device8254::Device8254(WORD baseAddress) : 
+	Device8254::Device8254(WORD baseAddress, size_t clockSpeedHz) : 
 		Logger("PIT8254"), 
 		m_counter0("PIT_T0"),
 		m_counter1("PIT_T1"),
@@ -166,6 +246,7 @@ namespace pit
 		m_baseAddress(baseAddress)
 	{
 		Reset();
+		s_clockSpeed = clockSpeedHz;
 	}
 
 	void Device8254::EnableLog(bool enable, SEVERITY minSev)
@@ -192,6 +273,10 @@ namespace pit
 		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&Device8254::T2_OUT));
 
 		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&Device8254::CONTROL_OUT));
+
+		m_counter0.SetGate(true);
+		m_counter1.SetGate(true);
+		m_counter2.SetGate(true);
 	}
 
 	BYTE Device8254::T0_IN()
