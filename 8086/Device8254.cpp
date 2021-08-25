@@ -9,7 +9,7 @@ namespace pit
 		m_gate(false),
 		m_out(false),
 		m_run(false),
-		m_lsbmsbFlipFlop(false),
+		m_flipFlopLSBMSB(false),
 		m_newValue(false),
 		m_n(0),
 		m_value(0),
@@ -118,7 +118,20 @@ namespace pit
 			break;
 
 		case RWMode::RW_MSB:
-		case RWMode::RW_MSBLSB:
+			if (m_latched)
+			{
+				m_latched = false;
+				ret = (BYTE)(m_latchedValue >> 8);
+				LogPrintf(LOG_DEBUG, "GetMSB(latched): %02X", ret);
+			}
+			else
+			{
+				ret = (BYTE)(m_value >> 8);
+				LogPrintf(LOG_DEBUG, "GetMSB(live): %02X", ret);
+			}
+			break;
+
+		case RWMode::RW_LSBMSB:
 		default:
 			throw std::exception("Get:RWMode: Not implemented");
 		}
@@ -127,18 +140,27 @@ namespace pit
 
 	void Counter::Set(BYTE value)
 	{
-		m_newValue = true;
 		switch (m_rwMode)
 		{
-		case RWMode::RW_MSBLSB:
-			// TODO
-			throw std::exception("Get:RWMode: MSBLSB Not implemented");
+		case RWMode::RW_LSBMSB:
+			if (!m_flipFlopLSBMSB)
+			{
+				SetLSB(value);
+			}
+			else
+			{
+				SetMSB(value);
+				m_newValue = true;
+			}
+			m_flipFlopLSBMSB = !m_flipFlopLSBMSB;
 			break;
 		case RWMode::RW_LSB: 
 			SetLSB(value); 
+			m_newValue = true;
 			break;
 		case RWMode::RW_MSB: 
 			SetMSB(value); 
+			m_newValue = true;
 			break;
 		default:
 			throw std::exception("Set:RWMode: Not implemented");
@@ -181,9 +203,9 @@ namespace pit
 			LogPrintf(LOG_DEBUG, "SetRWMode: MSB");
 			break;
 
-		case RWMode::RW_MSBLSB:
-			LogPrintf(LOG_DEBUG, "SetRWMode: MSBLSB");
-			m_lsbmsbFlipFlop = false;
+		case RWMode::RW_LSBMSB:
+			LogPrintf(LOG_DEBUG, "SetRWMode: LSBMSB");
+			m_flipFlopLSBMSB = false;
 			break;
 
 		default:
@@ -331,7 +353,7 @@ namespace pit
 
 		case CTRL_RW0: counter->SetRWMode(RWMode::RW_LSB); break;
 		case CTRL_RW1: counter->SetRWMode(RWMode::RW_MSB); break;
-		case CTRL_RW1 | CTRL_RW0: counter->SetRWMode(RWMode::RW_MSBLSB); break;
+		case CTRL_RW1 | CTRL_RW0: counter->SetRWMode(RWMode::RW_LSBMSB); break;
 		default:
 			throw std::exception("RW: Not implemented");
 		}

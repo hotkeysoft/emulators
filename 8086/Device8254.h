@@ -12,7 +12,7 @@ namespace pit
 {
 	static size_t s_clockSpeed = 1000000;
 
-	enum class RWMode { RW_LSB, RW_MSB, RW_MSBLSB };
+	enum class RWMode { RW_LSB, RW_MSB, RW_LSBMSB };
 	enum class CounterMode { Mode0, Mode1, Mode2, Mode3, Mode4, Mode5 };
 
 	class Counter : public Logger
@@ -56,7 +56,7 @@ namespace pit
 		bool m_out;
 		bool m_run;
 		bool m_newValue;
-		bool m_lsbmsbFlipFlop;
+		bool m_flipFlopLSBMSB;
 		WORD m_n;
 		WORD m_value;
 
