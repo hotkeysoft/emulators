@@ -85,6 +85,8 @@ namespace emul
 
 		// PUSH CS (1)
 		case 0x0E: PUSH(regCS); break;
+		// POP CS (1) // Undocumented
+		case 0x0F: POP(regCS); break;
 
 		// ADC rm+r=>rm (4)
 		// ----------
@@ -1325,6 +1327,7 @@ namespace emul
 				throw(std::exception("SHIFTROT8 RCR not implemented"));
 				break;
 			case 0x20: // SHL/SAL
+			case 0x30: // Undocumented 
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
 				SetFlag(FLAG_C, getMSB(dest));
 				dest <<= 1;
@@ -1339,7 +1342,7 @@ namespace emul
 				throw(std::exception("SHIFTROT8 SAR not implemented"));
 				break;
 			default:
-				break;
+				throw(std::exception("not possible"));
 			}
 
 			// Flags: ODITSZAPC
@@ -1390,6 +1393,7 @@ namespace emul
 				throw(std::exception("SHIFTROT16 RCR not implemented"));
 				break;
 			case 0x20: // SHL/SAL
+			case 0x30: // Undocumented 
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
 				SetFlag(FLAG_C, getMSB(dest));
 				dest <<= 1;
@@ -1592,7 +1596,8 @@ namespace emul
 
 		switch (op2 & 0x38)
 		{
-		case 0x00:
+		case 0x00: // TEST
+		case 0x08: // Undocumented
 		{
 			LogPrintf(LOG_DEBUG, "TEST8");
 			BYTE imm = FetchByte();
@@ -1607,7 +1612,7 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
-		case 0x20:
+		case 0x20: // MUL
 		{
 			LogPrintf(LOG_DEBUG, "MUL8");
 			WORD result = regA.hl.l * (*dest);
@@ -1616,7 +1621,6 @@ namespace emul
 			SetFlag(FLAG_C, regA.hl.h != 0);
 			break;
 		}
-		case 0x08: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "---"); // break;
 		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); // break;
 		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); // break;
 		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); // break;
@@ -1636,7 +1640,8 @@ namespace emul
 
 		switch (op2 & 0x38)
 		{
-		case 0x00: 
+		case 0x00:
+		case 0x08:
 		{
 			LogPrintf(LOG_DEBUG, "TEST16");
 			WORD imm = FetchWord();
@@ -1651,7 +1656,6 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
-		case 0x08: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "---"); HLT(); break;
 		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); HLT(); break;
 		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); HLT(); break;
 		case 0x20: /*func = rawMul16;*/ LogPrintf(LOG_ERROR, "mul"); HLT(); break;
