@@ -171,8 +171,8 @@ int main(void)
 			{
 				static bool release = false;
 				fprintf(stderr, "\t* Keyboard interrupt release=%d\n", release);
+				fprintf(stderr, "\t* CanInterrupt=%d\n", cpu.CanInterrupt());
 				cpu.Interrupt(8 + 1); // Hardware interrupt 1: keyboard
-				cpu.EnableLog(true, Logger::LOG_DEBUG);
 				ppi.SetCurrentKeyCode(0x3B, release);
 				while (GetAsyncKeyState(VK_F1) & 0x8000);
 				release = !release;
