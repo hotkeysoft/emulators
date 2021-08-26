@@ -15,7 +15,7 @@ namespace dma
 	class DMAChannel : public PortConnector
 	{
 	public:
-		DMAChannel(Device8237* parent, WORD id, const char* label);
+		DMAChannel(Device8237* parent, BYTE id, const char* label);
 
 		DMAChannel() = delete;
 		DMAChannel(const DMAChannel&) = delete;
@@ -38,7 +38,7 @@ namespace dma
 
 	private:
 		Device8237* m_parent;
-		WORD m_id;
+		BYTE m_id;
 
 		enum MODE {
 			MODE_M1 = 128,
@@ -85,6 +85,8 @@ namespace dma
 
 		bool GetByteFlipFlop(bool toggle = false);
 		bool IsDisabled() { return (m_commandReg & CMD_DISABLE); }
+
+		void SetTerminalCount(BYTE channel);
 
 	protected:
 		const WORD m_baseAddress;

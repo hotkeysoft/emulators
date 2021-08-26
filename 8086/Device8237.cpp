@@ -12,7 +12,7 @@ using emul::SetBit;
 namespace dma
 {
 
-	DMAChannel::DMAChannel(Device8237* parent, WORD id, const char* label) :
+	DMAChannel::DMAChannel(Device8237* parent, BYTE id, const char* label) :
 		Logger(label),
 		m_parent(parent),
 		m_id(id),
@@ -53,6 +53,15 @@ namespace dma
 		else
 		{
 			++m_address;
+		}
+
+		if (m_count == 0)
+		{
+			LogPrintf(LOG_INFO, "Channel %d, Count done", m_id);
+			m_count = m_baseCount;
+			m_address = m_baseAddress;
+			m_parent->SetTerminalCount(m_id);
+
 		}
 	}
 
@@ -217,7 +226,10 @@ namespace dma
 	BYTE Device8237::ReadStatus()
 	{
 		LogPrintf(LOG_INFO, "Read Status, value=%02X", m_statusReg);
-		return m_statusReg;
+		BYTE ret = m_statusReg;
+		// Reset TC bits
+		m_statusReg &= 0xF0;
+		return ret;
 	}
 	BYTE Device8237::ReadTemp()
 	{
@@ -323,4 +335,9 @@ namespace dma
 		return ret;
 	}
 
+	void Device8237::SetTerminalCount(BYTE channel)
+	{
+		channel &= 3;
+		m_statusReg |= (1 << channel);
+	}
 }
