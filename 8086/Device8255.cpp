@@ -105,13 +105,14 @@ namespace ppi
 		bool PB6 = (m_portBData & 0x08);
 
 		BYTE ret;
+		// TODO: Check, switch ON means bit=0
 		if (PB6)
 		{
-			ret = (m_switches & 0xF0) >> 4;
+			ret = ((~m_switches) & 0xF0) >> 4;
 		}
 		else
 		{
-			ret = (m_switches & 0x0F);
+			ret = ((~m_switches) & 0x0F);
 		}
 
 		LogPrintf(LOG_DEBUG, "PORTC IN, ret=%02X", ret);
