@@ -39,4 +39,16 @@ namespace emul
 	inline BYTE GetHiByte(WORD in) { return in >> 8; }
 	inline WORD SetLowByte(WORD& out, const BYTE low) { out &= 0xFF00; out |= low; return out; }
 	inline WORD SetHiByte(WORD& out, const BYTE hi) { out &= 0x00FF; out |= (hi << 8); return out; }
+	inline BYTE SetBit(BYTE& out, const BYTE bit, bool state)
+	{
+		if (state)
+		{
+			out |= (1 << bit);
+		}
+		else
+		{
+			out &= ~(1 << bit);
+		}
+		return out;
+	}
 }

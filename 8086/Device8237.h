@@ -52,10 +52,10 @@ namespace dma
 		bool m_decrement;
 
 		WORD m_baseCount;
-		WORD m_baseAddress;
-
-		WORD m_address;
 		WORD m_count;
+
+		WORD m_baseAddress;
+		WORD m_address;
 	};
 
 	class Device8237 : public PortConnector
@@ -84,7 +84,7 @@ namespace dma
 		virtual bool ConnectTo(emul::PortAggregator& dest);
 
 		bool GetByteFlipFlop(bool toggle = false);
-		bool IsEnabled() { return !m_disabled; }
+		bool IsDisabled() { return (m_commandReg & CMD_DISABLE); }
 
 	protected:
 		const WORD m_baseAddress;
@@ -117,7 +117,11 @@ namespace dma
 		DMAChannel m_channel3;
 
 		BYTE m_commandReg;
-		bool m_disabled;
+		BYTE m_statusReg;
+		BYTE m_requestReg;
+		BYTE m_tempReg;
+		BYTE m_maskReg;
+
 		bool m_byteFlipFlop;
 	};
 }

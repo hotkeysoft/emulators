@@ -7,6 +7,7 @@ using emul::GetHiByte;
 using emul::GetLowByte;
 using emul::SetHiByte;
 using emul::SetLowByte;
+using emul::SetBit;
 
 namespace dma
 {
@@ -15,8 +16,10 @@ namespace dma
 		Logger(label),
 		m_parent(parent),
 		m_id(id),
-		m_address(0x0000),
+		m_baseCount(0x0000),
 		m_count(0x0000),
+		m_baseAddress(0x0000),
+		m_address(0x0000),
 		m_mode(0),
 		m_decrement(false)
 	{
@@ -37,7 +40,7 @@ namespace dma
 
 	void DMAChannel::Tick()
 	{
-		if (!m_parent->IsEnabled())
+		if (m_parent->IsDisabled())
 			return;
 
 		// Fake memory refresh
@@ -117,7 +120,6 @@ namespace dma
 
 		m_decrement = (m_mode & MODE_ADDR_DECREMENT);
 		LogPrintf(LOG_INFO, "Address %s", m_decrement ? "Decrement" : "Increment");
-
 	}
 
 	Device8237::Device8237(WORD baseAddress) :
@@ -127,8 +129,11 @@ namespace dma
 		m_channel2(this, 2, "dma.2"),
 		m_channel3(this, 3, "dma.3"),
 		m_baseAddress(baseAddress),
-		m_commandReg(0xFF),
-		m_disabled(false),
+		m_commandReg(0),
+		m_statusReg(0),
+		m_requestReg(0),
+		m_tempReg(0),
+		m_maskReg(0xFF),
 		m_byteFlipFlop(false)
 	{
 		Reset();
@@ -146,7 +151,11 @@ namespace dma
 
 	void Device8237::Reset()
 	{
-		m_commandReg = 0xFF;
+		m_commandReg = 0;
+		m_statusReg = 0;
+		m_requestReg =0;
+		m_tempReg = 0;
+		m_maskReg = 0xFF;
 		m_byteFlipFlop = false;
 	}
 
@@ -207,13 +216,13 @@ namespace dma
 
 	BYTE Device8237::ReadStatus()
 	{
-		LogPrintf(LOG_DEBUG, "Read Status");
-		return 0;
+		LogPrintf(LOG_DEBUG, "Read Status, value=%02X", m_statusReg);
+		return m_statusReg;
 	}
 	BYTE Device8237::ReadTemp()
 	{
-		LogPrintf(LOG_DEBUG, "Read Temporary");
-		return 0;
+		LogPrintf(LOG_DEBUG, "Read Temporary, value=%02X", m_tempReg);
+		return m_tempReg;
 	}
 
 	void Device8237::WriteCommand(BYTE value)
@@ -221,9 +230,8 @@ namespace dma
 		LogPrintf(LOG_DEBUG, "Write Command, value=%02X", value);
 		m_commandReg = value;
 
-		m_disabled = (m_commandReg & CMD_DISABLE);
-		LogPrintf(LOG_INFO, "Controller: %s", m_disabled ? "Disabled" : "Enabled");
-		if (m_commandReg & CMD_DISABLE)
+		LogPrintf(LOG_INFO, "Controller: %s", IsDisabled() ? "Disabled" : "Enabled");
+		if (IsDisabled())
 			return;
 
 		LogPrintf(LOG_INFO, "Memory to Memory: %s", (m_commandReg & CMD_MEM2MEM) ? "Enabled" : "Disabled");
@@ -255,7 +263,17 @@ namespace dma
 	void Device8237::WriteSingleMaskBit(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "Write Single Mask Bit, value=%02X", value);
+		BYTE channel = value & 3;
+		bool bit = (value & 4);
+		SetBit(m_maskReg, channel, bit);
+		LogPrintf(LOG_INFO, "Set Channel %d mask bit: %s", channel, bit ? "SET" : "CLEAR");
 	}
+	void Device8237::WriteAllMaskBits(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write All Mask Bits, value=%02X", value);
+		m_maskReg = (value & 0xF0);
+	}
+
 	void Device8237::WriteMode(BYTE value)
 	{
 		switch (value & 3)
@@ -281,10 +299,6 @@ namespace dma
 	{
 		LogPrintf(LOG_DEBUG, "Master Clear, value=%02X", value);
 		m_byteFlipFlop = false;
-	}
-	void Device8237::WriteAllMaskBits(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "Write All Mask Bits, value=%02X", value);
 	}
 
 	void Device8237::DMARequest(size_t channel, bool state)
