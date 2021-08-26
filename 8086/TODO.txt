@@ -6,7 +6,13 @@ Keyboard
 - Diagnostics
 - Interrupt
 
+Interrupt controller
+DMA controller
+
 POST failures:
 - LINE TEST
 - CRT INTERFACE LINES TEST
 - 8259 INTERRUPT CONTROLLER TEST
+- KEYBOARD TEST
+- DISKETTE ATTACHMENT TEST
+

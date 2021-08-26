@@ -12,6 +12,7 @@ namespace emul
 	WORD rawAnd8(SourceDest8 sd, bool) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
 	WORD rawOr8(SourceDest8 sd, bool) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
 	WORD rawXor8(SourceDest8 sd, bool) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
+	WORD rawTest8(SourceDest8 sd, bool) { return *(sd.dest) & *(sd.source); }
 
 	DWORD rawAdd16(SourceDest16 sd, bool) { DWORD r = *(sd.dest) + *(sd.source); (*sd.dest) = (WORD)r; return r; }
 	DWORD rawSub16(SourceDest16 sd, bool) { DWORD r = *(sd.dest) - *(sd.source); (*sd.dest) = (WORD)r; return r; }
@@ -358,7 +359,7 @@ namespace emul
 		// TEST rm+r (4)
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x84: NotImplemented(opcode); break;
+		case 0x84: Arithmetic8(GetModRegRM8(FetchByte(), true), rawTest8); break;
 		// REG16/MEM16, REG16
 		case 0x85: NotImplemented(opcode); break;
 
