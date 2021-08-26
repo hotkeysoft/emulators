@@ -83,7 +83,7 @@ namespace ppi
 		if (diff & 0x10) LogPrintf(LOG_INFO, "PB4: MB RAM Parity Check %s", value & 0x10 ? "OFF" : "ON");
 		if (diff & 0x08) LogPrintf(LOG_INFO, "PB3: DIP Switch Block Select %s", value & 0x08 ? "1-4" : "5-8");
 		if (diff & 0x04) LogPrintf(LOG_INFO, "PB2: UNUSED %s", value & 0x04 ? "1" : "0");
-		if (diff & 0x02) LogPrintf(LOG_INFO, "PB1: SPEAKER Data %s", value & 0x02 ? "OFF" : "ON");
+		if (diff & 0x02) LogPrintf(LOG_INFO, "PB1: SPEAKER Data %s", value & 0x02 ? "ON" : "OFF");
 		if (diff & 0x01) LogPrintf(LOG_INFO, "PB0: TIMER2 Gate %s", value & 0x01 ? "HI" : "LOW");
 
 		m_portBData = value;
