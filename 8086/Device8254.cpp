@@ -35,7 +35,7 @@ namespace pit
 			case CounterMode::Mode0:
 			{
 				m_value = m_n;
-				size_t ticks = 1 + (m_n ? m_n : GetMaxValue());
+				WORD ticks = 1 + (m_n ? m_n : GetMaxValue());
 				float intervalMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
 				LogPrintf(LOG_INFO, "Starting Count, interval = %0.2fus", intervalMicro);
 				// Start counting on next tick
@@ -78,6 +78,7 @@ namespace pit
 		case CounterMode::Mode0:
 			if (m_value == 0)
 			{
+				LogPrintf(LOG_INFO, "Count Done");
 				m_run = false;
 				m_out = true;
 			}
@@ -392,4 +393,17 @@ namespace pit
 		m_counter1.Tick();
 		m_counter2.Tick();
 	}
+
+	Counter& Device8254::GetCounter(size_t counter)
+	{
+		switch (counter)
+		{
+		case 0: return m_counter0;
+		case 1: return m_counter1;
+		case 2: return m_counter2;
+		default:
+			throw std::exception("Device8254::GetCounter:: invalid counter id");
+		}
+	}
+
 }

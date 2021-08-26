@@ -130,11 +130,32 @@ int main(void)
 	time_t startTime, stopTime;
 	time(&startTime);
 
+	// TODO: Temporary, need dynamic connections
+	// Timer 0: Time of day
+	// Timer 1: DMA RAM refresh
+	// Timer 2: Speaker
+	bool timer0Out = false;
 	try
 	{
 		while (cpu.Step())
 		{
 			pit.Tick();
+			bool out = pit.GetCounter(0).GetOutput();
+			if (out != timer0Out)
+			{
+				timer0Out = out;
+				fprintf(stderr,"\t* timer 0 output changed: %d\n", out);
+				if (out)
+				{
+					// TODO: this bypasses a lot of things.
+					// Quick and dirty for now: Check mask manually and interrupt cpu
+					if (!(pic.Mask_IN() & 0x01))
+					{
+						cpu.Interrupt(8+0); // Hardware interrupt 0
+					}
+				}
+			}
+
 			dma.Tick();
 		};
 	}
@@ -161,7 +182,7 @@ int main(void)
 	{
 		BYTE val;
 		memory.Read(emul::S2A(0xB800, offset), val);
-		fprintf(stderr, "%c", val);
+		fprintf(stderr, "%c", val?val:' ');
 	}
 	fprintf(stderr, "\n");
 

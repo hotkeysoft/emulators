@@ -63,6 +63,8 @@ namespace emul
 		virtual void Reset();
 		void Reset(ADDRESS);
 
+		void Interrupt(BYTE interrupt) { INT(interrupt); }
+
 	protected:
 		PortAggregator m_ports;
 

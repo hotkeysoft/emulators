@@ -28,12 +28,13 @@ namespace pit
 
 		void Tick();
 
-		BYTE Get();
-		void Set(BYTE);
-
+		bool GetOutput() const { return m_out; }
+		bool GetGate() const { return m_gate; }
 		void SetGate(bool gate) { m_gate = gate; }
 
 		void LatchValue();
+		BYTE Get();
+		void Set(BYTE);
 
 		void SetRWMode(RWMode rw);
 		void SetMode(CounterMode rw);
@@ -92,6 +93,8 @@ namespace pit
 		void T2_OUT(BYTE value);
 
 		void CONTROL_OUT(BYTE value);
+
+		Counter& GetCounter(size_t counter);
 
 	protected:
 		enum CTRL {
