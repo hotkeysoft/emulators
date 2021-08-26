@@ -1621,12 +1621,11 @@ namespace emul
 			SetFlag(FLAG_C, regA.hl.h != 0);
 			break;
 		}
-		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); // break;
-		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); // break;
-		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); // break;
-		case 0x30: /*func = rawDiv16;*/ LogPrintf(LOG_ERROR, "div"); // break;
-		case 0x38: /*func = rawIDiv16;*/ LogPrintf(LOG_ERROR, "idiv"); // break;
-			throw(std::exception("ArithmeticMulti8 not implemented"));
+		case 0x10: throw(std::exception("ArithmeticMulti8 [not] not implemented"));
+		case 0x18: throw(std::exception("ArithmeticMulti8 [neg] not implemented"));
+		case 0x28: throw(std::exception("ArithmeticMulti8 [imul] not implemented"));
+		case 0x30: throw(std::exception("ArithmeticMulti8 [div] not implemented"));
+		case 0x38: throw(std::exception("ArithmeticMulti8 [idiv] not implemented"));
 		default:
 			throw(std::exception("not possible"));
 		}
@@ -1636,7 +1635,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticMulti16");
 
-		WORD* dest = GetModRM16(op2);
+		WORD* modrm = GetModRM16(op2);
 
 		switch (op2 & 0x38)
 		{
@@ -1646,7 +1645,7 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "TEST16");
 			WORD imm = FetchWord();
 			SourceDest16 sd;
-			sd.dest = dest;
+			sd.dest = modrm;
 			sd.source = &imm;
 			WORD after = rawAnd16(sd, false);
 			SetFlag(FLAG_O, false);
@@ -1656,13 +1655,26 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
-		case 0x10: /*func = rawNot16;*/ LogPrintf(LOG_ERROR, "not"); HLT(); break;
-		case 0x18: /*func = rawNeg16;*/ LogPrintf(LOG_ERROR, "neg"); HLT(); break;
-		case 0x20: /*func = rawMul16;*/ LogPrintf(LOG_ERROR, "mul"); HLT(); break;
-		case 0x28: /*func = rawIMul16;*/ LogPrintf(LOG_ERROR, "imul"); HLT(); break;
-		case 0x30: /*func = rawDiv16;*/ LogPrintf(LOG_ERROR, "div"); HLT(); break;
-		case 0x38: /*func = rawIDiv16;*/ LogPrintf(LOG_ERROR, "idiv"); HLT(); break;
-			throw(std::exception("ArithmeticMulti16 not implemented"));
+		case 0x10: throw(std::exception("ArithmeticMulti16 [not] not implemented"));
+		case 0x18: throw(std::exception("ArithmeticMulti16 [neg] not implemented"));
+		case 0x20: throw(std::exception("ArithmeticMulti16 [mul] not implemented"));
+		case 0x28: throw(std::exception("ArithmeticMulti16 [imul] not implemented"));
+		case 0x30:
+		{
+			LogPrintf(LOG_DEBUG, "TEST16");
+			if ((*modrm) == 0)
+			{
+				// TODO div by zero
+				throw(std::exception("ArithmeticMulti16 div by zero"));
+			}
+			DWORD dividend = getDword(regD.x, regA.x);
+			WORD quotient = dividend / (*modrm);
+			WORD remainder = dividend % (*modrm);
+			regA.x = quotient;
+			regD.x = remainder;
+			break;
+		}
+		case 0x38: throw(std::exception("ArithmeticMulti16 [idiv] not implemented"));
 		default:
 			throw(std::exception("not possible"));
 		}
@@ -1896,18 +1908,18 @@ namespace emul
 		switch (op2 & 0x38)
 		{
 			// INC/DEC MEM16
-		case 0x00: LogPrintf(LOG_ERROR, "INC MEM16");  HLT(); break;
-		case 0x08: LogPrintf(LOG_ERROR, "DEC MEM16");  HLT(); break;
+		case 0x00: throw(std::exception("MultiFunc [INC MEM16] not implemented"));
+		case 0x08: throw(std::exception("MultiFunc [DEC MEM16] not implemented"));
 			// CALL RM16(intra) / CALL MEM16(intersegment)
-		case 0x10: LogPrintf(LOG_ERROR, "CALL RM16(intra)");  HLT(); break;
-		case 0x18: LogPrintf(LOG_ERROR, "CALL MEM16(inter)");  HLT(); break;
+		case 0x10: throw(std::exception("MultiFunc [CALL RM16(intra)] not implemented"));
+		case 0x18: throw(std::exception("MultiFunc [CALL RM16(inter)] not implemented"));
 			// JMP RM16(intra) // JMP MEM16(intersegment)
 		case 0x20: JMPIntra(*dest); break;
-		case 0x28: LogPrintf(LOG_ERROR, "JMP MEM16(inter)");  HLT(); break;
+		case 0x28: throw(std::exception("MultiFunc [JMP MEM16(inter)] not implemented"));
 			// PUSH MEM16
-		case 0x30: LogPrintf(LOG_ERROR, "PUSH MEM16");  HLT(); break;
+		case 0x30: throw(std::exception("MultiFunc [PUSH MEM16] not implemented"));
 			// not used
-		case 0x38: LogPrintf(LOG_ERROR, "not used");  HLT(); break;
+		case 0x38: LogPrintf(LOG_WARNING, "Multifunc(0x28): not used"); break;
 
 		default:
 			throw(std::exception("not possible"));

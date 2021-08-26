@@ -216,12 +216,12 @@ namespace dma
 
 	BYTE Device8237::ReadStatus()
 	{
-		LogPrintf(LOG_DEBUG, "Read Status, value=%02X", m_statusReg);
+		LogPrintf(LOG_INFO, "Read Status, value=%02X", m_statusReg);
 		return m_statusReg;
 	}
 	BYTE Device8237::ReadTemp()
 	{
-		LogPrintf(LOG_DEBUG, "Read Temporary, value=%02X", m_tempReg);
+		LogPrintf(LOG_INFO, "Read Temporary, value=%02X", m_tempReg);
 		return m_tempReg;
 	}
 

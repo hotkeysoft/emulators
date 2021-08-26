@@ -76,8 +76,8 @@ int main(void)
 	emul::MemoryBlock test(emul::S2A(testROMAddress), testROM, emul::MemoryType::ROM);
 	//memory.Allocate(&test);
 
-	//emul::MemoryBlock extraRam(0x10000, 0x40000, emul::MemoryType::RAM);
-	//memory.Allocate(&extraRam);
+	emul::MemoryBlock extraRam(0x10000, 0x10000, emul::MemoryType::RAM);
+	memory.Allocate(&extraRam);
 
 	pit::Device8254 pit(0x40, 1193182);
 	pit.Init();
@@ -95,7 +95,6 @@ int main(void)
 	{
 		ppi.SetPOSTLoop(false);
 		ppi.SetMathCoprocessor(false);
-
 		ppi.SetRAMConfig(ppi::RAMSIZE::RAM_64K);
 		ppi.SetDisplayConfig(ppi::DISPLAY::COLOR_80x25);
 		ppi.SetFloppyCount(1);
