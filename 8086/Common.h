@@ -34,4 +34,9 @@ namespace emul
 	{
 		return (address <= GetMaxAddress(addressBits));
 	}
+
+	inline BYTE GetLowByte(WORD in) { return in & 0xFF; }
+	inline BYTE GetHiByte(WORD in) { return in >> 8; }
+	inline WORD SetLowByte(WORD& out, const BYTE low) { out &= 0xFF00; out |= low; return out; }
+	inline WORD SetHiByte(WORD& out, const BYTE hi) { out &= 0x00FF; out |= (hi << 8); return out; }
 }

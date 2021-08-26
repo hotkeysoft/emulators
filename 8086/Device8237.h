@@ -28,15 +28,31 @@ namespace dma
 
 		void Tick();
 
-		BYTE ADDR_IN();
-		void ADDR_OUT(BYTE value);
+		BYTE ReadAddress();
+		void WriteAddress(BYTE value);
 
-		BYTE COUNT_IN();
-		void COUNT_OUT(BYTE value);
+		BYTE ReadCount();
+		void WriteCount(BYTE value);
+
+		void SetMode(BYTE mode);
 
 	private:
 		Device8237* m_parent;
 		WORD m_id;
+
+		enum MODE {
+			MODE_M1 = 128,
+			MODE_M0 = 64,
+			MODE_ADDR_DECREMENT = 32,
+			MODE_AUTO_INIT = 16,
+			MODE_OP1 = 8,
+			MODE_OP0 = 4
+		};
+		BYTE m_mode;
+		bool m_decrement;
+
+		WORD m_baseCount;
+		WORD m_baseAddress;
 
 		WORD m_address;
 		WORD m_count;
@@ -66,6 +82,9 @@ namespace dma
 		bool DMAAcknowledged(size_t channel);
 
 		virtual bool ConnectTo(emul::PortAggregator& dest);
+
+		bool GetByteFlipFlop(bool toggle = false);
+		bool IsEnabled() { return !m_disabled; }
 
 	protected:
 		const WORD m_baseAddress;
@@ -98,5 +117,7 @@ namespace dma
 		DMAChannel m_channel3;
 
 		BYTE m_commandReg;
+		bool m_disabled;
+		bool m_byteFlipFlop;
 	};
 }

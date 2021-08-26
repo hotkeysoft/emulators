@@ -104,7 +104,7 @@ int main(void)
 	dma::Device8237 dma(0x00);
 	dma.Init();
 	dma.EnableLog(false);
-	dma.EnableLog(true, Logger::LOG_DEBUG);
+	dma.EnableLog(true, Logger::LOG_INFO);
 
 	cga::DeviceCGA cga(0x3D0);
 	cga.Init();
