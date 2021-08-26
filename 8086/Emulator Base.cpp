@@ -44,9 +44,33 @@ void onRet(emul::CPU* cpu, emul::WORD addr)
 const emul::ADDRESS testROMAddress = 0xB000;
 const std::vector<BYTE> testROM = { 0xBA, 0x00, 0xC8, 0x81, 0xEA, 0x00, 0xC8, 0xC4 };
 
+int ReadInput()
+{
+	int key = _getch();
+	// Special Char
+	if (key == 0 || key == 0xE0)
+	{
+		key = _getch();
+	}
+
+	return key;
+}
+
+void DumpScreen(emul::MemoryBlock& block)
+{
+	fprintf(stderr, "SCREEN MEMORY DUMP\n");
+
+	for (WORD offset = 0; offset < 800; offset += 2)
+	{
+		BYTE val = block.read(emul::S2A(0xB800, offset));
+		fprintf(stderr, "%c", val ? val : ' ');
+	}
+	fprintf(stderr, "\n");
+}
+
 int main(void)
 {
-//	logFile = fopen("./dump.log", "w");
+	//	logFile = fopen("./dump.log", "w");
 
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -89,7 +113,7 @@ int main(void)
 
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true, Logger::LOG_INFO);
+	ppi.EnableLog(true, Logger::LOG_DEBUG);
 
 	// Configuration switches
 	{
@@ -110,7 +134,7 @@ int main(void)
 
 	emul::CPU8086 cpu(memory, mmap);
 
-//	cpu.AddWatch("EXECUTE", onCall, onRet);
+	//	cpu.AddWatch("EXECUTE", onCall, onRet);
 
 	cpu.AddDevice(pic);
 	cpu.AddDevice(pit);
@@ -119,9 +143,9 @@ int main(void)
 	cpu.AddDevice(cga);
 	cpu.Reset();
 	cpu.EnableLog(false);
-//	cpu.EnableLog(true, Logger::LOG_DEBUG);
+	//	cpu.EnableLog(true, Logger::LOG_DEBUG);
 
-	//cpu.Reset(emul::S2A(testROMAddress));
+		//cpu.Reset(emul::S2A(testROMAddress));
 
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();
@@ -136,8 +160,24 @@ int main(void)
 	bool timer0Out = false;
 	try
 	{
-		while (cpu.Step())
+		while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000) && cpu.Step())
 		{
+			if (GetAsyncKeyState(VK_F12) & 0x8000)
+			{
+				DumpScreen(screenB800);
+				while (GetAsyncKeyState(VK_F12) & 0x8000);
+			}
+			else if (GetAsyncKeyState(VK_F1) & 0x8000)
+			{
+				static bool release = false;
+				fprintf(stderr, "\t* Keyboard interrupt release=%d\n", release);
+				cpu.Interrupt(8 + 1); // Hardware interrupt 1: keyboard
+				cpu.EnableLog(true, Logger::LOG_DEBUG);
+				ppi.SetCurrentKeyCode(0x3B, release);
+				while (GetAsyncKeyState(VK_F1) & 0x8000);
+				release = !release;
+			}
+
 			pit.Tick();
 			bool out = pit.GetCounter(0).GetOutput();
 			if (out != timer0Out)
@@ -150,7 +190,7 @@ int main(void)
 					// Quick and dirty for now: Check mask manually and interrupt cpu
 					if (!(pic.Mask_IN() & 0x01))
 					{
-						cpu.Interrupt(8+0); // Hardware interrupt 0
+						cpu.Interrupt(8+0); // Hardware interrupt 0: timer
 					}
 				}
 			}
@@ -167,7 +207,7 @@ int main(void)
 
 	cpu.Dump();
 	fprintf(stderr, "\n");
-	for (emul::ADDRESS a = 0x400; a < 0x400 + 32; ++a)
+	for (emul::ADDRESS a = 0x400; a < 0x400 + 64; ++a)
 	{
 		BYTE val;
 		memory.Read(a, val);
@@ -175,15 +215,7 @@ int main(void)
 	}
 	fprintf(stderr, "\n\n");
 
-	fprintf(stderr, "SCREEN MEMORY DUMP\n");
-
-	for (WORD offset= 0; offset<800; offset+=2)
-	{
-		BYTE val;
-		memory.Read(emul::S2A(0xB800, offset), val);
-		fprintf(stderr, "%c", val?val:' ');
-	}
-	fprintf(stderr, "\n");
+	DumpScreen(screenB800);
 
 	if (logFile)
 	{

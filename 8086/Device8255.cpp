@@ -2,7 +2,11 @@
 
 namespace ppi
 {
-	Device8255::Device8255(WORD baseAddress) : Logger("8255"), m_baseAddress(baseAddress), m_switches(0)
+	Device8255::Device8255(WORD baseAddress) : 
+		Logger("8255"), 
+		m_baseAddress(baseAddress), 
+		m_switches(0),
+		m_currentKey(0xAA)
 	{
 		Reset();
 	}
@@ -40,8 +44,8 @@ namespace ppi
 	// Outputs diagnostic code
 	BYTE Device8255::PORTA_IN()
 	{
-		LogPrintf(LOG_DEBUG, "PORTA IN");
-		return 0xFF;
+		LogPrintf(LOG_DEBUG, "Read Keyboard, current key=%02X", m_currentKey);
+		return m_currentKey;
 	}
 	void Device8255::PORTA_OUT(BYTE value)
 	{
@@ -235,5 +239,10 @@ namespace ppi
 	{
 		m_switches &= ~SW_COPROCESSOR;
 		m_switches |= (set ? SW_COPROCESSOR : 0);
+	}
+
+	void Device8255::SetCurrentKeyCode(BYTE keyCode, bool release)
+	{ 
+		m_currentKey = keyCode + (release ? 0x80 : 0);
 	}
 }

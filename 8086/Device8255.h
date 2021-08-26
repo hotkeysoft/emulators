@@ -53,6 +53,8 @@ namespace ppi
 		void SetPOSTLoop(bool);
 		void SetMathCoprocessor(bool);
 
+		void SetCurrentKeyCode(BYTE keyCode, bool release);
+
 	protected:
 		BYTE PORTA_IN();
 		void PORTA_OUT(BYTE value);
@@ -103,5 +105,7 @@ namespace ppi
 
 		// Motherboard configuration switches
 		BYTE m_switches;
+
+		BYTE m_currentKey;
 	};
 }
