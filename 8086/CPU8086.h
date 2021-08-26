@@ -221,6 +221,7 @@ namespace emul
 		void LOOP(BYTE offset, bool cond = true);
 
 		void RETNear(bool pop = false, WORD value = 0);
+		void RETFar(bool pop = false, WORD value = 0);
 
 		void XCHG8(SourceDest8 sd);
 		void XCHG8(BYTE& b1, BYTE& b2);
@@ -236,6 +237,9 @@ namespace emul
 
 		void STOS8();
 		void STOS16();
+
+		void SCAS8();
+		void SCAS16();
 
 		void MOVS8();
 		void MOVS16();
@@ -253,6 +257,8 @@ namespace emul
 		void MultiFunc(BYTE op2);
 
 		void LoadPTR(WORD& destSegment, SourceDest16 modRegRm);
+
+		void XLAT();
 
 		void NotImplemented(BYTE);
 	};

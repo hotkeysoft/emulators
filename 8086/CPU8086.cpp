@@ -368,7 +368,7 @@ namespace emul
 		// REG8/MEM8, REG8
 		case 0x86: XCHG8(GetModRegRM8(FetchByte())); break;
 		// REG16/MEM16, REG16
-		case 0x87: NotImplemented(opcode); break;
+		case 0x87: XCHG16(GetModRegRM16(FetchByte())); break;
 
 		// MOV rm<=>r (4)
 		// ----------
@@ -471,7 +471,7 @@ namespace emul
 		// TEST i+a (2)
 		// ----------
 		// TEST AL, IMM8
-		case 0xA8: NotImplemented(opcode); break;
+		case 0xA8: ArithmeticImm8(regA.hl.l, FetchByte(), rawTest8); break;
 		// TEST AX, IMM16
 		case 0xA9: NotImplemented(opcode); break;
 
@@ -492,9 +492,9 @@ namespace emul
 		// SCAS (1)
 		// ----------
 		// SCAS DEST-STR8
-		case 0xAE: NotImplemented(opcode); break;
+		case 0xAE: SCAS8(); break;
 		// SCAS DEST-STR16
-		case 0xAF: NotImplemented(opcode); break;
+		case 0xAF: SCAS16(); break;
 
 		// MOV i=>r (2-3)
 		// ----------
@@ -550,9 +550,9 @@ namespace emul
 		case 0xC7: MOVIMM16(GetModRM16(FetchByte())); break;
 
 		// RET Far SP+IMM16 (3)
-		case 0xCA: NotImplemented(opcode); break;
+		case 0xCA: RETFar(true, FetchWord()); break;
 		// RET Far (1)
-		case 0xCB: NotImplemented(opcode); break;
+		case 0xCB: RETFar(); break;
 
 		// INT3 (1)
 		case 0xCC: INT(3); break;
@@ -580,7 +580,7 @@ namespace emul
 		case 0xD5: NotImplemented(opcode); break;
 
 		// XLAT (1)
-		case 0xD7: NotImplemented(opcode); break;
+		case 0xD7: XLAT(); break;
 
 		// ESC (2) ??
 		case 0xD8: NotImplemented(opcode); break;
@@ -1297,7 +1297,14 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
 		if (count == 0)
 		{
-			throw std::exception("SHIFTROT8 count==0 not implemented");
+			BYTE* b = GetModRM8(op2);
+			BYTE& dest = *b;
+			SetFlag(FLAG_C, false);
+			SetFlag(FLAG_O, false);
+			AdjustSign(dest);
+			AdjustZero(dest);
+			AdjustParity(dest);
+			return;
 		}
 
 		// TODO: Ugly but approximates what i8086 does
@@ -1441,7 +1448,7 @@ namespace emul
 			// Overflow never occurs when adding operands with different signs. 
 			SetFlag(FLAG_O, (getMSB(source) == getMSB(before)) && (getMSB(afterB) != getMSB(source)));
 		}
-		else if (func == rawSub8 || func == rawSbb8)
+		else if (func == rawSub8 || func == rawCmp8 || func == rawSbb8)
 		{
 			// If 2 Two's Complement numbers are subtracted, and their signs are different, 
 			// then overflow occurs if and only if the result has the same sign as what is being subtracted.
@@ -1473,7 +1480,7 @@ namespace emul
 			// Overflow never occurs when adding operands with different signs. 
 			SetFlag(FLAG_O, (getMSB(source) == getMSB(before)) && (getMSB(before) != getMSB(afterW)));
 		}
-		else if (func == rawSub16 || func == rawSbb16)
+		else if (func == rawSub16 || func == rawCmp16 || func == rawSbb16)
 		{
 			// If 2 Two's Complement numbers are subtracted, and their signs are different, 
 			// then overflow occurs if and only if the result has the same sign as what is being subtracted.
@@ -1527,6 +1534,15 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "RETNear [%s][%d]", pop?"Pop":"NoPop", value);
 
 		POP(regIP);
+		regSP += value;
+	}
+
+	void CPU8086::RETFar(bool pop, WORD value)
+	{
+		LogPrintf(LOG_DEBUG, "RETFar [%s][%d]", pop ? "Pop" : "NoPop", value);
+
+		POP(regIP);
+		POP(regCS);
 		regSP += value;
 	}
 
@@ -1782,6 +1798,35 @@ namespace emul
 		PostREP();
 	}
 
+	void CPU8086::SCAS8()
+	{
+		LogPrintf(LOG_DEBUG, "SCAS8, DI=%04X", regDI);
+
+		if (PreREP())
+		{
+			SourceDest8 sd;
+
+			sd.source = m_memory.GetPtr8(S2A(regES, regDI));
+			sd.dest = &regA.hl.l;
+			Arithmetic8(sd, rawCmp8);
+
+			IndexIncDec(regDI);
+		}
+		PostREP();
+	}
+	void CPU8086::SCAS16()
+	{
+		LogPrintf(LOG_DEBUG, "SCAS16, DI=%04X", regDI);
+		throw std::exception("SCAS16 Not implemented");
+
+		if (PreREP())
+		{
+			IndexIncDec(regDI);
+			IndexIncDec(regDI);
+		}
+		PostREP();
+	}
+
 	void CPU8086::MOVS8()
 	{
 		LogPrintf(LOG_DEBUG, "MOVS8, SI=%04X, DI=%04X", regSI, regDI);
@@ -1943,5 +1988,13 @@ namespace emul
 
 		LogPrintf(LOG_DEBUG, "LoadPtr Loaded [%04X:%04X]", *(regMem.dest));
 
+	}
+
+	void CPU8086::XLAT()
+	{
+		LogPrintf(LOG_DEBUG, "XLAT");
+
+		WORD offset = regB.x + regA.hl.l; // TODO: Wrap around?
+		m_memory.Read(S2A(inSegOverride ? segOverride : regDS, offset), regA.hl.l);
 	}
 }
