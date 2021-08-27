@@ -53,7 +53,7 @@ namespace ppi
 		void SetPOSTLoop(bool);
 		void SetMathCoprocessor(bool);
 
-		void SetCurrentKeyCode(BYTE keyCode, bool release);
+		void SetCurrentKeyCode(BYTE keyCode);
 
 	protected:
 		BYTE PORTA_IN();

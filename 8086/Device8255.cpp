@@ -33,7 +33,6 @@ namespace ppi
 
 		Connect(m_baseAddress + 3, static_cast<PortConnector::INFunction>(&Device8255::CONTROL_IN));
 		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&Device8255::CONTROL_OUT));
-
 	}
 
 	// PORT A: KEYBOARD DATA (INPUT)
@@ -243,8 +242,8 @@ namespace ppi
 		m_switches |= (set ? SW_COPROCESSOR : 0);
 	}
 
-	void Device8255::SetCurrentKeyCode(BYTE keyCode, bool release)
+	void Device8255::SetCurrentKeyCode(BYTE keyCode)
 	{ 
-		m_currentKey = keyCode + (release ? 0x80 : 0);
+		m_currentKey = keyCode;
 	}
 }

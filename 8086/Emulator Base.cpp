@@ -64,7 +64,7 @@ void DumpScreen(emul::MemoryBlock& block)
 			fprintf(stderr, "\n");
 		}
 		BYTE val = block.read(emul::S2A(0xB800, offset));
-		fprintf(stderr, "%c", val ? val : ' ');
+		fprintf(stderr, "%c", (val < 32) ? ' ' : val);
 	}
 	fprintf(stderr, "\n");
 }
@@ -88,6 +88,10 @@ public:
 	BYTE DUMMY_IN() { return 0; }
 	void DUMMY_OUT(BYTE value) {}
 };
+
+BYTE keyBuf[256];
+BYTE keyBufRead = 0;
+BYTE keyBufWrite = 0;
 
 int main(void)
 {
@@ -184,40 +188,72 @@ int main(void)
 	bool timer0Out = false;
 	try
 	{
+		BYTE lastKeycode = 0;
 		size_t ticks = 0;
 		while (cpu.Step())
 		{ 
 			++ticks;
 
-			if (ticks % 100000)
+			if ((ticks % 1000 == 0) && _kbhit())
 			{
-				if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+				BYTE keyCode;
+				bool newKeycode = false;
+				int ch = _getch();
+				//fprintf(stderr, "[%c]%d", ch, ch);
+				if (ch == 27)
 				{
 					break;
 				}
-				else if (GetAsyncKeyState(VK_F10) & 0x8000)
+				else if (ch == 224)
 				{
-					while (GetAsyncKeyState(VK_F10) & 0x8000);
-					cpu.DumpInterruptTable();
-					cpu.Reset(0x8000, 0x0100);
-					_getch();
+					switch (ch = _getch())
+					{
+					case 134: // F12
+						DumpScreen(screenB800);
+						break;
+					}
 				}
-				else if (GetAsyncKeyState(VK_F12) & 0x8000)
+				else if (ch == 0)
 				{
-					DumpScreen(screenB800);
-					while (GetAsyncKeyState(VK_F12) & 0x8000);
+					switch (ch = _getch())
+					{
+					case 59: // F1
+					case 60: // F2
+					case 61: // F3
+					case 62: // F4
+					case 63: // F5
+					case 64: // F6
+					case 65: // F7
+					case 66: // F8
+					case 67: // F9
+					case 68: // F10
+						keyCode = ch;
+						newKeycode = true;
+						break;
+					}
 				}
-				else if (GetAsyncKeyState(VK_F1) & 0x8000)
+				else 
 				{
-					static bool release = false;
-					fprintf(stderr, "\t* Keyboard interrupt release=%d\n", release);
-					fprintf(stderr, "\t* CanInterrupt=%d\n", cpu.CanInterrupt());
+					keyCode = MapVirtualKeyA(LOBYTE(VkKeyScanA(ch)), 0);
+					newKeycode = true;
+				}
+
+				if (newKeycode)
+				{
+					keyBuf[keyBufWrite++] = keyCode;
+					keyBuf[keyBufWrite++] = keyCode | 0x80;
+				}
+			}
+
+			if (ticks % 10000 == 0)
+			{
+				if (keyBufRead != keyBufWrite)
+				{
+					fprintf(stderr, "* Add key to buffer\n");
 					while (!cpu.CanInterrupt())
 						cpu.Step();
 					cpu.Interrupt(8 + 1); // Hardware interrupt 1: keyboard
-					ppi.SetCurrentKeyCode(0x3B, release);
-					while (GetAsyncKeyState(VK_F1) & 0x8000);
-					release = !release;
+					ppi.SetCurrentKeyCode(keyBuf[keyBufRead++]);
 				}
 			}
 
