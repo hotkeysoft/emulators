@@ -712,11 +712,18 @@ namespace emul
 		segOverride = 0x000;
 	}
 
-	void CPU8086::Reset(ADDRESS startFrom)
+	void CPU8086::Reset(WORD segment, WORD offset)
 	{
 		CPU8086::Reset();
-		regCS = startFrom / 16;
-		regIP = startFrom % 16;
+		regCS = segment;
+		regDS = segment;
+		regES = segment;
+		regSS = segment;
+		regSP = 0xFFFE;
+		regSI = 0;
+		regDI = 0;
+		regIP = offset;
+
 		LogPrintf(LOG_DEBUG, "RESET AT CS=%04X, IP=%04X", regCS, regIP);
 	}
 
@@ -1968,7 +1975,28 @@ namespace emul
 		} 
 		else  if (interrupt == 0x10)
 		{
-			LogPrintf(LOG_DEBUG, "Video");
+			LogPrintf(LOG_DEBUG, "VIDEO");
+			switch (regA.hl.h)
+			{
+			case 0x00: LogPrintf(LOG_ERROR, "INT10: 0x00 - Set video mode [%02X]", regA.hl.l); break;
+			case 0x01: LogPrintf(LOG_ERROR, "INT10: Set text-mode cursor shape [%02X]-[%02X]", regC.hl.h, regC.hl.l); break;
+			case 0x02: LogPrintf(LOG_ERROR, "INT10: Set cursor position p[%d]:[%02d ,%02d]", regB.hl.h, regD.hl.l, regD.hl.h); break;
+			case 0x03: LogPrintf(LOG_ERROR, "INT10: Get cursor position p[%d]", regB.hl.h); break;
+			case 0x04: LogPrintf(LOG_ERROR, "INT10: Read light pen"); break;
+			case 0x05: LogPrintf(LOG_ERROR, "INT10: Select page p[%d]", regA.hl.l); break;
+			case 0x06: LogPrintf(LOG_ERROR, "INT10: Scroll up"); break;
+			case 0x07: LogPrintf(LOG_ERROR, "INT10: Scroll down"); break;
+			case 0x08: LogPrintf(LOG_ERROR, "INT10: Read char & attr at cursor"); break;
+			case 0x09: LogPrintf(LOG_ERROR, "INT10: Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", regA.hl.l, regA.hl.l, regB.hl.h, regB.hl.l, regC.x); break;
+			case 0x0A: LogPrintf(LOG_ERROR, "INT10: Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", regA.hl.l, regA.hl.l, regB.hl.h, regC.x); break;
+			case 0x0B: LogPrintf(LOG_ERROR, "INT10: Set background/border color / Set palette"); break;
+			case 0x0C: LogPrintf(LOG_ERROR, "INT10: Write pixel"); break;
+			case 0x0D: LogPrintf(LOG_ERROR, "INT10: Read pixel"); break;
+			case 0x0E: LogPrintf(LOG_ERROR, "INT10: Teletype output ch=[%02d]['%c'] p=[%d]", regA.hl.l, regA.hl.l, regB.hl.h); break;
+			case 0x0F: LogPrintf(LOG_ERROR, "INT10: Get video mode"); break;
+			case 0x11: LogPrintf(LOG_ERROR, "INT10: Change charset"); break;
+			default: LogPrintf(LOG_ERROR, "INT10: Other function ah=%02X", regA.hl.h); break;
+			}
 		}
 		else if (interrupt == 0x19)
 		{
@@ -1981,6 +2009,11 @@ namespace emul
 		else if (interrupt == 0x13)
 		{
 			LogPrintf(LOG_ERROR, "FLOPPY");
+		}
+		else if (interrupt == 0x21)
+		{
+			LogPrintf(LOG_ERROR, "DOS");
+			HLT();
 		}
 
 		PUSH(flags);

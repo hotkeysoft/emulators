@@ -62,7 +62,7 @@ namespace emul
 		void DumpInterruptTable();
 
 		virtual void Reset();
-		void Reset(ADDRESS);
+		void Reset(WORD segment, WORD offset);
 
 		void Interrupt(BYTE interrupt) { INT(interrupt); }
 		bool CanInterrupt() { return !GetFlag(FLAG::FLAG_I); }

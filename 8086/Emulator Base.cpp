@@ -41,9 +41,6 @@ void onRet(emul::CPU* cpu, emul::WORD addr)
 	fprintf(stderr, "\tELAPSED: %ul\n", cpu->getTime()-elapsed);
 }
 
-const emul::ADDRESS testROMAddress = 0xB000;
-const std::vector<BYTE> testROM = { 0xBA, 0x00, 0xC8, 0x81, 0xEA, 0x00, 0xC8, 0xC4 };
-
 int ReadInput()
 {
 	int key = _getch();
@@ -121,7 +118,8 @@ int main(void)
 	emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM);
 	memory.Allocate(&screenB800);
 
-	emul::MemoryBlock test(emul::S2A(testROMAddress), testROM, emul::MemoryType::ROM);
+	//emul::MemoryBlock test(emul::S2A(0x8000, 0x0100), 0x10000, emul::MemoryType::RAM);
+	//test.LoadBinary("test.bin");
 	//memory.Allocate(&test);
 
 	emul::MemoryBlock extraRam(0x10000, 0x10000, emul::MemoryType::RAM);
@@ -173,8 +171,6 @@ int main(void)
 	cpu.Reset();
 	cpu.EnableLog(true, Logger::LOG_ERROR);
 
-	//cpu.Reset(emul::S2A(testROMAddress));
-
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();
 
@@ -202,6 +198,8 @@ int main(void)
 				else if (GetAsyncKeyState(VK_F10) & 0x8000)
 				{
 					while (GetAsyncKeyState(VK_F10) & 0x8000);
+					cpu.DumpInterruptTable();
+					cpu.Reset(0x8000, 0x0100);
 					_getch();
 				}
 				else if (GetAsyncKeyState(VK_F12) & 0x8000)
