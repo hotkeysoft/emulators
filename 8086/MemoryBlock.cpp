@@ -97,15 +97,25 @@ namespace emul
 	{
 		LogPrintf(LOG_INFO, "LoadBinary: loading %s", file);
 
-		std::ifstream ifs(file, std::ios::in | std::ios::binary);
-		if (!ifs.read((char*)m_data, m_size))
+		FILE* f = fopen(file, "rb");
+		if (!f)
 		{
-			LogPrintf(LOG_INFO, "LoadBinary: error loading binary file");
+			LogPrintf(LOG_ERROR, "LoadBinary: error opening binary file");
+			return false;
 		}
+
+		size_t bytesRead = fread(m_data, sizeof(char), m_size, f);
+		if (bytesRead < 1)
+		{
+			LogPrintf(LOG_ERROR, "LoadBinary: error reading binary file");
+			return false;
+		}
+		else
 		{
 			LogPrintf(LOG_INFO, "LoadBinary: read %d bytes to memory block", m_size);
 		}
 
+		fclose(f);
 		return true;
 	}
 
