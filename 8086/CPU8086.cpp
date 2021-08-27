@@ -443,16 +443,16 @@ namespace emul
 		// MOV m=>a (3)
 		// ----------
 		// MOV AL, MEM8
-		case 0xA0: MOV8(&regA.hl.l, *m_memory.GetPtr8(FetchWord())); break;
+		case 0xA0: MOV8(&regA.hl.l, *m_memory.GetPtr8(S2A(inSegOverride ? segOverride : regDS, FetchWord()))); break;
 		// MOV AX, MEM16
-		case 0xA1: MOV16(&regA.x, *m_memory.GetPtr16(FetchWord())); break;
+		case 0xA1: MOV16(&regA.x, *m_memory.GetPtr16(S2A(inSegOverride ? segOverride : regDS, FetchWord()))); break;
 
 		// MOV a=>m (3)
 		// ----------
 		// MOV MEM8, AL
-		case 0xA2: MOV8(m_memory.GetPtr8(FetchWord()), regA.hl.l); break;
+		case 0xA2: MOV8(m_memory.GetPtr8(S2A(inSegOverride ? segOverride : regDS, FetchWord())), regA.hl.l); break;
 		// MOV MEM16, AX
-		case 0xA3: MOV16(m_memory.GetPtr16(FetchWord()), regA.x); break;
+		case 0xA3: MOV16(m_memory.GetPtr16(S2A(inSegOverride ? segOverride : regDS, FetchWord())), regA.x); break;
 
 		// MOVS (1)
 		// ----------
@@ -747,6 +747,19 @@ namespace emul
 			regSS, regSP,
 			regBP,
 			PRINTF_BYTE_TO_BIN_INT16(flags));
+	}
+
+	void CPU8086::DumpInterruptTable()
+	{
+		LogPrintf(LOG_ERROR, "INTERRUPT TABLE @ %04X:%04X", regCS, regIP);
+		for (BYTE interrupt = 0; interrupt <= 0x1F; ++interrupt)
+		{
+			emul::ADDRESS interruptAddress = interrupt * 4;
+			WORD* CS = m_memory.GetPtr16(interruptAddress + 2);
+			WORD* IP = m_memory.GetPtr16(interruptAddress);
+
+			LogPrintf(LOG_ERROR, "\tINT%02X: %04X:%04X", interrupt, *CS, *IP);
+		}
 	}
 
 	void CPU8086::ClearFlags()
@@ -1123,6 +1136,13 @@ namespace emul
 		regIP += offset;
 	}
 
+	void CPU8086::CALLIntra(WORD address)
+	{
+		LogPrintf(LOG_DEBUG, "CALLIntra newIP=%04X", address);
+		PUSH(regIP);
+		regIP = address;
+	}
+
 	void CPU8086::JMPfar()
 	{
 		WORD offset = FetchWord();
@@ -1145,7 +1165,7 @@ namespace emul
 
 	void CPU8086::JMPIntra(WORD address)
 	{
-		LogPrintf(LOG_DEBUG, "JMPNear newIP=%04X", address);
+		LogPrintf(LOG_DEBUG, "JMPIntra newIP=%04X", address);
 		regIP = address;
 	}
 
@@ -1380,6 +1400,7 @@ namespace emul
 		{
 			WORD before = dest;
 			WORD sign;
+			bool carry;
 			switch (op2 & 0x38)
 			{
 			case 0x00: // ROL
@@ -1394,7 +1415,10 @@ namespace emul
 				break;
 			case 0x10: // RCL
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCL");
-				throw(std::exception("SHIFTROT16 RCL not implemented"));
+				carry = GetFlag(FLAG_C);
+				SetFlag(FLAG_C, getMSB(dest));
+				dest <<= 1;
+				dest |= (carry ? 1 : 0);
 				break;
 			case 0x18: // RCR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCR");
@@ -1539,7 +1563,7 @@ namespace emul
 
 	void CPU8086::RETFar(bool pop, WORD value)
 	{
-		LogPrintf(LOG_DEBUG, "RETFar [%s][%d]", pop ? "Pop" : "NoPop", value);
+		LogPrintf(LOG_INFO, "RETFar [%s][%d]", pop ? "Pop" : "NoPop", value);
 
 		POP(regIP);
 		POP(regCS);
@@ -1609,7 +1633,7 @@ namespace emul
 
 		//RawOpFunc8 func;
 
-		BYTE* dest = GetModRM8(op2);
+		BYTE* modrm = GetModRM8(op2);
 
 		switch (op2 & 0x38)
 		{
@@ -1619,7 +1643,7 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "TEST8");
 			BYTE imm = FetchByte();
 			SourceDest8 sd;
-			sd.dest = dest;
+			sd.dest = modrm;
 			sd.source = &imm;
 			BYTE after = (BYTE)rawAnd8(sd, false);
 			SetFlag(FLAG_O, false);
@@ -1632,7 +1656,7 @@ namespace emul
 		case 0x20: // MUL
 		{
 			LogPrintf(LOG_DEBUG, "MUL8");
-			WORD result = regA.hl.l * (*dest);
+			WORD result = regA.hl.l * (*modrm);
 			regA.x = result;
 			SetFlag(FLAG_O, regA.hl.h != 0);
 			SetFlag(FLAG_C, regA.hl.h != 0);
@@ -1674,7 +1698,16 @@ namespace emul
 		}
 		case 0x10: throw(std::exception("ArithmeticMulti16 [not] not implemented"));
 		case 0x18: throw(std::exception("ArithmeticMulti16 [neg] not implemented"));
-		case 0x20: throw(std::exception("ArithmeticMulti16 [mul] not implemented"));
+		case 0x20: // MUL
+		{
+			LogPrintf(LOG_DEBUG, "MUL16");
+			DWORD result = regA.x * (*modrm);
+			regD.x = getHWord(result);
+			regA.x = getLWord(result);
+			SetFlag(FLAG_O, regA.x != 0);
+			SetFlag(FLAG_C, regA.x != 0);
+			break;
+		}
 		case 0x28: throw(std::exception("ArithmeticMulti16 [imul] not implemented"));
 		case 0x30:
 		{
@@ -1923,7 +1956,28 @@ namespace emul
 
 	void CPU8086::INT(BYTE interrupt)
 	{
-		LogPrintf(LOG_DEBUG, "Interrupt, int=%02X", interrupt);
+		LogPrintf(LOG_INFO, "Interrupt, int=%02X", interrupt);
+
+		if (interrupt == 0x16)
+		{
+			LogPrintf(LOG_ERROR, "Waiting for keyboard input");
+		} 
+		else  if (interrupt == 0x10)
+		{
+			LogPrintf(LOG_DEBUG, "Video");
+		}
+		else if (interrupt == 0x19)
+		{
+			LogPrintf(LOG_ERROR, "BOOT LOADER");
+		}
+		else if (interrupt == 0x18)
+		{
+			LogPrintf(LOG_ERROR, "BASIC");
+		}
+		else if (interrupt == 0x13)
+		{
+			LogPrintf(LOG_ERROR, "FLOPPY");
+		}
 
 		PUSH(flags);
 		PUSH(regCS);
@@ -1939,7 +1993,7 @@ namespace emul
 
 	void CPU8086::IRET()
 	{
-		LogPrintf(LOG_DEBUG, "IRET");
+		LogPrintf(LOG_INFO, "IRET");
 		POP(regIP);
 		POP(regCS);
 		POP(flags);
@@ -1957,7 +2011,7 @@ namespace emul
 		case 0x00: throw(std::exception("MultiFunc [INC MEM16] not implemented"));
 		case 0x08: throw(std::exception("MultiFunc [DEC MEM16] not implemented"));
 			// CALL RM16(intra) / CALL MEM16(intersegment)
-		case 0x10: throw(std::exception("MultiFunc [CALL RM16(intra)] not implemented"));
+		case 0x10: CALLIntra(*dest); break;
 		case 0x18: throw(std::exception("MultiFunc [CALL RM16(inter)] not implemented"));
 			// JMP RM16(intra) // JMP MEM16(intersegment)
 		case 0x20: JMPIntra(*dest); break;

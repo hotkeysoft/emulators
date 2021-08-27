@@ -68,6 +68,26 @@ void DumpScreen(emul::MemoryBlock& block)
 	fprintf(stderr, "\n");
 }
 
+class DummyPortSink : public emul::PortConnector
+{
+public:
+	DummyPortSink() : Logger("portSink")
+	{
+	}
+
+	void AddDummyIN(WORD port)
+	{
+		Connect(port, static_cast<PortConnector::INFunction>(&DummyPortSink::DUMMY_IN));
+	}
+	void AddDummyOUT(WORD port)
+	{
+		Connect(port, static_cast<PortConnector::OUTFunction>(&DummyPortSink::DUMMY_OUT));
+	}
+
+	BYTE DUMMY_IN() { return 0; }
+	void DUMMY_OUT(BYTE value) {}
+};
+
 int main(void)
 {
 	//	logFile = fopen("./dump.log", "w");
@@ -105,15 +125,15 @@ int main(void)
 
 	pit::Device8254 pit(0x40, 1193182);
 	pit.Init();
-	pit.EnableLog(true, Logger::LOG_DEBUG);
+	pit.EnableLog(true, Logger::LOG_INFO);
 
 	pic::Device8259 pic(0x20);
 	pic.Init();
-	pic.EnableLog(true, Logger::LOG_DEBUG);
+	pic.EnableLog(true, Logger::LOG_INFO);
 
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true, Logger::LOG_DEBUG);
+	ppi.EnableLog(true, Logger::LOG_INFO);
 
 	// Configuration switches
 	{
@@ -132,6 +152,9 @@ int main(void)
 	cga::DeviceCGA cga(0x3D0);
 	cga.Init();
 
+	DummyPortSink sink;
+	sink.AddDummyIN(0x3F4);
+
 	emul::CPU8086 cpu(memory, mmap);
 
 	//	cpu.AddWatch("EXECUTE", onCall, onRet);
@@ -141,11 +164,11 @@ int main(void)
 	cpu.AddDevice(ppi);
 	cpu.AddDevice(dma);
 	cpu.AddDevice(cga);
+	cpu.AddDevice(sink);
 	cpu.Reset();
-	cpu.EnableLog(false);
-	//	cpu.EnableLog(true, Logger::LOG_DEBUG);
+	cpu.EnableLog(true, Logger::LOG_ERROR);
 
-		//cpu.Reset(emul::S2A(testROMAddress));
+	//cpu.Reset(emul::S2A(testROMAddress));
 
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();
@@ -162,7 +185,13 @@ int main(void)
 	{
 		while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000) && cpu.Step())
 		{
-			if (GetAsyncKeyState(VK_F12) & 0x8000)
+			if (GetAsyncKeyState(VK_F10) & 0x8000)
+			{
+				cpu.DumpInterruptTable();
+				_getch();
+				while (GetAsyncKeyState(VK_F1) & 0x8000);
+			}
+			else if (GetAsyncKeyState(VK_F12) & 0x8000)
 			{
 				DumpScreen(screenB800);
 				while (GetAsyncKeyState(VK_F12) & 0x8000);
@@ -172,6 +201,12 @@ int main(void)
 				static bool release = false;
 				fprintf(stderr, "\t* Keyboard interrupt release=%d\n", release);
 				fprintf(stderr, "\t* CanInterrupt=%d\n", cpu.CanInterrupt());
+				while (!cpu.CanInterrupt())
+					cpu.Step();
+				cpu.EnableLog(true, Logger::LOG_DEBUG);
+				cpu.Dump();
+				cpu.EnableLog(true, Logger::LOG_INFO);
+				cpu.DumpInterruptTable();
 				cpu.Interrupt(8 + 1); // Hardware interrupt 1: keyboard
 				ppi.SetCurrentKeyCode(0x3B, release);
 				while (GetAsyncKeyState(VK_F1) & 0x8000);

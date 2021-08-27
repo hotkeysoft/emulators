@@ -59,6 +59,7 @@ namespace emul
 		void AddDevice(PortConnector& ports);
 
 		void Dump();
+		void DumpInterruptTable();
 
 		virtual void Reset();
 		void Reset(ADDRESS);
@@ -162,6 +163,7 @@ namespace emul
 		// Opcodes
 
 		void CALLNear(WORD offset);
+		void CALLIntra(WORD address);
 
 		void JMPfar();
 		void JMPNear(BYTE offset);
