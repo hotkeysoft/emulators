@@ -23,6 +23,7 @@ namespace emul
 	DWORD rawAnd16(SourceDest16 sd, bool) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
 	DWORD rawOr16(SourceDest16 sd, bool) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
 	DWORD rawXor16(SourceDest16 sd, bool) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
+	DWORD rawTest16(SourceDest16 sd, bool) { return *(sd.dest) & *(sd.source); }
 
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
@@ -41,7 +42,7 @@ namespace emul
 		// Disable override after next instruction
 		bool clearSegOverride = inSegOverride;
 
-		switch(opcode)
+		switch(opcode) 
 		{
 		// ADD rm+r=>rm (4)
 		// --------
@@ -1712,7 +1713,7 @@ namespace emul
 			SourceDest16 sd;
 			sd.dest = modrm;
 			sd.source = &imm;
-			WORD after = rawAnd16(sd, false);
+			WORD after = rawTest16(sd, false);
 			SetFlag(FLAG_O, false);
 			SetFlag(FLAG_C, false);
 			AdjustSign(after);
@@ -1740,7 +1741,7 @@ namespace emul
 		case 0x28: throw(std::exception("ArithmeticMulti16 [imul] not implemented"));
 		case 0x30:
 		{
-			LogPrintf(LOG_DEBUG, "TEST16");
+			LogPrintf(LOG_DEBUG, "DIV16");
 			if ((*modrm) == 0)
 			{
 				// TODO div by zero
