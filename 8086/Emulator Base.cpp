@@ -58,10 +58,14 @@ int ReadInput()
 
 void DumpScreen(emul::MemoryBlock& block)
 {
-	fprintf(stderr, "SCREEN MEMORY DUMP\n");
+	fprintf(stderr, "SCREEN MEMORY DUMP");
 
-	for (WORD offset = 0; offset < 800; offset += 2)
+	for (WORD offset = 0; offset < 2000; offset += 2)
 	{
+		if (offset % 80 == 0)
+		{
+			fprintf(stderr, "\n");
+		}
 		BYTE val = block.read(emul::S2A(0xB800, offset));
 		fprintf(stderr, "%c", val ? val : ' ');
 	}
@@ -147,7 +151,7 @@ int main(void)
 	dma::Device8237 dma(0x00);
 	dma.Init();
 	dma.EnableLog(false);
-	dma.EnableLog(true, Logger::LOG_INFO);
+	dma.EnableLog(true, Logger::LOG_WARNING);
 
 	cga::DeviceCGA cga(0x3D0);
 	cga.Init();
@@ -183,34 +187,40 @@ int main(void)
 	bool timer0Out = false;
 	try
 	{
-		while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000) && cpu.Step())
-		{
-			if (GetAsyncKeyState(VK_F10) & 0x8000)
+		size_t ticks = 0;
+		while (cpu.Step())
+		{ 
+			++ticks;
+
+			if (ticks % 10000)
 			{
-				cpu.DumpInterruptTable();
-				_getch();
-				while (GetAsyncKeyState(VK_F1) & 0x8000);
-			}
-			else if (GetAsyncKeyState(VK_F12) & 0x8000)
-			{
-				DumpScreen(screenB800);
-				while (GetAsyncKeyState(VK_F12) & 0x8000);
-			}
-			else if (GetAsyncKeyState(VK_F1) & 0x8000)
-			{
-				static bool release = false;
-				fprintf(stderr, "\t* Keyboard interrupt release=%d\n", release);
-				fprintf(stderr, "\t* CanInterrupt=%d\n", cpu.CanInterrupt());
-				while (!cpu.CanInterrupt())
-					cpu.Step();
-				cpu.EnableLog(true, Logger::LOG_DEBUG);
-				cpu.Dump();
-				cpu.EnableLog(true, Logger::LOG_INFO);
-				cpu.DumpInterruptTable();
-				cpu.Interrupt(8 + 1); // Hardware interrupt 1: keyboard
-				ppi.SetCurrentKeyCode(0x3B, release);
-				while (GetAsyncKeyState(VK_F1) & 0x8000);
-				release = !release;
+				if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+				{
+					break;
+				}
+				else if (GetAsyncKeyState(VK_F10) & 0x8000)
+				{
+					cpu.DumpInterruptTable();
+					_getch();
+					while (GetAsyncKeyState(VK_F1) & 0x8000);
+				}
+				else if (GetAsyncKeyState(VK_F12) & 0x8000)
+				{
+					DumpScreen(screenB800);
+					while (GetAsyncKeyState(VK_F12) & 0x8000);
+				}
+				else if (GetAsyncKeyState(VK_F1) & 0x8000)
+				{
+					static bool release = false;
+					fprintf(stderr, "\t* Keyboard interrupt release=%d\n", release);
+					fprintf(stderr, "\t* CanInterrupt=%d\n", cpu.CanInterrupt());
+					while (!cpu.CanInterrupt())
+						cpu.Step();
+					cpu.Interrupt(8 + 1); // Hardware interrupt 1: keyboard
+					ppi.SetCurrentKeyCode(0x3B, release);
+					while (GetAsyncKeyState(VK_F1) & 0x8000);
+					release = !release;
+				}
 			}
 
 			pit.Tick();
@@ -231,7 +241,7 @@ int main(void)
 			}
 
 			dma.Tick();
-		};
+		}
 	}
 	catch (std::exception e)
 	{
