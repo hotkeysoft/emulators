@@ -29,7 +29,15 @@ namespace cga
 		BYTE IN();
 		void OUT(BYTE value);
 
+		BYTE ReadStatus();
+
 	protected:
 		const WORD m_baseAddress;
+
+		bool IsHSync() { return m_hPos > 320; }
+		bool IsVSync() { return m_vPos > 200; }
+
+		WORD m_hPos;
+		WORD m_vPos;
 	};
 }

@@ -57,9 +57,9 @@ void DumpScreen(emul::MemoryBlock& block)
 {
 	fprintf(stderr, "SCREEN MEMORY DUMP");
 
-	for (WORD offset = 0; offset < 2000; offset += 2)
+	for (WORD offset = 0; offset < 4000; offset += 2)
 	{
-		if (offset % 80 == 0)
+		if (offset % 160 == 0)
 		{
 			fprintf(stderr, "\n");
 		}
@@ -142,7 +142,7 @@ int main(void)
 		ppi.SetPOSTLoop(false);
 		ppi.SetMathCoprocessor(false);
 		ppi.SetRAMConfig(ppi::RAMSIZE::RAM_128K);
-		ppi.SetDisplayConfig(ppi::DISPLAY::COLOR_40x25);
+		ppi.SetDisplayConfig(ppi::DISPLAY::COLOR_80x25);
 		ppi.SetFloppyCount(1);
 	}
 
@@ -189,7 +189,7 @@ int main(void)
 		{ 
 			++ticks;
 
-			if (ticks % 10000)
+			if (ticks % 100000)
 			{
 				if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
 				{
@@ -239,6 +239,7 @@ int main(void)
 			}
 
 			dma.Tick();
+			cga.Tick();
 		}
 	}
 	catch (std::exception e)
