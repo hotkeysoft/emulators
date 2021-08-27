@@ -247,6 +247,9 @@ namespace emul
 		void MOVS8();
 		void MOVS16();
 
+		void CMPS8();
+		void CMPS16();
+
 		void REP(bool z);
 		bool PreREP();
 		void PostREP();

@@ -198,9 +198,9 @@ namespace emul
 		// XOR i=>a (2-3)
 		// ----------
 		// AL, IMMED8
-		case 0x34: NotImplemented(opcode); break;
+		case 0x34: ArithmeticImm8(regA.hl.l, FetchByte(), rawXor8); break;
 		// AX, IMMED16
-		case 0x35: NotImplemented(opcode); break;
+		case 0x35: ArithmeticImm16(regA.x, FetchWord(), rawXor16); break;
 
 		// SS Segment Override
 		case 0x36: SEGOVERRIDE(regSS); break;
@@ -351,9 +351,9 @@ namespace emul
 
 		// ADD/--/ADC/SBB/---/SUB/---/CMP i=>rm w/sign Extension (5-6)
 		// ----------
-		// REG8/MEM8, IMM8 TODO, validate sign extension=1 but wide=0 == 0x80?
+		// REG8/MEM8, IMM8 (same as 0x80)
 		case 0x82: ArithmeticImm8(FetchByte()); break;
-		// REG16/MEM16, IMM16 ?
+		// REG16/MEM16, IMM8 (sign-extend to 16)
 		case 0x83: ArithmeticImm16(FetchByte(), true); break; // imm data = sign-extended byte
 
 		// TEST rm+r (4)
@@ -399,7 +399,7 @@ namespace emul
 		// POP rm (4)
 		// ----------
 		// POP REG16/MEM16
-		case 0x8F: NotImplemented(opcode); break;
+		case 0x8F: POP(*GetModRM16(FetchByte())); break;
 
 		// XCHG rm<=>a (1)
 		// ----------
@@ -464,9 +464,9 @@ namespace emul
 		// CMPS (1)
 		// ----------
 		// CMPS DEST-STR8, SRC-STR8
-		case 0xA6: NotImplemented(opcode); break;
+		case 0xA6: CMPS8(); break;
 		// CMPS DEST-STR16, SRC-STR16
-		case 0xA7: NotImplemented(opcode); break;
+		case 0xA7: CMPS16(); break;
 
 		// TEST i+a (2)
 		// ----------
@@ -939,7 +939,6 @@ namespace emul
 
 		if (inSegOverride)
 		{
-			// TODO: Validate
 			LogPrintf(LOG_DEBUG, "GetModRM8: Segment override =%04X", segOverride);
 			segment = segOverride;
 		}
@@ -1011,7 +1010,6 @@ namespace emul
 
 		if (inSegOverride)
 		{
-			// TODO: Validate
 			LogPrintf(LOG_DEBUG, "GetModRM8: Segment override =%04X", segOverride);
 			segment = segOverride;
 		}
@@ -1106,14 +1104,12 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "CLI");
 		SetFlag(FLAG_I, false);
-		//TODO
 	}
 
 	void CPU8086::STI()
 	{
 		LogPrintf(LOG_DEBUG, "STI");
 		SetFlag(FLAG_I, true);
-		//TODO
 	}
 
 	void CPU8086::CBW()
@@ -1341,6 +1337,7 @@ namespace emul
 		for (BYTE i = 0; i < count; ++i)
 		{
 			BYTE before = dest;
+			bool carry;
 			switch (op2 & 0x38)
 			{
 			case 0x00: // ROL
@@ -1355,11 +1352,17 @@ namespace emul
 				break;
 			case 0x10: // RCL
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
-				throw(std::exception("SHIFTROT8 RCL not implemented"));
+				carry = GetFlag(FLAG_C);
+				SetFlag(FLAG_C, getMSB(dest));
+				dest <<= 1;
+				dest |= (carry ? 1 : 0);
 				break;
 			case 0x18: // RCR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-				throw(std::exception("SHIFTROT8 RCR not implemented"));
+				carry = getLSB(dest);
+				dest >>= 1;
+				dest |= (GetFlag(FLAG_C) ? 128 : 0);
+				SetFlag(FLAG_C, carry);
 				break;
 			case 0x20: // SHL/SAL
 			case 0x30: // Undocumented 
@@ -1428,8 +1431,11 @@ namespace emul
 				dest |= (carry ? 1 : 0);
 				break;
 			case 0x18: // RCR
-				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCR");
-				throw(std::exception("SHIFTROT16 RCR not implemented"));
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
+				carry = getLSB(dest);
+				dest >>= 1;
+				dest |= (GetFlag(FLAG_C) ? 32768 : 0);
+				SetFlag(FLAG_C, carry);
 				break;
 			case 0x20: // SHL/SAL
 			case 0x30: // Undocumented 
@@ -1662,6 +1668,7 @@ namespace emul
 		}
 		case 0x10: // NOT
 		{
+			LogPrintf(LOG_DEBUG, "NOT16");
 			*modrm = ~(*modrm);
 			break;
 		}
@@ -1707,7 +1714,12 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
-		case 0x10: throw(std::exception("ArithmeticMulti16 [not] not implemented"));
+		case 0x10:
+		{
+			LogPrintf(LOG_DEBUG, "NOT16");
+			*modrm = ~(*modrm);
+			break;
+		}
 		case 0x18: throw(std::exception("ArithmeticMulti16 [neg] not implemented"));
 		case 0x20: // MUL
 		{
@@ -1905,6 +1917,53 @@ namespace emul
 
 			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI+1), val);
 			m_memory.Write(S2A(regES, regDI+1), val);
+
+			IndexIncDec(regSI);
+			IndexIncDec(regSI);
+
+			IndexIncDec(regDI);
+			IndexIncDec(regDI);
+		}
+		PostREP();
+	}
+
+	void CPU8086::CMPS8()
+	{
+		LogPrintf(LOG_DEBUG, "CMPS8, SI=%04X, DI=%04X", regSI, regDI);
+		if (inSegOverride)
+		{
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+		}
+
+		if (PreREP())
+		{
+			SourceDest8 sd;
+			sd.dest = m_memory.GetPtr8(S2A(inSegOverride ? segOverride : regDS, regSI));
+			sd.source = m_memory.GetPtr8(S2A(regES, regDI));
+
+			Arithmetic8(sd, rawCmp8);
+
+			IndexIncDec(regSI);
+
+			IndexIncDec(regDI);
+		}
+		PostREP();
+	}
+	void CPU8086::CMPS16()
+	{
+		LogPrintf(LOG_DEBUG, "CMPS16, SI=%04X, DI=%04X", regSI, regDI);
+		if (inSegOverride)
+		{
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+		}
+
+		if (PreREP())
+		{
+			SourceDest16 sd;
+			sd.dest = m_memory.GetPtr16(S2A(inSegOverride ? segOverride : regDS, regSI));
+			sd.source = m_memory.GetPtr16(S2A(regES, regDI));
+
+			Arithmetic16(sd, rawCmp16);
 
 			IndexIncDec(regSI);
 			IndexIncDec(regSI);
