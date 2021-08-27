@@ -16,3 +16,4 @@ POST failures:
 - KEYBOARD TEST
 - DISKETTE ATTACHMENT TEST
 
+Why 40 columns?

@@ -7,7 +7,7 @@ namespace emul
 	WORD rawSub8(SourceDest8 sd, bool) { WORD r = *(sd.dest) - *(sd.source); *(sd.dest) = (BYTE)r; return r; }
 	WORD rawCmp8(SourceDest8 sd, bool) { return *(sd.dest) - *(sd.source); }
 	WORD rawAdc8(SourceDest8 sd, bool c) { WORD r = *(sd.dest) + *(sd.source) + (BYTE)c; *(sd.dest) = (BYTE)r; return r; }
-	WORD rawSbb8(SourceDest8 sd, bool b) { throw(std::exception("rawSbb8 not implemented")); }
+	WORD rawSbb8(SourceDest8 sd, bool b) { WORD r = *(sd.dest) - *(sd.source) - (BYTE)b; *(sd.dest) = (BYTE)r; return r; }
 
 	WORD rawAnd8(SourceDest8 sd, bool) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
 	WORD rawOr8(SourceDest8 sd, bool) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
@@ -18,7 +18,7 @@ namespace emul
 	DWORD rawSub16(SourceDest16 sd, bool) { DWORD r = *(sd.dest) - *(sd.source); (*sd.dest) = (WORD)r; return r; }
 	DWORD rawCmp16(SourceDest16 sd, bool) { return *(sd.dest) - *(sd.source); }
 	DWORD rawAdc16(SourceDest16 sd, bool c) { DWORD r = *(sd.dest) + *(sd.source) + WORD(c); (*sd.dest) = (WORD)r; return r; }
-	DWORD rawSbb16(SourceDest16 sd, bool b) { throw(std::exception("rawSbb16 not implemented")); }
+	DWORD rawSbb16(SourceDest16 sd, bool b) { DWORD r = *(sd.dest) - *(sd.source) - WORD(b); (*sd.dest) = (WORD)r; return r; }
 
 	DWORD rawAnd16(SourceDest16 sd, bool) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
 	DWORD rawOr16(SourceDest16 sd, bool) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
@@ -1653,6 +1653,11 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
+		case 0x10: // NOT
+		{
+			*modrm = ~(*modrm);
+			break;
+		}
 		case 0x20: // MUL
 		{
 			LogPrintf(LOG_DEBUG, "MUL8");
@@ -1662,7 +1667,6 @@ namespace emul
 			SetFlag(FLAG_C, regA.hl.h != 0);
 			break;
 		}
-		case 0x10: throw(std::exception("ArithmeticMulti8 [not] not implemented"));
 		case 0x18: throw(std::exception("ArithmeticMulti8 [neg] not implemented"));
 		case 0x28: throw(std::exception("ArithmeticMulti8 [imul] not implemented"));
 		case 0x30: throw(std::exception("ArithmeticMulti8 [div] not implemented"));
@@ -2007,18 +2011,18 @@ namespace emul
 
 		switch (op2 & 0x38)
 		{
-			// INC/DEC MEM16
-		case 0x00: throw(std::exception("MultiFunc [INC MEM16] not implemented"));
-		case 0x08: throw(std::exception("MultiFunc [DEC MEM16] not implemented"));
-			// CALL RM16(intra) / CALL MEM16(intersegment)
+		// INC/DEC MEM16
+		case 0x00: INC16(*dest); break;
+		case 0x08: DEC16(*dest); break;
+		// CALL RM16(intra) / CALL MEM16(intersegment)
 		case 0x10: CALLIntra(*dest); break;
 		case 0x18: throw(std::exception("MultiFunc [CALL RM16(inter)] not implemented"));
-			// JMP RM16(intra) // JMP MEM16(intersegment)
+		// JMP RM16(intra) // JMP MEM16(intersegment)
 		case 0x20: JMPIntra(*dest); break;
 		case 0x28: throw(std::exception("MultiFunc [JMP MEM16(inter)] not implemented"));
-			// PUSH MEM16
-		case 0x30: throw(std::exception("MultiFunc [PUSH MEM16] not implemented"));
-			// not used
+		// PUSH MEM16
+		case 0x30: PUSH(*dest); break;
+		// not used
 		case 0x38: LogPrintf(LOG_WARNING, "Multifunc(0x28): not used"); break;
 
 		default:
@@ -2031,7 +2035,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "LoadPtr");
 
 		// TODO: This should fail if modrm is register
-		// otherwise we will read data in this instead of memory
+		// otherwise we will read data in *this instead of memory
 
 		// Target register -> offset
 		*(regMem.dest) = *(regMem.source);
