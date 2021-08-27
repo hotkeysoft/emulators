@@ -206,7 +206,7 @@ namespace emul
 		case 0x36: SEGOVERRIDE(regSS); break;
 
 		// AAA (1)
-		case 0x37: NotImplemented(opcode); break;
+		case 0x37: AAA(); break;
 
 		// CMP rm+r=>r (4)
 		// ----------
@@ -723,6 +723,12 @@ namespace emul
 		regSI = 0;
 		regDI = 0;
 		regIP = offset;
+
+		regA.x = 0;
+		regB.x = 0;
+		regC.x = 0;
+		regD.x = 0;
+		regBP = 0;
 
 		LogPrintf(LOG_DEBUG, "RESET AT CS=%04X, IP=%04X", regCS, regIP);
 	}
@@ -2146,5 +2152,24 @@ namespace emul
 
 		WORD offset = regB.x + regA.hl.l; // TODO: Wrap around?
 		m_memory.Read(S2A(inSegOverride ? segOverride : regDS, offset), regA.hl.l);
+	}
+
+	void CPU8086::AAA()
+	{
+		LogPrintf(LOG_DEBUG, "AAA");
+		
+		if (GetFlag(FLAG_A) || (regA.hl.l) > 9)
+		{
+			++regA.hl.h;
+			regA.hl.l += 6;
+			SetFlag(FLAG_A, true);
+			SetFlag(FLAG_C, true);
+		}
+		else
+		{
+			SetFlag(FLAG_A, false);
+			SetFlag(FLAG_C, false);
+		}
+		regA.hl.l &= 0x0F;
 	}
 }
