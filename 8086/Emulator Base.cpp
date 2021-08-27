@@ -143,8 +143,8 @@ int main(void)
 	{
 		ppi.SetPOSTLoop(false);
 		ppi.SetMathCoprocessor(false);
-		ppi.SetRAMConfig(ppi::RAMSIZE::RAM_64K);
-		ppi.SetDisplayConfig(ppi::DISPLAY::COLOR_80x25);
+		ppi.SetRAMConfig(ppi::RAMSIZE::RAM_128K);
+		ppi.SetDisplayConfig(ppi::DISPLAY::COLOR_40x25);
 		ppi.SetFloppyCount(1);
 	}
 
@@ -155,6 +155,7 @@ int main(void)
 
 	cga::DeviceCGA cga(0x3D0);
 	cga.Init();
+	cga.EnableLog(true, Logger::LOG_WARNING);
 
 	DummyPortSink sink;
 	sink.AddDummyIN(0x3F4);
@@ -200,9 +201,8 @@ int main(void)
 				}
 				else if (GetAsyncKeyState(VK_F10) & 0x8000)
 				{
-					cpu.DumpInterruptTable();
+					while (GetAsyncKeyState(VK_F10) & 0x8000);
 					_getch();
-					while (GetAsyncKeyState(VK_F1) & 0x8000);
 				}
 				else if (GetAsyncKeyState(VK_F12) & 0x8000)
 				{

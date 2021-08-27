@@ -109,14 +109,13 @@ namespace ppi
 		bool PB6 = (m_portBData & 0x08);
 
 		BYTE ret;
-		// TODO: Check, switch ON means bit=0
 		if (PB6)
 		{
-			ret = ((~m_switches) & 0xF0) >> 4;
+			ret = (m_switches & 0xF0) >> 4;
 		}
 		else
 		{
-			ret = ((~m_switches) & 0x0F);
+			ret = (m_switches & 0x0F);
 		}
 
 		LogPrintf(LOG_DEBUG, "PORTC IN, ret=%02X", ret);
@@ -211,6 +210,9 @@ namespace ppi
 		case DISPLAY::COLOR_40x25: m_switches |= SW_DISPLAY_L; break;
 		case DISPLAY::COLOR_80x25: m_switches |= SW_DISPLAY_H; break;
 		case DISPLAY::MONO_80x25: m_switches |= (SW_DISPLAY_H | SW_DISPLAY_L); break;
+		case DISPLAY::NONE:
+		default:
+			break;
 		}
 	}
 
@@ -232,7 +234,7 @@ namespace ppi
 	void Device8255::SetPOSTLoop(bool set)
 	{
 		m_switches &= ~SW_POST_LOOP;
-		m_switches |= (set ? SW_POST_LOOP : 0);
+		m_switches |= (set ? 0 : SW_POST_LOOP);
 	}
 
 	void Device8255::SetMathCoprocessor(bool set)

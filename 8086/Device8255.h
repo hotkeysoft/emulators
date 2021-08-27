@@ -10,7 +10,7 @@ using emul::WORD;
 namespace ppi
 {
 	enum class RAMSIZE { RAM_64K, RAM_128K, RAM_192K, RAM_256K };
-	enum class DISPLAY { COLOR_40x25, COLOR_80x25, MONO_80x25 };
+	enum class DISPLAY { MONO_80x25, COLOR_40x25, COLOR_80x25, NONE };
 
 	class Device8255 : public PortConnector
 	{

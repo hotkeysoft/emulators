@@ -25,10 +25,12 @@ namespace cga
 
 	BYTE DeviceCGA::IN()
 	{
+		LogPrintf(Logger::LOG_DEBUG, "IN");
 		return 0;
 	}
 	void DeviceCGA::OUT(BYTE value)
 	{
+		LogPrintf(Logger::LOG_DEBUG, "OUT");
 	}
 
 	void DeviceCGA::Tick()
