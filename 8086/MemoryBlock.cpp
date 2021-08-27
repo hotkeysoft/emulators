@@ -93,9 +93,9 @@ namespace emul
 		m_data[address - m_baseAddress] = data;
 	}
 
-	bool MemoryBlock::LoadBinary(const char* file)
+	bool MemoryBlock::LoadBinary(const char* file, WORD offset)
 	{
-		LogPrintf(LOG_INFO, "LoadBinary: loading %s", file);
+		LogPrintf(LOG_INFO, "LoadBinary: loading %s at %02Xh", file, offset);
 
 		FILE* f = fopen(file, "rb");
 		if (!f)
@@ -104,7 +104,7 @@ namespace emul
 			return false;
 		}
 
-		size_t bytesRead = fread(m_data, sizeof(char), m_size, f);
+		size_t bytesRead = fread(m_data+offset, sizeof(char), m_size-offset, f);
 		if (bytesRead < 1)
 		{
 			LogPrintf(LOG_ERROR, "LoadBinary: error reading binary file");
@@ -112,7 +112,7 @@ namespace emul
 		}
 		else
 		{
-			LogPrintf(LOG_INFO, "LoadBinary: read %d bytes to memory block", m_size);
+			LogPrintf(LOG_INFO, "LoadBinary: read %d bytes to memory block", bytesRead);
 		}
 
 		fclose(f);

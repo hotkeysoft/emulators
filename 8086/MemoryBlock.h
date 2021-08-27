@@ -24,7 +24,7 @@ namespace emul
 		size_t GetSize() const { return m_size; };
 		MemoryType GetType() const { return m_type; };
 
-		bool LoadBinary(const char* file);
+		bool LoadBinary(const char* file, WORD offset = 0);
 
 		virtual BYTE read(ADDRESS address);
 		virtual BYTE* getPtr8(ADDRESS address);

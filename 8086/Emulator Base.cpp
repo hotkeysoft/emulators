@@ -122,8 +122,8 @@ int main(void)
 	emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM);
 	memory.Allocate(&screenB800);
 
-	//emul::MemoryBlock test(emul::S2A(0x8000, 0x0100), 0x10000, emul::MemoryType::RAM);
-	//test.LoadBinary("test.bin");
+	//emul::MemoryBlock test(emul::S2A(0x8000), 0x10000, emul::MemoryType::RAM);
+	//test.LoadBinary("data/bin2dec.com", 0x0100);
 	//memory.Allocate(&test);
 
 	emul::MemoryBlock extraRam(0x10000, 0x10000, emul::MemoryType::RAM);
@@ -226,9 +226,12 @@ int main(void)
 					case 65: // F7
 					case 66: // F8
 					case 67: // F9
-					case 68: // F10
 						keyCode = ch;
 						newKeycode = true;
+						break;
+
+					case 68: // F10
+						cpu.Reset(0x8000, 0x0100);
 						break;
 					}
 				}
