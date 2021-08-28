@@ -267,6 +267,7 @@ namespace emul
 		void XLAT();
 
 		void AAA();
+		void AAM();
 
 		void NotImplemented(BYTE);
 	};

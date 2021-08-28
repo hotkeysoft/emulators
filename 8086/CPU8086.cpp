@@ -576,7 +576,7 @@ namespace emul
 		case 0xD3: SHIFTROT16(FetchByte(), regC.hl.l); break;
 
 		// AAM
-		case 0xD4: NotImplemented(opcode); break;
+		case 0xD4: AAM(); break;
 		// AAD
 		case 0xD5: NotImplemented(opcode); break;
 
@@ -1220,6 +1220,7 @@ namespace emul
 		SetFlag(FLAG_A, ((before ^ b) & 0x18) == 0x18);
 		AdjustParity(b);
 	}
+
 	void CPU8086::DEC8(BYTE& b)
 	{
 		LogPrintf(LOG_DEBUG, "DEC8");
@@ -1508,6 +1509,7 @@ namespace emul
 		SetFlag(FLAG_A, ((before ^ afterB) & 0x18) == 0x18);
 		AdjustParity(afterB);
 	}
+
 	void CPU8086::Arithmetic16(SourceDest16 sd, RawOpFunc16 func)
 	{
 		const WORD& source = *(sd.source);
@@ -1651,8 +1653,6 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticMulti8");
 
-		//RawOpFunc8 func;
-
 		BYTE* modrm = GetModRM8(op2);
 
 		switch (op2 & 0x38)
@@ -1665,7 +1665,7 @@ namespace emul
 			SourceDest8 sd;
 			sd.dest = modrm;
 			sd.source = &imm;
-			BYTE after = (BYTE)rawAnd8(sd, false);
+			BYTE after = (BYTE)rawTest8(sd, false);
 			SetFlag(FLAG_O, false);
 			SetFlag(FLAG_C, false);
 			AdjustSign(after);
@@ -1688,7 +1688,17 @@ namespace emul
 			SetFlag(FLAG_C, regA.hl.h != 0);
 			break;
 		}
-		case 0x18: throw(std::exception("ArithmeticMulti8 [neg] not implemented"));
+		case 0x18: 
+		{
+			LogPrintf(LOG_DEBUG, "NEG8");
+			BYTE tempDest = 0;
+			SourceDest8 sd;
+			sd.dest = &tempDest;
+			sd.source = modrm;
+			Arithmetic8(sd, rawSub8);
+			*modrm = tempDest;
+			break;
+		}
 		case 0x28: throw(std::exception("ArithmeticMulti8 [imul] not implemented"));
 		case 0x30: throw(std::exception("ArithmeticMulti8 [div] not implemented"));
 		case 0x38: throw(std::exception("ArithmeticMulti8 [idiv] not implemented"));
@@ -1705,7 +1715,7 @@ namespace emul
 
 		switch (op2 & 0x38)
 		{
-		case 0x00:
+		case 0x00: // TEST
 		case 0x08:
 		{
 			LogPrintf(LOG_DEBUG, "TEST16");
@@ -1727,7 +1737,17 @@ namespace emul
 			*modrm = ~(*modrm);
 			break;
 		}
-		case 0x18: throw(std::exception("ArithmeticMulti16 [neg] not implemented"));
+		case 0x18:
+		{
+			LogPrintf(LOG_DEBUG, "NEG16");
+			WORD tempDest = 0;
+			SourceDest16 sd;
+			sd.dest = &tempDest;
+			sd.source = modrm;
+			Arithmetic16(sd, rawSub16);
+			*modrm = tempDest;
+			break;
+		}
 		case 0x20: // MUL
 		{
 			LogPrintf(LOG_DEBUG, "MUL16");
@@ -2042,6 +2062,7 @@ namespace emul
 		else  if (interrupt == 0x10)
 		{
 			LogPrintf(LOG_DEBUG, "VIDEO");
+#ifdef TRACE_INT10
 			switch (regA.hl.h)
 			{
 			case 0x00: LogPrintf(LOG_ERROR, "INT10: 0x00 - Set video mode [%02X]", regA.hl.l); break;
@@ -2063,6 +2084,7 @@ namespace emul
 			case 0x11: LogPrintf(LOG_ERROR, "INT10: Change charset"); break;
 			default: LogPrintf(LOG_ERROR, "INT10: Other function ah=%02X", regA.hl.h); break;
 			}
+#endif
 		}
 		else if (interrupt == 0x19)
 		{
@@ -2172,5 +2194,16 @@ namespace emul
 			SetFlag(FLAG_C, false);
 		}
 		regA.hl.l &= 0x0F;
+	}
+
+	void CPU8086::AAM()
+	{
+		LogPrintf(LOG_DEBUG, "AAM");
+		regA.hl.h = regA.hl.l / 10;
+		regA.hl.l %= regA.hl.l;
+
+		AdjustSign(regA.hl.l);
+		AdjustZero(regA.hl.l);
+		AdjustParity(regA.hl.l);
 	}
 }
