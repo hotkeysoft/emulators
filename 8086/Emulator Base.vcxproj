@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Logger.cpp" />
+    <ClCompile Include="Console.cpp" />
     <ClCompile Include="CPU.cpp" />
     <ClCompile Include="CPU8086.cpp" />
     <ClCompile Include="Device8237.cpp" />
@@ -162,6 +163,7 @@
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Console.h" />
     <ClInclude Include="CPU.h" />
     <ClInclude Include="CPU8086.h" />
     <ClInclude Include="Device8237.h" />

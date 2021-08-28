@@ -10,6 +10,7 @@
 #include "Device8237.h"
 #include "Device8259.h"
 #include "DeviceCGA.h"
+#include "Console.h"
 #include <conio.h>
 #include <vector>
 #include <string>
@@ -24,8 +25,31 @@
 
 FILE* logFile = nullptr;
 
+Console console;
+
+// 16K screen buffer
+emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM);
+
+void DumpScreen();
+
+bool showScreen = false;
+void ToggleScreen()
+{
+	showScreen = !showScreen;
+	if (showScreen)
+	{
+		DumpScreen();
+	}
+	else
+	{
+		fprintf(stderr, "Console mode\n");
+	}
+}
+
 void LogCallback(const char *str)
 {
+	if (showScreen)
+		return;
 	fprintf(logFile ? logFile : stderr, str);
 }
 
@@ -53,20 +77,18 @@ int ReadInput()
 	return key;
 }
 
-void DumpScreen(emul::MemoryBlock& block)
+void DumpScreen()
 {
-	fprintf(stderr, "SCREEN MEMORY DUMP");
-
 	for (WORD offset = 0; offset < 4000; offset += 2)
 	{
-		if (offset % 160 == 0)
-		{
-			fprintf(stderr, "\n");
-		}
-		BYTE val = block.read(emul::S2A(0xB800, offset));
-		fprintf(stderr, "%c", (val < 32) ? ' ' : val);
+		BYTE val = screenB800.read(emul::S2A(0xB800, offset));
+		BYTE attr = screenB800.read(emul::S2A(0xB800, offset+1));
+
+		size_t y = offset / 160;
+		size_t x = (offset/2) % 80;
+
+		console.WriteAt(x, y, val, attr);
 	}
-	fprintf(stderr, "\n");
 }
 
 class DummyPortSink : public emul::PortConnector
@@ -97,6 +119,8 @@ int main(void)
 {
 	//	logFile = fopen("./dump.log", "w");
 
+	console.Init();
+
 	Logger::RegisterLogCallback(LogCallback);
 
 	emul::Memory memory(emul::CPU8086_ADDRESS_BITS);
@@ -118,8 +142,6 @@ int main(void)
 	base64K.Clear(0xA5);
 	memory.Allocate(&base64K);
 
-	// 16K screen buffer
-	emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM);
 	memory.Allocate(&screenB800);
 
 	//emul::MemoryBlock test(emul::S2A(0x8000), 0x10000, emul::MemoryType::RAM);
@@ -193,13 +215,18 @@ int main(void)
 		{ 
 			++ticks;
 
+			if (showScreen && (ticks % 100000 == 0))
+			{
+				DumpScreen();
+			}
+
 			if ((ticks % 1000 == 0) && _kbhit())
 			{
 				BYTE keyCode;
 				bool shift = false;
 				bool newKeycode = false;
 				int ch = _getch();
-				//fprintf(stderr, "[%c]%d", ch, ch);
+
 				if (ch == 27)
 				{
 					break;
@@ -209,7 +236,7 @@ int main(void)
 					switch (ch = _getch())
 					{
 					case 134: // F12
-						DumpScreen(screenB800);
+						ToggleScreen();
 						break;
 					}
 				}
@@ -263,7 +290,6 @@ int main(void)
 			{
 				if (keyBufRead != keyBufWrite)
 				{
-					fprintf(stderr, "* Add key to buffer\n");
 					while (!cpu.CanInterrupt())
 						cpu.Step();
 					cpu.Interrupt(8 + 1); // Hardware interrupt 1: keyboard
@@ -276,7 +302,6 @@ int main(void)
 			if (out != timer0Out)
 			{
 				timer0Out = out;
-				fprintf(stderr,"\t* timer 0 output changed: %d\n", out);
 				if (out)
 				{
 					// TODO: this bypasses a lot of things.
@@ -308,8 +333,6 @@ int main(void)
 		fprintf(stderr, "%02X ", val);
 	}
 	fprintf(stderr, "\n\n");
-
-	DumpScreen(screenB800);
 
 	if (logFile)
 	{
