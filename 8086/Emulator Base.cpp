@@ -13,6 +13,7 @@
 #include "Console.h"
 #include <conio.h>
 #include <vector>
+#include <deque>
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -34,6 +35,7 @@ const SCREENWIDTH screenWidth = COLS80;
 emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM);
 
 void DumpScreen();
+void DumpBackLog();
 
 bool showScreen = false;
 void ToggleScreen()
@@ -46,14 +48,37 @@ void ToggleScreen()
 	else
 	{
 		fprintf(stderr, "Console mode\n");
+		DumpBackLog();
+	}
+}
+
+const size_t BACKLOG_MAX = 1000;
+std::deque<std::string> backLog;
+
+void DumpBackLog()
+{
+	while (backLog.size())
+	{
+		std::string& entry = backLog.front();
+		fprintf(stderr, "%s", entry.c_str());
+		backLog.pop_front();
 	}
 }
 
 void LogCallback(const char *str)
 {
-	if (showScreen)
-		return;
-	fprintf(logFile ? logFile : stderr, str);
+	if (showScreen & !logFile)
+	{
+		backLog.push_back(str);
+		while (backLog.size() > BACKLOG_MAX)
+		{
+			backLog.pop_front();
+		}
+	}
+	else
+	{
+		fprintf(logFile ? logFile : stderr, str);
+	}
 }
 
 unsigned long elapsed;
@@ -328,14 +353,8 @@ int main(void)
 	time(&stopTime);
 
 	cpu.Dump();
-	fprintf(stderr, "\n");
-	for (emul::ADDRESS a = 0x400; a < 0x400 + 64; ++a)
-	{
-		BYTE val;
-		memory.Read(a, val);
-		fprintf(stderr, "%02X ", val);
-	}
-	fprintf(stderr, "\n\n");
+
+	DumpBackLog();
 
 	if (logFile)
 	{
