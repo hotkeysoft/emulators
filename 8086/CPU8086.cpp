@@ -1326,10 +1326,12 @@ namespace emul
 	void CPU8086::SHIFTROT8(BYTE op2, BYTE count)
 	{
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
+
+		BYTE* b = GetModRM8(op2);
+		BYTE& dest = *b;
+
 		if (count == 0)
 		{
-			BYTE* b = GetModRM8(op2);
-			BYTE& dest = *b;
 			SetFlag(FLAG_C, false);
 			SetFlag(FLAG_O, false);
 			AdjustSign(dest);
@@ -1339,8 +1341,6 @@ namespace emul
 		}
 
 		// TODO: Ugly but approximates what i8086 does
-		BYTE* b = GetModRM8(op2);
-		BYTE& dest = *b;
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 before=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
 		for (BYTE i = 0; i < count; ++i)
 		{
@@ -1405,14 +1405,21 @@ namespace emul
 	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
 	{
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
+
+		WORD* b = GetModRM16(op2);
+		WORD& dest = *b;
+
 		if (count == 0)
 		{
-			throw std::exception("SHIFTROT16 count==0 not implemented");
+			SetFlag(FLAG_C, false);
+			SetFlag(FLAG_O, false);
+			AdjustSign(dest);
+			AdjustZero(dest);
+			AdjustParity(dest);
+			return;
 		}
 
 		// TODO: Ugly but approximates what i8086 does
-		WORD* b = GetModRM16(op2);
-		WORD& dest = *b;
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 before=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
 		for (BYTE i = 0; i < count; ++i)
 		{
@@ -1987,6 +1994,7 @@ namespace emul
 		if (PreREP())
 		{
 			SourceDest16 sd;
+			// TODO: Can read past end of block
 			sd.dest = m_memory.GetPtr16(S2A(inSegOverride ? segOverride : regDS, regSI));
 			sd.source = m_memory.GetPtr16(S2A(regES, regDI));
 
@@ -2062,7 +2070,9 @@ namespace emul
 		else  if (interrupt == 0x10)
 		{
 			LogPrintf(LOG_DEBUG, "VIDEO");
-#ifdef TRACE_INT10
+#if 1
+			char ch = (regA.hl.l < 32) ? '.' : (char)regA.hl.l;
+			
 			switch (regA.hl.h)
 			{
 			case 0x00: LogPrintf(LOG_ERROR, "INT10: 0x00 - Set video mode [%02X]", regA.hl.l); break;
@@ -2074,16 +2084,17 @@ namespace emul
 			case 0x06: LogPrintf(LOG_ERROR, "INT10: Scroll up"); break;
 			case 0x07: LogPrintf(LOG_ERROR, "INT10: Scroll down"); break;
 			case 0x08: LogPrintf(LOG_ERROR, "INT10: Read char & attr at cursor"); break;
-			case 0x09: LogPrintf(LOG_ERROR, "INT10: Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", regA.hl.l, regA.hl.l, regB.hl.h, regB.hl.l, regC.x); break;
-			case 0x0A: LogPrintf(LOG_ERROR, "INT10: Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", regA.hl.l, regA.hl.l, regB.hl.h, regC.x); break;
+			case 0x09: LogPrintf(LOG_ERROR, "INT10: Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", regA.hl.l, ch, regB.hl.h, regB.hl.l, regC.x); break;
+			case 0x0A: LogPrintf(LOG_ERROR, "INT10: Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", regA.hl.l, ch, regB.hl.h, regC.x); break;
 			case 0x0B: LogPrintf(LOG_ERROR, "INT10: Set background/border color / Set palette"); break;
 			case 0x0C: LogPrintf(LOG_ERROR, "INT10: Write pixel"); break;
 			case 0x0D: LogPrintf(LOG_ERROR, "INT10: Read pixel"); break;
-			case 0x0E: LogPrintf(LOG_ERROR, "INT10: Teletype output ch=[%02d]['%c'] p=[%d]", regA.hl.l, regA.hl.l, regB.hl.h); break;
+			case 0x0E: LogPrintf(LOG_ERROR, "INT10: Teletype output ch=[%02d]['%c'] p=[%d]", regA.hl.l, ch, regB.hl.h); break;
 			case 0x0F: LogPrintf(LOG_ERROR, "INT10: Get video mode"); break;
 			case 0x11: LogPrintf(LOG_ERROR, "INT10: Change charset"); break;
 			default: LogPrintf(LOG_ERROR, "INT10: Other function ah=%02X", regA.hl.h); break;
 			}
+			return;
 #endif
 		}
 		else if (interrupt == 0x19)

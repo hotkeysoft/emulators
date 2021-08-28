@@ -123,11 +123,11 @@ int main(void)
 	memory.Allocate(&screenB800);
 
 	//emul::MemoryBlock test(emul::S2A(0x8000), 0x10000, emul::MemoryType::RAM);
-	//test.LoadBinary("data/bin2dec.com", 0x0100);
+	//test.LoadBinary(R"(C:\Programs\emu8086\MyBuild\sbb.com)", 0x0100);
 	//memory.Allocate(&test);
 
-	emul::MemoryBlock extraRam(0x10000, 0x10000, emul::MemoryType::RAM);
-	memory.Allocate(&extraRam);
+	//emul::MemoryBlock extraRam(0x10000, 0x10000, emul::MemoryType::RAM);
+	//memory.Allocate(&extraRam);
 
 	pit::Device8254 pit(0x40, 1193182);
 	pit.Init();
@@ -145,7 +145,7 @@ int main(void)
 	{
 		ppi.SetPOSTLoop(false);
 		ppi.SetMathCoprocessor(false);
-		ppi.SetRAMConfig(ppi::RAMSIZE::RAM_128K);
+		ppi.SetRAMConfig(ppi::RAMSIZE::RAM_64K);
 		ppi.SetDisplayConfig(ppi::DISPLAY::COLOR_80x25);
 		ppi.SetFloppyCount(1);
 	}
@@ -188,7 +188,6 @@ int main(void)
 	bool timer0Out = false;
 	try
 	{
-		BYTE lastKeycode = 0;
 		size_t ticks = 0;
 		while (cpu.Step())
 		{ 
@@ -197,6 +196,7 @@ int main(void)
 			if ((ticks % 1000 == 0) && _kbhit())
 			{
 				BYTE keyCode;
+				bool shift = false;
 				bool newKeycode = false;
 				int ch = _getch();
 				//fprintf(stderr, "[%c]%d", ch, ch);
@@ -231,20 +231,31 @@ int main(void)
 						break;
 
 					case 68: // F10
-						cpu.Reset(0x8000, 0x0100);
+						base64K.LoadBinary("data/BASIC_F600.BIN", 0x1000);
+						cpu.Reset(0x0100, 0x0000);
 						break;
 					}
 				}
 				else 
 				{
-					keyCode = MapVirtualKeyA(LOBYTE(VkKeyScanA(ch)), 0);
+					SHORT vkey = VkKeyScanA(ch);
+					shift = HIBYTE(vkey) & 1;
+					keyCode = MapVirtualKeyA(LOBYTE(vkey), 0);
 					newKeycode = true;
 				}
 
 				if (newKeycode)
 				{
+					if (shift)
+					{
+						keyBuf[keyBufWrite++] = 0x2A;
+					}
 					keyBuf[keyBufWrite++] = keyCode;
 					keyBuf[keyBufWrite++] = keyCode | 0x80;
+					if (shift)
+					{
+						keyBuf[keyBufWrite++] = 0x2A | 0x80;
+					}
 				}
 			}
 
