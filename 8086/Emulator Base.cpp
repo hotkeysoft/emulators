@@ -27,6 +27,9 @@ FILE* logFile = nullptr;
 
 Console console;
 
+enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
+const SCREENWIDTH screenWidth = COLS80;
+
 // 16K screen buffer
 emul::MemoryBlock screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM);
 
@@ -84,8 +87,8 @@ void DumpScreen()
 		BYTE val = screenB800.read(emul::S2A(0xB800, offset));
 		BYTE attr = screenB800.read(emul::S2A(0xB800, offset+1));
 
-		size_t y = offset / 160;
-		size_t x = (offset/2) % 80;
+		size_t y = offset / (screenWidth * 2);
+		size_t x = (offset/2) % screenWidth;
 
 		console.WriteAt(x, y, val, attr);
 	}
@@ -119,7 +122,7 @@ int main(void)
 {
 	//	logFile = fopen("./dump.log", "w");
 
-	console.Init();
+	console.Init(screenWidth);
 
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -168,7 +171,7 @@ int main(void)
 		ppi.SetPOSTLoop(false);
 		ppi.SetMathCoprocessor(false);
 		ppi.SetRAMConfig(ppi::RAMSIZE::RAM_64K);
-		ppi.SetDisplayConfig(ppi::DISPLAY::COLOR_80x25);
+		ppi.SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
 		ppi.SetFloppyCount(1);
 	}
 

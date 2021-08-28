@@ -12,7 +12,8 @@ Console::~Console()
 {
 }
 
-void Console::Init() {
+void Console::Init(short columns) 
+{
 	m_hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	CONSOLE_FONT_INFOEX cfi = { sizeof(cfi) };
@@ -26,11 +27,11 @@ void Console::Init() {
 	// Use cfi to set the screen buffer's new font
 	SetCurrentConsoleFontEx(m_hConsole, FALSE, &cfi);
 
-	SMALL_RECT windowSize = { 0, 0, 79, 25 };
+	SMALL_RECT windowSize = { 0, 0, columns-1, 25 };
 	if (!SetConsoleWindowInfo(m_hConsole, TRUE, &windowSize)) {
 		fprintf(stderr, "SetConsoleWindowInfo failed %d\n", GetLastError());
 	}
-	if (!SetConsoleScreenBufferSize(m_hConsole, { 80, 26 })) {
+	if (!SetConsoleScreenBufferSize(m_hConsole, { columns, 26 })) {
 		fprintf(stderr, "SetConsoleScreenBufferSize failed %d\n", GetLastError());
 	}
 

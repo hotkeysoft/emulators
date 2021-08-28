@@ -10,7 +10,7 @@ public:
 	Console();
 	~Console();
 
-	void Init();
+	void Init(short columns = 80);
 
 	void WriteAt(short x, short y, const char* text, int len, WORD attr = 15);
 	void WriteAt(short x, short y, char ch, WORD attr);
