@@ -252,7 +252,7 @@ namespace emul
 
 		void REP(bool z);
 		bool PreREP();
-		void PostREP();
+		void PostREP(bool checkZ);
 
 		void SEGOVERRIDE(WORD);
 

@@ -37,6 +37,9 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
+		//if (regIP == 0x64C4)
+		//	__debugbreak();
+
 		++regIP;
 
 		// Disable override after next instruction
@@ -1842,7 +1845,7 @@ namespace emul
 			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), regA.hl.l);
 			IndexIncDec(regSI);
 		}
-		PostREP();
+		PostREP(false);
 	}
 
 	void CPU8086::LODS16()
@@ -1860,7 +1863,7 @@ namespace emul
 			IndexIncDec(regSI);
 			IndexIncDec(regSI);
 		}
-		PostREP();
+		PostREP(false);
 	}
 
 	void CPU8086::STOS8()
@@ -1872,7 +1875,7 @@ namespace emul
 			m_memory.Write(S2A(regES, regDI), regA.hl.l);
 			IndexIncDec(regDI);
 		}
-		PostREP();
+		PostREP(false);
 	}
 	void CPU8086::STOS16()
 	{
@@ -1885,7 +1888,7 @@ namespace emul
 			IndexIncDec(regDI);
 			IndexIncDec(regDI);
 		}
-		PostREP();
+		PostREP(false);
 	}
 
 	void CPU8086::SCAS8()
@@ -1902,7 +1905,7 @@ namespace emul
 
 			IndexIncDec(regDI);
 		}
-		PostREP();
+		PostREP(true);
 	}
 	void CPU8086::SCAS16()
 	{
@@ -1914,7 +1917,7 @@ namespace emul
 			IndexIncDec(regDI);
 			IndexIncDec(regDI);
 		}
-		PostREP();
+		PostREP(true);
 	}
 
 	void CPU8086::MOVS8()
@@ -1933,7 +1936,7 @@ namespace emul
 			IndexIncDec(regSI);
 			IndexIncDec(regDI);
 		}
-		PostREP();
+		PostREP(false);
 	}
 	void CPU8086::MOVS16()
 	{
@@ -1958,7 +1961,7 @@ namespace emul
 			IndexIncDec(regDI);
 			IndexIncDec(regDI);
 		}
-		PostREP();
+		PostREP(false);
 	}
 
 	void CPU8086::CMPS8()
@@ -1981,7 +1984,7 @@ namespace emul
 
 			IndexIncDec(regDI);
 		}
-		PostREP();
+		PostREP(true);
 	}
 	void CPU8086::CMPS16()
 	{
@@ -2006,7 +2009,7 @@ namespace emul
 			IndexIncDec(regDI);
 			IndexIncDec(regDI);
 		}
-		PostREP();
+		PostREP(true);
 	}
 
 	void CPU8086::REP(bool z)
@@ -2031,7 +2034,7 @@ namespace emul
 		}
 		return true;
 	}
-	void CPU8086::PostREP()
+	void CPU8086::PostREP(bool checkZ)
 	{
 		if (!inRep)
 		{
@@ -2040,7 +2043,7 @@ namespace emul
 
 		--regC.x;
 		LogPrintf(LOG_DEBUG, "PostRep, cx=%04X", regC.x);
-		if (GetFlag(FLAG_Z) == repZ)
+		if (!checkZ || (GetFlag(FLAG_Z) == repZ))
 		{ 
 			regIP = repIP;
 		}
@@ -2070,7 +2073,7 @@ namespace emul
 		else  if (interrupt == 0x10)
 		{
 			LogPrintf(LOG_DEBUG, "VIDEO");
-#if 1
+#if 0
 			char ch = (regA.hl.l < 32) ? '.' : (char)regA.hl.l;
 			
 			switch (regA.hl.h)
