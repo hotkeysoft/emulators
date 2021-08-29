@@ -55,6 +55,7 @@ namespace emul
 		if (it == m_inputPorts.end())
 		{
 			LogPrintf(LOG_WARNING, "PortConnector::In: port 0x%04X not allocated", port);
+			value = 0xFF;
 			return false;
 		}
 
