@@ -10,6 +10,7 @@
 #include "Device8237.h"
 #include "Device8259.h"
 #include "DeviceCGA.h"
+#include "DeviceFloppy.h"
 #include "Console.h"
 #include <conio.h>
 #include <vector>
@@ -147,7 +148,7 @@ int main(void)
 {
 	//	logFile = fopen("./dump.log", "w");
 
-	console.Init(screenWidth);
+	//console.Init(screenWidth);
 
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -181,15 +182,15 @@ int main(void)
 
 	pit::Device8254 pit(0x40, 1193182);
 	pit.Init();
-	pit.EnableLog(true, Logger::LOG_INFO);
+	pit.EnableLog(true, Logger::LOG_WARNING);
 
 	pic::Device8259 pic(0x20);
 	pic.Init();
-	pic.EnableLog(true, Logger::LOG_INFO);
+	pic.EnableLog(true, Logger::LOG_WARNING);
 
 	ppi::Device8255 ppi(0x60);
 	ppi.Init();
-	ppi.EnableLog(true, Logger::LOG_INFO);
+	ppi.EnableLog(true, Logger::LOG_WARNING);
 
 	// Configuration switches
 	{
@@ -209,8 +210,11 @@ int main(void)
 	cga.Init();
 	cga.EnableLog(true, Logger::LOG_WARNING);
 
+	fdc::DeviceFloppy floppy(0x03F0);
+	floppy.Init();
+	floppy.EnableLog(true, Logger::LOG_INFO);
+
 	DummyPortSink sink;
-	sink.AddDummyIN(0x3F4);
 
 	emul::CPU8086 cpu(memory, mmap);
 
@@ -221,6 +225,7 @@ int main(void)
 	cpu.AddDevice(ppi);
 	cpu.AddDevice(dma);
 	cpu.AddDevice(cga);
+	cpu.AddDevice(floppy);
 	cpu.AddDevice(sink);
 	cpu.Reset();
 	cpu.EnableLog(true, Logger::LOG_ERROR);
@@ -343,6 +348,7 @@ int main(void)
 
 			dma.Tick();
 			cga.Tick();
+			floppy.Tick();
 		}
 	}
 	catch (std::exception e)
