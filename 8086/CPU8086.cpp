@@ -37,8 +37,8 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		//if (regIP == 0x64C4)
-		//	__debugbreak();
+		if (regIP == 0x0104)
+			__debugbreak();
 
 		++regIP;
 
@@ -2123,7 +2123,7 @@ namespace emul
 		PUSH(regIP);
 
 		SetFlag(FLAG_T, false);
-		SetFlag(FLAG_I, false);
+		CLI();
 		
 		ADDRESS interruptAddress = interrupt * 4;
 		regCS = *m_memory.GetPtr16(interruptAddress + 2);

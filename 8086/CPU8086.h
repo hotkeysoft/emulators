@@ -65,7 +65,7 @@ namespace emul
 		void Reset(WORD segment, WORD offset);
 
 		void Interrupt(BYTE interrupt) { INT(interrupt); }
-		bool CanInterrupt() { return !GetFlag(FLAG::FLAG_I); }
+		bool CanInterrupt() { return GetFlag(FLAG::FLAG_I); }
 
 	protected:
 		PortAggregator m_ports;
