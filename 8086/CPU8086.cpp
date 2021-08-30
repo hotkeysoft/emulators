@@ -1389,10 +1389,10 @@ namespace emul
 				break;
 			case 0x38: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
+				SetFlag(FLAG_C, getLSB(dest));
 				sign = (dest & 128);
 				dest >>= 1;
 				dest |= sign;
-				SetFlag(FLAG_C, getLSB(dest));
 				break;
 			default:
 				throw(std::exception("not possible"));
