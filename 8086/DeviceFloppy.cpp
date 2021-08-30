@@ -225,6 +225,10 @@ namespace fdc
 			m_dataRegisterReady = true;
 			m_commandBusy = false;
 			break;
+		case STATE::CMD_READ:
+			// temp
+			m_state = STATE::CMD_WAIT;
+			break;
 
 		default: throw std::exception("Unknown state");
 		}
