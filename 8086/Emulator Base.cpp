@@ -210,9 +210,9 @@ int main(void)
 	cga.Init();
 	cga.EnableLog(true, Logger::LOG_WARNING);
 
-	fdc::DeviceFloppy floppy(0x03F0);
+	fdc::DeviceFloppy floppy(0x03F0, 1193182);
 	floppy.Init();
-	floppy.EnableLog(true, Logger::LOG_INFO);
+	floppy.EnableLog(true, Logger::LOG_DEBUG);
 
 	DummyPortSink sink;
 
@@ -341,9 +341,16 @@ int main(void)
 					// Quick and dirty for now: Check mask manually and interrupt cpu
 					if (!(pic.Mask_IN() & 0x01))
 					{
-						cpu.Interrupt(8+0); // Hardware interrupt 0: timer
+						cpu.Interrupt(8 + 6); // Hardware interrupt 0: timer
 					}
 				}
+			}
+
+			if (floppy.IsInterruptPending() && cpu.CanInterrupt())
+			{
+				fprintf(stderr, "Fire Floppy interrupt\n");
+				cpu.Interrupt(8 + 6); // Hardware interrupt 6: floppy
+				floppy.ClearInterrupt();
 			}
 
 			dma.Tick();
