@@ -26,6 +26,9 @@
 
 #include <Windows.h>
 
+//#define NO_CONSOLE
+//#define CPU_TEST
+
 FILE* logFile = nullptr;
 
 Console console;
@@ -149,7 +152,9 @@ int main(void)
 {
 	//	logFile = fopen("./dump.log", "w");
 
-	//console.Init(screenWidth);
+#ifndef NO_CONSOLE
+	console.Init(screenWidth);
+#endif
 
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -213,7 +218,7 @@ int main(void)
 
 	fdc::DeviceFloppy floppy(0x03F0, 1193182);
 	floppy.Init();
-	floppy.EnableLog(true, Logger::LOG_DEBUG);
+	floppy.EnableLog(true, Logger::LOG_WARNING);
 
 	DummyPortSink sink;
 
@@ -262,7 +267,7 @@ int main(void)
 				DumpScreen();
 			}
 
-			if ((ticks % 1000 == 0) && _kbhit())
+			if ((ticks % 10000 == 0) && _kbhit())
 			{
 				BYTE keyCode;
 				bool shift = false;
@@ -330,10 +335,8 @@ int main(void)
 
 			if (ticks % 10000 == 0)
 			{
-				if (keyBufRead != keyBufWrite)
+				if (keyBufRead != keyBufWrite && cpu.CanInterrupt())
 				{
-					while (!cpu.CanInterrupt())
-						cpu.Step();
 					cpu.Interrupt(8 + 1); // Hardware interrupt 1: keyboard
 					ppi.SetCurrentKeyCode(keyBuf[keyBufRead++]);
 				}
@@ -357,7 +360,7 @@ int main(void)
 
 			if (floppy.IsInterruptPending() && cpu.CanInterrupt())
 			{
-				fprintf(stderr, "Fire Floppy interrupt\n");
+				//fprintf(stderr, "Fire Floppy interrupt\n");
 				cpu.Interrupt(8 + 6); // Hardware interrupt 6: floppy
 				floppy.ClearInterrupt();
 			}
