@@ -1696,21 +1696,21 @@ namespace emul
 		}
 		case 0x20: // MUL
 		{
-			LogPrintf(LOG_DEBUG, "MUL8");
 			WORD result = regA.hl.l * (*modrm);
+			LogPrintf(LOG_DEBUG, "MUL8, %02X * %02X = %04X", regA.hl.l, *modrm, result);
 			regA.x = result;
 			SetFlag(FLAG_O, regA.hl.h != 0);
 			SetFlag(FLAG_C, regA.hl.h != 0);
 			break;
 		}
-		case 0x18: 
+		case 0x18: // NEG
 		{
-			LogPrintf(LOG_DEBUG, "NEG8");
 			BYTE tempDest = 0;
 			SourceDest8 sd;
 			sd.dest = &tempDest;
 			sd.source = modrm;
 			Arithmetic8(sd, rawSub8);
+			LogPrintf(LOG_DEBUG, "NEG8, -(%02X) = %02X", *modrm, tempDest);
 			*modrm = tempDest;
 			break;
 		}
@@ -1754,23 +1754,23 @@ namespace emul
 		}
 		case 0x18:
 		{
-			LogPrintf(LOG_DEBUG, "NEG16");
 			WORD tempDest = 0;
 			SourceDest16 sd;
 			sd.dest = &tempDest;
 			sd.source = modrm;
 			Arithmetic16(sd, rawSub16);
+			LogPrintf(LOG_DEBUG, "NEG16, -(%04X) = %04X", *modrm, tempDest);
 			*modrm = tempDest;
 			break;
 		}
 		case 0x20: // MUL
 		{
-			LogPrintf(LOG_DEBUG, "MUL16");
 			DWORD result = regA.x * (*modrm);
+			LogPrintf(LOG_DEBUG, "MUL16, %04X * %04X = %08X", regA.x, *modrm, result);
 			regD.x = getHWord(result);
 			regA.x = getLWord(result);
-			SetFlag(FLAG_O, regA.x != 0);
-			SetFlag(FLAG_C, regA.x != 0);
+			SetFlag(FLAG_O, regD.x != 0);
+			SetFlag(FLAG_C, regD.x != 0);
 			break;
 		}
 		case 0x28: throw(std::exception("ArithmeticMulti16 [imul] not implemented"));
@@ -1785,6 +1785,7 @@ namespace emul
 			DWORD dividend = getDword(regD.x, regA.x);
 			WORD quotient = dividend / (*modrm);
 			WORD remainder = dividend % (*modrm);
+			LogPrintf(LOG_DEBUG, "DIV16 %08X / %04X = %04X r %04X", dividend, (*modrm), quotient, remainder);
 			regA.x = quotient;
 			regD.x = remainder;
 			break;
