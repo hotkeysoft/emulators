@@ -37,8 +37,8 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		if (regIP == 0x0104)
-			__debugbreak();
+		//if (regIP == 0x0104)
+		//	__debugbreak();
 
 		++regIP;
 
@@ -1348,6 +1348,7 @@ namespace emul
 		for (BYTE i = 0; i < count; ++i)
 		{
 			BYTE before = dest;
+			BYTE sign;
 			bool carry;
 			switch (op2 & 0x38)
 			{
@@ -1388,7 +1389,10 @@ namespace emul
 				break;
 			case 0x38: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
-				throw(std::exception("SHIFTROT8 SAR not implemented"));
+				sign = (dest & 128);
+				dest >>= 1;
+				dest |= sign;
+				SetFlag(FLAG_C, getLSB(dest));
 				break;
 			default:
 				throw(std::exception("not possible"));
@@ -1468,6 +1472,7 @@ namespace emul
 				break;
 			case 0x38: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
+				SetFlag(FLAG_C, getLSB(dest));
 				sign = (dest & 32768);
 				dest >>= 1;
 				dest |= sign;
