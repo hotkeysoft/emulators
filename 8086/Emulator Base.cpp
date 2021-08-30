@@ -5,6 +5,7 @@
 #include "MemoryBlock.h"
 #include "MemoryMap.h"
 #include "CPU8086.h"
+#include "CPU8086Test.h"
 #include "Device8254.h"
 #include "Device8255.h"
 #include "Device8237.h"
@@ -217,6 +218,14 @@ int main(void)
 	DummyPortSink sink;
 
 	emul::CPU8086 cpu(memory, mmap);
+
+#ifdef CPU_TEST
+	{
+		emul::CPU8086Test testCPU(memory, mmap);
+		testCPU.EnableLog(true, Logger::LOG_DEBUG);
+		testCPU.Test();
+	}
+#endif
 
 	//	cpu.AddWatch("EXECUTE", onCall, onRet);
 
