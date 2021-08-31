@@ -43,6 +43,9 @@ namespace fdc
 
 		m_enableIRQDMA = false;
 		m_driveSel = 0;
+		
+		m_st0 = 0xC0; // TODO: Find why in datasheet
+
 		m_state = STATE::RESET_START;
 	}
 
@@ -240,7 +243,6 @@ namespace fdc
 			break;
 		case STATE::RESET_DONE:
 			LogPrintf(Logger::LOG_INFO, "End RESET, interrupt");
-			m_st0 = 0; // All clear
 			m_state = STATE::CMD_WAIT;
 			SetInterruptPending();
 			break;
@@ -267,7 +269,7 @@ namespace fdc
 			}
 			break;
 		case STATE::CMD_EXEC_DONE:
-			LogPrintf(Logger::LOG_DEBUG, "Command Execution done");
+			LogPrintf(Logger::LOG_INFO, "Command Execution done");
 			m_driveActive[0] = false;
 			m_driveActive[1] = false;
 			m_driveActive[2] = false;
@@ -277,6 +279,7 @@ namespace fdc
 			m_state = STATE::RESULT_WAIT;
 			if (m_currCommand->interrupt)
 			{
+				LogPrintf(LOG_INFO, "Interrupt Pending");
 				SetInterruptPending();
 			}
 			break;
@@ -345,6 +348,7 @@ namespace fdc
 	{
 		LogPrintf(LOG_ERROR, "Command [%s] not implemented", m_currCommand->name);
 		m_fifo.clear();
+		throw std::exception("not implemented");
 		return 0;
 	}
 
@@ -352,9 +356,24 @@ namespace fdc
 	{
 		LogPrintf(LOG_INFO, "COMMAND: SenseInterrupt");
 
+
 		// Response: ST0, PCN
 		m_fifo.push_back(m_st0);
 		m_fifo.push_back(m_pcn);
+
+		// If after a reset, return C0 for each drives
+		// TODO: Check that we after a reset and not in an error condition
+		if (m_st0 & 0xC0)
+		{
+			++m_st0;
+			if (m_st0 == 0xC4)
+			{
+				// done
+				m_st0 = 0;
+			}
+
+		}
+
 		return DelayToTicks(5);
 	}
 
