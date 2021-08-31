@@ -86,6 +86,8 @@ namespace fdc
 		size_t Recalibrate();
 		size_t Seek();
 		size_t SenseDriveStatus();
+		size_t Specify();
+		size_t ReadData();
 
 		bool m_interruptPending;
 		void SetInterruptPending() { m_interruptPending = true; }
@@ -129,6 +131,11 @@ namespace fdc
 		BYTE m_st0; // Status flag
 		BYTE m_st3; // Status flag
 		BYTE m_pcn; // Present Cylinder Number
+
+		BYTE m_srt; // Step Rate Time, time between cylinders (ms)
+		BYTE m_hlt; // Head Load Time, time to wait between activating head and before read (ms)
+		BYTE m_hut; // Head Unload Time, time to wait before deactivating the head (ms)
+		bool m_nonDMA;
 
 		enum class DataDirection { FDC2CPU, CPU2FDC };
 
@@ -183,24 +190,25 @@ namespace fdc
 			bool interrupt;
 		};
 		const Command* m_currCommand;
+		BYTE m_currcommandID;
 
 		typedef std::map<CMD, Command> CommandMap;
 		const CommandMap m_commandMap = {
-			{ CMD::READ_TRACK,         { "ReadTrack"       , 8, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::SPECIFY,            { "Specify"         , 3, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::READ_TRACK,         { "ReadTrack"       , 8, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::SPECIFY,            { "Specify"         , 2, &DeviceFloppy::Specify,          false } },
 			{ CMD::SENSE_DRIVE_STATUS, { "SenseDriveStatus", 1, &DeviceFloppy::SenseDriveStatus, false } },
-			{ CMD::WRITE_DATA,         { "WriteData"       , 8, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::READ_DATA,          { "ReadData"        , 8, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::RECALIBRATE,        { "Recalibrate"     , 1, &DeviceFloppy::Recalibrate,    true } },
-			{ CMD::SENSE_INT_STATUS,   { "SenseInterrupt"  , 0, &DeviceFloppy::SenseInterrupt, false } },
-			{ CMD::WRITE_DELETED_DATA, { "WriteDeletedData", 8, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::READ_ID,            { "ReadID"          , 1, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::READ_DELETED_DATA,  { "ReadDeletedData" , 8, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::FORMAT_TRACK,       { "FormatTrack"     , 5, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::SEEK,               { "Seek"            , 2, &DeviceFloppy::Seek,           true } },
-			{ CMD::SCAN_EQUAL,         { "ScanEqual"       , 8, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::SCAN_LOW_OR_EQUAL,  { "ScanLowOrEqual"  , 8, &DeviceFloppy::NotImplemented, false } },
-			{ CMD::SCAN_HIGH_OR_EQUAL, { "ScanHighOrEqual" , 8, &DeviceFloppy::NotImplemented, false } }
+			{ CMD::WRITE_DATA,         { "WriteData"       , 8, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::READ_DATA,          { "ReadData"        , 8, &DeviceFloppy::ReadData,         true  } },
+			{ CMD::RECALIBRATE,        { "Recalibrate"     , 1, &DeviceFloppy::Recalibrate,      true  } },
+			{ CMD::SENSE_INT_STATUS,   { "SenseInterrupt"  , 0, &DeviceFloppy::SenseInterrupt,   false } },
+			{ CMD::WRITE_DELETED_DATA, { "WriteDeletedData", 8, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::READ_ID,            { "ReadID"          , 1, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::READ_DELETED_DATA,  { "ReadDeletedData" , 8, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::FORMAT_TRACK,       { "FormatTrack"     , 5, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::SEEK,               { "Seek"            , 2, &DeviceFloppy::Seek,             true  } },
+			{ CMD::SCAN_EQUAL,         { "ScanEqual"       , 8, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::SCAN_LOW_OR_EQUAL,  { "ScanLowOrEqual"  , 8, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::SCAN_HIGH_OR_EQUAL, { "ScanHighOrEqual" , 8, &DeviceFloppy::NotImplemented,   false } }
 		};
 
 	};

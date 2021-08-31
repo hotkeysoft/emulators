@@ -1,4 +1,5 @@
 #include "DeviceFloppy.h"
+#include <assert.h>
 
 namespace fdc
 {
@@ -15,6 +16,10 @@ namespace fdc
 		m_interruptPending(false),
 		m_st0(0),
 		m_pcn(0),
+		m_srt(16),
+		m_hlt(254),
+		m_hut(240),
+		m_nonDMA(true),
 		m_commandBusy(false),
 		m_driveActive{ false, false, false, false },
 		m_dataInputOutput(DataDirection::CPU2FDC),
@@ -22,7 +27,8 @@ namespace fdc
 		m_motor{ false, false, false, false },
 		m_enableIRQDMA(false),
 		m_driveSel(0),
-		m_currCommand(nullptr)
+		m_currCommand(nullptr),
+		m_currcommandID(0)
 	{
 	}
 
@@ -45,6 +51,10 @@ namespace fdc
 		m_driveSel = 0;
 		
 		m_st0 = 0xC0; // TODO: Find why in datasheet
+		m_srt = 16;
+		m_hlt = 254;
+		m_hut = 240;
+		m_nonDMA = true;
 
 		m_state = STATE::RESET_START;
 	}
@@ -259,7 +269,7 @@ namespace fdc
 			m_commandBusy = false;
 			break;
 		case STATE::CMD_READ:
-			LogPrintf(Logger::LOG_INFO, "Read Command");
+			LogPrintf(Logger::LOG_DEBUG, "Read Command");
 			ReadCommand();
 			break;
 		case STATE::CMD_EXEC_DELAY:
@@ -275,8 +285,19 @@ namespace fdc
 			m_driveActive[2] = false;
 			m_driveActive[3] = false;
 			m_dataRegisterReady = true;
-			m_dataInputOutput = DataDirection::FDC2CPU;
-			m_state = STATE::RESULT_WAIT;
+
+			// No results, ready for next command
+			if (m_fifo.size() == 0)
+			{
+				m_dataInputOutput = DataDirection::CPU2FDC;
+				m_state = STATE::CMD_WAIT;
+			}
+			else
+			{
+				m_dataInputOutput = DataDirection::FDC2CPU;
+				m_state = STATE::RESULT_WAIT;
+			}
+
 			if (m_currCommand->interrupt)
 			{
 				LogPrintf(LOG_INFO, "Interrupt Pending");
@@ -286,7 +307,7 @@ namespace fdc
 		case STATE::PARAM_WAIT:
 			if (m_currCommand->paramCount == m_fifo.size())
 			{
-				LogPrintf(Logger::LOG_INFO, "Read all [%d] parameters, start execution phase", m_fifo.size());
+				LogPrintf(Logger::LOG_DEBUG, "Read all [%d] parameters, start execution phase", m_fifo.size());
 
 				ExecuteCommand();
 			}
@@ -294,7 +315,7 @@ namespace fdc
 		case STATE::RESULT_WAIT:
 			if (m_fifo.size() == 0)
 			{
-				LogPrintf(Logger::LOG_INFO, "Client Read all results, ready for next command");
+				LogPrintf(Logger::LOG_DEBUG, "Client Read all results, ready for next command");
 				m_commandBusy = false;
 				m_dataInputOutput = DataDirection::CPU2FDC;
 				m_state = STATE::CMD_WAIT;
@@ -307,23 +328,24 @@ namespace fdc
 	void DeviceFloppy::RQMDelay(STATE nextState)
 	{
 		m_currOpWait = DelayToTicks(RQM_DELAY_US);
-		LogPrintf(Logger::LOG_INFO, "Start RQM Delay, count=%zu", m_currOpWait);
+		LogPrintf(Logger::LOG_DEBUG, "Start RQM Delay, count=%zu", m_currOpWait);
 		m_dataRegisterReady = false;
 		m_state = STATE::RQM_DELAY;
 		m_nextState = nextState;
 	}
 	void DeviceFloppy::ReadCommand()
 	{
-		CMD commandID = (CMD)m_fifo.front();
+		m_currcommandID = m_fifo.front();
 		m_fifo.pop_front();
 
-		LogPrintf(LOG_INFO, "ReadCommand, cmd = %02X", commandID);
+		LogPrintf(LOG_DEBUG, "ReadCommand, cmd = %02X", m_currcommandID);
 
-		CommandMap::const_iterator it = m_commandMap.find(commandID);
+		// Only check 5 lower bits, hi bits are parameters or fixed 0/1
+		CommandMap::const_iterator it = m_commandMap.find((CMD)(m_currcommandID & 0b00011111));
 		if (it != m_commandMap.end())
 		{
 			m_currCommand = &(it->second);
-			LogPrintf(LOG_INFO, "Command: [%s], parameters: [%d]", m_currCommand->name, m_currCommand->paramCount);
+			LogPrintf(LOG_DEBUG, "Command: [%s], parameters: [%d]", m_currCommand->name, m_currCommand->paramCount);
 			m_state = STATE::PARAM_WAIT;
 		}
 		else
@@ -331,6 +353,7 @@ namespace fdc
 			LogPrintf(LOG_ERROR, "Unknown command");
 			m_state = STATE::CMD_ERROR;
 			m_currCommand = nullptr;
+			m_currcommandID = 0;
 			throw std::exception("Unknown command");
 		}
 	}
@@ -339,7 +362,7 @@ namespace fdc
 		m_state = STATE::CMD_EXEC;
 		ExecFunc func = m_currCommand->func;
 		m_currOpWait = (this->*func)();
-		LogPrintf(LOG_INFO, "Command pushed [%d] results. Execution Delay: [%d]", m_fifo.size(), m_currOpWait);
+		LogPrintf(LOG_DEBUG, "Command pushed [%d] results. Execution Delay: [%d]", m_fifo.size(), m_currOpWait);
 
 		m_state = m_currOpWait ? STATE::CMD_EXEC_DELAY : STATE::CMD_EXEC_DONE;
 	}
@@ -356,6 +379,7 @@ namespace fdc
 	{
 		LogPrintf(LOG_INFO, "COMMAND: SenseInterrupt");
 
+		assert(m_fifo.size() == 0);
 
 		// Response: ST0, PCN
 		m_fifo.push_back(m_st0);
@@ -374,6 +398,7 @@ namespace fdc
 
 		}
 
+		// Response: none
 		return DelayToTicks(5);
 	}
 
@@ -389,7 +414,8 @@ namespace fdc
 		m_st0 = SE | driveNumber; // Set Seek end + head + drive
 		m_pcn = 0;
 
-		// Response: none
+		assert(m_fifo.size() == 0);
+		// Response: none, Interrupt
 		return DelayToTicks(100 * 1000); // 100 ms;
 	}
 
@@ -413,7 +439,9 @@ namespace fdc
 		m_st0 = SE | (param & 7); // Set Seek end + head + drive
 		m_pcn = cylinder;
 
-		return DelayToTicks(travel * 1000); // TODO: Get real world number range
+		assert(m_fifo.size() == 0);
+		// Response: Interrupt
+		return DelayToTicks(travel * m_srt * 1000);
 	}
 
 	size_t DeviceFloppy::SenseDriveStatus()
@@ -428,8 +456,72 @@ namespace fdc
 
 		m_st3 = RDY | (TRK0 * (m_pcn == 0)) | DSDR | (param & 7);
 
+		assert(m_fifo.size() == 0);
 		// Response: ST3
 		m_fifo.push_back(m_st3);
 		return DelayToTicks(5);
 	}
+
+	size_t DeviceFloppy::Specify()
+	{
+		BYTE param = m_fifo.front();
+		m_fifo.pop_front();
+
+		m_srt = 16-(param >> 4); // Step Rate Time (1-16 ms, 0xF=1, 0xE=2, etc)
+		m_hut = param << 4; // Head Unload Time (16-240ms in 16ms increment)
+		if (m_hut == 0) m_hut = 255;
+
+		param = m_fifo.front();
+		m_fifo.pop_front();
+
+		m_hlt = (param & 0b11111110); // Head Load Time (2-254ms in 2ms increment)
+		if (m_hlt == 0) m_hlt = 255;
+
+		m_nonDMA = (param & 1);
+
+		LogPrintf(LOG_INFO, "COMMAND: Specify srt=[%d] hut=[%d] hlt=[%d] nonDMA=[%d]", m_srt, m_hut, m_hlt, m_nonDMA);
+
+		assert(m_fifo.size() == 0);
+		// No Response, no interrupt
+		return DelayToTicks(5);
+	}
+
+	size_t DeviceFloppy::ReadData()
+	{
+		BYTE param = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE driveNumber = param & 3;
+		bool head = param & 4;
+
+		BYTE c = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE h = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE r = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE n = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE eot = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE gpl = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE dtl = m_fifo.front();
+		m_fifo.pop_front();
+
+		LogPrintf(LOG_INFO, "COMMAND: Read Data drive=[%d] head=[%d]", driveNumber, head);
+		LogPrintf(LOG_INFO, " Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] eot=[%d] gpl=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
+
+		assert(m_fifo.size() == 0);
+
+		throw std::exception("not implemented");
+
+	}
 }
+
