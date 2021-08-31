@@ -218,7 +218,7 @@ int main(void)
 
 	fdc::DeviceFloppy floppy(0x03F0, 1193182);
 	floppy.Init();
-	floppy.EnableLog(true, Logger::LOG_WARNING);
+	floppy.EnableLog(true, Logger::LOG_INFO);
 
 	DummyPortSink sink;
 

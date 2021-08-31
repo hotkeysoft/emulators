@@ -2,7 +2,8 @@
 
 namespace fdc
 {
-	const size_t RESET_DELAY_MS = 10;
+	const size_t RESET_DELAY_US = 10 * 1000; // 10 ms
+	const size_t RQM_DELAY_US = 5; // 5 us
 
 	DeviceFloppy::DeviceFloppy(WORD baseAddress, size_t clockSpeedHz) :
 		Logger("fdc"),
@@ -10,14 +11,18 @@ namespace fdc
 		m_clockSpeed(clockSpeedHz),
 		m_currOpWait(0),
 		m_state(STATE::CMD_WAIT),
+		m_nextState(STATE::CMD_WAIT),
 		m_interruptPending(false),
+		m_st0(0),
+		m_pcn(0),
 		m_commandBusy(false),
 		m_driveActive{ false, false, false, false },
 		m_dataInputOutput(DataDirection::CPU2FDC),
 		m_dataRegisterReady(true),
 		m_motor{ false, false, false, false },
 		m_enableIRQDMA(false),
-		m_driveSel(0)
+		m_driveSel(0),
+		m_currCommand(nullptr)
 	{
 	}
 
@@ -64,16 +69,16 @@ namespace fdc
 		//DATA_FIFO = 0x3F5,
 		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&DeviceFloppy::ReadDataFIFO));
 		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&DeviceFloppy::WriteDataFIFO));
-		
+
 		//DIGITAL_INPUT_REGISTER = 0x3F7, // read-only (AT)
 		Connect(m_baseAddress + 7, static_cast<PortConnector::INFunction>(&DeviceFloppy::ReadDigitalInputReg));
 		//CONFIGURATION_CONTROL_REGISTER = 0x3F7  // write-only (AT)
 		Connect(m_baseAddress + 7, static_cast<PortConnector::OUTFunction>(&DeviceFloppy::WriteConfigControlReg));
 	}
 
-	size_t DeviceFloppy::DelayToTicks(size_t delayMS)
+	size_t DeviceFloppy::DelayToTicks(size_t delayUS)
 	{
-		return delayMS * m_clockSpeed / 1000;
+		return delayUS * m_clockSpeed / 1000000;
 	}
 
 	// BEGIN Unused|AT|PS/2 Registers - No operation
@@ -155,7 +160,7 @@ namespace fdc
 
 	BYTE DeviceFloppy::ReadMainStatusReg()
 	{
-		LogPrintf(Logger::LOG_DEBUG, "ReadMainStatusReg [%cMRQ %cDIO %cNDMA %cBUSY %cACTD %cATCD %cACTB %cACTA]",
+		LogPrintf(Logger::LOG_DEBUG, "ReadMainStatusReg [%cRQM %cDIO %cNDMA %cBUSY %cACTD %cATCD %cACTB %cACTA]",
 			m_dataRegisterReady ? ' ' : '/',
 			(m_dataInputOutput == DataDirection::FDC2CPU) ? ' ' : '/',
 			false ? ' ' : '/',
@@ -166,7 +171,7 @@ namespace fdc
 			m_driveActive[0] ? ' ' : '/');
 
 		BYTE status =
-			(MRQ * m_dataRegisterReady) |
+			(RQM * m_dataRegisterReady) |
 			(DIO * (m_dataInputOutput == DataDirection::FDC2CPU)) |
 			(NDMA * 0) |
 			(BUSY * m_commandBusy) |
@@ -180,8 +185,21 @@ namespace fdc
 
 	BYTE DeviceFloppy::ReadDataFIFO()
 	{
+		BYTE result = 0xFF;
 		LogPrintf(Logger::LOG_DEBUG, "ReadDataFIFO");
-		return 0;
+		switch (m_state)
+		{
+		case STATE::RESULT_WAIT:
+			m_commandBusy = true;
+			RQMDelay(STATE::RESULT_WAIT);
+			result = m_fifo.front();
+			m_fifo.pop_front();
+			break;
+		default:
+			throw std::exception("Unexpected state");
+		}
+		LogPrintf(Logger::LOG_DEBUG, "Return Result: %02X", result);
+		return result;
 	}
 	void DeviceFloppy::WriteDataFIFO(BYTE value)
 	{
@@ -192,12 +210,16 @@ namespace fdc
 		switch (m_state)
 		{
 		case STATE::CMD_WAIT:
-			m_state = STATE::CMD_READ;
+			m_commandBusy = true;
+			RQMDelay(STATE::CMD_READ);
+			break;
+		case STATE::PARAM_WAIT:
+			m_commandBusy = true;
+			RQMDelay(STATE::PARAM_WAIT);
 			break;
 		default:
 			throw std::exception("Unexpected state");
 		}
-
 	}
 
 	void DeviceFloppy::Tick()
@@ -205,8 +227,8 @@ namespace fdc
 		switch (m_state)
 		{
 		case STATE::RESET_START:
-			m_currOpWait = DelayToTicks(RESET_DELAY_MS);
-			LogPrintf(Logger::LOG_INFO, "Start RESET, count=%d", m_currOpWait);
+			m_currOpWait = DelayToTicks(RESET_DELAY_US);
+			LogPrintf(Logger::LOG_INFO, "Start RESET, count=%zu", m_currOpWait);
 			m_state = STATE::RESET_ACTIVE;
 			m_commandBusy = true;
 			break;
@@ -218,19 +240,177 @@ namespace fdc
 			break;
 		case STATE::RESET_DONE:
 			LogPrintf(Logger::LOG_INFO, "End RESET, interrupt");
+			m_st0 = 0; // All clear
 			m_state = STATE::CMD_WAIT;
 			SetInterruptPending();
+			break;
+		case STATE::RQM_DELAY:
+			if (--m_currOpWait == 0)
+			{
+				LogPrintf(Logger::LOG_DEBUG, "RQM Delay done");
+				m_dataRegisterReady = true;
+				m_state = m_nextState;
+			}
 			break;
 		case STATE::CMD_WAIT:
 			m_dataRegisterReady = true;
 			m_commandBusy = false;
 			break;
 		case STATE::CMD_READ:
-			// temp
-			m_state = STATE::CMD_WAIT;
+			LogPrintf(Logger::LOG_INFO, "Read Command");
+			ReadCommand();
 			break;
+		case STATE::CMD_EXEC_DELAY:
+			if (--m_currOpWait == 0)
+			{
+				m_state = STATE::CMD_EXEC_DONE;
+			}
+			break;
+		case STATE::CMD_EXEC_DONE:
+			LogPrintf(Logger::LOG_DEBUG, "Command Execution done");
+			m_driveActive[0] = false;
+			m_driveActive[1] = false;
+			m_driveActive[2] = false;
+			m_driveActive[3] = false;
+			m_dataRegisterReady = true;
+			m_dataInputOutput = DataDirection::FDC2CPU;
+			m_state = STATE::RESULT_WAIT;
+			if (m_currCommand->interrupt)
+			{
+				SetInterruptPending();
+			}
+			break;
+		case STATE::PARAM_WAIT:
+			if (m_currCommand->paramCount == m_fifo.size())
+			{
+				LogPrintf(Logger::LOG_INFO, "Read all [%d] parameters, start execution phase", m_fifo.size());
 
+				ExecuteCommand();
+			}
+			break;
+		case STATE::RESULT_WAIT:
+			if (m_fifo.size() == 0)
+			{
+				LogPrintf(Logger::LOG_INFO, "Client Read all results, ready for next command");
+				m_commandBusy = false;
+				m_dataInputOutput = DataDirection::CPU2FDC;
+				m_state = STATE::CMD_WAIT;
+			}
+			break;
 		default: throw std::exception("Unknown state");
 		}
+	}
+
+	void DeviceFloppy::RQMDelay(STATE nextState)
+	{
+		m_currOpWait = DelayToTicks(RQM_DELAY_US);
+		LogPrintf(Logger::LOG_INFO, "Start RQM Delay, count=%zu", m_currOpWait);
+		m_dataRegisterReady = false;
+		m_state = STATE::RQM_DELAY;
+		m_nextState = nextState;
+	}
+	void DeviceFloppy::ReadCommand()
+	{
+		CMD commandID = (CMD)m_fifo.front();
+		m_fifo.pop_front();
+
+		LogPrintf(LOG_INFO, "ReadCommand, cmd = %02X", commandID);
+
+		CommandMap::const_iterator it = m_commandMap.find(commandID);
+		if (it != m_commandMap.end())
+		{
+			m_currCommand = &(it->second);
+			LogPrintf(LOG_INFO, "Command: [%s], parameters: [%d]", m_currCommand->name, m_currCommand->paramCount);
+			m_state = STATE::PARAM_WAIT;
+		}
+		else
+		{
+			LogPrintf(LOG_ERROR, "Unknown command");
+			m_state = STATE::CMD_ERROR;
+			m_currCommand = nullptr;
+			throw std::exception("Unknown command");
+		}
+	}
+	void DeviceFloppy::ExecuteCommand()
+	{
+		m_state = STATE::CMD_EXEC;
+		ExecFunc func = m_currCommand->func;
+		m_currOpWait = (this->*func)();
+		LogPrintf(LOG_INFO, "Command pushed [%d] results. Execution Delay: [%d]", m_fifo.size(), m_currOpWait);
+
+		m_state = m_currOpWait ? STATE::CMD_EXEC_DELAY : STATE::CMD_EXEC_DONE;
+	}
+
+	size_t DeviceFloppy::NotImplemented()
+	{
+		LogPrintf(LOG_ERROR, "Command [%s] not implemented", m_currCommand->name);
+		m_fifo.clear();
+		return 0;
+	}
+
+	size_t DeviceFloppy::SenseInterrupt()
+	{
+		LogPrintf(LOG_INFO, "COMMAND: SenseInterrupt");
+
+		// Response: ST0, PCN
+		m_fifo.push_back(m_st0);
+		m_fifo.push_back(m_pcn);
+		return DelayToTicks(5);
+	}
+
+	size_t DeviceFloppy::Recalibrate()
+	{
+		// TODO: Support parallel seek/recalibrate
+		BYTE driveNumber = m_fifo.front() % 3;
+		m_fifo.pop_front();
+
+		LogPrintf(LOG_INFO, "COMMAND: Recalibrate drive [%d]", driveNumber);
+
+		m_driveActive[driveNumber] = true;
+		m_st0 = SE | driveNumber; // Set Seek end + head + drive
+		m_pcn = 0;
+
+		// Response: none
+		return DelayToTicks(100 * 1000); // 100 ms;
+	}
+
+	size_t DeviceFloppy::Seek()
+	{
+		// TODO: Support parallel seek/recalibrate
+		BYTE param = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE driveNumber = param % 3;
+		bool head = param & 4;
+
+		int cylinder = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE travel = abs(cylinder - m_pcn);
+
+		LogPrintf(LOG_INFO, "COMMAND: Seek d=[%d] h=[%d] cyl=[%d] (travel: [%d])", driveNumber, head, cylinder, travel);
+
+		m_driveActive[driveNumber] = true;
+		m_st0 = SE | (param & 7); // Set Seek end + head + drive
+		m_pcn = cylinder;
+
+		return DelayToTicks(travel * 1000); // TODO: Get real world number range
+	}
+
+	size_t DeviceFloppy::SenseDriveStatus()
+	{
+		BYTE param = m_fifo.front();
+		m_fifo.pop_front();
+
+		BYTE driveNumber = param & 3;
+		bool head = param & 4;
+
+		LogPrintf(LOG_INFO, "COMMAND: Sense Drive Status d=[%d] h=[%d]", driveNumber, head);
+
+		m_st3 = RDY | (TRK0 * (m_pcn == 0)) | DSDR | (param & 7);
+
+		// Response: ST3
+		m_fifo.push_back(m_st3);
+		return DelayToTicks(5);
 	}
 }

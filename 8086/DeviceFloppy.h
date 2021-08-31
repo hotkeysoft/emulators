@@ -60,9 +60,32 @@ namespace fdc
 			RESET_ACTIVE,
 			RESET_DONE,
 
+			RQM_DELAY,
+
+			PARAM_WAIT,
+
 			CMD_WAIT,
 			CMD_READ,
-		} m_state;
+			CMD_ERROR,
+			CMD_EXEC,
+			CMD_EXEC_DELAY,
+			CMD_EXEC_DONE,
+
+			RESULT_WAIT,
+		} m_state, m_nextState;
+
+		// State machine processing
+		void RQMDelay(STATE nextState);
+		void ReadCommand();
+		void ExecuteCommand();
+
+		// FDC Commands
+		typedef size_t(DeviceFloppy::* ExecFunc)();
+		size_t NotImplemented();
+		size_t SenseInterrupt();
+		size_t Recalibrate();
+		size_t Seek();
+		size_t SenseDriveStatus();
 
 		bool m_interruptPending;
 		void SetInterruptPending() { m_interruptPending = true; }
@@ -70,7 +93,7 @@ namespace fdc
 		// Status
 		enum MSR
 		{
-			MRQ  = 0x80, // 1 = Data Register Ready
+			RQM  = 0x80, // 1 = Data Register Ready
 			DIO  = 0x40, // 1 = Controller->CPU, 0 = CPU->Controller
 			NDMA = 0x20, // 1 = NON-DMA Mode, 0 = DMA Mode
 			BUSY = 0x10, // 1 = Device Busy
@@ -79,6 +102,33 @@ namespace fdc
 			ACTB = 0x02, // 1 = Drive 1 Seeking 
 			ACTA = 0x01, // 1 = Drive 0 Seeking
 		};
+
+		enum ST0
+		{
+			IC1 = 0x80, // 00 = Normal Termination, 01 = Abnormal Termination
+			IC0 = 0x40, // 10 = Invalid Command, 00 = Drive not ready
+			SE  = 0x20, // 1 = Seek End
+			EC  = 0x10, // 1 = Equipment Check (fault, no track 0)
+			NR  = 0x08, // 1 = Not Ready
+			HD  = 0x04, // Head Address
+			US1 = 0x02, // Drive Number at interrupt
+			US0 = 0x01, // Drive Number at interrupt
+		};
+
+		enum ST3
+		{
+			ESIG = 0x80, // 1 = Error
+			WPDR = 0x40, // 1 = Write Protection
+			RDY =  0x20, // 1 = Ready
+			TRK0 = 0x10, // Above track 0
+			DSDR = 0x08, // Double sided drive
+			HDDR = 0x04, // Active head
+			DS1 =  0x02, // Drive Number
+			DS0 =  0x01, // Drive Number
+		};
+		BYTE m_st0; // Status flag
+		BYTE m_st3; // Status flag
+		BYTE m_pcn; // Present Cylinder Number
 
 		enum class DataDirection { FDC2CPU, CPU2FDC };
 
@@ -125,33 +175,32 @@ namespace fdc
 			SCAN_HIGH_OR_EQUAL = 29
 		};
 
-		typedef void (DeviceFloppy::* ExecFunc)(CMD);
-		void NotImplemented(CMD id) { LogPrintf(LOG_WARNING, "Exec id=%d Not Implemented", id); }
-
 		struct Command
 		{
 			const char* name;
 			size_t paramCount;
 			ExecFunc func;
+			bool interrupt;
 		};
+		const Command* m_currCommand;
 
 		typedef std::map<CMD, Command> CommandMap;
 		const CommandMap m_commandMap = {
-			{ CMD::READ_TRACK,         { "ReadTrack"       , 8, &DeviceFloppy::NotImplemented } },
-			{ CMD::SPECIFY,            { "Specify"         , 3, &DeviceFloppy::NotImplemented } },
-			{ CMD::SENSE_DRIVE_STATUS, { "SenseDriveStatus", 1, &DeviceFloppy::NotImplemented } },
-			{ CMD::WRITE_DATA,         { "WriteData"       , 8, &DeviceFloppy::NotImplemented } },
-			{ CMD::READ_DATA,          { "ReadData"        , 8, &DeviceFloppy::NotImplemented } },
-			{ CMD::RECALIBRATE,        { "Recalibrate"     , 1, &DeviceFloppy::NotImplemented } },
-			{ CMD::SENSE_INT_STATUS,   { "SenseInterrupt"  , 0, &DeviceFloppy::NotImplemented } },
-			{ CMD::WRITE_DELETED_DATA, { "WriteDeletedData", 8, &DeviceFloppy::NotImplemented } },
-			{ CMD::READ_ID,            { "ReadID"          , 1, &DeviceFloppy::NotImplemented } },
-			{ CMD::READ_DELETED_DATA,  { "ReadDeletedData" , 8, &DeviceFloppy::NotImplemented } },
-			{ CMD::FORMAT_TRACK,       { "FormatTrack"     , 5, &DeviceFloppy::NotImplemented } },
-			{ CMD::SEEK,               { "Seek"            , 2, &DeviceFloppy::NotImplemented } },
-			{ CMD::SCAN_EQUAL,         { "ScalEqual"       , 8, &DeviceFloppy::NotImplemented } },
-			{ CMD::SCAN_LOW_OR_EQUAL,  { "ScanLowOrEqual"  , 8, &DeviceFloppy::NotImplemented } },
-			{ CMD::SCAN_HIGH_OR_EQUAL, { "ScanHighOrEqual" , 8, &DeviceFloppy::NotImplemented } }
+			{ CMD::READ_TRACK,         { "ReadTrack"       , 8, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::SPECIFY,            { "Specify"         , 3, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::SENSE_DRIVE_STATUS, { "SenseDriveStatus", 1, &DeviceFloppy::SenseDriveStatus, false } },
+			{ CMD::WRITE_DATA,         { "WriteData"       , 8, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::READ_DATA,          { "ReadData"        , 8, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::RECALIBRATE,        { "Recalibrate"     , 1, &DeviceFloppy::Recalibrate,    true } },
+			{ CMD::SENSE_INT_STATUS,   { "SenseInterrupt"  , 0, &DeviceFloppy::SenseInterrupt, false } },
+			{ CMD::WRITE_DELETED_DATA, { "WriteDeletedData", 8, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::READ_ID,            { "ReadID"          , 1, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::READ_DELETED_DATA,  { "ReadDeletedData" , 8, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::FORMAT_TRACK,       { "FormatTrack"     , 5, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::SEEK,               { "Seek"            , 2, &DeviceFloppy::Seek,           true } },
+			{ CMD::SCAN_EQUAL,         { "ScanEqual"       , 8, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::SCAN_LOW_OR_EQUAL,  { "ScanLowOrEqual"  , 8, &DeviceFloppy::NotImplemented, false } },
+			{ CMD::SCAN_HIGH_OR_EQUAL, { "ScanHighOrEqual" , 8, &DeviceFloppy::NotImplemented, false } }
 		};
 
 	};
