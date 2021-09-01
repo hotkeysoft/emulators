@@ -26,6 +26,8 @@ namespace emul
 
 		bool LoadBinary(const char* file, WORD offset = 0);
 
+		bool Dump(ADDRESS start, size_t len, const char* outFile);
+
 		virtual BYTE read(ADDRESS address);
 		virtual BYTE* getPtr8(ADDRESS address);
 		virtual WORD* getPtr16(ADDRESS address);

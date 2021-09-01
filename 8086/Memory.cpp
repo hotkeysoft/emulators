@@ -206,4 +206,31 @@ namespace emul
 
 		return NULL;
 	}
+
+	void Memory::Dump(ADDRESS start, size_t len, const char* outFile)
+	{
+		MemoryBlock* block = NULL;
+
+		if (m_currBlock && start >= m_currMin && start <= m_currMax)
+		{
+			block = m_currBlock;
+		}
+		else
+		{
+			MemoryBlock* newBlock = FindBlock(start);
+			if (newBlock)
+			{
+				block = newBlock;
+			}
+			else
+			{
+				LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", start);
+			}
+		}
+
+		if (block)
+		{
+			block->Dump(start, len, outFile);
+		}
+	}
 }

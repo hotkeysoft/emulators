@@ -119,5 +119,35 @@ namespace emul
 		return true;
 	}
 
+	bool MemoryBlock::Dump(ADDRESS start, size_t len, const char* outFile)
+	{
+		LogPrintf(LOG_INFO, "Dump: dumping block @ %04Xh, size=%d to %s", start, len, outFile);
+
+		FILE* f = fopen(outFile, "wb");
+		if (!f)
+		{
+			LogPrintf(LOG_ERROR, "Dump: error opening binary file");
+			return false;
+		}
+
+		size_t offset = start - m_baseAddress;
+
+		len = std::min(len, m_size - offset);
+		size_t bytesWritten = fwrite(m_data+offset, sizeof(char), len, f);
+		if (bytesWritten != len)
+		{
+			LogPrintf(LOG_ERROR, "LoadBinary: error writing binary file");
+			return false;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "LoadBinary: wrote %d bytes to file", bytesWritten);
+		}
+
+		fclose(f);
+		return true;
+
+
+	}
 
 }
