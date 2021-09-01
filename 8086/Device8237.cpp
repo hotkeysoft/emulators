@@ -67,7 +67,7 @@ namespace dma
 
 		if (m_count == 0xFFFF)
 		{
-			LogPrintf(LOG_INFO, "Channel %d, Count done", m_id);
+			LogPrintf(LOG_DEBUG, "Channel %d, Count done", m_id);
 
 			// TODO: Terminalcount & correct states
 			if (m_autoInit)
