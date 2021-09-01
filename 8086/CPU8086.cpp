@@ -37,7 +37,7 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		//if (regIP == 0x7C73)
+		//if (regCS == 0x2B1 && regIP == 0x552)
 		//{
 		//	__debugbreak();
 		//}
@@ -581,9 +581,9 @@ namespace emul
 		case 0xD3: SHIFTROT16(FetchByte(), regC.hl.l); break;
 
 		// AAM
-		case 0xD4: AAM(); break;
+		case 0xD4: AAM(FetchByte()); break;
 		// AAD
-		case 0xD5: AAD(); break;
+		case 0xD5: AAD(FetchByte()); break;
 
 		// XLAT (1)
 		case 0xD7: XLAT(); break;
@@ -2156,7 +2156,15 @@ namespace emul
 		}
 		else if (interrupt == 0x21)
 		{
-			LogPrintf(LOG_ERROR, "DOS, ah = %02X", regA.hl.h);
+			LogPrintf(LOG_ERROR, "DOS");
+
+			switch (regA.hl.h)
+			{				
+			case 0x0A: LogPrintf(LOG_ERROR, "INT21: 0x0A - Buffered input"); break;
+			case 0x2B: LogPrintf(LOG_ERROR, "INT21: 0x2B - Set system date[%04d-%02d-%02d]", regC.x, regD.hl.h, regD.hl.l); break;
+			default: LogPrintf(LOG_ERROR, "INT10: Other function ah=%02X", regA.hl.h); break;
+			}
+
 		}
 
 		PUSH(flags);
@@ -2251,22 +2259,37 @@ namespace emul
 		regA.hl.l &= 0x0F;
 	}
 
-	void CPU8086::AAM()
+	void CPU8086::AAM(BYTE base)
 	{
 		LogPrintf(LOG_DEBUG, "AAM");
-		regA.hl.h = regA.hl.l / 10;
-		regA.hl.l %= regA.hl.l;
+		if (base != 10)
+		{
+			LogPrintf(LOG_WARNING, "AAM base!=10 [%d]", base);
+		}
+		if (base == 0)
+		{
+			LogPrintf(LOG_ERROR, "AAM base==0 [%d]", base);
+			return;
+		}
+
+		regA.hl.h = regA.hl.l / base;
+		regA.hl.l %= base;
 
 		AdjustSign(regA.hl.l);
 		AdjustZero(regA.hl.l);
 		AdjustParity(regA.hl.l);
 	}
 
-	void CPU8086::AAD()
+	void CPU8086::AAD(BYTE base)
 	{
 		LogPrintf(LOG_DEBUG, "AAD");
 
-		regA.hl.l = (regA.hl.h * 10) + regA.hl.l;
+		if (base != 10)
+		{
+			LogPrintf(LOG_WARNING, "AAD base!=10 [%d]", base);
+		}
+
+		regA.hl.l = (regA.hl.h * base) + regA.hl.l;
 		regA.hl.h = 0;
 
 		AdjustSign(regA.hl.l);
