@@ -270,6 +270,7 @@ namespace emul
 
 		void AAA();
 		void AAM();
+		void AAD();
 
 		void LEA(BYTE op2);
 

@@ -544,7 +544,7 @@ namespace emul
 		case 0xC3: RETNear(); break;
 
 		// LES REG16, MEM16 (4)
-		case 0xC4: NotImplemented(opcode); break;
+		case 0xC4: LoadPTR(regES, GetModRegRM16(FetchByte(), true)); break;
 		// LDS REG16, MEM16 (4)
 		case 0xC5: LoadPTR(regDS, GetModRegRM16(FetchByte(), true)); break;
 
@@ -583,7 +583,7 @@ namespace emul
 		// AAM
 		case 0xD4: AAM(); break;
 		// AAD
-		case 0xD5: NotImplemented(opcode); break;
+		case 0xD5: AAD(); break;
 
 		// XLAT (1)
 		case 0xD7: XLAT(); break;
@@ -2139,7 +2139,7 @@ namespace emul
 			case 0x11: LogPrintf(LOG_ERROR, "INT10: Change charset"); break;
 			default: LogPrintf(LOG_ERROR, "INT10: Other function ah=%02X", regA.hl.h); break;
 			}
-			return;
+			//return;
 #endif
 		}
 		else if (interrupt == 0x19)
@@ -2156,7 +2156,7 @@ namespace emul
 		}
 		else if (interrupt == 0x21)
 		{
-			LogPrintf(LOG_ERROR, "DOS");
+			LogPrintf(LOG_ERROR, "DOS, ah = %02X", regA.hl.h);
 		}
 
 		PUSH(flags);
@@ -2256,6 +2256,18 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "AAM");
 		regA.hl.h = regA.hl.l / 10;
 		regA.hl.l %= regA.hl.l;
+
+		AdjustSign(regA.hl.l);
+		AdjustZero(regA.hl.l);
+		AdjustParity(regA.hl.l);
+	}
+
+	void CPU8086::AAD()
+	{
+		LogPrintf(LOG_DEBUG, "AAD");
+
+		regA.hl.l = (regA.hl.h * 10) + regA.hl.l;
+		regA.hl.h = 0;
 
 		AdjustSign(regA.hl.l);
 		AdjustZero(regA.hl.l);
