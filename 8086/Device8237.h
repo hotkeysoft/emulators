@@ -2,6 +2,7 @@
 
 #include "Common.h"
 #include "PortConnector.h"
+#include "Memory.h"
 
 using emul::PortConnector;
 class emul::PortAggregator;
@@ -15,7 +16,7 @@ namespace dma
 	class DMAChannel : public PortConnector
 	{
 	public:
-		DMAChannel(Device8237* parent, BYTE id, const char* label);
+		DMAChannel(Device8237* parent, emul::Memory& memory, BYTE id, const char* label);
 
 		DMAChannel() = delete;
 		DMAChannel(const DMAChannel&) = delete;
@@ -36,8 +37,11 @@ namespace dma
 
 		void SetMode(BYTE mode);
 
+		void DMAWrite(BYTE value);
+
 	private:
 		Device8237* m_parent;
+		emul::Memory& m_memory;
 		BYTE m_id;
 
 		enum MODE {
@@ -50,6 +54,7 @@ namespace dma
 		};
 		BYTE m_mode;
 		bool m_decrement;
+		bool m_autoInit;
 
 		WORD m_baseCount;
 		WORD m_count;
@@ -61,7 +66,7 @@ namespace dma
 	class Device8237 : public PortConnector
 	{
 	public:
-		Device8237(WORD baseAddress);
+		Device8237(WORD baseAddress, emul::Memory& m_memory);
 
 		Device8237() = delete;
 		Device8237(const Device8237&) = delete;
@@ -78,8 +83,8 @@ namespace dma
 
 		void Tick();
 
-		void DMARequest(size_t channel, bool state);
-		bool DMAAcknowledged(size_t channel);
+		void DMARequest(BYTE channel, bool state);
+		bool DMAAcknowledged(BYTE channel);
 
 		virtual bool ConnectTo(emul::PortAggregator& dest);
 
@@ -87,6 +92,8 @@ namespace dma
 		bool IsDisabled() { return (m_commandReg & CMD_DISABLE); }
 
 		void SetTerminalCount(BYTE channel);
+
+		void DMAWrite(BYTE channel, BYTE data);
 
 	protected:
 		const WORD m_baseAddress;
@@ -117,6 +124,8 @@ namespace dma
 		DMAChannel m_channel1;
 		DMAChannel m_channel2;
 		DMAChannel m_channel3;
+
+		bool DMARequests[3];
 
 		BYTE m_commandReg;
 		BYTE m_statusReg;

@@ -2,7 +2,6 @@
 #include "Device8237.h"
 #include "PortAggregator.h"
 
-
 using emul::GetHiByte;
 using emul::GetLowByte;
 using emul::SetHiByte;
@@ -12,16 +11,18 @@ using emul::SetBit;
 namespace dma
 {
 
-	DMAChannel::DMAChannel(Device8237* parent, BYTE id, const char* label) :
+	DMAChannel::DMAChannel(Device8237* parent, emul::Memory& memory, BYTE id, const char* label) :
 		Logger(label),
 		m_parent(parent),
+		m_memory(memory),
 		m_id(id),
 		m_baseCount(0x0000),
 		m_count(0x0000),
 		m_baseAddress(0x0000),
 		m_address(0x0000),
 		m_mode(0),
-		m_decrement(false)
+		m_decrement(false),
+		m_autoInit(false)
 	{
 	}
 
@@ -36,6 +37,13 @@ namespace dma
 
 	void DMAChannel::Reset()
 	{
+		m_baseCount = 0x0000;
+		m_count = 0x0000;
+		m_baseAddress = 0x0000;
+		m_address = 0x0000;
+		m_mode = 0;
+		m_decrement = false;
+		m_autoInit = false;
 	}
 
 	void DMAChannel::Tick()
@@ -58,10 +66,13 @@ namespace dma
 		if (m_count == 0)
 		{
 			LogPrintf(LOG_INFO, "Channel %d, Count done", m_id);
-			m_count = m_baseCount;
-			m_address = m_baseAddress;
-			m_parent->SetTerminalCount(m_id);
 
+			if (m_autoInit)
+			{
+				m_count = m_baseCount;
+				m_address = m_baseAddress;
+			}
+			m_parent->SetTerminalCount(m_id);
 		}
 	}
 
@@ -76,6 +87,12 @@ namespace dma
 		bool loHi = m_parent->GetByteFlipFlop(true);
 		LogPrintf(LOG_DEBUG, "Write ADDRESS, value=%02X, lowHi=%d", value, loHi);
 		loHi ? SetHiByte(m_address, value) : SetLowByte(m_address, value);
+
+		if (loHi)
+		{
+			LogPrintf(LOG_INFO, "Write ADDRESS, value=%04X (%d)", m_address, m_address);
+			m_baseAddress = m_address;
+		}
 	}
 
 	BYTE DMAChannel::ReadCount()
@@ -90,6 +107,12 @@ namespace dma
 		bool loHi = m_parent->GetByteFlipFlop(true);
 		LogPrintf(LOG_DEBUG, "Write COUNT, value=%02X, lowHi=%d", value, loHi);
 		loHi ? SetHiByte(m_count, value) : SetLowByte(m_count, value);
+
+		if (loHi)
+		{
+			LogPrintf(LOG_INFO, "Write COUNT, value=%04X (%d)", m_count, m_count);
+			m_baseCount = m_count;
+		}
 	}
 
 	void DMAChannel::SetMode(BYTE mode)
@@ -131,12 +154,29 @@ namespace dma
 		LogPrintf(LOG_INFO, "Address %s", m_decrement ? "Decrement" : "Increment");
 	}
 
-	Device8237::Device8237(WORD baseAddress) :
+	void DMAChannel::DMAWrite(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "DMA Write, value=%02X @ Address %04x", value, m_address);
+
+		if ((m_mode & (MODE_OP1 | MODE_OP0)) == MODE_OP0) // WRITE Transfer
+		{
+			// TODO: Bank, port 80
+			m_memory.Write(m_address, value);
+		}
+		else 
+		{
+			throw std::exception("DMAWrite: Mode not supported");
+		}
+
+		Tick();
+	}
+
+	Device8237::Device8237(WORD baseAddress, emul::Memory& memory) :
 		Logger("dma"),
-		m_channel0(this, 0, "dma.0"),
-		m_channel1(this, 1, "dma.1"),
-		m_channel2(this, 2, "dma.2"),
-		m_channel3(this, 3, "dma.3"),
+		m_channel0(this, memory, 0, "dma.0"),
+		m_channel1(this, memory, 1, "dma.1"),
+		m_channel2(this, memory, 2, "dma.2"),
+		m_channel3(this, memory, 3, "dma.3"),
 		m_baseAddress(baseAddress),
 		m_commandReg(0),
 		m_statusReg(0),
@@ -166,6 +206,10 @@ namespace dma
 		m_tempReg = 0;
 		m_maskReg = 0xFF;
 		m_byteFlipFlop = false;
+
+		DMARequests[0] = false;
+		DMARequests[1] = false;
+		DMARequests[2] = false;
 	}
 
 	void Device8237::Init()
@@ -206,6 +250,7 @@ namespace dma
 	{
 		static size_t div = 0;
 
+		// TODO: Fake memory refresh until everything is connected
 		if (div++ == 15)
 		{
 			div = 0;
@@ -313,16 +358,18 @@ namespace dma
 		m_byteFlipFlop = false;
 	}
 
-	void Device8237::DMARequest(size_t channel, bool state)
+	void Device8237::DMARequest(BYTE channel, bool state)
 	{
-		if (channel > 3) throw std::exception("invalid dma channel");
-		// TODO
+		if (channel > 2) throw std::exception("invalid dma channel");
+		DMARequests[channel % 3] = state;
 	}
-	bool Device8237::DMAAcknowledged(size_t channel)
+	bool Device8237::DMAAcknowledged(BYTE channel)
 	{
-		if (channel > 3) throw std::exception("invalid dma channel");
+		if (channel > 2) throw std::exception("invalid dma channel");
 		// TODO
-		return false;
+		bool ack = DMARequests[channel % 3];
+		DMARequests[channel % 3] = false;		
+		return ack;
 	}
 
 	bool Device8237::GetByteFlipFlop(bool toggle)
@@ -339,5 +386,22 @@ namespace dma
 	{
 		channel &= 3;
 		m_statusReg |= (1 << channel);
+	}
+
+	void Device8237::DMAWrite(BYTE channel, BYTE data)
+	{
+		switch (channel & 3)
+		{
+		case 0: m_channel0.DMAWrite(data);
+			break;
+		case 1: m_channel1.DMAWrite(data);
+			break;
+		case 2: m_channel2.DMAWrite(data);
+			break;
+		case 3: m_channel3.DMAWrite(data);
+			break;
+		default:
+			throw std::exception("not possible");
+		}
 	}
 }

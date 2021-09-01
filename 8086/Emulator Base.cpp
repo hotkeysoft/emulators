@@ -26,7 +26,7 @@
 
 #include <Windows.h>
 
-//#define NO_CONSOLE
+#define NO_CONSOLE
 //#define CPU_TEST
 
 FILE* logFile = nullptr;
@@ -207,10 +207,10 @@ int main(void)
 		ppi.SetFloppyCount(1);
 	}
 
-	dma::Device8237 dma(0x00);
+	dma::Device8237 dma(0x00, memory);
 	dma.Init();
 	dma.EnableLog(false);
-	dma.EnableLog(true, Logger::LOG_WARNING);
+	dma.EnableLog(true, Logger::LOG_INFO);
 
 	cga::DeviceCGA cga(0x3D0);
 	cga.Init();
@@ -368,6 +368,23 @@ int main(void)
 			dma.Tick();
 			cga.Tick();
 			floppy.Tick();
+
+			// TODO: faking it
+			if (floppy.IsDMAPending())
+			{
+				dma.DMARequest(2, true);
+				fprintf(stderr, "floppy DMA pending\n");
+			}
+
+			if (dma.DMAAcknowledged(2))
+			{
+				dma.DMARequest(2, false);
+
+				// Do it manually
+				floppy.DMAAcknowledge();
+				dma.DMAWrite(2, floppy.ReadDataFIFO());
+				fprintf(stderr, "floppy DMA read\n");
+			}
 		}
 	}
 	catch (std::exception e)

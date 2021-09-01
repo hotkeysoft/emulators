@@ -1,6 +1,8 @@
 #include "DeviceFloppy.h"
 #include <assert.h>
 
+#include "data/BOOTSECT.h"
+
 namespace fdc
 {
 	const size_t RESET_DELAY_US = 10 * 1000; // 10 ms
@@ -14,11 +16,6 @@ namespace fdc
 		m_state(STATE::CMD_WAIT),
 		m_nextState(STATE::CMD_WAIT),
 		m_interruptPending(false),
-		m_st0(0),
-		m_pcn(0),
-		m_srt(16),
-		m_hlt(254),
-		m_hut(240),
 		m_nonDMA(true),
 		m_commandBusy(false),
 		m_driveActive{ false, false, false, false },
@@ -205,20 +202,26 @@ namespace fdc
 		case STATE::RESULT_WAIT:
 			m_commandBusy = true;
 			RQMDelay(STATE::RESULT_WAIT);
-			result = m_fifo.front();
-			m_fifo.pop_front();
+			result = Pop();
+			break;
+		case STATE::DMA_WAIT:
+			result = Pop();
+			DMAAcknowledge();
+			ReadSector();
 			break;
 		default:
+			LogPrintf(Logger::LOG_ERROR, "ReadDataFIFO() Unexpected State: %d", m_state);
 			throw std::exception("Unexpected state");
 		}
 		LogPrintf(Logger::LOG_DEBUG, "Return Result: %02X", result);
 		return result;
 	}
+
 	void DeviceFloppy::WriteDataFIFO(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteDataFIFO, value=%02X", value);
 
-		m_fifo.push_back(value);
+		Push(value);
 
 		switch (m_state)
 		{
@@ -231,6 +234,7 @@ namespace fdc
 			RQMDelay(STATE::PARAM_WAIT);
 			break;
 		default:
+			LogPrintf(Logger::LOG_ERROR, "WriteDataFIFO() Unexpected State: %d", m_state);
 			throw std::exception("Unexpected state");
 		}
 	}
@@ -275,7 +279,7 @@ namespace fdc
 		case STATE::CMD_EXEC_DELAY:
 			if (--m_currOpWait == 0)
 			{
-				m_state = STATE::CMD_EXEC_DONE;
+				m_state = m_nextState;
 			}
 			break;
 		case STATE::CMD_EXEC_DONE:
@@ -321,7 +325,37 @@ namespace fdc
 				m_state = STATE::CMD_WAIT;
 			}
 			break;
-		default: throw std::exception("Unknown state");
+		case STATE::READ_START:
+			LogPrintf(Logger::LOG_INFO, "Start Read");
+			m_state = STATE::READ_EXEC;
+			m_currOpWait = DelayToTicks(100 * 1000);
+			break;
+		case STATE::READ_EXEC:
+			LogPrintf(Logger::LOG_INFO, "Read Sector");
+			ReadSector();
+			break;
+		case STATE::READ_DONE:
+			LogPrintf(Logger::LOG_INFO, "End Read");
+			ReadSectorEnd();
+			m_state = STATE::CMD_EXEC_DONE;
+			break;
+		case STATE::DMA_WAIT:
+			LogPrintf(Logger::LOG_INFO, "DMA Wait");
+			if (--m_currOpWait == 0)
+			{
+				m_state = STATE::CMD_ERROR;
+			}
+			break;
+		case STATE::CMD_ERROR:
+			LogPrintf(Logger::LOG_INFO, "Command Error");
+			m_st0 = 0x80;
+			m_fifo.clear();
+			Push(m_st0);
+			m_state = STATE::CMD_EXEC_DONE;
+			break;
+		default: 
+			LogPrintf(Logger::LOG_ERROR, "Tick() Unknown State: %d", m_state);
+			throw std::exception("Unknown state");
 		}
 	}
 
@@ -335,8 +369,7 @@ namespace fdc
 	}
 	void DeviceFloppy::ReadCommand()
 	{
-		m_currcommandID = m_fifo.front();
-		m_fifo.pop_front();
+		m_currcommandID = Pop();
 
 		LogPrintf(LOG_DEBUG, "ReadCommand, cmd = %02X", m_currcommandID);
 
@@ -361,29 +394,35 @@ namespace fdc
 	{
 		m_state = STATE::CMD_EXEC;
 		ExecFunc func = m_currCommand->func;
-		m_currOpWait = (this->*func)();
-		LogPrintf(LOG_DEBUG, "Command pushed [%d] results. Execution Delay: [%d]", m_fifo.size(), m_currOpWait);
+		m_nextState = (this->*func)();
+		LogPrintf(LOG_DEBUG, "Command pushed [%d] results. Next State: [%d]", m_fifo.size(), m_nextState);
 
-		m_state = m_currOpWait ? STATE::CMD_EXEC_DELAY : STATE::CMD_EXEC_DONE;
+		m_state = m_currOpWait ? STATE::CMD_EXEC_DELAY : m_nextState;
 	}
 
-	size_t DeviceFloppy::NotImplemented()
+	void DeviceFloppy::DMAAcknowledge()
+	{
+		m_dmaPending = false;
+		//m_state = STATE::DMA_ACK;
+	}
+
+	DeviceFloppy::STATE DeviceFloppy::NotImplemented()
 	{
 		LogPrintf(LOG_ERROR, "Command [%s] not implemented", m_currCommand->name);
 		m_fifo.clear();
 		throw std::exception("not implemented");
-		return 0;
+		return STATE::CMD_EXEC_DONE;
 	}
 
-	size_t DeviceFloppy::SenseInterrupt()
+	DeviceFloppy::STATE DeviceFloppy::SenseInterrupt()
 	{
 		LogPrintf(LOG_INFO, "COMMAND: SenseInterrupt");
 
 		assert(m_fifo.size() == 0);
 
 		// Response: ST0, PCN
-		m_fifo.push_back(m_st0);
-		m_fifo.push_back(m_pcn);
+		Push(m_st0);
+		Push(m_pcn);
 
 		// If after a reset, return C0 for each drives
 		// TODO: Check that we after a reset and not in an error condition
@@ -399,14 +438,14 @@ namespace fdc
 		}
 
 		// Response: none
-		return DelayToTicks(5);
+		m_currOpWait = 5;
+		return STATE::CMD_EXEC_DONE;
 	}
 
-	size_t DeviceFloppy::Recalibrate()
+	DeviceFloppy::STATE DeviceFloppy::Recalibrate()
 	{
 		// TODO: Support parallel seek/recalibrate
-		BYTE driveNumber = m_fifo.front() % 3;
-		m_fifo.pop_front();
+		BYTE driveNumber = Pop() % 3;
 
 		LogPrintf(LOG_INFO, "COMMAND: Recalibrate drive [%d]", driveNumber);
 
@@ -416,22 +455,21 @@ namespace fdc
 
 		assert(m_fifo.size() == 0);
 		// Response: none, Interrupt
-		return DelayToTicks(100 * 1000); // 100 ms;
+		m_currOpWait = DelayToTicks(100 * 1000); // 100 ms
+		return STATE::CMD_EXEC_DONE;
 	}
 
-	size_t DeviceFloppy::Seek()
+	DeviceFloppy::STATE DeviceFloppy::Seek()
 	{
 		// TODO: Support parallel seek/recalibrate
-		BYTE param = m_fifo.front();
-		m_fifo.pop_front();
+		BYTE param = Pop();
 
 		BYTE driveNumber = param % 3;
 		bool head = param & 4;
 
-		int cylinder = m_fifo.front();
-		m_fifo.pop_front();
+		int cylinder = Pop();
 
-		BYTE travel = abs(cylinder - m_pcn);
+		size_t travel = abs(cylinder - m_pcn);
 
 		LogPrintf(LOG_INFO, "COMMAND: Seek d=[%d] h=[%d] cyl=[%d] (travel: [%d])", driveNumber, head, cylinder, travel);
 
@@ -441,13 +479,13 @@ namespace fdc
 
 		assert(m_fifo.size() == 0);
 		// Response: Interrupt
-		return DelayToTicks(travel * m_srt * 1000);
+		m_currOpWait = DelayToTicks(travel * (size_t)m_srt * 1000);
+		return STATE::CMD_EXEC_DONE;
 	}
 
-	size_t DeviceFloppy::SenseDriveStatus()
+	DeviceFloppy::STATE DeviceFloppy::SenseDriveStatus()
 	{
-		BYTE param = m_fifo.front();
-		m_fifo.pop_front();
+		BYTE param = Pop();
 
 		BYTE driveNumber = param & 3;
 		bool head = param & 4;
@@ -458,21 +496,20 @@ namespace fdc
 
 		assert(m_fifo.size() == 0);
 		// Response: ST3
-		m_fifo.push_back(m_st3);
-		return DelayToTicks(5);
+		Push(m_st3);
+		m_currOpWait = DelayToTicks(5);
+		return STATE::CMD_EXEC_DONE;
 	}
 
-	size_t DeviceFloppy::Specify()
+	DeviceFloppy::STATE DeviceFloppy::Specify()
 	{
-		BYTE param = m_fifo.front();
-		m_fifo.pop_front();
+		BYTE param = Pop();
 
 		m_srt = 16-(param >> 4); // Step Rate Time (1-16 ms, 0xF=1, 0xE=2, etc)
 		m_hut = param << 4; // Head Unload Time (16-240ms in 16ms increment)
 		if (m_hut == 0) m_hut = 255;
 
-		param = m_fifo.front();
-		m_fifo.pop_front();
+		param = Pop();
 
 		m_hlt = (param & 0b11111110); // Head Load Time (2-254ms in 2ms increment)
 		if (m_hlt == 0) m_hlt = 255;
@@ -483,45 +520,94 @@ namespace fdc
 
 		assert(m_fifo.size() == 0);
 		// No Response, no interrupt
-		return DelayToTicks(5);
+		m_currOpWait = DelayToTicks(5);
+		return STATE::CMD_EXEC_DONE;
 	}
 
-	size_t DeviceFloppy::ReadData()
+	DeviceFloppy::STATE DeviceFloppy::ReadData()
 	{
-		BYTE param = m_fifo.front();
-		m_fifo.pop_front();
+		BYTE param = Pop();
 
 		BYTE driveNumber = param & 3;
 		bool head = param & 4;
 
-		BYTE c = m_fifo.front();
-		m_fifo.pop_front();
-
-		BYTE h = m_fifo.front();
-		m_fifo.pop_front();
-
-		BYTE r = m_fifo.front();
-		m_fifo.pop_front();
-
-		BYTE n = m_fifo.front();
-		m_fifo.pop_front();
-
-		BYTE eot = m_fifo.front();
-		m_fifo.pop_front();
-
-		BYTE gpl = m_fifo.front();
-		m_fifo.pop_front();
-
-		BYTE dtl = m_fifo.front();
-		m_fifo.pop_front();
+		BYTE c = Pop();
+		BYTE h = Pop();
+		BYTE r = Pop();
+		BYTE n = Pop();
+		BYTE eot = Pop();
+		BYTE gpl = Pop();
+		BYTE dtl = Pop();
 
 		LogPrintf(LOG_INFO, "COMMAND: Read Data drive=[%d] head=[%d]", driveNumber, head);
-		LogPrintf(LOG_INFO, " Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] eot=[%d] gpl=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
+
+		m_currHead = head;
+		m_currSector = r;
+		m_maxSector = eot;
+
+		// TODO: Error handling, validation
+		if (c != m_pcn)
+		{
+			throw std::exception("cylinder != current cylinder");
+		}
+
+		// TODO: Multitrack
+		// (m_currcommandID & 0x80) //MT
+
+		// Only this configuration is supported at the moment
+		assert(m_enableIRQDMA == true);
+		assert(m_nonDMA == false);
+		assert(n == 2);		// All floppy drives use 512 bytes/sector
+		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
 
 		assert(m_fifo.size() == 0);
 
-		throw std::exception("not implemented");
+		m_driveActive[driveNumber] = true;
+		// TODO: Only if head is not already loaded
+		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
 
+		// Put the whole sector in the fifo
+		// TODO: Get sector
+		for (size_t b= 0; b < 512; ++b)
+		{
+			Push(BOOT[b]);
+		}
+
+		return STATE::READ_START;
+	}
+
+	void DeviceFloppy::ReadSector()
+	{
+		LogPrintf(LOG_INFO, "ReadSector, fifo=%d", m_fifo.size());
+		// Exit Conditions
+		if (m_fifo.size() == 0)
+		{
+			m_currOpWait = DelayToTicks(10);
+			m_nextState = STATE::READ_DONE;
+			m_state = STATE::CMD_EXEC_DELAY;
+			return;
+		}
+
+		SetDMAPending();
+
+		// Timeout
+		m_currOpWait = DelayToTicks(100 * 1000);
+
+		m_state = STATE::DMA_WAIT;
+	}
+
+	void DeviceFloppy::ReadSectorEnd()
+	{
+		LogPrintf(LOG_INFO, "ReadSectorEnd, fifo=%d", m_fifo.size());
+		m_st0 = 0;
+
+		Push(m_st0);
+		Push(0/*m_st1*/); // TODO: Error stuff, check details
+		Push(0/*m_st2*/); // TODO: Error stuff, check details
+		Push(m_pcn);
+		Push(m_currHead);
+		Push(++m_currSector);
+		Push(2); // N
 	}
 }
-

@@ -49,6 +49,9 @@ namespace fdc
 		bool IsInterruptPending() const { return m_interruptPending; }
 		void ClearInterrupt() { m_interruptPending = false; }
 
+		bool IsDMAPending() const { return m_dmaPending; }
+		void DMAAcknowledge();
+
 	protected:
 		const WORD m_baseAddress;
 		size_t m_clockSpeed;
@@ -71,6 +74,13 @@ namespace fdc
 			CMD_EXEC_DELAY,
 			CMD_EXEC_DONE,
 
+			READ_START,
+			READ_EXEC,
+			READ_DONE,
+
+			DMA_WAIT,
+			DMA_ACK,
+
 			RESULT_WAIT,
 		} m_state, m_nextState;
 
@@ -78,16 +88,21 @@ namespace fdc
 		void RQMDelay(STATE nextState);
 		void ReadCommand();
 		void ExecuteCommand();
+		void ReadSector();
+		void ReadSectorEnd();
 
 		// FDC Commands
-		typedef size_t(DeviceFloppy::* ExecFunc)();
-		size_t NotImplemented();
-		size_t SenseInterrupt();
-		size_t Recalibrate();
-		size_t Seek();
-		size_t SenseDriveStatus();
-		size_t Specify();
-		size_t ReadData();
+		typedef STATE(DeviceFloppy::* ExecFunc)();
+		STATE NotImplemented();
+		STATE SenseInterrupt();
+		STATE Recalibrate();
+		STATE Seek();
+		STATE SenseDriveStatus();
+		STATE Specify();
+		STATE ReadData();
+
+		bool m_dmaPending;
+		void SetDMAPending() { LogPrintf(Logger::LOG_INFO, "Set DMA Pending");  m_dmaPending = true; }
 
 		bool m_interruptPending;
 		void SetInterruptPending() { m_interruptPending = true; }
@@ -131,6 +146,10 @@ namespace fdc
 		BYTE m_st0; // Status flag
 		BYTE m_st3; // Status flag
 		BYTE m_pcn; // Present Cylinder Number
+		
+		BYTE m_currSector;
+		BYTE m_maxSector;
+		BYTE m_currHead;
 
 		BYTE m_srt; // Step Rate Time, time between cylinders (ms)
 		BYTE m_hlt; // Head Load Time, time to wait between activating head and before read (ms)
@@ -161,6 +180,9 @@ namespace fdc
 		bool m_enableIRQDMA;
 		BYTE m_driveSel;
 
+		// Command/Response/Parameters FIFO
+		void Push(BYTE value) { m_fifo.push_back(value); }
+		BYTE Pop() { BYTE ret = m_fifo.front(); m_fifo.pop_front(); return ret; }
 		std::deque<BYTE> m_fifo;
 
 		enum CMD
