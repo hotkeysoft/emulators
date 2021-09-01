@@ -162,6 +162,7 @@ namespace emul
 
 		// Opcodes
 
+		void CALLfar();
 		void CALLNear(WORD offset);
 		void CALLIntra(WORD address);
 
@@ -169,6 +170,7 @@ namespace emul
 		void JMPNear(BYTE offset);
 		void JMPNear(WORD offset);
 		void JMPIntra(WORD address);
+		void JMPInter(WORD* destPtr);
 
 		void CLC();
 		void CMC();

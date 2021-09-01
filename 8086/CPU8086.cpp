@@ -37,7 +37,7 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		//if (regIP == 0x0104)
+		//if (regIP == 0x07C6C)
 		//	__debugbreak();
 
 		++regIP;
@@ -45,7 +45,7 @@ namespace emul
 		// Disable override after next instruction
 		bool clearSegOverride = inSegOverride;
 
-		switch(opcode) 
+		switch(opcode)
 		{
 		// ADD rm+r=>rm (4)
 		// --------
@@ -430,7 +430,7 @@ namespace emul
 		case 0x99: NotImplemented(opcode); break;
 
 		// CALL Far (5)
-		case 0x9A: NotImplemented(opcode); break;
+		case 0x9A: CALLfar(); break;
 
 		// WAIT (1)
 		case 0x9B: NotImplemented(opcode); break;
@@ -1156,6 +1156,18 @@ namespace emul
 		regIP = address;
 	}
 
+	void CPU8086::CALLfar()
+	{
+		WORD offset = FetchWord();
+		WORD segment = FetchWord();
+		LogPrintf(LOG_DEBUG, "CALLfar %02X|%02X", segment, offset);
+		PUSH(regCS);
+		PUSH(regIP);
+		regCS = segment;
+		regIP = offset;
+	}
+
+
 	void CPU8086::JMPfar()
 	{
 		WORD offset = FetchWord();
@@ -1180,6 +1192,13 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "JMPIntra newIP=%04X", address);
 		regIP = address;
+	}
+
+	void CPU8086::JMPInter(WORD* destPtr)
+	{
+		regIP = *destPtr++;
+		regCS = *destPtr;
+		LogPrintf(LOG_DEBUG, "JMPInter newCS=%04X, newIP=%04X", regCS, regIP);
 	}
 
 	void CPU8086::NotImplemented(BYTE op)
@@ -2079,7 +2098,7 @@ namespace emul
 		else  if (interrupt == 0x10)
 		{
 			LogPrintf(LOG_DEBUG, "VIDEO");
-#if 0
+#if 1
 			char ch = (regA.hl.l < 32) ? '.' : (char)regA.hl.l;
 			
 			switch (regA.hl.h)
@@ -2160,7 +2179,7 @@ namespace emul
 		case 0x18: throw(std::exception("MultiFunc [CALL RM16(inter)] not implemented"));
 		// JMP RM16(intra) // JMP MEM16(intersegment)
 		case 0x20: JMPIntra(*dest); break;
-		case 0x28: throw(std::exception("MultiFunc [JMP MEM16(inter)] not implemented"));
+		case 0x28: JMPInter(dest); break;
 		// PUSH MEM16
 		case 0x30: PUSH(*dest); break;
 		// not used
