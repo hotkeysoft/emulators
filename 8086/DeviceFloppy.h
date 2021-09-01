@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "PortConnector.h"
 #include "Logger.h"
+#include <vector>
 #include <deque>
 
 using emul::PortConnector;
@@ -24,6 +25,8 @@ namespace fdc
 
 		void Init();
 		void Reset();
+
+		bool LoadDiskImage(const char* path);
 
 		size_t DelayToTicks(size_t delayMS);
 
@@ -56,6 +59,8 @@ namespace fdc
 		const WORD m_baseAddress;
 		size_t m_clockSpeed;
 		size_t m_currOpWait;
+
+		std::vector<BYTE> m_currImage;
 
 		enum class STATE
 		{
@@ -102,7 +107,7 @@ namespace fdc
 		STATE ReadData();
 
 		bool m_dmaPending;
-		void SetDMAPending() { LogPrintf(Logger::LOG_INFO, "Set DMA Pending");  m_dmaPending = true; }
+		void SetDMAPending() { LogPrintf(Logger::LOG_DEBUG, "Set DMA Pending");  m_dmaPending = true; }
 
 		bool m_interruptPending;
 		void SetInterruptPending() { m_interruptPending = true; }

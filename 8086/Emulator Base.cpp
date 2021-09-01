@@ -219,6 +219,7 @@ int main(void)
 	fdc::DeviceFloppy floppy(0x03F0, 1193182);
 	floppy.Init();
 	floppy.EnableLog(true, Logger::LOG_INFO);
+	floppy.LoadDiskImage("data/PC-DOS-1.00.img");
 
 	DummyPortSink sink;
 
@@ -373,7 +374,7 @@ int main(void)
 			if (floppy.IsDMAPending())
 			{
 				dma.DMARequest(2, true);
-				fprintf(stderr, "floppy DMA pending\n");
+				//fprintf(stderr, "floppy DMA pending\n");
 			}
 
 			if (dma.DMAAcknowledged(2))
@@ -383,7 +384,7 @@ int main(void)
 				// Do it manually
 				floppy.DMAAcknowledge();
 				dma.DMAWrite(2, floppy.ReadDataFIFO());
-				fprintf(stderr, "floppy DMA read\n");
+				//fprintf(stderr, "floppy DMA read\n");
 			}
 		}
 	}

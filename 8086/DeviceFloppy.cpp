@@ -1,8 +1,6 @@
 #include "DeviceFloppy.h"
 #include <assert.h>
 
-#include "data/BOOTSECT.h"
-
 namespace fdc
 {
 	const size_t RESET_DELAY_US = 10 * 1000; // 10 ms
@@ -54,6 +52,48 @@ namespace fdc
 		m_nonDMA = true;
 
 		m_state = STATE::RESET_START;
+	}
+
+	bool DeviceFloppy::LoadDiskImage(const char* path)
+	{
+		m_currImage.clear();
+
+		LogPrintf(LOG_INFO, "LoadDiskImage: loading %s", path);
+
+		struct stat stat_buf;
+		int rc = stat(path, &stat_buf);
+		size_t size = stat_buf.st_size;
+		size_t expected = 512 * 40 * 8;
+
+		if (size != expected)
+		{
+			LogPrintf(LOG_ERROR, "LoadDiskImage: Unsupported image file, size=%d", size);
+			return false;
+		}
+
+		m_currImage.clear();
+		m_currImage.resize(expected);
+
+		FILE* f = fopen(path, "rb");
+		if (!f)
+		{
+			LogPrintf(LOG_ERROR, "LoadDiskImage: error opening binary file");
+			return false;
+		}
+
+		size_t bytesRead = fread(&m_currImage[0], sizeof(char), size, f);
+		if (size != bytesRead)
+		{
+			LogPrintf(LOG_ERROR, "LoadDiskImage: error reading binary file");
+			return false;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "LoadDiskImage: read %d bytes", bytesRead);
+		}
+
+		fclose(f);
+		return true;
 	}
 
 	void DeviceFloppy::Init()
@@ -340,7 +380,7 @@ namespace fdc
 			m_state = STATE::CMD_EXEC_DONE;
 			break;
 		case STATE::DMA_WAIT:
-			LogPrintf(Logger::LOG_INFO, "DMA Wait");
+			LogPrintf(Logger::LOG_DEBUG, "DMA Wait");
 			if (--m_currOpWait == 0)
 			{
 				m_state = STATE::CMD_ERROR;
@@ -567,11 +607,28 @@ namespace fdc
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
 
-		// Put the whole sector in the fifo
-		// TODO: Get sector
-		for (size_t b= 0; b < 512; ++b)
+		if (r < 1 || r > 8)
 		{
-			Push(BOOT[b]);
+			LogPrintf(LOG_ERROR, "Invalid sector [%d]", r);
+			throw std::exception("Invalid sector");
+		}
+		if (c >= 40)
+		{
+			LogPrintf(LOG_ERROR, "Invalid cylinder [%d]", c);
+			throw std::exception("Invalid cylinder");
+		}
+		if (h > 1)
+		{
+			LogPrintf(LOG_ERROR, "Invalid head [%d]", h);
+			throw std::exception("Invalid head");
+		}
+
+		// Put the whole sector in the fifo
+		for (size_t b = 0; b < 512; ++b)
+		{
+			// TODO: adjust do floppy size
+			int offset = 512 * ((c * 8) + (r - 1));
+			Push(m_currImage[offset+b]);
 		}
 
 		return STATE::READ_START;
@@ -579,7 +636,7 @@ namespace fdc
 
 	void DeviceFloppy::ReadSector()
 	{
-		LogPrintf(LOG_INFO, "ReadSector, fifo=%d", m_fifo.size());
+		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
 		// Exit Conditions
 		if (m_fifo.size() == 0)
 		{
