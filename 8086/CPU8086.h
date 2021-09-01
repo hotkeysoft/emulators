@@ -271,6 +271,8 @@ namespace emul
 		void AAA();
 		void AAM();
 
+		void LEA(BYTE op2);
+
 		void NotImplemented(BYTE);
 	};
 }

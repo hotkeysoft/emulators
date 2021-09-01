@@ -37,8 +37,10 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		//if (regIP == 0x07C6C)
+		//if (regIP == 0x7C73)
+		//{
 		//	__debugbreak();
+		//}
 
 		++regIP;
 
@@ -393,7 +395,7 @@ namespace emul
 		// LEA (4)
 		// ----------
 		// REG16, MEM16
-		case 0x8D: NotImplemented(opcode); break;
+		case 0x8D: LEA(FetchByte()); break;
 
 		// MOV rm=>sr (4)
 		// ----------
@@ -1734,7 +1736,22 @@ namespace emul
 			break;
 		}
 		case 0x28: throw(std::exception("ArithmeticMulti8 [imul] not implemented"));
-		case 0x30: throw(std::exception("ArithmeticMulti8 [div] not implemented"));
+		case 0x30:
+		{
+			LogPrintf(LOG_DEBUG, "DIV8");
+			if ((*modrm) == 0)
+			{
+				// TODO div by zero
+				throw(std::exception("ArithmeticMulti8 div by zero"));
+			}
+			WORD dividend = regA.x;
+			BYTE quotient = dividend / (*modrm);
+			BYTE remainder = dividend % (*modrm);
+			LogPrintf(LOG_DEBUG, "DIV8 %04X / %02X = %02X r %02X", dividend, (*modrm), quotient, remainder);
+			regA.hl.l = quotient;
+			regA.hl.h = remainder;
+			break;
+		}
 		case 0x38: throw(std::exception("ArithmeticMulti8 [idiv] not implemented"));
 		default:
 			throw(std::exception("not possible"));
@@ -2140,7 +2157,6 @@ namespace emul
 		else if (interrupt == 0x21)
 		{
 			LogPrintf(LOG_ERROR, "DOS");
-			HLT();
 		}
 
 		PUSH(flags);
@@ -2245,4 +2261,54 @@ namespace emul
 		AdjustZero(regA.hl.l);
 		AdjustParity(regA.hl.l);
 	}
+
+	void CPU8086::LEA(BYTE modregrm)
+	{
+		LogPrintf(LOG_DEBUG, "LEA");
+
+		SourceDest16 sd;
+
+		// reg part
+		LogPrintf(LOG_DEBUG, "LEA Target Register: %s", GetReg16Str(modregrm >> 3));
+		WORD* dest = GetReg16(modregrm >> 3, false);
+
+		// TODO, duplication
+		WORD displacement = 0;
+		bool direct = false;
+		switch (modregrm & 0xC0)
+		{
+		case 0xC0: // REG
+			throw std::exception("register not valid source");
+		case 0x00: // NO DISP (or DIRECT)
+			if ((modregrm & 7) == 6) // Direct 
+			{
+				direct = true;
+				displacement = FetchWord();
+			}
+			else
+			{
+				LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp=0");
+			}
+			break;
+		case 0x40:
+			displacement = widen(FetchByte());
+			LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp8=%04X", displacement);
+			break;
+		case 0x80:
+			displacement = FetchWord();
+			LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp16=%04X", displacement);
+			break;
+		default:
+			throw std::exception("GetModRM16: not implemented");
+		}
+
+		SegmentOffset segoff = GetEA(modregrm, direct);
+		WORD& segment = std::get<0>(segoff);
+		WORD& offset = std::get<1>(segoff);
+
+		offset = (direct ? 0 : offset) + displacement;
+
+		*dest = offset;
+	}
+
 }
