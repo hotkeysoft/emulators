@@ -55,6 +55,7 @@ namespace dma
 		BYTE m_mode;
 		bool m_decrement;
 		bool m_autoInit;
+		bool m_terminalCount;
 
 		WORD m_baseCount;
 		WORD m_count;
@@ -91,7 +92,8 @@ namespace dma
 		bool GetByteFlipFlop(bool toggle = false);
 		bool IsDisabled() { return (m_commandReg & CMD_DISABLE); }
 
-		void SetTerminalCount(BYTE channel);
+		bool GetTerminalCount(BYTE channel);
+		void SetTerminalCount(BYTE channel, bool tc = true);
 
 		void DMAWrite(BYTE channel, BYTE data);
 

@@ -54,6 +54,7 @@ namespace fdc
 
 		bool IsDMAPending() const { return m_dmaPending; }
 		void DMAAcknowledge();
+		void DMATerminalCount();
 
 	protected:
 		const WORD m_baseAddress;

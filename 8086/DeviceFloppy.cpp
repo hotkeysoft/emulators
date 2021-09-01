@@ -51,6 +51,8 @@ namespace fdc
 		m_hut = 240;
 		m_nonDMA = true;
 
+		m_fifo.clear();
+
 		m_state = STATE::RESET_START;
 	}
 
@@ -626,7 +628,7 @@ namespace fdc
 		// Put the whole sector in the fifo
 		for (size_t b = 0; b < 512; ++b)
 		{
-			// TODO: adjust do floppy size
+			// TODO: adjust to floppy geometry
 			int offset = 512 * ((c * 8) + (r - 1));
 			Push(m_currImage[offset+b]);
 		}
@@ -638,12 +640,30 @@ namespace fdc
 	{
 		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
 		// Exit Conditions
+
 		if (m_fifo.size() == 0)
 		{
-			m_currOpWait = DelayToTicks(10);
-			m_nextState = STATE::READ_DONE;
-			m_state = STATE::CMD_EXEC_DELAY;
-			return;
+			++m_currSector;
+			if (m_currSector > 8)
+			{
+				m_currSector = 0;
+
+				// TODO for now don't auto move to next track
+				m_currOpWait = DelayToTicks(10);
+				m_nextState = STATE::READ_DONE;
+				m_state = STATE::CMD_EXEC_DELAY;
+				return;
+			}
+
+			LogPrintf(LOG_INFO, "ReadSector done, reading next sector %d", m_currSector);
+			// Put the whole sector in the fifo
+			// TODO: Avoid duplication
+			for (size_t b = 0; b < 512; ++b)
+			{
+				// TODO: adjust to floppy geometry
+				int offset = 512 * ((m_pcn * 8) + (m_currSector - 1));
+				Push(m_currImage[offset + b]);
+			}
 		}
 
 		SetDMAPending();
@@ -659,6 +679,8 @@ namespace fdc
 		LogPrintf(LOG_INFO, "ReadSectorEnd, fifo=%d", m_fifo.size());
 		m_st0 = 0;
 
+		m_fifo.clear();
+
 		Push(m_st0);
 		Push(0/*m_st1*/); // TODO: Error stuff, check details
 		Push(0/*m_st2*/); // TODO: Error stuff, check details
@@ -666,5 +688,16 @@ namespace fdc
 		Push(m_currHead);
 		Push(++m_currSector);
 		Push(2); // N
+	}
+
+	void DeviceFloppy::DMATerminalCount()
+	{
+		LogPrintf(LOG_INFO, "DMATerminalCount");
+
+		// TODO: Check that we are in correct state;
+		m_dmaPending = false;
+		m_currOpWait = DelayToTicks(10);
+		m_nextState = STATE::READ_DONE;
+		m_state = STATE::CMD_EXEC_DELAY;
 	}
 }

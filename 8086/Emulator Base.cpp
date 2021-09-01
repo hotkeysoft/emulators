@@ -26,7 +26,7 @@
 
 #include <Windows.h>
 
-#define NO_CONSOLE
+//#define NO_CONSOLE
 //#define CPU_TEST
 
 FILE* logFile = nullptr;
@@ -384,6 +384,10 @@ int main(void)
 				// Do it manually
 				floppy.DMAAcknowledge();
 				dma.DMAWrite(2, floppy.ReadDataFIFO());
+				if (dma.GetTerminalCount(2))
+				{
+					floppy.DMATerminalCount();
+				}
 				//fprintf(stderr, "floppy DMA read\n");
 			}
 		}

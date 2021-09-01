@@ -22,7 +22,8 @@ namespace dma
 		m_address(0x0000),
 		m_mode(0),
 		m_decrement(false),
-		m_autoInit(false)
+		m_autoInit(false),
+		m_terminalCount(false)
 	{
 	}
 
@@ -44,6 +45,7 @@ namespace dma
 		m_mode = 0;
 		m_decrement = false;
 		m_autoInit = false;
+		m_terminalCount = false;
 	}
 
 	void DMAChannel::Tick()
@@ -63,16 +65,21 @@ namespace dma
 			++m_address;
 		}
 
-		if (m_count == 0)
+		if (m_count == 0xFFFF)
 		{
 			LogPrintf(LOG_INFO, "Channel %d, Count done", m_id);
 
+			// TODO: Terminalcount & correct states
 			if (m_autoInit)
 			{
 				m_count = m_baseCount;
 				m_address = m_baseAddress;
 			}
-			m_parent->SetTerminalCount(m_id);
+			else
+			{
+				m_terminalCount = true;
+				m_parent->SetTerminalCount(m_id);
+			}
 		}
 	}
 
@@ -112,6 +119,8 @@ namespace dma
 		{
 			LogPrintf(LOG_INFO, "Write COUNT, value=%04X (%d)", m_count, m_count);
 			m_baseCount = m_count;
+			m_terminalCount = false;
+			m_parent->SetTerminalCount(m_id, false);
 		}
 	}
 
@@ -152,10 +161,17 @@ namespace dma
 
 		m_decrement = (m_mode & MODE_ADDR_DECREMENT);
 		LogPrintf(LOG_INFO, "Address %s", m_decrement ? "Decrement" : "Increment");
+
+		m_terminalCount = false;
+		m_parent->SetTerminalCount(m_id, false);
 	}
 
 	void DMAChannel::DMAWrite(BYTE value)
 	{
+		if (m_terminalCount)
+		{
+			return;
+		}
 		LogPrintf(LOG_DEBUG, "DMA Write, value=%02X @ Address %04x", value, m_address);
 
 		if ((m_mode & (MODE_OP1 | MODE_OP0)) == MODE_OP0) // WRITE Transfer
@@ -368,7 +384,7 @@ namespace dma
 		if (channel > 2) throw std::exception("invalid dma channel");
 		// TODO
 		bool ack = DMARequests[channel % 3];
-		DMARequests[channel % 3] = false;		
+		DMARequests[channel % 3] = false;
 		return ack;
 	}
 
@@ -382,10 +398,21 @@ namespace dma
 		return ret;
 	}
 
-	void Device8237::SetTerminalCount(BYTE channel)
+	void Device8237::SetTerminalCount(BYTE channel, bool tc)
 	{
 		channel &= 3;
-		m_statusReg |= (1 << channel);
+		m_statusReg &= ~(1 << channel);
+
+		if (tc)
+		{
+			m_statusReg |= (1 << channel);
+		}
+	}
+
+	bool Device8237::GetTerminalCount(BYTE channel)
+	{
+		channel &= 3;
+		return m_statusReg & (1 << channel);
 	}
 
 	void Device8237::DMAWrite(BYTE channel, BYTE data)
