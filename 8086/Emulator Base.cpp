@@ -301,11 +301,16 @@ int main(void)
 					case 64: // F6
 					case 65: // F7
 					case 66: // F8
-					case 67: // F9
 						keyCode = ch;
 						newKeycode = true;
 						break;
-
+					case 67: // F9
+					{
+						char buf[256];
+						sprintf(buf, "memory.%lld.bin", time(nullptr));
+						memory.Dump(0, 65536, buf);
+						break;
+					}
 					case 68: // F10
 						base64K.LoadBinary("data/BASIC_F600.BIN", 0x1000);
 						cpu.Reset(0x0100, 0x0000);
