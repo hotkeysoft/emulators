@@ -3,27 +3,27 @@
 
 namespace emul
 {
-	WORD rawAdd8(SourceDest8 sd, bool);
-	WORD rawSub8(SourceDest8 sd, bool);
-	WORD rawCmp8(SourceDest8 sd, bool);
-	WORD rawAdc8(SourceDest8 sd, bool c);
-	WORD rawSbb8(SourceDest8 sd, bool b);
+	WORD rawAdd8(BYTE&, const BYTE&, bool);
+	WORD rawSub8(BYTE&, const BYTE&, bool);
+	WORD rawCmp8(BYTE&, const BYTE&, bool);
+	WORD rawAdc8(BYTE&, const BYTE&, bool c);
+	WORD rawSbb8(BYTE&, const BYTE&, bool b);
 
-	WORD rawAnd8(SourceDest8 sd, bool);
-	WORD rawOr8(SourceDest8 sd, bool);
-	WORD rawXor8(SourceDest8 sd, bool);
-	WORD rawTest8(SourceDest8 sd, bool);
+	WORD rawAnd8(BYTE&, const BYTE&, bool);
+	WORD rawOr8(BYTE&, const BYTE&, bool);
+	WORD rawXor8(BYTE&, const BYTE&, bool);
+	WORD rawTest8(BYTE&, const BYTE&, bool);
 
-	DWORD rawAdd16(SourceDest16 sd, bool);
-	DWORD rawSub16(SourceDest16 sd, bool);
-	DWORD rawCmp16(SourceDest16 sd, bool);
-	DWORD rawAdc16(SourceDest16 sd, bool c);
-	DWORD rawSbb16(SourceDest16 sd, bool b);
+	DWORD rawAdd16(WORD&, const WORD&, bool);
+	DWORD rawSub16(WORD&, const WORD&, bool);
+	DWORD rawCmp16(WORD&, const WORD&, bool);
+	DWORD rawAdc16(WORD&, const WORD&, bool c);
+	DWORD rawSbb16(WORD&, const WORD&, bool b);
 
-	DWORD rawAnd16(SourceDest16 sd, bool);
-	DWORD rawOr16(SourceDest16 sd, bool);
-	DWORD rawXor16(SourceDest16 sd, bool);
-	DWORD rawTest16(SourceDest16 sd, bool);
+	DWORD rawAnd16(WORD&, const WORD&, bool);
+	DWORD rawOr16(WORD&, const WORD&, bool);
+	DWORD rawXor16(WORD&, const WORD&, bool);
+	DWORD rawTest16(WORD&, const WORD&, bool);
 
 	// Arithmetic functions internal tests
 	#define ATEST8(F,A,B,R,O,S,Z,C) { flags=0; d8=A; s8=B; Arithmetic8(sd8, F); assert(*sd8.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }

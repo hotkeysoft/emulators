@@ -3,27 +3,27 @@
 
 namespace emul
 {
-	WORD rawAdd8(SourceDest8 sd, bool) { WORD r = *(sd.dest) + *(sd.source); *(sd.dest) = (BYTE)r; return r; }
-	WORD rawSub8(SourceDest8 sd, bool) { WORD r = *(sd.dest) - *(sd.source); *(sd.dest) = (BYTE)r; return r; }
-	WORD rawCmp8(SourceDest8 sd, bool) { return *(sd.dest) - *(sd.source); }
-	WORD rawAdc8(SourceDest8 sd, bool c) { WORD r = *(sd.dest) + *(sd.source) + (BYTE)c; *(sd.dest) = (BYTE)r; return r; }
-	WORD rawSbb8(SourceDest8 sd, bool b) { WORD r = *(sd.dest) - *(sd.source) - (BYTE)b; *(sd.dest) = (BYTE)r; return r; }
+	WORD rawAdd8(BYTE& dest, const BYTE& src, bool) { WORD r = dest + src; dest = (BYTE)r; return r; }
+	WORD rawSub8(BYTE& dest, const BYTE& src, bool) { WORD r = dest - src; dest = (BYTE)r; return r; }
+	WORD rawCmp8(BYTE& dest, const BYTE& src, bool) { return dest - src; }
+	WORD rawAdc8(BYTE& dest, const BYTE& src, bool c) { WORD r = dest + src + (BYTE)c; dest = (BYTE)r; return r; }
+	WORD rawSbb8(BYTE& dest, const BYTE& src, bool b) { WORD r = dest - src - (BYTE)b; dest = (BYTE)r; return r; }
 
-	WORD rawAnd8(SourceDest8 sd, bool) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
-	WORD rawOr8(SourceDest8 sd, bool) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
-	WORD rawXor8(SourceDest8 sd, bool) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
-	WORD rawTest8(SourceDest8 sd, bool) { return *(sd.dest) & *(sd.source); }
+	WORD rawAnd8(BYTE& dest, const BYTE& src, bool) { dest &= src; return dest; }
+	WORD rawOr8(BYTE& dest, const BYTE& src, bool) { dest |= src; return dest; }
+	WORD rawXor8(BYTE& dest, const BYTE& src, bool) { dest ^= src; return dest; }
+	WORD rawTest8(BYTE& dest, const BYTE& src, bool) { return dest & src; }
 
-	DWORD rawAdd16(SourceDest16 sd, bool) { DWORD r = *(sd.dest) + *(sd.source); (*sd.dest) = (WORD)r; return r; }
-	DWORD rawSub16(SourceDest16 sd, bool) { DWORD r = *(sd.dest) - *(sd.source); (*sd.dest) = (WORD)r; return r; }
-	DWORD rawCmp16(SourceDest16 sd, bool) { return *(sd.dest) - *(sd.source); }
-	DWORD rawAdc16(SourceDest16 sd, bool c) { DWORD r = *(sd.dest) + *(sd.source) + WORD(c); (*sd.dest) = (WORD)r; return r; }
-	DWORD rawSbb16(SourceDest16 sd, bool b) { DWORD r = *(sd.dest) - *(sd.source) - WORD(b); (*sd.dest) = (WORD)r; return r; }
+	DWORD rawAdd16(WORD& dest, const WORD& src, bool) { DWORD r = dest + src; dest = (WORD)r; return r; }
+	DWORD rawSub16(WORD& dest, const WORD& src, bool) { DWORD r = dest - src; dest = (WORD)r; return r; }
+	DWORD rawCmp16(WORD& dest, const WORD& src, bool) { return dest - src; }
+	DWORD rawAdc16(WORD& dest, const WORD& src, bool c) { DWORD r = dest + src + WORD(c); dest = (WORD)r; return r; }
+	DWORD rawSbb16(WORD& dest, const WORD& src, bool b) { DWORD r = dest - src - WORD(b); dest = (WORD)r; return r; }
 
-	DWORD rawAnd16(SourceDest16 sd, bool) { *(sd.dest) &= *(sd.source); return *(sd.dest); }
-	DWORD rawOr16(SourceDest16 sd, bool) { *(sd.dest) |= *(sd.source); return *(sd.dest); }
-	DWORD rawXor16(SourceDest16 sd, bool) { *(sd.dest) ^= *(sd.source); return *(sd.dest); }
-	DWORD rawTest16(SourceDest16 sd, bool) { return *(sd.dest) & *(sd.source); }
+	DWORD rawAnd16(WORD& dest, const WORD& src, bool) { dest &= src; return dest; }
+	DWORD rawOr16(WORD& dest, const WORD& src, bool) { dest |= src; return dest; }
+	DWORD rawXor16(WORD& dest, const WORD& src, bool) { dest ^= src; return dest; }
+	DWORD rawTest16(WORD& dest, const WORD& src, bool) { return dest & src; }
 
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
@@ -1244,12 +1244,10 @@ namespace emul
 
 		++b;
 
-		// Flags: ODITSZAPC
-		//        XnnnXXXXn
 		SetFlag(FLAG_O, getMSB(before) != getMSB(b));
 		AdjustSign(b);
 		AdjustZero(b);
-		SetFlag(FLAG_A, ((before ^ b) & 0x18) == 0x18);
+		SetFlag(FLAG_A, ((before & 0x0F) == 0x0F));
 		AdjustParity(b);
 	}
 
@@ -1260,12 +1258,10 @@ namespace emul
 
 		--b;
 
-		// Flags: ODITSZAPC
-		//        XnnnXXXXn
 		SetFlag(FLAG_O, getMSB(before) != getMSB(b));
 		AdjustSign(b);
 		AdjustZero(b);
-		SetFlag(FLAG_A, ((before ^ b) & 0x18) == 0x18);
+		SetFlag(FLAG_A, ((before & 0x0F) == 0));
 		AdjustParity(b);
 	}
 
@@ -1276,12 +1272,10 @@ namespace emul
 
 		++w;
 
-		// Flags: ODITSZAPC
-		//        XnnnXXXXn
 		SetFlag(FLAG_O, getMSB(before) != getMSB(w));
 		AdjustSign(w);
 		AdjustZero(w);
-		SetFlag(FLAG_A, ((before ^ w) & 0x18) == 0x18 );
+		SetFlag(FLAG_A, ((before & 0x000F) == 0x0F));
 		AdjustParity(w);
 	}
 	void CPU8086::DEC16(WORD& w)
@@ -1291,12 +1285,10 @@ namespace emul
 
 		--w;
 
-		// Flags: ODITSZAPC
-		//        XnnnXXXXn
 		SetFlag(FLAG_O, getMSB(before) != getMSB(w));
 		AdjustSign(w);
 		AdjustZero(w);
-		SetFlag(FLAG_A, ((before ^ w) & 0x18) == 0x18);
+		SetFlag(FLAG_A, ((before & 0x000F) == 0));
 		AdjustParity(w);
 	}
 
@@ -1427,12 +1419,9 @@ namespace emul
 				throw(std::exception("not possible"));
 			}
 
-			// Flags: ODITSZAPC
-			//        XnnnnnnnX
 			SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
 			AdjustSign(dest);
 			AdjustZero(dest);
-			SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 			AdjustParity(dest);
 		}
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
@@ -1510,12 +1499,9 @@ namespace emul
 				throw(std::exception("not possible"));
 			}
 
-			// Flags: ODITSZAPC
-			//        XnnnnnnnX
 			SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
 			AdjustSign(dest);
 			AdjustZero(dest);
-			SetFlag(FLAG_A, ((before ^ dest) & 0x18) == 0x18);
 			AdjustParity(dest);
 		}
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
@@ -1523,11 +1509,20 @@ namespace emul
 
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
 	{
+		// Aliases
 		const BYTE& source = *(sd.source);
-		BYTE before = *(sd.dest);
-		WORD after = func(sd, GetFlag(FLAG_C));
+		BYTE& dest = *(sd.dest);
+
+		// AC Calculation
+		const BYTE source4 = source & 0x0F;
+		BYTE dest4 = dest & 0x0F;
+		WORD after4 = func(dest4, source4, GetFlag(FLAG_C));
+		SetFlag(FLAG_A, after4 > 0x0F);
+
+		BYTE before = dest;
+		WORD after = func(dest, source, GetFlag(FLAG_C));
 		BYTE afterB = (BYTE)after;
-		SetFlag(FLAG_C, after > 255);
+		SetFlag(FLAG_C, after > 0xFF);
 
 		// TODO: improve this
 		if (func == rawAdd8 || func == rawAdc8)
@@ -1550,15 +1545,23 @@ namespace emul
 
 		AdjustSign(afterB);
 		AdjustZero(afterB);
-		SetFlag(FLAG_A, ((before ^ afterB) & 0x18) == 0x18);
 		AdjustParity(afterB);
 	}
 
 	void CPU8086::Arithmetic16(SourceDest16 sd, RawOpFunc16 func)
 	{
+		// Aliases
 		const WORD& source = *(sd.source);
-		WORD before = *(sd.dest);
-		DWORD after = func(sd, GetFlag(FLAG_C));
+		WORD& dest = *(sd.dest);
+
+		// AC Calculations
+		const WORD source4 = source & 0x0F;
+		WORD dest4 = dest & 0x0F;
+		WORD after4 = func(dest4, source4, GetFlag(FLAG_C));
+		SetFlag(FLAG_A, after4 > 0x0F);
+
+		WORD before = dest;
+		DWORD after = func(dest, source, GetFlag(FLAG_C));
 		WORD afterW = (WORD)after;
 		SetFlag(FLAG_C, after > 65535);
 
@@ -1583,7 +1586,6 @@ namespace emul
 
 		AdjustSign(afterW);
 		AdjustZero(afterW);
-		SetFlag(FLAG_A, ((before ^ afterW) & 0x18) == 0x18);
 		AdjustParity(afterW);
 	}
 
@@ -1706,10 +1708,7 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "TEST8");
 			BYTE imm = FetchByte();
-			SourceDest8 sd;
-			sd.dest = modrm;
-			sd.source = &imm;
-			BYTE after = (BYTE)rawTest8(sd, false);
+			BYTE after = (BYTE)rawTest8(*modrm, imm, false);
 			SetFlag(FLAG_O, false);
 			SetFlag(FLAG_C, false);
 			AdjustSign(after);
@@ -1779,10 +1778,7 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "TEST16");
 			WORD imm = FetchWord();
-			SourceDest16 sd;
-			sd.dest = modrm;
-			sd.source = &imm;
-			WORD after = rawTest16(sd, false);
+			WORD after = rawTest16(*modrm, imm, false);
 			SetFlag(FLAG_O, false);
 			SetFlag(FLAG_C, false);
 			AdjustSign(after);
