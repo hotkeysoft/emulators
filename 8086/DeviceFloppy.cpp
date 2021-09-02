@@ -646,7 +646,7 @@ namespace fdc
 			++m_currSector;
 			if (m_currSector > 8)
 			{
-				m_currSector = 0;
+				m_currSector = 1;
 
 				// TODO for now don't auto move to next track
 				m_currOpWait = DelayToTicks(10);
@@ -686,7 +686,7 @@ namespace fdc
 		Push(0/*m_st2*/); // TODO: Error stuff, check details
 		Push(m_pcn);
 		Push(m_currHead);
-		Push(++m_currSector);
+		Push(m_currSector);
 		Push(2); // N
 	}
 

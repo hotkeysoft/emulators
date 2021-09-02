@@ -2133,24 +2133,24 @@ namespace emul
 			
 			switch (regA.hl.h)
 			{
-			case 0x00: LogPrintf(LOG_ERROR, "INT10: 0x00 - Set video mode [%02X]", regA.hl.l); break;
-			case 0x01: LogPrintf(LOG_ERROR, "INT10: Set text-mode cursor shape [%02X]-[%02X]", regC.hl.h, regC.hl.l); break;
-			case 0x02: LogPrintf(LOG_ERROR, "INT10: Set cursor position p[%d]:[%02d ,%02d]", regB.hl.h, regD.hl.l, regD.hl.h); break;
-			case 0x03: LogPrintf(LOG_ERROR, "INT10: Get cursor position p[%d]", regB.hl.h); break;
-			case 0x04: LogPrintf(LOG_ERROR, "INT10: Read light pen"); break;
-			case 0x05: LogPrintf(LOG_ERROR, "INT10: Select page p[%d]", regA.hl.l); break;
-			case 0x06: LogPrintf(LOG_ERROR, "INT10: Scroll up"); break;
-			case 0x07: LogPrintf(LOG_ERROR, "INT10: Scroll down"); break;
-			case 0x08: LogPrintf(LOG_ERROR, "INT10: Read char & attr at cursor"); break;
-			case 0x09: LogPrintf(LOG_ERROR, "INT10: Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", regA.hl.l, ch, regB.hl.h, regB.hl.l, regC.x); break;
-			case 0x0A: LogPrintf(LOG_ERROR, "INT10: Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", regA.hl.l, ch, regB.hl.h, regC.x); break;
-			case 0x0B: LogPrintf(LOG_ERROR, "INT10: Set background/border color / Set palette"); break;
-			case 0x0C: LogPrintf(LOG_ERROR, "INT10: Write pixel"); break;
-			case 0x0D: LogPrintf(LOG_ERROR, "INT10: Read pixel"); break;
+			case 0x00: LogPrintf(LOG_DEBUG, "INT10: 0x00 - Set video mode [%02X]", regA.hl.l); break;
+			case 0x01: LogPrintf(LOG_DEBUG, "INT10: Set text-mode cursor shape [%02X]-[%02X]", regC.hl.h, regC.hl.l); break;
+			case 0x02: LogPrintf(LOG_DEBUG, "INT10: Set cursor position p[%d]:[%02d ,%02d]", regB.hl.h, regD.hl.l, regD.hl.h); break;
+			case 0x03: LogPrintf(LOG_DEBUG, "INT10: Get cursor position p[%d]", regB.hl.h); break;
+			case 0x04: LogPrintf(LOG_DEBUG, "INT10: Read light pen"); break;
+			case 0x05: LogPrintf(LOG_DEBUG, "INT10: Select page p[%d]", regA.hl.l); break;
+			case 0x06: LogPrintf(LOG_DEBUG, "INT10: Scroll up"); break;
+			case 0x07: LogPrintf(LOG_DEBUG, "INT10: Scroll down"); break;
+			case 0x08: LogPrintf(LOG_DEBUG, "INT10: Read char & attr at cursor"); break;
+			case 0x09: LogPrintf(LOG_DEBUG, "INT10: Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", regA.hl.l, ch, regB.hl.h, regB.hl.l, regC.x); break;
+			case 0x0A: LogPrintf(LOG_DEBUG, "INT10: Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", regA.hl.l, ch, regB.hl.h, regC.x); break;
+			case 0x0B: LogPrintf(LOG_DEBUG, "INT10: Set background/border color / Set palette"); break;
+			case 0x0C: LogPrintf(LOG_DEBUG, "INT10: Write pixel"); break;
+			case 0x0D: LogPrintf(LOG_DEBUG, "INT10: Read pixel"); break;
 			case 0x0E: LogPrintf(LOG_ERROR, "INT10: Teletype output ch=[%02d]['%c'] p=[%d]", regA.hl.l, ch, regB.hl.h); break;
-			case 0x0F: LogPrintf(LOG_ERROR, "INT10: Get video mode"); break;
-			case 0x11: LogPrintf(LOG_ERROR, "INT10: Change charset"); break;
-			default: LogPrintf(LOG_ERROR, "INT10: Other function ah=%02X", regA.hl.h); break;
+			case 0x0F: LogPrintf(LOG_DEBUG, "INT10: Get video mode"); break;
+			case 0x11: LogPrintf(LOG_DEBUG, "INT10: Change charset"); break;
+			default: LogPrintf(LOG_DEBUG, "INT10: Other function ah=%02X", regA.hl.h); break;
 			}
 			//return;
 #endif
@@ -2169,13 +2169,13 @@ namespace emul
 		}
 		else if (interrupt == 0x21)
 		{
-			LogPrintf(LOG_ERROR, "DOS");
+			LogPrintf(LOG_DEBUG, "DOS");
 
 			switch (regA.hl.h)
 			{				
 			case 0x0A: LogPrintf(LOG_ERROR, "INT21: 0x0A - Buffered input"); break;
 			case 0x2B: LogPrintf(LOG_ERROR, "INT21: 0x2B - Set system date[%04d-%02d-%02d]", regC.x, regD.hl.h, regD.hl.l); break;
-			default: LogPrintf(LOG_ERROR, "INT10: Other function ah=%02X", regA.hl.h); break;
+			default: LogPrintf(LOG_ERROR, "INT21: Other function ah=%02X", regA.hl.h); break;
 			}
 
 		}
