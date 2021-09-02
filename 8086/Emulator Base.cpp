@@ -220,6 +220,7 @@ int main(void)
 	floppy.Init();
 	floppy.EnableLog(true, Logger::LOG_INFO);
 	floppy.LoadDiskImage("data/PC-DOS-1.00.img");
+	//floppy.LoadDiskImage("data/PC-DOS-1.10.img");
 
 	DummyPortSink sink;
 
