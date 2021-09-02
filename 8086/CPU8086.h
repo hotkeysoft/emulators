@@ -165,6 +165,7 @@ namespace emul
 		void CALLfar();
 		void CALLNear(WORD offset);
 		void CALLIntra(WORD address);
+		void CALLInter(WORD* destPtr);
 
 		void JMPfar();
 		void JMPNear(BYTE offset);
@@ -271,6 +272,7 @@ namespace emul
 		void AAA();
 		void AAM(BYTE base);
 		void AAD(BYTE base);
+		void DAA();
 
 		void LEA(BYTE op2);
 

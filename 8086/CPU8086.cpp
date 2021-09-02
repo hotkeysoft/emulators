@@ -164,7 +164,7 @@ namespace emul
 		case 0x26: SEGOVERRIDE(regES); break;
 
 		// DAA (1)
-		case 0x27: NotImplemented(opcode); break;
+		case 0x27: DAA(); break;
 
 		// SUB rm+r=>rm (4)
 		// ----------
@@ -1169,6 +1169,14 @@ namespace emul
 		regIP = offset;
 	}
 
+	void CPU8086::CALLInter(WORD* destPtr)
+	{
+		PUSH(regCS);
+		PUSH(regIP);
+		regIP = *destPtr++;
+		regCS = *destPtr;
+		LogPrintf(LOG_DEBUG, "CALLInter newCS=%04X, newIP=%04X", regCS, regIP);
+	}
 
 	void CPU8086::JMPfar()
 	{
@@ -1952,10 +1960,15 @@ namespace emul
 	void CPU8086::SCAS16()
 	{
 		LogPrintf(LOG_DEBUG, "SCAS16, DI=%04X", regDI);
-		throw std::exception("SCAS16 Not implemented");
 
 		if (PreREP())
 		{
+			SourceDest16 sd;
+
+			sd.source = m_memory.GetPtr16(S2A(regES, regDI));
+			sd.dest = &regA.x;
+			Arithmetic16(sd, rawCmp16);
+
 			IndexIncDec(regDI);
 			IndexIncDec(regDI);
 		}
@@ -2200,7 +2213,7 @@ namespace emul
 		case 0x08: DEC16(*dest); break;
 		// CALL RM16(intra) / CALL MEM16(intersegment)
 		case 0x10: CALLIntra(*dest); break;
-		case 0x18: throw(std::exception("MultiFunc [CALL RM16(inter)] not implemented"));
+		case 0x18: CALLInter(dest); break;
 		// JMP RM16(intra) // JMP MEM16(intersegment)
 		case 0x20: JMPIntra(*dest); break;
 		case 0x28: JMPInter(dest); break;
@@ -2291,6 +2304,27 @@ namespace emul
 
 		regA.hl.l = (regA.hl.h * base) + regA.hl.l;
 		regA.hl.h = 0;
+
+		AdjustSign(regA.hl.l);
+		AdjustZero(regA.hl.l);
+		AdjustParity(regA.hl.l);
+	}
+
+	void CPU8086::DAA()
+	{
+		LogPrintf(LOG_DEBUG, "DAA");
+
+		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
+		{
+			regA.hl.l += 6;
+			SetFlag(FLAG_A, true);
+		}
+
+		if (GetFlag(FLAG_C) || regA.hl.l > 0x9F)
+		{
+			regA.hl.l += 0x60;
+			SetFlag(FLAG_C, true);
+		}
 
 		AdjustSign(regA.hl.l);
 		AdjustZero(regA.hl.l);
