@@ -6,13 +6,13 @@
 
 namespace emul
 {
-	const size_t MaxBlockSize = 65536;
+	const DWORD MaxBlockSize = 65536;
 	enum class MemoryType { RAM, ROM };
 
 	class MemoryBlock : public Logger
 	{
 	public:
-		MemoryBlock(ADDRESS baseAddress, size_t size, MemoryType type = MemoryType::RAM);
+		MemoryBlock(ADDRESS baseAddress, DWORD size, MemoryType type = MemoryType::RAM);
 		MemoryBlock(ADDRESS baseAddress, const std::vector<BYTE>data, MemoryType type = MemoryType::RAM);
 		MemoryBlock(const MemoryBlock& block);
 
@@ -21,12 +21,12 @@ namespace emul
 		void Clear(BYTE filler = 0xFF);
 
 		ADDRESS GetBaseAddress() const { return m_baseAddress; };
-		size_t GetSize() const { return m_size; };
+		DWORD GetSize() const { return m_size; };
 		MemoryType GetType() const { return m_type; };
 
 		bool LoadBinary(const char* file, WORD offset = 0);
 
-		bool Dump(ADDRESS start, size_t len, const char* outFile);
+		bool Dump(ADDRESS start, DWORD len, const char* outFile);
 
 		virtual BYTE read(ADDRESS address);
 		virtual BYTE* getPtr8(ADDRESS address);
@@ -35,7 +35,7 @@ namespace emul
 
 	protected:
 		ADDRESS m_baseAddress;
-		size_t m_size;
+		DWORD m_size;
 		MemoryType m_type;
 
 		BYTE* m_data;

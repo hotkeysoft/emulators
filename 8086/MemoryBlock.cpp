@@ -5,7 +5,7 @@
 
 namespace emul
 {
-	MemoryBlock::MemoryBlock(ADDRESS baseAddress, size_t size, MemoryType type) :
+	MemoryBlock::MemoryBlock(ADDRESS baseAddress, DWORD size, MemoryType type) :
 		Logger("MEMBLK"),
 		m_baseAddress(baseAddress),
 		m_size(size),
@@ -25,14 +25,13 @@ namespace emul
 	{
 		if (data.size() == 0 || data.size() > MaxBlockSize)
 			throw std::exception("Invalid block size");
-		m_size = data.size();
+		m_size = (DWORD)data.size();
 
 		m_invalid = 0xFA;
 
 		m_data = new BYTE[m_size];
 
-		for (size_t i = 0; i < m_size; i++)
-			m_data[i] = data[i];
+		memcpy(m_data, &(data[0]), m_size);
 	}
 
 	MemoryBlock::MemoryBlock(const MemoryBlock& block) :
@@ -119,7 +118,7 @@ namespace emul
 		return true;
 	}
 
-	bool MemoryBlock::Dump(ADDRESS start, size_t len, const char* outFile)
+	bool MemoryBlock::Dump(ADDRESS start, DWORD len, const char* outFile)
 	{
 		LogPrintf(LOG_INFO, "Dump: dumping block @ %04Xh, size=%d to %s", start, len, outFile);
 
@@ -130,7 +129,7 @@ namespace emul
 			return false;
 		}
 
-		size_t offset = start - m_baseAddress;
+		DWORD offset = start - m_baseAddress;
 
 		len = std::min(len, m_size - offset);
 		size_t bytesWritten = fwrite(m_data+offset, sizeof(char), len, f);

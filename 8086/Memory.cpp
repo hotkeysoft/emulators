@@ -23,7 +23,7 @@ namespace emul
 		LogPrintf(LOG_INFO, "Request to allocate block at %X, size = %d bytes", block->GetBaseAddress(), block->GetSize());
 
 		if (!CheckAddressRange(block->GetBaseAddress(), m_addressBits) || 
-			!CheckAddressRange(block->GetBaseAddress() + block->GetSize() - 1, m_addressBits))
+			!CheckAddressRange(block->GetBaseAddress() + (DWORD)block->GetSize() - 1, m_addressBits))
 		{
 			LogPrintf(LOG_ERROR, "Address out of range: block at %X, size = %d bytes", block->GetBaseAddress(), block->GetSize());
 			LogPrintf(LOG_ERROR, "CPU Max address: %X", GetMaxAddress(m_addressBits));
@@ -220,7 +220,7 @@ namespace emul
 		return NULL;
 	}
 
-	void Memory::Dump(ADDRESS start, size_t len, const char* outFile)
+	void Memory::Dump(ADDRESS start, DWORD len, const char* outFile)
 	{
 		MemoryBlock* block = NULL;
 

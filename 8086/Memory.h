@@ -21,7 +21,7 @@ namespace emul
 		void Read(ADDRESS address, BYTE& value);
 		void Write(ADDRESS address, BYTE value);
 
-		void Dump(ADDRESS start, size_t len, const char* outFile);
+		void Dump(ADDRESS start, DWORD len, const char* outFile);
 
 		BYTE* GetPtr8(ADDRESS address);
 		WORD* GetPtr16(ADDRESS address);
