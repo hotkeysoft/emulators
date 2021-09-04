@@ -26,6 +26,8 @@ namespace emul
 		BYTE* GetPtr8(ADDRESS address);
 		WORD* GetPtr16(ADDRESS address);
 
+		bool LoadBinary(const char* file, ADDRESS baseAddress);
+
 	private:
 		static WORD s_uninitialized;
 

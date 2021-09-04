@@ -41,11 +41,6 @@ namespace emul
 
 	typedef std::tuple<WORD, WORD> SegmentOffset;
 
-	inline ADDRESS S2A(WORD segment, WORD offset = 0)
-	{
-		return (segment << 4) + offset;
-	}
-
 	class CPU8086 : public CPU
 	{
 	public:
@@ -62,7 +57,7 @@ namespace emul
 		void DumpInterruptTable();
 
 		virtual void Reset();
-		void Reset(WORD segment, WORD offset);
+		virtual void Reset(WORD segment, WORD offset);
 
 		void Interrupt(BYTE interrupt) { INT(interrupt); }
 		bool CanInterrupt() { return GetFlag(FLAG::FLAG_I); }

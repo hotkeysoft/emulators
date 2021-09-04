@@ -25,6 +25,11 @@ namespace emul
 
 	typedef uint32_t ADDRESS;
 
+	inline ADDRESS S2A(WORD segment, WORD offset = 0)
+	{
+		return (segment << 4) + offset;
+	}
+
 	inline size_t GetMaxAddress(size_t addressBits)
 	{
 		return ((uint64_t)1 << addressBits) - 1;

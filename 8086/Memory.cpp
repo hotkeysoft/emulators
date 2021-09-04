@@ -119,6 +119,19 @@ namespace emul
 		}
 	}
 
+	bool Memory::LoadBinary(const char* file, ADDRESS baseAddress)
+	{
+		MemoryBlock* block = FindBlock(baseAddress);
+		if (!block)
+		{
+			// TODO: Create block
+			LogPrintf(LOG_ERROR, "LoadBinary: No memory allocated at address %04X", baseAddress);
+			return false;
+		}
+		block->LoadBinary(file, baseAddress - m_currBlock->GetBaseAddress());
+		return false;
+	}
+
 	void Memory::Read(ADDRESS address, BYTE& value)
 	{
 		LogPrintf(LOG_DEBUG, "Read(%X)", address);

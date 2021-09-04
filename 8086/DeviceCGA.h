@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "PortConnector.h"
 #include "Logger.h"
+#include "MemoryBlock.h"
 
 using emul::PortConnector;
 using emul::WORD;
@@ -31,6 +32,8 @@ namespace cga
 
 		BYTE ReadStatus();
 
+		emul::MemoryBlock& GetVideoRAM() { return m_screenB800; }
+
 	protected:
 		const WORD m_baseAddress;
 
@@ -39,5 +42,8 @@ namespace cga
 
 		WORD m_hPos;
 		WORD m_vPos;
+
+		// 16K screen buffer
+		emul::MemoryBlock m_screenB800;
 	};
 }

@@ -37,10 +37,10 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		//if (regCS == 0x2B1 && regIP == 0x552)
-		//{
-		//	__debugbreak();
-		//}
+		if (regCS == 0x0100 && regIP == 0x6F8D)
+		{
+			__debugbreak();
+		}
 
 		++regIP;
 
