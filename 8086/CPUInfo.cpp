@@ -71,6 +71,14 @@ namespace emul
 			c.x = coord["x"].get<short>();
 			c.y = coord["y"].get<short>();
 			c.w = coord["w"].get<short>();
+			if (!coord["h"].is_null())
+			{
+				c.h = coord["h"].get<short>();
+			}
+			else
+			{
+				c.h = 0;
+			}
 			return c;
 		}
 

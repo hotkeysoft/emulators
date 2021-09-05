@@ -22,6 +22,11 @@ namespace emul
 
 		void Show();
 		void Update();
+		void ToggleRunMode();
+		void UpdateRunMode();
+		void ToggleRAMMode();
+		void UpdateRAMMode();
+		void Step();
 
 		void SendKey(char ch);
 
@@ -30,11 +35,18 @@ namespace emul
 		void WriteValueHex(WORD value, const CPUInfo::Coord& coord, WORD attr = 15);
 
 		void UpdateRegisters();
+		void UpdateFlags();
 		void UpdateRAM();
 		void UpdateCode();
 
-		CPU8086* m_cpu;
-		Memory* m_memory;
+		enum class RUNMode { STEP, RUN };
+		RUNMode m_runMode = RUNMode::STEP;
+
+		enum class RAMMode { DSSI, ESDI, STACK, CUSTOM };
+		RAMMode m_ramMode = RAMMode::DSSI;
+
+		CPU8086* m_cpu = nullptr;
+		Memory* m_memory = nullptr;
 		Console& m_console;
 	};
 }

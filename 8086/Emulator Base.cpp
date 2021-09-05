@@ -19,6 +19,8 @@
 
 #include <Windows.h>
 
+const short CONSOLE_FONT_SIZE = 22;
+const short CONSOLE_COLS = 80;
 //#define NO_CONSOLE
 //#define CPU_TEST
 
@@ -88,10 +90,10 @@ void DumpScreen(cga::DeviceCGA& screen)
 		BYTE attr = screen.GetVideoRAM().read(emul::S2A(0xB800, offset+1));
 
 		// TODO: 40 cols
-		short y = offset / (80 * 2);
-		short x = (offset/2) % 80;
+		short y = offset / (CONSOLE_COLS * 2);
+		short x = (offset/2) % CONSOLE_COLS;
 
-		console.WriteAt(x, y, val, attr);
+		console.WriteAt(x+1, y+1, val, attr);
 	}
 }
 
@@ -100,7 +102,7 @@ int main(void)
 	//	logFile = fopen("./dump.log", "w");
 
 #ifndef NO_CONSOLE
-	console.Init(80);
+	console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
 #endif
 
 	Logger::RegisterLogCallback(LogCallback);
@@ -126,9 +128,14 @@ int main(void)
 			if (mode == Mode::CONSOLE && (pc.GetTicks() % 100000 == 0))
 			{
 				DumpScreen(pc.GetCGA());
+			} 
+			else if (mode == Mode::MONITOR)
+			{
+				monitor.Update();
+				monitor.Step(); // Waits for key if in STEP mode
 			}
 
-			if ((pc.GetTicks() % 10000 == 0) && _kbhit())
+			if (((mode == Mode::MONITOR) || (pc.GetTicks() % 10000 == 0)) && _kbhit())
 			{
 				BYTE keyCode;
 				bool shift = false;

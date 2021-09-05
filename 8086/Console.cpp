@@ -12,7 +12,7 @@ Console::~Console()
 {
 }
 
-void Console::Init(short columns) 
+void Console::Init(short columns, short fontSize) 
 {
 	m_hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -21,8 +21,8 @@ void Console::Init(short columns)
 	GetCurrentConsoleFontEx(m_hConsole, FALSE, &cfi);
 
 	// Modify the font size in cfi
-	cfi.dwFontSize.X = 18;
-	cfi.dwFontSize.Y = 18;
+	cfi.dwFontSize.X = fontSize;
+	cfi.dwFontSize.Y = fontSize;
 
 	// Use cfi to set the screen buffer's new font
 	SetCurrentConsoleFontEx(m_hConsole, FALSE, &cfi);
@@ -62,6 +62,28 @@ void Console::Clear()
 	SetConsoleCursorPosition(m_hConsole, homeCoords);
 }
 
+void Console::WaitForKey()
+{
+	HANDLE hStdIn = GetStdHandle(STD_INPUT_HANDLE);
+	while (1)
+	{
+		switch (WaitForSingleObject(hStdIn, INFINITE))
+		{
+		case WAIT_OBJECT_0:
+			if (_kbhit())
+			{
+				return;
+			}
+			else // Some other event, clear it from the queue
+			{
+				INPUT_RECORD r[512];
+				DWORD read;
+				ReadConsoleInput(hStdIn, r, 512, &read);
+			}
+		}
+	}
+}
+
 void Console::WriteAt(short x, short y, const char* text, size_t len, WORD attr)
 {
 	SetConsoleCursorPosition(m_hConsole, { x - 1 , y - 1 });
@@ -74,9 +96,25 @@ void Console::WriteAt(short x, short y, const char* text, size_t len, WORD attr)
 	WriteConsoleA(m_hConsole, text, len, &written, NULL);
 }
 
+void Console::WriteAttrAt(short x, short y, const WORD* attr, size_t len)
+{
+	COORD pos{ x - 1, y - 1 };
+	DWORD dummy;
+
+	WriteConsoleOutputAttribute(m_hConsole, attr, len, pos, &dummy);
+}
+
+void Console::WriteAttrAt(short x, short y, const WORD attr, size_t len)
+{
+	COORD pos = { x - 1, y - 1 };
+	DWORD dummy;
+
+	FillConsoleOutputAttribute(m_hConsole, attr, len, pos, &dummy);
+}
+
 void Console::WriteAt(short x, short y, char ch, WORD attr)
 {
-	COORD pos{ x, y };
+	COORD pos{ x - 1, y - 1 };
 	DWORD dummy;
 	const char data = ch;
 	WriteConsoleOutputCharacterA(m_hConsole, &ch, 1, pos, &dummy);
@@ -87,9 +125,5 @@ void Console::WriteBuffer(const char* buf, size_t bufSize)
 {
 	SetConsoleCursorPosition(m_hConsole, { 0, 0 });
 	DWORD written;
-	WriteConsoleA(m_hConsole,
-		buf,
-		(DWORD)bufSize,
-		&written,
-		NULL);
+	WriteConsoleA(m_hConsole, buf, (DWORD)bufSize, &written, nullptr);
 }
