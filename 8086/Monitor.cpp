@@ -37,6 +37,12 @@ namespace emul
 
 		case 62: // F4
 			ToggleRAMMode();
+			break;
+
+		case 66: // F8
+			m_runMode = RUNMode::STEP;
+			UpdateRunMode();
+			break;
 
 			// Not implemented, ignore
 		case 59: // F1
@@ -44,7 +50,6 @@ namespace emul
 		case 61: // F3
 		case 64: // F6
 		case 65: // F7
-		case 66: // F8
 		case 67: // F9
 		case 68: // F10
 		default:
@@ -141,6 +146,8 @@ namespace emul
 		m_console.WriteAttrAt(ramESDI.x, ramESDI.y, (m_ramMode == RAMMode::ESDI) ? highlight : regular, ramESDI.w);
 		m_console.WriteAttrAt(ramSTACK.x, ramSTACK.y, (m_ramMode == RAMMode::STACK) ? highlight : regular, ramSTACK.w);
 		m_console.WriteAttrAt(ramCustom.x, ramCustom.y, (m_ramMode == RAMMode::CUSTOM) ? highlight : regular, ramCustom.w);
+
+		UpdateRAM();
 	}
 
 	void Monitor::Step()
@@ -203,28 +210,68 @@ namespace emul
 		static CPUInfo::Coord addrPos = g_CPUInfo.GetCoord("ram.ADDR");
 		static CPUInfo::Coord hexPos = g_CPUInfo.GetCoord("ram.HEX");
 		static CPUInfo::Coord charPos = g_CPUInfo.GetCoord("ram.CHAR");
-		int bytesPerLine = charPos.w;
-		hexPos.h = 8;
+		static int bytesPerLine = charPos.w;
+		static int bytesTotal = charPos.w * charPos.h;
 
 		//static char ramLine[80] = "                              ";
 
-		BYTE* data = m_memory->GetPtr8(S2A(m_cpu->regDS, m_cpu->regSI));
-		for (int i = 0; i < hexPos.h; ++i)
+		// Adjust position so the view doesn't move around too much
+		WORD segment = 0;
+		WORD offset = 0;
+
+		switch (m_ramMode)
+		{
+		case RAMMode::DSSI:
+			segment = m_cpu->regDS;
+			offset = m_cpu->regSI;
+			break;
+		case RAMMode::ESDI:
+			segment = m_cpu->regES;
+			offset = m_cpu->regDI;
+			break;
+		case RAMMode::STACK:
+			segment = m_cpu->regSS;
+			offset = m_cpu->regSP;
+			break;
+		case RAMMode::CUSTOM:
+		default:
+			segment = 0;
+			offset = 0;
+			break;
+		}
+
+		WORD adjustedOffset = (offset / bytesPerLine) * bytesPerLine;
+		
+		// Check for end of segment
+		if (((DWORD)adjustedOffset + bytesTotal) >= 0x10000)
+		{
+			adjustedOffset = 0x10000 - bytesTotal;
+		}
+		else if (adjustedOffset > bytesPerLine)
+		{
+			adjustedOffset -= bytesPerLine; // Show one row before when possible
+		}
+		
+		BYTE* curr = m_memory->GetPtr8(S2A(segment, offset));
+		BYTE* data = m_memory->GetPtr8(S2A(segment, adjustedOffset));
+		for (int y = 0; y < hexPos.h; ++y)
 		{
 			CPUInfo::Coord pos;
 			pos.x = addrPos.x;
-			pos.y = addrPos.y + i;
-			WriteValueHex(m_cpu->regDS, pos);
+			pos.y = addrPos.y + y;
+			WriteValueHex(segment, pos);
 			pos.x += 5;
-			WriteValueHex((WORD)(m_cpu->regSI + (bytesPerLine * i)), pos);
+			WriteValueHex((WORD)(adjustedOffset + (bytesPerLine * y)), pos);
 
 			for (int x = 0; x < bytesPerLine; ++x)
 			{
+				BYTE* currByte = data + (bytesPerLine * y) + x;
 				pos.x = hexPos.x + (3 * x);
-				WriteValueHex((BYTE)data[bytesPerLine * i + x], pos);
-			}
+				WriteValueHex(*currByte, pos, (currByte==curr) ? 15 + (1<<4) : 7);
 
-			m_console.WriteAt(charPos.x, charPos.y + i, (const char*)data[bytesPerLine*i], bytesPerLine);
+				const BYTE& ch = *currByte;
+				m_console.WriteAt(charPos.x + x, pos.y, ch ? ch : 0xFA, ch ? 7 : 8);
+			}
 		}
 	}
 
