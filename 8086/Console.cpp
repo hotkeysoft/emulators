@@ -46,11 +46,31 @@ void Console::Init(short columns)
 	SetConsoleMode(m_hConsole, dwMode);
 }
 
-void Console::WriteAt(short x, short y, const char* text, int len, WORD attr)
+void Console::Clear()
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	DWORD count;
+	DWORD cellCount;
+	COORD homeCoords = { 0, 0 };
+
+	if (!GetConsoleScreenBufferInfo(m_hConsole, &csbi)) return;
+	cellCount = csbi.dwSize.X * csbi.dwSize.Y;
+
+	FillConsoleOutputCharacterA(m_hConsole, ' ', cellCount, homeCoords, &count);
+	FillConsoleOutputAttribute(m_hConsole, csbi.wAttributes, cellCount, homeCoords, &count);
+
+	SetConsoleCursorPosition(m_hConsole, homeCoords);
+}
+
+void Console::WriteAt(short x, short y, const char* text, size_t len, WORD attr)
 {
 	SetConsoleCursorPosition(m_hConsole, { x - 1 , y - 1 });
 	SetConsoleTextAttribute(m_hConsole, attr);
 	DWORD written;
+	if (len == SIZE_MAX)
+	{
+		len = strlen(text);
+	}
 	WriteConsoleA(m_hConsole, text, len, &written, NULL);
 }
 

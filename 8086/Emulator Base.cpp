@@ -6,6 +6,8 @@
 #include "MemoryMap.h"
 #include "Computer.h"
 #include "Console.h"
+#include "Monitor.h"
+
 #include <conio.h>
 #include <vector>
 #include <deque>
@@ -22,52 +24,59 @@
 
 FILE* logFile = nullptr;
 
+enum class Mode { MONITOR = 0, CONSOLE = 1, LOG = 2};
+Mode mode = Mode::LOG;
+
 Console console;
+emul::Monitor monitor(console);
 
 void DumpScreen(cga::DeviceCGA& screen);
-void DumpBackLog();
-
-bool showScreen = false;
-void ToggleScreen(cga::DeviceCGA& screen)
-{
-	showScreen = !showScreen;
-	if (showScreen)
-	{
-		DumpScreen(screen);
-	}
-	else
-	{
-		fprintf(stderr, "Console mode\n");
-		DumpBackLog();
-	}
-}
 
 const size_t BACKLOG_MAX = 1000;
-std::deque<std::string> backLog;
+std::string backLog[BACKLOG_MAX];
+size_t backLogPtr = 0;
 
-void DumpBackLog()
+void DumpBackLog(size_t lastN = BACKLOG_MAX)
 {
-	while (backLog.size())
+	size_t ptr = (backLogPtr + (BACKLOG_MAX - lastN)) % BACKLOG_MAX;
+	for (size_t pos = 0; pos < lastN; ++pos)
 	{
-		std::string& entry = backLog.front();
-		fprintf(stderr, "%s", entry.c_str());
-		backLog.pop_front();
+		fprintf(stderr, "%.79s", backLog[(ptr + pos) % BACKLOG_MAX].c_str());
 	}
 }
 
-void LogCallback(const char *str)
+void LogCallback(const char* str)
 {
-	if (showScreen & !logFile)
-	{
-		backLog.push_back(str);
-		while (backLog.size() > BACKLOG_MAX)
-		{
-			backLog.pop_front();
-		}
-	}
-	else
+	backLogPtr = (backLogPtr + 1) % BACKLOG_MAX;
+	backLog[backLogPtr] = str;
+
+	if (mode == Mode::LOG)
 	{
 		fprintf(logFile ? logFile : stderr, str);
+	}
+}
+
+void ToggleMode(cga::DeviceCGA& screen)
+{
+	switch (mode)
+	{
+	case Mode::MONITOR: mode = Mode::CONSOLE; break;
+	case Mode::CONSOLE: mode = Mode::LOG; break;
+	case Mode::LOG: mode = Mode::MONITOR; break;
+	}
+
+	switch (mode)
+	{
+	case Mode::MONITOR:
+		monitor.Show();
+		break;
+	case Mode::CONSOLE:
+		DumpScreen(screen);
+		break;
+	case Mode::LOG:
+		console.Clear();
+		DumpBackLog(24);
+		break;
 	}
 }
 
@@ -102,6 +111,8 @@ int main(void)
 	pc.Reset();
 	pc.EnableLog(true, Logger::LOG_ERROR);
 
+	monitor.Init(pc, pc.GetMemory());
+
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();
 
@@ -112,7 +123,7 @@ int main(void)
 	{
 		while (pc.Step())
 		{ 
-			if (showScreen && (pc.GetTicks() % 100000 == 0))
+			if (mode == Mode::CONSOLE && (pc.GetTicks() % 100000 == 0))
 			{
 				DumpScreen(pc.GetCGA());
 			}
@@ -133,7 +144,7 @@ int main(void)
 					switch (ch = _getch())
 					{
 					case 134: // F12
-						ToggleScreen(pc.GetCGA());
+						ToggleMode(pc.GetCGA());
 						break;
 					}
 				}
@@ -149,20 +160,18 @@ int main(void)
 					case 64: // F6
 					case 65: // F7
 					case 66: // F8
-						keyCode = ch;
-						newKeycode = true;
-						break;
 					case 67: // F9
-					{
-						char buf[256];
-						sprintf(buf, "memory.%lld.bin", time(nullptr));
-						pc.GetMemory().Dump(0, 65536, buf);
-						break;
-					}
 					case 68: // F10
-						pc.LoadBinary("data/BASIC_F600.BIN", 0x1000);
-						pc.Reset(0x0100, 0x0000);
-						break;
+						if (mode == Mode::MONITOR)
+						{
+							monitor.SendKey(ch);
+						}
+						else
+						{
+							keyCode = ch;
+							newKeycode = true;
+							break;
+						}
 					}
 				}
 				else 

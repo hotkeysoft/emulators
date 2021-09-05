@@ -149,6 +149,7 @@
     <ClCompile Include="CPU.cpp" />
     <ClCompile Include="CPU8086.cpp" />
     <ClCompile Include="CPU8086Test.cpp" />
+    <ClCompile Include="CPUInfo.cpp" />
     <ClCompile Include="Device8237.cpp" />
     <ClCompile Include="Device8254.cpp" />
     <ClCompile Include="Device8255.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MemoryBlock.cpp" />
     <ClCompile Include="MemoryMap.cpp" />
+    <ClCompile Include="Monitor.cpp" />
     <ClCompile Include="PortAggregator.cpp" />
     <ClCompile Include="PortConnector.cpp" />
     <ClCompile Include="StdAfx.cpp" />
@@ -171,6 +173,7 @@
     <ClInclude Include="CPU.h" />
     <ClInclude Include="CPU8086.h" />
     <ClInclude Include="CPU8086Test.h" />
+    <ClInclude Include="CPUInfo.h" />
     <ClInclude Include="Device8237.h" />
     <ClInclude Include="Device8254.h" />
     <ClInclude Include="Device8255.h" />
@@ -180,12 +183,21 @@
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MemoryBlock.h" />
     <ClInclude Include="MemoryMap.h" />
+    <ClInclude Include="Monitor.h" />
     <ClInclude Include="PortAggregator.h" />
     <ClInclude Include="PortConnector.h" />
     <ClInclude Include="StdAfx.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="TODO.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config\8086.ANS">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="config\8086.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

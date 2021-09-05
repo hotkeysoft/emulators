@@ -12,7 +12,9 @@ public:
 
 	void Init(short columns = 80);
 
-	void WriteAt(short x, short y, const char* text, int len, WORD attr = 15);
+	void Clear();
+
+	void WriteAt(short x, short y, const char* text, size_t len = SIZE_MAX, WORD attr = 15);
 	void WriteAt(short x, short y, char ch, WORD attr);
 	void WriteBuffer(const char* buf, size_t bufSize);
 
