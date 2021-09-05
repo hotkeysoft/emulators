@@ -783,7 +783,7 @@ namespace emul
 
 	void CPU8086::ClearFlags()
 	{
-		flags = FLAG_R1 | FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15;
+		flags = FLAG_R1 | FLAG_R12 | FLAG_R13;
 	}
 
 	BYTE CPU8086::FetchByte()

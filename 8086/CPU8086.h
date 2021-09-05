@@ -12,7 +12,7 @@ namespace emul
 	#pragma pack(push, 1)
 	union Register
 	{
-		WORD x;
+		WORD x = 0;
 		struct {
 			BYTE l;
 			BYTE h;
@@ -24,16 +24,16 @@ namespace emul
 	{
 		SourceDest8() {}
 		SourceDest8(BYTE* d, BYTE* s) : dest(d), source(s) {}
-		BYTE* source;
-		BYTE* dest;
+		BYTE* source = nullptr;
+		BYTE* dest = nullptr;
 	};
 
 	struct SourceDest16
 	{
 		SourceDest16() {}
 		SourceDest16(WORD* d, WORD* s) : dest(d), source(s) {}
-		WORD* source;
-		WORD* dest;
+		WORD* source = nullptr;
+		WORD* dest = nullptr;
 	};
 
 	typedef WORD(*RawOpFunc8)(BYTE& dest, const BYTE& src, bool);
@@ -62,27 +62,24 @@ namespace emul
 		void Interrupt(BYTE interrupt) { INT(interrupt); }
 		bool CanInterrupt() { return GetFlag(FLAG::FLAG_I); }
 
-	protected:
-		PortAggregator m_ports;
-
 		// General Registers
 		Register regA; // Accumulator
 		Register regB; // Base
 		Register regC; // Count
 		Register regD; // Data
 
-		WORD regSP; // Stack Pointer
-		WORD regBP; // Base Pointer
-		WORD regSI; // Source Index
-		WORD regDI; // Destination Index
+		WORD regSP = 0; // Stack Pointer
+		WORD regBP = 0; // Base Pointer
+		WORD regSI = 0; // Source Index
+		WORD regDI = 0; // Destination Index
 
 		// Segment Registers
-		WORD regCS; // Code Segment
-		WORD regDS; // Data Segment
-		WORD regSS; // Stack Segment
-		WORD regES; // Extra Segment
+		WORD regCS = 0; // Code Segment
+		WORD regDS = 0; // Data Segment
+		WORD regSS = 0; // Stack Segment
+		WORD regES = 0; // Extra Segment
 
-		WORD regIP; // Instruction Pointer
+		WORD regIP = 0; // Instruction Pointer
 
 		enum FLAG : WORD
 		{
@@ -96,20 +93,23 @@ namespace emul
 			FLAG_D = 0x0400, // Direction
 			FLAG_O = 0x0800, // Overflow
 
-			FLAG_R1 = 0x0002,
-			FLAG_R3 = 0x0008,
-			FLAG_R5 = 0x0020,
-			FLAG_R12 = 0x1000, // IOPL, Always 1 on 8086/186
-			FLAG_R13 = 0x2000, // IOPL, Always 1 on 8086/186
-			FLAG_R14 = 0x4000, // NT, Always 1 on 8086/186
-			FLAG_R15 = 0x8000, // Always 1 on 8086/186
+			FLAG_R1 = 0x0002,  // Reserved, 1
+			FLAG_R3 = 0x0008,  // Reserved, 0
+			FLAG_R5 = 0x0020,  // Reserved, 0
+			FLAG_R12 = 0x1000, // Reserved, 1
+			FLAG_R13 = 0x2000, // Reserved, 1
+			FLAG_R14 = 0x4000, // Reserved, 0
+			FLAG_R15 = 0x8000, // Reserved, 0
 		};
 
-		WORD flags;
+		WORD flags = 0;
 
 		void ClearFlags();
 		bool GetFlag(FLAG f) { return (flags & f) ? true : false; };
 		void SetFlag(FLAG f, bool v) { if (v) flags |= f; else flags &= ~f; };
+
+	protected:
+		PortAggregator m_ports;
 
 		// Pseudo flags
 		// ----------
@@ -118,13 +118,13 @@ namespace emul
 		bool GetFlagGreater() { return (GetFlag(FLAG_S) == GetFlag(FLAG_O)) && GetFlag(FLAG_Z); }
 
 		// REP flags
-		bool inRep;
-		WORD repIP;
-		bool repZ;
+		bool inRep = false;
+		WORD repIP = 0;
+		bool repZ = false;
 
 		// segment Override
-		bool inSegOverride;
-		WORD segOverride;
+		bool inSegOverride = false;
+		WORD segOverride = 0;
 
 		// Helper functions
 
