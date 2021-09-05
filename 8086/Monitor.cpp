@@ -44,6 +44,12 @@ namespace emul
 			UpdateRunMode();
 			break;
 
+		case 98: // CTRL-F5
+			m_runMode = RUNMode::STEP;
+			m_cpu->Reset();
+			Update();
+			break;
+
 			// Not implemented, ignore
 		case 59: // F1
 		case 60: // F2
@@ -213,8 +219,6 @@ namespace emul
 		static int bytesPerLine = charPos.w;
 		static int bytesTotal = charPos.w * charPos.h;
 
-		//static char ramLine[80] = "                              ";
-
 		// Adjust position so the view doesn't move around too much
 		WORD segment = 0;
 		WORD offset = 0;
@@ -235,8 +239,8 @@ namespace emul
 			break;
 		case RAMMode::CUSTOM:
 		default:
-			segment = 0;
-			offset = 0;
+			segment = m_cpu->regCS;
+			offset = m_cpu->regIP;
 			break;
 		}
 
@@ -247,7 +251,7 @@ namespace emul
 		{
 			adjustedOffset = 0x10000 - bytesTotal;
 		}
-		else if (adjustedOffset > bytesPerLine)
+		else if (adjustedOffset >= bytesPerLine)
 		{
 			adjustedOffset -= bytesPerLine; // Show one row before when possible
 		}

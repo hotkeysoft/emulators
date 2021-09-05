@@ -125,16 +125,6 @@ int main(void)
 	{
 		while (pc.Step())
 		{ 
-			if (mode == Mode::CONSOLE && (pc.GetTicks() % 100000 == 0))
-			{
-				DumpScreen(pc.GetCGA());
-			} 
-			else if (mode == Mode::MONITOR)
-			{
-				monitor.Update();
-				monitor.Step(); // Waits for key if in STEP mode
-			}
-
 			if (((mode == Mode::MONITOR) || (pc.GetTicks() % 10000 == 0)) && _kbhit())
 			{
 				BYTE keyCode;
@@ -157,7 +147,11 @@ int main(void)
 				}
 				else if (ch == 0)
 				{
-					switch (ch = _getch())
+					if (mode == Mode::MONITOR)
+					{
+						monitor.SendKey(_getch());
+					}
+					else switch (ch = _getch())
 					{
 					case 59: // F1
 					case 60: // F2
@@ -169,19 +163,12 @@ int main(void)
 					case 66: // F8
 					case 67: // F9
 					case 68: // F10
-						if (mode == Mode::MONITOR)
-						{
-							monitor.SendKey(ch);
-						}
-						else
-						{
-							keyCode = ch;
-							newKeycode = true;
-							break;
-						}
+						keyCode = ch;
+						newKeycode = true;
+						break;
 					}
 				}
-				else 
+				else
 				{
 					SHORT vkey = VkKeyScanA(ch);
 					shift = HIBYTE(vkey) & 1;
@@ -204,6 +191,15 @@ int main(void)
 				}
 			}
 
+			if (mode == Mode::CONSOLE && (pc.GetTicks() % 100000 == 0))
+			{
+				DumpScreen(pc.GetCGA());
+			}
+			else if (mode == Mode::MONITOR)
+			{
+				monitor.Update();
+				monitor.Step(); // Waits for key if in STEP mode
+			}
 		}
 	}
 	catch (std::exception e)
