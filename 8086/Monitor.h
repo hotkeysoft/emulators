@@ -7,6 +7,7 @@
 
 namespace emul
 {
+	enum class MonitorState { RUN, WAIT, EXIT, SWITCH_MODE };
 	class Monitor
 	{
 	public:
@@ -21,16 +22,17 @@ namespace emul
 		void Init(CPU8086& cpu, Memory& memory);
 
 		void Show();
+		MonitorState Run();
 		void Update();
+
+	protected:
+		MonitorState ProcessKey();
+
 		void ToggleRunMode();
 		void UpdateRunMode();
 		void ToggleRAMMode();
 		void UpdateRAMMode();
-		void Step();
 
-		void SendKey(char ch);
-
-	protected:
 		void WriteValueHex(BYTE value, const CPUInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(WORD value, const CPUInfo::Coord& coord, WORD attr = 15);
 

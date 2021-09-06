@@ -123,9 +123,32 @@ int main(void)
 
 	try
 	{
-		while (pc.Step())
+		bool run = true;
+		while (run)
 		{ 
-			if (((mode == Mode::MONITOR) || (pc.GetTicks() % 10000 == 0)) && _kbhit())
+			if (mode == Mode::MONITOR)
+			{
+				switch (monitor.Run())
+				{
+				case emul::MonitorState::EXIT:
+					run = false;
+					break;
+				case emul::MonitorState::WAIT:
+					break;
+				case emul::MonitorState::RUN:
+					pc.Step();
+					break;
+				case emul::MonitorState::SWITCH_MODE:
+					ToggleMode(pc.GetCGA());
+					break;
+				}
+			}
+			else
+			{
+				pc.Step();
+			}
+
+			if (mode != Mode::MONITOR && (pc.GetTicks() % 10000 == 0) && _kbhit())
 			{
 				BYTE keyCode;
 				bool shift = false;
@@ -134,7 +157,7 @@ int main(void)
 
 				if (ch == 27)
 				{
-					break;
+					run = false;
 				}
 				else if (ch == 224)
 				{
@@ -147,11 +170,7 @@ int main(void)
 				}
 				else if (ch == 0)
 				{
-					if (mode == Mode::MONITOR)
-					{
-						monitor.SendKey(_getch());
-					}
-					else switch (ch = _getch())
+					switch (ch = _getch())
 					{
 					case 59: // F1
 					case 60: // F2
@@ -194,11 +213,6 @@ int main(void)
 			if (mode == Mode::CONSOLE && (pc.GetTicks() % 100000 == 0))
 			{
 				DumpScreen(pc.GetCGA());
-			}
-			else if (mode == Mode::MONITOR)
-			{
-				monitor.Update();
-				monitor.Step(); // Waits for key if in STEP mode
 			}
 		}
 	}

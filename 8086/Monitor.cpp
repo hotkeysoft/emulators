@@ -1,6 +1,7 @@
 #include "Monitor.h"
 
 #include <string>
+#include <conio.h>
 
 namespace emul
 {
@@ -27,42 +28,71 @@ namespace emul
 		}
 	}
 
-	void Monitor::SendKey(char ch)
+	MonitorState Monitor::ProcessKey()
 	{
-		switch (ch)
+		if (!_kbhit())
+			return MonitorState::RUN;
+
+		int ch = _getch();
+		if (ch == 27)
 		{
-		case 63: // F5
-			ToggleRunMode();
-			break;
-
-		case 62: // F4
-			ToggleRAMMode();
-			break;
-
-		case 66: // F8
-			m_runMode = RUNMode::STEP;
-			UpdateRunMode();
-			break;
-
-		case 98: // CTRL-F5
-			m_runMode = RUNMode::STEP;
-			m_cpu->Reset();
-			Update();
-			break;
-
-			// Not implemented, ignore
-		case 59: // F1
-		case 60: // F2
-		case 61: // F3
-		case 64: // F6
-		case 65: // F7
-		case 67: // F9
-		case 68: // F10
-		default:
-			if (m_runMode == RUNMode::STEP)
-				m_console.WaitForKey();
-			break;
+			return MonitorState::EXIT;
 		}
+		else if (ch == 224)
+		{
+			switch (ch = _getch())
+			{
+			case 134: // F12
+				return MonitorState::SWITCH_MODE;
+			}
+		}
+		else if (ch == 0)
+		{
+			switch (ch = _getch())
+			{
+			case 63: // F5
+				ToggleRunMode();
+				break;
+
+			case 62: // F4
+				ToggleRAMMode();
+				break;
+
+			case 66: // F8
+				m_runMode = RUNMode::STEP;
+				UpdateRunMode();
+				return MonitorState::RUN;
+
+			case 98: // CTRL-F5
+				m_runMode = RUNMode::STEP;
+				m_cpu->Reset();
+				Update();
+				break;
+
+				// Not implemented, ignore
+			case 59: // F1
+			case 60: // F2
+			case 61: // F3
+			case 64: // F6
+			case 65: // F7
+			case 67: // F9
+			case 68: // F10
+			default:
+				break;
+			}
+		}
+		return (m_runMode == RUNMode::STEP) ? MonitorState::WAIT : MonitorState::RUN;
+	}
+
+	MonitorState Monitor::Run()
+	{
+		Update();
+		if (m_runMode == RUNMode::STEP)
+		{
+			m_console.WaitForKey();
+		}
+
+		return ProcessKey();
 	}
 
 	void Monitor::Show()
@@ -154,18 +184,6 @@ namespace emul
 		m_console.WriteAttrAt(ramCustom.x, ramCustom.y, (m_ramMode == RAMMode::CUSTOM) ? highlight : regular, ramCustom.w);
 
 		UpdateRAM();
-	}
-
-	void Monitor::Step()
-	{
-		switch (m_runMode)
-		{
-		case RUNMode::RUN:
-			break;
-		case RUNMode::STEP:
-			m_console.WaitForKey();
-			break;
-		}
 	}
 
 	void Monitor::UpdateRegisters()
