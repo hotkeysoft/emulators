@@ -96,8 +96,8 @@ namespace emul
 			FLAG_R1 = 0x0002,  // Reserved, 1
 			FLAG_R3 = 0x0008,  // Reserved, 0
 			FLAG_R5 = 0x0020,  // Reserved, 0
-			FLAG_R12 = 0x1000, // Reserved, 1
-			FLAG_R13 = 0x2000, // Reserved, 1
+			FLAG_R12 = 0x1000, // Reserved, 0
+			FLAG_R13 = 0x2000, // Reserved, 0
 			FLAG_R14 = 0x4000, // Reserved, 0
 			FLAG_R15 = 0x8000, // Reserved, 0
 		};

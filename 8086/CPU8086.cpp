@@ -367,7 +367,7 @@ namespace emul
 		// REG8/MEM8, REG8
 		case 0x84: Arithmetic8(GetModRegRM8(FetchByte(), true), rawTest8); break;
 		// REG16/MEM16, REG16
-		case 0x85: NotImplemented(opcode); break;
+		case 0x85: Arithmetic16(GetModRegRM16(FetchByte(), true), rawTest16); break;
 
 		// XCHG rm<=>r (4)
 		// ----------
@@ -440,7 +440,7 @@ namespace emul
 		// PUSHF (1)
 		case 0x9C: PUSH(flags); break;
 		// POPF (1)
-		case 0x9D: POP(flags); flags |= FLAG_R1; break;  // TODO: Clean flags in function
+		case 0x9D: POP(flags); flags |= FLAG_R1; flags &= ~(FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15); break;  // TODO: Clean flags in function
 		// SAHF (1)
 		case 0x9E: SAHF(); break;
 		// LAHF (1)
@@ -479,7 +479,7 @@ namespace emul
 		// TEST AL, IMM8
 		case 0xA8: ArithmeticImm8(regA.hl.l, FetchByte(), rawTest8); break;
 		// TEST AX, IMM16
-		case 0xA9: NotImplemented(opcode); break;
+		case 0xA9: ArithmeticImm16(regA.x, FetchWord(), rawTest16); break;
 
 		// STOS (1)
 		// ----------
