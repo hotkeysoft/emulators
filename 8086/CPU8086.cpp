@@ -1342,15 +1342,9 @@ namespace emul
 		BYTE* b = GetModRM8(op2);
 		BYTE& dest = *b;
 
-		if (count == 0)
-		{
-			SetFlag(FLAG_C, false);
-			SetFlag(FLAG_O, false);
-			AdjustSign(dest);
-			AdjustZero(dest);
-			AdjustParity(dest);
-			return;
-		}
+		op2 &= 0x38;
+
+		count &= 0b11111; // Technically done on 186 and above
 
 		// TODO: Ugly but approximates what i8086 does
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 before=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
@@ -1408,11 +1402,15 @@ namespace emul
 			}
 
 			SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
+		}
+		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
+
+		if (op2 >= 0x20) // Only shift operation adjusts SZP flags
+		{
 			AdjustSign(dest);
 			AdjustZero(dest);
 			AdjustParity(dest);
 		}
-		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
 	}
 
 	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
@@ -1422,15 +1420,9 @@ namespace emul
 		WORD* b = GetModRM16(op2);
 		WORD& dest = *b;
 
-		if (count == 0)
-		{
-			SetFlag(FLAG_C, false);
-			SetFlag(FLAG_O, false);
-			AdjustSign(dest);
-			AdjustZero(dest);
-			AdjustParity(dest);
-			return;
-		}
+		op2 &= 0x38;
+
+		count &= 0b11111; // Technically done on 186 and above
 
 		// TODO: Ugly but approximates what i8086 does
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 before=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
@@ -1439,7 +1431,7 @@ namespace emul
 			WORD before = dest;
 			WORD sign;
 			bool carry;
-			switch (op2 & 0x38)
+			switch (op2)
 			{
 			case 0x00: // ROL
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROL");
@@ -1488,11 +1480,15 @@ namespace emul
 			}
 
 			SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
+		}
+		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
+
+		if (op2 >= 0x20) // Only shift operation adjusts flags
+		{
 			AdjustSign(dest);
 			AdjustZero(dest);
 			AdjustParity(dest);
 		}
-		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
 	}
 
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
@@ -1736,7 +1732,15 @@ namespace emul
 			*modrm = tempDest;
 			break;
 		}
-		case 0x28: throw(std::exception("ArithmeticMulti8 [imul] not implemented"));
+		case 0x28: // IMUL
+		{
+			int16_t result = (int8_t)regA.hl.l * (int8_t)(*modrm);
+			LogPrintf(LOG_DEBUG, "IMUL8, %d * %d = %d", (int8_t)regA.hl.l, (int8_t)(*modrm), result);
+			regA.x = (WORD)result;
+			SetFlag(FLAG_O, regA.hl.h != 0 && regA.hl.h != 0xFF);
+			SetFlag(FLAG_C, regA.hl.h != 0 && regA.hl.h != 0xFF);
+			break;
+		}
 		case 0x30:
 		{
 			LogPrintf(LOG_DEBUG, "DIV8");
@@ -1832,7 +1836,16 @@ namespace emul
 			SetFlag(FLAG_C, regD.x != 0);
 			break;
 		}
-		case 0x28: throw(std::exception("ArithmeticMulti16 [imul] not implemented"));
+		case 0x28: 
+		{
+			int32_t result = (int16_t)regA.x * (int16_t)(*modrm);
+			LogPrintf(LOG_DEBUG, "IMUL16, %d * %d = %d", (int16_t)regA.x, (int16_t)(*modrm), result);
+			regD.x = getHWord(result);
+			regA.x = getLWord(result);
+			SetFlag(FLAG_O, regD.x != 0 && regD.x != 0xFFFF);
+			SetFlag(FLAG_C, regD.x != 0 && regD.x != 0xFFFF);
+			break;
+		}
 		case 0x30:
 		{
 			LogPrintf(LOG_DEBUG, "DIV16");
