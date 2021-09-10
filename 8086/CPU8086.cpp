@@ -565,7 +565,7 @@ namespace emul
 		// INT IMM8 (2)
 		case 0xCD: INT(FetchByte()); break;
 		// INTO (1)
-		case 0xCE: NotImplemented(opcode); break;
+		case 0xCE: if (GetFlag(FLAG_O)) INT(4); break;
 		// IRET (1)
 		case 0xCF: IRET(); break;
 
@@ -722,19 +722,7 @@ namespace emul
 	{
 		CPU8086::Reset();
 		regCS = segment;
-		regDS = segment;
-		regES = segment;
-		regSS = segment;
-		regSP = 0xFFFE;
-		regSI = 0;
-		regDI = 0;
 		regIP = offset;
-
-		regA.x = 0;
-		regB.x = 0;
-		regC.x = 0;
-		regD.x = 0;
-		regBP = 0;
 
 		LogPrintf(LOG_DEBUG, "RESET AT CS=%04X, IP=%04X", regCS, regIP);
 	}
@@ -1748,18 +1736,43 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "DIV8");
 			if ((*modrm) == 0)
 			{
-				// TODO div by zero
-				throw(std::exception("ArithmeticMulti8 div by zero"));
+				INT(0);
+				return;
 			}
 			WORD dividend = regA.x;
-			BYTE quotient = dividend / (*modrm);
+			WORD quotient = dividend / (*modrm);
+			if (quotient > 0xFF)
+			{
+				INT(0);
+				return;
+			}
 			BYTE remainder = dividend % (*modrm);
 			LogPrintf(LOG_DEBUG, "DIV8 %04X / %02X = %02X r %02X", dividend, (*modrm), quotient, remainder);
-			regA.hl.l = quotient;
+			regA.hl.l = (BYTE)quotient;
 			regA.hl.h = remainder;
 			break;
 		}
-		case 0x38: throw(std::exception("ArithmeticMulti8 [idiv] not implemented"));
+		case 0x38:
+		{
+			LogPrintf(LOG_DEBUG, "IDIV8");
+			if ((*modrm) == 0)
+			{
+				INT(0);
+				return;
+			}
+			int16_t dividend = (int16_t)regA.x;
+			int16_t quotient = dividend / (int8_t)(*modrm);
+			if (quotient > 127 || quotient < -127)
+			{
+				INT(0);
+				return;
+			}
+			int8_t remainder = dividend % (int8_t)(*modrm);
+			LogPrintf(LOG_DEBUG, "IDIV8 %04X / %02X = %02X r %02X", dividend, (*modrm), quotient, remainder);
+			regA.hl.l = (BYTE)quotient;
+			regA.hl.h = (BYTE)remainder;
+			break;
+		}
 		default:
 			throw(std::exception("not possible"));
 		}
@@ -1819,18 +1832,43 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "DIV16");
 			if ((*modrm) == 0)
 			{
-				// TODO div by zero
-				throw(std::exception("ArithmeticMulti16 div by zero"));
+				INT(0);
+				return;
 			}
 			DWORD dividend = getDword(regD.x, regA.x);
-			WORD quotient = dividend / (*modrm);
+			DWORD quotient = dividend / (*modrm);
+			if (quotient > 0xFFFF)
+			{
+				INT(0);
+				return;
+			}
 			WORD remainder = dividend % (*modrm);
 			LogPrintf(LOG_DEBUG, "DIV16 %08X / %04X = %04X r %04X", dividend, (*modrm), quotient, remainder);
-			regA.x = quotient;
+			regA.x = (WORD)quotient;
 			regD.x = remainder;
 			break;
 		}
-		case 0x38: throw(std::exception("ArithmeticMulti16 [idiv] not implemented"));
+		case 0x38:
+		{
+			LogPrintf(LOG_DEBUG, "IDIV16");
+			if ((*modrm) == 0)
+			{
+				INT(0);
+				return;
+			}
+			int32_t dividend = (int32_t)getDword(regD.x, regA.x);
+			int32_t quotient = dividend / int16_t(*modrm);
+			if (quotient > 32767 || quotient < -32767)
+			{
+				INT(0);
+				return;
+			}
+			int16_t remainder = dividend % int16_t(*modrm);
+			LogPrintf(LOG_DEBUG, "IDIV16 %08X / %04X = %04X r %04X", dividend, (*modrm), quotient, remainder);
+			regA.x = (WORD)quotient;
+			regD.x = (WORD)remainder;
+			break;
+		}
 		default:
 			throw(std::exception("not possible"));
 		}
@@ -2297,14 +2335,10 @@ namespace emul
 
 	void CPU8086::AAM(BYTE base)
 	{
-		LogPrintf(LOG_DEBUG, "AAM");
-		if (base != 10)
-		{
-			LogPrintf(LOG_WARNING, "AAM base!=10 [%d]", base);
-		}
+		LogPrintf(LOG_DEBUG, "AAM base %d", base);
 		if (base == 0)
 		{
-			LogPrintf(LOG_ERROR, "AAM base==0 [%d]", base);
+			INT(0);
 			return;
 		}
 
@@ -2318,12 +2352,7 @@ namespace emul
 
 	void CPU8086::AAD(BYTE base)
 	{
-		LogPrintf(LOG_DEBUG, "AAD");
-
-		if (base != 10)
-		{
-			LogPrintf(LOG_WARNING, "AAD base!=10 [%d]", base);
-		}
+		LogPrintf(LOG_DEBUG, "AAD base %d", base);
 
 		regA.hl.l = (regA.hl.h * base) + regA.hl.l;
 		regA.hl.h = 0;
