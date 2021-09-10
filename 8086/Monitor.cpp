@@ -297,8 +297,64 @@ namespace emul
 		}
 	}
 
+	typedef std::tuple<WORD, WORD> SegmentOffset;
+
+	void Monitor::PrintInstruction(short y, Instruction& instr)
+	{
+		static CPUInfo::Coord segmentPos = g_CPUInfo.GetCoord("CODE.segment");
+		static CPUInfo::Coord offsetPos = g_CPUInfo.GetCoord("CODE.offset");
+		static CPUInfo::Coord rawPos = g_CPUInfo.GetCoord("CODE.raw");
+		static CPUInfo::Coord textPos = g_CPUInfo.GetCoord("CODE.text");
+		static short baseY = segmentPos.y;
+
+		// TODO: Horribly inefficient
+		CPUInfo::Coord pos;
+		pos.y = baseY + y;
+
+		pos.x = segmentPos.x;
+		WriteValueHex(std::get<0>(instr.address), pos);
+		pos.x = offsetPos.x;
+		WriteValueHex(std::get<1>(instr.address), pos);
+		pos.x = rawPos.x;
+		m_console.WriteAt(pos.x, pos.y, (const char*)instr.raw, instr.len);
+		for (int i = 0; i < rawPos.w - instr.len; ++i)
+		{
+			m_console.WriteAt(pos.x + instr.len + i, pos.y, 0xFA, 8);
+		}
+
+		pos.x = textPos.x;
+		m_console.WriteAt(pos.x, pos.y, instr.text, textPos.w);
+	}
+
 	void Monitor::UpdateCode()
 	{
+		static CPUInfo::Coord codePos = g_CPUInfo.GetCoord("CODE");
+
+		SegmentOffset address = std::make_tuple(m_cpu->regCS, m_cpu->regIP);
+		Instruction decoded;
+
+		for (int i = 0; i < 8; ++i)
+		{
+			address = Disassemble(address, decoded);
+			PrintInstruction(i, decoded);
+		}
+	}
+
+	SegmentOffset Monitor::Disassemble(SegmentOffset address, Monitor::Instruction& decoded)
+	{
+		decoded.address = address;
+		WORD& segment = std::get<0>(address);
+		WORD& offset = std::get<1>(address);
+		BYTE* data = m_memory->GetPtr8(S2A(segment, offset));
+
+		decoded.len = 1;
+		decoded.raw[0] = *data;
+
+		memset(decoded.text, ' ', 32);
+		memcpy(decoded.text, "decoded", 7);
+
+		offset += 1;
+		return address;
 	}
 
 }

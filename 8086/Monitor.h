@@ -26,6 +26,15 @@ namespace emul
 		void Update();
 
 	protected:
+		struct Instruction
+		{
+			SegmentOffset address;
+			WORD offset;
+			BYTE len;
+			BYTE raw[16];
+			char text[32];
+		};
+
 		MonitorState ProcessKey();
 
 		void ToggleRunMode();
@@ -39,7 +48,10 @@ namespace emul
 		void UpdateRegisters();
 		void UpdateFlags();
 		void UpdateRAM();
+		void PrintInstruction(short y, Instruction& instr);
 		void UpdateCode();
+
+		SegmentOffset Disassemble(SegmentOffset address, Monitor::Instruction& decoded);
 
 		enum class RUNMode { STEP, RUN };
 		RUNMode m_runMode = RUNMode::STEP;
