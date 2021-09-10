@@ -619,7 +619,7 @@ namespace emul
 		// OUT PORT8, AL
 		case 0xE6: OUT8(FetchByte()); break;
 		// OUT PORT8, AX
-		case 0xE7: NotImplemented(opcode); break;
+		case 0xE7: OUT16(FetchByte()); break;
 
 		// CALL Near (3)
 		case 0xE8: CALLNear(FetchWord()); break;
@@ -642,7 +642,7 @@ namespace emul
 		// OUT AL, DX
 		case 0xEE: OUT8(regD.x); break;
 		// OUT AX, DX
-		case 0xEF: NotImplemented(opcode); break;
+		case 0xEF: OUT16(regD.x); break;
 
 		// LOCK (1)
 		case 0xF0: NotImplemented(opcode); break;
@@ -1597,6 +1597,12 @@ namespace emul
 	void CPU8086::OUT8(WORD port)
 	{
 		m_ports.Out(port, regA.hl.l);
+	}
+
+	void CPU8086::OUT16(WORD port)
+	{
+		m_ports.Out(port, regA.hl.l);
+		m_ports.Out(port+1, regA.hl.h);
 	}
 
 	void CPU8086::LOOP(BYTE offset, bool cond)

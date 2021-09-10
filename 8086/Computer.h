@@ -35,8 +35,6 @@ namespace emul
 		Memory m_memory;
 
 		// TODO: Should be dynamic
-		emul::MemoryBlock m_biosF000;// (emul::S2A(0xF000), 0x8000, emul::MemoryType::ROM);
-		emul::MemoryBlock m_biosF800;// (emul::S2A(0xF800), 0x8000, emul::MemoryType::ROM);
 		emul::MemoryBlock m_base64K;// (0, 0x10000, emul::MemoryType::RAM);
 
 		MemoryMap m_map;

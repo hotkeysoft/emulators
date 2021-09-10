@@ -27,7 +27,7 @@ const short CONSOLE_COLS = 80;
 FILE* logFile = nullptr;
 
 enum class Mode { MONITOR = 0, CONSOLE = 1, LOG = 2};
-Mode mode = Mode::LOG;
+Mode mode = Mode::MONITOR;
 
 Console console;
 emul::Monitor monitor(console);
@@ -109,14 +109,30 @@ int main(void)
 
 	emul::Computer pc;
 
+	emul::MemoryBlock biosF000(emul::S2A(0xF000), 0x8000, emul::MemoryType::ROM);
+	biosF000.LoadBinary("data/BIOS_5160_V3_F000.BIN");
+	//pc.GetMemory().Allocate(&biosF000);
+
+	emul::MemoryBlock biosF800(emul::S2A(0xF800), 0x8000, emul::MemoryType::ROM);
+	biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
+	//pc.GetMemory().Allocate(&biosF800);
+
+	emul::MemoryBlock testROMF000(emul::S2A(0xF000), 0x10000, emul::MemoryType::ROM);
+	testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\jump1.bin)");
+	pc.GetMemory().Allocate(&testROMF000);
+
 	pc.Init();
-	pc.Reset();
-	pc.EnableLog(true, Logger::LOG_ERROR);
+	//pc.Reset();
+	pc.Reset(0xF000, 0);
+	pc.EnableLog(true, Logger::LOG_DEBUG);
 
 	monitor.Init(pc, pc.GetMemory());
 
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();
+
+	if (mode == Mode::MONITOR)
+		monitor.Show();
 
 	time_t startTime, stopTime;
 	time(&startTime);
@@ -136,7 +152,7 @@ int main(void)
 				case emul::MonitorState::WAIT:
 					break;
 				case emul::MonitorState::RUN:
-					pc.Step();
+					run = pc.Step();
 					break;
 				case emul::MonitorState::SWITCH_MODE:
 					ToggleMode(pc.GetCGA());
@@ -145,7 +161,7 @@ int main(void)
 			}
 			else
 			{
-				pc.Step();
+				run = pc.Step();
 			}
 
 			if (mode != Mode::MONITOR && (pc.GetTicks() % 10000 == 0) && _kbhit())
@@ -224,6 +240,8 @@ int main(void)
 	time(&stopTime);
 
 	pc.Dump();
+
+	pc.GetMemory().Dump(0, 256, R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\mine\jump1.out)");
 
 	DumpBackLog();
 

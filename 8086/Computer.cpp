@@ -10,9 +10,7 @@ namespace emul
 
 	Computer::Computer() : 
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_biosF000(emul::S2A(0xF000), 0x8000, emul::MemoryType::ROM),
-		m_biosF800(emul::S2A(0xF800), 0x8000, emul::MemoryType::ROM),
-		m_base64K(0, 0x10000, emul::MemoryType::RAM),
+		m_base64K(0, 0x80000, emul::MemoryType::RAM),
 		Logger("PC"), 
 		CPU8086(m_memory, m_map),
 		m_pit(0x40, 1193182),
@@ -28,12 +26,6 @@ namespace emul
 	{
 		m_memory.EnableLog(true, Logger::LOG_ERROR);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
-
-		m_biosF000.LoadBinary("data/BIOS_5160_V3_F000.BIN");
-		m_memory.Allocate(&m_biosF000);
-
-		m_biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
-		m_memory.Allocate(&m_biosF800);
 
 		m_base64K.Clear(0xA5);
 		m_memory.Allocate(&m_base64K);

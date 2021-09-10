@@ -115,7 +115,7 @@ namespace emul
 		// ----------
 		bool GetFlagNotAbove() { return GetFlag(FLAG_C) || GetFlag(FLAG_Z); }
 		bool GetFlagNotLess() { return GetFlag(FLAG_S) == GetFlag(FLAG_O); }
-		bool GetFlagGreater() { return (GetFlag(FLAG_S) == GetFlag(FLAG_O)) && GetFlag(FLAG_Z); }
+		bool GetFlagGreater() { return (GetFlag(FLAG_S) == GetFlag(FLAG_O)) && !GetFlag(FLAG_Z); }
 
 		// REP flags
 		bool inRep = false;
@@ -218,6 +218,7 @@ namespace emul
 
 		void IN8(WORD port);
 		void OUT8(WORD port);
+		void OUT16(WORD port);
 
 		void LOOP(BYTE offset, bool cond = true);
 
