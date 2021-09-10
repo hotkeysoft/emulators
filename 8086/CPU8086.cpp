@@ -1746,8 +1746,10 @@ namespace emul
 			int16_t result = (int8_t)regA.hl.l * (int8_t)(*modrm);
 			LogPrintf(LOG_DEBUG, "IMUL8, %d * %d = %d", (int8_t)regA.hl.l, (int8_t)(*modrm), result);
 			regA.x = (WORD)result;
-			SetFlag(FLAG_O, regA.hl.h != 0 && regA.hl.h != 0xFF);
-			SetFlag(FLAG_C, regA.hl.h != 0 && regA.hl.h != 0xFF);
+			WORD tmp = widen(regA.hl.l);
+			bool ocFlags = (tmp != (WORD)result);
+			SetFlag(FLAG_O, ocFlags);
+			SetFlag(FLAG_C, ocFlags);
 			break;
 		}
 		case 0x30:
@@ -1818,13 +1820,13 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
-		case 0x10:
+		case 0x10: // NOT
 		{
 			LogPrintf(LOG_DEBUG, "NOT16");
 			*modrm = ~(*modrm);
 			break;
 		}
-		case 0x18:
+		case 0x18: // NEG
 		{
 			WORD tempDest = 0;
 			SourceDest16 sd;
@@ -1845,14 +1847,16 @@ namespace emul
 			SetFlag(FLAG_C, regD.x != 0);
 			break;
 		}
-		case 0x28: 
+		case 0x28: // IMUL
 		{
 			int32_t result = (int16_t)regA.x * (int16_t)(*modrm);
 			LogPrintf(LOG_DEBUG, "IMUL16, %d * %d = %d", (int16_t)regA.x, (int16_t)(*modrm), result);
 			regD.x = getHWord(result);
 			regA.x = getLWord(result);
-			SetFlag(FLAG_O, regD.x != 0 && regD.x != 0xFFFF);
-			SetFlag(FLAG_C, regD.x != 0 && regD.x != 0xFFFF);
+			DWORD tmp = widen(regA.x);
+			bool ocFlags = (tmp != (DWORD)result);
+			SetFlag(FLAG_O, ocFlags);
+			SetFlag(FLAG_C, ocFlags);
 			break;
 		}
 		case 0x30:
