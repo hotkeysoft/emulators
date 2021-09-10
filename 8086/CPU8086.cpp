@@ -1232,7 +1232,7 @@ namespace emul
 
 		++b;
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(b));
+		SetFlag(FLAG_O, (!getMSB(before) && getMSB(b)));
 		AdjustSign(b);
 		AdjustZero(b);
 		SetFlag(FLAG_A, ((before & 0x0F) == 0x0F));
@@ -1246,7 +1246,7 @@ namespace emul
 
 		--b;
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(b));
+		SetFlag(FLAG_O, (getMSB(before) && !getMSB(b)));
 		AdjustSign(b);
 		AdjustZero(b);
 		SetFlag(FLAG_A, ((before & 0x0F) == 0));
@@ -1260,7 +1260,7 @@ namespace emul
 
 		++w;
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(w));
+		SetFlag(FLAG_O, (!getMSB(before) && getMSB(w)));
 		AdjustSign(w);
 		AdjustZero(w);
 		SetFlag(FLAG_A, ((before & 0x000F) == 0x0F));
@@ -1273,7 +1273,7 @@ namespace emul
 
 		--w;
 
-		SetFlag(FLAG_O, getMSB(before) != getMSB(w));
+		SetFlag(FLAG_O, (getMSB(before) && !getMSB(w)));
 		AdjustSign(w);
 		AdjustZero(w);
 		SetFlag(FLAG_A, ((before & 0x000F) == 0));
