@@ -221,7 +221,7 @@ namespace emul
 
 		for (int i = 0; i < 12; ++i)
 		{
-			attr[i] = (m_cpu->flags & (1 << i)) ? 15 : 8;
+			attr[11-i] = (m_cpu->flags & (1 << i)) ? 15 : 8;
 		}
 
 		static CPUInfo::Coord coord = g_CPUInfo.GetCoord("FLAGS");
@@ -257,8 +257,8 @@ namespace emul
 			break;
 		case RAMMode::CUSTOM:
 		default:
-			segment = m_cpu->regCS;
-			offset = m_cpu->regIP;
+			segment = 0;
+			offset = 0;
 			break;
 		}
 
