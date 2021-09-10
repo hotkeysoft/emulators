@@ -265,9 +265,11 @@ namespace emul
 		void XLAT();
 
 		void AAA();
+		void AAS();
 		void AAM(BYTE base);
 		void AAD(BYTE base);
 		void DAA();
+		void DAS();
 
 		void LEA(BYTE op2);
 

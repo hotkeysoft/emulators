@@ -37,10 +37,10 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		if (regCS == 0x0100 && regIP == 0x6F8D)
-		{
-			__debugbreak();
-		}
+		//if (regCS == 0x0100 && regIP == 0x6F8D)
+		//{
+		//	__debugbreak();
+		//}
 
 		++regIP;
 
@@ -188,7 +188,7 @@ namespace emul
 		case 0x2E: SEGOVERRIDE(regCS); break;
 
 		// DAS (1)
-		case 0x2F: NotImplemented(opcode); break;
+		case 0x2F: DAS(); break;
 
 		// XOR rm+r=>rm (4)
 		// ----------
@@ -236,7 +236,7 @@ namespace emul
 		case 0x3E: SEGOVERRIDE(regDS); break;
 
 		// AAS (1)
-		case 0x3F: NotImplemented(opcode); break;
+		case 0x3F: AAS(); break;
 
 		// INC r (1)
 		// ----------
@@ -429,7 +429,7 @@ namespace emul
 		// CBW
 		case 0x98: CBW(); break;
 		// CWD
-		case 0x99: NotImplemented(opcode); break;
+		case 0x99: CWD(); break;
 
 		// CALL Far (5)
 		case 0x9A: CALLfar(); break;
@@ -440,7 +440,7 @@ namespace emul
 		// PUSHF (1)
 		case 0x9C: PUSH(flags); break;
 		// POPF (1)
-		case 0x9D: POP(flags); break;
+		case 0x9D: POP(flags); flags |= FLAG_R1; break;  // TODO: Clean flags in function
 		// SAHF (1)
 		case 0x9E: SAHF(); break;
 		// LAHF (1)
@@ -783,7 +783,7 @@ namespace emul
 
 	void CPU8086::ClearFlags()
 	{
-		flags = FLAG_R1 | FLAG_R12 | FLAG_R13;
+		flags = FLAG_R1; //| FLAG_R12 | FLAG_R13;
 	}
 
 	BYTE CPU8086::FetchByte()
@@ -2253,7 +2253,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "AAA");
 		
-		if (GetFlag(FLAG_A) || (regA.hl.l) > 9)
+		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
 		{
 			++regA.hl.h;
 			regA.hl.l += 6;
@@ -2266,6 +2266,33 @@ namespace emul
 			SetFlag(FLAG_C, false);
 		}
 		regA.hl.l &= 0x0F;
+
+		AdjustSign(regA.hl.l);
+		AdjustZero(regA.hl.l);
+		AdjustParity(regA.hl.l);
+	}
+
+	void CPU8086::AAS()
+	{
+		LogPrintf(LOG_DEBUG, "AAS");
+
+		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
+		{
+			--regA.hl.h;
+			regA.hl.l -= 6;
+			SetFlag(FLAG_A, true);
+			SetFlag(FLAG_C, true);
+		}
+		else
+		{
+			SetFlag(FLAG_A, false);
+			SetFlag(FLAG_C, false);
+		}
+		regA.hl.l &= 0x0F;
+
+		AdjustSign(regA.hl.l);
+		AdjustZero(regA.hl.l);
+		AdjustParity(regA.hl.l);
 	}
 
 	void CPU8086::AAM(BYTE base)
@@ -2319,6 +2346,27 @@ namespace emul
 		if (GetFlag(FLAG_C) || regA.hl.l > 0x9F)
 		{
 			regA.hl.l += 0x60;
+			SetFlag(FLAG_C, true);
+		}
+
+		AdjustSign(regA.hl.l);
+		AdjustZero(regA.hl.l);
+		AdjustParity(regA.hl.l);
+	}
+
+	void CPU8086::DAS()
+	{
+		LogPrintf(LOG_DEBUG, "DAS");
+
+		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
+		{
+			regA.hl.l -= 6;
+			SetFlag(FLAG_A, true);
+		}
+
+		if (GetFlag(FLAG_C) || regA.hl.l > 0x9F)
+		{
+			regA.hl.l -= 0x60;
 			SetFlag(FLAG_C, true);
 		}
 
