@@ -1346,6 +1346,11 @@ namespace emul
 
 		count &= 0b11111; // Technically done on 186 and above
 
+		if (count == 0)
+		{
+			return;
+		}
+
 		// TODO: Ugly but approximates what i8086 does
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 before=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
 		for (BYTE i = 0; i < count; ++i)
@@ -1423,6 +1428,10 @@ namespace emul
 		op2 &= 0x38;
 
 		count &= 0b11111; // Technically done on 186 and above
+		if (count == 0)
+		{
+			return;
+		}
 
 		// TODO: Ugly but approximates what i8086 does
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 before=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
