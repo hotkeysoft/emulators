@@ -2415,13 +2415,22 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "DAS");
 
+		BYTE oldAL = regA.hl.l;
+		bool oldCF = GetFlag(FLAG_C);
+		SetFlag(FLAG_C, false);
+
 		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
 		{
 			regA.hl.l -= 6;
+			SetFlag(FLAG_C, oldCF || (oldAL < 6));
 			SetFlag(FLAG_A, true);
 		}
+		else
+		{
+			SetFlag(FLAG_A, false);
+		}
 
-		if (GetFlag(FLAG_C) || regA.hl.l > 0x9F)
+		if (oldCF || oldAL > 0x99)
 		{
 			regA.hl.l -= 0x60;
 			SetFlag(FLAG_C, true);
