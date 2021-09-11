@@ -333,7 +333,7 @@ namespace emul
 		SegmentOffset address = std::make_tuple(m_cpu->regCS, m_cpu->regIP);
 		Instruction decoded;
 
-		for (int i = 0; i < 8; ++i)
+		for (int i = 0; i < 1; ++i)
 		{
 			address = Disassemble(address, decoded);
 			PrintInstruction(i, decoded);
@@ -351,7 +351,8 @@ namespace emul
 		decoded.raw[0] = *data;
 
 		memset(decoded.text, ' ', 32);
-		memcpy(decoded.text, "decoded", 7);
+		const std::string& instr = g_CPUInfo.Disassemble(*data);
+		memcpy(decoded.text, instr.c_str(), instr.size());
 
 		offset += 1;
 		return address;

@@ -639,9 +639,9 @@ namespace emul
 
 		// OUT variable (1)
 		// --------
-		// OUT AL, DX
+		// OUT DX, AL
 		case 0xEE: OUT8(regD.x); break;
-		// OUT AX, DX
+		// OUT DX, AX
 		case 0xEF: OUT16(regD.x); break;
 
 		// LOCK (1)
@@ -656,7 +656,6 @@ namespace emul
 		case 0xF4: HLT(); break;
 		// CMC (1)
 		case 0xF5: CMC(); break;
-		// CLC (1)
 
 		// TEST/---/NOT/NEG/MUL/IMUL/DIV/IDIV
 		// --------
