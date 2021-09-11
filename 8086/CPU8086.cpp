@@ -1727,6 +1727,9 @@ namespace emul
 			regA.x = result;
 			SetFlag(FLAG_O, regA.hl.h != 0);
 			SetFlag(FLAG_C, regA.hl.h != 0);
+			AdjustSign(regA.hl.l);
+			AdjustZero(regA.hl.l);
+			AdjustParity(regA.hl.l);
 			break;
 		}
 		case 0x18: // NEG
@@ -1749,6 +1752,9 @@ namespace emul
 			bool ocFlags = (tmp != (WORD)result);
 			SetFlag(FLAG_O, ocFlags);
 			SetFlag(FLAG_C, ocFlags);
+			AdjustSign(regA.hl.l);
+			AdjustZero(regA.hl.l);
+			AdjustParity(regA.hl.l);
 			break;
 		}
 		case 0x30:
@@ -1844,6 +1850,9 @@ namespace emul
 			regA.x = getLWord(result);
 			SetFlag(FLAG_O, regD.x != 0);
 			SetFlag(FLAG_C, regD.x != 0);
+			AdjustSign(regA.x);
+			AdjustZero(regA.x);
+			AdjustParity(regA.x);
 			break;
 		}
 		case 0x28: // IMUL
@@ -1856,6 +1865,9 @@ namespace emul
 			bool ocFlags = (tmp != (DWORD)result);
 			SetFlag(FLAG_O, ocFlags);
 			SetFlag(FLAG_C, ocFlags);
+			AdjustSign(regA.x);
+			AdjustZero(regA.x);
+			AdjustParity(regA.x);
 			break;
 		}
 		case 0x30:
@@ -2385,12 +2397,8 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "AAD base %d", base);
 
-		regA.hl.l = (regA.hl.h * base) + regA.hl.l;
+		ArithmeticImm8(regA.hl.l, base * regA.hl.h, rawAdd8);
 		regA.hl.h = 0;
-
-		AdjustSign(regA.hl.l);
-		AdjustZero(regA.hl.l);
-		AdjustParity(regA.hl.l);
 	}
 
 	void CPU8086::DAA()

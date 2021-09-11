@@ -72,7 +72,7 @@ namespace emul
 			DWORD dw = w;
 			if (getMSB(w))
 			{
-				dw |= 0xFFFF;
+				dw |= 0xFFFF0000;
 			}
 			return dw;
 		}
