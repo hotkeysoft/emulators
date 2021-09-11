@@ -10,7 +10,7 @@ namespace emul
 
 	Computer::Computer() : 
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_base64K(0, 0x80000, emul::MemoryType::RAM),
+		m_base64K(0, 0x10000, emul::MemoryType::RAM),
 		Logger("PC"), 
 		CPU8086(m_memory, m_map),
 		m_pit(0x40, 1193182),

@@ -24,6 +24,10 @@ const short CONSOLE_COLS = 80;
 //#define NO_CONSOLE
 //#define CPU_TEST
 
+#ifdef CPU_TEST
+#include "CPU8086Test.h"
+#endif
+
 FILE* logFile = nullptr;
 
 enum class Mode { MONITOR = 0, CONSOLE = 1, LOG = 2};
@@ -52,7 +56,7 @@ void LogCallback(const char* str)
 	backLogPtr = (backLogPtr + 1) % BACKLOG_MAX;
 	backLog[backLogPtr] = str;
 
-	if (mode == Mode::LOG)
+	if ((mode == Mode::LOG) || logFile)
 	{
 		fprintf(logFile ? logFile : stderr, str);
 	}
@@ -99,13 +103,25 @@ void DumpScreen(cga::DeviceCGA& screen)
 
 int main(void)
 {
-	//	logFile = fopen("./dump.log", "w");
+	//logFile = fopen("./dump.log", "w");
 
 #ifndef NO_CONSOLE
 	console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
 #endif
 
 	Logger::RegisterLogCallback(LogCallback);
+
+#ifdef CPU_TEST
+	{
+		emul::Memory mem(20);
+		emul::MemoryMap mmap;
+		emul::CPU8086Test testCPU(mem, mmap);
+		testCPU.Test();
+
+		fprintf(stderr, "Press any key to continue\n");
+		_getch();
+		return 0;}
+#endif
 
 	emul::Computer pc;
 
@@ -118,15 +134,18 @@ int main(void)
 	//pc.GetMemory().Allocate(&biosF800);
 
 	emul::MemoryBlock testROMF000(emul::S2A(0xF000), 0x10000, emul::MemoryType::ROM);
-	testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\jump1.bin)");
+	testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\mul.bin)");
 	pc.GetMemory().Allocate(&testROMF000);
 
 	pc.Init();
-	//pc.Reset();
+	pc.Reset();
 	pc.Reset(0xF000, 0);
+	pc.EnableLog(true, Logger::LOG_INFO);
 	pc.EnableLog(true, Logger::LOG_DEBUG);
 
+#ifndef NO_CONSOLE
 	monitor.Init(pc, pc.GetMemory());
+#endif
 
 	fprintf(stderr, "Press any key to continue\n");
 	_getch();
@@ -241,7 +260,7 @@ int main(void)
 
 	pc.Dump();
 
-	pc.GetMemory().Dump(0, 256, R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\mine\jump1.out)");
+	pc.GetMemory().Dump(0, 65536, R"(ram.dump)");
 
 	DumpBackLog();
 
@@ -260,5 +279,3 @@ int main(void)
 
 	return 0;
 }
-
-
