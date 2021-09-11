@@ -331,13 +331,24 @@ namespace emul
 		static CPUInfo::Coord codePos = g_CPUInfo.GetCoord("CODE");
 
 		SegmentOffset address = std::make_tuple(m_cpu->regCS, m_cpu->regIP);
-		Instruction decoded;
 
-		for (int i = 0; i < 1; ++i)
+		for (int i = 0; i < 12; ++i)
 		{
+			Instruction decoded;
 			address = Disassemble(address, decoded);
 			PrintInstruction(i, decoded);
 		}
+	}
+
+	bool replace(std::string& str, const std::string& from, const std::string& to) 
+	{
+		size_t start = str.find(from);
+		if (start == std::string::npos)
+		{
+			return false;
+		}
+		str.replace(start, from.size(), to);
+		return true;
 	}
 
 	SegmentOffset Monitor::Disassemble(SegmentOffset address, Monitor::Instruction& decoded)
@@ -347,15 +358,129 @@ namespace emul
 		WORD& offset = std::get<1>(address);
 		BYTE* data = m_memory->GetPtr8(S2A(segment, offset));
 
-		decoded.len = 1;
-		decoded.raw[0] = *data;
+		decoded.AddRaw(*data);
+
+		CPUInfo::Opcode instr = g_CPUInfo.GetOpcode(*data);
+		std::string text = instr.text;
+
+		if (instr.modRegRm != CPUInfo::Opcode::MODREGRM::NONE)
+		{
+			offset++;
+			BYTE* modRegRm = m_memory->GetPtr8(S2A(segment, offset));
+			decoded.AddRaw(*modRegRm);
+
+			const char* regStr = nullptr;
+			BYTE reg = (*modRegRm) >> 3;
+			switch (instr.modRegRm)
+			{
+			case CPUInfo::Opcode::MODREGRM::SR:
+				if (instr.sr) replace(text, "{sr}", CPU8086::GetReg16Str(reg, true));
+				break;
+			case CPUInfo::Opcode::MODREGRM::W8:
+				if (instr.r8) replace(text, "{r8}", CPU8086::GetReg8Str(reg));
+				break;
+			case CPUInfo::Opcode::MODREGRM::W16:
+				if (instr.r16) replace(text, "{r16}", CPU8086::GetReg16Str(reg, false));
+				break;
+			}
+
+			BYTE disp = 0;
+			if (instr.rm8)
+			{
+				replace(text, "{rm8}", CPU8086::GetModRMStr(*modRegRm, false, disp));
+			}
+			if (instr.rm16)
+			{
+				replace(text, "{rm16}", CPU8086::GetModRMStr(*modRegRm, true, disp));
+			}
+
+			// GetModRMStr can insert a {d8} or {d16} displacement, we have to fetch it
+			char buf[32];
+			if (disp == 8)
+			{
+				offset++;
+				BYTE* disp8 = m_memory->GetPtr8(S2A(segment, offset));
+				decoded.AddRaw(*disp8);
+
+				sprintf(buf, "0%Xh", *disp8);
+				replace(text, "{d8}", buf);
+			}
+			else if (disp == 16)
+			{
+				offset++;
+				WORD* disp16 = m_memory->GetPtr16(S2A(segment, offset));
+				offset++;
+				decoded.AddRaw(*disp16);
+
+				sprintf(buf, "0%Xh", *disp16);
+				replace(text, "{d16}", buf);
+			}
+		}
+
+		char buf[32];
+		switch (instr.imm)
+		{
+		case CPUInfo::Opcode::IMM::W8:
+		{
+			++offset;
+			BYTE* imm8 = m_memory->GetPtr8(S2A(segment, offset));
+			decoded.AddRaw(*imm8);
+
+			sprintf(buf, "0%Xh", *imm8);
+			replace(text, "{i8}", buf);
+			break;
+		}
+		case CPUInfo::Opcode::IMM::W16:
+		{
+			++offset;
+			WORD* imm16 = m_memory->GetPtr16(S2A(segment, offset));
+			offset++;
+			decoded.AddRaw(*imm16);
+
+			sprintf(buf, "0%Xh", *imm16);
+			replace(text, "{i16}", buf);
+			break;
+		}
+		case CPUInfo::Opcode::IMM::W32:
+		{
+			++offset;
+			WORD* imm16Offset = m_memory->GetPtr16(S2A(segment, offset));
+			offset++;
+			decoded.AddRaw(*imm16Offset);
+			offset++;
+			WORD* imm16Segment = m_memory->GetPtr16(S2A(segment, offset));
+			offset++;
+			decoded.AddRaw(*imm16Segment);
+			sprintf(buf, "0%Xh:0%Xh", *imm16Segment, *imm16Offset);
+			replace(text, "{i32}", buf);
+			break;
+		}
+		default:
+			break;
+		}
 
 		memset(decoded.text, ' ', 32);
-		const std::string& instr = g_CPUInfo.Disassemble(*data);
-		memcpy(decoded.text, instr.c_str(), instr.size());
+		memcpy(decoded.text, text.c_str(), text.size());
 
-		offset += 1;
+		++offset;
+
 		return address;
 	}
+
+	void Monitor::Instruction::AddRaw(BYTE b)
+	{
+		this->raw[this->len++] = hexDigits[b >> 4];
+		this->raw[this->len++] = hexDigits[(b & 0x0F)];
+	}
+	void Monitor::Instruction::AddRaw(WORD w)
+	{
+		// LOW BYTE
+		this->raw[this->len++] = hexDigits[(w >> 4) & 0x0F];
+		this->raw[this->len++] = hexDigits[(w & 0x0F)];
+		// HIGH BYTE
+		this->raw[this->len++] = hexDigits[(w >> 12) & 0x0F];
+		this->raw[this->len++] = hexDigits[(w >> 8) & 0x0F];
+	}
+
 
 }

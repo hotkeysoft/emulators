@@ -108,6 +108,10 @@ namespace emul
 		bool GetFlag(FLAG f) { return (flags & f) ? true : false; };
 		void SetFlag(FLAG f, bool v) { if (v) flags |= f; else flags &= ~f; };
 
+		static const char* GetReg8Str(BYTE reg);
+		static const char* GetReg16Str(BYTE reg, bool segReg = false);
+		static std::string GetModRMStr(BYTE modrm, bool wide, BYTE& disp);
+
 	protected:
 		PortAggregator m_ports;
 
@@ -148,12 +152,10 @@ namespace emul
 		SourceDest16 GetModRegRM16(BYTE modregrm, bool toReg = true, bool segReg = false);
 
 		SegmentOffset GetEA(BYTE modregrm, bool direct);
-		const char* GetEAStr(BYTE modregrm, bool direct);
+		static const char* GetEAStr(BYTE modregrm, bool direct);
 
 		BYTE* GetReg8(BYTE reg);
 		WORD* GetReg16(BYTE reg, bool segReg = false);
-		const char* GetReg8Str(BYTE reg); // For logging
-		const char* GetReg16Str(BYTE reg, bool segReg = false); // For logging
 
 		// Opcodes
 

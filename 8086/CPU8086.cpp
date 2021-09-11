@@ -805,7 +805,7 @@ namespace emul
 		case 6: return "DH";
 		case 7: return "BH";
 		}
-		throw std::exception("GetReg8: invalid reg value");
+		throw std::exception("not possible");
 	}
 
 	BYTE* CPU8086::GetReg8(BYTE reg)
@@ -822,7 +822,7 @@ namespace emul
 		case 6: return &regD.hl.h;
 		case 7: return &regB.hl.h;
 		}
-		throw std::exception("GetReg8: invalid reg value");
+		throw std::exception("not possible");
 	}
 
 	const char* CPU8086::GetReg16Str(BYTE reg, bool segReg)
@@ -839,7 +839,7 @@ namespace emul
 		case 6: return "SI";
 		case 7: return "DI";
 		}
-		throw std::exception("GetReg16: invalid reg value");
+		throw std::exception("not possible");
 	}
 
 	WORD* CPU8086::GetReg16(BYTE reg, bool segReg)
@@ -856,7 +856,7 @@ namespace emul
 		case 6: return &regSI;
 		case 7: return &regDI;
 		}
-		throw std::exception("GetReg16: invalid reg value");
+		throw std::exception("not possible");
 	}
 
 	SegmentOffset CPU8086::GetEA(BYTE modregrm, bool direct)
@@ -877,7 +877,7 @@ namespace emul
 		case 6: return std::make_tuple(regSS, regBP);
 		case 7: return std::make_tuple(regDS, regB.x);
 		}
-		throw std::exception("GetReg16: impossible modregrm value");
+		throw std::exception("not possible");
 	}
 
 	const char* CPU8086::GetEAStr(BYTE modregrm, bool direct)
@@ -897,7 +897,48 @@ namespace emul
 		case 6: return "SS:BP";
 		case 7: return "DS:BX";
 		}
-		throw std::exception("GetReg16: impossible modregrm value");
+		throw std::exception("not possible");
+	}
+
+	std::string CPU8086::GetModRMStr(BYTE modrm, bool wide, BYTE& disp)
+	{
+		disp = 0;
+		switch (modrm & 0xC0)
+		{
+		case 0xC0: return wide ? GetReg16Str(modrm) : GetReg8Str(modrm); // REG
+		case 0x40: disp = 8; break;
+		case 0x80: disp = 16; break;
+		case 0x00: // NO DISP (or DIRECT)
+			if ((modrm & 7) == 6) // Direct
+			{
+				disp = 16;
+				return "[{d16}]";
+			}
+			break;
+		default:
+			throw std::exception("not possible");
+		}
+
+		static char tmp[32];
+		switch (modrm & 7)
+		{
+		case 0: strcpy(tmp, "[BX+SI"); break;
+		case 1: strcpy(tmp, "[BX+DI"); break;
+		case 2: strcpy(tmp, "[BP+SI"); break;
+		case 3: strcpy(tmp, "[BP+DI"); break;
+		case 4: strcpy(tmp, "[SI"); break;
+		case 5: strcpy(tmp, "[DI"); break;
+		case 6: strcpy(tmp, "[BP"); break;
+		case 7: strcpy(tmp, "[BX"); break;
+		}
+
+		if (disp)
+		{
+			strcat(tmp, disp == 8 ? "+{d8}" : "+{d16}");
+		}
+		strcat(tmp, "]");
+
+		return tmp;
 	}
 
 	BYTE* CPU8086::GetModRM8(BYTE modrm)

@@ -35,11 +35,59 @@ namespace emul
 		{
 			throw std::exception("opcode list incomplete");
 		}
+
+		BuildOpcodes();
 	}
 
-	std::string CPUInfo::Disassemble(BYTE opcode) const
+	void CPUInfo::BuildOpcodes()
 	{
-		return m_config["cpu"]["OpCodes"][opcode].get<std::string>();
+		for (int i = 0; i < 256; ++i)
+		{
+			m_opcodes[i] = BuildOpcode(i);
+		}
+	}
+
+	CPUInfo::Opcode CPUInfo::BuildOpcode(BYTE op)
+	{
+		Opcode ret;
+		const std::string text = m_config["cpu"]["OpCodes"][op].get<std::string>();
+		ret.text = text;
+
+		ret.rm8 = text.find("{rm8}") != std::string::npos;
+		ret.rm16 = text.find("{rm16}") != std::string::npos;
+
+		ret.r8 = text.find("{r8}") != std::string::npos;
+		ret.r16 = text.find("{r16}") != std::string::npos;
+		ret.sr = text.find("{sr}") != std::string::npos;
+
+		ret.i8 = text.find("{i8}") != std::string::npos;
+		ret.i16 = text.find("{i16}") != std::string::npos;
+		ret.i32 = text.find("{i32}") != std::string::npos;
+
+		bool alu = text.find("{alu}") != std::string::npos;
+		bool alu2 = text.find("{alu2}") != std::string::npos;
+		bool shift = text.find("{shift}") != std::string::npos;
+		bool incdec = text.find("{incdec}") != std::string::npos;
+		bool multi = text.find("{multi}") != std::string::npos;
+
+		if (alu) ret.multi = Opcode::MULTI::ALU;
+		else if (alu2) ret.multi = Opcode::MULTI::ALU2;
+		else if (shift) ret.multi = Opcode::MULTI::SHIFT;
+		else if (incdec) ret.multi = Opcode::MULTI::INCDEC;
+		else if (multi) ret.multi = Opcode::MULTI::MULTI;
+		else ret.multi = Opcode::MULTI::NONE;
+
+		if (ret.i8) ret.imm = Opcode::IMM::W8;
+		else if (ret.i16) ret.imm = Opcode::IMM::W16;
+		else if (ret.i32) ret.imm = Opcode::IMM::W32;
+		else ret.imm = Opcode::IMM::NONE;
+
+		if (ret.sr) ret.modRegRm = Opcode::MODREGRM::SR;
+		else if (ret.r8 || ret.rm8) ret.modRegRm = Opcode::MODREGRM::W8;
+		else if (ret.r16 || ret.rm16) ret.modRegRm = Opcode::MODREGRM::W16;
+		else ret.modRegRm = Opcode::MODREGRM::NONE;
+
+		return ret;
 	}
 
 	std::string CPUInfo::GetANSIFile() const

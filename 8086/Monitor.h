@@ -28,9 +28,12 @@ namespace emul
 	protected:
 		struct Instruction
 		{
+			void AddRaw(BYTE b);
+			void AddRaw(WORD w);
+
 			SegmentOffset address;
 			WORD offset;
-			BYTE len;
+			BYTE len = 0;
 			BYTE raw[16];
 			char text[32];
 		};
