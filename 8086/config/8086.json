@@ -73,11 +73,11 @@
 			"DS:",   
 			"AAS",
 			
-			"INC AX",   "INC CX",   "INC DX",   "INC BX",   "INC SP",   "INC BP",   "INC SI",   "INC SI",
-			"DEC AX",   "DEC CX",   "DEC DX",   "DEC BX",   "DEC SP",   "DEC BP",   "DEC SI",   "DEC SI",
+			"INC AX",   "INC CX",   "INC DX",   "INC BX",   "INC SP",   "INC BP",   "INC SI",   "INC DI",
+			"DEC AX",   "DEC CX",   "DEC DX",   "DEC BX",   "DEC SP",   "DEC BP",   "DEC SI",   "DEC DI",
 			
-			"PUSH AX",  "PUSH CX",  "PUSH DX",  "PUSH BX",  "PUSH SP",  "PUSH BP",  "PUSH SI",  "PUSH SI",
-			"POP AX",   "POP CX",   "POP DX",   "POP BX",   "POP SP",   "POP BP",   "POP SI",   "POP SI",
+			"PUSH AX",  "PUSH CX",  "PUSH DX",  "PUSH BX",  "PUSH SP",  "PUSH BP",  "PUSH SI",  "PUSH DI",
+			"POP AX",   "POP CX",   "POP DX",   "POP BX",   "POP SP",   "POP BP",   "POP SI",   "POP DI",
 			
 			"DB 0x60", "DB 0x61", "DB 0x62", "DB 0x63", "DB 0x64", "DB 0x65", "DB 0x66", "DB 0x67",
 			"DB 0x68", "DB 0x69", "DB 0x6A", "DB 0x6B", "DB 0x6C", "DB 0x6D", "DB 0x6E", "DB 0x6F",
