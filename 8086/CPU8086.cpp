@@ -42,6 +42,8 @@ namespace emul
 		//	__debugbreak();
 		//}
 
+		bool trap = GetFlag(FLAG_T);
+
 		++regIP;
 
 		// Disable override after next instruction
@@ -707,6 +709,13 @@ namespace emul
 		if (clearSegOverride)
 		{
 			inSegOverride = false;
+		}
+
+		// Check for trap
+		if (trap && GetFlag(FLAG_T))
+		{
+			LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", regCS, regIP);
+			INT(1);
 		}
 	}
 
@@ -1686,7 +1695,7 @@ namespace emul
 
 	void CPU8086::RETFar(bool pop, WORD value)
 	{
-		LogPrintf(LOG_INFO, "RETFar [%s][%d]", pop ? "Pop" : "NoPop", value);
+		LogPrintf(LOG_DEBUG, "RETFar [%s][%d]", pop ? "Pop" : "NoPop", value);
 
 		POP(regIP);
 		POP(regCS);
@@ -2276,8 +2285,8 @@ namespace emul
 			case 0x06: LogPrintf(LOG_DEBUG, "INT10: Scroll up"); break;
 			case 0x07: LogPrintf(LOG_DEBUG, "INT10: Scroll down"); break;
 			case 0x08: LogPrintf(LOG_DEBUG, "INT10: Read char & attr at cursor"); break;
-			case 0x09: LogPrintf(LOG_DEBUG, "INT10: Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", regA.hl.l, ch, regB.hl.h, regB.hl.l, regC.x); break;
-			case 0x0A: LogPrintf(LOG_DEBUG, "INT10: Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", regA.hl.l, ch, regB.hl.h, regC.x); break;
+			case 0x09: LogPrintf(LOG_ERROR, "INT10: Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", regA.hl.l, ch, regB.hl.h, regB.hl.l, regC.x); break;
+			case 0x0A: LogPrintf(LOG_ERROR, "INT10: Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", regA.hl.l, ch, regB.hl.h, regC.x); break;
 			case 0x0B: LogPrintf(LOG_DEBUG, "INT10: Set background/border color / Set palette"); break;
 			case 0x0C: LogPrintf(LOG_DEBUG, "INT10: Write pixel"); break;
 			case 0x0D: LogPrintf(LOG_DEBUG, "INT10: Read pixel"); break;
@@ -2299,19 +2308,22 @@ namespace emul
 		}
 		else if (interrupt == 0x13)
 		{
-			LogPrintf(LOG_ERROR, "FLOPPY");
+			LogPrintf(LOG_ERROR, "FLOPPY, ah=%02X", regA.hl.h);
 		}
 		else if (interrupt == 0x21)
 		{
 			LogPrintf(LOG_DEBUG, "DOS");
 
+#if 1
 			switch (regA.hl.h)
 			{				
+			case 0x09: LogPrintf(LOG_ERROR, "INT21: 0x09 - Print String @[%04X:%04X]", regDS, regD.x); break;
 			case 0x0A: LogPrintf(LOG_ERROR, "INT21: 0x0A - Buffered input"); break;
+			case 0x0E: LogPrintf(LOG_ERROR, "INT21: 0x0E - Select Disk dl=%02X", regD.hl.l); break;
 			case 0x2B: LogPrintf(LOG_ERROR, "INT21: 0x2B - Set system date[%04d-%02d-%02d]", regC.x, regD.hl.h, regD.hl.l); break;
 			default: LogPrintf(LOG_ERROR, "INT21: Other function ah=%02X", regA.hl.h); break;
 			}
-
+#endif
 		}
 
 		PUSH(flags);
@@ -2328,7 +2340,7 @@ namespace emul
 
 	void CPU8086::IRET()
 	{
-		LogPrintf(LOG_INFO, "IRET");
+		LogPrintf(LOG_DEBUG, "IRET");
 		POP(regIP);
 		POP(regCS);
 		POP(flags);
