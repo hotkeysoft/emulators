@@ -15,15 +15,7 @@ namespace dma
 		Logger(label),
 		m_parent(parent),
 		m_memory(memory),
-		m_id(id),
-		m_baseCount(0x0000),
-		m_count(0x0000),
-		m_baseAddress(0x0000),
-		m_address(0x0000),
-		m_mode(0),
-		m_decrement(false),
-		m_autoInit(false),
-		m_terminalCount(false)
+		m_id(id)
 	{
 	}
 
@@ -168,16 +160,17 @@ namespace dma
 
 	void DMAChannel::DMAWrite(BYTE value)
 	{
+		emul::ADDRESS addr = (m_page << 16) + m_address;
+
 		if (m_terminalCount)
 		{
 			return;
 		}
-		LogPrintf(LOG_DEBUG, "DMA Write, value=%02X @ Address %04x", value, m_address);
+		LogPrintf(LOG_DEBUG, "DMA Write, value=%02X @ Address %04x", value, addr);
 
 		if ((m_mode & (MODE_OP1 | MODE_OP0)) == MODE_OP0) // WRITE Transfer
 		{
-			// TODO: Bank, port 80
-			m_memory.Write(m_address, value);
+			m_memory.Write(addr, value);
 		}
 		else 
 		{
@@ -260,6 +253,12 @@ namespace dma
 
 		// base+15: All Mask Bits (write)
 		Connect(GetBaseAdress() + 15, static_cast<PortConnector::OUTFunction>(&Device8237::WriteAllMaskBits));
+
+		// Page Registers
+		Connect(0x87, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel0Page));
+		Connect(0x83, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel1Page));
+		Connect(0x81, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel2Page));
+		Connect(0x82, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel3Page));
 	}
 
 	void Device8237::Tick()
@@ -430,5 +429,26 @@ namespace dma
 		default:
 			throw std::exception("not possible");
 		}
+	}
+
+	void Device8237::WriteChannel0Page(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "Set Channel 0 Page Register, value=%02X", value);
+		m_channel0.SetPage(value);
+	}
+	void Device8237::WriteChannel1Page(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "Set Channel 1 Page Register, value=%02X", value);
+		m_channel1.SetPage(value);
+	}
+	void Device8237::WriteChannel2Page(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "Set Channel 2 Page Register, value=%02X", value);
+		m_channel2.SetPage(value);
+	}
+	void Device8237::WriteChannel3Page(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "Set Channel 3 Page Register, value=%02X", value);
+		m_channel3.SetPage(value);
 	}
 }

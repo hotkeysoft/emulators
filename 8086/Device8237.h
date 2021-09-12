@@ -37,6 +37,8 @@ namespace dma
 
 		void SetMode(BYTE mode);
 
+		void SetPage(BYTE page) { m_page = (page & 0x0F); }
+
 		void DMAWrite(BYTE value);
 
 	private:
@@ -52,16 +54,18 @@ namespace dma
 			MODE_OP1 = 8,
 			MODE_OP0 = 4
 		};
-		BYTE m_mode;
-		bool m_decrement;
-		bool m_autoInit;
-		bool m_terminalCount;
+		BYTE m_mode = 0;
+		bool m_decrement = false;
+		bool m_autoInit = false;
+		bool m_terminalCount = false;
 
-		WORD m_baseCount;
-		WORD m_count;
+		WORD m_baseCount = 0;
+		WORD m_count = 0;
 
-		WORD m_baseAddress;
-		WORD m_address;
+		WORD m_baseAddress = 0;
+		WORD m_address = 0;
+
+		WORD m_page = 0;
 	};
 
 	class Device8237 : public PortConnector
@@ -121,6 +125,11 @@ namespace dma
 		void ClearFlipFlop(BYTE value);
 		void MasterClear(BYTE value);
 		void WriteAllMaskBits(BYTE value);
+
+		void WriteChannel0Page(BYTE value);
+		void WriteChannel1Page(BYTE value);
+		void WriteChannel2Page(BYTE value);
+		void WriteChannel3Page(BYTE value);
 
 		DMAChannel m_channel0;
 		DMAChannel m_channel1;
