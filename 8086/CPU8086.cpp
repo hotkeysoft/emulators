@@ -315,36 +315,52 @@ namespace emul
 		case 0x5F: POP(regDI); break;
 
 		// JO (2)
+		case 0x60:
 		case 0x70: JMPif(GetFlag(FLAG_O)); break;
 		// JNO (2)
+		case 0x61:
 		case 0x71: JMPif(!GetFlag(FLAG_O)); break;
 		// JB/JNAE/JC (2)
+		case 0x62:
 		case 0x72: JMPif(GetFlag(FLAG_C)); break;
 		// JNB/JAE/JNC (2)
+		case 0x63:
 		case 0x73: JMPif(!GetFlag(FLAG_C)); break;
 		// JE/JZ (2)
+		case 0x64:
 		case 0x74: JMPif(GetFlag(FLAG_Z)); break;
 		// JNE/JNZ (2)
+		case 0x65:
 		case 0x75: JMPif(!GetFlag(FLAG_Z)); break;
 		// JBE/JNA (2)
+		case 0x66:
 		case 0x76: JMPif(GetFlagNotAbove()); break;
 		// JNBE/JA (2)
+		case 0x67:
 		case 0x77: JMPif(!GetFlagNotAbove()); break;
 		// JS (2)
+		case 0x68:
 		case 0x78: JMPif(GetFlag(FLAG_S)); break;
 		// JNS (2)
+		case 0x69:
 		case 0x79: JMPif(!GetFlag(FLAG_S)); break;
 		// JP/JPE (2)
+		case 0x6A:
 		case 0x7A: JMPif(GetFlag(FLAG_P)); break;
 		// JNP/JPO (2)
+		case 0x6B:
 		case 0x7B: JMPif(!GetFlag(FLAG_P)); break;
 		// JL/JNGE (2)
+		case 0x6C:
 		case 0x7C: JMPif(!GetFlagNotLess()); break;
 		// JNL/JGE (2)
+		case 0x6D:
 		case 0x7D: JMPif(GetFlagNotLess()); break;
 		// JLE/JNG (2)
+		case 0x6E:
 		case 0x7E: JMPif(!GetFlagGreater()); break;
 		// JNLE/JG (2)
+		case 0x6F:
 		case 0x7F: JMPif(GetFlagGreater()); break;
 
 		//----------

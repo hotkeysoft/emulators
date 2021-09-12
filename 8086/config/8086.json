@@ -78,27 +78,12 @@
 			
 			"PUSH AX",  "PUSH CX",  "PUSH DX",  "PUSH BX",  "PUSH SP",  "PUSH BP",  "PUSH SI",  "PUSH DI",
 			"POP AX",   "POP CX",   "POP DX",   "POP BX",   "POP SP",   "POP BP",   "POP SI",   "POP DI",
-			
-			"DB 0x60", "DB 0x61", "DB 0x62", "DB 0x63", "DB 0x64", "DB 0x65", "DB 0x66", "DB 0x67",
-			"DB 0x68", "DB 0x69", "DB 0x6A", "DB 0x6B", "DB 0x6C", "DB 0x6D", "DB 0x6E", "DB 0x6F",
-			
-			"JO {i8}",  
-			"JNO {i8}",  
-			"JB/JNAE/JC {i8}",  
-			"JNB/JAE/JNC {i8}",  
-			"JE/JZ {i8}",  
-			"JNE/JNZ {i8}",  
-			"JBE/JNA {i8}",  
-			"JNBE/JA {i8}",
-			
-			"JS {i8}",  
-			"JNS {i8}",  
-			"JP/JPE {i8}",  
-			"JNP/JPO {i8}",  
-			"JL/JNGE {i8}",  
-			"JNL/JGE {i8}",  
-			"JLE/JNG {i8}",  
-			"JNLE/JG {i8}",
+				
+			"JO {i8}", "JNO {i8}", "JB/JNAE/JC {i8}", "JNB/JAE/JNC {i8}",  "JE/JZ {i8}", "JNE/JNZ {i8}", "JBE/JNA {i8}", "JNBE/JA {i8}",		
+			"JS {i8}", "JNS {i8}", "JP/JPE {i8}", "JNP/JPO {i8}", "JL/JNGE {i8}", "JNL/JGE {i8}", "JLE/JNG {i8}", "JNLE/JG {i8}",
+
+			"JO {i8}", "JNO {i8}", "JB/JNAE/JC {i8}", "JNB/JAE/JNC {i8}",  "JE/JZ {i8}", "JNE/JNZ {i8}", "JBE/JNA {i8}", "JNBE/JA {i8}",		
+			"JS {i8}", "JNS {i8}", "JP/JPE {i8}", "JNP/JPO {i8}", "JL/JNGE {i8}", "JNL/JGE {i8}", "JLE/JNG {i8}", "JNLE/JG {i8}",
 						
 			"{alu} {rm8}, {i8}",
 			"{alu} {rm16}, {i16}",    
