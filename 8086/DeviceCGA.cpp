@@ -5,6 +5,11 @@
 
 namespace cga
 {
+	const uint32_t CGAPalette[16] = {
+		0x000000, 0x0000AA, 0x00AA00, 0x00AAAA, 0xAA0000, 0xAA00AA, 0xAA5500, 0xAAAAAA,
+		0x555555, 0x5555FF, 0x55FF55, 0x55FFFF, 0xFF5555, 0xFF55FF, 0xFFFF55, 0xFFFFFF
+	};
+
 	DeviceCGA::DeviceCGA(WORD baseAddress) :
 		Logger("CGA"),
 		m_baseAddress(baseAddress),
@@ -25,7 +30,7 @@ namespace cga
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadBinary(charROM);
-		m_charROMStart = m_charROM.getPtr8(4096+2048);
+		m_charROMStart = m_charROM.getPtr8(4096 + 2048);
 
 		// Register Select
 		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&DeviceCGA::OUT));
@@ -83,19 +88,40 @@ namespace cga
 	{
 		if (m_vPos < 200 && m_hPos < 640 && ((m_vPos % 8) == 0))
 		{
-			BYTE* ch = m_screenB800.getPtr8(((m_vPos/8) * 80 + (m_hPos/8)) * 2);
+			BYTE* ch = m_screenB800.getPtr8(((m_vPos / 8) * 80 + (m_hPos / 8)) * 2);
 			BYTE* attr = ch + 1;
+			BYTE bg = (*attr) >> 4;
+			BYTE fg = (*attr) & 0x0F;
+
+			// Background
+			uint32_t bgRGB = CGAPalette[bg & 7];
+			Uint8 r = Uint8(bgRGB >> 16);
+			Uint8 g = Uint8(bgRGB >> 8);
+			Uint8 b = Uint8(bgRGB);
+
+			SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
+			SDL_Rect bgRect;
+			bgRect.x = m_hPos;
+			bgRect.y = m_vPos * 2;
+			bgRect.w = 8;
+			bgRect.h = 16;
+			SDL_RenderFillRect(m_sdlRenderer, &bgRect);
+
+			// Foreground
+			uint32_t fgRGB = CGAPalette[fg];
+			r = Uint8(fgRGB >> 16);
+			g = Uint8(fgRGB >> 8);
+			b = Uint8(fgRGB);
+
+			SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
 
 			BYTE* currCharPos = m_charROMStart + ((*ch) * 8) + (m_vPos % 8);
 			for (int y = 0; y < 8; ++y)
 			{
 				for (int x = 0; x < 8; ++x)
 				{
-					Uint8 color = ((*(currCharPos+y)) & (1 << (7 - x))) ? 255 : 0;
-					if (color)
+					if (((*(currCharPos + y)) & (1 << (7 - x))))
 					{
-						SDL_SetRenderDrawColor(m_sdlRenderer, color, color, color, 255);
-
 						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, (m_vPos + y) * 2);
 						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, (m_vPos + y) * 2 + 1);
 					}
