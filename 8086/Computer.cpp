@@ -10,7 +10,7 @@ namespace emul
 
 	Computer::Computer() : 
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_base64K(0, 0x10000, emul::MemoryType::RAM),
+		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
 		Logger("PC"), 
 		CPU8086(m_memory, m_map),
 		m_pit(0x40, 1193182),
@@ -24,11 +24,11 @@ namespace emul
 
 	void Computer::Init()
 	{
-		m_memory.EnableLog(true, Logger::LOG_ERROR);
-		m_mmap.EnableLog(true, Logger::LOG_ERROR);
+		m_memory.EnableLog(true, Logger::LOG_INFO);
+		m_mmap.EnableLog(true, Logger::LOG_INFO);
 
 		m_base64K.Clear(0xA5);
-		m_memory.Allocate(&m_base64K);
+		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
 		m_pit.EnableLog(true, Logger::LOG_WARNING);
@@ -53,7 +53,8 @@ namespace emul
 		m_dma.EnableLog(true, Logger::LOG_INFO);
 
 		m_cga.Init();
-		m_memory.Allocate(&m_cga.GetVideoRAM());
+		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xB800));
+		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xBC00));
 		m_cga.EnableLog(true, Logger::LOG_WARNING);
 
 		m_floppy.Init();

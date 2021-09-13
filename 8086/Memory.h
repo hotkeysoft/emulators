@@ -3,11 +3,16 @@
 #include "MemoryBlock.h"
 #include "Common.h"
 #include "Logger.h"
-#include <list>
+#include <vector>
+#include <tuple>
 
 namespace emul
 {
-	typedef std::list<MemoryBlock*> MemoryListType;
+	struct MemorySlot
+	{
+		MemoryBlock* block = nullptr;
+		ADDRESS base = 0;
+	};
 
 	class Memory : public Logger
 	{
@@ -15,7 +20,7 @@ namespace emul
 		Memory(size_t addressBits);
 		virtual ~Memory();
 
-		bool Allocate(MemoryBlock* block);
+		bool Allocate(MemoryBlock* block, ADDRESS base);
 		bool Free(MemoryBlock* block);
 
 		void Read(ADDRESS address, BYTE& value);
@@ -33,12 +38,6 @@ namespace emul
 
 		const size_t m_addressBits;
 
-		MemoryListType m_memory;
-
-		MemoryBlock* FindBlock(ADDRESS address);
-		MemoryBlock* FindOverlap(const MemoryBlock* block);
-
-		MemoryBlock* m_currBlock;
-		ADDRESS m_currMin, m_currMax;
+		std::vector<MemorySlot> m_memory;
 	};
 }

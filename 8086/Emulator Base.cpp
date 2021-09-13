@@ -31,7 +31,7 @@ const short CONSOLE_COLS = 80;
 FILE* logFile = nullptr;
 
 enum class Mode { MONITOR = 0, CONSOLE = 1, LOG = 2};
-Mode mode = Mode::MONITOR;
+Mode mode = Mode::LOG;
 
 Console console;
 emul::Monitor monitor(console);
@@ -90,8 +90,8 @@ void DumpScreen(cga::DeviceCGA& screen)
 {
 	for (WORD offset = 0; offset < 4000; offset += 2)
 	{
-		BYTE val = screen.GetVideoRAM().read(emul::S2A(0xB800, offset));
-		BYTE attr = screen.GetVideoRAM().read(emul::S2A(0xB800, offset+1));
+		BYTE val = screen.GetVideoRAM().read(offset);
+		BYTE attr = screen.GetVideoRAM().read(offset+1);
 
 		// TODO: 40 cols
 		short y = offset / (CONSOLE_COLS * 2);
@@ -125,17 +125,17 @@ int main(void)
 
 	emul::Computer pc;
 
-	emul::MemoryBlock biosF000(emul::S2A(0xF000), 0x8000, emul::MemoryType::ROM);
+	emul::MemoryBlock biosF000("BIOS0", 0x8000, emul::MemoryType::ROM);
 	biosF000.LoadBinary("data/BIOS_5160_V3_F000.BIN");
-	pc.GetMemory().Allocate(&biosF000);
+	pc.GetMemory().Allocate(&biosF000, emul::S2A(0xF000));
 
-	emul::MemoryBlock biosF800(emul::S2A(0xF800), 0x8000, emul::MemoryType::ROM);
+	emul::MemoryBlock biosF800("BIOS1", 0x8000, emul::MemoryType::ROM);
 	biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
-	pc.GetMemory().Allocate(&biosF800);
+	pc.GetMemory().Allocate(&biosF800, emul::S2A(0xF800));
 
-	emul::MemoryBlock testROMF000(emul::S2A(0xF000), 0x10000, emul::MemoryType::ROM);
+	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
-	//pc.GetMemory().Allocate(&testROMF000);
+	//pc.GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
 
 	pc.Init();
 	pc.Reset();

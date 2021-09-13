@@ -6,40 +6,39 @@
 
 namespace emul
 {
-	const DWORD MaxBlockSize = 65536;
 	enum class MemoryType { RAM, ROM };
 
 	class MemoryBlock : public Logger
 	{
 	public:
-		MemoryBlock(ADDRESS baseAddress, DWORD size, MemoryType type = MemoryType::RAM);
-		MemoryBlock(ADDRESS baseAddress, const std::vector<BYTE>data, MemoryType type = MemoryType::RAM);
+		MemoryBlock(const char* id, DWORD size, MemoryType type = MemoryType::RAM);
+		MemoryBlock(const char* id, const std::vector<BYTE>data, MemoryType type = MemoryType::RAM);
 		MemoryBlock(const MemoryBlock& block);
 
 		virtual ~MemoryBlock();
 
 		void Clear(BYTE filler = 0xFF);
 
-		ADDRESS GetBaseAddress() const { return m_baseAddress; };
+		const std::string& GetId() const { return m_id; }
 		DWORD GetSize() const { return m_size; };
 		MemoryType GetType() const { return m_type; };
 
 		bool LoadBinary(const char* file, WORD offset = 0);
 
-		bool Dump(ADDRESS start, DWORD len, const char* outFile);
+		bool Dump(ADDRESS offset, DWORD len, const char* outFile);
 
-		virtual BYTE read(ADDRESS address);
-		virtual BYTE* getPtr8(ADDRESS address);
-		virtual WORD* getPtr16(ADDRESS address);
-		virtual void write(ADDRESS address, char data);
+		virtual BYTE read(ADDRESS offset);
+		virtual BYTE* getPtr8(ADDRESS offset);
+		virtual WORD* getPtr16(ADDRESS offset);
+		virtual void write(ADDRESS offset, char data);
 
 	protected:
-		ADDRESS m_baseAddress;
+		DWORD RoundBlockSize(DWORD size);
+
+		std::string m_id;
 		DWORD m_size;
 		MemoryType m_type;
 
 		BYTE* m_data;
-
-		BYTE m_invalid;
 	};
 }

@@ -2,43 +2,39 @@
 #include "MemoryBlock.h"
 #include <memory.h>
 #include <fstream>
+#include <assert.h>
 
 namespace emul
 {
-	MemoryBlock::MemoryBlock(ADDRESS baseAddress, DWORD size, MemoryType type) :
+	const DWORD MaxBlockSize = 65536;
+	const WORD BlockGranularity = 4096;
+
+	MemoryBlock::MemoryBlock(const char* id, DWORD size, MemoryType type) :
 		Logger("MEMBLK"),
-		m_baseAddress(baseAddress),
-		m_size(size),
+		m_id(id ? id : "?"),
 		m_type(type)
 	{
-		m_invalid = 0xFA;
+		if (size == 0 || size > MaxBlockSize)
+		{
+			throw std::exception("Invalid block size");
+		}
 
+		m_size = RoundBlockSize(size);
 		m_data = new BYTE[m_size];
 
 		Clear();
 	}
 
-	MemoryBlock::MemoryBlock(ADDRESS baseAddress, const std::vector<BYTE>data, MemoryType type /*=RAM*/) :
-		Logger("MEMBLK"),
-		m_baseAddress(baseAddress),
-		m_type(type)
+	MemoryBlock::MemoryBlock(const char* id, const std::vector<BYTE>data, MemoryType type /*=RAM*/) :
+		MemoryBlock(id, (DWORD)data.size(), type)
 	{
-		if (data.size() == 0 || data.size() > MaxBlockSize)
-			throw std::exception("Invalid block size");
-		m_size = (DWORD)data.size();
-
-		m_invalid = 0xFA;
-
-		m_data = new BYTE[m_size];
-
-		memcpy(m_data, &(data[0]), m_size);
+		memcpy(m_data, &(data[0]), data.size());
 	}
 
 	MemoryBlock::MemoryBlock(const MemoryBlock& block) :
 		Logger("MEMBLK"),
-		m_baseAddress(block.m_baseAddress),
+		m_id(block.m_id),
 		m_size(block.m_size),
-		m_invalid(block.m_invalid),
 		m_type(block.m_type)
 	{
 		m_data = new BYTE[m_size];
@@ -50,51 +46,62 @@ namespace emul
 		delete[] m_data;
 	}
 
+	DWORD MemoryBlock::RoundBlockSize(DWORD size)
+	{
+		DWORD newSize = ((size + BlockGranularity - 1) / BlockGranularity) * BlockGranularity;
+		if (newSize != size)
+		{
+			LogPrintf(Logger::LOG_WARNING, "Rounding block size [%s] -> [%d]", size, newSize);
+		}
+		return newSize;
+	}
+
 	void MemoryBlock::Clear(BYTE filler)
 	{
 		memset(m_data, filler, m_size);
 	}
 
-	BYTE MemoryBlock::read(ADDRESS address)
+	BYTE MemoryBlock::read(ADDRESS offset)
 	{
-		if (address < m_baseAddress || address >= m_baseAddress + m_size)
-			return m_invalid;
-		else
-			return m_data[address - m_baseAddress];
+		assert(offset < m_size);
+		return m_data[offset];
 	}
 
-	BYTE* MemoryBlock::getPtr8(ADDRESS address)
+	BYTE* MemoryBlock::getPtr8(ADDRESS offset)
 	{
-		if (address < m_baseAddress || address >= m_baseAddress + m_size)
-			return 0;
-		else
-			return m_data+(address - m_baseAddress);
+		assert(offset < m_size);
+		return m_data+(offset);
 	}
 
-	WORD* MemoryBlock::getPtr16(ADDRESS address)
+	WORD* MemoryBlock::getPtr16(ADDRESS offset)
 	{
-		if (address < m_baseAddress || address + 1 >= m_baseAddress + m_size)
+		if (offset + 1 >= m_size)
 		{
 			throw std::exception("Not implemented: can not cross memory block boundary with WORD access");
-			return 0;
 		}
 		else
 		{
-			return (WORD*)(m_data + (address - m_baseAddress));
+			return (WORD*)(m_data + offset);
 		}
 	}
 
-	void MemoryBlock::write(ADDRESS address, char data)
+	void MemoryBlock::write(ADDRESS offset, char data)
 	{
-		if (address < m_baseAddress || address >= m_baseAddress + m_size)
-			return;
-
-		m_data[address - m_baseAddress] = data;
+		assert(offset < m_size);
+		if (m_type == MemoryType::RAM)
+		{
+			m_data[offset] = data;
+		}
 	}
 
 	bool MemoryBlock::LoadBinary(const char* file, WORD offset)
 	{
-		LogPrintf(LOG_INFO, "LoadBinary: loading %s at %02Xh", file, offset);
+		LogPrintf(LOG_INFO, "LoadBinary: loading %s at offset %04Xh", file, offset);
+
+		if (offset >= m_size)
+		{
+			throw std::exception("LoadBinary: offset out of range");
+		}
 
 		FILE* f = fopen(file, "rb");
 		if (!f)
@@ -111,16 +118,16 @@ namespace emul
 		}
 		else
 		{
-			LogPrintf(LOG_INFO, "LoadBinary: read %d bytes to memory block", bytesRead);
+			LogPrintf(LOG_INFO, "LoadBinary: read %d bytes to memory block at offset %04Xh", bytesRead, offset);
 		}
 
 		fclose(f);
 		return true;
 	}
 
-	bool MemoryBlock::Dump(ADDRESS start, DWORD len, const char* outFile)
+	bool MemoryBlock::Dump(ADDRESS offset, DWORD len, const char* outFile)
 	{
-		LogPrintf(LOG_INFO, "Dump: dumping block @ %04Xh, size=%d to %s", start, len, outFile);
+		LogPrintf(LOG_INFO, "Dump: dumping block size=%d to %s", m_size, outFile);
 
 		FILE* f = fopen(outFile, "wb");
 		if (!f)
@@ -128,8 +135,6 @@ namespace emul
 			LogPrintf(LOG_ERROR, "Dump: error opening binary file");
 			return false;
 		}
-
-		DWORD offset = start - m_baseAddress;
 
 		len = std::min(len, m_size - offset);
 		size_t bytesWritten = fwrite(m_data+offset, sizeof(char), len, f);
@@ -145,8 +150,6 @@ namespace emul
 
 		fclose(f);
 		return true;
-
-
 	}
 
 }

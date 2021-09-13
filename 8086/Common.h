@@ -27,7 +27,7 @@ namespace emul
 
 	inline ADDRESS S2A(WORD segment, WORD offset = 0)
 	{
-		return (segment << 4) + offset;
+		return ((segment << 4) + offset)&0xFFFFF;
 	}
 
 	inline size_t GetMaxAddress(size_t addressBits)

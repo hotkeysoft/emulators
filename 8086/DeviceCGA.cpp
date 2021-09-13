@@ -7,7 +7,7 @@ namespace cga
 		m_baseAddress(baseAddress),
 		m_hPos(0),
 		m_vPos(0),
-		m_screenB800(emul::S2A(0xB800), 0x4000, emul::MemoryType::RAM)
+		m_screenB800("CGA", 0x4000, emul::MemoryType::RAM)
 	{
 		Reset();
 	}
