@@ -5,3 +5,5 @@ x64
 *.user
 *.bak
 *.log
+/8086/*.bin
+/8086/data/*.txt

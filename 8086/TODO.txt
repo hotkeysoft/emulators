@@ -8,10 +8,18 @@ Keyboard
 
 Interrupt controller
 DMA controller
+- 0x80 - 0x9f DMA Page Registers
+
+Connections between components
+Timer 0 to interrupt controller instead of cpu
+
+Floppy controller
+- Write
 
 POST failures:
-- LINE TEST
-- CRT INTERFACE LINES TEST
-- 8259 INTERRUPT CONTROLLER TEST
 - KEYBOARD TEST
-- DISKETTE ATTACHMENT TEST
+
+- Interrupt during REP
+- Combined prefixes (rep + segment, etc.)
+
+- Timing
