@@ -30,13 +30,11 @@ const short CONSOLE_COLS = 80;
 
 FILE* logFile = nullptr;
 
-enum class Mode { MONITOR = 0, CONSOLE = 1, LOG = 2};
+enum class Mode { MONITOR = 0, LOG = 2};
 Mode mode = Mode::LOG;
 
 Console console;
 emul::Monitor monitor(console);
-
-void DumpScreen(cga::DeviceCGA& screen);
 
 const size_t BACKLOG_MAX = 1000;
 std::string backLog[BACKLOG_MAX];
@@ -66,8 +64,7 @@ void ToggleMode(cga::DeviceCGA& screen)
 {
 	switch (mode)
 	{
-	case Mode::MONITOR: mode = Mode::CONSOLE; break;
-	case Mode::CONSOLE: mode = Mode::LOG; break;
+	case Mode::MONITOR: mode = Mode::LOG; break;
 	case Mode::LOG: mode = Mode::MONITOR; break;
 	}
 
@@ -76,28 +73,10 @@ void ToggleMode(cga::DeviceCGA& screen)
 	case Mode::MONITOR:
 		monitor.Show();
 		break;
-	case Mode::CONSOLE:
-		DumpScreen(screen);
-		break;
 	case Mode::LOG:
 		console.Clear();
 		DumpBackLog(24);
 		break;
-	}
-}
-
-void DumpScreen(cga::DeviceCGA& screen)
-{
-	for (WORD offset = 0; offset < 4000; offset += 2)
-	{
-		BYTE val = screen.GetVideoRAM().read(offset);
-		BYTE attr = screen.GetVideoRAM().read(offset+1);
-
-		// TODO: 40 cols
-		short y = offset / (CONSOLE_COLS * 2);
-		short x = (offset/2) % CONSOLE_COLS;
-
-		console.WriteAt(x+1, y+1, val, attr);
 	}
 }
 
@@ -243,11 +222,6 @@ int main(void)
 						pc.InputKey(0x2A | 0x80);
 					}
 				}
-			}
-
-			if (mode == Mode::CONSOLE && (pc.GetTicks() % 100000 == 0))
-			{
-				DumpScreen(pc.GetCGA());
 			}
 		}
 	}

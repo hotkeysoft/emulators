@@ -9,6 +9,9 @@ using emul::PortConnector;
 using emul::WORD;
 using emul::BYTE;
 
+struct SDL_Window;
+struct SDL_Renderer;
+
 namespace cga
 {
 	class DeviceCGA : public PortConnector
@@ -22,7 +25,7 @@ namespace cga
 		DeviceCGA(DeviceCGA&&) = delete;
 		DeviceCGA& operator=(DeviceCGA&&) = delete;
 
-		void Init();
+		void Init(const char* charROM);
 		void Reset();
 
 		void Tick();
@@ -37,13 +40,21 @@ namespace cga
 	protected:
 		const WORD m_baseAddress;
 
-		bool IsHSync() { return m_hPos > 320; }
+		bool IsHSync() { return m_hPos > 640; }
 		bool IsVSync() { return m_vPos > 200; }
 
-		WORD m_hPos;
-		WORD m_vPos;
+		WORD m_hPos = 0;
+		WORD m_vPos = 0;
 
 		// 16K screen buffer
 		emul::MemoryBlock m_screenB800;
+		emul::MemoryBlock m_charROM;
+		BYTE* m_charROMStart;
+
+		// SDL
+		SDL_Window* m_sdlWindow = nullptr;
+		SDL_Renderer* m_sdlRenderer = nullptr;
+
+		void Render();
 	};
 }

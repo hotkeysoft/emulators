@@ -52,10 +52,10 @@ namespace emul
 		m_dma.EnableLog(false);
 		m_dma.EnableLog(true, Logger::LOG_INFO);
 
-		m_cga.Init();
+		m_cga.EnableLog(true, Logger::LOG_INFO);
+		m_cga.Init("data/CGA_CHAR.BIN");
 		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xB800));
 		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xBC00));
-		m_cga.EnableLog(true, Logger::LOG_WARNING);
 
 		m_floppy.Init();
 		m_floppy.EnableLog(true, Logger::LOG_INFO);
