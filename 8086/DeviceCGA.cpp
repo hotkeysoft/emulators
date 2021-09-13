@@ -81,9 +81,39 @@ namespace cga
 
 	void DeviceCGA::Tick()
 	{
-		// Fake sync pulses
+		if (m_vPos < 200 && m_hPos < 640 && ((m_vPos % 8) == 0))
+		{
+			BYTE* ch = m_screenB800.getPtr8(((m_vPos/8) * 80 + (m_hPos/8)) * 2);
+			BYTE* attr = ch + 1;
+
+			BYTE* currCharPos = m_charROMStart + ((*ch) * 8) + (m_vPos % 8);
+			for (int y = 0; y < 8; ++y)
+			{
+				for (int x = 0; x < 8; ++x)
+				{
+					Uint8 color = ((*(currCharPos+y)) & (1 << (7 - x))) ? 255 : 0;
+					if (color)
+					{
+						SDL_SetRenderDrawColor(m_sdlRenderer, color, color, color, 255);
+
+						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, (m_vPos + y) * 2);
+						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, (m_vPos + y) * 2 + 1);
+					}
+				}
+			}
+
+			SDL_Event e;
+			while (SDL_PollEvent(&e))
+			{
+				if (e.type == SDL_QUIT)
+				{
+					SDL_Quit();
+				}
+			}
+		}
+
 		m_hPos += 8;
-		if (m_hPos > 448*2)
+		if (m_hPos > 448 * 2)
 		{
 			m_hPos = 0;
 			++m_vPos;
@@ -92,30 +122,6 @@ namespace cga
 		{
 			m_vPos = 0;
 			Render();
-		}
-
-		if (m_vPos < 200 && m_hPos < 640)
-		{
-			BYTE* ch = m_screenB800.getPtr8(((m_vPos/8) * 80 + (m_hPos/8)) * 2);
-			BYTE* currCharPos = m_charROMStart + ((*ch) * 8) + (m_vPos % 8);
-
-			for (int x = 0; x < 8; ++x)
-			{
-				Uint8 color = ((*currCharPos) & (1 << (7-x))) ? 255 : 0;
-				SDL_SetRenderDrawColor(m_sdlRenderer, color, color, color, 255);
-
-				SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, m_vPos * 2);
-				SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, m_vPos * 2 + 1);
-			}
-		}
-
-		SDL_Event e;
-		while (SDL_PollEvent(&e))
-		{
-			if (e.type == SDL_QUIT)
-			{
-				SDL_Quit();
-			}
 		}
 
 	}
