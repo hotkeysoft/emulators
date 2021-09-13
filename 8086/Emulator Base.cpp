@@ -127,21 +127,21 @@ int main(void)
 
 	emul::MemoryBlock biosF000(emul::S2A(0xF000), 0x8000, emul::MemoryType::ROM);
 	biosF000.LoadBinary("data/BIOS_5160_V3_F000.BIN");
-	//pc.GetMemory().Allocate(&biosF000);
+	pc.GetMemory().Allocate(&biosF000);
 
 	emul::MemoryBlock biosF800(emul::S2A(0xF800), 0x8000, emul::MemoryType::ROM);
 	biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
-	//pc.GetMemory().Allocate(&biosF800);
+	pc.GetMemory().Allocate(&biosF800);
 
 	emul::MemoryBlock testROMF000(emul::S2A(0xF000), 0x10000, emul::MemoryType::ROM);
-	testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\mul.bin)");
-	pc.GetMemory().Allocate(&testROMF000);
+	testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
+	//pc.GetMemory().Allocate(&testROMF000);
 
 	pc.Init();
 	pc.Reset();
-	pc.Reset(0xF000, 0);
+	//pc.Reset(0xF000, 0);
 	pc.EnableLog(true, Logger::LOG_INFO);
-	pc.EnableLog(true, Logger::LOG_DEBUG);
+	//pc.EnableLog(true, Logger::LOG_DEBUG);
 
 #ifndef NO_CONSOLE
 	monitor.Init(pc, pc.GetMemory());
@@ -260,7 +260,7 @@ int main(void)
 
 	pc.Dump();
 
-	pc.GetMemory().Dump(0, 65536, R"(ram.dump)");
+	pc.GetMemory().Dump(0, 65536, R"(memdump.bin)");
 
 	DumpBackLog();
 
