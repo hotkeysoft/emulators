@@ -50,6 +50,7 @@ namespace cga
 
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_CreateWindowAndRenderer(640, 480, 0, &m_sdlWindow, &m_sdlRenderer);
+		SDL_RenderSetScale(m_sdlRenderer, 1.0, 2.4);
 	}
 
 	void DeviceCGA::Render()
@@ -102,9 +103,9 @@ namespace cga
 			SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
 			SDL_Rect bgRect;
 			bgRect.x = m_hPos;
-			bgRect.y = m_vPos * 2;
+			bgRect.y = m_vPos;
 			bgRect.w = 8;
-			bgRect.h = 16;
+			bgRect.h = 8;
 			SDL_RenderFillRect(m_sdlRenderer, &bgRect);
 
 			// Foreground
@@ -122,8 +123,7 @@ namespace cga
 				{
 					if (((*(currCharPos + y)) & (1 << (7 - x))))
 					{
-						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, (m_vPos + y) * 2);
-						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, (m_vPos + y) * 2 + 1);
+						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x, (m_vPos + y));
 					}
 				}
 			}
@@ -149,6 +149,5 @@ namespace cga
 			m_vPos = 0;
 			Render();
 		}
-
 	}
 }
