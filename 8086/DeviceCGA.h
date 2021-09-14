@@ -71,16 +71,30 @@ namespace cga
 			BYTE hDisplayed = 0;
 			BYTE hSyncPos = 0;
 			BYTE hSyncWidth = 0;
+
 			BYTE vTotal = 0;
 			BYTE vTotalAdjust = 0;
 			BYTE vTotalDisplayed = 0;
 			BYTE vSyncPos = 0;
+
 			BYTE interlaceMode = 0;
+
 			BYTE maxScanlineAddress = 0;
+
+			WORD startAddress = 0;
+
+			WORD cursorAddress = 0;
 			BYTE cursorStart = 0;
 			BYTE cursorEnd = 0;
-			WORD startAddress = 0;
-			WORD cursorAddress = 0;
+
+			enum CURSOR 
+			{ 
+				CURSOR_NOBLINK = 0,
+				CURSOR_NONE = 1,
+				CURSOR_BLINK16 = 2,
+				CURSOR_BLINK32 = 3
+			} cursor;
+
 		} m_crtc;
 
 		void SelectCRTCRegister(BYTE value);
@@ -99,6 +113,12 @@ namespace cga
 		WORD m_vTotal = 0;
 		WORD m_vTotalDisp = 0;
 		WORD m_vCharHeight = 0;
+
+		size_t m_frame = 0;
+
+		// Blinky things
+		bool m_blink16 = false;
+		bool m_blink32 = false;
 
 		bool IsHSync() { return m_hPos > m_hTotalDisp; }
 		bool IsVSync() { return m_vPos > m_vTotalDisp; }
@@ -124,6 +144,9 @@ namespace cga
 
 		// 16K screen buffer
 		emul::MemoryBlock m_screenB800;
+		BYTE* m_cursorPos = nullptr;
+		BYTE* m_currChar = nullptr;
+
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
 

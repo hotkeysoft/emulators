@@ -117,6 +117,7 @@ namespace cga
 	void DeviceCGA::SelectCRTCRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "SelectCRTCRegister, reg=%d", value);
+		value &= 31;
 		m_crtc.currRegister = (value > _CRT_MAX_REG) ? CRT_INVALID_REG : (CRTRegister)value;
 	}
 
@@ -158,28 +159,28 @@ namespace cga
 			break;
 		case CRT_H_SYNC_WIDTH_CHAR:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         hSyncWidth = %d characters", value);
-			m_crtc.hSyncWidth = value;
+			m_crtc.hSyncWidth = value & 15;
 			UpdateHVTotals();
 			break;
 
 		case CRT_V_TOTAL_ROW:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:             vTotal = %d rows", value);
-			m_crtc.vTotal = value;
+			m_crtc.vTotal = value & 127;
 			UpdateHVTotals();
 			break;
 		case CRT_V_TOTAL_ADJ_LINES:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       vTotalAdjust = %d scanlines", value);
-			m_crtc.vTotalAdjust = value;
+			m_crtc.vTotalAdjust = value & 31;
 			UpdateHVTotals();
 			break;
 		case CRT_V_DISPLAYED_ROW:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:    vTotalDisplayed = %d rows", value);
-			m_crtc.vTotalDisplayed = value;
+			m_crtc.vTotalDisplayed = value & 127;
 			UpdateHVTotals();
 			break;
 		case CRT_V_SYNC_POS_ROW:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           vSyncPos = %d rows", value);
-			m_crtc.vSyncPos = value;
+			m_crtc.vSyncPos = value & 127;
 			UpdateHVTotals();
 			break;
 
@@ -190,22 +191,23 @@ namespace cga
 
 		case CRT_MAX_SCANLINE_ADDR:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: maxScanlineAddress = %d scanlines", value);
-			m_crtc.maxScanlineAddress = value;
+			m_crtc.maxScanlineAddress = value & 31;
 			UpdateHVTotals();
 			break;
 
 		case CRT_CURSOR_START_LINE:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        cursorStart = %d scanline" , value);
-			m_crtc.cursorStart = value;
+			m_crtc.cursorStart = (value & 31);
+			m_crtc.cursor = (CRTCData::CURSOR)((value >> 5) & 3);
 			break;
 		case CRT_CURSOR_END_LINE:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          cursorEnd = %d scanline", value);
-			m_crtc.cursorEnd = value;
+			m_crtc.cursorEnd = (value & 31);
 			break;
 
 		case CRT_START_ADDR_HI:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:   startAddress(HI) = %d", value);
-			emul::SetHiByte(m_crtc.startAddress, value);
+			emul::SetHiByte(m_crtc.startAddress, value & 63);
 			break;
 		case CRT_START_ADDR_LO:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  startAddress(LOW) = %d", value);
@@ -214,7 +216,7 @@ namespace cga
 
 		case CRT_CURSOR_ADDR_HI:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  cursorAddress(HI) = %d", value);
-			emul::SetHiByte(m_crtc.cursorAddress, value);
+			emul::SetHiByte(m_crtc.cursorAddress, value & 63);
 			break;
 		case CRT_CURSOR_ADDR_LO:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  cursorAddress(LO) = %d", value);
@@ -280,9 +282,9 @@ namespace cga
 			return;
 		}
 
-		if ((m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % 8) == 0))
+		if (m_currChar && (m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % 8) == 0))
 		{
-			BYTE* ch = m_screenB800.getPtr8(((m_vPos / m_vCharHeight) * m_crtc.hDisplayed + (m_hPos / 8)) * 2);
+			BYTE* ch = m_currChar;
 			BYTE* attr = ch + 1;
 			BYTE bg = (*attr) >> 4;
 			BYTE fg = (*attr) & 0x0F;
@@ -321,6 +323,22 @@ namespace cga
 				}
 			}
 
+			if (m_currChar == m_cursorPos && (m_crtc.cursor != CRTCData::CURSOR_NONE))
+			{
+				// Validate blink modes/speeds
+				bool blink = (m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16);
+				
+				if (blink)
+				{
+					SDL_Rect bgRect;
+					bgRect.x = m_hPos + m_sdlHBorder;
+					bgRect.y = m_vPos + m_sdlVBorder + m_crtc.cursorStart;
+					bgRect.w = 8;
+					bgRect.h = m_crtc.cursorEnd - m_crtc.cursorStart + 1;
+					SDL_RenderFillRect(m_sdlRenderer, &bgRect);
+				}
+			}
+
 			SDL_Event e;
 			while (SDL_PollEvent(&e))
 			{
@@ -329,9 +347,12 @@ namespace cga
 					SDL_Quit();
 				}
 			}
+
+			m_currChar += 2;
 		}
 
 		m_hPos += 8;
+
 		if (m_hPos > m_hTotal)
 		{
 			m_hPos = 0;
@@ -339,8 +360,14 @@ namespace cga
 		}
 		if (m_vPos > m_vTotal)
 		{
+			++m_frame;
 			m_vPos = 0;
 			Render();
+			m_currChar = m_screenB800.getPtr8(m_crtc.startAddress);
+			m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress*2);
+			
+			if ((m_frame % 16) == 0) m_blink16 = !m_blink16;
+			if ((m_frame % 32) == 0) m_blink32 = !m_blink32;
 		}
 	}
 }
