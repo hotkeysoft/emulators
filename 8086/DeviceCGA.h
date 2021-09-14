@@ -14,6 +14,8 @@ struct SDL_Renderer;
 
 namespace cga
 {
+	enum class MONITOR { COLOR, GREEN, AMBER, GREY };
+
 	class DeviceCGA : public PortConnector
 	{
 	public:
@@ -25,7 +27,7 @@ namespace cga
 		DeviceCGA(DeviceCGA&&) = delete;
 		DeviceCGA& operator=(DeviceCGA&&) = delete;
 
-		void Init(const char* charROM);
+		void Init(const char* charROM, MONITOR monitor = MONITOR::COLOR, BYTE border = 10);
 		void Reset();
 
 		void Tick();
@@ -34,9 +36,6 @@ namespace cga
 
 	protected:
 		const WORD m_baseAddress;
-
-		bool IsHSync() { return m_hPos > 640; }
-		bool IsVSync() { return m_vPos > 200; }
 
 		// CRT Controller
 		enum CRTRegister
@@ -88,11 +87,32 @@ namespace cga
 		BYTE ReadCRTCData();
 		void WriteCRTCData(BYTE value);
 
+		void UpdateHVTotals();
+		
 		WORD m_hPos = 0;
+		WORD m_hBorder = 0;
+		WORD m_hTotal = 0;
+		WORD m_hTotalDisp = 0;
+
 		WORD m_vPos = 0;
+		WORD m_vBorder = 0;
+		WORD m_vTotal = 0;
+		WORD m_vTotalDisp = 0;
+		WORD m_vCharHeight = 0;
+
+		bool IsHSync() { return m_hPos > m_hTotalDisp; }
+		bool IsVSync() { return m_vPos > m_vTotalDisp; }
 
 		// Mode Control Register
-		BYTE m_modeControlRegister = 0;
+		struct MODEControl
+		{
+			bool text80Columns = false;
+			bool graphics = false;
+			bool monochrome = false;
+			bool enableVideo = false;
+			bool hiResolution = false;
+			bool blink = false;
+		} m_mode;
 		void WriteModeControlRegister(BYTE value);
 
 		// Color Select Register
@@ -107,9 +127,15 @@ namespace cga
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
 
+		const uint32_t* m_alphaPalette = nullptr;
+
 		// SDL
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
+
+		BYTE m_sdlBorderPixels;
+		BYTE m_sdlHBorder;
+		BYTE m_sdlVBorder;
 
 		void Render();
 	};
