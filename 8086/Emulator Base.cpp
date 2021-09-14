@@ -21,7 +21,7 @@
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
-//#define NO_CONSOLE
+#define NO_CONSOLE
 //#define CPU_TEST
 
 #ifdef CPU_TEST
@@ -177,6 +177,20 @@ int main(void)
 				{
 					switch (ch = _getch())
 					{
+					case 71: // HOME
+					case 72: // UP
+					case 73: // PGUP
+					case 75: // LEFT
+					case 77: // RIGHT
+					case 79: // END
+					case 80: // DOWN
+					case 81: // PGDOWN
+					case 82: // INSERT
+					case 83: // DELETE
+						keyCode = ch;
+						newKeycode = true;
+						break;
+
 					case 134: // F12
 						ToggleMode(pc.GetCGA());
 						break;
@@ -196,6 +210,19 @@ int main(void)
 					case 66: // F8
 					case 67: // F9
 					case 68: // F10
+					case 71: // HOME
+					case 72: // UP
+					case 73: // PGUP
+					case 74: // -
+					case 75: // LEFT
+					case 76: // 5
+					case 77: // RIGHT
+					case 78: // +
+					case 79: // END
+					case 80: // DOWN
+					case 81: // PGDOWN
+					case 82: // INSERT
+					case 83: // DELETE
 						keyCode = ch;
 						newKeycode = true;
 						break;
