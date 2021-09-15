@@ -9,20 +9,20 @@ namespace cga
 
 	const uint32_t AlphaColorPalette[16] = 
 	{
-		0x000000, 0x0000AA, 0x00AA00, 0x00AAAA, 0xAA0000, 0xAA00AA, 0xAA5500, 0xAAAAAA,
-		0x555555, 0x5555FF, 0x55FF55, 0x55FFFF, 0xFF5555, 0xFF55FF, 0xFFFF55, 0xFFFFFF
+		0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA,
+		0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
 	};
 
 	const uint32_t AlphaMonoGreyPalette[16] =
 	{
-		0x000000, 0x0C0C0C, 0x7A7A7A, 0x868686, 0x242424, 0x303030, 0x616161, 0xAAAAAA,
-		0x555555, 0x616161, 0xCFCFCF, 0xDBDBDB, 0x797979, 0x858585, 0xF3F3F3, 0xFFFFFF
+		0xFF000000, 0xFF0C0C0C, 0xFF7A7A7A, 0xFF868686, 0xFF242424, 0xFF303030, 0xFF616161, 0xFFAAAAAA,
+		0xFF555555, 0xFF616161, 0xFFCFCFCF, 0xFFDBDBDB, 0xFF797979, 0xFF858585, 0xFFF3F3F3, 0xFFFFFFFF
 	};
 
 	const uint32_t AlphaMonoGreenPalette[16] =
 	{
-		0x000000, 0x020A00, 0x1D7700, 0x218400, 0x082300, 0x0B2D00, 0x186000, 0x2AA800,
-		0x155400, 0x186000, 0x33CE00, 0x36D800, 0x1D7700, 0x218400, 0x3CF200, 0x41ff00
+		0xFF000000, 0xFF020A00, 0xFF1D7700, 0xFF218400, 0xFF082300, 0xFF0B2D00, 0xFF186000, 0xFF2AA800,
+		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
 	};
 
 	DeviceCGA::DeviceCGA(WORD baseAddress) :
@@ -33,6 +33,12 @@ namespace cga
 		m_alphaPalette(AlphaColorPalette)
 	{
 		Reset();
+		m_frameBuffer = new uint32_t[640 * 200];
+	}
+
+	DeviceCGA::~DeviceCGA()
+	{
+		delete[] m_frameBuffer;
 	}
 
 	void DeviceCGA::Reset()
@@ -80,12 +86,23 @@ namespace cga
 
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_CreateWindowAndRenderer(640 + (2 * border), 480 + (2 * border), 0, &m_sdlWindow, &m_sdlRenderer);
+
+		m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 640, 200);
+
+		SDL_RenderSetScale(m_sdlRenderer, 1.0f, VSCALE);
 	}
 
 	void DeviceCGA::Render()
 	{
 		static size_t frames = 0;
 
+		// TODO: don't recompute every time
+		SDL_Rect srcRect = { 0, 0, (m_mode.text80Columns || m_mode.hiResolution) ? 640 : 320, 200 };
+		SDL_Rect destRect = { m_sdlHBorder, m_sdlVBorder, 640, 200 };
+
+		SDL_UpdateTexture(m_sdlTexture, NULL, m_frameBuffer, 640 * sizeof(uint32_t));
+
+		SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &destRect);
 		SDL_RenderPresent(m_sdlRenderer);
 
 		Uint32 borderRGB = m_alphaPalette[m_color.color];
@@ -148,29 +165,29 @@ namespace cga
 			UpdateHVTotals();
 			break;
 		case CRT_H_SYNC_WIDTH_CHAR:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         hSyncWidth = %d characters", value);
 			m_crtc.hSyncWidth = value & 15;
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         hSyncWidth = %d characters", m_crtc.hSyncWidth);
 			UpdateHVTotals();
 			break;
 
 		case CRT_V_TOTAL_ROW:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:             vTotal = %d rows", value);
 			m_crtc.vTotal = value & 127;
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:             vTotal = %d rows", m_crtc.vTotal);
 			UpdateHVTotals();
 			break;
 		case CRT_V_TOTAL_ADJ_LINES:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       vTotalAdjust = %d scanlines", value);
 			m_crtc.vTotalAdjust = value & 31;
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       vTotalAdjust = %d scanlines", m_crtc.vTotalAdjust);
 			UpdateHVTotals();
 			break;
 		case CRT_V_DISPLAYED_ROW:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:    vTotalDisplayed = %d rows", value);
 			m_crtc.vTotalDisplayed = value & 127;
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:    vTotalDisplayed = %d rows", m_crtc.vTotalDisplayed);
 			UpdateHVTotals();
 			break;
 		case CRT_V_SYNC_POS_ROW:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           vSyncPos = %d rows", value);
 			m_crtc.vSyncPos = value & 127;
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           vSyncPos = %d rows", m_crtc.vSyncPos);
 			UpdateHVTotals();
 			break;
 
@@ -180,19 +197,19 @@ namespace cga
 			break;
 
 		case CRT_MAX_SCANLINE_ADDR:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: maxScanlineAddress = %d scanlines", value);
 			m_crtc.maxScanlineAddress = value & 31;
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: maxScanlineAddress = %d scanlines", m_crtc.maxScanlineAddress);
 			UpdateHVTotals();
 			break;
 
 		case CRT_CURSOR_START_LINE:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        cursorStart = %d scanline" , value);
 			m_crtc.cursorStart = (value & 31);
 			m_crtc.cursor = (CRTCData::CURSOR)((value >> 5) & 3);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        cursorStart = %d scanline, %d", m_crtc.cursorStart, m_crtc.cursor);
 			break;
 		case CRT_CURSOR_END_LINE:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          cursorEnd = %d scanline", value);
 			m_crtc.cursorEnd = (value & 31);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          cursorEnd = %d scanline", m_crtc.cursorEnd);
 			break;
 
 		case CRT_START_ADDR_HI:
@@ -242,10 +259,6 @@ namespace cga
 			m_mode.enableVideo ? ' ' : '/',
 			m_mode.hiResolution ? ' ' : '/',
 			m_mode.blink ? ' ' : '/');
-
-		// Adjust scale in 40 column/320x200 graphic modes
-		SDL_RenderSetScale(m_sdlRenderer, (m_mode.text80Columns || m_mode.hiResolution) ? 1.0f : 2.0f, VSCALE);
-		m_sdlHBorder = m_mode.text80Columns ? m_sdlBorderPixels : m_sdlBorderPixels / 2;
 	}
 
 	void DeviceCGA::WriteColorSelectRegister(BYTE value)
@@ -256,7 +269,7 @@ namespace cga
 		m_color.palIntense = value & 16;
 		m_color.palSelect = value & 32;
 
-		LogPrintf(Logger::LOG_INFO, "WriteColorSelectRegister color=[%d], palette %d, intense %d", 
+		LogPrintf(Logger::LOG_INFO, "WriteColorSelectRegister color=%d, palette %d, intense %d", 
 			m_color.color, 
 			m_color.palSelect,
 			m_color.palIntense);
@@ -354,64 +367,38 @@ namespace cga
 				bg = bg & 7;
 			}
 
+			uint32_t fgRGB = m_alphaPalette[fg];
 			uint32_t bgRGB = m_alphaPalette[bg];
-			Uint8 r = Uint8(bgRGB >> 16);
-			Uint8 g = Uint8(bgRGB >> 8);
-			Uint8 b = Uint8(bgRGB);
 
-			SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
-			SDL_Rect bgRect;
-			bgRect.x = m_hPos + m_sdlHBorder;
-			bgRect.y = m_vPos + m_sdlVBorder;
-			bgRect.w = 8;
-			bgRect.h = m_vCharHeight;
-			SDL_RenderFillRect(m_sdlRenderer, &bgRect);
-
-			if (charBlink && !m_blink16)
+			// Draw character
+			BYTE* currCharPos = m_charROMStart + ((*ch) * 8) + (m_vPos % m_vCharHeight);
+			bool draw = !charBlink || (charBlink && m_blink16);
+			for (int y = 0; y < m_vCharHeight; ++y)
 			{
-				// Blink, off position, don't draw char
-			}
-			else
-			{
-				// Foreground color
-				uint32_t fgRGB = m_alphaPalette[fg];
-				r = Uint8(fgRGB >> 16);
-				g = Uint8(fgRGB >> 8);
-				b = Uint8(fgRGB);
-
-				SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
-
-				// Draw character
-				BYTE* currCharPos = m_charROMStart + ((*ch) * 8) + (m_vPos % m_vCharHeight);
-				for (int y = 0; y < m_vCharHeight; ++y)
+				for (int x = 0; x < 8; ++x)
 				{
-					for (int x = 0; x < 8; ++x)
-					{
-						if (((*(currCharPos + y)) & (1 << (7 - x))))
-						{
-							SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x + m_sdlHBorder, (m_vPos + y) + m_sdlVBorder);
-						}
-					}
+					bool set = draw && ((*(currCharPos + y)) & (1 << (7 - x)));
+					m_frameBuffer[640 * (m_vPos + y) + m_hPos + x] = set ? fgRGB : bgRGB;
 				}
 			}
 
 			// Cursor
-			if (m_currChar == m_cursorPos && (m_crtc.cursor != CRTCData::CURSOR_NONE))
-			{
-				// TODO: Validate blink modes/speeds
-				bool blink = (m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16);
+			//if (m_currChar == m_cursorPos && (m_crtc.cursor != CRTCData::CURSOR_NONE))
+			//{
+			//	// TODO: Validate blink modes/speeds
+			//	bool blink = (m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16);
 
-				if (blink)
-				{
-					// TODO: Split cursor, wraparound
-					SDL_Rect bgRect;
-					bgRect.x = m_hPos + m_sdlHBorder;
-					bgRect.y = m_vPos + m_sdlVBorder + m_crtc.cursorStart;
-					bgRect.w = 8;
-					bgRect.h = m_crtc.cursorEnd - m_crtc.cursorStart + 1;
-					SDL_RenderFillRect(m_sdlRenderer, &bgRect);
-				}
-			}
+			//	if (blink)
+			//	{
+			//		// TODO: Split cursor, wraparound
+			//		SDL_Rect bgRect;
+			//		bgRect.x = m_hPos + m_sdlHBorder;
+			//		bgRect.y = m_vPos + m_sdlVBorder + m_crtc.cursorStart;
+			//		bgRect.w = 8;
+			//		bgRect.h = m_crtc.cursorEnd - m_crtc.cursorStart + 1;
+			//		//SDL_RenderFillRect(m_sdlRenderer, &bgRect);
+			//	}
+			//}
 
 			m_currChar += 2;
 		}
@@ -433,16 +420,8 @@ namespace cga
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					if (val)
-					{
-						uint32_t fgRGB = m_alphaPalette[(val * 2) + m_color.palSelect + (8 * m_color.palIntense)];
-						Uint8 r = Uint8(fgRGB >> 16);
-						Uint8 g = Uint8(fgRGB >> 8);
-						Uint8 b = Uint8(fgRGB);
-
-						SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
-						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + (w * 4) + (3 - x) + m_sdlHBorder, m_vPos + m_sdlVBorder);
-					}
+					Uint32 color = val ? m_alphaPalette[(val * 2) + m_color.palSelect + (8 * m_color.palIntense)] : m_alphaPalette[m_color.color];
+					m_frameBuffer[640 * m_vPos + m_hPos + (w * 4) + (3 - x)] = color;
 				}
 
 				++currChar;
@@ -458,22 +437,18 @@ namespace cga
 
 		if ((m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp))
 		{
-			SDL_SetRenderDrawColor(m_sdlRenderer, 0, 0, 0, 255);
-
 			for (int w = 0; w < 2; ++w)
 			{
 				BYTE ch = *currChar;
-				WORD baseX = (m_hPos * 2) + (w * 8) + m_sdlHBorder;
+				WORD baseX = (m_hPos * 2) + (w * 8);
 
 				for (int x = 0; x < 8; ++x)
 				{
 					BYTE val = ch & 1;
 					ch >>= 1;
 
-					if (!val)
-					{
-						SDL_RenderDrawPoint(m_sdlRenderer, baseX + (7 - x), m_vPos + m_sdlVBorder);
-					}
+					Uint32 color = val ? m_alphaPalette[m_color.color] : m_alphaPalette[0];
+					m_frameBuffer[640 * m_vPos + baseX + (7 - x)] = color;
 				}
 
 				++currChar;

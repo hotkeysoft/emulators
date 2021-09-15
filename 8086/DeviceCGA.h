@@ -11,6 +11,7 @@ using emul::BYTE;
 
 struct SDL_Window;
 struct SDL_Renderer;
+struct SDL_Texture;
 
 namespace cga
 {
@@ -18,6 +19,7 @@ namespace cga
 	{
 	public:
 		DeviceCGA(WORD baseAddress);
+		~DeviceCGA();
 
 		DeviceCGA() = delete;
 		DeviceCGA(const DeviceCGA&) = delete;
@@ -171,10 +173,13 @@ namespace cga
 		// SDL
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
+		SDL_Texture* m_sdlTexture = nullptr;
 
 		BYTE m_sdlBorderPixels;
 		BYTE m_sdlHBorder;
 		BYTE m_sdlVBorder;
+
+		uint32_t* m_frameBuffer;
 
 		void Render();
 	};
