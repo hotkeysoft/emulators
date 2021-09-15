@@ -243,8 +243,8 @@ namespace cga
 			m_mode.hiResolution ? ' ' : '/',
 			m_mode.blink ? ' ' : '/');
 
-		// Adjust scaline in 40 column mode
-		SDL_RenderSetScale(m_sdlRenderer, m_mode.text80Columns ? 1.0f : 2.0f, VSCALE);
+		// Adjust scale in 40 column/320x200 graphic modes
+		SDL_RenderSetScale(m_sdlRenderer, (m_mode.text80Columns || m_mode.hiResolution) ? 1.0f : 2.0f, VSCALE);
 		m_sdlHBorder = m_mode.text80Columns ? m_sdlBorderPixels : m_sdlBorderPixels / 2;
 	}
 
@@ -278,6 +278,14 @@ namespace cga
 	{
 		if (!m_mode.enableVideo || m_hTotal == 0 || m_vTotal == 0)
 		{
+			SDL_Event e;
+			while (SDL_PollEvent(&e))
+			{
+				if (e.type == SDL_QUIT)
+				{
+					SDL_Quit();
+				}
+			}
 			return;
 		}
 
@@ -292,9 +300,14 @@ namespace cga
 		}
 		if (m_vPos > m_vTotal)
 		{
+			// Render the current frame
+			Render();
+
+			// New frame, compute new offsets and do some housekeeping
 			++m_frame;
 			m_vPos = 0;
-			Render();
+
+			// Pointers for alpha mode
 			m_currChar = m_screenB800.getPtr8(m_crtc.startAddress*2);
 			m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress*2);
 			
@@ -303,9 +316,24 @@ namespace cga
 
 			m_alphaPalette = m_mode.monochrome ? AlphaMonoGreyPalette : AlphaColorPalette;
 
+			// Pointers for graphics mode
+			m_bank0 = m_screenB800.getPtr8(0x0000);
+			m_bank1 = m_screenB800.getPtr8(0x2000);
+
+			// Select draw function
 			m_drawFunc = &DeviceCGA::DrawTextMode;
 			if (m_mode.graphics) m_drawFunc = &DeviceCGA::Draw320x200;
 			if (m_mode.hiResolution) m_drawFunc = &DeviceCGA::Draw640x200;
+
+			// Process Events
+			SDL_Event e;
+			while (SDL_PollEvent(&e))
+			{
+				if (e.type == SDL_QUIT)
+				{
+					SDL_Quit();
+				}
+			}
 		}
 	}
 
@@ -385,24 +413,71 @@ namespace cga
 				}
 			}
 
-			SDL_Event e;
-			while (SDL_PollEvent(&e))
-			{
-				if (e.type == SDL_QUIT)
-				{
-					SDL_Quit();
-				}
-			}
-
 			m_currChar += 2;
 		}
 	}
 	void DeviceCGA::Draw320x200()
 	{
+		// Called every 8 horizontal pixels
+		// In this mode 1 byte = 4 pixels
 
+		BYTE* &currChar = (m_vPos & 1) ? m_bank1 : m_bank0;
+
+		if ((m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp))
+		{
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = *currChar;
+				for (int x = 0; x < 4; ++x)
+				{
+					BYTE val = ch & 3;
+					ch >>= 2;
+
+					if (val)
+					{
+						uint32_t fgRGB = m_alphaPalette[(val * 2) + m_color.palSelect + (8 * m_color.palIntense)];
+						Uint8 r = Uint8(fgRGB >> 16);
+						Uint8 g = Uint8(fgRGB >> 8);
+						Uint8 b = Uint8(fgRGB);
+
+						SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
+						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + (w * 4) + (3 - x) + m_sdlHBorder, m_vPos + m_sdlVBorder);
+					}
+				}
+
+				++currChar;
+			}
+		}
 	}
 	void DeviceCGA::Draw640x200()
 	{
+		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
+		// In this mode 1 byte = 8 pixels
 
+		BYTE*& currChar = (m_vPos & 1) ? m_bank1 : m_bank0;
+
+		if ((m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp))
+		{
+			SDL_SetRenderDrawColor(m_sdlRenderer, 0, 0, 0, 255);
+
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = *currChar;
+				WORD baseX = (m_hPos * 2) + (w * 8) + m_sdlHBorder;
+
+				for (int x = 0; x < 8; ++x)
+				{
+					BYTE val = ch & 1;
+					ch >>= 1;
+
+					if (!val)
+					{
+						SDL_RenderDrawPoint(m_sdlRenderer, baseX + (7 - x), m_vPos + m_sdlVBorder);
+					}
+				}
+
+				++currChar;
+			}
+		}
 	}
 }
