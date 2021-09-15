@@ -41,7 +41,7 @@ namespace cga
 		m_vPos = 0;
 	}
 
-	void DeviceCGA::Init(const char* charROM, MONITOR monitor, BYTE border)
+	void DeviceCGA::Init(const char* charROM, BYTE border)
 	{
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
@@ -77,22 +77,6 @@ namespace cga
 
 		// Status Register
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&DeviceCGA::ReadStatusRegister));
-
-		switch (monitor)
-		{
-		case MONITOR::GREEN:
-			m_alphaPalette = AlphaMonoGreenPalette;
-			break;
-
-		case MONITOR::GREY:
-			m_alphaPalette = AlphaMonoGreyPalette;
-			break;
-
-		case MONITOR::AMBER: // TODO
-		case MONITOR::COLOR:
-		default:
-			m_alphaPalette = AlphaColorPalette;
-		}
 
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_CreateWindowAndRenderer(640 + (2 * border), 480 + (2 * border), 0, &m_sdlWindow, &m_sdlRenderer);
@@ -215,11 +199,11 @@ namespace cga
 			break;
 
 		case CRT_CURSOR_ADDR_HI:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  cursorAddress(HI) = %d", value);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(HI) = %d", value);
 			emul::SetHiByte(m_crtc.cursorAddress, value & 63);
 			break;
 		case CRT_CURSOR_ADDR_LO:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  cursorAddress(LO) = %d", value);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(LO) = %d", value);
 			emul::SetLowByte(m_crtc.cursorAddress, value);
 			break;
 
@@ -363,11 +347,13 @@ namespace cga
 			++m_frame;
 			m_vPos = 0;
 			Render();
-			m_currChar = m_screenB800.getPtr8(m_crtc.startAddress);
+			m_currChar = m_screenB800.getPtr8(m_crtc.startAddress*2);
 			m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress*2);
 			
 			if ((m_frame % 16) == 0) m_blink16 = !m_blink16;
 			if ((m_frame % 32) == 0) m_blink32 = !m_blink32;
+
+			m_alphaPalette = m_mode.monochrome ? AlphaMonoGreyPalette : AlphaColorPalette;
 		}
 	}
 }

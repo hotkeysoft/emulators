@@ -14,8 +14,6 @@ struct SDL_Renderer;
 
 namespace cga
 {
-	enum class MONITOR { COLOR, GREEN, AMBER, GREY };
-
 	class DeviceCGA : public PortConnector
 	{
 	public:
@@ -27,7 +25,7 @@ namespace cga
 		DeviceCGA(DeviceCGA&&) = delete;
 		DeviceCGA& operator=(DeviceCGA&&) = delete;
 
-		void Init(const char* charROM, MONITOR monitor = MONITOR::COLOR, BYTE border = 10);
+		void Init(const char* charROM, BYTE border = 10);
 		void Reset();
 
 		void Tick();
