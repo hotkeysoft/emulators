@@ -88,7 +88,13 @@ namespace cga
 
 		SDL_RenderPresent(m_sdlRenderer);
 
-		SDL_SetRenderDrawColor(m_sdlRenderer, 0, 0, 0, 255);
+		Uint32 borderRGB = m_alphaPalette[m_color.color];
+
+		Uint8 r = Uint8(borderRGB >> 16);
+		Uint8 g = Uint8(borderRGB >> 8);
+		Uint8 b = Uint8(borderRGB);
+
+		SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
 		SDL_RenderClear(m_sdlRenderer);
 
 		if (++frames == 60)
@@ -245,6 +251,15 @@ namespace cga
 	void DeviceCGA::WriteColorSelectRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteColorSelectRegister, value=%02Xh", value);
+
+		m_color.color = (value & 15);
+		m_color.palIntense = value & 16;
+		m_color.palSelect = value & 32;
+
+		LogPrintf(Logger::LOG_INFO, "WriteColorSelectRegister color=[%d], palette %d, intense %d", 
+			m_color.color, 
+			m_color.palSelect,
+			m_color.palIntense);
 	}
 
 	void DeviceCGA::UpdateHVTotals()
@@ -266,74 +281,7 @@ namespace cga
 			return;
 		}
 
-		if (m_currChar && (m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % 8) == 0))
-		{
-			BYTE* ch = m_currChar;
-			BYTE* attr = ch + 1;
-			BYTE bg = (*attr) >> 4;
-			BYTE fg = (*attr) & 0x0F;
-
-			// Background
-			uint32_t bgRGB = m_alphaPalette[bg & 7];
-			Uint8 r = Uint8(bgRGB >> 16);
-			Uint8 g = Uint8(bgRGB >> 8);
-			Uint8 b = Uint8(bgRGB);
-
-			SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
-			SDL_Rect bgRect;
-			bgRect.x = m_hPos + m_sdlHBorder;
-			bgRect.y = m_vPos + m_sdlVBorder;
-			bgRect.w = 8;
-			bgRect.h = m_vCharHeight;
-			SDL_RenderFillRect(m_sdlRenderer, &bgRect);
-
-			// Foreground
-			uint32_t fgRGB = m_alphaPalette[fg];
-			r = Uint8(fgRGB >> 16);
-			g = Uint8(fgRGB >> 8);
-			b = Uint8(fgRGB);
-
-			SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
-
-			BYTE* currCharPos = m_charROMStart + ((*ch) * 8) + (m_vPos % m_vCharHeight);
-			for (int y = 0; y < m_vCharHeight; ++y)
-			{
-				for (int x = 0; x < 8; ++x)
-				{
-					if (((*(currCharPos + y)) & (1 << (7 - x))))
-					{
-						SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x + m_sdlHBorder, (m_vPos + y) + m_sdlVBorder);
-					}
-				}
-			}
-
-			if (m_currChar == m_cursorPos && (m_crtc.cursor != CRTCData::CURSOR_NONE))
-			{
-				// Validate blink modes/speeds
-				bool blink = (m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16);
-				
-				if (blink)
-				{
-					SDL_Rect bgRect;
-					bgRect.x = m_hPos + m_sdlHBorder;
-					bgRect.y = m_vPos + m_sdlVBorder + m_crtc.cursorStart;
-					bgRect.w = 8;
-					bgRect.h = m_crtc.cursorEnd - m_crtc.cursorStart + 1;
-					SDL_RenderFillRect(m_sdlRenderer, &bgRect);
-				}
-			}
-
-			SDL_Event e;
-			while (SDL_PollEvent(&e))
-			{
-				if (e.type == SDL_QUIT)
-				{
-					SDL_Quit();
-				}
-			}
-
-			m_currChar += 2;
-		}
+		(this->*m_drawFunc)();
 
 		m_hPos += 8;
 
@@ -354,6 +302,107 @@ namespace cga
 			if ((m_frame % 32) == 0) m_blink32 = !m_blink32;
 
 			m_alphaPalette = m_mode.monochrome ? AlphaMonoGreyPalette : AlphaColorPalette;
+
+			m_drawFunc = &DeviceCGA::DrawTextMode;
+			if (m_mode.graphics) m_drawFunc = &DeviceCGA::Draw320x200;
+			if (m_mode.hiResolution) m_drawFunc = &DeviceCGA::Draw640x200;
 		}
+	}
+
+	void DeviceCGA::DrawTextMode()
+	{
+		if (m_currChar && (m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % 8) == 0))
+		{
+			BYTE* ch = m_currChar;
+			BYTE* attr = ch + 1;
+			BYTE bg = (*attr) >> 4;
+			BYTE fg = (*attr) & 0x0F;
+			bool charBlink = false;
+
+			// Background
+			if (m_mode.blink) // Hi bit: intense bg vs blink fg
+			{
+				charBlink = bg & 8;
+				bg = bg & 7;
+			}
+
+			uint32_t bgRGB = m_alphaPalette[bg];
+			Uint8 r = Uint8(bgRGB >> 16);
+			Uint8 g = Uint8(bgRGB >> 8);
+			Uint8 b = Uint8(bgRGB);
+
+			SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
+			SDL_Rect bgRect;
+			bgRect.x = m_hPos + m_sdlHBorder;
+			bgRect.y = m_vPos + m_sdlVBorder;
+			bgRect.w = 8;
+			bgRect.h = m_vCharHeight;
+			SDL_RenderFillRect(m_sdlRenderer, &bgRect);
+
+			if (charBlink && !m_blink16)
+			{
+				// Blink, off position, don't draw char
+			}
+			else
+			{
+				// Foreground color
+				uint32_t fgRGB = m_alphaPalette[fg];
+				r = Uint8(fgRGB >> 16);
+				g = Uint8(fgRGB >> 8);
+				b = Uint8(fgRGB);
+
+				SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
+
+				// Draw character
+				BYTE* currCharPos = m_charROMStart + ((*ch) * 8) + (m_vPos % m_vCharHeight);
+				for (int y = 0; y < m_vCharHeight; ++y)
+				{
+					for (int x = 0; x < 8; ++x)
+					{
+						if (((*(currCharPos + y)) & (1 << (7 - x))))
+						{
+							SDL_RenderDrawPoint(m_sdlRenderer, m_hPos + x + m_sdlHBorder, (m_vPos + y) + m_sdlVBorder);
+						}
+					}
+				}
+			}
+
+			// Cursor
+			if (m_currChar == m_cursorPos && (m_crtc.cursor != CRTCData::CURSOR_NONE))
+			{
+				// TODO: Validate blink modes/speeds
+				bool blink = (m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16);
+
+				if (blink)
+				{
+					// TODO: Split cursor, wraparound
+					SDL_Rect bgRect;
+					bgRect.x = m_hPos + m_sdlHBorder;
+					bgRect.y = m_vPos + m_sdlVBorder + m_crtc.cursorStart;
+					bgRect.w = 8;
+					bgRect.h = m_crtc.cursorEnd - m_crtc.cursorStart + 1;
+					SDL_RenderFillRect(m_sdlRenderer, &bgRect);
+				}
+			}
+
+			SDL_Event e;
+			while (SDL_PollEvent(&e))
+			{
+				if (e.type == SDL_QUIT)
+				{
+					SDL_Quit();
+				}
+			}
+
+			m_currChar += 2;
+		}
+	}
+	void DeviceCGA::Draw320x200()
+	{
+
+	}
+	void DeviceCGA::Draw640x200()
+	{
+
 	}
 }

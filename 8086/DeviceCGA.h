@@ -133,8 +133,20 @@ namespace cga
 		} m_mode;
 		void WriteModeControlRegister(BYTE value);
 
+		typedef void(DeviceCGA::* DrawFunc)();
+		DrawFunc m_drawFunc = &DeviceCGA::DrawTextMode;
+		void DrawTextMode();
+		void Draw320x200();
+		void Draw640x200();
+
 		// Color Select Register
-		BYTE m_colorSelectRegister = 0;
+		struct COLORSelect
+		{
+			BYTE color = 0; // bits 0-3: bgri border (alpha) / border+bg (320x200) / fg (640x200)
+
+			bool palIntense = false; // bit 4 intensity palette (320x200)
+			bool palSelect = false; // bit 5 graph palette (320x200)
+		} m_color;
 		void WriteColorSelectRegister(BYTE value);
 
 		// Status Register
