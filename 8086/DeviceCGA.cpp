@@ -350,6 +350,13 @@ namespace cga
 		}
 	}
 
+	bool DeviceCGA::IsCursor() const
+	{
+		return (m_currChar == m_cursorPos) &&
+			(m_crtc.cursor != CRTCData::CURSOR_NONE) &&
+			((m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16));
+	}
+
 	void DeviceCGA::DrawTextMode()
 	{
 		if (m_currChar && (m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % 8) == 0))
@@ -370,35 +377,21 @@ namespace cga
 			uint32_t fgRGB = m_alphaPalette[fg];
 			uint32_t bgRGB = m_alphaPalette[bg];
 
+			bool isCursorChar = IsCursor();
+
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((*ch) * 8) + (m_vPos % m_vCharHeight);
+			BYTE* currCharPos = m_charROMStart + ((uint32_t)(*ch) * 8) + (m_vPos % m_vCharHeight);
 			bool draw = !charBlink || (charBlink && m_blink16);
 			for (int y = 0; y < m_vCharHeight; ++y)
 			{
+				uint32_t offset = 640 * (uint32_t)(m_vPos + y) + m_hPos;
+				bool cursorLine = isCursorChar && (y >= m_crtc.cursorStart) && (y <= m_crtc.cursorEnd);
 				for (int x = 0; x < 8; ++x)
 				{
 					bool set = draw && ((*(currCharPos + y)) & (1 << (7 - x)));
-					m_frameBuffer[640 * (m_vPos + y) + m_hPos + x] = set ? fgRGB : bgRGB;
+					m_frameBuffer[offset + x] = (set || cursorLine) ? fgRGB : bgRGB;
 				}
 			}
-
-			// Cursor
-			//if (m_currChar == m_cursorPos && (m_crtc.cursor != CRTCData::CURSOR_NONE))
-			//{
-			//	// TODO: Validate blink modes/speeds
-			//	bool blink = (m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16);
-
-			//	if (blink)
-			//	{
-			//		// TODO: Split cursor, wraparound
-			//		SDL_Rect bgRect;
-			//		bgRect.x = m_hPos + m_sdlHBorder;
-			//		bgRect.y = m_vPos + m_sdlVBorder + m_crtc.cursorStart;
-			//		bgRect.w = 8;
-			//		bgRect.h = m_crtc.cursorEnd - m_crtc.cursorStart + 1;
-			//		//SDL_RenderFillRect(m_sdlRenderer, &bgRect);
-			//	}
-			//}
 
 			m_currChar += 2;
 		}

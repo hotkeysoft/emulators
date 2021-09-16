@@ -120,6 +120,8 @@ namespace cga
 		bool m_blink16 = false;
 		bool m_blink32 = false;
 
+		bool IsCursor() const;
+
 		bool IsHSync() { return m_hPos > m_hTotalDisp; }
 		bool IsVSync() { return m_vPos > m_vTotalDisp; }
 
