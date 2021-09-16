@@ -595,10 +595,11 @@ namespace fdc
 		m_maxSector = eot;
 
 		// TODO: Error handling, validation
-		if (c != m_pcn)
-		{
-			throw std::exception("cylinder != current cylinder");
-		}
+		m_pcn = c;
+		//if (c != m_pcn)
+		//{
+		//	throw std::exception("cylinder != current cylinder");
+		//}
 
 		// TODO: Multitrack
 		// (m_currcommandID & 0x80) //MT
