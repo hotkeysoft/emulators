@@ -94,7 +94,7 @@ namespace emul
 
 		// PUSH CS (1)
 		case 0x0E: PUSH(regCS); break;
-		// POP CS (1) // Undocumented
+		// POP CS (1) // Undocumented, 8086 only
 		case 0x0F: POP(regCS); break;
 
 		// ADC rm+r=>rm (4)
@@ -316,6 +316,7 @@ namespace emul
 		// POP DI
 		case 0x5F: POP(regDI); break;
 
+		// Undocumented: 0x60-0x6F maps to 0x70-0x7F on 8086 only
 		// JO (2)
 		case 0x60:
 		case 0x70: JMPif(GetFlag(FLAG_O)); break;
@@ -557,8 +558,10 @@ namespace emul
 		case 0xBF: MOV16(&regDI, FetchWord()); break;
 
 		// RET SP+IMM16 (3)
+		case 0xC0: // Undocumented, 8086 only
 		case 0xC2: RETNear(true, FetchWord()); break;
 		// RET Near (1)
+		case 0xC1: // Undocumented, 8086 only
 		case 0xC3: RETNear(); break;
 
 		// LES REG16, MEM16 (4)
@@ -574,8 +577,10 @@ namespace emul
 		case 0xC7: MOVIMM16(GetModRM16(FetchByte())); break;
 
 		// RET Far SP+IMM16 (3)
+		case 0xC8: //Undocumented, 8086 only
 		case 0xCA: RETFar(true, FetchWord()); break;
 		// RET Far (1)
+		case 0xC9: //Undocumented, 8086 only
 		case 0xCB: RETFar(); break;
 
 		// INT3 (1)
@@ -602,6 +607,10 @@ namespace emul
 		case 0xD4: AAM(FetchByte()); break;
 		// AAD
 		case 0xD5: AAD(FetchByte()); break;
+
+		// TODO: Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
+		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
+		// case 0xD6: SALC(); break
 
 		// XLAT (1)
 		case 0xD7: XLAT(); break;
@@ -858,11 +867,11 @@ namespace emul
 		case 1: return segReg ? "CS" : "CX";
 		case 2: return segReg ? "SS" : "DX";
 		case 3: return segReg ? "DS" : "BX";
-
-		case 4: return "SP";
-		case 5: return "BP";
-		case 6: return "SI";
-		case 7: return "DI";
+		// Undocumented: 4-7 segment register same as 0-3 on 808x/8018x
+		case 4: return segReg ? "ES" : "SP";
+		case 5: return segReg ? "CS" : "BP";
+		case 6: return segReg ? "SS" : "SI";
+		case 7: return segReg ? "DS" : "DI";
 		}
 		throw std::exception("not possible");
 	}
@@ -875,11 +884,11 @@ namespace emul
 		case 1: return segReg ? &regCS : &regC.x;
 		case 2: return segReg ? &regSS : &regD.x;
 		case 3: return segReg ? &regDS : &regB.x;
-
-		case 4: return &regSP;
-		case 5: return &regBP;
-		case 6: return &regSI;
-		case 7: return &regDI;
+		// Undocumented: 4-7 segment register same as 0-3 on 808x/8018x
+		case 4: return segReg ? &regES : &regSP;
+		case 5: return segReg ? &regCS : &regBP;
+		case 6: return segReg ? &regSS : &regSI;
+		case 7: return segReg ? &regDS : &regDI;
 		}
 		throw std::exception("not possible");
 	}
