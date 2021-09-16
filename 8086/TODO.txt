@@ -7,8 +7,9 @@ Keyboard
 - Interrupt
 
 Interrupt controller
+- Mask, etc
 DMA controller
-- 0x80 - 0x9f DMA Page Registers
+
 
 Connections between components
 Timer 0 to interrupt controller instead of cpu
@@ -23,3 +24,5 @@ POST failures:
 - Combined prefixes (rep + segment, etc.)
 
 - Timing
+
+- Timer0 not working
