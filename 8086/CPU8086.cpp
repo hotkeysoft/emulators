@@ -2225,7 +2225,7 @@ namespace emul
 
 		inRep = true;
 		repZ = z;
-		repIP = regIP;
+		repIP = regIP-1;
 	}
 
 	bool CPU8086::PreREP()
@@ -2337,7 +2337,11 @@ namespace emul
 
 		PUSH(flags);
 		PUSH(regCS);
-		PUSH(regIP);
+		PUSH(inRep ? repIP : regIP);
+		if (inRep)
+		{
+			inRep = false;
+		}
 
 		SetFlag(FLAG_T, false);
 		CLI();
