@@ -56,11 +56,17 @@ namespace fdc
 		m_state = STATE::RESET_START;
 	}
 
-	bool DeviceFloppy::LoadDiskImage(const char* path)
+	bool DeviceFloppy::LoadDiskImage(BYTE drive, const char* path)
 	{
-		m_currImage.clear();
+		if (drive > 3)
+		{
+			LogPrintf(LOG_ERROR, "LoadDiskImage: invalid drive number %d", drive);
+			return false;
+		}
 
-		LogPrintf(LOG_INFO, "LoadDiskImage: loading %s", path);
+		m_currImage[drive].clear();
+
+		LogPrintf(LOG_INFO, "LoadDiskImage: loading %s in drive %d", path, drive);
 
 		struct stat stat_buf;
 		int rc = stat(path, &stat_buf);
@@ -73,8 +79,8 @@ namespace fdc
 			return false;
 		}
 
-		m_currImage.clear();
-		m_currImage.resize(expected);
+		m_currImage[drive].clear();
+		m_currImage[drive].resize(expected);
 
 		FILE* f = fopen(path, "rb");
 		if (!f)
@@ -83,7 +89,7 @@ namespace fdc
 			return false;
 		}
 
-		size_t bytesRead = fread(&m_currImage[0], sizeof(char), size, f);
+		size_t bytesRead = fread(&m_currImage[drive][0], sizeof(char), size, f);
 		if (size != bytesRead)
 		{
 			LogPrintf(LOG_ERROR, "LoadDiskImage: error reading binary file");
@@ -630,7 +636,7 @@ namespace fdc
 		{
 			// TODO: adjust to floppy geometry
 			int offset = 512 * ((c * 8) + (r - 1));
-			Push(m_currImage[offset+b]);
+			Push(m_currImage[driveNumber][offset+b]);
 		}
 
 		return STATE::READ_START;
@@ -658,11 +664,20 @@ namespace fdc
 			LogPrintf(LOG_INFO, "ReadSector done, reading next sector %d", m_currSector);
 			// Put the whole sector in the fifo
 			// TODO: Avoid duplication
+			BYTE driveActive = 0;
+			for (BYTE d = 0; d < 3; ++d)
+			{
+				if (m_driveActive[d])
+				{
+					driveActive = d;
+					break;
+				}
+			}
 			for (size_t b = 0; b < 512; ++b)
 			{
 				// TODO: adjust to floppy geometry
 				int offset = 512 * ((m_pcn * 8) + (m_currSector - 1));
-				Push(m_currImage[offset + b]);
+				Push(m_currImage[driveActive][offset + b]);
 			}
 		}
 

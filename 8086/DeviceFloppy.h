@@ -26,7 +26,7 @@ namespace fdc
 		void Init();
 		void Reset();
 
-		bool LoadDiskImage(const char* path);
+		bool LoadDiskImage(BYTE drive, const char* path);
 
 		size_t DelayToTicks(size_t delayMS);
 
@@ -61,7 +61,7 @@ namespace fdc
 		size_t m_clockSpeed;
 		size_t m_currOpWait;
 
-		std::vector<BYTE> m_currImage;
+		std::vector<BYTE> m_currImage[4];
 
 		enum class STATE
 		{

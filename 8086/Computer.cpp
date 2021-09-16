@@ -45,7 +45,7 @@ namespace emul
 			m_ppi.SetMathCoprocessor(false);
 			m_ppi.SetRAMConfig(ppi::RAMSIZE::RAM_64K);
 			m_ppi.SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
-			m_ppi.SetFloppyCount(1);
+			m_ppi.SetFloppyCount(2);
 		}
 
 		m_dma.Init();
@@ -59,7 +59,8 @@ namespace emul
 
 		m_floppy.Init();
 		m_floppy.EnableLog(true, Logger::LOG_INFO);
-		m_floppy.LoadDiskImage("data/PC-DOS-1.00.img");
+		m_floppy.LoadDiskImage(0, "data/PC-DOS-1.00.img");
+		m_floppy.LoadDiskImage(1, "data/PCMAG-VOL06N19.img");
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);
