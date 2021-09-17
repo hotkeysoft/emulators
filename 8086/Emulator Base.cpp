@@ -263,7 +263,7 @@ int main(void)
 
 	pc.GetMemory().Dump(0, 65536, R"(memdump.bin)");
 
-	DumpBackLog();
+	//DumpBackLog();
 
 	if (logFile)
 	{

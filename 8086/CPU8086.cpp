@@ -2271,16 +2271,16 @@ namespace emul
 
 	void CPU8086::INT(BYTE interrupt)
 	{
-		LogPrintf(LOG_INFO, "Interrupt, int=%02X", interrupt);
+		LogPrintf(LOG_DEBUG, "Interrupt, int=%02X", interrupt);
 
 		if (interrupt == 0x16)
 		{
-			LogPrintf(LOG_ERROR, "Waiting for keyboard input");
+			LogPrintf(LOG_DEBUG, "Waiting for keyboard input");
 		} 
 		else  if (interrupt == 0x10)
 		{
 			LogPrintf(LOG_DEBUG, "VIDEO");
-#if 1
+#if 0
 			char ch = (regA.hl.l < 32) ? '.' : (char)regA.hl.l;
 			
 			switch (regA.hl.h)
@@ -2323,7 +2323,7 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "DOS");
 
-#if 1
+#if 0
 			switch (regA.hl.h)
 			{				
 			case 0x09: LogPrintf(LOG_ERROR, "INT21: 0x09 - Print String @[%04X:%04X]", regDS, regD.x); break;
