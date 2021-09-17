@@ -61,8 +61,6 @@ namespace fdc
 		size_t m_clockSpeed;
 		size_t m_currOpWait;
 
-		std::vector<BYTE> m_currImage[4];
-
 		enum class STATE
 		{
 			RESET_START,
@@ -239,5 +237,33 @@ namespace fdc
 			{ CMD::SCAN_HIGH_OR_EQUAL, { "ScanHighOrEqual" , 8, &DeviceFloppy::NotImplemented,   false } }
 		};
 
+		struct Geometry
+		{
+			const char* name;
+			BYTE head;
+			BYTE cyl;
+			BYTE sect;
+			uint32_t GetImageSize() { return 512 * head * cyl * sect; }
+			uint32_t CHS2A(BYTE c, BYTE h, BYTE s) { return 512*((c * head + h) * sect + s - 1); }
+		};
+
+		typedef std::map<uint32_t, Geometry> Geometries;
+		const Geometries m_geometries = {
+			{ 163840,  { "160KB",  1, 40, 8 } },
+			{ 184320,  { "180KB",  1, 40, 9 } },
+			{ 327680,  { "320KB",  2, 40, 8 } },
+			{ 368640,  { "360KB",  2, 40, 9 } },
+			{ 1228800, { "1.2MB",  2, 80, 15 } },
+
+			{ 737280,  { "720KB",  2, 80, 9 } },
+			{ 1474560, { "1.44MB", 2, 80, 18 } },
+		};
+
+		struct FloppyDisk
+		{
+			bool loaded = false;
+			Geometry geometry;
+			std::vector<BYTE> data;
+		} m_images[4];
 	};
 }

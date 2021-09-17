@@ -64,23 +64,27 @@ namespace fdc
 			return false;
 		}
 
-		m_currImage[drive].clear();
+		m_images[drive].loaded = false;
+		m_images[drive].data.clear();
 
 		LogPrintf(LOG_INFO, "LoadDiskImage: loading %s in drive %d", path, drive);
 
+		// Find geometry
 		struct stat stat_buf;
 		int rc = stat(path, &stat_buf);
-		size_t size = stat_buf.st_size;
-		size_t expected = 512 * 40 * 8;
+		uint32_t size = stat_buf.st_size;
 
-		if (size != expected)
+		const auto it = m_geometries.find(size);
+		if (it == m_geometries.end())
 		{
 			LogPrintf(LOG_ERROR, "LoadDiskImage: Unsupported image file, size=%d", size);
 			return false;
 		}
+		const Geometry& geometry = it->second;
 
-		m_currImage[drive].clear();
-		m_currImage[drive].resize(expected);
+		LogPrintf(LOG_INFO, "LoadImage: Detected image geometry: %s", geometry.name);
+
+		m_images[drive].data.resize(size);
 
 		FILE* f = fopen(path, "rb");
 		if (!f)
@@ -89,7 +93,7 @@ namespace fdc
 			return false;
 		}
 
-		size_t bytesRead = fread(&m_currImage[drive][0], sizeof(char), size, f);
+		size_t bytesRead = fread(&m_images[drive].data[0], sizeof(char), size, f);
 		if (size != bytesRead)
 		{
 			LogPrintf(LOG_ERROR, "LoadDiskImage: error reading binary file");
@@ -99,6 +103,9 @@ namespace fdc
 		{
 			LogPrintf(LOG_INFO, "LoadDiskImage: read %d bytes", bytesRead);
 		}
+
+		m_images[drive].loaded = true;
+		m_images[drive].geometry = geometry;
 
 		fclose(f);
 		return true;
@@ -613,31 +620,32 @@ namespace fdc
 		assert(m_fifo.size() == 0);
 
 		m_driveActive[driveNumber] = true;
+		FloppyDisk& disk = m_images[driveNumber];
+
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
 
-		if (r < 1 || r > 8)
+		if (r < 1 || r > disk.geometry.sect)
 		{
 			LogPrintf(LOG_ERROR, "Invalid sector [%d]", r);
 			throw std::exception("Invalid sector");
 		}
-		if (c >= 40)
+		if (c >= disk.geometry.cyl)
 		{
 			LogPrintf(LOG_ERROR, "Invalid cylinder [%d]", c);
 			throw std::exception("Invalid cylinder");
 		}
-		if (h > 1)
+		if (h > disk.geometry.head)
 		{
 			LogPrintf(LOG_ERROR, "Invalid head [%d]", h);
 			throw std::exception("Invalid head");
 		}
 
 		// Put the whole sector in the fifo
+		uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
 		for (size_t b = 0; b < 512; ++b)
 		{
-			// TODO: adjust to floppy geometry
-			int offset = 512 * ((c * 8) + (r - 1));
-			Push(m_currImage[driveNumber][offset+b]);
+			Push(disk.data[offset+b]);
 		}
 
 		return STATE::READ_START;
@@ -648,10 +656,22 @@ namespace fdc
 		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
 		// Exit Conditions
 
+		FloppyDisk& disk = m_images[0];
+		BYTE driveActive = 0;
+		for (BYTE d = 0; d < 3; ++d)
+		{
+			if (m_driveActive[d])
+			{
+				disk = m_images[d];
+				break;
+			}
+		}
+		// TODO: Handle not loaded
+
 		if (m_fifo.size() == 0)
 		{
 			++m_currSector;
-			if (m_currSector > 8)
+			if (m_currSector > disk.geometry.sect)
 			{
 				m_currSector = 1;
 
@@ -665,20 +685,10 @@ namespace fdc
 			LogPrintf(LOG_INFO, "ReadSector done, reading next sector %d", m_currSector);
 			// Put the whole sector in the fifo
 			// TODO: Avoid duplication
-			BYTE driveActive = 0;
-			for (BYTE d = 0; d < 3; ++d)
-			{
-				if (m_driveActive[d])
-				{
-					driveActive = d;
-					break;
-				}
-			}
+			uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
 			for (size_t b = 0; b < 512; ++b)
 			{
-				// TODO: adjust to floppy geometry
-				int offset = 512 * ((m_pcn * 8) + (m_currSector - 1));
-				Push(m_currImage[driveActive][offset + b]);
+				Push(disk.data[offset + b]);
 			}
 		}
 
