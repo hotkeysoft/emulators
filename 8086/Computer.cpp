@@ -31,7 +31,7 @@ namespace emul
 		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_WARNING);
+		m_pit.EnableLog(true, Logger::LOG_DEBUG);
 
 		m_pic.Init();
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
@@ -45,22 +45,25 @@ namespace emul
 			m_ppi.SetMathCoprocessor(false);
 			m_ppi.SetRAMConfig(ppi::RAMSIZE::RAM_64K);
 			m_ppi.SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
-			m_ppi.SetFloppyCount(2);
+			m_ppi.SetFloppyCount(1);
 		}
 
 		m_dma.Init();
 		m_dma.EnableLog(false);
-		m_dma.EnableLog(true, Logger::LOG_INFO);
+		m_dma.EnableLog(true, Logger::LOG_WARNING);
 
-		m_cga.EnableLog(true, Logger::LOG_INFO);
+		m_cga.EnableLog(true, Logger::LOG_WARNING);
 		m_cga.Init("data/CGA_CHAR.BIN");
 		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xB800));
 		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xBC00));
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_INFO);
-		m_floppy.LoadDiskImage(0, "data/PC-DOS-1.00.img");
-		m_floppy.LoadDiskImage(1, "data/PCMAG-VOL06N19.img");
+		m_floppy.EnableLog(true, Logger::LOG_DEBUG);
+		m_floppy.LoadDiskImage(0, "data/PC-DOS-1.10.img");
+		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\SCBOXING.IMG)");
+		// "
+		//m_floppy.LoadDiskImage(0, "data/MS-DOS-2.0d1.img");
+		//m_floppy.LoadDiskImage(1, "data/CheckIt1.10A.img");
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);
@@ -98,15 +101,22 @@ namespace emul
 		bool out = m_pit.GetCounter(0).GetOutput();
 		if (out != timer0Out)
 		{
-			timer0Out = out;
-			if (out)
+			//LogPrintf(Logger::LOG_WARNING, "Timer0 toggle");
+			if (out && CanInterrupt())
 			{
 				// TODO: this bypasses a lot of things.
 				// Quick and dirty for now: Check mask manually and interrupt cpu
 				if (!(m_pic.Mask_IN() & 0x01))
 				{
-					Interrupt(8 + 6); // Hardware interrupt 0: timer
+					LogPrintf(Logger::LOG_DEBUG, "%lld Timer0", m_ticks);
+					Interrupt(8 + 0); // Hardware interrupt 0: timer
 				}
+				// acknowledge it
+				timer0Out = out;
+			}
+			else if (!out)
+			{
+				timer0Out = out;
 			}
 		}
 

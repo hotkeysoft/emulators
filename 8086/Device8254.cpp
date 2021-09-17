@@ -66,7 +66,7 @@ namespace pit
 		// Decrease counter, wrap if 0
 		if (m_value == 0)
 		{
-			m_value = GetMaxValue();
+			m_value = m_n ? m_n : GetMaxValue();
 		}
 		else
 		{
@@ -92,6 +92,19 @@ namespace pit
 			{
 				m_value = m_n;
 				m_out = true;
+			}
+			break;
+		case CounterMode::Mode3:
+			// TODO: Probably not right, check 8254 behavior with odd/even n values
+			if (m_value <= 1)
+			{
+				m_value = 0;
+				m_out = !m_out;
+			}
+			else
+			{
+				// Decrease count by 2 total
+				--m_value;
 			}
 			break;
 		default:
@@ -236,6 +249,7 @@ namespace pit
 			break;
 		case CounterMode::Mode3:
 			LogPrintf(LOG_INFO, "SetMode: 3 - SQUARE WAVE MODE");
+			m_out = true;
 			break;
 		case CounterMode::Mode4:
 			LogPrintf(LOG_INFO, "SetMode: 4 - SOFTWARE TRIGGERED MODE");
