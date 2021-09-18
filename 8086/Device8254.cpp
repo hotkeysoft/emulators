@@ -36,21 +36,22 @@ namespace pit
 			{
 				m_value = m_n;
 				WORD ticks = 1 + (m_n ? m_n : GetMaxValue());
-				float intervalMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
-				LogPrintf(LOG_INFO, "Starting Count, interval = %0.2fus", intervalMicro);
+				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
+				LogPrintf(LOG_INFO, "Starting Count, interval = %0.2fus", m_periodMicro);
 				// Start counting on next tick
 				return;
 			}
 			case CounterMode::Mode2:
 			{
 				size_t ticks = m_n ? m_n : GetMaxValue();
-				float intervalMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
-				LogPrintf(LOG_INFO, "Starting Count, period = %0.2fus", intervalMicro);
+				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
+				LogPrintf(LOG_INFO, "Starting Count, period = %0.2fus", m_periodMicro);
 				break;
 			}
 			case CounterMode::Mode3:
 			{
 				size_t ticks = m_n ? m_n : GetMaxValue();
+				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
 				float freq = (float)s_clockSpeed / (float)ticks;
 				LogPrintf(LOG_INFO, "Frequency = %0.2fHz", freq);
 				break;
@@ -163,12 +164,14 @@ namespace pit
 			}
 			m_flipFlopLSBMSB = !m_flipFlopLSBMSB;
 			break;
-		case RWMode::RW_LSB: 
-			SetLSB(value); 
+		case RWMode::RW_LSB:
+			SetMSB(0);
+			SetLSB(value);
 			m_newValue = true;
 			break;
-		case RWMode::RW_MSB: 
-			SetMSB(value); 
+		case RWMode::RW_MSB:
+			SetLSB(0);
+			SetMSB(value);
 			m_newValue = true;
 			break;
 		default:
@@ -189,13 +192,15 @@ namespace pit
 
 	void Counter::SetMSB(BYTE value)
 	{
-		m_n = (value<<8);
-		LogPrintf(LOG_DEBUG, "Value: %04X", m_n);
+		m_n &= 0x00FF;
+		m_n |= (value<<8);
+		LogPrintf(LOG_DEBUG, "SetMSB(%02Xh), newN=%04Xh", value, m_n);
 	}
 	void Counter::SetLSB(BYTE value)
 	{
-		m_n = value;
-		LogPrintf(LOG_DEBUG, "Value: %04X", m_n);
+		m_n &= 0xFF00;
+		m_n |= value;
+		LogPrintf(LOG_DEBUG, "SetLSB(%02Xh), newN=%04Xh", value, m_n);
 	}
 
 	void Counter::SetRWMode(RWMode rw)

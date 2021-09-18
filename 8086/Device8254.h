@@ -28,6 +28,8 @@ namespace pit
 
 		void Tick();
 
+		float GetPeriodMicro() const { return m_periodMicro; };
+
 		bool GetOutput() const { return m_out; }
 		bool GetGate() const { return m_gate; }
 		void SetGate(bool gate) { m_gate = gate; }
@@ -41,7 +43,7 @@ namespace pit
 		void SetBCD(bool bcd);
 
 	protected:
-		WORD GetMaxValue()
+		WORD GetMaxValue() const
 		{
 			return m_rwMode == RWMode::RW_LSB ? 255 : 65535;
 		}
@@ -63,6 +65,8 @@ namespace pit
 
 		bool m_latched;
 		WORD m_latchedValue;
+
+		float m_periodMicro = 0.0f;
 	};
 
 	class Device8254 : public PortConnector
