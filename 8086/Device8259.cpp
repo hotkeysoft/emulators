@@ -1,4 +1,6 @@
 #include "Device8259.h"
+#include <assert.h>
+
 
 namespace pic
 {
@@ -12,6 +14,25 @@ namespace pic
 	void Device8259::Reset()
 	{
 		m_state = STATE::UNINITIALIZED;
+	}
+
+	void Device8259::InterruptRequest(BYTE interrupt)
+	{
+		LogPrintf(LOG_INFO, "InterruptRequest: int=%d", interrupt);
+		assert(interrupt < 8);
+		BYTE intBit = 1 << interrupt;
+
+		// Mask bits: 0 = Enabled, 1 = Interrupt Masked (inhibited)
+		intBit &= ~m_interruptMaskRegister;
+
+		if (intBit)
+		{
+			m_interruptRequestRegister |= intBit;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "InterruptRequest: Interrupt is masked");
+		}
 	}
 
 	void Device8259::Init()
