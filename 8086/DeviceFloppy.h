@@ -104,6 +104,7 @@ namespace fdc
 		STATE SenseDriveStatus();
 		STATE Specify();
 		STATE ReadData();
+		STATE ReadTrack();
 
 		bool m_dmaPending;
 		void SetDMAPending() { LogPrintf(Logger::LOG_DEBUG, "Set DMA Pending");  m_dmaPending = true; }
@@ -220,7 +221,7 @@ namespace fdc
 
 		typedef std::map<CMD, Command> CommandMap;
 		const CommandMap m_commandMap = {
-			{ CMD::READ_TRACK,         { "ReadTrack"       , 8, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::READ_TRACK,         { "ReadTrack"       , 8, &DeviceFloppy::ReadTrack,        true } },
 			{ CMD::SPECIFY,            { "Specify"         , 2, &DeviceFloppy::Specify,          false } },
 			{ CMD::SENSE_DRIVE_STATUS, { "SenseDriveStatus", 1, &DeviceFloppy::SenseDriveStatus, false } },
 			{ CMD::WRITE_DATA,         { "WriteData"       , 8, &DeviceFloppy::NotImplemented,   false } },

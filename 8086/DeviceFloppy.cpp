@@ -651,6 +651,74 @@ namespace fdc
 		return STATE::READ_START;
 	}
 
+	// Same as readdata but start a sector 1
+	DeviceFloppy::STATE DeviceFloppy::ReadTrack()
+	{
+		BYTE param = Pop();
+
+		BYTE driveNumber = param & 3;
+		bool head = param & 4;
+
+		BYTE c = Pop();
+		BYTE h = Pop();
+		BYTE r = Pop();
+		BYTE n = Pop();
+		BYTE eot = Pop();
+		BYTE gpl = Pop();
+		BYTE dtl = Pop();
+
+		LogPrintf(LOG_INFO, "COMMAND: Read Track drive=[%d] head=[%d]", driveNumber, head);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
+
+		m_currHead = head;
+		m_currSector = 1;
+		m_maxSector = eot;
+
+		// TODO: Error handling, validation
+		m_pcn = c;
+		//if (c != m_pcn)
+		//{
+		//	throw std::exception("cylinder != current cylinder");
+		//}
+
+		// TODO: Multitrack
+		// (m_currcommandID & 0x80) //MT
+
+		// Only this configuration is supported at the moment
+		assert(m_enableIRQDMA == true);
+		assert(m_nonDMA == false);
+		assert(n == 2);		// All floppy drives use 512 bytes/sector
+		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
+
+		assert(m_fifo.size() == 0);
+
+		m_driveActive[driveNumber] = true;
+		FloppyDisk& disk = m_images[driveNumber];
+
+		// TODO: Only if head is not already loaded
+		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
+
+		if (c >= disk.geometry.cyl)
+		{
+			LogPrintf(LOG_ERROR, "Invalid cylinder [%d]", c);
+			throw std::exception("Invalid cylinder");
+		}
+		if (h > disk.geometry.head)
+		{
+			LogPrintf(LOG_ERROR, "Invalid head [%d]", h);
+			throw std::exception("Invalid head");
+		}
+
+		// Put the whole sector in the fifo
+		uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
+		for (size_t b = 0; b < 512; ++b)
+		{
+			Push(disk.data[offset + b]);
+		}
+
+		return STATE::READ_START;
+	}
+
 	void DeviceFloppy::ReadSector()
 	{
 		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
