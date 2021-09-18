@@ -626,15 +626,15 @@ namespace emul
 		// XLAT (1)
 		case 0xD7: XLAT(); break;
 
-		// ESC (2) ??
-		case 0xD8: NotImplemented(opcode); break;
-		case 0xD9: NotImplemented(opcode); break;
-		case 0xDA: NotImplemented(opcode); break;
-		case 0xDB: NotImplemented(opcode); break;
-		case 0xDC: NotImplemented(opcode); break;
-		case 0xDD: NotImplemented(opcode); break;
-		case 0xDE: NotImplemented(opcode); break;
-		case 0xDF: NotImplemented(opcode); break;
+		// ESC (2) 
+		case 0xD8: 
+		case 0xD9: 
+		case 0xDA: 
+		case 0xDB: 
+		case 0xDC: 
+		case 0xDD: 
+		case 0xDE: 
+		case 0xDF: GetModRegRM16(FetchByte()); break;
 
 		// LOOPNZ/LOOPNE (2)
 		case 0xE0: LOOP(FetchByte(), GetFlag(FLAG_Z) == false); break;
