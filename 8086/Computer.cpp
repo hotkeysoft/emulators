@@ -24,14 +24,14 @@ namespace emul
 
 	void Computer::Init()
 	{
-		m_memory.EnableLog(true, Logger::LOG_INFO);
-		m_mmap.EnableLog(true, Logger::LOG_INFO);
+		m_memory.EnableLog(true, Logger::LOG_ERROR);
+		m_mmap.EnableLog(true, Logger::LOG_ERROR);
 
 		m_base64K.Clear(0xA5);
 		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_DEBUG);
+		m_pit.EnableLog(true, Logger::LOG_WARNING);
 
 		m_pic.Init();
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
@@ -58,7 +58,7 @@ namespace emul
 		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xBC00));
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_DEBUG);
+		m_floppy.EnableLog(true, Logger::LOG_WARNING);
 		m_floppy.LoadDiskImage(0, "data/PC-DOS-1.10.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\SCBOXING.IMG)");
 		// "
@@ -75,6 +75,7 @@ namespace emul
 
 	bool Computer::Step()
 	{
+		int intCount = 0;
 		++m_ticks; // TODO: Coordinate with CPU
 
 		// TODO: Temporary, need dynamic connections
@@ -88,13 +89,16 @@ namespace emul
 			return false;
 		}
 
-		if (m_ticks % 10000 == 0)
+		static size_t m_lastKbd = 0;
+		if (m_keyBufRead != m_keyBufWrite && CanInterrupt() && (m_ticks-m_lastKbd) > 10000)
 		{
-			if (m_keyBufRead != m_keyBufWrite && CanInterrupt())
-			{
-				Interrupt(8 + 1); // Hardware interrupt 1: keyboard
-				m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
-			}
+			LogPrintf(LOG_WARNING, "KBD Interrupt");
+			m_pic.InterruptRequest(1); // TEMP
+
+			Interrupt(8 + 1); // Hardware interrupt 1: keyboard
+			m_lastKbd = m_ticks;
+			++intCount;
+			m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
 		}
 
 		m_pit.Tick();
@@ -106,10 +110,12 @@ namespace emul
 			{
 				// TODO: this bypasses a lot of things.
 				// Quick and dirty for now: Check mask manually and interrupt cpu
-				if (!(m_pic.Mask_IN() & 0x01))
+				if (!(m_pic.GetMask() & 0x01))
 				{
 					LogPrintf(Logger::LOG_DEBUG, "%lld Timer0", m_ticks);
+					m_pic.InterruptRequest(0); // TEMP
 					Interrupt(8 + 0); // Hardware interrupt 0: timer
+					++intCount;
 				}
 				// acknowledge it
 				timer0Out = out;
@@ -124,6 +130,8 @@ namespace emul
 		{
 			//fprintf(stderr, "Fire Floppy interrupt\n");
 			Interrupt(8 + 6); // Hardware interrupt 6: floppy
+			++intCount;
+			m_pic.InterruptRequest(6); // TEMP
 			m_floppy.ClearInterrupt();
 		}
 
@@ -150,6 +158,12 @@ namespace emul
 				m_floppy.DMATerminalCount();
 			}
 			//fprintf(stderr, "floppy DMA read\n");
+		}
+
+		if (intCount > 1)
+		{
+			LogPrintf(LOG_ERROR, ">1 interrupts in same cycle");
+			assert(false);
 		}
 
 		return true;
