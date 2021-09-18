@@ -378,7 +378,7 @@ namespace cga
 
 	void DeviceCGA::DrawTextMode()
 	{
-		if (m_currChar && (m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % 8) == 0))
+		if (m_currChar && (m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % m_vCharHeight) == 0))
 		{
 			BYTE* ch = m_currChar;
 			BYTE* attr = ch + 1;
