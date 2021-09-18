@@ -327,7 +327,14 @@ namespace cga
 
 			// Pointers for alpha mode
 			m_currChar = m_screenB800.getPtr8(m_crtc.startAddress*2);
-			m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress*2);
+			if (m_crtc.cursorAddress * 2 >= m_screenB800.GetSize())
+			{
+				m_cursorPos = nullptr;
+			}
+			else
+			{
+				m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress * 2);
+			}
 			
 			if ((m_frame % 16) == 0) m_blink16 = !m_blink16;
 			if ((m_frame % 32) == 0) m_blink32 = !m_blink32;
