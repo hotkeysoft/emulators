@@ -8,6 +8,7 @@
 #include "Device8259.h"
 #include "DeviceCGA.h"
 #include "DeviceFloppy.h"
+#include "DevicePCSpeaker.h"
 
 namespace emul
 {
@@ -45,6 +46,8 @@ namespace emul
 		dma::Device8237 m_dma;
 		cga::DeviceCGA m_cga;
 		fdc::DeviceFloppy m_floppy;
+
+		beeper::DevicePCSpeaker m_pcSpeaker;
 
 		// Keyboard buffer
 		BYTE m_keyBuf[256];

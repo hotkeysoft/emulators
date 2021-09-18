@@ -1,5 +1,4 @@
 #include "Computer.h"
-
 #include "Console.h"
 
 namespace emul
@@ -10,7 +9,7 @@ namespace emul
 
 	Computer::Computer() : 
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
+		m_base64K("RAM0", 0x40000, emul::MemoryType::RAM),
 		Logger("PC"), 
 		CPU8086(m_memory, m_map),
 		m_pit(0x40, 1193182),
@@ -43,10 +42,12 @@ namespace emul
 		{
 			m_ppi.SetPOSTLoop(false);
 			m_ppi.SetMathCoprocessor(false);
-			m_ppi.SetRAMConfig(ppi::RAMSIZE::RAM_64K);
+			m_ppi.SetRAMConfig(ppi::RAMSIZE::RAM_256K);
 			m_ppi.SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
 			m_ppi.SetFloppyCount(1);
 		}
+
+		m_pcSpeaker.Init(&m_ppi, &m_pit);
 
 		m_dma.Init();
 		m_dma.EnableLog(false);
@@ -60,8 +61,8 @@ namespace emul
 		m_floppy.Init();
 		m_floppy.EnableLog(true, Logger::LOG_WARNING);
 		m_floppy.LoadDiskImage(0, "data/PC-DOS-1.10.img");
-		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\SCBOXING.IMG)");
-		// "
+		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\KQ1.IMG)");
+		// 
 		//m_floppy.LoadDiskImage(0, "data/MS-DOS-2.0d1.img");
 		//m_floppy.LoadDiskImage(1, "data/CheckIt1.10A.img");
 
@@ -125,6 +126,8 @@ namespace emul
 				timer0Out = out;
 			}
 		}
+
+		m_pcSpeaker.Tick();
 
 		if (m_floppy.IsInterruptPending() && CanInterrupt())
 		{

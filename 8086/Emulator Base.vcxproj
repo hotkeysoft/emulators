@@ -182,6 +182,7 @@
     <ClCompile Include="Device8259.cpp" />
     <ClCompile Include="DeviceCGA.cpp" />
     <ClCompile Include="DeviceFloppy.cpp" />
+    <ClCompile Include="DevicePCSpeaker.cpp" />
     <ClCompile Include="Emulator Base.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MemoryBlock.cpp" />
@@ -206,6 +207,7 @@
     <ClInclude Include="Device8259.h" />
     <ClInclude Include="DeviceCGA.h" />
     <ClInclude Include="DeviceFloppy.h" />
+    <ClInclude Include="DevicePCSpeaker.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MemoryBlock.h" />
     <ClInclude Include="MemoryMap.h" />
