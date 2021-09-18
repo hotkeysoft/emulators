@@ -80,7 +80,7 @@ void ToggleMode(cga::DeviceCGA& screen)
 	}
 }
 
-int main(void)
+int main(int argc, char* args[])
 {
 	//logFile = fopen("./dump.log", "w");
 
@@ -169,11 +169,11 @@ int main(void)
 				bool newKeycode = false;
 				int ch = _getch();
 
-				if (ch == 27)
+				/*if (ch == 27)
 				{
 					run = false;
 				}
-				else if (ch == 224)
+				else */if (ch == 224)
 				{
 					switch (ch = _getch())
 					{
