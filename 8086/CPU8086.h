@@ -4,6 +4,7 @@
 #include "PortConnector.h"
 #include "PortAggregator.h"
 #include <tuple>
+#include <assert.h>
 
 namespace emul
 {
@@ -49,6 +50,9 @@ namespace emul
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
 		virtual ADDRESS GetCurrentAddress() const { return S2A(regCS, regIP); }
+
+		virtual bool Step() override;
+
 		virtual void Exec(BYTE opcode);
 
 		void AddDevice(PortConnector& ports);
@@ -59,8 +63,11 @@ namespace emul
 		virtual void Reset();
 		virtual void Reset(WORD segment, WORD offset);
 
-		void Interrupt(BYTE interrupt) { INT(interrupt); }
-		bool CanInterrupt() { return GetFlag(FLAG::FLAG_I); }
+		void Interrupt(BYTE interrupt) { assert(!inSegOverride); INT(interrupt); }
+		bool CanInterrupt() 
+		{ 
+			return GetFlag(FLAG::FLAG_I) && (m_lastOp != 0xFB);
+		}
 
 		// General Registers
 		Register regA; // Accumulator
@@ -113,6 +120,8 @@ namespace emul
 		static std::string GetModRMStr(BYTE modrm, bool wide, BYTE& disp);
 
 	protected:
+		BYTE m_lastOp = 0;
+
 		PortAggregator m_ports;
 
 		// Pseudo flags

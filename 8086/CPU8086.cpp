@@ -35,12 +35,23 @@ namespace emul
 
 	}
 
+	bool CPU8086::Step()
+	{
+		bool ret = CPU::Step();
+		if (ret && inSegOverride)
+		{
+			return CPU::Step();
+		}
+		return ret;
+	}
+
 	void CPU8086::Exec(BYTE opcode)
 	{
 		//if (regCS == 0x0100 && regIP == 0x6F8D)
 		//{
 		//	__debugbreak();
 		//}
+		m_lastOp = opcode;
 
 		bool trap = GetFlag(FLAG_T);
 
