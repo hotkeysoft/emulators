@@ -457,15 +457,33 @@ namespace cga
 			{
 				BYTE ch = *currChar;
 
-				m_frameBuffer[baseX++] = (ch & 0b10000000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b01000000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00100000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00010000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00001000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00000100) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00000010) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00000001) ? fg : bg;
+				if (m_composite)
+				{
+					Uint32 colorH = Composite640Palette[ch >> 4];
+					Uint32 colorL = Composite640Palette[ch & 15];
 
+					// TODO: artifacts
+					m_frameBuffer[baseX++] = colorH;
+					m_frameBuffer[baseX++] = colorH;
+					m_frameBuffer[baseX++] = colorH;
+					m_frameBuffer[baseX++] = colorH;
+
+					m_frameBuffer[baseX++] = colorL;
+					m_frameBuffer[baseX++] = colorL;
+					m_frameBuffer[baseX++] = colorL;
+					m_frameBuffer[baseX++] = colorL;
+				}
+				else
+				{
+					m_frameBuffer[baseX++] = (ch & 0b10000000) ? fg : bg;
+					m_frameBuffer[baseX++] = (ch & 0b01000000) ? fg : bg;
+					m_frameBuffer[baseX++] = (ch & 0b00100000) ? fg : bg;
+					m_frameBuffer[baseX++] = (ch & 0b00010000) ? fg : bg;
+					m_frameBuffer[baseX++] = (ch & 0b00001000) ? fg : bg;
+					m_frameBuffer[baseX++] = (ch & 0b00000100) ? fg : bg;
+					m_frameBuffer[baseX++] = (ch & 0b00000010) ? fg : bg;
+					m_frameBuffer[baseX++] = (ch & 0b00000001) ? fg : bg;
+				}
 				++currChar;
 			}
 		}

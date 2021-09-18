@@ -32,6 +32,8 @@ namespace cga
 
 		void Tick();
 
+		void SetComposite(bool composite) { m_composite = composite; }
+
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB800; }
 
 	protected:
@@ -158,6 +160,8 @@ namespace cga
 
 		// 16K screen buffer
 		emul::MemoryBlock m_screenB800;
+
+		bool m_composite = false; // Composite artifact colors
 
 		// Text mode pointers
 		BYTE* m_cursorPos = nullptr;
