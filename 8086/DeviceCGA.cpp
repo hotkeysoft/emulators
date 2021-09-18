@@ -25,6 +25,13 @@ namespace cga
 		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
 	};
 
+	const uint32_t Composite640Palette[16] =
+	{
+		0xFF000000, 0xFF006E31, 0xFF3109FF, 0xFF008AFF, 0xFFA70031, 0xFF767676, 0xFFEC11FF, 0xFFBB92FF,
+		0xFF315A00, 0xFF00DB00, 0xFF767676, 0xFF45F7BB, 0xFFEC6300, 0xFFBBE400, 0xFFFF7FBB, 0xFFFFFFFF
+	};
+
+
 	DeviceCGA::DeviceCGA(WORD baseAddress) :
 		Logger("CGA"),
 		m_baseAddress(baseAddress),
@@ -438,23 +445,26 @@ namespace cga
 		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
 		// In this mode 1 byte = 8 pixels
 
-		BYTE*& currChar = (m_vPos & 1) ? m_bank1 : m_bank0;
-
 		if ((m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp))
 		{
+			BYTE*& currChar = (m_vPos & 1) ? m_bank1 : m_bank0;
+
+			Uint32 fg = m_alphaPalette[m_color.color];
+			Uint32 bg = m_alphaPalette[0];
+
+			uint32_t baseX = (640 * m_vPos) + (m_hPos * 2);
 			for (int w = 0; w < 2; ++w)
 			{
 				BYTE ch = *currChar;
-				WORD baseX = (m_hPos * 2) + (w * 8);
 
-				for (int x = 0; x < 8; ++x)
-				{
-					BYTE val = ch & 1;
-					ch >>= 1;
-
-					Uint32 color = val ? m_alphaPalette[m_color.color] : m_alphaPalette[0];
-					m_frameBuffer[640 * m_vPos + baseX + (7 - x)] = color;
-				}
+				m_frameBuffer[baseX++] = (ch & 0b10000000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b01000000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00100000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00010000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00001000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00000100) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00000010) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00000001) ? fg : bg;
 
 				++currChar;
 			}
