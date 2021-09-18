@@ -84,7 +84,12 @@ namespace cga
 		// Status Register
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&DeviceCGA::ReadStatusRegister));
 
-		SDL_Init(SDL_INIT_VIDEO);
+
+		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+		{
+			SDL_InitSubSystem(SDL_INIT_VIDEO);
+		}
+
 		SDL_CreateWindowAndRenderer(640 + (2 * border), 480 + (2 * border), 0, &m_sdlWindow, &m_sdlRenderer);
 
 		m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 640, 200);
