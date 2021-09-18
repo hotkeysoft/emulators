@@ -115,37 +115,32 @@ namespace pit
 	BYTE Counter::Get()
 	{
 		BYTE ret;
+		WORD value = (m_latched) ? m_latchedValue : m_value;
+
 		switch (m_rwMode)
 		{
 		case RWMode::RW_LSB:
-			if (m_latched)
-			{
-				m_latched = false;
-				ret = (BYTE)m_latchedValue;
-				LogPrintf(LOG_DEBUG, "GetLSB(latched): %02X", ret);
-			}
-			else
-			{
-				ret = (BYTE)m_value;
-				LogPrintf(LOG_DEBUG, "GetLSB(live): %02X", ret);
-			}
+			ret = (BYTE)value;
+			m_latched = false;
 			break;
 
 		case RWMode::RW_MSB:
-			if (m_latched)
-			{
-				m_latched = false;
-				ret = (BYTE)(m_latchedValue >> 8);
-				LogPrintf(LOG_DEBUG, "GetMSB(latched): %02X", ret);
-			}
-			else
-			{
-				ret = (BYTE)(m_value >> 8);
-				LogPrintf(LOG_DEBUG, "GetMSB(live): %02X", ret);
-			}
+			ret = (BYTE)(value >> 8);
+			m_latched = false;
 			break;
 
 		case RWMode::RW_LSBMSB:
+			if (!m_flipFlopLSBMSB)
+			{
+				ret = (BYTE)value;
+			}
+			else
+			{
+				ret = (BYTE)(value >> 8);
+				m_latched = false;
+			}
+			break;
+
 		default:
 			throw std::exception("Get:RWMode: Not implemented");
 		}
