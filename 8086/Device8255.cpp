@@ -246,4 +246,9 @@ namespace ppi
 	{ 
 		m_currentKey = keyCode;
 	}
+
+	bool Device8255::IsSoundON()
+	{
+		return (m_portBData & 3) == 3;
+	}
 }

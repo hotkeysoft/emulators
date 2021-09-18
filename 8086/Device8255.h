@@ -55,6 +55,8 @@ namespace ppi
 
 		void SetCurrentKeyCode(BYTE keyCode);
 
+		bool IsSoundON();
+
 	protected:
 		BYTE PORTA_IN();
 		void PORTA_OUT(BYTE value);
