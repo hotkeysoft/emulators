@@ -724,13 +724,13 @@ namespace fdc
 		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
 		// Exit Conditions
 
-		FloppyDisk& disk = m_images[0];
+		FloppyDisk* disk = &m_images[0];
 		BYTE driveActive = 0;
 		for (BYTE d = 0; d < 3; ++d)
 		{
 			if (m_driveActive[d])
 			{
-				disk = m_images[d];
+				disk = &m_images[d];
 				break;
 			}
 		}
@@ -739,7 +739,7 @@ namespace fdc
 		if (m_fifo.size() == 0)
 		{
 			++m_currSector;
-			if (m_currSector > disk.geometry.sect)
+			if (m_currSector > disk->geometry.sect)
 			{
 				m_currSector = 1;
 
@@ -753,10 +753,10 @@ namespace fdc
 			LogPrintf(LOG_INFO, "ReadSector done, reading next sector %d", m_currSector);
 			// Put the whole sector in the fifo
 			// TODO: Avoid duplication
-			uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
+			uint32_t offset = disk->geometry.CHS2A(m_pcn, m_currHead, m_currSector);
 			for (size_t b = 0; b < 512; ++b)
 			{
-				Push(disk.data[offset + b]);
+				Push(disk->data[offset + b]);
 			}
 		}
 
