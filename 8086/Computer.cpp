@@ -1,11 +1,25 @@
+#include "Common.h"
 #include "Computer.h"
 #include "Console.h"
+#include <thread>
 
 namespace emul
 {
-
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
+
+	class DummyPort : public PortConnector
+	{
+	public:
+		DummyPort() : Logger("DUMMY")
+		{
+			Connect(0xC0, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
+		}
+
+		void WriteData(BYTE value)
+		{
+		}
+	} dummyPort;
 
 	Computer::Computer() : 
 		m_memory(emul::CPU8086_ADDRESS_BITS),
@@ -30,7 +44,7 @@ namespace emul
 		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_WARNING);
+		m_pit.EnableLog(true, Logger::LOG_INFO);
 
 		m_pic.Init();
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
@@ -55,6 +69,8 @@ namespace emul
 
 		m_cga.EnableLog(true, Logger::LOG_WARNING);
 		m_cga.Init("data/CGA_CHAR.BIN");
+		//m_cga.SetComposite(true);
+
 		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xB800));
 		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xBC00));
 
@@ -63,8 +79,8 @@ namespace emul
 		m_floppy.LoadDiskImage(0, "data/PC-DOS-1.10.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\KQ1.IMG)");
 		// 
-		//m_floppy.LoadDiskImage(0, "data/MS-DOS-2.0d1.img");
-		//m_floppy.LoadDiskImage(1, "data/CheckIt1.10A.img");
+		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
+		//m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);
@@ -72,10 +88,24 @@ namespace emul
 		AddDevice(m_dma);
 		AddDevice(m_cga);
 		AddDevice(m_floppy);
+		AddDevice(dummyPort);
+	}
+
+	void little_sleep(std::chrono::microseconds us)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		auto end = start + us;
+		do 
+		{
+			std::this_thread::yield();
+		} while (std::chrono::high_resolution_clock::now() < end);
 	}
 
 	bool Computer::Step()
 	{
+		static auto lastTick = std::chrono::high_resolution_clock::now();
+		static int64_t syncTicks = 0;
+
 		int intCount = 0;
 		++m_ticks; // TODO: Coordinate with CPU
 
@@ -113,7 +143,6 @@ namespace emul
 				// Quick and dirty for now: Check mask manually and interrupt cpu
 				if (!(m_pic.GetMask() & 0x01))
 				{
-					LogPrintf(Logger::LOG_DEBUG, "%lld Timer0", m_ticks);
 					m_pic.InterruptRequest(0); // TEMP
 					Interrupt(8 + 0); // Hardware interrupt 0: timer
 					++intCount;
@@ -167,6 +196,21 @@ namespace emul
 		{
 			LogPrintf(LOG_ERROR, ">1 interrupts in same cycle");
 			assert(false);
+		}
+
+		++syncTicks;
+		// Every 11932 ticks (~10ms) make an adjustment
+		if (syncTicks >= 11931)
+		{
+			auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
+
+			if (delta < std::chrono::microseconds(10000))
+			{
+				little_sleep(std::chrono::microseconds(10000)-delta);
+			}
+
+			syncTicks = 0;
+			lastTick = std::chrono::high_resolution_clock::now();
 		}
 
 		return true;
