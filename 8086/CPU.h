@@ -30,13 +30,13 @@ namespace emul
 		void Run();
 		virtual bool Step();
 
-		unsigned long getTime() { return m_timeTicks; };
-
 		// Watches
 		void AddWatch(ADDRESS address, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
 		void AddWatch(const char* label, CPUCallbackFunc onCall, CPUCallbackFunc onRet);
 		void RemoveWatch(ADDRESS address);
 		void RemoveWatch(const char* label);
+
+		uint32_t GetInstructionTicks() { return m_opTicks; }
 
 	protected:
 		enum class CPUState { STOP, RUN, STEP };
@@ -45,7 +45,8 @@ namespace emul
 		Memory& m_memory;
 		MemoryMap& m_mmap;
 
-		unsigned long m_timeTicks;
+		uint32_t m_opTicks = 0;
+		inline void TICK(uint32_t count) { m_opTicks += count; }
 
 		// Helper functions
 		BYTE getLByte(WORD w) { return BYTE(w & 0x00FF); };

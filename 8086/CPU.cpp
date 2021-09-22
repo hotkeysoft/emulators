@@ -6,8 +6,7 @@ namespace emul
 	CPU::CPU(size_t addressBits, Memory& memory, MemoryMap& mmap) : Logger("CPU"), 
 		m_state(CPUState::STOP),
 		m_memory(memory),
-		m_mmap(mmap),
-		m_timeTicks(0)
+		m_mmap(mmap)
 	{
 	}
 
@@ -18,7 +17,6 @@ namespace emul
 	void CPU::Reset()
 	{
 		m_state = CPUState::STOP;
-		m_timeTicks = 0;
 	}
 
 	void CPU::Run()
@@ -31,6 +29,8 @@ namespace emul
 	{
 		try
 		{
+			m_opTicks = 0;
+
 			// Fetch opcode
 			unsigned char opcode;
 			m_state = CPUState::RUN;

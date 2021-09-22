@@ -271,12 +271,6 @@ int main(int argc, char* args[])
 	}
 
 	fprintf(stderr, "Time elapsed: %I64u\n", stopTime-startTime);
-	pc.getTime();
-	fprintf(stderr, "CPU ticks: %zu\n", pc.GetTicks());
-	if (stopTime - startTime > 1)
-	{
-		fprintf(stderr, "Avg speed: %I64u ticks/s\n", pc.GetTicks() / (stopTime - startTime));
-	}
 
 	return 0;
 }
