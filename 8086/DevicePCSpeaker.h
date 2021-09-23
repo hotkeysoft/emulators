@@ -34,8 +34,8 @@ namespace beeper
 
 		void InitSDLAudio();
 
-		ppi::Device8255* m_8255;
-		pit::Device8254* m_8254;
+		ppi::Device8255* m_8255 = nullptr;
+		pit::Device8254* m_8254 = nullptr;
 
 		uint16_t m_soundPeriod = 0;
 		uint16_t m_onCount = 0;

@@ -40,10 +40,43 @@ namespace emul
 		return (address <= GetMaxAddress(addressBits));
 	}
 
-	inline BYTE GetLowByte(WORD in) { return in & 0xFF; }
-	inline BYTE GetHiByte(WORD in) { return in >> 8; }
-	inline WORD SetLowByte(WORD& out, const BYTE low) { out &= 0xFF00; out |= low; return out; }
-	inline WORD SetHiByte(WORD& out, const BYTE hi) { out &= 0x00FF; out |= (hi << 8); return out; }
+	inline bool GetLSB(BYTE b) { return b & 1; }
+	inline bool GetMSB(BYTE b) { return b & 128; }
+
+	inline bool GetLSB(WORD b) { return b & 1; }
+	inline bool GetMSB(WORD b) { return b & 32768; }
+
+	inline BYTE GetLByte(WORD w) { return BYTE(w); };
+	inline BYTE GetHByte(WORD w) { return BYTE(w >> 8); };
+
+	inline WORD SetLByte(WORD& out, const BYTE low) { out &= 0xFF00; out |= low; return out; }
+	inline WORD SetHByte(WORD& out, const BYTE hi) { out &= 0x00FF; out |= (hi << 8); return out; }
+
+	inline WORD GetLWord(DWORD d) { return WORD(d & 0x0000FFFF); };
+	inline WORD GetHWord(DWORD d) { return WORD(d >> 16); };
+
+	inline WORD MakeWord(BYTE h, BYTE l) { return (((WORD)h) << 8) + l; };
+	inline DWORD MakeDword(WORD h, WORD l) { return (((DWORD)h) << 16) + l; }
+
+	inline WORD Widen(BYTE b)
+	{
+		WORD w = b;
+		if (GetMSB(b))
+		{
+			w |= 0xFF00;
+		}
+		return w;
+	}
+	inline DWORD Widen(WORD w)
+	{
+		DWORD dw = w;
+		if (GetMSB(w))
+		{
+			dw |= 0xFFFF0000;
+		}
+		return dw;
+	}
+
 	inline BYTE SetBit(BYTE& out, const BYTE bit, bool state)
 	{
 		if (state)

@@ -48,23 +48,20 @@ namespace pit
 			return m_rwMode == RWMode::RW_LSB ? 255 : 65535;
 		}
 
-		void SetMSB(BYTE value);
-		void SetLSB(BYTE value);
+		RWMode m_rwMode = RWMode::RW_LSB;
+		CounterMode m_mode = CounterMode::Mode0;
+		bool m_bcd = false;
 
-		RWMode m_rwMode;
-		CounterMode m_mode;
-		bool m_bcd;
+		bool m_gate = false;
+		bool m_out = false;
+		bool m_run = false;
+		bool m_newValue = false;
+		bool m_flipFlopLSBMSB = false;
+		WORD m_n = 0;
+		WORD m_value = 0;
 
-		bool m_gate;
-		bool m_out;
-		bool m_run;
-		bool m_newValue;
-		bool m_flipFlopLSBMSB;
-		WORD m_n;
-		WORD m_value;
-
-		bool m_latched;
-		WORD m_latchedValue;
+		bool m_latched = false;
+		WORD m_latchedValue = 0;
 
 		float m_periodMicro = 0.0f;
 	};

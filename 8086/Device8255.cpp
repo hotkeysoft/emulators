@@ -4,9 +4,7 @@ namespace ppi
 {
 	Device8255::Device8255(WORD baseAddress) : 
 		Logger("8255"), 
-		m_baseAddress(baseAddress), 
-		m_switches(0),
-		m_currentKey(0xAA)
+		m_baseAddress(baseAddress)
 	{
 		Reset();
 	}

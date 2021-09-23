@@ -59,7 +59,7 @@ namespace fdc
 	protected:
 		const WORD m_baseAddress;
 		size_t m_clockSpeed;
-		size_t m_currOpWait;
+		size_t m_currOpWait = 0;
 
 		enum class STATE
 		{
@@ -86,7 +86,9 @@ namespace fdc
 			DMA_ACK,
 
 			RESULT_WAIT,
-		} m_state, m_nextState;
+		};
+		STATE m_state = STATE::CMD_WAIT;
+		STATE m_nextState = STATE::CMD_WAIT;
 
 		// State machine processing
 		void RQMDelay(STATE nextState);
@@ -109,7 +111,7 @@ namespace fdc
 		bool m_dmaPending;
 		void SetDMAPending() { LogPrintf(Logger::LOG_DEBUG, "Set DMA Pending");  m_dmaPending = true; }
 
-		bool m_interruptPending;
+		bool m_interruptPending = false;
 		void SetInterruptPending() { m_interruptPending = true; }
 
 		// Status
@@ -148,25 +150,25 @@ namespace fdc
 			DS1 =  0x02, // Drive Number
 			DS0 =  0x01, // Drive Number
 		};
-		BYTE m_st0; // Status flag
-		BYTE m_st3; // Status flag
-		BYTE m_pcn; // Present Cylinder Number
+		BYTE m_st0 = 0; // Status flag
+		BYTE m_st3 = 0; // Status flag
+		BYTE m_pcn = 0; // Present Cylinder Number
 		
-		BYTE m_currSector;
-		BYTE m_maxSector;
-		BYTE m_currHead;
+		BYTE m_currSector = 0;
+		BYTE m_maxSector = 0;
+		BYTE m_currHead = 0;
 
-		BYTE m_srt; // Step Rate Time, time between cylinders (ms)
-		BYTE m_hlt; // Head Load Time, time to wait between activating head and before read (ms)
-		BYTE m_hut; // Head Unload Time, time to wait before deactivating the head (ms)
-		bool m_nonDMA;
+		BYTE m_srt = 0; // Step Rate Time, time between cylinders (ms)
+		BYTE m_hlt = 0; // Head Load Time, time to wait between activating head and before read (ms)
+		BYTE m_hut = 0; // Head Unload Time, time to wait before deactivating the head (ms)
+		bool m_nonDMA = true;
+
+		bool m_commandBusy = false;
+		bool m_dataRegisterReady = true;
+		bool m_driveActive[4] = { false, false, false, false };
 
 		enum class DataDirection { FDC2CPU, CPU2FDC };
-
-		bool m_commandBusy;
-		bool m_driveActive[4];
-		DataDirection m_dataInputOutput;
-		bool m_dataRegisterReady;
+		DataDirection m_dataInputOutput = DataDirection::CPU2FDC;
 
 		enum DOR
 		{
@@ -181,9 +183,9 @@ namespace fdc
 		};
 
 		// Drive Output Register
-		bool m_motor[4];
-		bool m_enableIRQDMA;
-		BYTE m_driveSel;
+		bool m_motor[4] = { false, false, false, false };
+		bool m_enableIRQDMA = false;
+		BYTE m_driveSel = 0;
 
 		// Command/Response/Parameters FIFO
 		void Push(BYTE value) { m_fifo.push_back(value); }
@@ -216,8 +218,8 @@ namespace fdc
 			ExecFunc func;
 			bool interrupt;
 		};
-		const Command* m_currCommand;
-		BYTE m_currcommandID;
+		const Command* m_currCommand = nullptr;
+		BYTE m_currcommandID = 0;
 
 		typedef std::map<CMD, Command> CommandMap;
 		const CommandMap m_commandMap = {

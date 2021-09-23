@@ -94,20 +94,20 @@ namespace ppi
 		enum DIRECTION { INPUT, OUTPUT };
 		const char* GetPortDirectionStr(DIRECTION d) { return (d == INPUT) ? "INPUT" : "OUTPUT"; }
 
-		DIRECTION m_portADirection;
-		DIRECTION m_portBDirection;
-		DIRECTION m_portCHDirection;
-		DIRECTION m_portCLDirection;
+		DIRECTION m_portADirection = INPUT;
+		DIRECTION m_portBDirection = INPUT;
+		DIRECTION m_portCHDirection = INPUT;
+		DIRECTION m_portCLDirection = INPUT;
 
-		BYTE m_portAData;
-		BYTE m_portBData;
-		BYTE m_portCData;
+		BYTE m_portAData = 0;
+		BYTE m_portBData = 0;
+		BYTE m_portCData = 0;
 
-		BYTE m_controlWord;
+		BYTE m_controlWord = DEFAULT_CONTROLWORD;
 
 		// Motherboard configuration switches
-		BYTE m_switches;
+		BYTE m_switches = 0;
 
-		BYTE m_currentKey;
+		BYTE m_currentKey = 0xAA;
 	};
 }

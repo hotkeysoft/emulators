@@ -48,36 +48,6 @@ namespace emul
 		uint32_t m_opTicks = 0;
 		inline void TICK(uint32_t count) { m_opTicks += count; }
 
-		// Helper functions
-		BYTE getLByte(WORD w) { return BYTE(w & 0x00FF); };
-		BYTE getHByte(WORD w) { return BYTE(w >> 8); };
-		WORD getWord(BYTE h, BYTE l) { return (((WORD)h) << 8) + l; };
-		WORD getLWord(DWORD d) { return WORD(d & 0x0000FFFF); };
-		WORD getHWord(DWORD d) { return WORD(d >> 16); };
-		DWORD getDword(WORD h, WORD l) { return (((DWORD)h) << 16) + l; }
-		bool getLSB(BYTE b) { return b & 1; }
-		bool getLSB(WORD b) { return b & 1; }
-		bool getMSB(WORD b) { return b & 32768; }
-		bool getMSB(BYTE b) { return b & 128; }
-		WORD widen(BYTE b)
-		{
-			WORD w = b;
-			if (getMSB(b))
-			{
-				w |= 0xFF00;
-			}
-			return w;
-		}
-		DWORD widen(WORD w)
-		{
-			DWORD dw = w;
-			if (getMSB(w))
-			{
-				dw |= 0xFFFF0000;
-			}
-			return dw;
-		}
-
 		bool IsParityOdd(BYTE b);
 		bool IsParityEven(BYTE b) { return !IsParityOdd(b); };
 

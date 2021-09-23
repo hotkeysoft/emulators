@@ -1,20 +1,13 @@
 #include "Device8254.h"
 
+using emul::GetHByte;
+using emul::GetLByte;
+using emul::SetLByte;
+using emul::SetHByte;
+
 namespace pit
 {
-	Counter::Counter(const char* label) : Logger(label),
-		m_rwMode(RWMode::RW_LSB),
-		m_mode(CounterMode::Mode0),
-		m_bcd(false),
-		m_gate(false),
-		m_out(false),
-		m_run(false),
-		m_flipFlopLSBMSB(false),
-		m_newValue(false),
-		m_n(0),
-		m_value(0),
-		m_latched(false),
-		m_latchedValue(0)
+	Counter::Counter(const char* label) : Logger(label)
 	{
 	}
 
@@ -121,23 +114,23 @@ namespace pit
 		switch (m_rwMode)
 		{
 		case RWMode::RW_LSB:
-			ret = (BYTE)value;
+			ret = GetLByte(value);
 			m_latched = false;
 			break;
 
 		case RWMode::RW_MSB:
-			ret = (BYTE)(value >> 8);
+			ret = GetHByte(value);
 			m_latched = false;
 			break;
 
 		case RWMode::RW_LSBMSB:
 			if (!m_flipFlopLSBMSB)
 			{
-				ret = (BYTE)value;
+				ret = GetLByte(value);
 			}
 			else
 			{
-				ret = (BYTE)(value >> 8);
+				ret = GetHByte(value);
 				m_latched = false;
 			}
 			break;
@@ -155,23 +148,23 @@ namespace pit
 		case RWMode::RW_LSBMSB:
 			if (!m_flipFlopLSBMSB)
 			{
-				SetLSB(value);
+				SetLByte(m_n, value);
 			}
 			else
 			{
-				SetMSB(value);
+				SetHByte(m_n, value);
 				m_newValue = true;
 			}
 			m_flipFlopLSBMSB = !m_flipFlopLSBMSB;
 			break;
 		case RWMode::RW_LSB:
-			SetMSB(0);
-			SetLSB(value);
+			SetHByte(m_n, 0);
+			SetLByte(m_n, value);
 			m_newValue = true;
 			break;
 		case RWMode::RW_MSB:
-			SetLSB(0);
-			SetMSB(value);
+			SetLByte(m_n, 0);
+			SetHByte(m_n, value);
 			m_newValue = true;
 			break;
 		default:
@@ -188,19 +181,6 @@ namespace pit
 			m_latchedValue = m_value;
 			m_latched = true;
 		}
-	}
-
-	void Counter::SetMSB(BYTE value)
-	{
-		m_n &= 0x00FF;
-		m_n |= (value<<8);
-		LogPrintf(LOG_DEBUG, "SetMSB(%02Xh), newN=%04Xh", value, m_n);
-	}
-	void Counter::SetLSB(BYTE value)
-	{
-		m_n &= 0xFF00;
-		m_n |= value;
-		LogPrintf(LOG_DEBUG, "SetLSB(%02Xh), newN=%04Xh", value, m_n);
 	}
 
 	void Counter::SetRWMode(RWMode rw)

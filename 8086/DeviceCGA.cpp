@@ -63,7 +63,7 @@ namespace cga
 
 		m_sdlBorderPixels = border;
 		m_sdlHBorder = border;
-		m_sdlVBorder = border / VSCALE;
+		m_sdlVBorder = (BYTE)(border / VSCALE);
 
 		// CRTC Register Select
 		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&DeviceCGA::SelectCRTCRegister));
@@ -226,20 +226,20 @@ namespace cga
 
 		case CRT_START_ADDR_HI:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:   startAddress(HI) = %d", value);
-			emul::SetHiByte(m_crtc.startAddress, value & 63);
+			emul::SetHByte(m_crtc.startAddress, value & 63);
 			break;
 		case CRT_START_ADDR_LO:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  startAddress(LOW) = %d", value);
-			emul::SetLowByte(m_crtc.startAddress, value);
+			emul::SetLByte(m_crtc.startAddress, value);
 			break;
 
 		case CRT_CURSOR_ADDR_HI:
 			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(HI) = %d", value);
-			emul::SetHiByte(m_crtc.cursorAddress, value & 63);
+			emul::SetHByte(m_crtc.cursorAddress, value & 63);
 			break;
 		case CRT_CURSOR_ADDR_LO:
 			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(LO) = %d", value);
-			emul::SetLowByte(m_crtc.cursorAddress, value);
+			emul::SetLByte(m_crtc.cursorAddress, value);
 			break;
 
 		default:
@@ -333,14 +333,14 @@ namespace cga
 			m_vPos = 0;
 
 			// Pointers for alpha mode
-			m_currChar = m_screenB800.getPtr8(m_crtc.startAddress*2);
-			if (m_crtc.cursorAddress * 2 >= m_screenB800.GetSize())
+			m_currChar = m_screenB800.getPtr8(m_crtc.startAddress * 2u);
+			if (m_crtc.cursorAddress * 2u >= m_screenB800.GetSize())
 			{
 				m_cursorPos = nullptr;
 			}
 			else
 			{
-				m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress * 2);
+				m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress * 2u);
 			}
 			
 			if ((m_frame % 16) == 0) m_blink16 = !m_blink16;

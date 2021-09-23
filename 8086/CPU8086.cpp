@@ -81,9 +81,9 @@ namespace emul
 		case 0x05: ArithmeticImm16(regA.x, FetchWord(), rawAdd16); break;
 
 		// PUSH ES (1)
-		case 0x06: PUSH(regES); break;
+		case 0x06: TICK(10); PUSH(regES); break;
 		// POP ES (1)
-		case 0x07: POP(regES); break;
+		case 0x07: TICK(8); POP(regES); break;
 
 		// OR rm+r=>rm (4)
 		// ----------
@@ -104,9 +104,9 @@ namespace emul
 		case 0x0D: ArithmeticImm16(regA.x, FetchWord(), rawOr16); break;
 
 		// PUSH CS (1)
-		case 0x0E: PUSH(regCS); break;
+		case 0x0E: TICK(10); PUSH(regCS); break;
 		// POP CS (1) // Undocumented, 8086 only
-		case 0x0F: POP(regCS); break;
+		case 0x0F: TICK(8); POP(regCS); break;
 
 		// ADC rm+r=>rm (4)
 		// ----------
@@ -128,9 +128,9 @@ namespace emul
 		case 0x15: ArithmeticImm16(regA.x, FetchWord(), rawAdc16); break;
 
 		// PUSH SS (1)
-		case 0x16: PUSH(regSS); break;
+		case 0x16: TICK(10); PUSH(regSS); break;
 		// POP SS (1)
-		case 0x17: POP(regSS); break;
+		case 0x17: TICK(8); POP(regSS); break;
 
 		// SBB rm+r=>rm (4)
 		// ----------
@@ -151,9 +151,9 @@ namespace emul
 		case 0x1D: ArithmeticImm16(regA.x, FetchWord(), rawSbb16); break;
 
 		// PUSH DS (1)
-		case 0x1E: PUSH(regDS); break;
+		case 0x1E: TICK(10); PUSH(regDS); break;
 		// POP DS (1)
-		case 0x1F: POP(regDS); break;
+		case 0x1F: TICK(8); POP(regDS); break;
 
 		// AND rm+r=>rm (4)
 		// ----------
@@ -174,10 +174,10 @@ namespace emul
 		case 0x25: ArithmeticImm16(regA.x, FetchWord(), rawAnd16); break;
 
 		// ES Segment Override
-		case 0x26: SEGOVERRIDE(regES); break;
+		case 0x26: TICK(2); SEGOVERRIDE(regES); break;
 
 		// DAA (1)
-		case 0x27: DAA(); break;
+		case 0x27: TICK(4); DAA(); break;
 
 		// SUB rm+r=>rm (4)
 		// ----------
@@ -198,10 +198,10 @@ namespace emul
 		case 0x2D: ArithmeticImm16(regA.x, FetchWord(), rawSub16); break;
 
 		// CS Segment Override
-		case 0x2E: SEGOVERRIDE(regCS); break;
+		case 0x2E: TICK(2); SEGOVERRIDE(regCS); break;
 
 		// DAS (1)
-		case 0x2F: DAS(); break;
+		case 0x2F: TICK(4); DAS(); break;
 
 		// XOR rm+r=>rm (4)
 		// ----------
@@ -222,10 +222,10 @@ namespace emul
 		case 0x35: ArithmeticImm16(regA.x, FetchWord(), rawXor16); break;
 
 		// SS Segment Override
-		case 0x36: SEGOVERRIDE(regSS); break;
+		case 0x36: TICK(2); SEGOVERRIDE(regSS); break;
 
 		// AAA (1)
-		case 0x37: AAA(); break;
+		case 0x37: TICK(4);  AAA(); break;
 
 		// CMP rm+r=>r (4)
 		// ----------
@@ -246,86 +246,86 @@ namespace emul
 		case 0x3D: ArithmeticImm16(regA.x, FetchWord(), rawCmp16); break;
 
 		// DS Segment Override
-		case 0x3E: SEGOVERRIDE(regDS); break;
+		case 0x3E: TICK(2); SEGOVERRIDE(regDS); break;
 
 		// AAS (1)
-		case 0x3F: AAS(); break;
+		case 0x3F: TICK(4); AAS(); break;
 
 		// INC r (1)
 		// ----------
 		// INC AX
-		case 0x40: INC16(regA.x); break;
+		case 0x40: TICK(2); INC16(regA.x); break;
 		// INC CX
-		case 0x41: INC16(regC.x); break;
+		case 0x41: TICK(2); INC16(regC.x); break;
 		// INC DX
-		case 0x42: INC16(regD.x); break;
+		case 0x42: TICK(2); INC16(regD.x); break;
 		// INC BX
-		case 0x43: INC16(regB.x); break;
+		case 0x43: TICK(2); INC16(regB.x); break;
 		// INC SP
-		case 0x44: INC16(regSP); break;
+		case 0x44: TICK(2); INC16(regSP); break;
 		// INC BP
-		case 0x45: INC16(regBP); break;
+		case 0x45: TICK(2); INC16(regBP); break;
 		// INC SI
-		case 0x46: INC16(regSI); break;
+		case 0x46: TICK(2); INC16(regSI); break;
 		// INC DI
-		case 0x47: INC16(regDI); break;
+		case 0x47: TICK(2); INC16(regDI); break;
 
 		// DEC r (1)
 		// ----------
 		// DEC AX
-		case 0x48: DEC16(regA.x); break;
+		case 0x48: TICK(2); DEC16(regA.x); break;
 		// DEC CX
-		case 0x49: DEC16(regC.x); break;
+		case 0x49: TICK(2); DEC16(regC.x); break;
 		// DEC DX
-		case 0x4A: DEC16(regD.x); break;
+		case 0x4A: TICK(2); DEC16(regD.x); break;
 		// DEC BX
-		case 0x4B: DEC16(regB.x); break;
+		case 0x4B: TICK(2); DEC16(regB.x); break;
 		// DEC SP
-		case 0x4C: DEC16(regSP); break;
+		case 0x4C: TICK(2); DEC16(regSP); break;
 		// DEC BP
-		case 0x4D: DEC16(regBP); break;
+		case 0x4D: TICK(2); DEC16(regBP); break;
 		// DEC SI
-		case 0x4E: DEC16(regSI); break;
+		case 0x4E: TICK(2); DEC16(regSI); break;
 		// DEC DI
-		case 0x4F: DEC16(regDI); break;
+		case 0x4F: TICK(2); DEC16(regDI); break;
 
 		// PUSH r (1)
 		// ----------
 		// PUSH AX
-		case 0x50: PUSH(regA.x); break;
+		case 0x50: TICK(11); PUSH(regA.x); break;
 		// PUSH CX
-		case 0x51: PUSH(regC.x); break;
+		case 0x51: TICK(11); PUSH(regC.x); break;
 		// PUSH DX
-		case 0x52: PUSH(regD.x); break;
+		case 0x52: TICK(11); PUSH(regD.x); break;
 		// PUSH BX
-		case 0x53: PUSH(regB.x); break;
+		case 0x53: TICK(11); PUSH(regB.x); break;
 		// PUSH SP
-		case 0x54: PUSH(regSP); break;
+		case 0x54: TICK(11); PUSH(regSP); break;
 		// PUSH BP
-		case 0x55: PUSH(regBP); break;
+		case 0x55: TICK(11); PUSH(regBP); break;
 		// PUSH SI
-		case 0x56: PUSH(regSI); break;
+		case 0x56: TICK(11); PUSH(regSI); break;
 		// PUSH DI
-		case 0x57: PUSH(regDI); break;
+		case 0x57: TICK(11); PUSH(regDI); break;
 
 		// POP r (1)
 		// ----------
 		// POP AX
-		case 0x58: POP(regA.x); break;
+		case 0x58: TICK(8); POP(regA.x); break;
 		// POP CX
-		case 0x59: POP(regC.x); break;
+		case 0x59: TICK(8); POP(regC.x); break;
 		// POP DX
-		case 0x5A: POP(regD.x); break;
+		case 0x5A: TICK(8); POP(regD.x); break;
 		// POP BX
-		case 0x5B: POP(regB.x); break;
+		case 0x5B: TICK(8); POP(regB.x); break;
 		// POP SP
-		case 0x5C: POP(regSP); break;
+		case 0x5C: TICK(8); POP(regSP); break;
 		// POP BP
-		case 0x5D: POP(regBP); break;
+		case 0x5D: TICK(8); POP(regBP); break;
 		// POP SI
-		case 0x5E: POP(regSI); break;
+		case 0x5E: TICK(8); POP(regSI); break;
 		// POP DI
-		case 0x5F: POP(regDI); break;
+		case 0x5F: TICK(8); POP(regDI); break;
 
 		// Undocumented: 0x60-0x6F maps to 0x70-0x7F on 8086 only
 		// JO (2)
@@ -440,41 +440,41 @@ namespace emul
 		// XCHG rm<=>a (1)
 		// ----------
 		// XCHG AX, AX (NOP)
-		case 0x90: XCHG16(regA.x, regA.x); break;
+		case 0x90: TICK(3); XCHG16(regA.x, regA.x); break;
 		// XCHG AX, CX
-		case 0x91: XCHG16(regA.x, regC.x); break;
+		case 0x91: TICK(3); XCHG16(regA.x, regC.x); break;
 		// XCHG AX, DX
-		case 0x92: XCHG16(regA.x, regD.x); break;
+		case 0x92: TICK(3); XCHG16(regA.x, regD.x); break;
 		// XCHG AX, BX
-		case 0x93: XCHG16(regA.x, regB.x); break;
+		case 0x93: TICK(3); XCHG16(regA.x, regB.x); break;
 		// XCHG AX, SP
-		case 0x94: XCHG16(regA.x, regSP); break;
+		case 0x94: TICK(3); XCHG16(regA.x, regSP); break;
 		// XCHG AX, BP
-		case 0x95: XCHG16(regA.x, regBP); break;
+		case 0x95: TICK(3); XCHG16(regA.x, regBP); break;
 		// XCHG AX, SI
-		case 0x96: XCHG16(regA.x, regSI); break;
+		case 0x96: TICK(3); XCHG16(regA.x, regSI); break;
 		// XCHG AX, DI
-		case 0x97: XCHG16(regA.x, regDI); break;
+		case 0x97: TICK(3); XCHG16(regA.x, regDI); break;
 
 		// CBW
-		case 0x98: CBW(); break;
+		case 0x98: TICK(2); CBW(); break;
 		// CWD
-		case 0x99: CWD(); break;
+		case 0x99: TICK(5); CWD(); break;
 
 		// CALL Far (5)
-		case 0x9A: CALLfar(); break;
+		case 0x9A: TICK(28); CALLfar(); break;
 
 		// WAIT (1)
 		case 0x9B: NotImplemented(opcode); break;
 
 		// PUSHF (1)
-		case 0x9C: PUSH(flags); break;
+		case 0x9C: TICK(10); PUSH(flags); break;
 		// POPF (1)
-		case 0x9D: POP(flags); flags |= FLAG_R1; flags &= ~(FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15); break;  // TODO: Clean flags in function
+		case 0x9D: TICK(8); POP(flags); flags |= FLAG_R1; flags &= ~(FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15); break;  // TODO: Clean flags in function
 		// SAHF (1)
-		case 0x9E: SAHF(); break;
+		case 0x9E: TICK(4); SAHF(); break;
 		// LAHF (1)
-		case 0x9F: LAHF(); break;
+		case 0x9F: TICK(4); LAHF(); break;
 
 		// MOV m=>a (3)
 		// ----------
@@ -493,16 +493,16 @@ namespace emul
 		// MOVS (1)
 		// ----------
 		// MOVS DEST-STR8, SRC-STR8
-		case 0xA4: MOVS8(); break;
+		case 0xA4: TICK(17); MOVS8(); break;
 		// MOVS DEST-STR16, SRC-STR16
-		case 0xA5: MOVS16(); break;
+		case 0xA5: TICK(17); MOVS16(); break;
 
 		// CMPS (1)
 		// ----------
 		// CMPS DEST-STR8, SRC-STR8
-		case 0xA6: CMPS8(); break;
+		case 0xA6: TICK(22); CMPS8(); break;
 		// CMPS DEST-STR16, SRC-STR16
-		case 0xA7: CMPS16(); break;
+		case 0xA7: TICK(22); CMPS16(); break;
 
 		// TEST i+a (2)
 		// ----------
@@ -514,16 +514,16 @@ namespace emul
 		// STOS (1)
 		// ----------
 		// STOS DEST-STR8
-		case 0xAA: STOS8(); break;
+		case 0xAA: TICK(10); STOS8(); break;
 		// STOS DEST-STR16
-		case 0xAB: STOS16(); break;
+		case 0xAB: TICK(10); STOS16(); break;
 
 		// LODS (1)
 		// ----------
 		// LODS SRC-STR8
-		case 0xAC: LODS8(); break;
+		case 0xAC: TICK(12); LODS8(); break;
 		// LODS SRC-STR16
-		case 0xAD: LODS16(); break;
+		case 0xAD: TICK(12); LODS16(); break;
 
 		// SCAS (1)
 		// ----------
@@ -570,10 +570,10 @@ namespace emul
 
 		// RET SP+IMM16 (3)
 		case 0xC0: // Undocumented, 8086 only
-		case 0xC2: RETNear(true, FetchWord()); break;
+		case 0xC2: TICK(12); RETNear(true, FetchWord()); break;
 		// RET Near (1)
 		case 0xC1: // Undocumented, 8086 only
-		case 0xC3: RETNear(); break;
+		case 0xC3: TICK(8); RETNear(); break;
 
 		// LES REG16, MEM16 (4)
 		case 0xC4: LoadPTR(regES, GetModRegRM16(FetchByte(), true)); break;
@@ -589,19 +589,19 @@ namespace emul
 
 		// RET Far SP+IMM16 (3)
 		case 0xC8: //Undocumented, 8086 only
-		case 0xCA: RETFar(true, FetchWord()); break;
+		case 0xCA: TICK(18); RETFar(true, FetchWord()); break;
 		// RET Far (1)
 		case 0xC9: //Undocumented, 8086 only
-		case 0xCB: RETFar(); break;
+		case 0xCB: TICK(17); RETFar(); break;
 
 		// INT3 (1)
-		case 0xCC: INT(3); break;
+		case 0xCC: TICK(52); INT(3); break;
 		// INT IMM8 (2)
-		case 0xCD: INT(FetchByte()); break;
+		case 0xCD: TICK(51); INT(FetchByte()); break;
 		// INTO (1)
-		case 0xCE: if (GetFlag(FLAG_O)) INT(4); break;
+		case 0xCE: TICK(4);  if (GetFlag(FLAG_O)) { TICK(49); INT(4); } break;
 		// IRET (1)
-		case 0xCF: IRET(); break;
+		case 0xCF: TICK(24); IRET(); break;
 
 		// ROL/ROR/RCL/RCR/SAL|SHL/SHR/---/SAR
 		// ----------
@@ -615,16 +615,16 @@ namespace emul
 		case 0xD3: SHIFTROT16(FetchByte(), regC.hl.l); break;
 
 		// AAM
-		case 0xD4: AAM(FetchByte()); break;
+		case 0xD4: TICK(83); AAM(FetchByte()); break;
 		// AAD
-		case 0xD5: AAD(FetchByte()); break;
+		case 0xD5: TICK(60); AAD(FetchByte()); break;
 
 		// TODO: Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
 		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
 		// case 0xD6: SALC(); break
 
 		// XLAT (1)
-		case 0xD7: XLAT(); break;
+		case 0xD7: TICK(11); XLAT(); break;
 
 		// ESC (2) 
 		case 0xD8: 
@@ -637,63 +637,63 @@ namespace emul
 		case 0xDF: GetModRegRM16(FetchByte()); break;
 
 		// LOOPNZ/LOOPNE (2)
-		case 0xE0: LOOP(FetchByte(), GetFlag(FLAG_Z) == false); break;
+		case 0xE0: TICK(1); LOOP(FetchByte(), GetFlag(FLAG_Z) == false); break;
 		// LOOPZ/LOOPE (2)
-		case 0xE1: LOOP(FetchByte(), GetFlag(FLAG_Z) == true); break;
+		case 0xE1: TICK(1); LOOP(FetchByte(), GetFlag(FLAG_Z) == true); break;
 		// LOOP (2)
 		case 0xE2: LOOP(FetchByte()); break;
 		// JCXZ (2)
-		case 0xE3: JMPif(regC.x == 0); break;
+		case 0xE3: TICK(2); JMPif(regC.x == 0); break;
 
 		// IN fixed (2)
 		// --------
 		// IN AL, IMM8
-		case 0xE4: IN8(FetchByte()); break;
-		// IN AX, IMM8
-		case 0xE5: NotImplemented(opcode); break;
+		case 0xE4: TICK(10); IN8(FetchByte()); break;
+		// IN AX, IMM16
+		case 0xE5: TICK(10); NotImplemented(opcode); break;
 
 		// OUT fixed (2)
 		// --------
 		// OUT PORT8, AL
-		case 0xE6: OUT8(FetchByte()); break;
+		case 0xE6: TICK(10); OUT8(FetchByte()); break;
 		// OUT PORT8, AX
-		case 0xE7: OUT16(FetchByte()); break;
+		case 0xE7: TICK(10); OUT16(FetchByte()); break;
 
 		// CALL Near (3)
-		case 0xE8: CALLNear(FetchWord()); break;
+		case 0xE8: TICK(19); CALLNear(FetchWord()); break;
 		// JUMP Near (3)
-		case 0xE9: JMPNear(FetchWord()); break;
+		case 0xE9: TICK(15); JMPNear(FetchWord()); break;
 		// JUMP Far (5)
-		case 0xEA: JMPfar(); break;
+		case 0xEA: TICK(15); JMPfar(); break;
 		// JUMP Near Short (2)
-		case 0xEB: JMPNear(FetchByte()); break;
+		case 0xEB: TICK(15); JMPNear(FetchByte()); break;
 
 		// IN variable (1)
 		// --------
 		// IN AL, DX
-		case 0xEC: IN8(regD.x); break;
+		case 0xEC: TICK(8); IN8(regD.x); break;
 		// IN AX, DX
-		case 0xED: NotImplemented(opcode); break;
+		case 0xED: TICK(8); NotImplemented(opcode); break;
 
 		// OUT variable (1)
 		// --------
 		// OUT DX, AL
-		case 0xEE: OUT8(regD.x); break;
+		case 0xEE: TICK(8); OUT8(regD.x); break;
 		// OUT DX, AX
-		case 0xEF: OUT16(regD.x); break;
+		case 0xEF: TICK(8); OUT16(regD.x); break;
 
 		// LOCK (1)
-		case 0xF0: NotImplemented(opcode); break;
+		case 0xF0: TICK(2); NotImplemented(opcode); break;
 
 		// REPNZ/REPNE (1)
-		case 0xF2: REP(false); break;
+		case 0xF2: TICK(2); REP(false); break;
 		// REPZ/REPE (1)
-		case 0xF3: REP(true); break;
+		case 0xF3: TICK(2); REP(true); break;
 
 		// HLT (1)
 		case 0xF4: HLT(); break;
 		// CMC (1)
-		case 0xF5: CMC(); break;
+		case 0xF5: TICK(2); CMC(); break;
 
 		// TEST/---/NOT/NEG/MUL/IMUL/DIV/IDIV
 		// --------
@@ -702,22 +702,22 @@ namespace emul
 		// REG16/MEM16 (, IMM16 {TEST})
 		case 0xF7: ArithmeticMulti16(FetchByte()); break;
 
-		case 0xF8: CLC(); break;
+		case 0xF8: TICK(2); CLC(); break;
 		// STC (1)
-		case 0xF9: STC(); break;
+		case 0xF9: TICK(2); STC(); break;
 		// CLI (1)
-		case 0xFA: CLI(); break;
+		case 0xFA: TICK(2); CLI(); break;
 		// STI (1)
-		case 0xFB: STI(); break;
+		case 0xFB: TICK(2); STI(); break;
 		// CLD (1)
-		case 0xFC: CLD(); break;
+		case 0xFC: TICK(2); CLD(); break;
 		// STD (1)
-		case 0xFD: STD(); break;
+		case 0xFD: TICK(2); STD(); break;
 
 		// INC/DEC/---/---/---/---/---/---
 		// --------
 		// REG8/MEM8
-		case 0xFE: INCDEC8(FetchByte()); break;
+		case 0xFE: TICK(3); INCDEC8(FetchByte()); break;
 
 		// INC/DEC/CALL/CALL/JMP/JMP/PUSH/---
 		case 0xFF: MultiFunc(FetchByte()); break;
@@ -735,6 +735,7 @@ namespace emul
 		if (trap && GetFlag(FLAG_T))
 		{
 			LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", regCS, regIP);
+			TICK(50);
 			INT(1);
 		}
 	}
@@ -1007,7 +1008,7 @@ namespace emul
 			}
 			break;
 		case 0x40:
-			displacement = widen(FetchByte());
+			displacement = Widen(FetchByte());
 			LogPrintf(LOG_DEBUG, "GetModRM8: MEM disp8=%04X", displacement);
 			break;
 		case 0x80:
@@ -1078,7 +1079,7 @@ namespace emul
 			}
 			break;
 		case 0x40:
-			displacement = widen(FetchByte());
+			displacement = Widen(FetchByte());
 			LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp8=%04X", displacement);
 			break;
 		case 0x80:
@@ -1142,7 +1143,7 @@ namespace emul
 	}
 	void CPU8086::AdjustParity(WORD data)
 	{
-		AdjustParity(getLByte(data));
+		AdjustParity(GetLByte(data));
 	}
 	void CPU8086::AdjustSign(WORD data)
 	{
@@ -1200,13 +1201,13 @@ namespace emul
 	void CPU8086::CBW()
 	{
 		LogPrintf(LOG_DEBUG, "CBW");
-		regA.hl.h = getMSB(regA.hl.l) ? 0xFF : 0;
+		regA.hl.h = GetMSB(regA.hl.l) ? 0xFF : 0;
 	}
 
 	void CPU8086::CWD()
 	{
 		LogPrintf(LOG_DEBUG, "CWD");
-		regD.x = getMSB(regA.x) ? 0xFFFF : 0;
+		regD.x = GetMSB(regA.x) ? 0xFFFF : 0;
 	}
 
 	void CPU8086::HLT()
@@ -1263,7 +1264,7 @@ namespace emul
 	void CPU8086::JMPNear(BYTE offset)
 	{
 		LogPrintf(LOG_DEBUG, "JMPNear Byte offset %02X", offset);
-		regIP += widen(offset);
+		regIP += Widen(offset);
 	}
 	void CPU8086::JMPNear(WORD offset)
 	{
@@ -1317,7 +1318,7 @@ namespace emul
 
 		++b;
 
-		SetFlag(FLAG_O, (!getMSB(before) && getMSB(b)));
+		SetFlag(FLAG_O, (!GetMSB(before) && GetMSB(b)));
 		AdjustSign(b);
 		AdjustZero(b);
 		SetFlag(FLAG_A, ((before & 0x0F) == 0x0F));
@@ -1331,7 +1332,7 @@ namespace emul
 
 		--b;
 
-		SetFlag(FLAG_O, (getMSB(before) && !getMSB(b)));
+		SetFlag(FLAG_O, (GetMSB(before) && !GetMSB(b)));
 		AdjustSign(b);
 		AdjustZero(b);
 		SetFlag(FLAG_A, ((before & 0x0F) == 0));
@@ -1345,7 +1346,7 @@ namespace emul
 
 		++w;
 
-		SetFlag(FLAG_O, (!getMSB(before) && getMSB(w)));
+		SetFlag(FLAG_O, (!GetMSB(before) && GetMSB(w)));
 		AdjustSign(w);
 		AdjustZero(w);
 		SetFlag(FLAG_A, ((before & 0x000F) == 0x0F));
@@ -1358,7 +1359,7 @@ namespace emul
 
 		--w;
 
-		SetFlag(FLAG_O, (getMSB(before) && !getMSB(w)));
+		SetFlag(FLAG_O, (GetMSB(before) && !GetMSB(w)));
 		AdjustSign(w);
 		AdjustZero(w);
 		SetFlag(FLAG_A, ((before & 0x000F) == 0));
@@ -1409,11 +1410,13 @@ namespace emul
 
 	void CPU8086::JMPif(bool cond)
 	{
+		TICK(4);
 		LogPrintf(LOG_DEBUG, "JMPif %d", cond);
 		BYTE offset = FetchByte();
 		if (cond)
 		{
-			regIP += widen(offset);
+			TICK(12);
+			regIP += Widen(offset);
 		}
 	}
 
@@ -1447,24 +1450,24 @@ namespace emul
 			{
 			case 0x00: // ROL
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
-				SetFlag(FLAG_C, getMSB(dest));
+				SetFlag(FLAG_C, GetMSB(dest));
 				dest = (dest << 1) | (dest >> 7);
 				break;
 			case 0x08: // ROR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
-				SetFlag(FLAG_C, getLSB(dest));
+				SetFlag(FLAG_C, GetLSB(dest));
 				dest = (dest >> 1) | (dest << 7);
 				break;
 			case 0x10: // RCL
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
 				carry = GetFlag(FLAG_C);
-				SetFlag(FLAG_C, getMSB(dest));
+				SetFlag(FLAG_C, GetMSB(dest));
 				dest <<= 1;
 				dest |= (carry ? 1 : 0);
 				break;
 			case 0x18: // RCR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-				carry = getLSB(dest);
+				carry = GetLSB(dest);
 				dest >>= 1;
 				dest |= (GetFlag(FLAG_C) ? 128 : 0);
 				SetFlag(FLAG_C, carry);
@@ -1472,17 +1475,17 @@ namespace emul
 			case 0x20: // SHL/SAL
 			case 0x30: // Undocumented 
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
-				SetFlag(FLAG_C, getMSB(dest));
+				SetFlag(FLAG_C, GetMSB(dest));
 				dest <<= 1;
 				break;
 			case 0x28: // SHR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
-				SetFlag(FLAG_C, getLSB(dest));
+				SetFlag(FLAG_C, GetLSB(dest));
 				dest >>= 1;
 				break;
 			case 0x38: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
-				SetFlag(FLAG_C, getLSB(dest));
+				SetFlag(FLAG_C, GetLSB(dest));
 				sign = (dest & 128);
 				dest >>= 1;
 				dest |= sign;
@@ -1491,7 +1494,7 @@ namespace emul
 				throw(std::exception("not possible"));
 			}
 
-			SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
+			SetFlag(FLAG_O, GetMSB(before) != GetMSB(dest));
 		}
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
 
@@ -1529,24 +1532,24 @@ namespace emul
 			{
 			case 0x00: // ROL
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROL");
-				SetFlag(FLAG_C, getMSB(dest));
+				SetFlag(FLAG_C, GetMSB(dest));
 				dest = (dest << 1) | (dest >> 15);
 				break;
 			case 0x08: // ROR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROR");
-				SetFlag(FLAG_C, getLSB(dest));
+				SetFlag(FLAG_C, GetLSB(dest));
 				dest = (dest >> 1) | (dest << 15);
 				break;
 			case 0x10: // RCL
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCL");
 				carry = GetFlag(FLAG_C);
-				SetFlag(FLAG_C, getMSB(dest));
+				SetFlag(FLAG_C, GetMSB(dest));
 				dest <<= 1;
 				dest |= (carry ? 1 : 0);
 				break;
 			case 0x18: // RCR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-				carry = getLSB(dest);
+				carry = GetLSB(dest);
 				dest >>= 1;
 				dest |= (GetFlag(FLAG_C) ? 32768 : 0);
 				SetFlag(FLAG_C, carry);
@@ -1554,17 +1557,17 @@ namespace emul
 			case 0x20: // SHL/SAL
 			case 0x30: // Undocumented 
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
-				SetFlag(FLAG_C, getMSB(dest));
+				SetFlag(FLAG_C, GetMSB(dest));
 				dest <<= 1;
 				break;
 			case 0x28: // SHR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHR");
-				SetFlag(FLAG_C, getLSB(dest));
+				SetFlag(FLAG_C, GetLSB(dest));
 				dest >>= 1;
 				break;
 			case 0x38: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
-				SetFlag(FLAG_C, getLSB(dest));
+				SetFlag(FLAG_C, GetLSB(dest));
 				sign = (dest & 32768);
 				dest >>= 1;
 				dest |= sign;
@@ -1573,7 +1576,7 @@ namespace emul
 				throw(std::exception("not possible"));
 			}
 
-			SetFlag(FLAG_O, getMSB(before) != getMSB(dest));
+			SetFlag(FLAG_O, GetMSB(before) != GetMSB(dest));
 		}
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest), dest, dest);
 
@@ -1608,13 +1611,13 @@ namespace emul
 			// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative), 
 			// then overflow occurs if and only if the result has the opposite sign. 
 			// Overflow never occurs when adding operands with different signs. 
-			SetFlag(FLAG_O, (getMSB(source) == getMSB(before)) && (getMSB(afterB) != getMSB(source)));
+			SetFlag(FLAG_O, (GetMSB(source) == GetMSB(before)) && (GetMSB(afterB) != GetMSB(source)));
 		}
 		else if (func == rawSub8 || func == rawCmp8 || func == rawSbb8)
 		{
 			// If 2 Two's Complement numbers are subtracted, and their signs are different, 
 			// then overflow occurs if and only if the result has the same sign as what is being subtracted.
-			SetFlag(FLAG_O, (getMSB(source) != getMSB(before)) && (getMSB(afterB) == getMSB(source)));
+			SetFlag(FLAG_O, (GetMSB(source) != GetMSB(before)) && (GetMSB(afterB) == GetMSB(source)));
 		}
 		else
 		{
@@ -1649,13 +1652,13 @@ namespace emul
 			// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative), 
 			// then overflow occurs if and only if the result has the opposite sign. 
 			// Overflow never occurs when adding operands with different signs. 
-			SetFlag(FLAG_O, (getMSB(source) == getMSB(before)) && (getMSB(before) != getMSB(afterW)));
+			SetFlag(FLAG_O, (GetMSB(source) == GetMSB(before)) && (GetMSB(before) != GetMSB(afterW)));
 		}
 		else if (func == rawSub16 || func == rawCmp16 || func == rawSbb16)
 		{
 			// If 2 Two's Complement numbers are subtracted, and their signs are different, 
 			// then overflow occurs if and only if the result has the same sign as what is being subtracted.
-			SetFlag(FLAG_O, (getMSB(source) != getMSB(before)) && (getMSB(afterW) == getMSB(source)));
+			SetFlag(FLAG_O, (GetMSB(source) != GetMSB(before)) && (GetMSB(afterW) == GetMSB(source)));
 		}
 		else
 		{
@@ -1697,11 +1700,13 @@ namespace emul
 
 	void CPU8086::LOOP(BYTE offset, bool cond)
 	{
+		TICK(5);
 		--regC.x;
 		LogPrintf(LOG_DEBUG, "LOOP, CX=%04X", regC.x);
 		if (regC.x && cond)
 		{
-			regIP += widen(offset);
+			TICK(12);
+			regIP += Widen(offset);
 		}
 	}
 
@@ -1773,7 +1778,7 @@ namespace emul
 		SourceDest16 sd;
 		sd.dest = GetModRM16(op2);
 
-		WORD imm = signExtend ? widen(FetchByte()) : FetchWord();
+		WORD imm = signExtend ? Widen(FetchByte()) : FetchWord();
 		sd.source = &imm;
 
 		Arithmetic16(sd, func);
@@ -1834,7 +1839,7 @@ namespace emul
 			int16_t result = (int8_t)regA.hl.l * (int8_t)(*modrm);
 			LogPrintf(LOG_DEBUG, "IMUL8, %d * %d = %d", (int8_t)regA.hl.l, (int8_t)(*modrm), result);
 			regA.x = (WORD)result;
-			WORD tmp = widen(regA.hl.l);
+			WORD tmp = Widen(regA.hl.l);
 			bool ocFlags = (tmp != (WORD)result);
 			SetFlag(FLAG_O, ocFlags);
 			SetFlag(FLAG_C, ocFlags);
@@ -1932,8 +1937,8 @@ namespace emul
 		{
 			DWORD result = regA.x * (*modrm);
 			LogPrintf(LOG_DEBUG, "MUL16, %04X * %04X = %08X", regA.x, *modrm, result);
-			regD.x = getHWord(result);
-			regA.x = getLWord(result);
+			regD.x = GetHWord(result);
+			regA.x = GetLWord(result);
 			SetFlag(FLAG_O, regD.x != 0);
 			SetFlag(FLAG_C, regD.x != 0);
 			AdjustSign(regA.x);
@@ -1945,9 +1950,9 @@ namespace emul
 		{
 			int32_t result = (int16_t)regA.x * (int16_t)(*modrm);
 			LogPrintf(LOG_DEBUG, "IMUL16, %d * %d = %d", (int16_t)regA.x, (int16_t)(*modrm), result);
-			regD.x = getHWord(result);
-			regA.x = getLWord(result);
-			DWORD tmp = widen(regA.x);
+			regD.x = GetHWord(result);
+			regA.x = GetLWord(result);
+			DWORD tmp = Widen(regA.x);
 			bool ocFlags = (tmp != (DWORD)result);
 			SetFlag(FLAG_O, ocFlags);
 			SetFlag(FLAG_C, ocFlags);
@@ -1964,7 +1969,7 @@ namespace emul
 				INT(0);
 				return;
 			}
-			DWORD dividend = getDword(regD.x, regA.x);
+			DWORD dividend = MakeDword(regD.x, regA.x);
 			DWORD quotient = dividend / (*modrm);
 			if (quotient > 0xFFFF)
 			{
@@ -1985,7 +1990,7 @@ namespace emul
 				INT(0);
 				return;
 			}
-			int32_t dividend = (int32_t)getDword(regD.x, regA.x);
+			int32_t dividend = (int32_t)MakeDword(regD.x, regA.x);
 			int32_t quotient = dividend / int16_t(*modrm);
 			if (quotient > 32767 || quotient < -32767)
 			{
@@ -2032,8 +2037,8 @@ namespace emul
 	void CPU8086::PUSH(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "PUSH %04X", w);
-		m_memory.Write(S2A(regSS, --regSP), getHByte(w));
-		m_memory.Write(S2A(regSS, --regSP), getLByte(w));
+		m_memory.Write(S2A(regSS, --regSP), GetHByte(w));
+		m_memory.Write(S2A(regSS, --regSP), GetLByte(w));
 	}
 
 	void CPU8086::POP(WORD& w)
@@ -2042,7 +2047,7 @@ namespace emul
 		BYTE lo, hi;
 		m_memory.Read(S2A(regSS, regSP++), lo);
 		m_memory.Read(S2A(regSS, regSP++), hi);
-		w = getWord(hi, lo);
+		w = MakeWord(hi, lo);
 	}
 
 	void CPU8086::LODS8()
@@ -2264,6 +2269,7 @@ namespace emul
 		if (!checkZ || (GetFlag(FLAG_Z) == repZ))
 		{ 
 			regIP = repIP;
+			TICK(9);
 		}
 		else
 		{
@@ -2574,7 +2580,7 @@ namespace emul
 			}
 			break;
 		case 0x40:
-			displacement = widen(FetchByte());
+			displacement = Widen(FetchByte());
 			LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp8=%04X", displacement);
 			break;
 		case 0x80:

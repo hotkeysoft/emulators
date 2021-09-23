@@ -9,21 +9,7 @@ namespace fdc
 	DeviceFloppy::DeviceFloppy(WORD baseAddress, size_t clockSpeedHz) :
 		Logger("fdc"),
 		m_baseAddress(baseAddress),
-		m_clockSpeed(clockSpeedHz),
-		m_currOpWait(0),
-		m_state(STATE::CMD_WAIT),
-		m_nextState(STATE::CMD_WAIT),
-		m_interruptPending(false),
-		m_nonDMA(true),
-		m_commandBusy(false),
-		m_driveActive{ false, false, false, false },
-		m_dataInputOutput(DataDirection::CPU2FDC),
-		m_dataRegisterReady(true),
-		m_motor{ false, false, false, false },
-		m_enableIRQDMA(false),
-		m_driveSel(0),
-		m_currCommand(nullptr),
-		m_currcommandID(0)
+		m_clockSpeed(clockSpeedHz)
 	{
 	}
 

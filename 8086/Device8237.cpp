@@ -2,10 +2,10 @@
 #include "Device8237.h"
 #include "PortAggregator.h"
 
-using emul::GetHiByte;
-using emul::GetLowByte;
-using emul::SetHiByte;
-using emul::SetLowByte;
+using emul::GetHByte;
+using emul::GetLByte;
+using emul::SetHByte;
+using emul::SetLByte;
 using emul::SetBit;
 
 namespace dma
@@ -79,13 +79,13 @@ namespace dma
 	{
 		bool loHi = m_parent->GetByteFlipFlop(true);
 		LogPrintf(LOG_DEBUG, "Read ADDRESS, value = %02X, lowHi=%d", m_address, loHi);
-		return (loHi ? GetHiByte(m_address) : GetLowByte(m_address));
+		return (loHi ? GetHByte(m_address) : GetLByte(m_address));
 	}
 	void DMAChannel::WriteAddress(BYTE value)
 	{
 		bool loHi = m_parent->GetByteFlipFlop(true);
 		LogPrintf(LOG_DEBUG, "Write ADDRESS, value=%02X, lowHi=%d", value, loHi);
-		loHi ? SetHiByte(m_address, value) : SetLowByte(m_address, value);
+		loHi ? SetHByte(m_address, value) : SetLByte(m_address, value);
 
 		if (loHi)
 		{
@@ -98,14 +98,14 @@ namespace dma
 	{
 		bool loHi = m_parent->GetByteFlipFlop(true);
 		LogPrintf(LOG_DEBUG, "Read COUNT, value=%02X, lowHi=%d", m_count, loHi);
-		return (loHi ? GetHiByte(m_count) : GetLowByte(m_count));
+		return (loHi ? GetHByte(m_count) : GetLByte(m_count));
 	}
 
 	void DMAChannel::WriteCount(BYTE value)
 	{
 		bool loHi = m_parent->GetByteFlipFlop(true);
 		LogPrintf(LOG_DEBUG, "Write COUNT, value=%02X, lowHi=%d", value, loHi);
-		loHi ? SetHiByte(m_count, value) : SetLowByte(m_count, value);
+		loHi ? SetHByte(m_count, value) : SetLByte(m_count, value);
 
 		if (loHi)
 		{
