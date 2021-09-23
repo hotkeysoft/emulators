@@ -58,6 +58,10 @@ namespace emul
 	inline WORD MakeWord(BYTE h, BYTE l) { return (((WORD)h) << 8) + l; };
 	inline DWORD MakeDword(WORD h, WORD l) { return (((DWORD)h) << 16) + l; }
 
+	inline BYTE LowestSetBit(BYTE b) { return b & (-b); }
+	inline bool IsPowerOf2(BYTE b) { return b && !(b & (b - 1)); }
+	inline BYTE LogBase2(BYTE b) { BYTE r = 0; while (b >>= 1) r++; return r; }
+
 	inline WORD Widen(BYTE b)
 	{
 		WORD w = b;
