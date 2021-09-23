@@ -120,6 +120,8 @@ namespace emul
 		static std::string GetModRMStr(BYTE modrm, bool wide, BYTE& disp);
 
 	protected:
+		inline void TICKRM(uint32_t r, uint32_t m) { m_opTicks += (m_regMem == REGMEM::REG) ? r : m; };
+
 		BYTE m_lastOp = 0;
 
 		PortAggregator m_ports;
@@ -156,6 +158,7 @@ namespace emul
 
 		BYTE* GetModRM8(BYTE modrm);
 		WORD* GetModRM16(BYTE modrm);
+		enum class REGMEM { REG, MEM } m_regMem;
 
 		SourceDest8 GetModRegRM8(BYTE modregrm, bool toReg = true);
 		SourceDest16 GetModRegRM16(BYTE modregrm, bool toReg = true, bool segReg = false);

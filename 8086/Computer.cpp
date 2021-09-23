@@ -119,6 +119,13 @@ namespace emul
 		{
 			return false;
 		}
+		uint32_t cpuTicks = GetInstructionTicks();
+		if (cpuTicks == 0)
+		{
+			LogPrintf(LOG_ERROR, "Operand %02Xh has no timing info", m_lastOp);
+			throw std::exception("op with no timing");
+		}
+
 
 		static size_t m_lastKbd = 0;
 		if (m_keyBufRead != m_keyBufWrite && CanInterrupt() && (m_ticks-m_lastKbd) > 10000)
