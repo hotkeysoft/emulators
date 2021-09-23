@@ -30,6 +30,12 @@ namespace pic
 
 		BYTE GetMask() { return m_interruptMaskRegister; }
 
+		// TODO: simplification, doesn't handle multiple interrupts & priorities correctly
+		bool InterruptPending() const { return m_interruptRequestRegister && !m_inServiceRegister; }
+		void InterruptAcknowledge();
+
+		BYTE GetPendingInterrupt() const;
+
 	protected:
 		const WORD m_baseAddress;
 

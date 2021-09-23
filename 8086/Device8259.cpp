@@ -1,6 +1,10 @@
 #include "Device8259.h"
 #include <assert.h>
 
+using emul::SetBit;
+using emul::LowestSetBit;
+using emul::IsPowerOf2;
+using emul::LogBase2;
 
 namespace pic
 {
@@ -150,11 +154,6 @@ namespace pic
 		}
 	}
 
-	void Device8259::EOI()
-	{
-	}
-
-
 	BYTE Device8259::Read1()
 	{
 		LogPrintf(LOG_DEBUG, "Read1: value=%02X", m_interruptMaskRegister);
@@ -236,4 +235,28 @@ namespace pic
 	void Device8259::Tick()
 	{
 	}
+
+	// TODO: simplification, doesn't handle multiple interrupts & priorities correctly
+	void Device8259::InterruptAcknowledge()
+	{
+		// Lowest set bit (higher priority by default)
+		BYTE intBit = LowestSetBit(m_interruptRequestRegister);
+
+		m_inServiceRegister |= intBit; // Set bit in ISR
+		m_interruptRequestRegister &= ~intBit; // Clear bit in IRR
+	}
+
+	// TODO: Only handles one active interrupt at a time
+	BYTE Device8259::GetPendingInterrupt() const
+	{
+		assert(IsPowerOf2(m_inServiceRegister));
+		return LogBase2(m_inServiceRegister) | m_init.interruptBase;
+	}
+
+	// TODO: Only handles one active interrupt at a time
+	void Device8259::EOI()
+	{
+		m_inServiceRegister = 0;
+	}
+
 }

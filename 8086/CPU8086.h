@@ -63,7 +63,7 @@ namespace emul
 		virtual void Reset();
 		virtual void Reset(WORD segment, WORD offset);
 
-		void Interrupt(BYTE interrupt) { assert(!inSegOverride); INT(interrupt); }
+		void Interrupt(BYTE interrupt) { assert(!inSegOverride); TICK(61); INT(interrupt); }
 		bool CanInterrupt() 
 		{ 
 			return GetFlag(FLAG::FLAG_I) && (m_lastOp != 0xFB);

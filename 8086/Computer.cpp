@@ -106,7 +106,6 @@ namespace emul
 		static auto lastTick = std::chrono::high_resolution_clock::now();
 		static int64_t syncTicks = 0;
 
-		int intCount = 0;
 		++m_ticks; // TODO: Coordinate with CPU
 
 		// TODO: Temporary, need dynamic connections
@@ -115,10 +114,16 @@ namespace emul
 		// Timer 2: Speaker
 		static bool timer0Out = false;
 
-		if (!CPU8086::Step())
+		if (m_pic.InterruptPending() && CanInterrupt())
+		{
+			m_pic.InterruptAcknowledge();
+			Interrupt(m_pic.GetPendingInterrupt());
+		}
+		else if (!CPU8086::Step())
 		{
 			return false;
 		}
+
 		uint32_t cpuTicks = GetInstructionTicks();
 		if (cpuTicks == 0)
 		{
@@ -126,50 +131,29 @@ namespace emul
 			throw std::exception("op with no timing");
 		}
 
-
 		static size_t m_lastKbd = 0;
-		if (m_keyBufRead != m_keyBufWrite && CanInterrupt() && (m_ticks-m_lastKbd) > 10000)
+		if (m_keyBufRead != m_keyBufWrite && (m_ticks-m_lastKbd) > 10000)
 		{
-			LogPrintf(LOG_WARNING, "KBD Interrupt");
-			m_pic.InterruptRequest(1); // TEMP
-
-			Interrupt(8 + 1); // Hardware interrupt 1: keyboard
 			m_lastKbd = m_ticks;
-			++intCount;
 			m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
+			m_pic.InterruptRequest(1);
 		}
 
 		m_pit.Tick();
 		bool out = m_pit.GetCounter(0).GetOutput();
 		if (out != timer0Out)
 		{
-			//LogPrintf(Logger::LOG_WARNING, "Timer0 toggle");
-			if (out && CanInterrupt())
+			if (out)
 			{
-				// TODO: this bypasses a lot of things.
-				// Quick and dirty for now: Check mask manually and interrupt cpu
-				if (!(m_pic.GetMask() & 0x01))
-				{
-					m_pic.InterruptRequest(0); // TEMP
-					Interrupt(8 + 0); // Hardware interrupt 0: timer
-					++intCount;
-				}
-				// acknowledge it
-				timer0Out = out;
+				m_pic.InterruptRequest(0);
 			}
-			else if (!out)
-			{
-				timer0Out = out;
-			}
+			timer0Out = out;
 		}
 
 		m_pcSpeaker.Tick();
 
 		if (m_floppy.IsInterruptPending() && CanInterrupt())
 		{
-			//fprintf(stderr, "Fire Floppy interrupt\n");
-			Interrupt(8 + 6); // Hardware interrupt 6: floppy
-			++intCount;
 			m_pic.InterruptRequest(6); // TEMP
 			m_floppy.ClearInterrupt();
 		}
@@ -182,7 +166,6 @@ namespace emul
 		if (m_floppy.IsDMAPending())
 		{
 			m_dma.DMARequest(2, true);
-			//fprintf(stderr, "floppy DMA pending\n");
 		}
 
 		if (m_dma.DMAAcknowledged(2))
@@ -197,12 +180,6 @@ namespace emul
 				m_floppy.DMATerminalCount();
 			}
 			//fprintf(stderr, "floppy DMA read\n");
-		}
-
-		if (intCount > 1)
-		{
-			LogPrintf(LOG_ERROR, ">1 interrupts in same cycle");
-			assert(false);
 		}
 
 		++syncTicks;
