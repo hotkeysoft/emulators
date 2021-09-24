@@ -44,7 +44,7 @@ namespace beeper
 
 		for (int i = 0; i < length; ++i)
 		{
-			buffer[i] = This->GetNextSample() ? 127 : -128;
+			buffer[i] = This->GetNextSample();
 		}
 	}
 
@@ -54,17 +54,16 @@ namespace beeper
 		want.freq = 44100;
 		want.format = AUDIO_S8;
 		want.channels = 1;
-		want.samples = 4096;
+		want.samples = 1024;
 		want.callback = &AudioCallback;
 		want.userdata = this;
 
 		m_audioDeviceID = SDL_OpenAudioDevice(0, 0, &want, &m_audioSpec, /*SDL_AUDIO_ALLOW_ANY_CHANGE*/0);
+		SDL_PauseAudioDevice(m_audioDeviceID, false);
 	}
 
 	void DevicePCSpeaker::Tick()
 	{
-		SDL_PauseAudioDevice(m_audioDeviceID, !m_8255->IsSoundON());
-
 		Uint16 period = PeriodToSamples(m_8254->GetCounter(2).GetPeriodMicro());
 		if (period != m_soundPeriod)
 		{
@@ -76,7 +75,6 @@ namespace beeper
 				++m_onCount;
 			}
 			LogPrintf(LOG_INFO, "New period: %d samples (%d on / %d off)", period, m_onCount, m_offCount);
-
 			
 			m_currSample = true;
 			m_currCount = m_onCount;
@@ -84,8 +82,13 @@ namespace beeper
 
 	}
 
-	bool DevicePCSpeaker::GetNextSample()
+	uint8_t DevicePCSpeaker::GetNextSample()
 	{
+		if (!m_8255->IsSoundON())
+		{
+			return 0;
+		}
+
 		--m_currCount;
 
 		if (m_currCount == 0)
@@ -94,7 +97,7 @@ namespace beeper
 			m_currCount = m_currSample ? m_offCount : m_onCount;
 		}
 
-		return m_currSample;
+		return m_currSample ? 127 : -128;
 	}
 
 	uint16_t DevicePCSpeaker::PeriodToSamples(float period)

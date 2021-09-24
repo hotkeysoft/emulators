@@ -27,7 +27,7 @@ namespace beeper
 
 		const SDL_AudioSpec& GetAudioSpec() const { return m_audioSpec; }
 		uint16_t GetPeriod() { return m_soundPeriod; }
-		bool GetNextSample();
+		uint8_t GetNextSample();
 
 	protected:
 		uint16_t PeriodToSamples(float period);
