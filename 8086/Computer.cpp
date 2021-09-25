@@ -13,7 +13,17 @@ namespace emul
 	public:
 		DummyPort() : Logger("DUMMY")
 		{
+			//SN746496 programmable tone/noise generator PCjr
 			Connect(0xC0, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
+
+			// Joystick
+			Connect(0x201, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
+
+			//EGA
+			for (WORD w = 0x3C0; w < 0x3D0; ++w)
+			{
+				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
+			}
 		}
 
 		void WriteData(BYTE value)
@@ -50,7 +60,7 @@ namespace emul
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_WARNING);
+		m_ppi.EnableLog(true, Logger::LOG_INFO);
 
 		// Configuration switches
 		{
@@ -58,7 +68,7 @@ namespace emul
 			m_ppi.SetMathCoprocessor(false);
 			m_ppi.SetRAMConfig(ppi::RAMSIZE::RAM_256K);
 			m_ppi.SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
-			m_ppi.SetFloppyCount(1);
+			m_ppi.SetFloppyCount(2);
 		}
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
@@ -77,7 +87,7 @@ namespace emul
 		m_floppy.Init();
 		m_floppy.EnableLog(true, Logger::LOG_WARNING);
 		m_floppy.LoadDiskImage(0, "data/PC-DOS-1.10.img");
-		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\KQ1.IMG)");
+		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 		// 
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
 		//m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
@@ -131,71 +141,75 @@ namespace emul
 			throw std::exception("op with no timing");
 		}
 
-		static size_t m_lastKbd = 0;
-		if (m_keyBufRead != m_keyBufWrite && (m_ticks-m_lastKbd) > 10000)
+		for (int i = 0; i < cpuTicks / 4; ++i)
 		{
-			m_lastKbd = m_ticks;
-			m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
-			m_pic.InterruptRequest(1);
-		}
-
-		m_pit.Tick();
-		bool out = m_pit.GetCounter(0).GetOutput();
-		if (out != timer0Out)
-		{
-			if (out)
+			static size_t m_lastKbd = 0;
+			if (m_keyBufRead != m_keyBufWrite && (m_ticks-m_lastKbd) > 10000)
 			{
-				m_pic.InterruptRequest(0);
-			}
-			timer0Out = out;
-		}
-
-		m_pcSpeaker.Tick();
-
-		if (m_floppy.IsInterruptPending() && CanInterrupt())
-		{
-			m_pic.InterruptRequest(6); // TEMP
-			m_floppy.ClearInterrupt();
-		}
-
-		m_dma.Tick();
-		m_cga.Tick();
-		m_floppy.Tick();
-
-		// TODO: faking it
-		if (m_floppy.IsDMAPending())
-		{
-			m_dma.DMARequest(2, true);
-		}
-
-		if (m_dma.DMAAcknowledged(2))
-		{
-			m_dma.DMARequest(2, false);
-
-			// Do it manually
-			m_floppy.DMAAcknowledge();
-			m_dma.DMAWrite(2, m_floppy.ReadDataFIFO());
-			if (m_dma.GetTerminalCount(2))
-			{
-				m_floppy.DMATerminalCount();
-			}
-			//fprintf(stderr, "floppy DMA read\n");
-		}
-
-		++syncTicks;
-		// Every 11932 ticks (~10ms) make an adjustment
-		if (syncTicks >= 11931)
-		{
-			auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
-
-			if (delta < std::chrono::microseconds(10000))
-			{
-				little_sleep(std::chrono::microseconds(10000)-delta);
+				m_lastKbd = m_ticks;
+				m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
+				m_pic.InterruptRequest(1);
 			}
 
-			syncTicks = 0;
-			lastTick = std::chrono::high_resolution_clock::now();
+			m_pit.Tick();
+			bool out = m_pit.GetCounter(0).GetOutput();
+			if (out != timer0Out)
+			{
+				if (out)
+				{
+					m_pic.InterruptRequest(0);
+				}
+				timer0Out = out;
+			}
+
+			m_pcSpeaker.Tick();
+
+			if (m_floppy.IsInterruptPending() && CanInterrupt())
+			{
+				m_pic.InterruptRequest(6); // TEMP
+				m_floppy.ClearInterrupt();
+			}
+
+			m_dma.Tick();
+			m_cga.Tick();
+			m_floppy.Tick();
+
+			// TODO: faking it
+			if (m_floppy.IsDMAPending())
+			{
+				m_dma.DMARequest(2, true);
+			}
+
+			if (m_dma.DMAAcknowledged(2))
+			{
+				m_dma.DMARequest(2, false);
+
+				// Do it manually
+				m_floppy.DMAAcknowledge();
+				m_dma.DMAWrite(2, m_floppy.ReadDataFIFO());
+				if (m_dma.GetTerminalCount(2))
+				{
+					m_floppy.DMATerminalCount();
+				}
+				//fprintf(stderr, "floppy DMA read\n");
+			}
+
+			++syncTicks;
+			// Every 11932 ticks (~10ms) make an adjustment
+			if (syncTicks >= 11931)
+			{
+				auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
+
+				if (delta < std::chrono::microseconds(10000))
+				{
+					little_sleep(std::chrono::microseconds(10000)-delta);
+				}
+
+				syncTicks = 0;
+				lastTick = std::chrono::high_resolution_clock::now();
+			}
 		}
+
 
 		return true;
 	}
