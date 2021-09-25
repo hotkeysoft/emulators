@@ -27,10 +27,14 @@ namespace cga
 
 	const uint32_t Composite640Palette[16] =
 	{
-		0xFF000000, 0xFF006E31, 0xFF3109FF, 0xFF008AFF, 0xFFA70031, 0xFF767676, 0xFFEC11FF, 0xFFBB92FF,
-		0xFF315A00, 0xFF00DB00, 0xFF767676, 0xFF45F7BB, 0xFFEC6300, 0xFFBBE400, 0xFFFF7FBB, 0xFFFFFFFF
+		0x00000000, 0x00006E31, 0x003109FF, 0x00008AFF, 0x00A70031, 0x00767676, 0x00EC11FF, 0x00BB92FF,
+		0x00315A00, 0x0000DB00, 0x00767676, 0x0045F7BB, 0x00EC6300, 0x00BBE400, 0x00FF7FBB, 0x00FFFFFF
 	};
 
+	const uint32_t TempGray[] =
+	{
+		0xFF000000, 0xFF3F3F3F, 0xFF7F7F7F, 0xFFFFFFFF
+	};
 
 	DeviceCGA::DeviceCGA(WORD baseAddress) :
 		Logger("CGA"),
@@ -104,7 +108,7 @@ namespace cga
 		SDL_RenderSetScale(m_sdlRenderer, 1.0f, VSCALE);
 	}
 
-	void DeviceCGA::Render()
+	void DeviceCGA::RenderFrame()
 	{
 		static size_t frames = 0;
 
@@ -320,43 +324,21 @@ namespace cga
 
 		if (m_hPos > m_hTotal)
 		{
+			EndOfRow();
 			m_hPos = 0;
 			++m_vPos;
 		}
 		if (m_vPos > m_vTotal)
 		{
-			// Render the current frame
-			Render();
+			RenderFrame();
 
 			// New frame, compute new offsets and do some housekeeping
 			++m_frame;
 			m_vPos = 0;
 
-			// Pointers for alpha mode
-			m_currChar = m_screenB800.getPtr8(m_crtc.startAddress * 2u);
-			if (m_crtc.cursorAddress * 2u >= m_screenB800.GetSize())
-			{
-				m_cursorPos = nullptr;
-			}
-			else
-			{
-				m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress * 2u);
-			}
-			
-			if ((m_frame % 16) == 0) m_blink16 = !m_blink16;
-			if ((m_frame % 32) == 0) m_blink32 = !m_blink32;
+			NewFrame();
 
-			m_alphaPalette = m_mode.monochrome ? AlphaMonoGreyPalette : AlphaColorPalette;
-
-			// Pointers for graphics mode
-			m_bank0 = m_screenB800.getPtr8(0x0000);
-			m_bank1 = m_screenB800.getPtr8(0x2000);
-
-			// Select draw function
-			m_drawFunc = &DeviceCGA::DrawTextMode;
-			if (m_mode.graphics) m_drawFunc = &DeviceCGA::Draw320x200;
-			if (m_mode.hiResolution) m_drawFunc = &DeviceCGA::Draw640x200;
-
+			// TODO: Move this elsewhere
 			// Process Events
 			SDL_Event e;
 			while (SDL_PollEvent(&e))
@@ -367,6 +349,65 @@ namespace cga
 				}
 			}
 		}
+	}
+
+	void DeviceCGA::NewFrame()
+	{
+		// Pointers for alpha mode
+		m_currChar = m_screenB800.getPtr8(m_crtc.startAddress * 2u);
+		if (m_crtc.cursorAddress * 2u >= m_screenB800.GetSize())
+		{
+			m_cursorPos = nullptr;
+		}
+		else
+		{
+			m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress * 2u);
+		}
+
+		if ((m_frame % 16) == 0) m_blink16 = !m_blink16;
+		if ((m_frame % 32) == 0) m_blink32 = !m_blink32;
+
+		m_alphaPalette = m_mode.monochrome ? AlphaMonoGreyPalette : AlphaColorPalette;
+
+		// Pointers for graphics mode
+		m_bank0 = m_screenB800.getPtr8(0x0000);
+		m_bank1 = m_screenB800.getPtr8(0x2000);
+
+		// Select draw function
+		m_drawFunc = &DeviceCGA::DrawTextMode;
+		if (m_mode.graphics) m_drawFunc = &DeviceCGA::Draw320x200;
+		if (m_mode.hiResolution) m_drawFunc = &DeviceCGA::Draw640x200;
+
+	}
+
+	Uint32 tempRowAlpha[640 + 2];
+	Uint32 tempRow[640];
+
+	void DeviceCGA::EndOfRow()
+	{
+		if (!m_mode.hiResolution || !m_composite || m_vPos >= m_vTotalDisp)
+			return;
+
+		uint32_t baseX = (640 * m_vPos);
+
+		memset(tempRowAlpha, 0, sizeof(tempRowAlpha));
+		for (int offset = 0; offset < 4; ++offset)
+		{
+			for (int x = 0; x < 640; ++x)
+			{
+				//tempRowAlpha[x + offset] += (tempRow[x] & 16) ? 0x3F000000 : 0;
+				tempRowAlpha[x + offset] += (tempRow[x] & 16) ? 1 : 0;
+			}
+		}
+
+		for (int i = 0; i < 640; ++i)
+		{
+			m_frameBuffer[baseX + i] = Composite640Palette[tempRow[i] & 15] | ((i%256) << 24);// tempRowAlpha[i + 2];
+			//m_frameBuffer[baseX + i] = TempGray[tempRowAlpha[i+2]];
+		}
+
+		// Clear temp row
+
 	}
 
 	bool DeviceCGA::IsCursor() const
@@ -440,6 +481,7 @@ namespace cga
 			}
 		}
 	}
+
 	void DeviceCGA::Draw640x200()
 	{
 		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
@@ -453,25 +495,38 @@ namespace cga
 			Uint32 bg = m_alphaPalette[0];
 
 			uint32_t baseX = (640 * m_vPos) + (m_hPos * 2);
+
+
+			uint32_t compositeOffset = m_hPos * 2;
+
 			for (int w = 0; w < 2; ++w)
 			{
 				BYTE ch = *currChar;
 
 				if (m_composite)
 				{
-					Uint32 colorH = Composite640Palette[ch >> 4];
-					Uint32 colorL = Composite640Palette[ch & 15];
+					BYTE colorH = ch >> 4;
+					BYTE colorL = ch & 15;
 
 					// TODO: artifacts
-					m_frameBuffer[baseX++] = colorH;
-					m_frameBuffer[baseX++] = colorH;
-					m_frameBuffer[baseX++] = colorH;
-					m_frameBuffer[baseX++] = colorH;
+					//m_frameBuffer[baseX++] = colorH;
+					//m_frameBuffer[baseX++] = colorH;
+					//m_frameBuffer[baseX++] = colorH;
+					//m_frameBuffer[baseX++] = colorH;
 
-					m_frameBuffer[baseX++] = colorL;
-					m_frameBuffer[baseX++] = colorL;
-					m_frameBuffer[baseX++] = colorL;
-					m_frameBuffer[baseX++] = colorL;
+					//m_frameBuffer[baseX++] = colorL;
+					//m_frameBuffer[baseX++] = colorL;
+					//m_frameBuffer[baseX++] = colorL;
+					//m_frameBuffer[baseX++] = colorL;
+
+					tempRow[compositeOffset++] = colorH | ((ch & 0b10000000) ? 16 : 0);
+					tempRow[compositeOffset++] = colorH | ((ch & 0b01000000) ? 16 : 0);
+					tempRow[compositeOffset++] = colorH | ((ch & 0b00100000) ? 16 : 0);
+					tempRow[compositeOffset++] = colorH | ((ch & 0b00010000) ? 16 : 0);
+					tempRow[compositeOffset++] = colorL | ((ch & 0b00001000) ? 16 : 0);
+					tempRow[compositeOffset++] = colorL | ((ch & 0b00000100) ? 16 : 0);
+					tempRow[compositeOffset++] = colorL | ((ch & 0b00000010) ? 16 : 0);
+					tempRow[compositeOffset++] = colorL | ((ch & 0b00000001) ? 16 : 0);
 				}
 				else
 				{

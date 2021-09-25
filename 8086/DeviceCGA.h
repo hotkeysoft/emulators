@@ -187,6 +187,8 @@ namespace cga
 
 		uint32_t* m_frameBuffer;
 
-		void Render();
+		void RenderFrame();
+		void NewFrame();
+		void EndOfRow();
 	};
 }
