@@ -97,6 +97,45 @@ namespace fdc
 		return true;
 	}
 
+	bool DeviceFloppy::SaveDiskImage(BYTE drive, const char* path)
+	{
+		if (drive > 3)
+		{
+			LogPrintf(LOG_ERROR, "SaveDiskImage: invalid drive number %d", drive);
+			return false;
+		}
+
+		if (!m_images[drive].loaded)
+		{
+			LogPrintf(LOG_ERROR, "SaveDiskImage: image not loaded for drive %d", drive);
+			return false;
+		}
+
+		LogPrintf(LOG_INFO, "SaveDiskImage: saving floppy %d to file %s", drive, path);
+
+		FILE* f = fopen(path, "wb");
+		if (!f)
+		{
+			LogPrintf(LOG_ERROR, "SaveDiskImage: error opening binary file");
+			return false;
+		}
+
+		size_t size = m_images[drive].data.size();
+		size_t bytesWritten = fwrite(&m_images[drive].data[0], sizeof(char), size, f);
+		if (size != bytesWritten)
+		{
+			LogPrintf(LOG_ERROR, "SaveDiskImage: error writing binary file");
+			return false;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "SaveDiskImage: written %d bytes", bytesWritten);
+		}
+
+		fclose(f);
+		return true;
+	}
+
 	void DeviceFloppy::Init()
 	{
 		// STATUS_REGISTER_A = 0x3F0, // read-only (PS/2)
@@ -274,6 +313,10 @@ namespace fdc
 			m_commandBusy = true;
 			RQMDelay(STATE::PARAM_WAIT);
 			break;
+		case STATE::DMA_WAIT:
+			DMAAcknowledge();
+			WriteSector();
+			break;
 		default:
 			LogPrintf(Logger::LOG_ERROR, "WriteDataFIFO() Unexpected State: %d", m_state);
 			throw std::exception("Unexpected state");
@@ -375,10 +418,19 @@ namespace fdc
 			LogPrintf(Logger::LOG_INFO, "Read Sector");
 			ReadSector();
 			break;
-		case STATE::READ_DONE:
-			LogPrintf(Logger::LOG_INFO, "End Read");
-			ReadSectorEnd();
+		case STATE::RW_DONE:
+			LogPrintf(Logger::LOG_INFO, "End Read/Write");
+			RWSectorEnd();
 			m_state = STATE::CMD_EXEC_DONE;
+			break;
+		case STATE::WRITE_START:
+			LogPrintf(Logger::LOG_INFO, "Start Write");
+			m_state = STATE::WRITE_EXEC;
+			m_currOpWait = DelayToTicks(100 * 1000);
+			break;
+		case STATE::WRITE_EXEC:
+			LogPrintf(Logger::LOG_INFO, "Write Sector");
+			WriteSector();
 			break;
 		case STATE::DMA_WAIT:
 			LogPrintf(Logger::LOG_DEBUG, "DMA Wait");
@@ -731,7 +783,7 @@ namespace fdc
 
 				// TODO for now don't auto move to next track
 				m_currOpWait = DelayToTicks(10);
-				m_nextState = STATE::READ_DONE;
+				m_nextState = STATE::RW_DONE;
 				m_state = STATE::CMD_EXEC_DELAY;
 				return;
 			}
@@ -754,7 +806,7 @@ namespace fdc
 		m_state = STATE::DMA_WAIT;
 	}
 
-	void DeviceFloppy::ReadSectorEnd()
+	void DeviceFloppy::RWSectorEnd()
 	{
 		LogPrintf(LOG_INFO, "ReadSectorEnd, fifo=%d", m_fifo.size());
 		m_st0 = 0;
@@ -770,6 +822,118 @@ namespace fdc
 		Push(2); // N
 	}
 
+	DeviceFloppy::STATE DeviceFloppy::WriteData()
+	{
+		BYTE param = Pop();
+
+		BYTE driveNumber = param & 3;
+		bool head = param & 4;
+
+		BYTE c = Pop();
+		BYTE h = Pop();
+		BYTE r = Pop();
+		BYTE n = Pop();
+		BYTE eot = Pop();
+		BYTE gpl = Pop();
+		BYTE dtl = Pop();
+
+		LogPrintf(LOG_INFO, "COMMAND: Write Data drive=[%d] head=[%d]", driveNumber, head);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
+
+		m_currHead = head;
+		m_currSector = r;
+		m_maxSector = eot;
+
+		// TODO: Error handling, validation
+		m_pcn = c;
+		//if (c != m_pcn)
+		//{
+		//	throw std::exception("cylinder != current cylinder");
+		//}
+
+		// TODO: Multitrack
+		// (m_currcommandID & 0x80) //MT
+
+		// Only this configuration is supported at the moment
+		assert(m_enableIRQDMA == true);
+		assert(m_nonDMA == false);
+		assert(n == 2);		// All floppy drives use 512 bytes/sector
+		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
+
+		assert(m_fifo.size() == 0);
+
+		m_driveActive[driveNumber] = true;
+		FloppyDisk& disk = m_images[driveNumber];
+
+		// TODO: Only if head is not already loaded
+		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
+
+		if (r < 1 || r > disk.geometry.sect)
+		{
+			LogPrintf(LOG_ERROR, "Invalid sector [%d]", r);
+			throw std::exception("Invalid sector");
+		}
+		if (c >= disk.geometry.cyl)
+		{
+			LogPrintf(LOG_ERROR, "Invalid cylinder [%d]", c);
+			throw std::exception("Invalid cylinder");
+		}
+		if (h > disk.geometry.head)
+		{
+			LogPrintf(LOG_ERROR, "Invalid head [%d]", h);
+			throw std::exception("Invalid head");
+		}
+
+		return STATE::WRITE_START;
+	}
+
+	void DeviceFloppy::WriteSector()
+	{
+		LogPrintf(LOG_DEBUG, "WriteSector, fifo=%d", m_fifo.size());
+		
+		// Exit Conditions
+
+		FloppyDisk* disk = &m_images[0];
+		BYTE driveActive = 0;
+		for (BYTE d = 0; d < 3; ++d)
+		{
+			if (m_driveActive[d])
+			{
+				disk = &m_images[d];
+				break;
+			}
+		}
+		// TODO: Handle not loaded
+
+		if (m_fifo.size() == 512)
+		{
+			uint32_t offset = disk->geometry.CHS2A(m_pcn, m_currHead, m_currSector);
+			for (size_t b = 0; b < 512; ++b)
+			{
+				disk->data[offset + b] = Pop();
+			}
+
+			//++m_currSector;
+			//if (m_currSector > disk->geometry.sect)
+			//{
+			//	m_currSector = 1;
+
+			//	// TODO for now don't auto move to next track
+			//	m_currOpWait = DelayToTicks(10);
+			//	m_nextState = STATE::READ_DONE;
+			//	m_state = STATE::CMD_EXEC_DELAY;
+			//	return;
+			//}
+		}
+
+		SetDMAPending();
+
+		// Timeout
+		m_currOpWait = DelayToTicks(100 * 1000);
+
+		m_state = STATE::DMA_WAIT;
+	}
+
 	void DeviceFloppy::DMATerminalCount()
 	{
 		LogPrintf(LOG_INFO, "DMATerminalCount");
@@ -777,7 +941,7 @@ namespace fdc
 		// TODO: Check that we are in correct state;
 		m_dmaPending = false;
 		m_currOpWait = DelayToTicks(10);
-		m_nextState = STATE::READ_DONE;
+		m_nextState = STATE::RW_DONE;
 		m_state = STATE::CMD_EXEC_DELAY;
 	}
 }

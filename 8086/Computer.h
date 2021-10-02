@@ -27,6 +27,7 @@ namespace emul
 
 		Memory& GetMemory() { return m_memory; }
 		cga::DeviceCGA& GetCGA() { return m_cga; }
+		fdc::DeviceFloppy& GetFloppy() { return m_floppy; }
 
 		size_t GetTicks() { return m_ticks; }
 

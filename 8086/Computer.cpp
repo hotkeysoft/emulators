@@ -75,7 +75,7 @@ namespace emul
 
 		m_dma.Init();
 		m_dma.EnableLog(false);
-		m_dma.EnableLog(true, Logger::LOG_WARNING);
+		m_dma.EnableLog(true, Logger::LOG_INFO);
 
 		m_cga.EnableLog(true, Logger::LOG_WARNING);
 		m_cga.Init("data/CGA_CHAR.BIN");
@@ -85,7 +85,7 @@ namespace emul
 		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xBC00));
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_WARNING);
+		m_floppy.EnableLog(true, Logger::LOG_INFO);
 		m_floppy.LoadDiskImage(0, "data/PC-DOS-1.10.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 		// 
@@ -186,12 +186,28 @@ namespace emul
 
 				// Do it manually
 				m_floppy.DMAAcknowledge();
-				m_dma.DMAWrite(2, m_floppy.ReadDataFIFO());
+
+				dma::DMAChannel& channel = m_dma.GetChannel(2);
+				dma::OPERATION op = channel.GetOperation();
+				BYTE value;
+				switch (op)
+				{
+				case dma::OPERATION::READ:
+					channel.DMAOperation(value);
+					m_floppy.WriteDataFIFO(value);
+					break;
+				case dma::OPERATION::WRITE:
+					value = m_floppy.ReadDataFIFO();
+					channel.DMAOperation(value);
+					break;
+				default:
+					throw std::exception("DMAOperation: Operation not supported");
+				}
+
 				if (m_dma.GetTerminalCount(2))
 				{
 					m_floppy.DMATerminalCount();
 				}
-				//fprintf(stderr, "floppy DMA read\n");
 			}
 
 			++syncTicks;
@@ -209,7 +225,6 @@ namespace emul
 				lastTick = std::chrono::high_resolution_clock::now();
 			}
 		}
-
 
 		return true;
 	}

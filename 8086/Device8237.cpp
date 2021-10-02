@@ -138,12 +138,16 @@ namespace dma
 		switch (m_mode & (MODE_OP1 | MODE_OP0))
 		{
 		case 0: LogPrintf(LOG_INFO, "Operation: VERIFY Transfer");
+			m_operation = OPERATION::VERIFY;
 			break;
 		case MODE_OP0: LogPrintf(LOG_INFO, "Operation: WRITE Transfer");
+			m_operation = OPERATION::WRITE;
 			break;
 		case MODE_OP1: LogPrintf(LOG_INFO, "Operation: READ Transfer");
+			m_operation = OPERATION::READ;
 			break;
 		case MODE_OP1 | MODE_OP0: LogPrintf(LOG_ERROR, "Invalid operation");
+			m_operation = OPERATION::INVALID;
 			break;
 		default:
 			throw std::exception("not possible");
@@ -158,7 +162,7 @@ namespace dma
 		m_parent->SetTerminalCount(m_id, false);
 	}
 
-	void DMAChannel::DMAWrite(BYTE value)
+	void DMAChannel::DMAOperation(BYTE& value)
 	{
 		emul::ADDRESS addr = (m_page << 16) + m_address;
 
@@ -166,15 +170,19 @@ namespace dma
 		{
 			return;
 		}
-		LogPrintf(LOG_DEBUG, "DMA Write, value=%02X @ Address %04x", value, addr);
 
-		if ((m_mode & (MODE_OP1 | MODE_OP0)) == MODE_OP0) // WRITE Transfer
+		switch (m_operation)
 		{
+		case OPERATION::READ:
+			m_memory.Read(addr, value);
+			LogPrintf(LOG_DEBUG, "DMA Read, value=%02X @ Address %04x", value, addr);
+			break;
+		case OPERATION::WRITE:
+			LogPrintf(LOG_DEBUG, "DMA Write, value=%02X @ Address %04x", value, addr);
 			m_memory.Write(addr, value);
-		}
-		else 
-		{
-			throw std::exception("DMAWrite: Mode not supported");
+			break;
+		default:
+			throw std::exception("DMAOperation: Operation not supported");
 		}
 
 		Tick();
@@ -219,6 +227,7 @@ namespace dma
 		DMARequests[0] = false;
 		DMARequests[1] = false;
 		DMARequests[2] = false;
+		DMARequests[3] = false;
 	}
 
 	void Device8237::Init()
@@ -345,22 +354,9 @@ namespace dma
 		LogPrintf(LOG_DEBUG, "Write All Mask Bits, value=%02X", value);
 		m_maskReg = (value & 0xF0);
 	}
-
 	void Device8237::WriteMode(BYTE value)
 	{
-		switch (value & 3)
-		{
-		case 0: m_channel0.SetMode(value);
-			break;
-		case 1: m_channel1.SetMode(value);
-			break;
-		case 2: m_channel2.SetMode(value);
-			break;
-		case 3: m_channel3.SetMode(value);
-			break;
-		default:
-			throw std::exception("not possible");
-		}
+		GetChannel(value & 3).SetMode(value);
 	}
 	void Device8237::ClearFlipFlop(BYTE value)
 	{
@@ -376,14 +372,14 @@ namespace dma
 	void Device8237::DMARequest(BYTE channel, bool state)
 	{
 		if (channel > 2) throw std::exception("invalid dma channel");
-		DMARequests[channel % 3] = state;
+		DMARequests[channel & 3] = state;
 	}
 	bool Device8237::DMAAcknowledged(BYTE channel)
 	{
 		if (channel > 2) throw std::exception("invalid dma channel");
 		// TODO
-		bool ack = DMARequests[channel % 3];
-		DMARequests[channel % 3] = false;
+		bool ack = DMARequests[channel & 3];
+		DMARequests[channel & 3] = false;
 		return ack;
 	}
 
@@ -414,18 +410,14 @@ namespace dma
 		return m_statusReg & (1 << channel);
 	}
 
-	void Device8237::DMAWrite(BYTE channel, BYTE data)
+	DMAChannel& Device8237::GetChannel(BYTE channel)
 	{
 		switch (channel & 3)
 		{
-		case 0: m_channel0.DMAWrite(data);
-			break;
-		case 1: m_channel1.DMAWrite(data);
-			break;
-		case 2: m_channel2.DMAWrite(data);
-			break;
-		case 3: m_channel3.DMAWrite(data);
-			break;
+		case 0: return m_channel0;
+		case 1: return m_channel1;
+		case 2: return m_channel2;
+		case 3: return m_channel3;
 		default:
 			throw std::exception("not possible");
 		}

@@ -13,6 +13,8 @@ namespace dma
 {
 	class Device8237;
 
+	enum class OPERATION { VERIFY, READ, WRITE, INVALID };
+
 	class DMAChannel : public PortConnector
 	{
 	public:
@@ -39,7 +41,8 @@ namespace dma
 
 		void SetPage(BYTE page) { m_page = (page & 0x0F); }
 
-		void DMAWrite(BYTE value);
+		OPERATION GetOperation() { return m_operation; }
+		void DMAOperation(BYTE& value);
 
 	private:
 		Device8237* m_parent;
@@ -55,6 +58,7 @@ namespace dma
 			MODE_OP0 = 4
 		};
 		BYTE m_mode = 0;
+		OPERATION m_operation = OPERATION::INVALID;
 		bool m_decrement = false;
 		bool m_autoInit = false;
 		bool m_terminalCount = false;
@@ -99,7 +103,7 @@ namespace dma
 		bool GetTerminalCount(BYTE channel);
 		void SetTerminalCount(BYTE channel, bool tc = true);
 
-		void DMAWrite(BYTE channel, BYTE data);
+		DMAChannel& GetChannel(BYTE channel);
 
 	protected:
 		const WORD m_baseAddress;
@@ -136,7 +140,7 @@ namespace dma
 		DMAChannel m_channel2;
 		DMAChannel m_channel3;
 
-		bool DMARequests[3];
+		bool DMARequests[4] = { false, false, false, false };
 
 		BYTE m_commandReg;
 		BYTE m_statusReg;
