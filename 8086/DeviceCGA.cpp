@@ -367,8 +367,6 @@ namespace cga
 		if ((m_frame % 16) == 0) m_blink16 = !m_blink16;
 		if ((m_frame % 32) == 0) m_blink32 = !m_blink32;
 
-		m_alphaPalette = m_mode.monochrome ? AlphaMonoGreyPalette : AlphaColorPalette;
-
 		// Pointers for graphics mode
 		m_bank0 = m_screenB800.getPtr8(0x0000);
 		m_bank1 = m_screenB800.getPtr8(0x2000);
@@ -378,6 +376,18 @@ namespace cga
 		if (m_mode.graphics) m_drawFunc = &DeviceCGA::Draw320x200;
 		if (m_mode.hiResolution) m_drawFunc = &DeviceCGA::Draw640x200;
 
+		// TODO: Do this for each line instead of each frame
+		m_alphaPalette = (m_mode.monochrome && m_composite) ? AlphaMonoGreyPalette : AlphaColorPalette;
+		m_currGraphPalette[0] = m_alphaPalette[m_color.color];
+		for (int i = 1; i < 4; ++i)
+		{
+			m_currGraphPalette[i] = m_alphaPalette[
+				(m_color.palIntense << 3) // Intensity
+				| (i << 1)
+				| (m_color.palSelect && !m_mode.monochrome) // Palette shift for non mono modes
+				| (m_mode.monochrome & (i & 1)) // Palette shift for mono modes
+			];
+		}
 	}
 
 	Uint32 tempRowAlpha[640 + 2];
@@ -473,8 +483,7 @@ namespace cga
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					Uint32 color = val ? m_alphaPalette[(val * 2) + m_color.palSelect + (8 * m_color.palIntense)] : m_alphaPalette[m_color.color];
-					m_frameBuffer[640 * m_vPos + m_hPos + (w * 4) + (3 - x)] = color;
+					m_frameBuffer[640 * m_vPos + m_hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
 				}
 
 				++currChar;

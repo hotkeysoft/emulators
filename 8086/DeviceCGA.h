@@ -175,6 +175,7 @@ namespace cga
 		BYTE* m_bank1 = nullptr;
 
 		const uint32_t* m_alphaPalette = nullptr;
+		uint32_t m_currGraphPalette[4];
 
 		// SDL
 		SDL_Window* m_sdlWindow = nullptr;
