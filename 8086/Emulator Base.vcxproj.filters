@@ -75,7 +75,7 @@
     <ClCompile Include="CPU8086Test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Computer.cpp">
+    <ClCompile Include="ComputerXT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Monitor.cpp">
@@ -143,7 +143,7 @@
     <ClInclude Include="CPU8086Test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Computer.h">
+    <ClInclude Include="ComputerXT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Monitor.h">
