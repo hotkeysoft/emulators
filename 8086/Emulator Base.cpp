@@ -4,7 +4,7 @@
 #include "Memory.h"
 #include "MemoryBlock.h"
 #include "MemoryMap.h"
-#include "Computer.h"
+#include "ComputerXT.h"
 #include "Console.h"
 #include "Monitor.h"
 
@@ -82,7 +82,7 @@ void ToggleMode(cga::DeviceCGA& screen)
 
 int main(int argc, char* args[])
 {
-	//logFile = fopen("./dump.log", "w");
+	//logFile = fopen("./dump/dump.log", "w");
 
 #ifndef NO_CONSOLE
 	console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
@@ -102,15 +102,7 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	emul::Computer pc;
-
-	emul::MemoryBlock biosF000("BIOS0", 0x8000, emul::MemoryType::ROM);
-	biosF000.LoadBinary("data/BIOS_5160_V3_F000.BIN");
-	pc.GetMemory().Allocate(&biosF000, emul::S2A(0xF000));
-
-	emul::MemoryBlock biosF800("BIOS1", 0x8000, emul::MemoryType::ROM);
-	biosF800.LoadBinary("data/BIOS_5160_V3_F800.BIN");
-	pc.GetMemory().Allocate(&biosF800, emul::S2A(0xF800));
+	emul::ComputerXT pc;
 
 	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
@@ -261,8 +253,8 @@ int main(int argc, char* args[])
 
 	pc.Dump();
 
-	pc.GetMemory().Dump(0, 65536, "memdump.bin");
-	pc.GetFloppy().SaveDiskImage(0, "floppy0.img");
+	pc.GetMemory().Dump(0, 65536, "dump/memdump.bin");
+	pc.GetFloppy().SaveDiskImage(0, "dump/floppy0.img");
 
 	//DumpBackLog();
 

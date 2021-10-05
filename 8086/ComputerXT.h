@@ -12,10 +12,10 @@
 
 namespace emul
 {
-	class Computer : public CPU8086
+	class ComputerXT : public CPU8086
 	{
 	public:
-		Computer();
+		ComputerXT();
 
 		void Init();
 
@@ -37,7 +37,9 @@ namespace emul
 		Memory m_memory;
 
 		// TODO: Should be dynamic
-		emul::MemoryBlock m_base64K;// (0, 0x10000, emul::MemoryType::RAM);
+		emul::MemoryBlock m_base64K;
+		emul::MemoryBlock m_biosF000;
+		emul::MemoryBlock m_biosF800;
 
 		MemoryMap m_map;
 
