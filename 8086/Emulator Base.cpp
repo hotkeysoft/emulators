@@ -261,7 +261,8 @@ int main(int argc, char* args[])
 
 	pc.Dump();
 
-	pc.GetMemory().Dump(0, 65536, R"(memdump.bin)");
+	pc.GetMemory().Dump(0, 65536, "memdump.bin");
+	pc.GetFloppy().SaveDiskImage(0, "floppy0.img");
 
 	//DumpBackLog();
 

@@ -33,7 +33,7 @@ namespace emul
 
 	Computer::Computer() : 
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_base64K("RAM0", 0x40000, emul::MemoryType::RAM),
+		m_base64K("RAM0", 0x80000, emul::MemoryType::RAM),
 		Logger("PC"), 
 		CPU8086(m_memory, m_map),
 		m_pit(0x40, 1193182),
@@ -54,13 +54,13 @@ namespace emul
 		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_INFO);
+		m_pit.EnableLog(true, Logger::LOG_WARNING);
 
 		m_pic.Init();
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_INFO);
+		m_ppi.EnableLog(true, Logger::LOG_WARNING);
 
 		// Configuration switches
 		{
@@ -72,6 +72,7 @@ namespace emul
 		}
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
+		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
 
 		m_dma.Init();
 		m_dma.EnableLog(false);
