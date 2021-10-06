@@ -3,7 +3,7 @@
 #include "CPU8086.h"
 #include "Memory.h"
 #include "Device8254.h"
-#include "Device8255.h"
+#include "Device8255XT.h"
 #include "Device8237.h"
 #include "Device8259.h"
 #include "DeviceCGA.h"
@@ -45,7 +45,7 @@ namespace emul
 
 		pit::Device8254 m_pit;
 		pic::Device8259 m_pic;
-		ppi::Device8255 m_ppi;
+		ppi::Device8255XT m_ppi;
 		dma::Device8237 m_dma;
 		cga::DeviceCGA m_cga;
 		fdc::DeviceFloppy m_floppy;

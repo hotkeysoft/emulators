@@ -23,7 +23,7 @@
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
-//#define NO_CONSOLE
+#define NO_CONSOLE
 //#define CPU_TEST
 
 #ifdef CPU_TEST
@@ -33,7 +33,7 @@ const short CONSOLE_COLS = 80;
 FILE* logFile = nullptr;
 
 enum class Mode { MONITOR = 0, LOG = 2};
-Mode mode = Mode::MONITOR;
+Mode mode = Mode::LOG;
 
 Console console;
 emul::Monitor monitor(console);

@@ -3,7 +3,7 @@
 #include "CPU8086.h"
 #include "Memory.h"
 #include "Device8254.h"
-#include "Device8255.h"
+#include "Device8255PCjr.h"
 #include "Device8259.h"
 #include "DevicePCSpeaker.h"
 
@@ -40,7 +40,7 @@ namespace emul
 
 		pit::Device8254 m_pit;
 		pic::Device8259 m_pic;
-		ppi::Device8255 m_ppi;
+		ppi::Device8255PCjr m_ppi;
 		//cga::DeviceCGA m_cga;
 		//fdc::DeviceFloppy m_floppy;
 

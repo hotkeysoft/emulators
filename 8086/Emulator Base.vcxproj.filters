@@ -90,6 +90,12 @@
     <ClCompile Include="ComputerPCjr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Device8255XT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Device8255PCjr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
@@ -159,6 +165,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ComputerPCjr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Device8255XT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Device8255PCjr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

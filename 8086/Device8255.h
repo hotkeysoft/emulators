@@ -9,13 +9,11 @@ using emul::WORD;
 
 namespace ppi
 {
-	enum class RAMSIZE { RAM_64K, RAM_128K, RAM_192K, RAM_256K };
-	enum class DISPLAY { MONO_80x25, COLOR_40x25, COLOR_80x25, NONE };
-
 	class Device8255 : public PortConnector
 	{
 	public:
 		Device8255(WORD baseAddress);
+		virtual ~Device8255() {}
 
 		Device8255() = delete;
 		Device8255(const Device8255&) = delete;
@@ -28,44 +26,18 @@ namespace ppi
 
 		void SetControlWord(BYTE ctrl);
 
-		// TODO: Should be in child class
-		enum CONFIG_SW
-		{
-			// PB3 == LOW
-			SW_POST_LOOP =   0x01, // SW1
-			SW_COPROCESSOR = 0x02, // SW2
-			SW_RAM_L =       0x04, // SW3
-			SW_RAM_H =       0x08, // SW4
-
-			SW_DISPLAY_L =   0x10, // SW5
-			SW_DISPLAY_H =   0x20, // SW6
-			SW_FLOPPY_L =    0x40, // SW7
-			SW_FLOPPY_H =    0x80, // SW8
-		};
-	
-		// Amount of memory on system board
-		void SetRAMConfig(RAMSIZE);
-
-		// Display at power up
-		void SetDisplayConfig(DISPLAY);
-
-		void SetFloppyCount(BYTE);
-		void SetPOSTLoop(bool);
-		void SetMathCoprocessor(bool);
-
-		void SetCurrentKeyCode(BYTE keyCode);
-
-		bool IsSoundON();
+		virtual bool IsSoundON();
+		virtual void SetCurrentKeyCode(BYTE keyCode) = 0;
 
 	protected:
-		BYTE PORTA_IN();
-		void PORTA_OUT(BYTE value);
+		virtual BYTE PORTA_IN() = 0;
+		virtual void PORTA_OUT(BYTE value) = 0;
 
-		BYTE PORTB_IN();
-		void PORTB_OUT(BYTE value);
+		virtual BYTE PORTB_IN() = 0;
+		virtual void PORTB_OUT(BYTE value) = 0;
 
-		BYTE PORTC_IN();
-		void PORTC_OUT(BYTE value);
+		virtual BYTE PORTC_IN() = 0;
+		virtual void PORTC_OUT(BYTE value) = 0;
 
 		BYTE CONTROL_IN();
 		void CONTROL_OUT(BYTE value);
@@ -91,23 +63,18 @@ namespace ppi
 			CTRL_GB_C_DIR_L
 		);
 
-		enum DIRECTION { INPUT, OUTPUT };
-		const char* GetPortDirectionStr(DIRECTION d) { return (d == INPUT) ? "INPUT" : "OUTPUT"; }
+		enum class DIRECTION { INPUT, OUTPUT };
+		const char* GetPortDirectionStr(DIRECTION d) { return (d == DIRECTION::INPUT) ? "INPUT" : "OUTPUT"; }
 
-		DIRECTION m_portADirection = INPUT;
-		DIRECTION m_portBDirection = INPUT;
-		DIRECTION m_portCHDirection = INPUT;
-		DIRECTION m_portCLDirection = INPUT;
+		DIRECTION m_portADirection = DIRECTION::INPUT;
+		DIRECTION m_portBDirection = DIRECTION::INPUT;
+		DIRECTION m_portCHDirection = DIRECTION::INPUT;
+		DIRECTION m_portCLDirection = DIRECTION::INPUT;
 
 		BYTE m_portAData = 0;
 		BYTE m_portBData = 0;
 		BYTE m_portCData = 0;
 
 		BYTE m_controlWord = DEFAULT_CONTROLWORD;
-
-		// Motherboard configuration switches
-		BYTE m_switches = 0;
-
-		BYTE m_currentKey = 0xAA;
 	};
 }
