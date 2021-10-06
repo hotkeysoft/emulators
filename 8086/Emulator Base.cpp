@@ -4,9 +4,11 @@
 #include "Memory.h"
 #include "MemoryBlock.h"
 #include "MemoryMap.h"
-#include "ComputerXT.h"
 #include "Console.h"
 #include "Monitor.h"
+
+#include "ComputerXT.h"
+#include "ComputerPCjr.h"
 
 #include <conio.h>
 #include <vector>
@@ -21,7 +23,7 @@
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
-#define NO_CONSOLE
+//#define NO_CONSOLE
 //#define CPU_TEST
 
 #ifdef CPU_TEST
@@ -31,7 +33,7 @@ const short CONSOLE_COLS = 80;
 FILE* logFile = nullptr;
 
 enum class Mode { MONITOR = 0, LOG = 2};
-Mode mode = Mode::LOG;
+Mode mode = Mode::MONITOR;
 
 Console console;
 emul::Monitor monitor(console);
@@ -60,7 +62,7 @@ void LogCallback(const char* str)
 	}
 }
 
-void ToggleMode(cga::DeviceCGA& screen)
+void ToggleMode()
 {
 	switch (mode)
 	{
@@ -102,10 +104,11 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	emul::ComputerXT pc;
+	//emul::ComputerXT pc;
+	emul::ComputerPCjr pc;
 
-	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
-	testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
+	//emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
+	//testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
 	//pc.GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
 
 	pc.Init();
@@ -145,7 +148,7 @@ int main(int argc, char* args[])
 					run = pc.Step();
 					break;
 				case emul::MonitorState::SWITCH_MODE:
-					ToggleMode(pc.GetCGA());
+					ToggleMode();
 					break;
 				}
 			}
@@ -184,7 +187,7 @@ int main(int argc, char* args[])
 						break;
 
 					case 134: // F12
-						ToggleMode(pc.GetCGA());
+						ToggleMode();
 						break;
 					}
 				}
@@ -254,7 +257,7 @@ int main(int argc, char* args[])
 	pc.Dump();
 
 	pc.GetMemory().Dump(0, 65536, "dump/memdump.bin");
-	pc.GetFloppy().SaveDiskImage(0, "dump/floppy0.img");
+	//pc.GetFloppy().SaveDiskImage(0, "dump/floppy0.img");
 
 	//DumpBackLog();
 
