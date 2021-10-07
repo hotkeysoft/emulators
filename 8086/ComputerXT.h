@@ -6,9 +6,9 @@
 #include "Device8255XT.h"
 #include "Device8237.h"
 #include "Device8259.h"
-#include "DeviceCGA.h"
 #include "DeviceFloppy.h"
 #include "DevicePCSpeaker.h"
+#include "VideoCGA.h"
 
 namespace emul
 {
@@ -26,7 +26,6 @@ namespace emul
 		void InputKey(BYTE ch) { m_keyBuf[m_keyBufWrite++] = ch; }
 
 		Memory& GetMemory() { return m_memory; }
-		cga::DeviceCGA& GetCGA() { return m_cga; }
 		fdc::DeviceFloppy& GetFloppy() { return m_floppy; }
 
 		size_t GetTicks() { return m_ticks; }
@@ -47,8 +46,9 @@ namespace emul
 		pic::Device8259 m_pic;
 		ppi::Device8255XT m_ppi;
 		dma::Device8237 m_dma;
-		cga::DeviceCGA m_cga;
 		fdc::DeviceFloppy m_floppy;
+
+		video::VideoCGA m_cga;
 
 		beeper::DevicePCSpeaker m_pcSpeaker;
 

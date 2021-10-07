@@ -1,9 +1,9 @@
-#include "DeviceCGA.h"
+#include "VideoCGA.h"
 #include <assert.h>
 
 #include "SDL.h"
 
-namespace cga
+namespace video
 {
 	const float VSCALE = 2.4f;
 
@@ -36,7 +36,7 @@ namespace cga
 		0xFF000000, 0xFF3F3F3F, 0xFF7F7F7F, 0xFFFFFFFF
 	};
 
-	DeviceCGA::DeviceCGA(WORD baseAddress) :
+	VideoCGA::VideoCGA(WORD baseAddress) :
 		Logger("CGA"),
 		m_baseAddress(baseAddress),
 		m_screenB800("CGA", 16384, emul::MemoryType::RAM),
@@ -47,18 +47,18 @@ namespace cga
 		m_frameBuffer = new uint32_t[640 * 200];
 	}
 
-	DeviceCGA::~DeviceCGA()
+	VideoCGA::~VideoCGA()
 	{
 		delete[] m_frameBuffer;
 	}
 
-	void DeviceCGA::Reset()
+	void VideoCGA::Reset()
 	{
 		m_hPos = 0;
 		m_vPos = 0;
 	}
 
-	void DeviceCGA::Init(const char* charROM, BYTE border)
+	void VideoCGA::Init(const char* charROM, BYTE border)
 	{
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
@@ -70,30 +70,30 @@ namespace cga
 		m_sdlVBorder = (BYTE)(border / VSCALE);
 
 		// CRTC Register Select
-		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&DeviceCGA::SelectCRTCRegister));
-		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&DeviceCGA::SelectCRTCRegister));
-		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&DeviceCGA::SelectCRTCRegister));
-		Connect(m_baseAddress + 6, static_cast<PortConnector::OUTFunction>(&DeviceCGA::SelectCRTCRegister));
+		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&VideoCGA::SelectCRTCRegister));
+		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&VideoCGA::SelectCRTCRegister));
+		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&VideoCGA::SelectCRTCRegister));
+		Connect(m_baseAddress + 6, static_cast<PortConnector::OUTFunction>(&VideoCGA::SelectCRTCRegister));
 
 		// CRTC Register Data
-		Connect(m_baseAddress + 1, static_cast<PortConnector::OUTFunction>(&DeviceCGA::WriteCRTCData));
-		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&DeviceCGA::WriteCRTCData));
-		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&DeviceCGA::WriteCRTCData));
-		Connect(m_baseAddress + 7, static_cast<PortConnector::OUTFunction>(&DeviceCGA::WriteCRTCData));
+		Connect(m_baseAddress + 1, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteCRTCData));
+		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteCRTCData));
+		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteCRTCData));
+		Connect(m_baseAddress + 7, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteCRTCData));
 
-		Connect(m_baseAddress + 1, static_cast<PortConnector::INFunction>(&DeviceCGA::ReadCRTCData));
-		Connect(m_baseAddress + 3, static_cast<PortConnector::INFunction>(&DeviceCGA::ReadCRTCData));
-		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&DeviceCGA::ReadCRTCData));
-		Connect(m_baseAddress + 7, static_cast<PortConnector::INFunction>(&DeviceCGA::ReadCRTCData));
+		Connect(m_baseAddress + 1, static_cast<PortConnector::INFunction>(&VideoCGA::ReadCRTCData));
+		Connect(m_baseAddress + 3, static_cast<PortConnector::INFunction>(&VideoCGA::ReadCRTCData));
+		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&VideoCGA::ReadCRTCData));
+		Connect(m_baseAddress + 7, static_cast<PortConnector::INFunction>(&VideoCGA::ReadCRTCData));
 
 		// Mode Control Register
-		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&DeviceCGA::WriteModeControlRegister));
+		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteModeControlRegister));
 
 		// Color Select Register
-		Connect(m_baseAddress + 9, static_cast<PortConnector::OUTFunction>(&DeviceCGA::WriteColorSelectRegister));
+		Connect(m_baseAddress + 9, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteColorSelectRegister));
 
 		// Status Register
-		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&DeviceCGA::ReadStatusRegister));
+		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoCGA::ReadStatusRegister));
 
 
 		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
@@ -108,7 +108,7 @@ namespace cga
 		SDL_RenderSetScale(m_sdlRenderer, 1.0f, VSCALE);
 	}
 
-	void DeviceCGA::RenderFrame()
+	void VideoCGA::RenderFrame()
 	{
 		static size_t frames = 0;
 
@@ -137,14 +137,14 @@ namespace cga
 		}
 	}
 
-	void DeviceCGA::SelectCRTCRegister(BYTE value)
+	void VideoCGA::SelectCRTCRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "SelectCRTCRegister, reg=%d", value);
 		value &= 31;
 		m_crtc.currRegister = (value > _CRT_MAX_REG) ? CRT_INVALID_REG : (CRTRegister)value;
 	}
 
-	BYTE DeviceCGA::ReadCRTCData()
+	BYTE VideoCGA::ReadCRTCData()
 	{
 		LogPrintf(Logger::LOG_DEBUG, "ReadCRTCData, reg=%d", m_crtc.currRegister);
 
@@ -161,7 +161,7 @@ namespace cga
 			return 0xFF;
 		}
 	}
-	void DeviceCGA::WriteCRTCData(BYTE value)
+	void VideoCGA::WriteCRTCData(BYTE value)
 	{
 		switch (m_crtc.currRegister)
 		{
@@ -251,13 +251,13 @@ namespace cga
 		}
 	}
 
-	BYTE DeviceCGA::ReadStatusRegister()
+	BYTE VideoCGA::ReadStatusRegister()
 	{
 		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister, hSync=%d, vSync=%d", IsHSync(), IsVSync());
 		return (IsHSync() ? 1 : 0) | (IsVSync() ? 8 : 0);
 	}
 
-	void DeviceCGA::WriteModeControlRegister(BYTE value)
+	void VideoCGA::WriteModeControlRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteModeControlRegister, value=%02Xh", value);
 
@@ -277,7 +277,7 @@ namespace cga
 			m_mode.blink ? ' ' : '/');
 	}
 
-	void DeviceCGA::WriteColorSelectRegister(BYTE value)
+	void VideoCGA::WriteColorSelectRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteColorSelectRegister, value=%02Xh", value);
 
@@ -291,7 +291,7 @@ namespace cga
 			m_color.palIntense);
 	}
 
-	void DeviceCGA::UpdateHVTotals()
+	void VideoCGA::UpdateHVTotals()
 	{
 		m_hTotalDisp = m_crtc.hDisplayed * 8;
 		m_hTotal = m_crtc.hTotal * 8;
@@ -303,7 +303,7 @@ namespace cga
 		m_hBorder = (m_crtc.vTotal - m_crtc.vSyncPos) * m_vCharHeight;
 	}
 
-	void DeviceCGA::Tick()
+	void VideoCGA::Tick()
 	{
 		if (!m_mode.enableVideo || m_hTotal == 0 || m_vTotal == 0)
 		{
@@ -351,7 +351,7 @@ namespace cga
 		}
 	}
 
-	void DeviceCGA::NewFrame()
+	void VideoCGA::NewFrame()
 	{
 		// Pointers for alpha mode
 		m_currChar = m_screenB800.getPtr8(m_crtc.startAddress * 2u);
@@ -372,9 +372,9 @@ namespace cga
 		m_bank1 = m_screenB800.getPtr8(0x2000);
 
 		// Select draw function
-		m_drawFunc = &DeviceCGA::DrawTextMode;
-		if (m_mode.graphics) m_drawFunc = &DeviceCGA::Draw320x200;
-		if (m_mode.hiResolution) m_drawFunc = &DeviceCGA::Draw640x200;
+		m_drawFunc = &VideoCGA::DrawTextMode;
+		if (m_mode.graphics) m_drawFunc = &VideoCGA::Draw320x200;
+		if (m_mode.hiResolution) m_drawFunc = &VideoCGA::Draw640x200;
 
 		// TODO: Do this for each line instead of each frame
 		m_alphaPalette = (m_mode.monochrome && m_composite) ? AlphaMonoGreyPalette : AlphaColorPalette;
@@ -393,7 +393,7 @@ namespace cga
 	Uint32 tempRowAlpha[640 + 2];
 	Uint32 tempRow[640];
 
-	void DeviceCGA::EndOfRow()
+	void VideoCGA::EndOfRow()
 	{
 		if (!m_mode.hiResolution || !m_composite || m_vPos >= m_vTotalDisp)
 			return;
@@ -420,14 +420,14 @@ namespace cga
 
 	}
 
-	bool DeviceCGA::IsCursor() const
+	bool VideoCGA::IsCursor() const
 	{
 		return (m_currChar == m_cursorPos) &&
 			(m_crtc.cursor != CRTCData::CURSOR_NONE) &&
 			((m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16));
 	}
 
-	void DeviceCGA::DrawTextMode()
+	void VideoCGA::DrawTextMode()
 	{
 		if (m_currChar && (m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % m_vCharHeight) == 0))
 		{
@@ -466,7 +466,7 @@ namespace cga
 			m_currChar += 2;
 		}
 	}
-	void DeviceCGA::Draw320x200()
+	void VideoCGA::Draw320x200()
 	{
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
@@ -491,7 +491,7 @@ namespace cga
 		}
 	}
 
-	void DeviceCGA::Draw640x200()
+	void VideoCGA::Draw640x200()
 	{
 		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
 		// In this mode 1 byte = 8 pixels

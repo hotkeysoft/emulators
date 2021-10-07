@@ -60,9 +60,6 @@
     <ClCompile Include="Device8237.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceCGA.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Device8259.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -94,6 +91,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Device8255PCjr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoCGA.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -137,9 +137,6 @@
     <ClInclude Include="Device8237.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceCGA.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Device8259.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -171,6 +168,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Device8255PCjr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoCGA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

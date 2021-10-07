@@ -13,19 +13,19 @@ struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
 
-namespace cga
+namespace video
 {
-	class DeviceCGA : public PortConnector
+	class VideoCGA : public PortConnector
 	{
 	public:
-		DeviceCGA(WORD baseAddress);
-		~DeviceCGA();
+		VideoCGA(WORD baseAddress);
+		~VideoCGA();
 
-		DeviceCGA() = delete;
-		DeviceCGA(const DeviceCGA&) = delete;
-		DeviceCGA& operator=(const DeviceCGA&) = delete;
-		DeviceCGA(DeviceCGA&&) = delete;
-		DeviceCGA& operator=(DeviceCGA&&) = delete;
+		VideoCGA() = delete;
+		VideoCGA(const VideoCGA&) = delete;
+		VideoCGA& operator=(const VideoCGA&) = delete;
+		VideoCGA(VideoCGA&&) = delete;
+		VideoCGA& operator=(VideoCGA&&) = delete;
 
 		void Init(const char* charROM, BYTE border = 10);
 		void Reset();
@@ -139,8 +139,8 @@ namespace cga
 		} m_mode;
 		void WriteModeControlRegister(BYTE value);
 
-		typedef void(DeviceCGA::* DrawFunc)();
-		DrawFunc m_drawFunc = &DeviceCGA::DrawTextMode;
+		typedef void(VideoCGA::* DrawFunc)();
+		DrawFunc m_drawFunc = &VideoCGA::DrawTextMode;
 		void DrawTextMode();
 		void Draw320x200();
 		void Draw640x200();

@@ -183,7 +183,6 @@
     <ClCompile Include="Device8255PCjr.cpp" />
     <ClCompile Include="Device8255XT.cpp" />
     <ClCompile Include="Device8259.cpp" />
-    <ClCompile Include="DeviceCGA.cpp" />
     <ClCompile Include="DeviceFloppy.cpp" />
     <ClCompile Include="DevicePCSpeaker.cpp" />
     <ClCompile Include="Emulator Base.cpp" />
@@ -194,6 +193,7 @@
     <ClCompile Include="PortAggregator.cpp" />
     <ClCompile Include="PortConnector.cpp" />
     <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="VideoCGA.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h" />
@@ -211,7 +211,6 @@
     <ClInclude Include="Device8255PCjr.h" />
     <ClInclude Include="Device8255XT.h" />
     <ClInclude Include="Device8259.h" />
-    <ClInclude Include="DeviceCGA.h" />
     <ClInclude Include="DeviceFloppy.h" />
     <ClInclude Include="DevicePCSpeaker.h" />
     <ClInclude Include="Memory.h" />
@@ -221,6 +220,7 @@
     <ClInclude Include="PortAggregator.h" />
     <ClInclude Include="PortConnector.h" />
     <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="VideoCGA.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="TODO.txt" />
