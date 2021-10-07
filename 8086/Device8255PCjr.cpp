@@ -8,36 +8,34 @@ namespace ppi
 	{
 	}
 
-	// PORT A: KEYBOARD DATA (INPUT)
+	// PORT A: KEYBOARD DATA (OUTPUT)
 	// ---------
-	// PA7-PA0: Received keyboard byte
-	// 
-	// Configured as OUTPUT during POST
-	// Outputs diagnostic code
+	// PA7-PA0: Keystroke Storage
 	BYTE Device8255PCjr::PORTA_IN()
 	{
-		LogPrintf(LOG_DEBUG, "Read Keyboard, current key=%02X", m_currentKey);
-		return m_currentKey;
+		LogPrintf(LOG_DEBUG, "Read Keyboard Storage, value=%02X", m_portAData);
+		return m_portAData;
 	}
 	void Device8255PCjr::PORTA_OUT(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "POST: %d", value);
+		LogPrintf(LOG_INFO, "Write Keyboard Storage, value: %d", value);
+		m_portAData = value;
 	}
 	
-	// PORT B:
+	// PORT B: OUTPUT
 	// ---------
-	// PB7: HIGH: Clear KSR + Clear IRQ1 / LOW: Normal state
-	// PB6: Keyboard clock line: HIGH: Normal state / LOW: Pull clock line low (triggers keyboard self-test)
-	// PB5: ENABLEI/OCK(2) / LOW: Enable detection of RAM parity errors on expansion cards
-	// PB4: ENBRAMPCK (6) / LOW: Enable detection of RAM parity errors on motherboard
-	// PB3: DIP Switch block select (0: 1-4 / 1: 5-8) (TODO: Determine 0-1)
-	// PB2: (JUMPER E5 - UNUSED)
-	// PB1: SPKRDATA (8) / Data for speaker
-	// PB0: TIM2GATESPK (8) / Gate for timer 2
+	// PB7: (Reserved)
+	// PB6: SPKR Switch 1
+	// PB5: SPKR Switch 0
+	// PB4: HI: Disable Internal Beeper and Cassette Motor Relay
+	// PB3: HI: Cassette Motor OFF
+	// PB2: HI: Alphanumeric mode / LOW: Graphics mode
+	// PB1: Speaker Data
+	// PB0: Timer2 Gate (Speaker)
 
 	BYTE Device8255PCjr::PORTB_IN()
 	{
-		LogPrintf(LOG_DEBUG, "PORTB IN");
+		LogPrintf(LOG_DEBUG, "PORTB IN, value=%02X", m_portBData);
 		return m_portBData;
 	}
 	void Device8255PCjr::PORTB_OUT(BYTE value)
@@ -53,34 +51,34 @@ namespace ppi
 			firstSet = false;
 		}
 
-		if (diff & 0x80) LogPrintf(LOG_INFO, "PB7: KSR+IRQ1 %s", value & 0x80 ? "Clear" : "Normal");
-		if (diff & 0x40) LogPrintf(LOG_INFO, "PB6: KBD Clock %s", value & 0x40 ? "Normal" : "LOW: Self-test");
-		if (diff & 0x20) LogPrintf(LOG_INFO, "PB5: EX RAM Parity Check %s", value & 0x20 ? "OFF" : "ON");
-		if (diff & 0x10) LogPrintf(LOG_INFO, "PB4: MB RAM Parity Check %s", value & 0x10 ? "OFF" : "ON");
-		if (diff & 0x08) LogPrintf(LOG_INFO, "PB3: DIP Switch Block Select %s", value & 0x08 ? "1-4" : "5-8");
-		if (diff & 0x04) LogPrintf(LOG_INFO, "PB2: UNUSED %s", value & 0x04 ? "1" : "0");
+		if (diff & 0x40) LogPrintf(LOG_INFO, "PB6: SPKR Switch 1 %s", value & 0x40 ? "HI" : "LOW");
+		if (diff & 0x40) LogPrintf(LOG_INFO, "PB5: SPKR Switch 0 %s", value & 0x40 ? "HI" : "LOW");
+		if (diff & 0x10) LogPrintf(LOG_INFO, "PB4: Internal Beeper/Cassette Motor Relay %s", value & 0x10 ? "DISABLE" : "ENABLE");
+		if (diff & 0x08) LogPrintf(LOG_INFO, "PB3: Cassette Motor %s", value & 0x08 ? "OFF" : "ON");
+		if (diff & 0x04) LogPrintf(LOG_INFO, "PB2: Video Mode %s", value & 0x04 ? "ALPHA" : "GRAPHICS");
 		if (diff & 0x02) LogPrintf(LOG_INFO, "PB1: SPEAKER Data %s", value & 0x02 ? "ON" : "OFF");
 		if (diff & 0x01) LogPrintf(LOG_INFO, "PB0: TIMER2 Gate %s", value & 0x01 ? "HI" : "LOW");
 
 		m_portBData = value;
 	}
 
-	// PORT C:
+	// PORT C: INPUT
 	// ---------
-	// PC7: PCK (6) (IN) RAM parity error occured on motherboard
-	// PC6: I/O CHCK (2) (IN) RAM parity error occured on expansion cards
-	// PC5: T/C2OUT (8) (IN) Timer channel 2 monitoring
-	// PC4: SPK (8) (IN) Speaker monitoring
 
-	// PC0-PC3: (IN) SW1 Configuration Switches 1-4 / 5-8 (selected by PB3)
+	// PC7: (CFG) Keyboard Cable Connected: HI: no, LOW: yes
 
+	// PC6: Keyboard Data
+	// PC5: Timer channel 2 monitoring
+	// PC4: Cassette Data In
+	// 
+	// PC3: (CFG) 64KB Expansion Installed: HI: no, LOW: yes
+	// PC2: (CFG) Diskette Drive Card Installed: HI: no, LOW: yes
+	// PC1: (CFG) Internal MODEM Card Installed: HI: no, LOW: yes
+	// 
+	// PC0: Keyboard Latched
 	BYTE Device8255PCjr::PORTC_IN()
 	{
-		// TODO: PC4-7 == 0 for now
-
-		bool PB6 = (m_portBData & 0x08);
-
-		BYTE ret = 0;
+		BYTE ret = (m_config & 0b10001110) | 0; //TODO (PC0/4/5/6)
 
 		LogPrintf(LOG_DEBUG, "PORTC IN, ret=%02X", ret);
 		return ret;
@@ -94,4 +92,29 @@ namespace ppi
 	{ 
 		m_currentKey = keyCode;
 	}
+
+	// PC7: (CFG) Keyboard Cable Connected: HI: no, LOW: yes
+	void Device8255PCjr::SetKeyboardConnected(bool value)
+	{
+		emul::SetBit(m_config, 7, !value);
+	}
+
+	// PC3: (CFG) 64KB Expansion Installed: HI: no, LOW: yes
+	void Device8255PCjr::SetRAMExpansion(bool value)
+	{
+		emul::SetBit(m_config, 3, !value);
+	}
+
+	// PC2: (CFG) Diskette Drive Card Installed: HI: no, LOW: yes
+	void Device8255PCjr::SetDisketteCard(bool value)
+	{
+		emul::SetBit(m_config, 2, !value);
+	}
+
+	// PC1: (CFG) Internal MODEM Card Installed: HI: no, LOW: yes
+	void Device8255PCjr::SetModemCard(bool value)
+	{
+		emul::SetBit(m_config, 1, !value);
+	}
+
 }

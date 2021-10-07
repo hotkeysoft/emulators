@@ -17,10 +17,17 @@ namespace emul
 			{
 				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
 			}
+
+			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteMfgTest));
 		}
 
 		void WriteData(BYTE value)
 		{
+		}
+
+		void WriteMfgTest(BYTE value)
+		{
+			LogPrintf(LOG_ERROR, "MFG TEST: %02Xh", value);
 		}
 	} dummyPort;
 
@@ -28,7 +35,7 @@ namespace emul
 		Logger("PCjr"),
 		CPU8086(m_memory, m_map),
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_base64K("RAM0", 0x80000, emul::MemoryType::RAM),
+		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, 1193182),
@@ -39,20 +46,20 @@ namespace emul
 
 	void ComputerPCjr::Init()
 	{
-		m_memory.EnableLog(true, Logger::LOG_ERROR);
+		m_memory.EnableLog(true, Logger::LOG_INFO);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
 
 		m_base64K.Clear(0xA5);
 		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_WARNING);
+		m_pit.EnableLog(true, Logger::LOG_INFO);
 
 		m_pic.Init();
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_WARNING);
+		m_ppi.EnableLog(true, Logger::LOG_INFO);
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
@@ -115,8 +122,8 @@ namespace emul
 			if (m_keyBufRead != m_keyBufWrite && (m_ticks-m_lastKbd) > 10000)
 			{
 				m_lastKbd = m_ticks;
-				m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
-				m_pic.InterruptRequest(1);
+				//m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
+				//m_pic.InterruptRequest(1);
 			}
 
 			m_pit.Tick();
@@ -125,10 +132,12 @@ namespace emul
 			{
 				if (out)
 				{
-					m_pic.InterruptRequest(0);
+					//m_pic.InterruptRequest(0);
 				}
 				timer0Out = out;
 			}
+
+			m_pcSpeaker.Tick();
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment

@@ -22,6 +22,14 @@ namespace ppi
 		Device8255PCjr(Device8255PCjr&&) = delete;
 		Device8255PCjr& operator=(Device8255PCjr&&) = delete;
 
+		// Amount of memory on system board
+		enum class RAMSIZE { RAM_64K, RAM_128K };
+		void SetRAMConfig(RAMSIZE);
+		void SetKeyboardConnected(bool);
+		void SetRAMExpansion(bool);
+		void SetDisketteCard(bool);
+		void SetModemCard(bool);
+
 		virtual void SetCurrentKeyCode(BYTE keyCode);
 
 	protected:
@@ -35,5 +43,7 @@ namespace ppi
 		virtual void PORTC_OUT(BYTE value) override;
 
 		BYTE m_currentKey = 0xAA;
+
+		BYTE m_config = 0xFF;
 	};
 }
