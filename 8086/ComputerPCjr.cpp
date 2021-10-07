@@ -40,7 +40,8 @@ namespace emul
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, 1193182),
 		m_pic(0x20),
-		m_ppi(0x60)
+		m_ppi(0x60),
+		m_video(0x3D0)
 	{
 	}
 
@@ -65,6 +66,10 @@ namespace emul
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
 
+		m_video.EnableLog(true, Logger::LOG_WARNING);
+		m_video.Init("data/XT/CGA_CHAR.BIN");
+		//m_video.SetComposite(true);
+
 		m_biosF000.LoadBinary("data/PCjr/BIOS_4860_1504036_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
 
@@ -74,6 +79,7 @@ namespace emul
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
+		AddDevice(m_video);
 		AddDevice(dummyPort);
 	}
 
@@ -139,6 +145,8 @@ namespace emul
 			}
 
 			m_pcSpeaker.Tick();
+
+			m_video.Tick();
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment

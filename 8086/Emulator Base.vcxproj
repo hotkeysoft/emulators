@@ -194,6 +194,7 @@
     <ClCompile Include="PortConnector.cpp" />
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="VideoCGA.cpp" />
+    <ClCompile Include="VideoPCjr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h" />
@@ -221,6 +222,7 @@
     <ClInclude Include="PortConnector.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="VideoCGA.h" />
+    <ClInclude Include="VideoPCjr.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="TODO.txt" />

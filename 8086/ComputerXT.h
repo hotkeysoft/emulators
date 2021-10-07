@@ -48,7 +48,7 @@ namespace emul
 		dma::Device8237 m_dma;
 		fdc::DeviceFloppy m_floppy;
 
-		video::VideoCGA m_cga;
+		video::VideoCGA m_video;
 
 		beeper::DevicePCSpeaker m_pcSpeaker;
 

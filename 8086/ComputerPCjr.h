@@ -6,6 +6,7 @@
 #include "Device8255PCjr.h"
 #include "Device8259.h"
 #include "DevicePCSpeaker.h"
+#include "VideoPCjr.h"
 
 namespace emul
 {
@@ -41,8 +42,9 @@ namespace emul
 		pit::Device8254 m_pit;
 		pic::Device8259 m_pic;
 		ppi::Device8255PCjr m_ppi;
-		//cga::DeviceCGA m_cga;
 		//fdc::DeviceFloppy m_floppy;
+
+		video::VideoPCjr m_video;
 
 		beeper::DevicePCSpeaker m_pcSpeaker;
 

@@ -42,7 +42,7 @@ namespace emul
 		m_pic(0x20),
 		m_ppi(0x60),
 		m_dma(0x00, m_memory),
-		m_cga(0x3D0),
+		m_video(0x3D0),
 		m_floppy(0x03F0, 1193182)
 	{
 	}
@@ -80,12 +80,12 @@ namespace emul
 		m_dma.EnableLog(false);
 		m_dma.EnableLog(true, Logger::LOG_INFO);
 
-		m_cga.EnableLog(true, Logger::LOG_WARNING);
-		m_cga.Init("data/XT/CGA_CHAR.BIN");
-		//m_cga.SetComposite(true);
+		m_video.EnableLog(true, Logger::LOG_WARNING);
+		m_video.Init("data/XT/CGA_CHAR.BIN");
+		//m_video.SetComposite(true);
 
-		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xB800));
-		m_memory.Allocate(&m_cga.GetVideoRAM(), emul::S2A(0xBC00));
+		m_memory.Allocate(&m_video.GetVideoRAM(), emul::S2A(0xB800));
+		m_memory.Allocate(&m_video.GetVideoRAM(), emul::S2A(0xBC00));
 
 		m_biosF000.LoadBinary("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
@@ -105,7 +105,7 @@ namespace emul
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_dma);
-		AddDevice(m_cga);
+		AddDevice(m_video);
 		AddDevice(m_floppy);
 		AddDevice(dummyPort);
 	}
@@ -180,7 +180,7 @@ namespace emul
 			}
 
 			m_dma.Tick();
-			m_cga.Tick();
+			m_video.Tick();
 			m_floppy.Tick();
 
 			// TODO: faking it
