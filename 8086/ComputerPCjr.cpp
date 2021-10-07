@@ -51,6 +51,7 @@ namespace emul
 
 		m_base64K.Clear(0xA5);
 		m_memory.Allocate(&m_base64K, 0);
+		m_memory.Allocate(&m_base64K, 0x10000);
 
 		m_pit.Init();
 		m_pit.EnableLog(true, Logger::LOG_INFO);
@@ -59,7 +60,7 @@ namespace emul
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_INFO);
+		m_ppi.EnableLog(true, Logger::LOG_DEBUG);
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);

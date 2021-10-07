@@ -13,7 +13,7 @@ namespace ppi
 	// PA7-PA0: Keystroke Storage
 	BYTE Device8255PCjr::PORTA_IN()
 	{
-		LogPrintf(LOG_DEBUG, "Read Keyboard Storage, value=%02X", m_portAData);
+		LogPrintf(LOG_INFO, "Read Keyboard Storage, value=%02X", m_portAData);
 		return m_portAData;
 	}
 	void Device8255PCjr::PORTA_OUT(BYTE value)

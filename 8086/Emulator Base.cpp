@@ -135,6 +135,12 @@ int main(int argc, char* args[])
 		bool run = true;
 		while (run)
 		{ 
+			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0x015F))
+			//{
+			//	monitor.Show();
+			//	mode = Mode::MONITOR;
+			//}
+
 			if (mode == Mode::MONITOR)
 			{
 				switch (monitor.Run())
