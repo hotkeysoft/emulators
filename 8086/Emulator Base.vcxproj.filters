@@ -99,6 +99,9 @@
     <ClCompile Include="VideoPCjr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Device6845.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
@@ -177,6 +180,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VideoPCjr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Device6845.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -66,10 +66,9 @@ namespace emul
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
 
-		m_video.EnableLog(true, Logger::LOG_WARNING);
+		m_video.EnableLog(true, Logger::LOG_INFO);
 		m_video.Init("data/XT/CGA_CHAR.BIN");
-		//m_video.SetComposite(true);
-
+		
 		m_biosF000.LoadBinary("data/PCjr/BIOS_4860_1504036_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
 

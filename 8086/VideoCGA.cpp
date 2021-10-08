@@ -1,7 +1,8 @@
 #include "VideoCGA.h"
-#include <assert.h>
 
-#include "SDL.h"
+#include <SDL.h>
+
+#include <assert.h>
 
 namespace video
 {
@@ -38,7 +39,7 @@ namespace video
 
 	VideoCGA::VideoCGA(WORD baseAddress) :
 		Logger("CGA"),
-		m_baseAddress(baseAddress),
+		Device6845(baseAddress),
 		m_screenB800("CGA", 16384, emul::MemoryType::RAM),
 		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
 		m_alphaPalette(AlphaColorPalette)
@@ -54,8 +55,7 @@ namespace video
 
 	void VideoCGA::Reset()
 	{
-		m_hPos = 0;
-		m_vPos = 0;
+		Device6845::Reset();
 	}
 
 	void VideoCGA::Init(const char* charROM, BYTE border)
@@ -69,22 +69,7 @@ namespace video
 		m_sdlHBorder = border;
 		m_sdlVBorder = (BYTE)(border / VSCALE);
 
-		// CRTC Register Select
-		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&VideoCGA::SelectCRTCRegister));
-		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&VideoCGA::SelectCRTCRegister));
-		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&VideoCGA::SelectCRTCRegister));
-		Connect(m_baseAddress + 6, static_cast<PortConnector::OUTFunction>(&VideoCGA::SelectCRTCRegister));
-
-		// CRTC Register Data
-		Connect(m_baseAddress + 1, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteCRTCData));
-		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteCRTCData));
-		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteCRTCData));
-		Connect(m_baseAddress + 7, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteCRTCData));
-
-		Connect(m_baseAddress + 1, static_cast<PortConnector::INFunction>(&VideoCGA::ReadCRTCData));
-		Connect(m_baseAddress + 3, static_cast<PortConnector::INFunction>(&VideoCGA::ReadCRTCData));
-		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&VideoCGA::ReadCRTCData));
-		Connect(m_baseAddress + 7, static_cast<PortConnector::INFunction>(&VideoCGA::ReadCRTCData));
+		Device6845::Init();
 
 		// Mode Control Register
 		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteModeControlRegister));
@@ -94,7 +79,6 @@ namespace video
 
 		// Status Register
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoCGA::ReadStatusRegister));
-
 
 		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 		{
@@ -134,120 +118,6 @@ namespace video
 		{
 			LogPrintf(Logger::LOG_ERROR, "60 frames");
 			frames = 0;
-		}
-	}
-
-	void VideoCGA::SelectCRTCRegister(BYTE value)
-	{
-		LogPrintf(Logger::LOG_DEBUG, "SelectCRTCRegister, reg=%d", value);
-		value &= 31;
-		m_crtc.currRegister = (value > _CRT_MAX_REG) ? CRT_INVALID_REG : (CRTRegister)value;
-	}
-
-	BYTE VideoCGA::ReadCRTCData()
-	{
-		LogPrintf(Logger::LOG_DEBUG, "ReadCRTCData, reg=%d", m_crtc.currRegister);
-
-		switch (m_crtc.currRegister)
-		{
-		case CRT_CURSOR_ADDR_HI:
-			return (m_crtc.cursorAddress >> 8);
-		case CRT_CURSOR_ADDR_LO:
-			return (BYTE)m_crtc.cursorAddress;
-
-		case CRT_LIGHT_PEN_HI:
-		case CRT_LIGHT_PEN_LO:
-		default:
-			return 0xFF;
-		}
-	}
-	void VideoCGA::WriteCRTCData(BYTE value)
-	{
-		switch (m_crtc.currRegister)
-		{
-		case CRT_H_TOTAL_CHAR:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:             hTotal = %d characters", value);
-			m_crtc.hTotal = value;
-			UpdateHVTotals();
-			break;
-		case CRT_H_DISPLAYED_CHAR:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         hDisplayed = %d characters", value);
-			m_crtc.hDisplayed = value;
-			UpdateHVTotals();
-			break;
-		case CRT_H_SYNC_POS_CHAR:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           hSyncPos = %d characters", value);
-			m_crtc.hSyncPos = value;
-			UpdateHVTotals();
-			break;
-		case CRT_H_SYNC_WIDTH_CHAR:
-			m_crtc.hSyncWidth = value & 15;
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         hSyncWidth = %d characters", m_crtc.hSyncWidth);
-			UpdateHVTotals();
-			break;
-
-		case CRT_V_TOTAL_ROW:
-			m_crtc.vTotal = value & 127;
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:             vTotal = %d rows", m_crtc.vTotal);
-			UpdateHVTotals();
-			break;
-		case CRT_V_TOTAL_ADJ_LINES:
-			m_crtc.vTotalAdjust = value & 31;
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       vTotalAdjust = %d scanlines", m_crtc.vTotalAdjust);
-			UpdateHVTotals();
-			break;
-		case CRT_V_DISPLAYED_ROW:
-			m_crtc.vTotalDisplayed = value & 127;
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:    vTotalDisplayed = %d rows", m_crtc.vTotalDisplayed);
-			UpdateHVTotals();
-			break;
-		case CRT_V_SYNC_POS_ROW:
-			m_crtc.vSyncPos = value & 127;
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           vSyncPos = %d rows", m_crtc.vSyncPos);
-			UpdateHVTotals();
-			break;
-
-		case CRT_INTERLACE_MODE:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:      interlaceMode = %d", value);
-			m_crtc.interlaceMode = value;
-			break;
-
-		case CRT_MAX_SCANLINE_ADDR:
-			m_crtc.maxScanlineAddress = value & 31;
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: maxScanlineAddress = %d scanlines", m_crtc.maxScanlineAddress);
-			UpdateHVTotals();
-			break;
-
-		case CRT_CURSOR_START_LINE:
-			m_crtc.cursorStart = (value & 31);
-			m_crtc.cursor = (CRTCData::CURSOR)((value >> 5) & 3);
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        cursorStart = %d scanline, %d", m_crtc.cursorStart, m_crtc.cursor);
-			break;
-		case CRT_CURSOR_END_LINE:
-			m_crtc.cursorEnd = (value & 31);
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          cursorEnd = %d scanline", m_crtc.cursorEnd);
-			break;
-
-		case CRT_START_ADDR_HI:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:   startAddress(HI) = %d", value);
-			emul::SetHByte(m_crtc.startAddress, value & 63);
-			break;
-		case CRT_START_ADDR_LO:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  startAddress(LOW) = %d", value);
-			emul::SetLByte(m_crtc.startAddress, value);
-			break;
-
-		case CRT_CURSOR_ADDR_HI:
-			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(HI) = %d", value);
-			emul::SetHByte(m_crtc.cursorAddress, value & 63);
-			break;
-		case CRT_CURSOR_ADDR_LO:
-			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(LO) = %d", value);
-			emul::SetLByte(m_crtc.cursorAddress, value);
-			break;
-
-		default:
-			LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: Invalid Register, reg=%d", m_crtc.currRegister);
 		}
 	}
 
@@ -291,21 +161,9 @@ namespace video
 			m_color.palIntense);
 	}
 
-	void VideoCGA::UpdateHVTotals()
-	{
-		m_hTotalDisp = m_crtc.hDisplayed * 8;
-		m_hTotal = m_crtc.hTotal * 8;
-		m_hBorder = (m_crtc.hTotal - m_crtc.hSyncPos) * 8;
-
-		m_vCharHeight = (m_crtc.maxScanlineAddress + 1);
-		m_vTotalDisp = m_crtc.vTotalDisplayed * m_vCharHeight;
-		m_vTotal = m_crtc.vTotal * m_vCharHeight + m_crtc.vTotalAdjust;
-		m_hBorder = (m_crtc.vTotal - m_crtc.vSyncPos) * m_vCharHeight;
-	}
-
 	void VideoCGA::Tick()
 	{
-		if (!m_mode.enableVideo || m_hTotal == 0 || m_vTotal == 0)
+		if (!m_mode.enableVideo || !IsInit())
 		{
 			SDL_Event e;
 			while (SDL_PollEvent(&e))
@@ -320,52 +178,21 @@ namespace video
 
 		(this->*m_drawFunc)();
 
-		m_hPos += 8;
-
-		if (m_hPos > m_hTotal)
-		{
-			EndOfRow();
-			m_hPos = 0;
-			++m_vPos;
-		}
-		if (m_vPos > m_vTotal)
-		{
-			RenderFrame();
-
-			// New frame, compute new offsets and do some housekeeping
-			++m_frame;
-			m_vPos = 0;
-
-			NewFrame();
-
-			// TODO: Move this elsewhere
-			// Process Events
-			SDL_Event e;
-			while (SDL_PollEvent(&e))
-			{
-				if (e.type == SDL_QUIT)
-				{
-					SDL_Quit();
-				}
-			}
-		}
+		Device6845::Tick();
 	}
 
 	void VideoCGA::NewFrame()
 	{
 		// Pointers for alpha mode
-		m_currChar = m_screenB800.getPtr8(m_crtc.startAddress * 2u);
-		if (m_crtc.cursorAddress * 2u >= m_screenB800.GetSize())
+		m_currChar = m_screenB800.getPtr8(m_config.startAddress * 2u);
+		if (m_config.cursorAddress * 2u >= m_screenB800.GetSize())
 		{
 			m_cursorPos = nullptr;
 		}
 		else
 		{
-			m_cursorPos = m_screenB800.getPtr8(m_crtc.cursorAddress * 2u);
+			m_cursorPos = m_screenB800.getPtr8(m_config.cursorAddress * 2u);
 		}
-
-		if ((m_frame % 16) == 0) m_blink16 = !m_blink16;
-		if ((m_frame % 32) == 0) m_blink32 = !m_blink32;
 
 		// Pointers for graphics mode
 		m_bank0 = m_screenB800.getPtr8(0x0000);
@@ -388,6 +215,17 @@ namespace video
 				| (m_mode.monochrome & (i & 1)) // Palette shift for mono modes
 			];
 		}
+
+		// TODO: Move this elsewhere
+		// Process Events
+		SDL_Event e;
+		while (SDL_PollEvent(&e))
+		{
+			if (e.type == SDL_QUIT)
+			{
+				SDL_Quit();
+			}
+		}
 	}
 
 	static Uint32 tempRowAlpha[640 + 2];
@@ -395,10 +233,10 @@ namespace video
 
 	void VideoCGA::EndOfRow()
 	{
-		if (!m_mode.hiResolution || !m_composite || m_vPos >= m_vTotalDisp)
+		if (!m_mode.hiResolution || !m_composite || m_data.vPos >= m_data.vTotalDisp)
 			return;
 
-		uint32_t baseX = (640 * m_vPos);
+		uint32_t baseX = (640 * m_data.vPos);
 
 		memset(tempRowAlpha, 0, sizeof(tempRowAlpha));
 		for (int offset = 0; offset < 4; ++offset)
@@ -423,13 +261,13 @@ namespace video
 	bool VideoCGA::IsCursor() const
 	{
 		return (m_currChar == m_cursorPos) &&
-			(m_crtc.cursor != CRTCData::CURSOR_NONE) &&
-			((m_crtc.cursor == CRTCData::CURSOR_BLINK32 && m_blink32) || (m_blink16));
+			(m_config.cursor != CRTCConfig::CURSOR_NONE) &&
+			((m_config.cursor == CRTCConfig::CURSOR_BLINK32 && IsBlink32()) || IsBlink16());
 	}
 
 	void VideoCGA::DrawTextMode()
 	{
-		if (m_currChar && (m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp) && ((m_vPos % m_vCharHeight) == 0))
+		if (m_currChar && IsDisplayArea() && ((m_data.vPos % m_data.vCharHeight) == 0))
 		{
 			BYTE* ch = m_currChar;
 			BYTE* attr = ch + 1;
@@ -450,12 +288,12 @@ namespace video
 			bool isCursorChar = IsCursor();
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((uint32_t)(*ch) * 8) + (m_vPos % m_vCharHeight);
-			bool draw = !charBlink || (charBlink && m_blink16);
-			for (int y = 0; y < m_vCharHeight; ++y)
+			BYTE* currCharPos = m_charROMStart + ((uint32_t)(*ch) * 8) + (m_data.vPos % m_data.vCharHeight);
+			bool draw = !charBlink || (charBlink && IsBlink16());
+			for (int y = 0; y < m_data.vCharHeight; ++y)
 			{
-				uint32_t offset = 640 * (uint32_t)(m_vPos + y) + m_hPos;
-				bool cursorLine = isCursorChar && (y >= m_crtc.cursorStart) && (y <= m_crtc.cursorEnd);
+				uint32_t offset = 640 * (uint32_t)(m_data.vPos + y) + m_data.hPos;
+				bool cursorLine = isCursorChar && (y >= m_config.cursorStart) && (y <= m_config.cursorEnd);
 				for (int x = 0; x < 8; ++x)
 				{
 					bool set = draw && ((*(currCharPos + y)) & (1 << (7 - x)));
@@ -471,9 +309,9 @@ namespace video
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
 
-		BYTE* &currChar = (m_vPos & 1) ? m_bank1 : m_bank0;
+		BYTE* &currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
 
-		if ((m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp))
+		if (IsDisplayArea())
 		{
 			for (int w = 0; w < 2; ++w)
 			{
@@ -483,7 +321,7 @@ namespace video
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					m_frameBuffer[640 * m_vPos + m_hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
+					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
 				}
 
 				++currChar;
@@ -496,17 +334,16 @@ namespace video
 		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
 		// In this mode 1 byte = 8 pixels
 
-		if ((m_vPos < m_vTotalDisp) && (m_hPos < m_hTotalDisp))
+		if (IsDisplayArea())
 		{
-			BYTE*& currChar = (m_vPos & 1) ? m_bank1 : m_bank0;
+			BYTE*& currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
 
 			Uint32 fg = m_alphaPalette[m_color.color];
 			Uint32 bg = m_alphaPalette[0];
 
-			uint32_t baseX = (640 * m_vPos) + (m_hPos * 2);
+			uint32_t baseX = (640 * m_data.vPos) + (m_data.hPos * 2);
 
-
-			uint32_t compositeOffset = m_hPos * 2;
+			uint32_t compositeOffset = m_data.hPos * 2;
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -516,17 +353,6 @@ namespace video
 				{
 					BYTE colorH = ch >> 4;
 					BYTE colorL = ch & 15;
-
-					// TODO: artifacts
-					//m_frameBuffer[baseX++] = colorH;
-					//m_frameBuffer[baseX++] = colorH;
-					//m_frameBuffer[baseX++] = colorH;
-					//m_frameBuffer[baseX++] = colorH;
-
-					//m_frameBuffer[baseX++] = colorL;
-					//m_frameBuffer[baseX++] = colorL;
-					//m_frameBuffer[baseX++] = colorL;
-					//m_frameBuffer[baseX++] = colorL;
 
 					tempRow[compositeOffset++] = colorH | ((ch & 0b10000000) ? 16 : 0);
 					tempRow[compositeOffset++] = colorH | ((ch & 0b01000000) ? 16 : 0);

@@ -177,6 +177,7 @@
     <ClCompile Include="CPU8086.cpp" />
     <ClCompile Include="CPU8086Test.cpp" />
     <ClCompile Include="CPUInfo.cpp" />
+    <ClCompile Include="Device6845.cpp" />
     <ClCompile Include="Device8237.cpp" />
     <ClCompile Include="Device8254.cpp" />
     <ClCompile Include="Device8255.cpp" />
@@ -206,6 +207,7 @@
     <ClInclude Include="CPU8086.h" />
     <ClInclude Include="CPU8086Test.h" />
     <ClInclude Include="CPUInfo.h" />
+    <ClInclude Include="Device6845.h" />
     <ClInclude Include="Device8237.h" />
     <ClInclude Include="Device8254.h" />
     <ClInclude Include="Device8255.h" />
