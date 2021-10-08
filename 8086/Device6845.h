@@ -34,8 +34,8 @@ namespace crtc
 
 		bool IsInit() const { return m_data.hTotal && m_data.vTotal; }
 
-		bool IsHSync() const { return m_data.hPos > m_data.hTotalDisp; }
-		bool IsVSync() const { return m_data.vPos > m_data.vTotalDisp; }
+		bool IsHSync() const { return m_data.hPos >= m_data.hTotalDisp; }
+		bool IsVSync() const { return m_data.vPos >= m_data.vTotalDisp; }
 
 		bool IsDisplayArea() const { return (m_data.vPos < m_data.vTotalDisp) && (m_data.hPos < m_data.hTotalDisp); }
 

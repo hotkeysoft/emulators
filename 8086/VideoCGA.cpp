@@ -124,7 +124,7 @@ namespace video
 	BYTE VideoCGA::ReadStatusRegister()
 	{
 		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister, hSync=%d, vSync=%d", IsHSync(), IsVSync());
-		return (IsHSync() ? 1 : 0) | (IsVSync() ? 8 : 0);
+		return (IsDisplayArea() ? 1 : 0) | (IsVSync() ? 8 : 0);
 	}
 
 	void VideoCGA::WriteModeControlRegister(BYTE value)

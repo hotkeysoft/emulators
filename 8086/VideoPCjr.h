@@ -57,6 +57,9 @@ namespace video
 		} m_pageRegister;
 		void WritePageRegister(BYTE value);
 
+		void WriteGateArrayRegister(BYTE value);
+		BYTE ReadStatusRegister();
+
 		void MapB800Window();
 
 		typedef void(VideoPCjr::* DrawFunc)();

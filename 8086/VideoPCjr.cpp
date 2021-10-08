@@ -46,9 +46,15 @@ namespace video
 		Device6845::Init();
 
 		// Registers
+		// 
 		// CRT, Processor Page Register
 		Connect(m_baseAddress + 0xF, static_cast<PortConnector::OUTFunction>(&VideoPCjr::WritePageRegister));
-
+		//
+		// Gate Array Register: Address/Data
+		Connect(m_baseAddress + 0xA, static_cast<PortConnector::OUTFunction>(&VideoPCjr::WriteGateArrayRegister));
+		//
+		// Gate Array Register: Status
+		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoPCjr::ReadStatusRegister));
 
 		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 		{
@@ -106,6 +112,35 @@ namespace video
 	void VideoPCjr::MapB800Window()
 	{
 		m_memory->MapWindow(m_pageRegister.cpuBaseAddress, 0xB8000, 0x4000);
+	}
+
+	void VideoPCjr::WriteGateArrayRegister(BYTE value)
+	{
+
+	}
+
+	BYTE VideoPCjr::ReadStatusRegister()
+	{
+		// Bit0: 1:Display enabled
+		// 
+		// Light pen, not implemented
+		// Bit1: 1:Light pen trigger set
+		// Bit2: 1:Light pen switch off, 0: switch on
+		//
+		// Bit3 1:Vertical retrace active
+		// 
+		// Bit4 1:Video dot
+
+		BYTE status =
+			(IsDisplayArea() << 0) |
+			(0 << 1) | // Light Pen Trigger
+			(1 << 2) | // Light Pen switch
+			(IsVSync() << 3) |
+			(0 << 4); // Video dots
+
+		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister, value=%02Xh", status);
+
+		return status;
 	}
 
 	void VideoPCjr::RenderFrame()
