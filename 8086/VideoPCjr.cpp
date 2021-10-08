@@ -4,6 +4,10 @@
 
 #include <assert.h>
 
+using emul::Memory;
+using emul::MemoryBlock;
+using emul::S2A;
+
 namespace video
 {
 	const float VSCALE = 2.4f;
@@ -26,8 +30,10 @@ namespace video
 		Device6845::Reset();
 	}
 
-	void VideoPCjr::Init(const char* charROM, BYTE border)
+	void VideoPCjr::Init(Memory* memory, const char* charROM, BYTE border)
 	{
+		assert(memory);
+		m_memory = memory;
 		//assert(charROM);
 		//LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		//m_charROM.LoadBinary(charROM);
@@ -40,6 +46,9 @@ namespace video
 		Device6845::Init();
 
 		// Registers
+		// CRT, Processor Page Register
+		Connect(m_baseAddress + 0xF, static_cast<PortConnector::OUTFunction>(&VideoPCjr::WritePageRegister));
+
 
 		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 		{
@@ -51,6 +60,52 @@ namespace video
 		m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 640, 200);
 
 		SDL_RenderSetScale(m_sdlRenderer, 1.0f, VSCALE);
+	}
+
+	void VideoPCjr::WritePageRegister(BYTE value)
+	{
+		LogPrintf(Logger::LOG_DEBUG, "WritePageRegister, value=%02Xh", value);
+
+		m_pageRegister.crtPage = value & 7;
+		m_pageRegister.cpuPage = (value >> 3) & 7;
+		m_pageRegister.videoAddressMode = (value >> 6) & 3;
+
+		const char* modeStr;
+		switch (m_pageRegister.videoAddressMode)
+		{
+		case 0:
+			m_pageRegister.addressMode = PageRegister::ADDRESSMODE::ALPHA;
+			modeStr = "ALPHA";
+			break;
+		case 1:
+			m_pageRegister.addressMode = PageRegister::ADDRESSMODE::GRAPH_LOW;
+			modeStr = "GRAPH LOW";
+			break;
+		case 2:
+			m_pageRegister.addressMode = PageRegister::ADDRESSMODE::GRAPH_HI;
+			modeStr = "GRAPH HI";
+			break;
+		default:
+			LogPrintf(LOG_ERROR, "WritePageRegister: Reserved mode");
+			throw std::exception("WritePageRegister: Reserved mode");
+		}
+
+		// Pages are 16K (0x4000)
+		m_pageRegister.crtBaseAddress = m_pageRegister.crtPage * 0x4000;
+		m_pageRegister.cpuBaseAddress = m_pageRegister.cpuPage * 0x4000;
+
+		LogPrintf(Logger::LOG_INFO, "Set Page Register: cpuPage[%d][%05Xh] crtPage=[%d][%05Xh] videoAddressMode=[%d][%s]", 
+			m_pageRegister.crtPage, m_pageRegister.crtBaseAddress,
+			m_pageRegister.cpuPage, m_pageRegister.cpuBaseAddress,
+			m_pageRegister.videoAddressMode, modeStr);
+
+		MapB800Window();
+	}
+
+	// This maps the zone of memory pointed to by the cpu page register to a 16k window at B800:0000
+	void VideoPCjr::MapB800Window()
+	{
+		m_memory->MapWindow(m_pageRegister.cpuBaseAddress, 0xB8000, 0x4000);
 	}
 
 	void VideoPCjr::RenderFrame()

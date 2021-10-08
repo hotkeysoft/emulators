@@ -23,6 +23,8 @@ namespace emul
 		bool Allocate(MemoryBlock* block, ADDRESS base);
 		bool Free(MemoryBlock* block);
 
+		bool MapWindow(ADDRESS source, ADDRESS window, DWORD len);
+
 		void Read(ADDRESS address, BYTE& value);
 		void Write(ADDRESS address, BYTE value);
 

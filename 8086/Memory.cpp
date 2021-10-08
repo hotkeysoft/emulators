@@ -73,9 +73,67 @@ namespace emul
 		return true;
 	}
 
+	bool Memory::MapWindow(ADDRESS source, ADDRESS window, DWORD len)
+	{
+		LogPrintf(LOG_WARNING, "Request to map memory [%X]-[%X] to window [%X]-[%X], window size: %d bytes",
+			source, source + len - 1,
+			window, window + len - 1,
+			len);
+
+		if (len % BlockGranularity != 0)
+		{
+			LogPrintf(LOG_ERROR, "Window size [%d] is not a multiple of [%d]", len, BlockGranularity);
+			return false;
+		}
+
+		if (source % BlockGranularity != 0)
+		{
+			LogPrintf(LOG_ERROR, "Source base address [%d] is not aligned to [%d] bytes boundary", source, BlockGranularity);
+			return false;
+		}
+
+		if (window % BlockGranularity != 0)
+		{
+			LogPrintf(LOG_ERROR, "Window base address [%d] is not aligned to [%d] bytes boundary", window, BlockGranularity);
+			return false;
+		}
+
+		if (!CheckAddressRange(source, m_addressBits) ||
+			!CheckAddressRange(source + len - 1, m_addressBits))
+		{
+			LogPrintf(LOG_ERROR, "Address out of range: block at %X, size = %d bytes", source, len);
+			LogPrintf(LOG_ERROR, "CPU Max address: %X", GetMaxAddress(m_addressBits));
+			return false;
+		}
+
+		if (!CheckAddressRange(window, m_addressBits) ||
+			!CheckAddressRange(window + len - 1, m_addressBits))
+		{
+			LogPrintf(LOG_ERROR, "Address out of range: block at %X, size = %d bytes", source, len);
+			LogPrintf(LOG_ERROR, "CPU Max address: %X", GetMaxAddress(m_addressBits));
+			return false;
+		}
+
+		int nbSlots = len / BlockGranularity;
+		int sourceBaseSlot = source / BlockGranularity;
+		int windowBaseSlot = window / BlockGranularity;
+		LogPrintf(LOG_INFO, "Copying %d slots, base slot = %02Xh -> %02Xh", nbSlots, sourceBaseSlot, windowBaseSlot);
+
+		for (size_t i = 0; i < nbSlots; ++i)
+		{			
+			MemorySlot slot = m_memory[sourceBaseSlot + i];
+			slot.base += (window - source);
+
+			m_memory[windowBaseSlot + i] = slot;
+		}
+
+		return true;
+	}
+	
+
 	BYTE* Memory::GetPtr8(ADDRESS address)
 	{
-		MemorySlot& slot = m_memory[address/BlockGranularity];
+		MemorySlot& slot = m_memory[address / BlockGranularity];
 		MemoryBlock* block = slot.block;
 
 		if (block)

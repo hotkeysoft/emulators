@@ -1,14 +1,15 @@
 #pragma once
 
 #include "Common.h"
+#include "Memory.h"
 #include "PortConnector.h"
 #include "Logger.h"
-#include "MemoryBlock.h"
 #include "Device6845.h"
 
 using emul::PortConnector;
 using emul::WORD;
 using emul::BYTE;
+using emul::ADDRESS;
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -28,13 +29,35 @@ namespace video
 		VideoPCjr(VideoPCjr&&) = delete;
 		VideoPCjr& operator=(VideoPCjr&&) = delete;
 
-		void Init(const char* charROM, BYTE border = 10);
+		void Init(emul::Memory* memory, const char* charROM, BYTE border = 10);
 		virtual void Reset() override;
 
 		virtual void Tick() override;
 
 	protected:
+		emul::Memory* m_memory = nullptr;
+
 		bool IsCursor() const;
+
+		struct PageRegister
+		{
+			BYTE crtPage = 0;
+			BYTE cpuPage = 0;
+			BYTE videoAddressMode = 0;
+
+			enum class ADDRESSMODE {
+				ALPHA = 0,
+				GRAPH_LOW = 1,
+				GRAPH_HI = 2
+			} addressMode;
+
+			ADDRESS crtBaseAddress = 0;
+			ADDRESS cpuBaseAddress = 0;
+
+		} m_pageRegister;
+		void WritePageRegister(BYTE value);
+
+		void MapB800Window();
 
 		typedef void(VideoPCjr::* DrawFunc)();
 		DrawFunc m_drawFunc = nullptr; //&VideoPCjr::DrawTextMode;
