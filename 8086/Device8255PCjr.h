@@ -24,11 +24,13 @@ namespace ppi
 
 		// Amount of memory on system board
 		enum class RAMSIZE { RAM_64K, RAM_128K };
-		void SetRAMConfig(RAMSIZE);
 		void SetKeyboardConnected(bool);
 		void SetRAMExpansion(bool);
 		void SetDisketteCard(bool);
 		void SetModemCard(bool);
+
+		bool GetTimer2Gate() const { return m_portBData & 1; }
+		void SetTimer2Output(bool value) { m_timer2Out = value; }
 
 		virtual void SetCurrentKeyCode(BYTE keyCode);
 
@@ -42,6 +44,7 @@ namespace ppi
 		virtual BYTE PORTC_IN() override;
 		virtual void PORTC_OUT(BYTE value) override;
 
+		bool m_timer2Out = false;
 		BYTE m_currentKey = 0xAA;
 
 		BYTE m_config = 0xFF;

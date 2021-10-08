@@ -61,7 +61,7 @@ namespace emul
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_DEBUG);
+		m_ppi.EnableLog(true, Logger::LOG_INFO);
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
@@ -101,7 +101,7 @@ namespace emul
 
 		// TODO: Temporary, need dynamic connections
 		// Timer 0: Time of day
-		// Timer 1: DMA RAM refresh
+		// Timer 1: 
 		// Timer 2: Speaker
 		static bool timer0Out = false;
 
@@ -132,13 +132,17 @@ namespace emul
 				//m_pic.InterruptRequest(1);
 			}
 
+			pit::Counter& timer2 = m_pit.GetCounter(2);
+			timer2.SetGate(m_ppi.GetTimer2Gate());
 			m_pit.Tick();
+			m_ppi.SetTimer2Output(timer2.GetOutput());
+
 			bool out = m_pit.GetCounter(0).GetOutput();
 			if (out != timer0Out)
 			{
 				if (out)
 				{
-					//m_pic.InterruptRequest(0);
+					m_pic.InterruptRequest(0);
 				}
 				timer0Out = out;
 			}

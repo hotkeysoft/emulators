@@ -28,7 +28,7 @@ namespace pit
 			case CounterMode::Mode0:
 			{
 				m_value = m_n;
-				WORD ticks = 1 + (m_n ? m_n : GetMaxValue());
+				size_t ticks = (size_t)GetMaxValue() + 1;
 				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
 				LogPrintf(LOG_INFO, "Starting Count, interval = %0.2fus", m_periodMicro);
 				// Start counting on next tick
@@ -36,14 +36,14 @@ namespace pit
 			}
 			case CounterMode::Mode2:
 			{
-				size_t ticks = m_n ? m_n : GetMaxValue();
+				size_t ticks = GetMaxValue();
 				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
 				LogPrintf(LOG_INFO, "Starting Count, period = %0.2fus", m_periodMicro);
 				break;
 			}
 			case CounterMode::Mode3:
 			{
-				size_t ticks = m_n ? m_n : GetMaxValue();
+				size_t ticks = GetMaxValue();
 				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
 				float freq = (float)s_clockSpeed / (float)ticks;
 				LogPrintf(LOG_INFO, "Frequency = %0.2fHz", freq);
@@ -60,7 +60,7 @@ namespace pit
 		// Decrease counter, wrap if 0
 		if (m_value == 0)
 		{
-			m_value = m_n ? m_n : GetMaxValue();
+			m_value = GetMaxValue();
 		}
 		else
 		{
@@ -89,17 +89,8 @@ namespace pit
 			}
 			break;
 		case CounterMode::Mode3:
-			// TODO: Probably not right, check 8254 behavior with odd/even n values
-			if (m_value <= 1)
-			{
-				m_value = 0;
-				m_out = !m_out;
-			}
-			else
-			{
-				// Decrease count by 2 total
-				--m_value;
-			}
+			// Real 8254 counts by two and does an adjustement for odd values
+			m_out = (m_value > (GetMaxValue() / 2));
 			break;
 		default:
 			break;
@@ -133,6 +124,7 @@ namespace pit
 				ret = GetHByte(value);
 				m_latched = false;
 			}
+			m_flipFlopLSBMSB = !m_flipFlopLSBMSB;
 			break;
 
 		default:
@@ -178,7 +170,9 @@ namespace pit
 		{
 			LogPrintf(LOG_DEBUG, "Latch value: %04X", m_value);
 
-			m_latchedValue = m_value;
+			// Fake: mode 3 counts by 2 so values will always be even (except at wrap for odd n)
+			m_latchedValue = (m_mode == CounterMode::Mode3) ? (m_value&(~1)) : m_value;
+
 			m_latched = true;
 		}
 	}

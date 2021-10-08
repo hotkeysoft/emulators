@@ -78,7 +78,7 @@ namespace ppi
 	// PC0: Keyboard Latched
 	BYTE Device8255PCjr::PORTC_IN()
 	{
-		BYTE ret = (m_config & 0b10001110) | 0; //TODO (PC0/4/5/6)
+		BYTE ret = (m_config & 0b10001110) | (m_timer2Out << 5); //TODO (PC0/4/6)
 
 		LogPrintf(LOG_DEBUG, "PORTC IN, ret=%02X", ret);
 		return ret;

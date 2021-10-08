@@ -45,7 +45,7 @@ namespace pit
 	protected:
 		WORD GetMaxValue() const
 		{
-			return m_rwMode == RWMode::RW_LSB ? 255 : 65535;
+			return m_n ? m_n : (m_rwMode == RWMode::RW_LSB ? 255 : 65535);
 		}
 
 		RWMode m_rwMode = RWMode::RW_LSB;
