@@ -132,20 +132,20 @@ namespace crtc
 			break;
 
 		case CRT_START_ADDR_HI:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:   startAddress(HI) = %d", value);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:    startAddress(HI) = %02Xh", value);
 			emul::SetHByte(m_config.startAddress, value & 63);
 			break;
 		case CRT_START_ADDR_LO:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  startAddress(LOW) = %d", value);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:    startAddress(LO) = %02Xh", value);
 			emul::SetLByte(m_config.startAddress, value);
 			break;
 
 		case CRT_CURSOR_ADDR_HI:
-			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(HI) = %d", value);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(HI) = %02Xh", value);
 			emul::SetHByte(m_config.cursorAddress, value & 63);
 			break;
 		case CRT_CURSOR_ADDR_LO:
-			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(LO) = %d", value);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(LO) = %02Xh", value);
 			emul::SetLByte(m_config.cursorAddress, value);
 			break;
 
