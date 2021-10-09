@@ -63,21 +63,23 @@ namespace video
 		void MapB800Window();
 
 		typedef void(VideoPCjr::* DrawFunc)();
-		DrawFunc m_drawFunc = nullptr; //&VideoPCjr::DrawTextMode;
-		//void DrawTextMode();
+		DrawFunc m_drawFunc = &VideoPCjr::DrawTextMode;
+		void DrawTextMode();
 		//void Draw320x200();
 		//void Draw640x200();
 
 		// Text mode pointers
-		//BYTE* m_cursorPos = nullptr;
-		//BYTE* m_currChar = nullptr;
+		BYTE* m_cursorPos = nullptr;
+		BYTE* m_currChar = nullptr;
 
-		//emul::MemoryBlock m_charROM;
-		//BYTE* m_charROMStart;
+		emul::MemoryBlock m_charROM;
+		BYTE* m_charROMStart;
 
 		// Graph mode banks
 		//BYTE* m_bank0 = nullptr;
 		//BYTE* m_bank1 = nullptr;
+
+		const uint32_t* m_alphaPalette = nullptr;
 
 		// SDL
 		SDL_Window* m_sdlWindow = nullptr;

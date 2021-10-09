@@ -12,9 +12,17 @@ namespace video
 {
 	const float VSCALE = 2.4f;
 
+	const uint32_t AlphaColorPalette[16] =
+	{
+		0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA,
+		0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
+	};
+
 	VideoPCjr::VideoPCjr(WORD baseAddress) :
 		Logger("vidPCjr"),
-		Device6845(baseAddress)
+		Device6845(baseAddress),
+		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
+		m_alphaPalette(AlphaColorPalette)
 	{
 		Reset();
 		m_frameBuffer = new uint32_t[640 * 200];
@@ -36,8 +44,8 @@ namespace video
 		m_memory = memory;
 		//assert(charROM);
 		//LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
-		//m_charROM.LoadBinary(charROM);
-		//m_charROMStart = m_charROM.getPtr8(4096 + 2048);
+		m_charROM.LoadBinary(charROM);
+		m_charROMStart = m_charROM.getPtr8(4096 + 2048);
 
 		m_sdlBorderPixels = border;
 		m_sdlHBorder = border;
@@ -187,7 +195,7 @@ namespace video
 			return;
 		}
 
-		//(this->*m_drawFunc)();
+		(this->*m_drawFunc)();
 
 		Device6845::Tick();
 	}
@@ -195,22 +203,24 @@ namespace video
 	void VideoPCjr::NewFrame()
 	{
 		// Pointers for alpha mode
-		//m_currChar = m_screenB800.getPtr8(m_config.startAddress * 2u);
-		//if (m_config.cursorAddress * 2u >= m_screenB800.GetSize())
-		//{
-		//	m_cursorPos = nullptr;
-		//}
-		//else
-		//{
-		//	m_cursorPos = m_screenB800.getPtr8(m_config.cursorAddress * 2u);
-		//}
+		//TODODT Probably wrong
+		m_currChar = m_memory->GetPtr8(m_pageRegister.crtBaseAddress);
+		if (m_config.cursorAddress * 2u >= 0x4000)
+		{
+			m_cursorPos = nullptr;
+		}
+		else
+		{
+			//TODODT Surely wrong
+			m_cursorPos = m_memory->GetPtr8(m_config.cursorAddress * 2u);
+		}
 
 		//// Pointers for graphics mode
 		//m_bank0 = m_screenB800.getPtr8(0x0000);
 		//m_bank1 = m_screenB800.getPtr8(0x2000);
 
 		//// Select draw function
-		//m_drawFunc = &VideoPCjr::DrawTextMode;
+		m_drawFunc = &VideoPCjr::DrawTextMode;
 		//if (m_mode.graphics) m_drawFunc = &VideoPCjr::Draw320x200;
 		//if (m_mode.hiResolution) m_drawFunc = &VideoPCjr::Draw640x200;
 
@@ -275,6 +285,46 @@ namespace video
 		//return (m_currChar == m_cursorPos) &&
 		//	(m_config.cursor != CRTCConfig::CURSOR_NONE) &&
 		//	((m_config.cursor == CRTCConfig::CURSOR_BLINK32 && IsBlink32()) || IsBlink16());
+	}
+
+	void VideoPCjr::DrawTextMode()
+	{
+		if (m_currChar && IsDisplayArea() && ((m_data.vPos % m_data.vCharHeight) == 0))
+		{
+			BYTE* ch = m_currChar;
+			BYTE* attr = ch + 1;
+			BYTE bg = (*attr) >> 4;
+			BYTE fg = (*attr) & 0x0F;
+			bool charBlink = false;
+
+			// Background
+			//if (m_mode.blink) // Hi bit: intense bg vs blink fg
+			//{
+			//	charBlink = bg & 8;
+			//	bg = bg & 7;
+			//}
+
+			uint32_t fgRGB = m_alphaPalette[fg];
+			uint32_t bgRGB = m_alphaPalette[bg];
+
+			bool isCursorChar = IsCursor();
+
+			// Draw character
+			BYTE* currCharPos = m_charROMStart + ((uint32_t)(*ch) * 8) + (m_data.vPos % m_data.vCharHeight);
+			bool draw = !charBlink || (charBlink && IsBlink16());
+			for (int y = 0; y < m_data.vCharHeight; ++y)
+			{
+				uint32_t offset = 640 * (uint32_t)(m_data.vPos + y) + m_data.hPos;
+				bool cursorLine = isCursorChar && (y >= m_config.cursorStart) && (y <= m_config.cursorEnd);
+				for (int x = 0; x < 8; ++x)
+				{
+					bool set = draw && ((*(currCharPos + y)) & (1 << (7 - x)));
+					m_frameBuffer[offset + x] = (set || cursorLine) ? fgRGB : bgRGB;
+				}
+			}
+
+			m_currChar += 2;
+		}
 	}
 
 }
