@@ -62,6 +62,7 @@ namespace pic
 		{
 			LogPrintf(LOG_INFO, "ICW1: Begin initialization sequence");
 			m_interruptMaskRegister = 0;
+			m_interruptRequestRegister = 0;
 			m_reg0 = &m_interruptRequestRegister;
 
 			m_init.icw4Needed = (value & 1);
