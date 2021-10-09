@@ -124,11 +124,28 @@ namespace video
 
 	void VideoPCjr::WriteGateArrayRegister(BYTE value)
 	{
+		LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, value=%02Xh", value);
 
+		// Set Register Address
+		if (m_gateArrayRegister.addressDataFlipFlop == false)
+		{
+			m_gateArrayRegister.address = value;
+			LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, set address=%02Xh", value);
+		}
+		else // Set Register value
+		{
+			LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, data=%02Xh", value);
+			//TODO
+		}
+
+		m_gateArrayRegister.addressDataFlipFlop = !m_gateArrayRegister.addressDataFlipFlop;
 	}
 
 	BYTE VideoPCjr::ReadStatusRegister()
 	{
+		// Reading the status register resets the GateArrayRegister address/data flip-flop
+		m_gateArrayRegister.addressDataFlipFlop = false;
+
 		// Bit0: 1:Display enabled
 		// 
 		// Light pen, not implemented
@@ -139,12 +156,14 @@ namespace video
 		// 
 		// Bit4 1:Video dot
 
+		bool dot = (m_lastDot & (1 << (m_gateArrayRegister.address & 3)));
+
 		BYTE status =
 			(IsDisplayArea() << 0) |
 			(0 << 1) | // Light Pen Trigger
 			(1 << 2) | // Light Pen switch
 			(IsVSync() << 3) |
-			(0 << 4); // Video dots
+			(dot << 4); // Video dots
 
 		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister, value=%02Xh", status);
 
@@ -203,16 +222,14 @@ namespace video
 	void VideoPCjr::NewFrame()
 	{
 		// Pointers for alpha mode
-		//TODODT Probably wrong
-		m_currChar = m_memory->GetPtr8(m_pageRegister.crtBaseAddress);
-		if (m_config.cursorAddress * 2u >= 0x4000)
+		m_currChar = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + (m_config.startAddress * 2u));
+		if (m_config.cursorAddress >= (m_config.startAddress + 0x1000))
 		{
 			m_cursorPos = nullptr;
 		}
 		else
 		{
-			//TODODT Surely wrong
-			m_cursorPos = m_memory->GetPtr8(m_config.cursorAddress * 2u);
+			m_cursorPos = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + (m_config.cursorAddress * 2u));
 		}
 
 		//// Pointers for graphics mode
@@ -310,7 +327,7 @@ namespace video
 			bool isCursorChar = IsCursor();
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((uint32_t)(*ch) * 8) + (m_data.vPos % m_data.vCharHeight);
+			BYTE* currCharPos = m_charROMStart + ((size_t)(*ch) * 8) + (m_data.vPos % m_data.vCharHeight);
 			bool draw = !charBlink || (charBlink && IsBlink16());
 			for (int y = 0; y < m_data.vCharHeight; ++y)
 			{
@@ -318,8 +335,9 @@ namespace video
 				bool cursorLine = isCursorChar && (y >= m_config.cursorStart) && (y <= m_config.cursorEnd);
 				for (int x = 0; x < 8; ++x)
 				{
-					bool set = draw && ((*(currCharPos + y)) & (1 << (7 - x)));
-					m_frameBuffer[offset + x] = (set || cursorLine) ? fgRGB : bgRGB;
+					bool set = cursorLine || (draw && ((*(currCharPos + y)) & (1 << (7 - x))));
+					m_lastDot = set ? fg : bg;
+					m_frameBuffer[offset + x] = set ? fgRGB : bgRGB;
 				}
 			}
 

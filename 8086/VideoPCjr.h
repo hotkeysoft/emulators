@@ -57,6 +57,14 @@ namespace video
 		} m_pageRegister;
 		void WritePageRegister(BYTE value);
 
+		struct GateArrayRegister
+		{
+			BYTE address; // Register address
+
+			// false = address, true = data
+			bool addressDataFlipFlop = false;
+		} m_gateArrayRegister;
+
 		void WriteGateArrayRegister(BYTE value);
 		BYTE ReadStatusRegister();
 
@@ -91,6 +99,10 @@ namespace video
 		BYTE m_sdlVBorder;
 
 		uint32_t* m_frameBuffer;
+
+		// Diagnostics: dot information (status register)
+		// Only works in alpha modes for the moment
+		BYTE m_lastDot = 0; 
 
 		virtual void RenderFrame() override;
 		virtual void NewFrame() override;
