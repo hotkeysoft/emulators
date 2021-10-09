@@ -58,7 +58,7 @@ namespace emul
 		m_pit.EnableLog(true, Logger::LOG_INFO);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_WARNING);
+		m_pic.EnableLog(true, Logger::LOG_INFO);
 
 		m_ppi.Init();
 		m_ppi.EnableLog(true, Logger::LOG_INFO);
@@ -149,7 +149,17 @@ namespace emul
 
 			m_pcSpeaker.Tick();
 
-			m_video.Tick();
+			// Skip one in four video ticks to sync up with pit timing
+			if ((syncTicks & 3) != 3)
+			{
+				static bool wasVSync = false;
+				m_video.Tick();
+				if (!wasVSync && m_video.IsVSync())
+				{
+					m_pic.InterruptRequest(5);
+				}
+				wasVSync = m_video.IsVSync();
+			}
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment
