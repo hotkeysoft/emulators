@@ -127,24 +127,92 @@ namespace video
 		LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, value=%02Xh", value);
 
 		// Set Register Address
-		if (m_gateArrayRegister.addressDataFlipFlop == false)
+		if (m_mode.addressDataFlipFlop == false)
 		{
-			m_gateArrayRegister.address = value;
+			value &= GA_MASK;
+			m_mode.currRegister = (GateArrayAddress)value;
 			LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, set address=%02Xh", value);
 		}
 		else // Set Register value
 		{
 			LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, data=%02Xh", value);
-			//TODO
+			if (m_mode.currRegister & GA_PALETTE)
+			{
+				// TODO: When loading the palette, the video is 'disabled' and the color viewed on the screen
+				// is the data contained in the register being addressed by the processor.
+				//
+				// Video returns to normal after register address is changed to < 10h
+				value &= 0b1111;
+				BYTE reg = m_mode.currRegister - GA_PALETTE;
+				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Palette Register[%d] = %02Xh", reg, value);
+				m_mode.paletteRegister[reg] = value;
+			}
+			else switch (m_mode.currRegister)
+			{
+			case GA_MODE_CTRL_1:
+				LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister: Set Mode Control 1 = %02Xh", value);
+				m_mode.hiBandwidth =   value & 1;
+				m_mode.graphics =      value & 2;
+				m_mode.monochrome =    value & 4;
+				m_mode.enableVideo =   value & 8;
+				m_mode.graph16Colors = value & 16;
+
+				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister SetMode1 [%cHIBW %cGRAPH %cMONO %cVIDEO %cGRAPH16COLORS]",
+					m_mode.hiBandwidth ? ' ' : '/',
+					m_mode.graphics ? ' ' : '/',
+					m_mode.monochrome ? ' ' : '/',
+					m_mode.enableVideo ? ' ' : '/',
+					m_mode.graph16Colors ? ' ' : '/');
+				break;
+			case GA_PALETTE_MASK:
+				value &= 0b1111;
+				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Set Palette Mask = %02Xh", value);
+				m_mode.paletteMask = value;
+				break;
+			case GA_BORDER_COLOR:
+				value &= 0b1111;
+				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Set Border Color = % 02Xh", value);
+				m_mode.borderColor = value;
+				break;
+			case GA_MODE_CTRL_2:
+				LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister: Set Mode Control 2 = %02Xh", value);
+				m_mode.blink = value & 2;
+				m_mode.graph2Colors = value & 8;
+
+				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister SetMode2 [%cBLINK %cGRAPH2COLORS]",
+					m_mode.blink ? ' ' : '/',
+					m_mode.graph2Colors ? ' ' : '/');
+				break;
+			case GA_RESET:
+				value &= 0b11;
+				LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister: Reset, value = %02Xh", value);
+				// We don't really have to do anything special for the resets
+				if (!value)
+				{
+					LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Reset Completed");
+				}
+				if (value & 1)
+				{
+					LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Asynchronous Reset");
+				}
+				else if (value & 2)
+				{
+					LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Synchronous Reset");
+				}
+				break;
+			default:
+				LogPrintf(Logger::LOG_WARNING, "WriteGateArrayRegister: Invalid register address = %02Xh", m_mode.currRegister);
+				break;
+			}
 		}
 
-		m_gateArrayRegister.addressDataFlipFlop = !m_gateArrayRegister.addressDataFlipFlop;
+		m_mode.addressDataFlipFlop = !m_mode.addressDataFlipFlop;
 	}
 
 	BYTE VideoPCjr::ReadStatusRegister()
 	{
 		// Reading the status register resets the GateArrayRegister address/data flip-flop
-		m_gateArrayRegister.addressDataFlipFlop = false;
+		m_mode.addressDataFlipFlop = false;
 
 		// Bit0: 1:Display enabled
 		// 
@@ -156,7 +224,8 @@ namespace video
 		// 
 		// Bit4 1:Video dot
 
-		bool dot = (m_lastDot & (1 << (m_gateArrayRegister.address & 3)));
+		// register "address" selects the video dot to inspect (0-3: [B,G,R,I])
+		bool dot = (m_lastDot & (1 << (m_mode.currRegister & 3)));
 
 		BYTE status =
 			(IsDisplayArea() << 0) |
@@ -175,7 +244,8 @@ namespace video
 		static size_t frames = 0;
 
 		// TODO: don't recompute every time
-		SDL_Rect srcRect = { 0, 0, (/*m_mode.text80Columns || m_mode.hiResolution*/true) ? 640 : 320, 200 };
+		// TODO: check width
+		SDL_Rect srcRect = { 0, 0, (m_config.hDisplayed > 40) ? 640 : 320, 200 };
 		SDL_Rect destRect = { m_sdlHBorder, m_sdlVBorder, 640, 200 };
 
 		SDL_UpdateTexture(m_sdlTexture, NULL, m_frameBuffer, 640 * sizeof(uint32_t));
@@ -183,7 +253,7 @@ namespace video
 		SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &destRect);
 		SDL_RenderPresent(m_sdlRenderer);
 
-		Uint32 borderRGB = 0xFFFFFF;// = m_alphaPalette[m_color.color];
+		Uint32 borderRGB = m_alphaPalette[m_mode.borderColor];
 
 		Uint8 r = Uint8(borderRGB >> 16);
 		Uint8 g = Uint8(borderRGB >> 8);
@@ -201,7 +271,7 @@ namespace video
 
 	void VideoPCjr::Tick()
 	{
-		if (/*!m_mode.enableVideo || */!IsInit())
+		if (!m_mode.enableVideo || !IsInit())
 		{
 			SDL_Event e;
 			while (SDL_PollEvent(&e))
@@ -298,10 +368,9 @@ namespace video
 
 	bool VideoPCjr::IsCursor() const
 	{
-		return false;
-		//return (m_currChar == m_cursorPos) &&
-		//	(m_config.cursor != CRTCConfig::CURSOR_NONE) &&
-		//	((m_config.cursor == CRTCConfig::CURSOR_BLINK32 && IsBlink32()) || IsBlink16());
+		return (m_currChar == m_cursorPos) &&
+			(m_config.cursor != CRTCConfig::CURSOR_NONE) &&
+			((m_config.cursor == CRTCConfig::CURSOR_BLINK32 && IsBlink32()) || IsBlink16());
 	}
 
 	void VideoPCjr::DrawTextMode()
@@ -315,14 +384,14 @@ namespace video
 			bool charBlink = false;
 
 			// Background
-			//if (m_mode.blink) // Hi bit: intense bg vs blink fg
-			//{
-			//	charBlink = bg & 8;
-			//	bg = bg & 7;
-			//}
+			if (m_mode.blink) // Hi bit: intense bg vs blink fg
+			{
+				charBlink = bg & 8;
+				bg = bg & 7;
+			}
 
-			uint32_t fgRGB = m_alphaPalette[fg];
-			uint32_t bgRGB = m_alphaPalette[bg];
+			uint32_t fgRGB = m_alphaPalette[m_mode.paletteRegister[(fg & m_mode.paletteMask)]];
+			uint32_t bgRGB = m_alphaPalette[m_mode.paletteRegister[(bg & m_mode.paletteMask)]];
 
 			bool isCursorChar = IsCursor();
 

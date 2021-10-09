@@ -57,13 +57,40 @@ namespace video
 		} m_pageRegister;
 		void WritePageRegister(BYTE value);
 
+		// 
+		enum GateArrayAddress
+		{
+			GA_MODE_CTRL_1  = 0x0,
+			GA_PALETTE_MASK = 0x1,
+			GA_BORDER_COLOR = 0x2,
+			GA_MODE_CTRL_2  = 0x3,
+			GA_RESET        = 0x4,
+
+			GA_PALETTE      = 0x10, // 0x10-0x1F
+
+			GA_MASK = 0x1F
+		};
+
 		struct GateArrayRegister
 		{
-			BYTE address; // Register address
+			GateArrayAddress currRegister = (GateArrayAddress)0;
+
+			BYTE paletteRegister[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+
+			BYTE borderColor = 0;
+			BYTE paletteMask = 0x0F;
+
+			bool hiBandwidth = false; // Require 128K memory: 80x24 alpha, 640x200x4colors, 320x200x16colors
+			bool graphics = false;
+			bool monochrome = false;
+			bool enableVideo = false;
+			bool graph16Colors = false;
+			bool blink = false;
+			bool graph2Colors = false;
 
 			// false = address, true = data
 			bool addressDataFlipFlop = false;
-		} m_gateArrayRegister;
+		} m_mode;
 
 		void WriteGateArrayRegister(BYTE value);
 		BYTE ReadStatusRegister();
