@@ -185,6 +185,9 @@
     <ClCompile Include="Device8255XT.cpp" />
     <ClCompile Include="Device8259.cpp" />
     <ClCompile Include="DeviceFloppy.cpp" />
+    <ClCompile Include="DeviceKeyboard.cpp" />
+    <ClCompile Include="DeviceKeyboardPCjr.cpp" />
+    <ClCompile Include="DeviceKeyboardXT.cpp" />
     <ClCompile Include="DevicePCSpeaker.cpp" />
     <ClCompile Include="Emulator Base.cpp" />
     <ClCompile Include="Memory.cpp" />
@@ -215,6 +218,9 @@
     <ClInclude Include="Device8255XT.h" />
     <ClInclude Include="Device8259.h" />
     <ClInclude Include="DeviceFloppy.h" />
+    <ClInclude Include="DeviceKeyboard.h" />
+    <ClInclude Include="DeviceKeyboardPCjr.h" />
+    <ClInclude Include="DeviceKeyboardXT.h" />
     <ClInclude Include="DevicePCSpeaker.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MemoryBlock.h" />

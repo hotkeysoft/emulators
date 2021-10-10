@@ -35,7 +35,7 @@ namespace emul
 		Logger("XT"),
 		CPU8086(m_memory, m_map),
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_base64K("RAM0", 0x80000, emul::MemoryType::RAM),
+		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, 1193182),
@@ -92,6 +92,8 @@ namespace emul
 
 		m_biosF800.LoadBinary("data/XT/BIOS_5160_V3_F800.BIN");
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
+
+		m_keyboard.Init(&m_ppi, &m_pic);
 
 		m_floppy.Init();
 		m_floppy.EnableLog(true, Logger::LOG_INFO);
@@ -152,13 +154,7 @@ namespace emul
 
 		for (int i = 0; i < cpuTicks / 4; ++i)
 		{
-			static size_t m_lastKbd = 0;
-			if (m_keyBufRead != m_keyBufWrite && (m_ticks-m_lastKbd) > 10000)
-			{
-				m_lastKbd = m_ticks;
-				m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
-				m_pic.InterruptRequest(1);
-			}
+			m_keyboard.Tick();
 
 			m_pit.Tick();
 			bool out = m_pit.GetCounter(0).GetOutput();

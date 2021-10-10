@@ -6,6 +6,7 @@
 #include "Device8255PCjr.h"
 #include "Device8259.h"
 #include "DevicePCSpeaker.h"
+#include "DeviceKeyboardPCjr.h"
 #include "VideoPCjr.h"
 
 namespace emul
@@ -21,7 +22,7 @@ namespace emul
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
 		
-		void InputKey(BYTE ch) { m_keyBuf[m_keyBufWrite++] = ch; }
+		kbd::DeviceKeyboard& GetKeyboard() { return m_keyboard; }
 
 		Memory& GetMemory() { return m_memory; }
 
@@ -43,14 +44,10 @@ namespace emul
 		pic::Device8259 m_pic;
 		ppi::Device8255PCjr m_ppi;
 		//fdc::DeviceFloppy m_floppy;
+		kbd::DeviceKeyboardPCjr m_keyboard;
 
 		video::VideoPCjr m_video;
 
 		beeper::DevicePCSpeaker m_pcSpeaker;
-
-		// Keyboard buffer
-		BYTE m_keyBuf[256];
-		BYTE m_keyBufRead = 0;
-		BYTE m_keyBufWrite = 0;
 	};
 }

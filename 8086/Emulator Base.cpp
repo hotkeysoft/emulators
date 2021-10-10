@@ -59,6 +59,10 @@ void LogCallback(const char* str)
 	if ((mode == Mode::LOG) || logFile)
 	{
 		fprintf(logFile ? logFile : stderr, str);
+		if (logFile)
+		{
+			fflush(logFile);
+		}
 	}
 }
 
@@ -135,7 +139,7 @@ int main(int argc, char* args[])
 		bool run = true;
 		while (run)
 		{ 
-			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0x015F))
+			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0x0F78))
 			//{
 			//	monitor.Show();
 			//	mode = Mode::MONITOR;
@@ -239,15 +243,16 @@ int main(int argc, char* args[])
 
 				if (newKeycode)
 				{
+					kbd::DeviceKeyboard& kbd = pc.GetKeyboard();
 					if (shift)
 					{
-						pc.InputKey(0x2A);
+						kbd.InputKey(0x2A);
 					}
-					pc.InputKey(keyCode);
-					pc.InputKey(keyCode | 0x80);
+					kbd.InputKey(keyCode);
+					kbd.InputKey(keyCode | 0x80);
 					if (shift)
 					{
-						pc.InputKey(0x2A | 0x80);
+						kbd.InputKey(0x2A | 0x80);
 					}
 				}
 			}

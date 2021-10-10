@@ -78,7 +78,11 @@ namespace ppi
 	// PC0: Keyboard Latched
 	BYTE Device8255PCjr::PORTC_IN()
 	{
-		BYTE ret = (m_config & 0b10001110) | (m_timer2Out << 5); //TODO (PC0/4/6)
+		BYTE ret = (m_config & 0b10001110) | 
+			(m_keyboardDataBit << 6) |
+			(m_timer2Out << 5) | 
+			(m_cassetteDataBit << 4) |
+			(m_nmiLatch << 0);
 
 		LogPrintf(LOG_DEBUG, "PORTC IN, ret=%02X", ret);
 		return ret;
@@ -86,11 +90,6 @@ namespace ppi
 	void Device8255PCjr::PORTC_OUT(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "PORTC OUT, value=%02X", value);
-	}
-
-	void Device8255PCjr::SetCurrentKeyCode(BYTE keyCode)
-	{ 
-		m_currentKey = keyCode;
 	}
 
 	// PC7: (CFG) Keyboard Cable Connected: HI: no, LOW: yes

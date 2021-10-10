@@ -27,7 +27,6 @@ namespace ppi
 		void SetControlWord(BYTE ctrl);
 
 		virtual bool IsSoundON();
-		virtual void SetCurrentKeyCode(BYTE keyCode) = 0;
 
 	protected:
 		virtual BYTE PORTA_IN() = 0;

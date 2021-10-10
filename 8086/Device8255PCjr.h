@@ -29,10 +29,12 @@ namespace ppi
 		void SetDisketteCard(bool);
 		void SetModemCard(bool);
 
+		void SetNMILatch(bool value) { m_nmiLatch = value; }
+		void SetKeyboardDataBit(bool value) { m_keyboardDataBit = value; }
+		void SetCassetteDataBit(bool value) { m_cassetteDataBit = value; }
+
 		bool GetTimer2Gate() const { return m_portBData & 1; }
 		void SetTimer2Output(bool value) { m_timer2Out = value; }
-
-		virtual void SetCurrentKeyCode(BYTE keyCode);
 
 	protected:
 		virtual BYTE PORTA_IN() override;
@@ -45,7 +47,9 @@ namespace ppi
 		virtual void PORTC_OUT(BYTE value) override;
 
 		bool m_timer2Out = false;
-		BYTE m_currentKey = 0xAA;
+		bool m_nmiLatch = false;
+		bool m_keyboardDataBit = false;
+		bool m_cassetteDataBit = false;
 
 		BYTE m_config = 0xFF;
 	};

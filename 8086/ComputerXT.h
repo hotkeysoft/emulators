@@ -8,6 +8,7 @@
 #include "Device8259.h"
 #include "DeviceFloppy.h"
 #include "DevicePCSpeaker.h"
+#include "DeviceKeyboardXT.h"
 #include "VideoCGA.h"
 
 namespace emul
@@ -23,10 +24,9 @@ namespace emul
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
 		
-		void InputKey(BYTE ch) { m_keyBuf[m_keyBufWrite++] = ch; }
-
 		Memory& GetMemory() { return m_memory; }
 		fdc::DeviceFloppy& GetFloppy() { return m_floppy; }
+		kbd::DeviceKeyboard& GetKeyboard() { return m_keyboard; }
 
 		size_t GetTicks() { return m_ticks; }
 
@@ -47,14 +47,8 @@ namespace emul
 		ppi::Device8255XT m_ppi;
 		dma::Device8237 m_dma;
 		fdc::DeviceFloppy m_floppy;
-
 		video::VideoCGA m_video;
-
 		beeper::DevicePCSpeaker m_pcSpeaker;
-
-		// Keyboard buffer
-		BYTE m_keyBuf[256];
-		BYTE m_keyBufRead = 0;
-		BYTE m_keyBufWrite = 0;
+		kbd::DeviceKeyboardXT m_keyboard;
 	};
 }

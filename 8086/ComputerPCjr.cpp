@@ -41,7 +41,8 @@ namespace emul
 		m_pit(0x40, 1193182),
 		m_pic(0x20),
 		m_ppi(0x60),
-		m_video(0x3D0)
+		m_video(0x3D0),
+		m_keyboard(0xA0)
 	{
 	}
 
@@ -58,10 +59,16 @@ namespace emul
 		m_pit.EnableLog(true, Logger::LOG_INFO);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_INFO);
+		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
 		m_ppi.EnableLog(true, Logger::LOG_INFO);
+		{
+			m_ppi.SetKeyboardConnected(true);
+			m_ppi.SetRAMExpansion(false);
+			m_ppi.SetDisketteCard(false);
+			m_ppi.SetModemCard(false);
+		}
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
@@ -75,10 +82,14 @@ namespace emul
 		m_biosF800.LoadBinary("data/PCjr/BIOS_4860_1504037_F800.BIN");
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
+		m_keyboard.Init(&m_ppi, &m_pic);
+		m_keyboard.EnableLog(true, Logger::LOG_DEBUG);
+
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_video);
+		AddDevice(m_keyboard);
 		AddDevice(dummyPort);
 	}
 
@@ -124,13 +135,7 @@ namespace emul
 
 		for (int i = 0; i < cpuTicks / 4; ++i)
 		{
-			static size_t m_lastKbd = 0;
-			if (m_keyBufRead != m_keyBufWrite && (m_ticks-m_lastKbd) > 10000)
-			{
-				m_lastKbd = m_ticks;
-				//m_ppi.SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
-				//m_pic.InterruptRequest(1);
-			}
+			m_keyboard.Tick();
 
 			pit::Counter& timer2 = m_pit.GetCounter(2);
 			timer2.SetGate(m_ppi.GetTimer2Gate());
