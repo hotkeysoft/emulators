@@ -127,8 +127,6 @@ namespace emul
 		static auto lastTick = std::chrono::high_resolution_clock::now();
 		static int64_t syncTicks = 0;
 
-		++m_ticks; // TODO: Coordinate with CPU
-
 		// TODO: Temporary, need dynamic connections
 		// Timer 0: Time of day
 		// Timer 1: DMA RAM refresh
@@ -139,21 +137,21 @@ namespace emul
 		{
 			m_pic.InterruptAcknowledge();
 			Interrupt(m_pic.GetPendingInterrupt());
+			return true;
 		}
 		else if (!CPU8086::Step())
 		{
 			return false;
 		}
 
-		uint32_t cpuTicks = GetInstructionTicks();
-		if (cpuTicks == 0)
-		{
-			LogPrintf(LOG_ERROR, "Operand %02Xh has no timing info", m_lastOp);
-			throw std::exception("op with no timing");
-		}
+		static uint32_t cpuTicks = 0;
+		assert(GetInstructionTicks());
+		cpuTicks += GetInstructionTicks();
 
 		for (int i = 0; i < cpuTicks / 4; ++i)
 		{
+			++g_ticks;
+
 			m_keyboard.Tick();
 
 			m_pit.Tick();
@@ -230,6 +228,7 @@ namespace emul
 				lastTick = std::chrono::high_resolution_clock::now();
 			}
 		}
+		cpuTicks %= 4;
 
 		return true;
 	}
