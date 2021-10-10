@@ -2,8 +2,9 @@
 
 #include "Common.h"
 #include "Logger.h"
-
 #include "DeviceKeyboard.h"
+
+#include <deque>
 
 using emul::BYTE;
 
@@ -23,6 +24,10 @@ namespace kbd
 
 		virtual void Tick() override;
 
+		bool NMIPending();
+
+		bool IsSendingKey() const { return m_keySerialData.size() > 0; }
+
 	protected:
 		WORD m_baseAddress;
 
@@ -38,5 +43,12 @@ namespace kbd
 
 		BYTE ReadPortA0();
 		void WritePortA0(BYTE value);
+
+		void LoadKey(BYTE key);
+		void PushBit(bool bit);
+		void PushStop();
+		void SendBit();
+
+		std::deque<bool> m_keySerialData;
 	};
 }

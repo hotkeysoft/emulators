@@ -5,7 +5,7 @@
 namespace kbd
 {
 	DeviceKeyboardPCjr::DeviceKeyboardPCjr(WORD baseAddress) : 
-		Logger("kbdPCjr"), 
+		Logger("kbdPCjr"),
 		DeviceKeyboard(),
 		m_baseAddress(baseAddress)
 	{
@@ -46,34 +46,89 @@ namespace kbd
 			m_portA0.disableHRQ ? ' ' : '/');
 	}
 
+	bool DeviceKeyboardPCjr::NMIPending()
+	{
+		static bool lastNMI = false;
+		bool nmi = m_nmiLatch && m_portA0.enableNMI;
+		bool ret = (nmi && !lastNMI); // Trigger only on low-to-high transitions
+		lastNMI = nmi;
+		return ret;
+	}
+
+	void DeviceKeyboardPCjr::LoadKey(BYTE key)
+	{
+		LogPrintf(LOG_DEBUG, "[%zu] LoadKey [%02Xh]", emul::g_ticks, key);
+
+		// Start bit
+		PushBit(1);
+
+		// Char data
+		BYTE parity = 1; // odd parity
+		for (int i = 0; i < 8; ++i)
+		{
+			parity += (key & 1);
+			PushBit(key & 1);
+			key >>= 1;
+		}
+
+		// Parity
+		PushBit(parity & 1);
+
+		// Stop bits
+		for (int i = 0; i < 11; ++i)
+		{
+			PushStop();
+		}
+	}
+
+	void DeviceKeyboardPCjr::PushBit(bool bit)
+	{
+		// Biphase signal
+		m_keySerialData.push_back(bit);
+		m_keySerialData.push_back(!bit);
+	}
+
+	void DeviceKeyboardPCjr::PushStop()
+	{
+		m_keySerialData.push_back(0);
+		m_keySerialData.push_back(0);
+	}
+
+	void DeviceKeyboardPCjr::SendBit()
+	{
+		ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
+
+		bool bit = m_keySerialData.front();
+		m_keySerialData.pop_front();
+
+		ppi->SetKeyboardDataBit(bit);
+		LogPrintf(LOG_DEBUG, "SendBit, b=%d", bit);
+		if (bit)
+		{
+			m_nmiLatch = true;
+		}
+	}
+
 	void DeviceKeyboardPCjr::Tick()
 	{
 		ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
 
-		static int cooldown = 0;
-		if (m_keyBufRead != m_keyBufWrite && !cooldown)
+		static WORD wait = 0;
+		if (wait)
 		{
-			if (m_portA0.enableNMI)
-			{
-
-			}
-			else
-			{
-				// NMI disabled: eat the key, set nmi latch
-				LogPrintf(LOG_DEBUG, "NMI Disabled, dropping key");
-				++m_keyBufRead;
-				m_nmiLatch = true;
-			}
-			//((ppi::Device8255XT*)m_ppi)->SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
-			//m_pic->InterruptRequest(1);
-			cooldown = 10000;
+			--wait;
+		}
+		else if (IsSendingKey())
+		{
+			SendBit();
+			wait = 526; // 220 microseconds
+		}
+		else if (m_keyBufRead != m_keyBufWrite)
+		{
+			// Prepare key for serial transmission
+			LoadKey(m_keyBuf[m_keyBufRead++]);
 		}
 
 		ppi->SetNMILatch(m_nmiLatch);
-
-		if (cooldown)
-		{
-			--cooldown;
-		}
 	}
 }
