@@ -303,12 +303,12 @@ namespace video
 		}
 
 		//// Pointers for graphics mode
-		//m_bank0 = m_screenB800.getPtr8(0x0000);
-		//m_bank1 = m_screenB800.getPtr8(0x2000);
+		m_bank0 = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x0000);
+		m_bank1 = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
 
 		//// Select draw function
 		m_drawFunc = &VideoPCjr::DrawTextMode;
-		//if (m_mode.graphics) m_drawFunc = &VideoPCjr::Draw320x200;
+		if (m_mode.graphics) m_drawFunc = &VideoPCjr::Draw320x200;
 		//if (m_mode.hiResolution) m_drawFunc = &VideoPCjr::Draw640x200;
 
 		//// TODO: Do this for each line instead of each frame
@@ -411,6 +411,31 @@ namespace video
 			}
 
 			m_currChar += 2;
+		}
+	}
+
+	void VideoPCjr::Draw320x200()
+	{
+		// Called every 8 horizontal pixels
+		// In this mode 1 byte = 4 pixels
+
+		BYTE*& currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
+
+		if (IsDisplayArea())
+		{
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = *currChar;
+				for (int x = 0; x < 4; ++x)
+				{
+					BYTE val = ch & 3;
+					ch >>= 2;
+
+					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 4) + (3 - x)] = m_alphaPalette[m_mode.paletteRegister[(val & m_mode.paletteMask)]];
+				}
+
+				++currChar;
+			}
 		}
 	}
 

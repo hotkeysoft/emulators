@@ -100,7 +100,7 @@ namespace video
 		typedef void(VideoPCjr::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoPCjr::DrawTextMode;
 		void DrawTextMode();
-		//void Draw320x200();
+		void Draw320x200();
 		//void Draw640x200();
 
 		// Text mode pointers
@@ -111,8 +111,8 @@ namespace video
 		BYTE* m_charROMStart;
 
 		// Graph mode banks
-		//BYTE* m_bank0 = nullptr;
-		//BYTE* m_bank1 = nullptr;
+		BYTE* m_bank0 = nullptr;
+		BYTE* m_bank1 = nullptr;
 
 		const uint32_t* m_alphaPalette = nullptr;
 
