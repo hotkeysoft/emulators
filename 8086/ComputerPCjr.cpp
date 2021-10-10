@@ -83,7 +83,7 @@ namespace emul
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
 		m_keyboard.Init(&m_ppi, &m_pic);
-		m_keyboard.EnableLog(true, Logger::LOG_DEBUG);
+		m_keyboard.EnableLog(true, Logger::LOG_INFO);
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);
@@ -108,33 +108,36 @@ namespace emul
 		static auto lastTick = std::chrono::high_resolution_clock::now();
 		static int64_t syncTicks = 0;
 
-		++m_ticks; // TODO: Coordinate with CPU
-
 		// TODO: Temporary, need dynamic connections
 		// Timer 0: Time of day
 		// Timer 1: 
 		// Timer 2: Speaker
 		static bool timer0Out = false;
 
-		if (m_pic.InterruptPending() && CanInterrupt())
+		if (m_keyboard.NMIPending())
+		{
+			Interrupt(2);
+			return true;
+		}
+		else if (m_pic.InterruptPending() && CanInterrupt())
 		{
 			m_pic.InterruptAcknowledge();
 			Interrupt(m_pic.GetPendingInterrupt());
+			return true;
 		}
 		else if (!CPU8086::Step())
 		{
 			return false;
 		}
 
-		uint32_t cpuTicks = GetInstructionTicks();
-		if (cpuTicks == 0)
-		{
-			LogPrintf(LOG_ERROR, "Operand %02Xh has no timing info", m_lastOp);
-			throw std::exception("op with no timing");
-		}
+		static uint32_t cpuTicks = 0;
+		assert(GetInstructionTicks());
+		cpuTicks += GetInstructionTicks();
 
 		for (int i = 0; i < cpuTicks / 4; ++i)
 		{
+			++g_ticks;
+
 			m_keyboard.Tick();
 
 			pit::Counter& timer2 = m_pit.GetCounter(2);
@@ -181,6 +184,7 @@ namespace emul
 				lastTick = std::chrono::high_resolution_clock::now();
 			}
 		}
+		cpuTicks %= 4;
 
 		return true;
 	}

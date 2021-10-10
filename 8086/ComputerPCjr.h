@@ -26,11 +26,7 @@ namespace emul
 
 		Memory& GetMemory() { return m_memory; }
 
-		size_t GetTicks() { return m_ticks; }
-
 	protected:
-		size_t m_ticks = 0;
-
 		Memory m_memory;
 
 		// TODO: Should be dynamic
