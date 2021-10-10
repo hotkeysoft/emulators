@@ -61,6 +61,8 @@ namespace emul
 	inline DWORD MakeDword(WORD h, WORD l) { return (((DWORD)h) << 16) + l; }
 
 	inline BYTE LowestSetBit(BYTE b) { return b & (-b); }
+	inline bool IsPowerOf2(DWORD d) { return d && !(d & (d - 1)); }
+	inline bool IsPowerOf2(WORD w) { return w && !(w & (w - 1)); }
 	inline bool IsPowerOf2(BYTE b) { return b && !(b & (b - 1)); }
 	inline BYTE LogBase2(BYTE b) { BYTE r = 0; while (b >>= 1) r++; return r; }
 

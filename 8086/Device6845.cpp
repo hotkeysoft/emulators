@@ -124,11 +124,11 @@ namespace crtc
 		case CRT_CURSOR_START_LINE:
 			m_config.cursorStart = (value & 31);
 			m_config.cursor = (CRTCConfig::CURSOR)((value >> 5) & 3);
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        cursorStart = %d scanline, %d", m_config.cursorStart, m_config.cursor);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:        cursorStart = %d scanline, %d", m_config.cursorStart, m_config.cursor);
 			break;
 		case CRT_CURSOR_END_LINE:
 			m_config.cursorEnd = (value & 31);
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          cursorEnd = %d scanline", m_config.cursorEnd);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:          cursorEnd = %d scanline", m_config.cursorEnd);
 			break;
 
 		case CRT_START_ADDR_HI:
