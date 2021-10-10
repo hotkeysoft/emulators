@@ -97,6 +97,8 @@ namespace video
 
 		void MapB800Window();
 
+		uint32_t GetColor(BYTE index) { return m_alphaPalette[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
+
 		typedef void(VideoPCjr::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoPCjr::DrawTextMode;
 		void DrawTextMode();
@@ -105,6 +107,8 @@ namespace video
 		void Draw320x200x16();
 		void Draw640x200x2();
 		void Draw640x200x4();
+
+		int m_xAxisDivider = 1;
 
 		// Text mode pointers
 		BYTE* m_cursorPos = nullptr;

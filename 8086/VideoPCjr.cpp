@@ -245,8 +245,7 @@ namespace video
 		static size_t frames = 0;
 
 		// TODO: don't recompute every time
-		// TODO: check width
-		int w = (m_drawFunc == &VideoPCjr::Draw160x200x16) ? 160 : m_data.hTotalDisp;
+		int w = (m_data.hTotalDisp * 2) / m_xAxisDivider;
 
 		SDL_Rect srcRect = { 0, 0, w, 200 };
 		SDL_Rect destRect = { m_sdlHBorder, m_sdlVBorder, 640, 200 };
@@ -310,6 +309,7 @@ namespace video
 		m_bank1 = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
 
 		//// Select draw function
+		m_xAxisDivider = 2;
 		if (!m_mode.graphics)
 		{
 			m_drawFunc = &VideoPCjr::DrawTextMode;
@@ -317,10 +317,20 @@ namespace video
 		else if (m_mode.graph2Colors)
 		{
 			m_drawFunc = &VideoPCjr::Draw640x200x2;
+			m_xAxisDivider = 1;
 		}
 		else if (m_mode.graph16Colors)
 		{
-			m_drawFunc = m_mode.hiBandwidth ? &VideoPCjr::Draw320x200x16 : &VideoPCjr::Draw160x200x16;
+			if (m_mode.hiBandwidth)
+			{
+				m_drawFunc = &VideoPCjr::Draw320x200x16;
+				m_xAxisDivider = 2;
+			} 
+			else
+			{
+				m_drawFunc = &VideoPCjr::Draw160x200x16;
+				m_xAxisDivider = 4;
+			}
 		}
 		else if (m_mode.hiBandwidth)
 		{
@@ -329,20 +339,8 @@ namespace video
 		else
 		{
 			m_drawFunc = &VideoPCjr::Draw320x200x4;
+			m_xAxisDivider = 2;
 		}
-
-		//// TODO: Do this for each line instead of each frame
-		//m_alphaPalette = (m_mode.monochrome && m_composite) ? AlphaMonoGreyPalette : AlphaColorPalette;
-		//m_currGraphPalette[0] = m_alphaPalette[m_color.color];
-		//for (int i = 1; i < 4; ++i)
-		//{
-		//	m_currGraphPalette[i] = m_alphaPalette[
-		//		(m_color.palIntense << 3) // Intensity
-		//		| (i << 1)
-		//		| (m_color.palSelect && !m_mode.monochrome) // Palette shift for non mono modes
-		//		| (m_mode.monochrome & (i & 1)) // Palette shift for mono modes
-		//	];
-		//}
 
 		// TODO: Move this elsewhere
 		// Process Events
@@ -356,34 +354,8 @@ namespace video
 		}
 	}
 
-	static Uint32 tempRowAlpha[640 + 2];
-	static Uint32 tempRow[640];
-
 	void VideoPCjr::EndOfRow()
 	{
-		//if (!m_mode.hiResolution || !m_composite || m_data.vPos >= m_data.vTotalDisp)
-		//	return;
-
-		//uint32_t baseX = (640 * m_data.vPos);
-
-		//memset(tempRowAlpha, 0, sizeof(tempRowAlpha));
-		//for (int offset = 0; offset < 4; ++offset)
-		//{
-		//	for (int x = 0; x < 640; ++x)
-		//	{
-		//		//tempRowAlpha[x + offset] += (tempRow[x] & 16) ? 0x3F000000 : 0;
-		//		tempRowAlpha[x + offset] += (tempRow[x] & 16) ? 1 : 0;
-		//	}
-		//}
-
-		//for (int i = 0; i < 640; ++i)
-		//{
-		//	m_frameBuffer[baseX + i] = Composite640Palette[tempRow[i] & 15] | ((i%256) << 24);// tempRowAlpha[i + 2];
-		//	//m_frameBuffer[baseX + i] = TempGray[tempRowAlpha[i+2]];
-		//}
-
-		// Clear temp row
-
 	}
 
 	bool VideoPCjr::IsCursor() const
@@ -410,9 +382,6 @@ namespace video
 				bg = bg & 7;
 			}
 
-			uint32_t fgRGB = m_alphaPalette[m_mode.paletteRegister[(fg & m_mode.paletteMask)]];
-			uint32_t bgRGB = m_alphaPalette[m_mode.paletteRegister[(bg & m_mode.paletteMask)]];
-
 			bool isCursorChar = IsCursor();
 
 			// Draw character
@@ -426,7 +395,7 @@ namespace video
 				{
 					bool set = cursorLine || (draw && ((*(currCharPos + y)) & (1 << (7 - x))));
 					m_lastDot = set ? fg : bg;
-					m_frameBuffer[offset + x] = set ? fgRGB : bgRGB;
+					m_frameBuffer[offset + x] = GetColor(m_lastDot);
 				}
 			}
 
@@ -449,7 +418,7 @@ namespace video
 					BYTE val = ch & 15;
 					ch >>= 4;
 
-					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 2) + (1 - x)] = m_alphaPalette[m_mode.paletteRegister[(val & m_mode.paletteMask)]];
+					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
 
 				++currChar;
@@ -472,7 +441,7 @@ namespace video
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 4) + (3 - x)] = m_alphaPalette[m_mode.paletteRegister[(val & m_mode.paletteMask)]];
+					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 4) + (3 - x)] = GetColor(val);
 				}
 
 				++currChar;
@@ -486,7 +455,27 @@ namespace video
 	}
 	void VideoPCjr::Draw640x200x2()
 	{
+		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
+		// In this mode 1 byte = 8 pixels
 
+		if (IsDisplayArea())
+		{
+			BYTE*& currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
+
+			uint32_t baseX = (640 * m_data.vPos) + (m_data.hPos * 2);
+
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = *currChar;
+
+				for (int x = 0; x < 8; ++x)
+				{
+					bool val = (ch & (1 << (7-x)));
+					m_frameBuffer[baseX++] = GetColor(val);
+				}
+				++currChar;
+			}
+		}
 	}
 	void VideoPCjr::Draw640x200x4()
 	{
