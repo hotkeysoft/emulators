@@ -111,6 +111,9 @@
     <ClCompile Include="DeviceKeyboardPCjr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CartridgePCjr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
@@ -201,6 +204,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DeviceKeyboardPCjr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CartridgePCjr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -87,10 +87,10 @@ namespace emul
 		m_memory.Allocate(&m_video.GetVideoRAM(), emul::S2A(0xB800));
 		m_memory.Allocate(&m_video.GetVideoRAM(), emul::S2A(0xBC00));
 
-		m_biosF000.LoadBinary("data/XT/BIOS_5160_V3_F000.BIN");
+		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
 
-		m_biosF800.LoadBinary("data/XT/BIOS_5160_V3_F800.BIN");
+		m_biosF800.LoadFromFile("data/XT/BIOS_5160_V3_F800.BIN");
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
 		m_keyboard.Init(&m_ppi, &m_pic);

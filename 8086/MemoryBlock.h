@@ -23,7 +23,7 @@ namespace emul
 		DWORD GetSize() const { return m_size; };
 		MemoryType GetType() const { return m_type; };
 
-		bool LoadBinary(const char* file, WORD offset = 0);
+		virtual bool LoadFromFile(const char* file, WORD offset = 0);
 
 		bool Dump(ADDRESS offset, DWORD len, const char* outFile);
 
@@ -33,12 +33,14 @@ namespace emul
 		virtual void write(ADDRESS offset, char data);
 
 	protected:
+		MemoryBlock(const char* id, MemoryType type = MemoryType::RAM);
+
 		DWORD RoundBlockSize(DWORD size);
 
 		std::string m_id;
-		DWORD m_size;
+		DWORD m_size = 0;
 		MemoryType m_type;
 
-		BYTE* m_data;
+		BYTE* m_data = nullptr;
 	};
 }

@@ -9,10 +9,14 @@ namespace emul
 	const DWORD MaxBlockSize = 65536*10;
 	const WORD BlockGranularity = 4096;
 
-	MemoryBlock::MemoryBlock(const char* id, DWORD size, MemoryType type) :
+	MemoryBlock::MemoryBlock(const char* id, MemoryType type) :
 		Logger("MEMBLK"),
 		m_id(id ? id : "?"),
 		m_type(type)
+	{
+	}
+
+	MemoryBlock::MemoryBlock(const char* id, DWORD size, MemoryType type) : MemoryBlock(id, type)
 	{
 		if (size == 0 || size > MaxBlockSize)
 		{
@@ -94,7 +98,7 @@ namespace emul
 		}
 	}
 
-	bool MemoryBlock::LoadBinary(const char* file, WORD offset)
+	bool MemoryBlock::LoadFromFile(const char* file, WORD offset)
 	{
 		LogPrintf(LOG_INFO, "LoadBinary: loading %s at offset %04Xh", file, offset);
 

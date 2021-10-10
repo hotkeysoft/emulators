@@ -25,7 +25,7 @@ namespace kbd
 
 	BYTE DeviceKeyboardPCjr::ReadPortA0()
 	{
-		LogPrintf(LOG_INFO, "Clear NMI Latch");
+		LogPrintf(LOG_DEBUG, "Clear NMI Latch");
 		m_nmiLatch = false;
 		return 0xFF;
 	}
@@ -39,7 +39,7 @@ namespace kbd
 		m_portA0.selectCLK1Input = value & 0x20;
 		m_portA0.disableHRQ = value & 0x10;
 
-		LogPrintf(Logger::LOG_INFO, "WritePort40 [%cEnableNMI %cIRTest %cSelCLK1Input %cDisableHRQ]",
+		LogPrintf(Logger::LOG_DEBUG, "WritePort40 [%cEnableNMI %cIRTest %cSelCLK1Input %cDisableHRQ]",
 			m_portA0.enableNMI ? ' ' : '/',
 			m_portA0.irTestEnabled ? ' ' : '/',
 			m_portA0.selectCLK1Input ? ' ' : '/',
@@ -57,7 +57,7 @@ namespace kbd
 
 	void DeviceKeyboardPCjr::LoadKey(BYTE key)
 	{
-		LogPrintf(LOG_DEBUG, "[%zu] LoadKey [%02Xh]", emul::g_ticks, key);
+		LogPrintf(LOG_DEBUG, "LoadKey [%02Xh]", key);
 
 		// Start bit
 		PushBit(1);

@@ -176,7 +176,7 @@ namespace emul
 			LogPrintf(LOG_ERROR, "LoadBinary: No memory allocated at address %04X", baseAddress);
 			return false;
 		}
-		return block->LoadBinary(file, baseAddress - slot.base);
+		return block->LoadFromFile(file, baseAddress - slot.base);
 	}
 
 	void Memory::Read(ADDRESS address, BYTE& value)

@@ -8,6 +8,7 @@
 #include "DevicePCSpeaker.h"
 #include "DeviceKeyboardPCjr.h"
 #include "VideoPCjr.h"
+#include "CartridgePCjr.h"
 
 namespace emul
 {
@@ -45,5 +46,8 @@ namespace emul
 		video::VideoPCjr m_video;
 
 		beeper::DevicePCSpeaker m_pcSpeaker;
+
+		cart::CartridgePCjr m_cart1;
+		cart::CartridgePCjr m_cart2;
 	};
 }

@@ -76,14 +76,27 @@ namespace emul
 		m_video.EnableLog(true, Logger::LOG_INFO);
 		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
 		
-		m_biosF000.LoadBinary("data/PCjr/BIOS_4860_1504036_F000.BIN");
+		m_biosF000.LoadFromFile("data/PCjr/BIOS_4860_1504036_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
 
-		m_biosF800.LoadBinary("data/PCjr/BIOS_4860_1504037_F800.BIN");
+		m_biosF800.LoadFromFile("data/PCjr/BIOS_4860_1504037_F800.BIN");
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
 		m_keyboard.Init(&m_ppi, &m_pic);
 		m_keyboard.EnableLog(true, Logger::LOG_INFO);
+
+		// TODO: Make this dynamic
+		// Cartridges
+		if (m_cart1.LoadFromFile("data/PCjr/CartridgeBASIC_E800.jrc"))
+		{
+			m_memory.Allocate(&m_cart1, m_cart1.GetBaseAddress());
+		}
+
+		// Cartridges
+		//if (m_cart2.LoadBinary(R"()"))
+		//{
+		//	m_memory.Allocate(&m_cart2, m_cart2.GetBaseAddress());
+		//}
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);
