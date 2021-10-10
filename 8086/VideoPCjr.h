@@ -100,8 +100,11 @@ namespace video
 		typedef void(VideoPCjr::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoPCjr::DrawTextMode;
 		void DrawTextMode();
-		void Draw320x200();
-		//void Draw640x200();
+		void Draw160x200x16();
+		void Draw320x200x4();
+		void Draw320x200x16();
+		void Draw640x200x2();
+		void Draw640x200x4();
 
 		// Text mode pointers
 		BYTE* m_cursorPos = nullptr;

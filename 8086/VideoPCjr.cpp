@@ -246,7 +246,9 @@ namespace video
 
 		// TODO: don't recompute every time
 		// TODO: check width
-		SDL_Rect srcRect = { 0, 0, (m_config.hDisplayed > 40) ? 640 : 320, 200 };
+		int w = (m_drawFunc == &VideoPCjr::Draw160x200x16) ? 160 : m_data.hTotalDisp;
+
+		SDL_Rect srcRect = { 0, 0, w, 200 };
 		SDL_Rect destRect = { m_sdlHBorder, m_sdlVBorder, 640, 200 };
 
 		SDL_UpdateTexture(m_sdlTexture, NULL, m_frameBuffer, 640 * sizeof(uint32_t));
@@ -308,9 +310,26 @@ namespace video
 		m_bank1 = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
 
 		//// Select draw function
-		m_drawFunc = &VideoPCjr::DrawTextMode;
-		if (m_mode.graphics) m_drawFunc = &VideoPCjr::Draw320x200;
-		//if (m_mode.hiResolution) m_drawFunc = &VideoPCjr::Draw640x200;
+		if (!m_mode.graphics)
+		{
+			m_drawFunc = &VideoPCjr::DrawTextMode;
+		}
+		else if (m_mode.graph2Colors)
+		{
+			m_drawFunc = &VideoPCjr::Draw640x200x2;
+		}
+		else if (m_mode.graph16Colors)
+		{
+			m_drawFunc = m_mode.hiBandwidth ? &VideoPCjr::Draw320x200x16 : &VideoPCjr::Draw160x200x16;
+		}
+		else if (m_mode.hiBandwidth)
+		{
+			m_drawFunc = &VideoPCjr::Draw640x200x4;
+		}
+		else
+		{
+			m_drawFunc = &VideoPCjr::Draw320x200x4;
+		}
 
 		//// TODO: Do this for each line instead of each frame
 		//m_alphaPalette = (m_mode.monochrome && m_composite) ? AlphaMonoGreyPalette : AlphaColorPalette;
@@ -415,13 +434,34 @@ namespace video
 		}
 	}
 
-	void VideoPCjr::Draw320x200()
+	void VideoPCjr::Draw160x200x16()
+	{
+		// Called every 8 horizontal pixels
+		// In this mode 1 byte = 2 pixels
+		BYTE*& currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
+		if (IsDisplayArea() && m_data.hPos < 160)
+		{
+			for (int w = 0; w < 4; ++w)
+			{
+				BYTE ch = *currChar;
+				for (int x = 0; x < 2; ++x)
+				{
+					BYTE val = ch & 15;
+					ch >>= 4;
+
+					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 2) + (1 - x)] = m_alphaPalette[m_mode.paletteRegister[(val & m_mode.paletteMask)]];
+				}
+
+				++currChar;
+			}
+		}
+	}
+
+	void VideoPCjr::Draw320x200x4()
 	{
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-
 		BYTE*& currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
-
 		if (IsDisplayArea())
 		{
 			for (int w = 0; w < 2; ++w)
@@ -439,5 +479,19 @@ namespace video
 			}
 		}
 	}
+
+	void VideoPCjr::Draw320x200x16()
+	{
+
+	}
+	void VideoPCjr::Draw640x200x2()
+	{
+
+	}
+	void VideoPCjr::Draw640x200x4()
+	{
+
+	}
+
 
 }
