@@ -19,6 +19,8 @@
 
 namespace emul
 {
+	extern size_t g_ticks;
+
 	typedef uint8_t BYTE;
 	typedef uint16_t WORD;
 	typedef uint32_t DWORD;

@@ -30,6 +30,8 @@ const short CONSOLE_COLS = 80;
 #include "CPU8086Test.h"
 #endif
 
+size_t emul::g_ticks = 0;
+
 FILE* logFile = nullptr;
 
 enum class Mode { MONITOR = 0, LOG = 2};
@@ -137,9 +139,11 @@ int main(int argc, char* args[])
 	try
 	{
 		bool run = true;
+		int cooldown = 10000;
+
 		while (run)
 		{ 
-			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0x0F78))
+			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0x0FEF))
 			//{
 			//	monitor.Show();
 			//	mode = Mode::MONITOR;
@@ -167,94 +171,104 @@ int main(int argc, char* args[])
 				run = pc.Step();
 			}
 
-			if (mode != Mode::MONITOR && (pc.GetTicks() % 10000 == 0) && _kbhit())
+			if (cooldown == 0)
 			{
-				BYTE keyCode;
-				bool shift = false;
-				bool newKeycode = false;
-				int ch = _getch();
+				cooldown = 10000;
 
-				/*if (ch == 27)
+				if (mode != Mode::MONITOR && _kbhit())
 				{
-					run = false;
-				}
-				else */if (ch == 224)
-				{
-					switch (ch = _getch())
+					cooldown = 10000;
+					BYTE keyCode;
+					bool shift = false;
+					bool newKeycode = false;
+					int ch = _getch();
+
+					/*if (ch == 27)
 					{
-					case 71: // HOME
-					case 72: // UP
-					case 73: // PGUP
-					case 75: // LEFT
-					case 77: // RIGHT
-					case 79: // END
-					case 80: // DOWN
-					case 81: // PGDOWN
-					case 82: // INSERT
-					case 83: // DELETE
-						keyCode = ch;
+						run = false;
+					}
+					else */if (ch == 224)
+					{
+						switch (ch = _getch())
+						{
+						case 71: // HOME
+						case 72: // UP
+						case 73: // PGUP
+						case 75: // LEFT
+						case 77: // RIGHT
+						case 79: // END
+						case 80: // DOWN
+						case 81: // PGDOWN
+						case 82: // INSERT
+						case 83: // DELETE
+							keyCode = ch;
+							newKeycode = true;
+							break;
+
+						case 134: // F12
+							ToggleMode();
+							break;
+						}
+					}
+					else if (ch == 0)
+					{
+						switch (ch = _getch())
+						{
+						case 59: // F1
+						case 60: // F2
+						case 61: // F3
+						case 62: // F4
+						case 63: // F5
+						case 64: // F6
+						case 65: // F7
+						case 66: // F8
+						case 67: // F9
+						case 68: // F10
+						case 71: // HOME
+						case 72: // UP
+						case 73: // PGUP
+						case 74: // -
+						case 75: // LEFT
+						case 76: // 5
+						case 77: // RIGHT
+						case 78: // +
+						case 79: // END
+						case 80: // DOWN
+						case 81: // PGDOWN
+						case 82: // INSERT
+						case 83: // DELETE
+							keyCode = ch;
+							newKeycode = true;
+							break;
+						}
+					}
+					else
+					{
+						SHORT vkey = VkKeyScanA(ch);
+						shift = HIBYTE(vkey) & 1;
+						keyCode = MapVirtualKeyA(LOBYTE(vkey), 0);
 						newKeycode = true;
-						break;
+					}
 
-					case 134: // F12
-						ToggleMode();
-						break;
-					}
-				}
-				else if (ch == 0)
-				{
-					switch (ch = _getch())
+					if (newKeycode)
 					{
-					case 59: // F1
-					case 60: // F2
-					case 61: // F3
-					case 62: // F4
-					case 63: // F5
-					case 64: // F6
-					case 65: // F7
-					case 66: // F8
-					case 67: // F9
-					case 68: // F10
-					case 71: // HOME
-					case 72: // UP
-					case 73: // PGUP
-					case 74: // -
-					case 75: // LEFT
-					case 76: // 5
-					case 77: // RIGHT
-					case 78: // +
-					case 79: // END
-					case 80: // DOWN
-					case 81: // PGDOWN
-					case 82: // INSERT
-					case 83: // DELETE
-						keyCode = ch;
-						newKeycode = true;
-						break;
+						kbd::DeviceKeyboard& kbd = pc.GetKeyboard();
+						if (shift)
+						{
+							kbd.InputKey(0x2A);
+						}
+						kbd.InputKey(keyCode);
+						kbd.InputKey(keyCode | 0x80);
+						if (shift)
+						{
+							kbd.InputKey(0x2A | 0x80);
+						}
 					}
 				}
-				else
-				{
-					SHORT vkey = VkKeyScanA(ch);
-					shift = HIBYTE(vkey) & 1;
-					keyCode = MapVirtualKeyA(LOBYTE(vkey), 0);
-					newKeycode = true;
-				}
-
-				if (newKeycode)
-				{
-					kbd::DeviceKeyboard& kbd = pc.GetKeyboard();
-					if (shift)
-					{
-						kbd.InputKey(0x2A);
-					}
-					kbd.InputKey(keyCode);
-					kbd.InputKey(keyCode | 0x80);
-					if (shift)
-					{
-						kbd.InputKey(0x2A | 0x80);
-					}
-				}
+			}
+			else
+			{
+				--cooldown;
 			}
 		}
 	}
