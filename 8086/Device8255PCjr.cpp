@@ -84,7 +84,12 @@ namespace ppi
 			(m_cassetteDataBit << 4) |
 			(m_nmiLatch << 0);
 
-		LogPrintf(LOG_DEBUG, "PORTC IN, ret=%02X", ret);
+		LogPrintf(LOG_DEBUG, "PORTC IN  [%cKBDDATA %cT2OUT %cCASSDATA %cNMILATCH]",
+			m_keyboardDataBit ? ' ' : '/',
+			m_timer2Out ? ' ' : '/',
+			m_cassetteDataBit ? ' ' : '/',
+			m_nmiLatch ? ' ' : '/');
+
 		return ret;
 	}
 	void Device8255PCjr::PORTC_OUT(BYTE value)
