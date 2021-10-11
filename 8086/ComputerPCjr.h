@@ -33,6 +33,7 @@ namespace emul
 
 		// TODO: Should be dynamic
 		emul::MemoryBlock m_base64K;
+		emul::MemoryBlock m_ext64K;
 		emul::MemoryBlock m_biosF000;
 		emul::MemoryBlock m_biosF800;
 

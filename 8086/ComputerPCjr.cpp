@@ -36,6 +36,7 @@ namespace emul
 		CPU8086(m_memory, m_map),
 		m_memory(emul::CPU8086_ADDRESS_BITS),
 		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
+		m_ext64K("RAM1", 0x10000, emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, 1193182),
@@ -49,12 +50,14 @@ namespace emul
 
 	void ComputerPCjr::Init()
 	{
+		bool RAM128K = true;
+
 		m_memory.EnableLog(true, Logger::LOG_WARNING);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
 
 		m_base64K.Clear(0xA5);
 		m_memory.Allocate(&m_base64K, 0);
-		//m_memory.Allocate(&m_base64K, 0x10000);
+		m_memory.Allocate(RAM128K ? &m_ext64K : &m_base64K, 0x10000);
 
 		m_pit.Init();
 		m_pit.EnableLog(true, Logger::LOG_WARNING);
@@ -66,7 +69,7 @@ namespace emul
 		m_ppi.EnableLog(true, Logger::LOG_WARNING);
 		{
 			m_ppi.SetKeyboardConnected(true);
-			m_ppi.SetRAMExpansion(false);
+			m_ppi.SetRAMExpansion(RAM128K);
 			m_ppi.SetDisketteCard(false);
 			m_ppi.SetModemCard(false);
 		}
@@ -74,7 +77,7 @@ namespace emul
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
 
-		m_video.EnableLog(true, Logger::LOG_WARNING);
+		m_video.EnableLog(true, Logger::LOG_INFO);
 		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
 		
 		m_biosF000.LoadFromFile("data/PCjr/BIOS_4860_1504036_F000.BIN");
@@ -88,10 +91,10 @@ namespace emul
 
 		// TODO: Make this dynamic
 		// Cartridges
-		//if (m_cart1.LoadFromFile("data/PCjr/CartridgeBASIC_E800.jrc"))
-		//{
-		//	m_memory.Allocate(&m_cart1, m_cart1.GetBaseAddress());
-		//}
+		if (m_cart1.LoadFromFile("data/PCjr/CartridgeBASIC_E800.jrc"))
+		{
+			m_memory.Allocate(&m_cart1, m_cart1.GetBaseAddress());
+		}
 
 		// Cartridges
 		//if (m_cart2.LoadFromFile(R"()"))
