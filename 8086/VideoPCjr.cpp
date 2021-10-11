@@ -85,6 +85,11 @@ namespace video
 		m_pageRegister.cpuPage = (value >> 3) & 7;
 		m_pageRegister.videoAddressMode = (value >> 6) & 3;
 
+		if (m_mode.hiBandwidth)
+		{
+			emul::SetBit(m_pageRegister.crtPage, 0, false);
+		}
+
 		const char* modeStr;
 		switch (m_pageRegister.videoAddressMode)
 		{
@@ -101,8 +106,8 @@ namespace video
 			modeStr = "GRAPH HI";
 			break;
 		default:
-			LogPrintf(LOG_ERROR, "WritePageRegister: Reserved mode");
-			throw std::exception("WritePageRegister: Reserved mode");
+			modeStr = "UNUSED";
+			LogPrintf(LOG_WARNING, "WritePageRegister: Unused/Reserved mode");
 		}
 
 		// Pages are 16K (0x4000)
@@ -305,8 +310,10 @@ namespace video
 		}
 
 		//// Pointers for graphics mode
-		m_bank0 = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x0000);
-		m_bank1 = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
+		m_banks[0] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x0000);
+		m_banks[1] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
+		m_banks[2] = m_mode.hiBandwidth ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x4000) : nullptr;
+		m_banks[3] = m_mode.hiBandwidth ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x6000) : nullptr;
 
 		//// Select draw function
 		m_xAxisDivider = 2;
@@ -324,7 +331,7 @@ namespace video
 			if (m_mode.hiBandwidth)
 			{
 				m_drawFunc = &VideoPCjr::Draw320x200x16;
-				m_xAxisDivider = 2;
+				m_xAxisDivider = 4;
 			} 
 			else
 			{
@@ -407,7 +414,7 @@ namespace video
 	{
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		BYTE*& currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
+		BYTE*& currChar = m_banks[m_data.vPos & 1];
 		if (IsDisplayArea() && m_data.hPos < 160)
 		{
 			for (int w = 0; w < 4; ++w)
@@ -430,7 +437,7 @@ namespace video
 	{
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-		BYTE*& currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
+		BYTE*& currChar = m_banks[m_data.vPos & 1];
 		if (IsDisplayArea())
 		{
 			for (int w = 0; w < 2; ++w)
@@ -451,7 +458,27 @@ namespace video
 
 	void VideoPCjr::Draw320x200x16()
 	{
+		// Called every 8 horizontal pixels
+		// In this mode 1 byte = 2 pixels
+		if ((m_data.vPos & 3) > 3)
+			return;
+		BYTE*& currChar = m_banks[m_data.vPos & 3];
+		if (IsDisplayArea() && m_data.hPos < 320)
+		{
+			for (int w = 0; w < 4; ++w)
+			{
+				BYTE ch = *currChar;
+				for (int x = 0; x < 2; ++x)
+				{
+					BYTE val = ch & 15;
+					ch >>= 4;
 
+					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 2) + (1 - x)] = GetColor(val);
+				}
+
+				++currChar;
+			}
+		}
 	}
 	void VideoPCjr::Draw640x200x2()
 	{
@@ -460,7 +487,7 @@ namespace video
 
 		if (IsDisplayArea())
 		{
-			BYTE*& currChar = (m_data.vPos & 1) ? m_bank1 : m_bank0;
+			BYTE*& currChar = m_banks[m_data.vPos & 1];
 
 			uint32_t baseX = (640 * m_data.vPos) + (m_data.hPos * 2);
 
@@ -479,7 +506,24 @@ namespace video
 	}
 	void VideoPCjr::Draw640x200x4()
 	{
+		// Called every 8 horizontal pixels
+		// In this mode 2 bytes = 8 pixels
+		BYTE*& currChar = m_banks[m_data.vPos & 3];
+		if (IsDisplayArea())
+		{
+			uint32_t baseX = (640 * m_data.vPos) + m_data.hPos;
 
+			BYTE chEven = *currChar++;
+			BYTE chOdd = *currChar++;
+
+			for (int x = 0; x < 8; ++x)
+			{
+				BYTE val = 
+					((chEven & (1 << (7 - x))) ? 1 : 0) | 
+					((chOdd  & (1 << (7 - x))) ? 2 : 0);
+				m_frameBuffer[baseX++] = GetColor(val);
+			}
+		}
 	}
 
 

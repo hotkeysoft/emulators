@@ -48,7 +48,8 @@ namespace video
 			enum class ADDRESSMODE {
 				ALPHA = 0,
 				GRAPH_LOW = 1,
-				GRAPH_HI = 2
+				GRAPH_HI = 2,
+				RESERVED = 3
 			} addressMode;
 
 			ADDRESS crtBaseAddress = 0;
@@ -118,8 +119,7 @@ namespace video
 		BYTE* m_charROMStart;
 
 		// Graph mode banks
-		BYTE* m_bank0 = nullptr;
-		BYTE* m_bank1 = nullptr;
+		BYTE* m_banks[4] = { 0, 0, 0, 0 };
 
 		const uint32_t* m_alphaPalette = nullptr;
 
