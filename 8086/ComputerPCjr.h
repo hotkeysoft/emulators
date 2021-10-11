@@ -6,6 +6,7 @@
 #include "Device8255PCjr.h"
 #include "Device8259.h"
 #include "DevicePCSpeaker.h"
+#include "DeviceFloppy.h"
 #include "DeviceKeyboardPCjr.h"
 #include "VideoPCjr.h"
 #include "CartridgePCjr.h"
@@ -40,7 +41,7 @@ namespace emul
 		pit::Device8254 m_pit;
 		pic::Device8259 m_pic;
 		ppi::Device8255PCjr m_ppi;
-		//fdc::DeviceFloppy m_floppy;
+		fdc::DeviceFloppy m_floppy;
 		kbd::DeviceKeyboardPCjr m_keyboard;
 
 		video::VideoPCjr m_video;

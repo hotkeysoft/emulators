@@ -75,7 +75,7 @@ namespace emul
 
 	bool Memory::MapWindow(ADDRESS source, ADDRESS window, DWORD len)
 	{
-		LogPrintf(LOG_WARNING, "Request to map memory [%X]-[%X] to window [%X]-[%X], window size: %d bytes",
+		LogPrintf(LOG_INFO, "Request to map memory [%X]-[%X] to window [%X]-[%X], window size: %d bytes",
 			source, source + len - 1,
 			window, window + len - 1,
 			len);
@@ -117,7 +117,7 @@ namespace emul
 		int nbSlots = len / BlockGranularity;
 		int sourceBaseSlot = source / BlockGranularity;
 		int windowBaseSlot = window / BlockGranularity;
-		LogPrintf(LOG_INFO, "Copying %d slots, base slot = %02Xh -> %02Xh", nbSlots, sourceBaseSlot, windowBaseSlot);
+		LogPrintf(LOG_DEBUG, "Copying %d slots, base slot = %02Xh -> %02Xh", nbSlots, sourceBaseSlot, windowBaseSlot);
 
 		for (size_t i = 0; i < nbSlots; ++i)
 		{			

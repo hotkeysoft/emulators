@@ -42,27 +42,28 @@ namespace emul
 		m_pic(0x20),
 		m_ppi(0x60),
 		m_video(0x3D0),
-		m_keyboard(0xA0)
+		m_keyboard(0xA0),
+		m_floppy(0xF0, 1193182)
 	{
 	}
 
 	void ComputerPCjr::Init()
 	{
-		m_memory.EnableLog(true, Logger::LOG_INFO);
+		m_memory.EnableLog(true, Logger::LOG_WARNING);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
 
 		m_base64K.Clear(0xA5);
 		m_memory.Allocate(&m_base64K, 0);
-		m_memory.Allocate(&m_base64K, 0x10000);
+		//m_memory.Allocate(&m_base64K, 0x10000);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_INFO);
+		m_pit.EnableLog(true, Logger::LOG_WARNING);
 
 		m_pic.Init();
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_INFO);
+		m_ppi.EnableLog(true, Logger::LOG_WARNING);
 		{
 			m_ppi.SetKeyboardConnected(true);
 			m_ppi.SetRAMExpansion(false);
@@ -73,7 +74,7 @@ namespace emul
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
 
-		m_video.EnableLog(true, Logger::LOG_INFO);
+		m_video.EnableLog(true, Logger::LOG_WARNING);
 		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
 		
 		m_biosF000.LoadFromFile("data/PCjr/BIOS_4860_1504036_F000.BIN");
@@ -83,26 +84,30 @@ namespace emul
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
 		m_keyboard.Init(&m_ppi, &m_pic);
-		m_keyboard.EnableLog(true, Logger::LOG_INFO);
+		m_keyboard.EnableLog(true, Logger::LOG_WARNING);
 
 		// TODO: Make this dynamic
 		// Cartridges
-		if (m_cart1.LoadFromFile("data/PCjr/CartridgeBASIC_E800.jrc"))
-		{
-			m_memory.Allocate(&m_cart1, m_cart1.GetBaseAddress());
-		}
+		//if (m_cart1.LoadFromFile("data/PCjr/CartridgeBASIC_E800.jrc"))
+		//{
+		//	m_memory.Allocate(&m_cart1, m_cart1.GetBaseAddress());
+		//}
 
 		// Cartridges
-		//if (m_cart2.LoadBinary(R"()"))
+		//if (m_cart2.LoadFromFile(R"()"))
 		//{
 		//	m_memory.Allocate(&m_cart2, m_cart2.GetBaseAddress());
 		//}
+
+//		m_floppy.Init();
+//		m_floppy.EnableLog(true, Logger::LOG_DEBUG);
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_video);
 		AddDevice(m_keyboard);
+//		AddDevice(m_floppy);
 		AddDevice(dummyPort);
 	}
 
