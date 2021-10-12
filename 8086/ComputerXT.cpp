@@ -78,7 +78,7 @@ namespace emul
 
 		m_dma.Init();
 		m_dma.EnableLog(false);
-		m_dma.EnableLog(true, Logger::LOG_INFO);
+		m_dma.EnableLog(true, Logger::LOG_WARNING);
 
 		m_video.EnableLog(true, Logger::LOG_WARNING);
 		m_video.Init("data/XT/CGA_CHAR.BIN");
@@ -96,7 +96,7 @@ namespace emul
 		m_keyboard.Init(&m_ppi, &m_pic);
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_INFO);
+		m_floppy.EnableLog(true, Logger::LOG_WARNING);
 		m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-1.10.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 		// 
@@ -167,9 +167,9 @@ namespace emul
 
 			m_pcSpeaker.Tick();
 
-			if (m_floppy.IsInterruptPending() && CanInterrupt())
+			if (m_floppy.IsInterruptPending())
 			{
-				m_pic.InterruptRequest(6); // TEMP
+				m_pic.InterruptRequest(6);
 				m_floppy.ClearInterrupt();
 			}
 

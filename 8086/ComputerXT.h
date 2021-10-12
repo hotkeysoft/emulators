@@ -6,7 +6,7 @@
 #include "Device8255XT.h"
 #include "Device8237.h"
 #include "Device8259.h"
-#include "DeviceFloppy.h"
+#include "DeviceFloppyXT.h"
 #include "DevicePCSpeaker.h"
 #include "DeviceKeyboardXT.h"
 #include "VideoCGA.h"
@@ -28,11 +28,7 @@ namespace emul
 		fdc::DeviceFloppy& GetFloppy() { return m_floppy; }
 		kbd::DeviceKeyboard& GetKeyboard() { return m_keyboard; }
 
-		size_t GetTicks() { return m_ticks; }
-
 	protected:
-		size_t m_ticks = 0;
-
 		Memory m_memory;
 
 		// TODO: Should be dynamic
@@ -46,7 +42,7 @@ namespace emul
 		pic::Device8259 m_pic;
 		ppi::Device8255XT m_ppi;
 		dma::Device8237 m_dma;
-		fdc::DeviceFloppy m_floppy;
+		fdc::DeviceFloppyXT m_floppy;
 		video::VideoCGA m_video;
 		beeper::DevicePCSpeaker m_pcSpeaker;
 		kbd::DeviceKeyboardXT m_keyboard;

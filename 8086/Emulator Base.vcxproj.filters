@@ -114,6 +114,12 @@
     <ClCompile Include="CartridgePCjr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DeviceFloppyXT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceFloppyPCjr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
@@ -207,6 +213,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CartridgePCjr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceFloppyXT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceFloppyPCjr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

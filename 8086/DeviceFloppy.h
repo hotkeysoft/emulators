@@ -14,8 +14,11 @@ namespace fdc
 {
 	class DeviceFloppy : public PortConnector
 	{
-	public:
+	protected:
 		DeviceFloppy(WORD baseAddress, size_t clockSpeedHz);
+
+	public:
+		virtual ~DeviceFloppy() {};
 
 		DeviceFloppy() = delete;
 		DeviceFloppy(const DeviceFloppy&) = delete;
@@ -23,17 +26,15 @@ namespace fdc
 		DeviceFloppy(DeviceFloppy&&) = delete;
 		DeviceFloppy& operator=(DeviceFloppy&&) = delete;
 
-		void Init();
-		void Reset();
+		virtual void Init();
+		virtual void Reset();
+
+		virtual void Tick();
 
 		bool LoadDiskImage(BYTE drive, const char* path);
 		bool SaveDiskImage(BYTE drive, const char* path);
 
 		size_t DelayToTicks(size_t delayMS);
-
-		void Tick();
-
-		void WriteDataOutputReg(BYTE value);
 
 		BYTE ReadMainStatusReg();
 
@@ -105,7 +106,7 @@ namespace fdc
 		STATE ReadTrack();
 		STATE WriteData();
 
-		bool m_dmaPending;
+		bool m_dmaPending = false;
 		void SetDMAPending() { LogPrintf(Logger::LOG_DEBUG, "Set DMA Pending");  m_dmaPending = true; }
 
 		bool m_interruptPending = false;
@@ -167,20 +168,6 @@ namespace fdc
 		enum class DataDirection { FDC2CPU, CPU2FDC };
 		DataDirection m_dataInputOutput = DataDirection::CPU2FDC;
 
-		enum DOR
-		{
-			MOTD  = 0x80, // Set to turn drive 3's motor ON
-			MOTC  = 0x40, // Set to turn drive 2's motor ON
-			MOTB  = 0x20, // Set to turn drive 1's motor ON
-			MOTA  = 0x10, // Set to turn drive 0's motor ON
-			IRQ   = 0x08, // Set to enable IRQs and DMA
-			RESET = 0x04, // Clear = enter reset mode, Set = normal operation
-			DSEL1 = 0x02, // "Select" drive number for next access
-			DSEL0 = 0x01,
-		};
-
-		// Drive Output Register
-		bool m_motor[4] = { false, false, false, false };
 		bool m_enableIRQDMA = false;
 		BYTE m_driveSel = 0;
 

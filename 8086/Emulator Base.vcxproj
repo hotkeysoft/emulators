@@ -186,6 +186,8 @@
     <ClCompile Include="Device8255XT.cpp" />
     <ClCompile Include="Device8259.cpp" />
     <ClCompile Include="DeviceFloppy.cpp" />
+    <ClCompile Include="DeviceFloppyPCjr.cpp" />
+    <ClCompile Include="DeviceFloppyXT.cpp" />
     <ClCompile Include="DeviceKeyboard.cpp" />
     <ClCompile Include="DeviceKeyboardPCjr.cpp" />
     <ClCompile Include="DeviceKeyboardXT.cpp" />
@@ -220,6 +222,8 @@
     <ClInclude Include="Device8255XT.h" />
     <ClInclude Include="Device8259.h" />
     <ClInclude Include="DeviceFloppy.h" />
+    <ClInclude Include="DeviceFloppyPCjr.h" />
+    <ClInclude Include="DeviceFloppyXT.h" />
     <ClInclude Include="DeviceKeyboard.h" />
     <ClInclude Include="DeviceKeyboardPCjr.h" />
     <ClInclude Include="DeviceKeyboardXT.h" />
