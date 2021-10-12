@@ -33,22 +33,12 @@ namespace fdc
 
 		void Tick();
 
-		BYTE ReadStatusRegA();
-		BYTE ReadStatusRegB();
-
 		void WriteDataOutputReg(BYTE value);
 
-		BYTE ReadTapeReg();
-		void WriteTapeReg(BYTE value);
-
 		BYTE ReadMainStatusReg();
-		void WriteDataRateSelectReg(BYTE value);
 
 		BYTE ReadDataFIFO();
 		void WriteDataFIFO(BYTE value);
-
-		BYTE ReadDigitalInputReg();
-		void WriteConfigControlReg(BYTE value);
 
 		bool IsInterruptPending() const { return m_interruptPending; }
 		void ClearInterrupt() { m_interruptPending = false; }
