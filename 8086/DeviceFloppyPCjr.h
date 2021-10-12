@@ -26,6 +26,8 @@ namespace fdc
 
 		void WriteDigitalOutputReg(BYTE value);
 
+		virtual void Tick() override;
+
 	protected:
 
 		enum DOR
@@ -44,5 +46,16 @@ namespace fdc
 
 			bool driveEnable = false;
 		} m_dor;
+
+		struct Watchdog
+		{
+			size_t counter = SIZE_MAX;
+			bool active = false;
+		} m_wd;
+
+		void ResetWatchdog();
+		void LaunchWatchdog();
+		bool IsWatchdogTriggered() { return m_dor.wdEnable && (m_wd.counter == 0); }
+
 	};
 }
