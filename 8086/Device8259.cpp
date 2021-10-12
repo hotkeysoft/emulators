@@ -26,17 +26,7 @@ namespace pic
 		assert(interrupt < 8);
 		BYTE intBit = 1 << interrupt;
 
-		// Mask bits: 0 = Enabled, 1 = Interrupt Masked (inhibited)
-		intBit &= ~m_interruptMaskRegister;
-
-		if (intBit)
-		{
-			m_interruptRequestRegister |= intBit;
-		}
-		else
-		{
-			LogPrintf(LOG_INFO, "InterruptRequest: Interrupt is masked");
-		}
+		m_interruptRequestRegister |= intBit;
 	}
 
 	void Device8259::Init()
@@ -235,6 +225,11 @@ namespace pic
 
 	void Device8259::Tick()
 	{
+	}
+
+	bool Device8259::InterruptPending() const
+	{ 
+		return (m_interruptRequestRegister & (~m_interruptMaskRegister)) && !m_inServiceRegister;
 	}
 
 	// TODO: simplification, doesn't handle multiple interrupts & priorities correctly
