@@ -16,8 +16,6 @@ namespace fdc
 		m_dor.driveEnable = false;
 		m_dor.wdEnable = false;
 		m_dor.wdTrigger = false;
-
-		m_enableIRQDMA = false;
 	}
 
 	void DeviceFloppyPCjr::Init()

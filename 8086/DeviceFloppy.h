@@ -107,10 +107,10 @@ namespace fdc
 		STATE WriteData();
 
 		bool m_dmaPending = false;
-		void SetDMAPending() { m_dmaPending = true; }
+		virtual void SetDMAPending() { m_dmaPending = true; }
 
 		bool m_interruptPending = false;
-		void SetInterruptPending() { m_interruptPending = true; }
+		virtual void SetInterruptPending() { m_interruptPending = true; }
 
 		// Status
 		enum MSR
@@ -150,7 +150,7 @@ namespace fdc
 		};
 		BYTE m_st0 = 0; // Status flag
 		BYTE m_st3 = 0; // Status flag
-		BYTE m_pcn = 0; // Present Cylinder Number
+		BYTE m_pcn = 0; // Present Cylinder Number (TODO: one per drive)
 		
 		BYTE m_currSector = 0;
 		BYTE m_maxSector = 0;
@@ -163,15 +163,12 @@ namespace fdc
 
 		bool m_commandBusy = false;
 		bool m_dataRegisterReady = true;
-		bool m_driveActive[4] = { false, false, false, false };
+		bool m_driveActive[4] = { false, false, false, false }; // Only used for seek
+		BYTE m_currDrive = 0;
 
 		enum class DataDirection { FDC2CPU, CPU2FDC };
 		DataDirection m_dataInputOutput = DataDirection::CPU2FDC;
 		
-		bool IsIRQDMAEnabled() { return m_enableIRQDMA; }
-		bool m_enableIRQDMA = false;
-		BYTE m_driveSel = 0;
-
 		// Command/Response/Parameters FIFO
 		void Push(BYTE value) { m_fifo.push_back(value); }
 		BYTE Pop() { BYTE ret = m_fifo.front(); m_fifo.pop_front(); return ret; }

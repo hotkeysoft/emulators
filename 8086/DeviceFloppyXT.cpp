@@ -50,8 +50,8 @@ namespace fdc
 			LogPrintf(LOG_INFO, "Drive %d Motor: %s", drive, m_dor.motor[drive] ? "ON" : "OFF");
 		}
 
-		m_enableIRQDMA = (value & DOR::IRQ);
-		LogPrintf(LOG_INFO, "IRQ/DMA: %s", m_enableIRQDMA ? "Enabled" : "Disabled");
+		m_dor.irqDMAEnabled = (value & DOR::IRQ);
+		LogPrintf(LOG_INFO, "IRQ/DMA: %s", m_dor.irqDMAEnabled ? "Enabled" : "Disabled");
 
 		switch (value & (DOR::DSEL1 | DOR::DSEL0))
 		{

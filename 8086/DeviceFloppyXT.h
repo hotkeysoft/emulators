@@ -28,6 +28,9 @@ namespace fdc
 
 	protected:
 
+		virtual void SetDMAPending() override { m_dmaPending = m_dor.irqDMAEnabled; }
+		virtual void SetInterruptPending() override { m_interruptPending = m_dor.irqDMAEnabled; }
+
 		enum DOR
 		{
 			MOTD  = 0x80, // Set to turn drive 3's motor ON
@@ -43,6 +46,7 @@ namespace fdc
 		struct DigitalOutputRegister
 		{
 			bool motor[4] = { false, false, false, false };
+			bool irqDMAEnabled = false;
 			BYTE driveSel = 0;
 		} m_dor;
 	};

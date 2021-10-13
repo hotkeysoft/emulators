@@ -22,9 +22,7 @@ namespace fdc
 
 		m_dataRegisterReady = false;
 		m_dataInputOutput = DataDirection::CPU2FDC;
-
-		m_enableIRQDMA = false;
-		
+	
 		m_st0 = 0xC0; // TODO: Find why in datasheet
 		m_srt = 16;
 		m_hlt = 254;
@@ -163,7 +161,7 @@ namespace fdc
 		BYTE status =
 			(RQM * m_dataRegisterReady) |
 			(DIO * (m_dataInputOutput == DataDirection::FDC2CPU)) |
-			(NDMA * 0) |
+			(NDMA * (0)) |
 			(BUSY * m_commandBusy) |
 			(ACTD * m_driveActive[3]) |
 			(ACTC * m_driveActive[2]) |
@@ -527,7 +525,7 @@ namespace fdc
 	{
 		BYTE param = Pop();
 
-		BYTE driveNumber = param & 3;
+		m_currDrive = param & 3;
 		bool head = param & 4;
 
 		BYTE c = Pop();
@@ -538,7 +536,7 @@ namespace fdc
 		BYTE gpl = Pop();
 		BYTE dtl = Pop();
 
-		LogPrintf(LOG_INFO, "COMMAND: Read Data drive=[%d] head=[%d]", driveNumber, head);
+		LogPrintf(LOG_INFO, "COMMAND: Read Data drive=[%d] head=[%d]", m_currDrive, head);
 		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		m_currHead = head;
@@ -556,15 +554,13 @@ namespace fdc
 		// (m_currcommandID & 0x80) //MT
 
 		// Only this configuration is supported at the moment
-		assert(m_enableIRQDMA == true);
 		assert(m_nonDMA == false);
 		assert(n == 2);		// All floppy drives use 512 bytes/sector
 		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
 
 		assert(m_fifo.size() == 0);
 
-		m_driveActive[driveNumber] = true;
-		FloppyDisk& disk = m_images[driveNumber];
+		FloppyDisk& disk = m_images[m_currDrive];
 
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
@@ -600,7 +596,7 @@ namespace fdc
 	{
 		BYTE param = Pop();
 
-		BYTE driveNumber = param & 3;
+		m_currDrive = param & 3;
 		bool head = param & 4;
 
 		BYTE c = Pop();
@@ -611,7 +607,7 @@ namespace fdc
 		BYTE gpl = Pop();
 		BYTE dtl = Pop();
 
-		LogPrintf(LOG_INFO, "COMMAND: Read Track drive=[%d] head=[%d]", driveNumber, head);
+		LogPrintf(LOG_INFO, "COMMAND: Read Track drive=[%d] head=[%d]", m_currDrive, head);
 		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		m_currHead = head;
@@ -629,15 +625,13 @@ namespace fdc
 		// (m_currcommandID & 0x80) //MT
 
 		// Only this configuration is supported at the moment
-		assert(m_enableIRQDMA == true);
 		assert(m_nonDMA == false);
-		assert(n == 2);		// All floppy drives use 512 bytes/sector
+		assert(n == 2);      // All floppy drives use 512 bytes/sector
 		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
 
 		assert(m_fifo.size() == 0);
 
-		m_driveActive[driveNumber] = true;
-		FloppyDisk& disk = m_images[driveNumber];
+		FloppyDisk& disk = m_images[m_currDrive];
 
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
@@ -668,22 +662,13 @@ namespace fdc
 		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
 		// Exit Conditions
 
-		FloppyDisk* disk = &m_images[0];
-		BYTE driveActive = 0;
-		for (BYTE d = 0; d < 3; ++d)
-		{
-			if (m_driveActive[d])
-			{
-				disk = &m_images[d];
-				break;
-			}
-		}
+		FloppyDisk& disk = m_images[m_currDrive];
 		// TODO: Handle not loaded
 
 		if (m_fifo.size() == 0)
 		{
 			++m_currSector;
-			if (m_currSector > disk->geometry.sect)
+			if (m_currSector > disk.geometry.sect)
 			{
 				m_currSector = 1;
 
@@ -697,17 +682,14 @@ namespace fdc
 			LogPrintf(LOG_INFO, "ReadSector done, reading next sector %d", m_currSector);
 			// Put the whole sector in the fifo
 			// TODO: Avoid duplication
-			uint32_t offset = disk->geometry.CHS2A(m_pcn, m_currHead, m_currSector);
+			uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
 			for (size_t b = 0; b < 512; ++b)
 			{
-				Push(disk->data[offset + b]);
+				Push(disk.data[offset + b]);
 			}
 		}
 
-		if (IsIRQDMAEnabled())
-		{
-			SetDMAPending();
-		}
+		SetDMAPending();
 
 		// Timeout
 		m_currOpWait = DelayToTicks(100 * 1000);
@@ -735,7 +717,7 @@ namespace fdc
 	{
 		BYTE param = Pop();
 
-		BYTE driveNumber = param & 3;
+		m_currDrive = param & 3;
 		bool head = param & 4;
 
 		BYTE c = Pop();
@@ -746,7 +728,7 @@ namespace fdc
 		BYTE gpl = Pop();
 		BYTE dtl = Pop();
 
-		LogPrintf(LOG_INFO, "COMMAND: Write Data drive=[%d] head=[%d]", driveNumber, head);
+		LogPrintf(LOG_INFO, "COMMAND: Write Data drive=[%d] head=[%d]", m_currDrive, head);
 		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		m_currHead = head;
@@ -764,15 +746,13 @@ namespace fdc
 		// (m_currcommandID & 0x80) //MT
 
 		// Only this configuration is supported at the moment
-		assert(m_enableIRQDMA == true);
 		assert(m_nonDMA == false);
-		assert(n == 2);		// All floppy drives use 512 bytes/sector
+		assert(n == 2);      // All floppy drives use 512 bytes/sector
 		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
 
 		assert(m_fifo.size() == 0);
 
-		m_driveActive[driveNumber] = true;
-		FloppyDisk& disk = m_images[driveNumber];
+		FloppyDisk& disk = m_images[m_currDrive];
 
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
@@ -802,24 +782,15 @@ namespace fdc
 		
 		// Exit Conditions
 
-		FloppyDisk* disk = &m_images[0];
-		BYTE driveActive = 0;
-		for (BYTE d = 0; d < 3; ++d)
-		{
-			if (m_driveActive[d])
-			{
-				disk = &m_images[d];
-				break;
-			}
-		}
+		FloppyDisk& disk = m_images[m_currDrive];
 		// TODO: Handle not loaded
 
 		if (m_fifo.size() == 512)
 		{
-			uint32_t offset = disk->geometry.CHS2A(m_pcn, m_currHead, m_currSector);
+			uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
 			for (size_t b = 0; b < 512; ++b)
 			{
-				disk->data[offset + b] = Pop();
+				disk.data[offset + b] = Pop();
 			}
 
 			//++m_currSector;
@@ -835,10 +806,7 @@ namespace fdc
 			//}
 		}
 
-		if (IsIRQDMAEnabled())
-		{
-			SetDMAPending();
-		}
+		SetDMAPending();
 
 		// Timeout
 		m_currOpWait = DelayToTicks(100 * 1000);
