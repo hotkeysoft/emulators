@@ -680,10 +680,12 @@ namespace fdc
 		FloppyDisk& disk = m_images[m_currDrive];
 		// TODO: Handle not loaded
 
+		BYTE maxSector = m_nonDMA ? std::min(m_maxSector, disk.geometry.sect) : disk.geometry.sect;
+
 		if (m_fifo.size() == 0)
-		{
+		{		
 			++m_currSector;
-			if (m_currSector > std::min(m_maxSector, disk.geometry.sect))
+			if (m_currSector > maxSector)
 			{
 				m_currSector = 1;
 
