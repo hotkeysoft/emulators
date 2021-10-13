@@ -62,7 +62,7 @@ namespace fdc
 	{
 		DeviceFloppy::Tick();
 
-		if (m_wd.active)
+		if (m_dor.wdEnable && m_wd.active)
 		{
 			--m_wd.counter;
 
