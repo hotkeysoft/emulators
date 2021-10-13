@@ -11,6 +11,7 @@ namespace emul
 		{
 			// Joystick
 			Connect(0x201, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
+			Connect(0x201, static_cast<PortConnector::INFunction>(&DummyPort::ReadData));
 
 			//EGA
 			for (WORD w = 0x3C0; w < 0x3D0; ++w)
@@ -19,6 +20,14 @@ namespace emul
 			}
 
 			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteMfgTest));
+			
+			// PCjr sound
+			Connect(0xC0, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
+		}
+
+		BYTE ReadData()
+		{
+			return 0xFF;
 		}
 
 		void WriteData(BYTE value)
@@ -105,8 +114,8 @@ namespace emul
 		m_floppy.Init();
 		m_floppy.EnableLog(true, Logger::LOG_INFO);
 		m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
-		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
-
+		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
+		
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
