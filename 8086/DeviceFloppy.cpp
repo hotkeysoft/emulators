@@ -21,6 +21,7 @@ namespace fdc
 		m_driveActive[3] = false;
 
 		m_dataRegisterReady = false;
+		m_executionPhase = false;
 		m_dataInputOutput = DataDirection::CPU2FDC;
 	
 		m_st0 = 0xC0; // TODO: Find why in datasheet
@@ -148,10 +149,10 @@ namespace fdc
 
 	BYTE DeviceFloppy::ReadMainStatusReg()
 	{
-		LogPrintf(Logger::LOG_DEBUG, "ReadMainStatusReg [%cRQM %cDIO %cNDMA %cBUSY %cACTD %cATCD %cACTB %cACTA]",
+		LogPrintf(Logger::LOG_DEBUG, "ReadMainStatusReg [%cRQM %cDIO %cEXM %cBUSY %cACTD %cATCD %cACTB %cACTA]",
 			m_dataRegisterReady ? ' ' : '/',
 			(m_dataInputOutput == DataDirection::FDC2CPU) ? ' ' : '/',
-			false ? ' ' : '/',
+			(m_executionPhase && m_nonDMA) ? ' ' : '/',
 			m_commandBusy ? ' ' : '/',
 			m_driveActive[3] ? ' ' : '/',
 			m_driveActive[2] ? ' ' : '/',
@@ -161,7 +162,7 @@ namespace fdc
 		BYTE status =
 			(RQM * m_dataRegisterReady) |
 			(DIO * (m_dataInputOutput == DataDirection::FDC2CPU)) |
-			(NDMA * (0)) |
+			(EXM * (m_executionPhase && m_nonDMA)) |
 			(BUSY * m_commandBusy) |
 			(ACTD * m_driveActive[3]) |
 			(ACTC * m_driveActive[2]) |
@@ -185,6 +186,10 @@ namespace fdc
 		case STATE::DMA_WAIT:
 			result = Pop();
 			DMAAcknowledge();
+			ReadSector();
+			break;
+		case STATE::NDMA_WAIT:
+			result = Pop();
 			ReadSector();
 			break;
 		default:
@@ -250,7 +255,7 @@ namespace fdc
 			if (--m_currOpWait == 0)
 			{
 				LogPrintf(Logger::LOG_DEBUG, "RQM Delay done");
-				m_dataRegisterReady = true;
+				m_dataRegisterReady = m_fifo.size();
 				m_state = m_nextState;
 			}
 			break;
@@ -275,6 +280,7 @@ namespace fdc
 			m_driveActive[2] = false;
 			m_driveActive[3] = false;
 			m_dataRegisterReady = true;
+			m_executionPhase = false;
 
 			// No results, ready for next command
 			if (m_fifo.size() == 0)
@@ -341,6 +347,14 @@ namespace fdc
 				m_state = STATE::CMD_ERROR;
 			}
 			break;
+		case STATE::NDMA_WAIT:
+			LogPrintf(Logger::LOG_DEBUG, "NDMA Wait");
+			m_dataRegisterReady = m_fifo.size();
+			if (--m_currOpWait == 0)
+			{
+				m_state = STATE::CMD_ERROR;
+			}
+			break;
 		case STATE::CMD_ERROR:
 			LogPrintf(Logger::LOG_INFO, "Command Error");
 			m_st0 = 0x80;
@@ -369,7 +383,8 @@ namespace fdc
 		LogPrintf(LOG_DEBUG, "ReadCommand, cmd = %02X", m_currcommandID);
 
 		// Only check 5 lower bits, hi bits are parameters or fixed 0/1
-		CommandMap::const_iterator it = m_commandMap.find((CMD)(m_currcommandID & 0b00011111));
+		m_currcommandID &= 0b00011111;
+		CommandMap::const_iterator it = m_commandMap.find((CMD)m_currcommandID);
 		if (it != m_commandMap.end())
 		{
 			m_currCommand = &(it->second);
@@ -388,6 +403,8 @@ namespace fdc
 	void DeviceFloppy::ExecuteCommand()
 	{
 		m_state = STATE::CMD_EXEC;
+		m_executionPhase = true;
+		m_dataRegisterReady = false;
 		ExecFunc func = m_currCommand->func;
 		m_nextState = (this->*func)();
 		LogPrintf(LOG_DEBUG, "Command pushed [%d] results. Next State: [%d]", m_fifo.size(), m_nextState);
@@ -550,11 +567,10 @@ namespace fdc
 		//	throw std::exception("cylinder != current cylinder");
 		//}
 
-		// TODO: Multitrack
-		// (m_currcommandID & 0x80) //MT
+		// TODO: Multitrack + extract bit because it's stripped of m_currcommandID
+		// (m_currcommandID & 0x80) //MT 
 
 		// Only this configuration is supported at the moment
-		assert(m_nonDMA == false);
 		assert(n == 2);		// All floppy drives use 512 bytes/sector
 		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
 
@@ -625,7 +641,6 @@ namespace fdc
 		// (m_currcommandID & 0x80) //MT
 
 		// Only this configuration is supported at the moment
-		assert(m_nonDMA == false);
 		assert(n == 2);      // All floppy drives use 512 bytes/sector
 		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
 
@@ -668,7 +683,7 @@ namespace fdc
 		if (m_fifo.size() == 0)
 		{
 			++m_currSector;
-			if (m_currSector > disk.geometry.sect)
+			if (m_currSector > std::min(m_maxSector, disk.geometry.sect))
 			{
 				m_currSector = 1;
 
@@ -694,7 +709,7 @@ namespace fdc
 		// Timeout
 		m_currOpWait = DelayToTicks(100 * 1000);
 
-		m_state = STATE::DMA_WAIT;
+		m_state = m_nonDMA ? STATE::NDMA_WAIT : STATE::DMA_WAIT;
 	}
 
 	void DeviceFloppy::RWSectorEnd()
@@ -746,7 +761,6 @@ namespace fdc
 		// (m_currcommandID & 0x80) //MT
 
 		// Only this configuration is supported at the moment
-		assert(m_nonDMA == false);
 		assert(n == 2);      // All floppy drives use 512 bytes/sector
 		assert(dtl == 0xFF); // All floppy drives use 512 bytes/sector
 
@@ -811,7 +825,7 @@ namespace fdc
 		// Timeout
 		m_currOpWait = DelayToTicks(100 * 1000);
 
-		m_state = STATE::DMA_WAIT;
+		m_state = m_nonDMA ? STATE::NDMA_WAIT : STATE::DMA_WAIT;
 	}
 
 	void DeviceFloppy::DMATerminalCount()

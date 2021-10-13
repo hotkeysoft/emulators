@@ -81,6 +81,8 @@ namespace fdc
 			DMA_WAIT,
 			DMA_ACK,
 
+			NDMA_WAIT,
+
 			RESULT_WAIT,
 		};
 		STATE m_state = STATE::CMD_WAIT;
@@ -117,7 +119,7 @@ namespace fdc
 		{
 			RQM  = 0x80, // 1 = Data Register Ready
 			DIO  = 0x40, // 1 = Controller->CPU, 0 = CPU->Controller
-			NDMA = 0x20, // 1 = NON-DMA Mode, 0 = DMA Mode
+			EXM  = 0x20, // 1 = During execution phase in non-DMA mode, 0 otherwise
 			BUSY = 0x10, // 1 = Device Busy
 			ACTD = 0x08, // 1 = Drive 3 Seeking
 			ACTC = 0x04, // 1 = Drive 2 Seeking
@@ -163,6 +165,7 @@ namespace fdc
 
 		bool m_commandBusy = false;
 		bool m_dataRegisterReady = true;
+		bool m_executionPhase = false;
 		bool m_driveActive[4] = { false, false, false, false }; // Only used for seek
 		BYTE m_currDrive = 0;
 
