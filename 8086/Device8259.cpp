@@ -20,13 +20,11 @@ namespace pic
 		m_state = STATE::UNINITIALIZED;
 	}
 
-	void Device8259::InterruptRequest(BYTE interrupt)
+	void Device8259::InterruptRequest(BYTE interrupt, bool value)
 	{
-		LogPrintf(LOG_INFO, "InterruptRequest: int=%d", interrupt);
+		LogPrintf(LOG_DEBUG, "InterruptRequest: int=%d", interrupt);
 		assert(interrupt < 8);
-		BYTE intBit = 1 << interrupt;
-
-		m_interruptRequestRegister |= intBit;
+		SetBit(m_interruptRequestRegister, interrupt, value);
 	}
 
 	void Device8259::Init()

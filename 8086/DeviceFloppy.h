@@ -107,7 +107,7 @@ namespace fdc
 		STATE WriteData();
 
 		bool m_dmaPending = false;
-		void SetDMAPending() { LogPrintf(Logger::LOG_DEBUG, "Set DMA Pending");  m_dmaPending = true; }
+		void SetDMAPending() { m_dmaPending = true; }
 
 		bool m_interruptPending = false;
 		void SetInterruptPending() { m_interruptPending = true; }
@@ -167,7 +167,8 @@ namespace fdc
 
 		enum class DataDirection { FDC2CPU, CPU2FDC };
 		DataDirection m_dataInputOutput = DataDirection::CPU2FDC;
-
+		
+		bool IsIRQDMAEnabled() { return m_enableIRQDMA; }
 		bool m_enableIRQDMA = false;
 		BYTE m_driveSel = 0;
 

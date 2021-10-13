@@ -21,7 +21,7 @@ namespace pic
 		Device8259(Device8259&&) = delete;
 		Device8259& operator=(Device8259&&) = delete;
 
-		void InterruptRequest(BYTE interrupt);
+		void InterruptRequest(BYTE interrupt, bool value = true);
 
 		void Init();
 		void Reset();

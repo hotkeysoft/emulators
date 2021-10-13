@@ -20,7 +20,7 @@ namespace fdc
 		m_driveActive[2] = false;
 		m_driveActive[3] = false;
 
-		m_dataRegisterReady = true;
+		m_dataRegisterReady = false;
 		m_dataInputOutput = DataDirection::CPU2FDC;
 
 		m_enableIRQDMA = false;
@@ -234,13 +234,17 @@ namespace fdc
 			m_commandBusy = true;
 			break;
 		case STATE::RESET_ACTIVE:
+			if (m_currOpWait % 100 == 0)
+			{
+				LogPrintf(Logger::LOG_DEBUG, "RESET in progress, count=%zu", m_currOpWait);
+			}
 			if (--m_currOpWait == 0)
 			{
 				m_state = STATE::RESET_DONE;
 			}
 			break;
 		case STATE::RESET_DONE:
-			LogPrintf(Logger::LOG_INFO, "End RESET, interrupt");
+			LogPrintf(Logger::LOG_INFO, "End RESET");
 			m_state = STATE::CMD_WAIT;
 			SetInterruptPending();
 			break;
@@ -288,7 +292,7 @@ namespace fdc
 
 			if (m_currCommand->interrupt)
 			{
-				LogPrintf(LOG_INFO, "Interrupt Pending");
+				LogPrintf(LOG_DEBUG, "Interrupt Pending");
 				SetInterruptPending();
 			}
 			break;
@@ -442,6 +446,7 @@ namespace fdc
 
 		LogPrintf(LOG_INFO, "COMMAND: Recalibrate drive [%d]", driveNumber);
 
+		m_dataRegisterReady = false;
 		m_driveActive[driveNumber] = true;
 		m_st0 = SE | driveNumber; // Set Seek end + head + drive
 		m_pcn = 0;
@@ -466,6 +471,7 @@ namespace fdc
 
 		LogPrintf(LOG_INFO, "COMMAND: Seek d=[%d] h=[%d] cyl=[%d] (travel: [%d])", driveNumber, head, cylinder, travel);
 
+		m_dataRegisterReady = false;
 		m_driveActive[driveNumber] = true;
 		m_st0 = SE | (param & 7); // Set Seek end + head + drive
 		m_pcn = cylinder;
@@ -698,7 +704,10 @@ namespace fdc
 			}
 		}
 
-		SetDMAPending();
+		if (IsIRQDMAEnabled())
+		{
+			SetDMAPending();
+		}
 
 		// Timeout
 		m_currOpWait = DelayToTicks(100 * 1000);
@@ -826,7 +835,10 @@ namespace fdc
 			//}
 		}
 
-		SetDMAPending();
+		if (IsIRQDMAEnabled())
+		{
+			SetDMAPending();
+		}
 
 		// Timeout
 		m_currOpWait = DelayToTicks(100 * 1000);

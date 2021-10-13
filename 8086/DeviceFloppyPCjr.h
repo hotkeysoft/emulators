@@ -28,6 +28,8 @@ namespace fdc
 
 		virtual void Tick() override;
 
+		bool IsWatchdogInterrupt() { return m_dor.wdEnable && (m_wd.counter == 0); }
+
 	protected:
 
 		enum DOR
@@ -55,7 +57,5 @@ namespace fdc
 
 		void ResetWatchdog();
 		void LaunchWatchdog();
-		bool IsWatchdogTriggered() { return m_dor.wdEnable && (m_wd.counter == 0); }
-
 	};
 }

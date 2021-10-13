@@ -70,7 +70,7 @@ namespace emul
 		{
 			m_ppi.SetKeyboardConnected(true);
 			m_ppi.SetRAMExpansion(RAM128K);
-			m_ppi.SetDisketteCard(false);
+			m_ppi.SetDisketteCard(true);
 			m_ppi.SetModemCard(false);
 		}
 
@@ -102,15 +102,17 @@ namespace emul
 		//	m_memory.Allocate(&m_cart2, m_cart2.GetBaseAddress());
 		//}
 
-//		m_floppy.Init();
-//		m_floppy.EnableLog(true, Logger::LOG_DEBUG);
+		m_floppy.Init();
+		m_floppy.EnableLog(true, Logger::LOG_INFO);
+		m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
+		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_video);
 		AddDevice(m_keyboard);
-//		AddDevice(m_floppy);
+		AddDevice(m_floppy);
 		AddDevice(dummyPort);
 	}
 
@@ -178,15 +180,15 @@ namespace emul
 
 			m_pcSpeaker.Tick();
 
+			m_floppy.Tick();
+			m_pic.InterruptRequest(6, m_floppy.IsWatchdogInterrupt());
+
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)
 			{
 				static bool wasVSync = false;
 				m_video.Tick();
-				if (!wasVSync && m_video.IsVSync())
-				{
-					m_pic.InterruptRequest(5);
-				}
+				m_pic.InterruptRequest(5, (!wasVSync && m_video.IsVSync()));
 				wasVSync = m_video.IsVSync();
 			}
 

@@ -75,8 +75,6 @@ namespace fdc
 			{
 				m_wd.active = false;
 				LogPrintf(LOG_INFO, "Watchdog timer expired");
-
-				SetInterruptPending();
 			}
 		}
 	}
@@ -87,7 +85,6 @@ namespace fdc
 
 		m_wd.active = false;
 		m_wd.counter = 3 * m_clockSpeed; // 3 seconds
-		ClearInterrupt();
 	}
 
 	void DeviceFloppyPCjr::LaunchWatchdog()
