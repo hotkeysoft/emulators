@@ -115,7 +115,7 @@ namespace emul
 		m_floppy.EnableLog(true, Logger::LOG_INFO);
 		m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
-		
+
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
@@ -172,9 +172,16 @@ namespace emul
 
 			m_keyboard.Tick();
 
+			m_pit.GetCounter(0).Tick();
+			if (m_keyboard.GetTimer1Source() == kbd::CLK1::MAIN_CLK)
+			{
+				m_pit.GetCounter(1).Tick();
+			}
+
 			pit::Counter& timer2 = m_pit.GetCounter(2);
 			timer2.SetGate(m_ppi.GetTimer2Gate());
-			m_pit.Tick();
+			timer2.Tick();
+
 			m_ppi.SetTimer2Output(timer2.GetOutput());
 
 			bool out = m_pit.GetCounter(0).GetOutput();
@@ -183,6 +190,11 @@ namespace emul
 				if (out)
 				{
 					m_pic.InterruptRequest(0);
+					if (m_keyboard.GetTimer1Source() == kbd::CLK1::TIMER0_OUT)
+					{
+						m_pit.GetCounter(1).Tick();
+					}
+
 				}
 				timer0Out = out;
 			}

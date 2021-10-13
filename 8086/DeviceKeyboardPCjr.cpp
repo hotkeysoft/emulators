@@ -39,7 +39,7 @@ namespace kbd
 		m_portA0.selectCLK1Input = value & 0x20;
 		m_portA0.disableHRQ = value & 0x10;
 
-		LogPrintf(Logger::LOG_DEBUG, "WritePort40 [%cEnableNMI %cIRTest %cSelCLK1Input %cDisableHRQ]",
+		LogPrintf(Logger::LOG_INFO, "WritePort40 [%cEnableNMI %cIRTest %cSelCLK1Input %cDisableHRQ]",
 			m_portA0.enableNMI ? ' ' : '/',
 			m_portA0.irTestEnabled ? ' ' : '/',
 			m_portA0.selectCLK1Input ? ' ' : '/',

@@ -10,6 +10,8 @@ using emul::BYTE;
 
 namespace kbd
 {
+	enum class CLK1 { MAIN_CLK, TIMER0_OUT };
+
 	class DeviceKeyboardPCjr : public DeviceKeyboard
 	{
 	public:
@@ -23,6 +25,8 @@ namespace kbd
 		virtual void Init(ppi::Device8255* ppi, pic::Device8259* pic) override;
 
 		virtual void Tick() override;
+
+		CLK1 GetTimer1Source() { return m_portA0.selectCLK1Input ? CLK1::TIMER0_OUT : CLK1::MAIN_CLK; }
 
 		bool NMIPending();
 
