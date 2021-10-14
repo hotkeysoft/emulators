@@ -186,10 +186,10 @@
 		
 			"DB 0xD8", "DB 0xD9", "DB 0xDA", "DB 0xDB", "DB 0xDC", "DB 0xDD", "DB 0xDE", "DB 0xDF",
 			
-			"LOOPNZ", 
-			"LOOPZ", 
-			"LOOP", 
-			"JCXZ", 
+			"LOOPNZ {i8}", 
+			"LOOPZ {i8}", 
+			"LOOP {i8}", 
+			"JCXZ {i8}", 
 			"IN AL, {i8}", 
 			"IN AX, {i8}", 
 			"OUT {i8}, AL", 
