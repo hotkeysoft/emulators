@@ -33,8 +33,19 @@ namespace ppi
 		void SetKeyboardDataBit(bool value) { m_keyboardDataBit = value; }
 		void SetCassetteDataBit(bool value) { m_cassetteDataBit = value; }
 
+		bool GetCassetteMotorRelay() const { return (m_portBData & 0x18) == 0; }
+
 		bool GetTimer2Gate() const { return m_portBData & 1; }
-		void SetTimer2Output(bool value) { m_timer2Out = value; }
+		void SetTimer2Output(bool value) 
+		{ 
+			m_timer2Out = value; 
+			// When the cassette motor relay is off,
+			// timer 2 output is looped back to cassette data bit
+			if (!GetCassetteMotorRelay())
+			{
+				SetCassetteDataBit(value);
+			}
+		}
 
 	protected:
 		virtual BYTE PORTA_IN() override;
