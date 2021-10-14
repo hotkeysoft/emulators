@@ -184,12 +184,9 @@ namespace fdc
 			result = Pop();
 			break;
 		case STATE::DMA_WAIT:
-			result = Pop();
-			DMAAcknowledge();
-			ReadSector();
-			break;
 		case STATE::NDMA_WAIT:
 			result = Pop();
+			DMAAcknowledge();
 			ReadSector();
 			break;
 		default:
@@ -217,6 +214,7 @@ namespace fdc
 			RQMDelay(STATE::PARAM_WAIT);
 			break;
 		case STATE::DMA_WAIT:
+		case STATE::NDMA_WAIT:
 			DMAAcknowledge();
 			WriteSector();
 			break;
@@ -349,9 +347,10 @@ namespace fdc
 			break;
 		case STATE::NDMA_WAIT:
 			LogPrintf(Logger::LOG_DEBUG, "NDMA Wait");
-			m_dataRegisterReady = m_fifo.size();
+			m_dataRegisterReady = true;
 			if (--m_currOpWait == 0)
 			{
+				m_dataRegisterReady = false;
 				m_state = STATE::CMD_ERROR;
 			}
 			break;
@@ -415,7 +414,6 @@ namespace fdc
 	void DeviceFloppy::DMAAcknowledge()
 	{
 		m_dmaPending = false;
-		//m_state = STATE::DMA_ACK;
 	}
 
 	DeviceFloppy::STATE DeviceFloppy::NotImplemented()
@@ -801,6 +799,8 @@ namespace fdc
 		FloppyDisk& disk = m_images[m_currDrive];
 		// TODO: Handle not loaded
 
+		BYTE maxSector = m_nonDMA ? std::min(m_maxSector, disk.geometry.sect) : disk.geometry.sect;
+
 		if (m_fifo.size() == 512)
 		{
 			uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
@@ -809,17 +809,19 @@ namespace fdc
 				disk.data[offset + b] = Pop();
 			}
 
-			//++m_currSector;
-			//if (m_currSector > disk->geometry.sect)
-			//{
-			//	m_currSector = 1;
+			++m_currSector;
+			if (m_currSector > maxSector)
+			{
+				m_currSector = 1;
 
-			//	// TODO for now don't auto move to next track
-			//	m_currOpWait = DelayToTicks(10);
-			//	m_nextState = STATE::READ_DONE;
-			//	m_state = STATE::CMD_EXEC_DELAY;
-			//	return;
-			//}
+				m_dataRegisterReady = false;
+				m_currOpWait = DelayToTicks(10);
+				m_nextState = STATE::RW_DONE;
+				m_state = STATE::CMD_EXEC_DELAY;
+				return;
+			}
+
+			LogPrintf(LOG_INFO, "WriteSector done, writing next sector %d", m_currSector);
 		}
 
 		SetDMAPending();
