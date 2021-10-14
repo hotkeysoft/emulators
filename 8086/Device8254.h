@@ -43,9 +43,9 @@ namespace pit
 		void SetBCD(bool bcd);
 
 	protected:
-		WORD GetMaxValue() const
+		size_t GetMaxValue() const
 		{
-			return m_n ? m_n : (m_rwMode == RWMode::RW_LSB ? 255 : 65535);
+			return m_n ? m_n : (m_rwMode == RWMode::RW_LSB ? 256 : 65536);
 		}
 
 		RWMode m_rwMode = RWMode::RW_LSB;

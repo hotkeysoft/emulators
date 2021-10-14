@@ -121,7 +121,7 @@ namespace kbd
 		else if (IsSendingKey())
 		{
 			SendBit();
-			wait = 526; // 220 microseconds
+			wait = 263; // 220 microseconds
 		}
 		else if (m_keyBufRead != m_keyBufWrite)
 		{

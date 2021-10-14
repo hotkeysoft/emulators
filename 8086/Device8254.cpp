@@ -57,19 +57,10 @@ namespace pit
 			return;
 		}
 
-		// Decrease counter, wrap if 0
-		if (m_value == 0)
-		{
-			m_value = GetMaxValue();
-		}
-		else
-		{
-			--m_value;
-		}
-
 		switch (m_mode)
 		{
 		case CounterMode::Mode0:
+			--m_value;
 			if (m_value == 0)
 			{
 				LogPrintf(LOG_INFO, "Count Done");
@@ -78,19 +69,28 @@ namespace pit
 			}
 			break;
 		case CounterMode::Mode2:
+			--m_value;
 			if (m_value == 1)
 			{
 				m_out = false;
 			}
 			else if (m_value == 0)
 			{
-				m_value = m_n;
 				m_out = true;
+				m_value = m_n;
 			}
 			break;
 		case CounterMode::Mode3:
+			m_value -= (m_value & 1) ? 1 : 2;
+			if (m_value == 0)
+			{
+				m_out = !m_out;
+
+				m_value = m_n & (m_out ? ~0 : ~1);
+
+			}
+			//LogPrintf(LOG_DEBUG, "Mode3: value=%04Xh, out=%d", m_value, m_out);
 			// Real 8254 counts by two and does an adjustement for odd values
-			m_out = (m_value > (GetMaxValue() / 2));
 			break;
 		default:
 			break;
@@ -169,10 +169,7 @@ namespace pit
 		if (!m_latched)
 		{
 			LogPrintf(LOG_DEBUG, "Latch value: %04X", m_value);
-
-			// Fake: mode 3 counts by 2 so values will always be even (except at wrap for odd n)
-			m_latchedValue = (m_mode == CounterMode::Mode3) ? (m_value&(~1)) : m_value;
-
+			m_latchedValue = m_value;
 			m_latched = true;
 		}
 	}
