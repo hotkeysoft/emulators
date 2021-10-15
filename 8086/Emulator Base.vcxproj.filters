@@ -223,14 +223,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="TODO.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="config\8086.ANS">
       <Filter>config</Filter>
     </None>
     <None Include="config\8086.json">
       <Filter>config</Filter>
     </None>
+    <None Include="TODO.md" />
   </ItemGroup>
 </Project>
