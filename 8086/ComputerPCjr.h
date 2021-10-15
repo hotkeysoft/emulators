@@ -2,6 +2,7 @@
 
 #include "CPU8086.h"
 #include "Memory.h"
+#include "Device8250.h"
 #include "Device8254.h"
 #include "Device8255PCjr.h"
 #include "Device8259.h"
@@ -44,6 +45,7 @@ namespace emul
 		ppi::Device8255PCjr m_ppi;
 		fdc::DeviceFloppyPCjr m_floppy;
 		kbd::DeviceKeyboardPCjr m_keyboard;
+		uart::Device8250 m_uart;
 
 		video::VideoPCjr m_video;
 

@@ -4,6 +4,16 @@
 
 namespace emul
 {
+	static const size_t MAIN_CLK = 14318180;
+
+	static const size_t CPU_CLK_DIVIDER = 3;
+	static const size_t UART_CLK_DIVIDER = 8;
+	static const size_t PIT_CLK_DIVIDER = 12;
+
+	static const size_t CPU_CLK = MAIN_CLK / CPU_CLK_DIVIDER;
+	static const size_t UART_CLK = MAIN_CLK / UART_CLK_DIVIDER;
+	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
+
 	static class DummyPort : public PortConnector
 	{
 	public:
@@ -48,18 +58,23 @@ namespace emul
 		m_ext64K("RAM1", 0x10000, emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
-		m_pit(0x40, 1193182),
+		m_pit(0x40, PIT_CLK),
 		m_pic(0x20),
 		m_ppi(0x60),
 		m_video(0x3D0),
 		m_keyboard(0xA0),
-		m_floppy(0xF0, 1193182)
+		m_floppy(0xF0, PIT_CLK),
+		m_uart(0x2F8, UART_CLK)
 	{
 	}
 
 	void ComputerPCjr::Init()
 	{
 		bool RAM128K = true;
+
+		LogPrintf(LOG_INFO, "CPU Clock:  [%zu]", CPU_CLK);
+		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
+		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
 		m_memory.EnableLog(true, Logger::LOG_WARNING);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
@@ -116,12 +131,16 @@ namespace emul
 		m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
 
+		m_uart.Init();
+		m_uart.EnableLog(true, Logger::LOG_DEBUG);
+
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_video);
 		AddDevice(m_keyboard);
 		AddDevice(m_floppy);
+		AddDevice(m_uart);
 		AddDevice(dummyPort);
 	}
 
@@ -212,6 +231,15 @@ namespace emul
 				m_pic.InterruptRequest(5, (!wasVSync && m_video.IsVSync()));
 				wasVSync = m_video.IsVSync();
 			}
+
+			m_uart.Tick();
+			// UART clock is 1.5x base clock
+			if (syncTicks & 1)
+			{
+				m_uart.Tick();
+			}
+			// TODO UART interrupt
+			// m_pic.InterruptRequest(3);
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment
