@@ -1,28 +1,56 @@
 TODO
 
-Keyboard 
-- BIOS Function KBD_RESET(F9E2)
-- object
-- Diagnostics
-- Interrupt
-
-Interrupt controller
-- Mask, etc
-DMA controller
-
+General
 
 Connections between components
-Timer 0 to interrupt controller instead of cpu
+
+Interrupt controller
+- Multiple interrupts in one cycle
 
 Floppy controller
 - Write
+- Floppy change
+- Write protect
+
+PC
+
+Keyboard
+- BIOS Function KBD_RESET(F9E2)
+- Diagnostics
+- Use SDL
 
 POST failures:
 - KEYBOARD TEST
 
 - Interrupt during REP
-- Combined prefixes (rep + segment, etc.)
 
-- Timing
+PCjr
 
-- Timer0 not working
+POST failures:
+- D: RS232
+
+- PC-DOS boot fail: command.com memory error
+
+Graphics
+
+CGA
+- Composite mode
+- Graphic glitches (ex: load game SQ1)
+
+EGA
+- Everything
+
+Sound
+
+PC Speaker
+- Use T2 output directly instead of keeping separate count
+
+SN76496 (PCjr/Tandy)
+- Everything
+
+Serial/RS-232
+- 8250 
+- Serial mouse
+
+Joystick
+- Everything
