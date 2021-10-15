@@ -3,6 +3,42 @@ Emulators for 8080- and TMS1000-family CPUs
 
 - 8080: 8080/8085 Emulator (from https://github.com/hotkeysoft/pfe_cpu8085)
 - 8086: 8086/8088 Emulator + IBM PC components (work in progress)
+  - Most opcodes implemented
+  - Partial timing implementation / sync 
+  - Partial implementation of debugger/monitor in console
+  - **No user interface yet to load disks/configure machine**
+    - **Everything is done in code at the moment**
+  - Terminal window + Display in separate SDL window
+  - IBM PC/XT (5160)
+    - Loads original BIOS ROM (passes POST except 301 error)
+    - Boots various versions of PC/MS-DOS
+    - Various games load from floppy
+    - Partial emulation of components
+      - Keyboard (input from terminal window, not graph window)
+      - μPD765A Floppy drive controller
+      - 8237 DMA controller (for floppy)
+      - 8259 IRQ controller
+      - 8254 Timer (clock, sound)
+      - 8255 Peripheral Interface
+      - CGA graphics
+        - 6845 CRT Controller
+        - CGA text modes
+        - CGA graphic modes (except 16 color composite)
+      - PC Speaker sound (incomplete, no samples/pwm)
+  - IBM PCjr
+    - Loads original BIOS ROM (passes POST except RS-232 test) 
+    - Shares many components w/XT (8259, 8254, 8255)
+    - Some cartridge games work
+    - Floppy loads some booter games
+    - Many versions of DOS give COMMAND.COM memory error, TODO
+    - Additional or PCjr-specific components
+      - Cartridges (no dynamic load)
+      - Floppy (no DMA/IRQ, watchdog)
+      - Keyboard (serial data stream)
+      - PCjr graphics
+        - Map B800 window in main memory
+        - Special modes, indexed colors
+
 - TMS1000: TMS1000/1100/1400/1700 Emulator (used in old electronic games)
   - Simple monitor
   - Simple front-end to test for the following games:
@@ -10,5 +46,8 @@ Emulators for 8080- and TMS1000-family CPUs
     - Merlin / Master Merlin (Parker Brothers)
     - Split Second (Parker Brothers)
     - Pocket Repeat (Radio Shack)
-   - Emulator core is portable and used in two Arduino Atmega328p projects (upload TBD)
-   
+   - Emulator core is portable and used in three Arduino Atmega328p projects
+     - [Repeat Electronic Game](https://github.com/hotkeysoft/repeatElectronicGame-kicad) (Pocket Repeat ROM)
+     - [Wizard Electronic Game](https://github.com/hotkeysoft/wizardElectronicGame-kicad) (Merlin / Master Merlin ROM)
+     - [LED Matrix Game](https://github.com/hotkeysoft/ledMatrixGame-kicad) (Pocket Repeat ROM)
+
