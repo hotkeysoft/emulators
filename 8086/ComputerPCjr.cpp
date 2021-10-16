@@ -238,8 +238,7 @@ namespace emul
 			{
 				m_uart.Tick();
 			}
-			// TODO UART interrupt
-			// m_pic.InterruptRequest(3);
+			m_pic.InterruptRequest(3, m_uart.IsInterrupt());
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment
