@@ -12,6 +12,30 @@ namespace kbd { class DeviceKeyboard; }
 
 namespace events
 {
+	class Key
+	{
+	public:
+		Key(BYTE scancode, BYTE prefix = 0, bool repeat = true) : m_scancode(scancode), m_prefix(prefix), m_repeat(repeat) {}
+
+		BYTE GetScancode() const { return m_scancode; }
+		BYTE GetPrefix() const { return m_prefix; }
+		bool IsRepeat() const { return m_repeat; }
+	private:
+		BYTE m_scancode;
+		BYTE m_prefix = 0;
+		bool m_repeat = true;
+	};
+	class NonRepeatingKey : public Key
+	{
+	public:
+		NonRepeatingKey(BYTE scancode) : Key(scancode, 0, false) {}
+	};
+	class ExtendedKey : public Key
+	{
+	public:
+		ExtendedKey(BYTE prefix, BYTE scancode, bool repeat = true) : Key(scancode, prefix, repeat) {}
+	};
+
 	class InputEvents : public Logger
 	{
 	public:
