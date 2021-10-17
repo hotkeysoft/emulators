@@ -35,7 +35,7 @@ namespace emul
 		Logger("XT"),
 		CPU8086(m_memory, m_map),
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
+		m_base64K("RAM0", 0x80000, emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, 1193182),
@@ -97,11 +97,11 @@ namespace emul
 
 		m_floppy.Init();
 		m_floppy.EnableLog(true, Logger::LOG_WARNING);
-		m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-1.10.img");
+		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-1.10.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 		// 
-		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
-		//m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
+		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
+		m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);

@@ -110,8 +110,8 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	//emul::ComputerXT pc;
-	emul::ComputerPCjr pc;
+	emul::ComputerXT pc;
+	//emul::ComputerPCjr pc;
 
 	//emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	//testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
@@ -143,7 +143,7 @@ int main(int argc, char* args[])
 
 		while (run)
 		{ 
-			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0x0FEF))
+			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0xE946))
 			//{
 			//	monitor.Show();
 			//	mode = Mode::MONITOR;
@@ -180,6 +180,8 @@ int main(int argc, char* args[])
 					cooldown = 10000;
 					BYTE keyCode;
 					bool shift = false;
+					bool ctrl = false;
+					bool alt = false;
 					bool newKeycode = false;
 					int ch = _getch();
 
@@ -245,7 +247,9 @@ int main(int argc, char* args[])
 					else
 					{
 						SHORT vkey = VkKeyScanA(ch);
-						shift = HIBYTE(vkey) & 1;
+						shift = GetAsyncKeyState(VK_SHIFT);
+						ctrl = GetAsyncKeyState(VK_CONTROL);
+						alt = GetAsyncKeyState(VK_MENU);
 						keyCode = MapVirtualKeyA(LOBYTE(vkey), 0);
 						newKeycode = true;
 					}
@@ -253,16 +257,18 @@ int main(int argc, char* args[])
 					if (newKeycode)
 					{
 						kbd::DeviceKeyboard& kbd = pc.GetKeyboard();
-						if (shift)
-						{
-							kbd.InputKey(0x2A);
-						}
+
+
+						if (shift) kbd.InputKey(0x2A);
+						if (alt) kbd.InputKey(0x38);
+						if (ctrl) kbd.InputKey(0x1D);
+
 						kbd.InputKey(keyCode);
 						kbd.InputKey(keyCode | 0x80);
-						if (shift)
-						{
-							kbd.InputKey(0x2A | 0x80);
-						}
+
+						if (shift) kbd.InputKey(0x2A | 0x80);
+						if (alt) kbd.InputKey(0x38 | 0x80);
+						if (ctrl) kbd.InputKey(0x1D | 0x80);
 					}
 				}
 			}
