@@ -10,6 +10,7 @@
 #include "DevicePCSpeaker.h"
 #include "DeviceKeyboardXT.h"
 #include "VideoCGA.h"
+#include "InputEvents.h"
 
 namespace emul
 {
@@ -46,5 +47,6 @@ namespace emul
 		video::VideoCGA m_video;
 		beeper::DevicePCSpeaker m_pcSpeaker;
 		kbd::DeviceKeyboardXT m_keyboard;
+		events::InputEvents m_inputs;
 	};
 }

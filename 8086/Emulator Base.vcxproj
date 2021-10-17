@@ -194,6 +194,7 @@
     <ClCompile Include="DeviceKeyboardXT.cpp" />
     <ClCompile Include="DevicePCSpeaker.cpp" />
     <ClCompile Include="Emulator Base.cpp" />
+    <ClCompile Include="InputEvents.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MemoryBlock.cpp" />
     <ClCompile Include="MemoryMap.cpp" />
@@ -230,6 +231,7 @@
     <ClInclude Include="DeviceKeyboardPCjr.h" />
     <ClInclude Include="DeviceKeyboardXT.h" />
     <ClInclude Include="DevicePCSpeaker.h" />
+    <ClInclude Include="InputEvents.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MemoryBlock.h" />
     <ClInclude Include="MemoryMap.h" />

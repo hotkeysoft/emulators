@@ -64,7 +64,8 @@ namespace emul
 		m_video(0x3D0),
 		m_keyboard(0xA0),
 		m_floppy(0xF0, PIT_CLK),
-		m_uart(0x2F8, UART_CLK)
+		m_uart(0x2F8, UART_CLK),
+		m_inputs(1193182)
 	{
 	}
 
@@ -134,6 +135,9 @@ namespace emul
 		m_uart.Init();
 		m_uart.EnableLog(true, Logger::LOG_WARNING);
 
+		m_inputs.EnableLog(true, Logger::LOG_INFO);
+		m_inputs.Init(&m_keyboard);
+
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
@@ -188,6 +192,12 @@ namespace emul
 		for (int i = 0; i < cpuTicks / 4; ++i)
 		{
 			++g_ticks;
+
+			m_inputs.Tick();
+			if (m_inputs.IsQuit())
+			{
+				return false;
+			}
 
 			m_keyboard.Tick();
 

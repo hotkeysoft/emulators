@@ -110,8 +110,8 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	emul::ComputerXT pc;
-	//emul::ComputerPCjr pc;
+	//emul::ComputerXT pc;
+	emul::ComputerPCjr pc;
 
 	//emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	//testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
@@ -171,6 +171,8 @@ int main(int argc, char* args[])
 				run = pc.Step();
 			}
 
+			// TODO: Keyboard input is now handled in InputEvents.
+			// We can focus here on console-specific commands/hotkeys
 			if (cooldown == 0)
 			{
 				cooldown = 10000;

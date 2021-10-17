@@ -165,14 +165,6 @@ namespace video
 	{
 		if (!m_mode.enableVideo || !IsInit())
 		{
-			SDL_Event e;
-			while (SDL_PollEvent(&e))
-			{
-				if (e.type == SDL_QUIT)
-				{
-					SDL_Quit();
-				}
-			}
 			return;
 		}
 
@@ -214,17 +206,6 @@ namespace video
 				| (m_color.palSelect && !m_mode.monochrome) // Palette shift for non mono modes
 				| (m_mode.monochrome & (i & 1)) // Palette shift for mono modes
 			];
-		}
-
-		// TODO: Move this elsewhere
-		// Process Events
-		SDL_Event e;
-		while (SDL_PollEvent(&e))
-		{
-			if (e.type == SDL_QUIT)
-			{
-				SDL_Quit();
-			}
 		}
 	}
 

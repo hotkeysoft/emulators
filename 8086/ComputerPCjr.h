@@ -11,6 +11,7 @@
 #include "DeviceKeyboardPCjr.h"
 #include "VideoPCjr.h"
 #include "CartridgePCjr.h"
+#include "InputEvents.h"
 
 namespace emul
 {
@@ -38,6 +39,9 @@ namespace emul
 		emul::MemoryBlock m_biosF000;
 		emul::MemoryBlock m_biosF800;
 
+		cart::CartridgePCjr m_cart1;
+		cart::CartridgePCjr m_cart2;
+
 		MemoryMap m_map;
 
 		pit::Device8254 m_pit;
@@ -46,12 +50,8 @@ namespace emul
 		fdc::DeviceFloppyPCjr m_floppy;
 		kbd::DeviceKeyboardPCjr m_keyboard;
 		uart::Device8250 m_uart;
-
 		video::VideoPCjr m_video;
-
 		beeper::DevicePCSpeaker m_pcSpeaker;
-
-		cart::CartridgePCjr m_cart1;
-		cart::CartridgePCjr m_cart2;
+		events::InputEvents m_inputs;
 	};
 }

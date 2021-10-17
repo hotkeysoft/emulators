@@ -43,7 +43,8 @@ namespace emul
 		m_ppi(0x60),
 		m_dma(0x00, m_memory),
 		m_video(0x3D0),
-		m_floppy(0x03F0, 1193182)
+		m_floppy(0x03F0, 1193182),
+		m_inputs(1193182)
 	{
 	}
 
@@ -103,6 +104,9 @@ namespace emul
 		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
 		m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
 
+		m_inputs.EnableLog(true, Logger::LOG_INFO);
+		m_inputs.Init(&m_keyboard);
+
 		AddDevice(m_pic);
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
@@ -151,6 +155,12 @@ namespace emul
 		for (int i = 0; i < cpuTicks / 4; ++i)
 		{
 			++g_ticks;
+
+			m_inputs.Tick();
+			if (m_inputs.IsQuit())
+			{
+				return false;
+			}
 
 			m_keyboard.Tick();
 

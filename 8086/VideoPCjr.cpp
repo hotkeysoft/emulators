@@ -280,14 +280,6 @@ namespace video
 	{
 		if (!m_mode.enableVideo || !IsInit())
 		{
-			SDL_Event e;
-			while (SDL_PollEvent(&e))
-			{
-				if (e.type == SDL_QUIT)
-				{
-					SDL_Quit();
-				}
-			}
 			return;
 		}
 
@@ -347,17 +339,6 @@ namespace video
 		{
 			m_drawFunc = &VideoPCjr::Draw320x200x4;
 			m_xAxisDivider = 2;
-		}
-
-		// TODO: Move this elsewhere
-		// Process Events
-		SDL_Event e;
-		while (SDL_PollEvent(&e))
-		{
-			if (e.type == SDL_QUIT)
-			{
-				SDL_Quit();
-			}
 		}
 	}
 
