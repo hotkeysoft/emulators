@@ -132,7 +132,7 @@ namespace emul
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
 
 		m_uart.Init();
-		m_uart.EnableLog(true, Logger::LOG_DEBUG);
+		m_uart.EnableLog(true, Logger::LOG_WARNING);
 
 		AddDevice(m_pic);
 		AddDevice(m_pit);

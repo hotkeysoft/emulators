@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "PortConnector.h"
 #include "Logger.h"
+#include <deque>
 
 using emul::PortConnector;
 using emul::WORD;
@@ -64,6 +65,8 @@ namespace uart
 
 		// Transmit clock (/BAUDOUT) is 'hardwired' internally to RCLK
 		bool GetBaudOut() const { return false; }
+
+		WORD GetBaudRate() const { return s_clockSpeed / ((size_t)m_divisorLatch * 16); }
 
 		BYTE GetDataLength() const { return m_dataConfig.dataLength; }
 		Parity GetParity() const { return m_dataConfig.parity; }
@@ -166,7 +169,7 @@ namespace uart
 			bool cts = false; // Bit 4 (delta: Bit 0)
 			bool dsr = false; // Bit 5 (delta: Bit 1)
 			bool ri = false;  // Bit 6 (delta: Bit 2)
-			bool dcd = false; // Bit 7 (delta: Bit 2)
+			bool dcd = false; // Bit 7 (delta: Bit 3)
 		} m_modemStatus, m_lastModemStatus, m_modemStatusDelta;
 
 		struct INTR
@@ -178,6 +181,11 @@ namespace uart
 		} m_intr;
 
 		WORD m_divisorLatch = 0;
+
+		BYTE m_rxBufferRegister;
+		BYTE m_txHoldingRegister;
+		std::deque<bool> m_txFIFO;
+		std::deque<bool> m_rxFIFO;
 
 		bool m_serialOut = true;
 	};

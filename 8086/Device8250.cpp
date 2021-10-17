@@ -65,6 +65,9 @@ namespace uart
 		m_intr.txHoldingRegisterEmpty = false;
 		m_intr.modemStatus = false;
 
+		m_txFIFO.clear();
+		m_rxFIFO.clear();
+
 		UpdateDataConfig();
 	}
 
@@ -118,6 +121,7 @@ namespace uart
 	{
 		LogPrintf(LOG_DEBUG, "WriteDivisorLatchLSB, value=%02x", value);
 		SetLByte(m_divisorLatch, value);
+		LogPrintf(LOG_INFO, "Baud rate: [%d]", GetBaudRate());
 	}
 
 	BYTE Device8250::ReadDivisorLatchMSB()
@@ -127,8 +131,9 @@ namespace uart
 	}
 	void Device8250::WriteDivisorLatchMSB(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteDivisorLatchLSB, value=%02x", value);
+		LogPrintf(LOG_DEBUG, "WriteDivisorLatchMSB, value=%02x", value);
 		SetHByte(m_divisorLatch, value);
+		LogPrintf(LOG_INFO, "Baud rate: [%d]", GetBaudRate());
 	}
 
 	BYTE Device8250::ReadReceiver()
@@ -136,13 +141,14 @@ namespace uart
 		m_intr.rxDataAvailable = false;
 		m_lineStatus.dataReady = false;
 
-		LogPrintf(LOG_INFO, "ReadReceiver, value=%02x", 0xFF);
-		return 0xFF;
+		LogPrintf(LOG_INFO, "ReadReceiver, value=%02x", m_rxBufferRegister);
+		return m_rxBufferRegister;
 	}
 	void Device8250::WriteTransmitter(BYTE value)
 	{
 		m_intr.txHoldingRegisterEmpty = false;
 		m_lineStatus.txHoldingRegisterEmpty = false;
+		m_txHoldingRegister = value;
 
 		LogPrintf(LOG_INFO, "WriteTransmitter, value=%02x", value);
 	}
@@ -339,35 +345,45 @@ namespace uart
 	{
 		// Reset interrupt
 		m_intr.modemStatus = false;
+
+		const bool& loop = m_modemControl.loopback;
 		
+		const bool& dcd = loop ? m_modemControl.out2 : m_modemStatus.dcd;
+		const bool& ri  = loop ? m_modemControl.out1 : m_modemStatus.ri;
+		const bool& dsr = loop ? m_modemControl.dtr  : m_modemStatus.dsr;
+		const bool& cts = loop ? m_modemControl.rts  : m_modemStatus.cts;
+
 		BYTE ret =
-			(m_modemStatus.dcd << 7) |
-			(m_modemStatus.ri << 6) |
-			(m_modemStatus.dsr << 5) |
-			(m_modemStatus.cts << 4) |
+			(dcd << 7) |
+			(ri  << 6) |
+			(dsr << 5) |
+			(cts << 4) |
 			(m_modemStatusDelta.dcd << 3) |
-			(m_modemStatusDelta.ri << 2) |
+			(m_modemStatusDelta.ri  << 2) |
 			(m_modemStatusDelta.dsr << 1) |
 			(m_modemStatusDelta.cts << 0);
 
 		LogPrintf(LOG_DEBUG, "ReadModemStatus, value=%02x", ret);
 
 		LogPrintf(LOG_DEBUG, "ReadModemStatus: [%cDCD %cRI %cDSR %cCTS | %cDDCD %cTERI %cDDSR %cDCTS]",
-			m_modemStatus.dcd ? ' ' : '/',
-			m_modemStatus.ri ? ' ' : '/',
-			m_modemStatus.dsr ? ' ' : '/',
-			m_modemStatus.cts ? ' ' : '/',
+			dcd ? ' ' : '/',
+			ri  ? ' ' : '/',
+			dsr ? ' ' : '/',
+			cts ? ' ' : '/',
 			m_modemStatusDelta.dcd ? ' ' : '/',
-			m_modemStatusDelta.ri ? ' ' : '/',
+			m_modemStatusDelta.ri  ? ' ' : '/',
 			m_modemStatusDelta.dsr ? ' ' : '/',
 			m_modemStatusDelta.cts ? ' ' : '/');
 
 		// Save current state for next deltas
-		m_lastModemStatus = m_modemStatus;
+		m_lastModemStatus.dcd = dcd;
+		m_lastModemStatus.ri  = ri;
+		m_lastModemStatus.dsr = dsr;
+		m_lastModemStatus.cts = cts;
 
 		// Reset Deltas
 		m_modemStatusDelta.dcd = false;
-		m_modemStatusDelta.ri = false;
+		m_modemStatusDelta.ri  = false;
 		m_modemStatusDelta.dsr = false;
 		m_modemStatusDelta.cts = false;
 
@@ -383,17 +399,17 @@ namespace uart
 		LogPrintf(LOG_INFO, "WriteModemStatus, value=%02x", value);
 
 		m_modemStatusDelta.dcd = value & 0x08;
-		m_modemStatusDelta.ri = value & 0x04;
+		m_modemStatusDelta.ri  = value & 0x04;
 		m_modemStatusDelta.dsr = value & 0x02;
 		m_modemStatusDelta.cts = value & 0x01;
 
 		LogPrintf(LOG_DEBUG, "WriteModemStatus: [%cDCD %cRI %cDSR %cCTS | %cDDCD %cTERI %cDDSR %cDCTS]",
 			m_modemStatus.dcd ? ' ' : '/',
-			m_modemStatus.ri ? ' ' : '/',
+			m_modemStatus.ri  ? ' ' : '/',
 			m_modemStatus.dsr ? ' ' : '/',
 			m_modemStatus.cts ? ' ' : '/',
 			m_modemStatusDelta.dcd ? ' ' : '/',
-			m_modemStatusDelta.ri ? ' ' : '/',
+			m_modemStatusDelta.ri  ? ' ' : '/',
 			m_modemStatusDelta.dsr ? ' ' : '/',
 			m_modemStatusDelta.cts ? ' ' : '/');
 	}
@@ -428,38 +444,6 @@ namespace uart
 			m_dataConfig.parity,
 			m_dataConfig.dataLength,
 			m_dataConfig.stopBits);
-	}
-
-	void Device8250::Tick()
-	{
-		// Modem status line changes
-
-		// TODO: modem interrupts in loopback
-
-		if (m_lastModemStatus.dcd != m_modemStatus.dcd)
-		{
-			m_modemStatusDelta.dcd = true;
-		}
-
-		if (!m_lastModemStatus.ri && m_modemStatus.ri) // 0->1 transition
-		{
-			m_modemStatusDelta.ri = true;
-		}
-
-		if (m_lastModemStatus.dsr != m_modemStatus.dsr)
-		{
-			m_modemStatusDelta.dsr = true;
-		}
-
-		if (m_lastModemStatus.cts != m_modemStatus.cts)
-		{
-			m_modemStatusDelta.cts = true;
-		}
-
-		if (m_modemStatusDelta.cts || m_modemStatusDelta.dcd || m_modemStatusDelta.dsr || m_modemStatusDelta.ri)
-		{
-			m_intr.modemStatus = true;
-		}
 	}
 
 	void Device8250::SetCTS(bool set)
@@ -505,5 +489,38 @@ namespace uart
 			(m_intr.rxDataAvailable && m_interruptEnable.dataAvailableInterrupt) ||
 			(m_intr.rxLineStatus && m_interruptEnable.errorOrBreak) ||
 			(m_intr.txHoldingRegisterEmpty && m_interruptEnable.txEmpty);
+	}
+
+	void Device8250::Tick()
+	{
+		// Modem status line changes
+
+		const bool& loop = m_modemControl.loopback;
+
+		const bool& dcd = loop ? m_modemControl.out2 : m_modemStatus.dcd;
+		const bool& ri  = loop ? m_modemControl.out1 : m_modemStatus.ri;
+		const bool& dsr = loop ? m_modemControl.dtr  : m_modemStatus.dsr;
+		const bool& cts = loop ? m_modemControl.rts  : m_modemStatus.cts;
+
+		if (m_lastModemStatus.dcd != dcd) m_modemStatusDelta.dcd = true;
+		if (m_lastModemStatus.ri && !ri)  m_modemStatusDelta.ri  = true; // 1->0 transition
+		if (m_lastModemStatus.dsr != dsr) m_modemStatusDelta.dsr = true;
+		if (m_lastModemStatus.cts != cts) m_modemStatusDelta.cts = true;
+
+		if (m_modemStatusDelta.cts || m_modemStatusDelta.dcd || m_modemStatusDelta.dsr || m_modemStatusDelta.ri)
+		{
+			m_intr.modemStatus = true;
+		}
+
+		// Shortcut: connect tx and rx in loopback mode
+		if (m_modemControl.loopback && !m_lineStatus.txHoldingRegisterEmpty)
+		{
+			m_rxBufferRegister = m_txHoldingRegister;
+			m_lineStatus.dataReady = true;
+			m_intr.rxDataAvailable = true;
+
+			m_lineStatus.txHoldingRegisterEmpty = true;
+			m_intr.txHoldingRegisterEmpty = true;
+		}
 	}
 }
