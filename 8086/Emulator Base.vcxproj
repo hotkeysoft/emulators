@@ -171,6 +171,7 @@
   <ItemGroup>
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="CartridgePCjr.cpp" />
+    <ClCompile Include="Computer.cpp" />
     <ClCompile Include="ComputerPCjr.cpp" />
     <ClCompile Include="ComputerXT.cpp" />
     <ClCompile Include="Console.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="CartridgePCjr.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Computer.h" />
     <ClInclude Include="ComputerPCjr.h" />
     <ClInclude Include="ComputerXT.h" />
     <ClInclude Include="Console.h" />

@@ -52,8 +52,7 @@ namespace emul
 
 	ComputerPCjr::ComputerPCjr() :
 		Logger("PCjr"),
-		CPU8086(m_memory, m_map),
-		m_memory(emul::CPU8086_ADDRESS_BITS),
+		Computer(m_memory, m_map),
 		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
 		m_ext64K("RAM1", 0x10000, emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),

@@ -142,8 +142,8 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	emul::ComputerXT pc;
-	//emul::ComputerPCjr pc;
+	//emul::ComputerXT pc;
+	emul::ComputerPCjr pc;
 
 	//emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	//testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
@@ -175,7 +175,7 @@ int main(int argc, char* args[])
 
 		while (run)
 		{ 
-			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0xE946))
+			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0x01DD))
 			//{
 			//	monitor.Show();
 			//	mode = Mode::MONITOR;
@@ -270,7 +270,10 @@ int main(int argc, char* args[])
 						case 65: // F7
 						case 66: // F8
 						case 67: // F9
+							break;
 						case 68: // F10
+							pc.Reboot();
+							break;
 						case 71: // HOME
 						case 72: // UP
 						case 73: // PGUP
