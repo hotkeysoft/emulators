@@ -20,6 +20,7 @@
 #include <time.h>
 
 #include <Windows.h>
+#include <commdlg.h>
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
@@ -43,6 +44,37 @@ emul::Monitor monitor(console);
 const size_t BACKLOG_MAX = 1000;
 std::string backLog[BACKLOG_MAX];
 size_t backLogPtr = 0;
+
+bool SelectFile(std::string& path)
+{
+	OPENFILENAMEA ofn;
+	char szFile[1024];
+
+	// Initialize OPENFILENAME
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = nullptr;
+	ofn.lpstrFile = szFile;
+	// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+	// use the contents of szFile to initialize itself.
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = "All\0*.*\0Floppy Image\0*.IMG\0";
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	// Display the Open dialog box.
+
+	if (!GetOpenFileNameA(&ofn))
+	{
+		return false;
+	}
+	path = szFile;
+	return true;
+}
 
 void DumpBackLog(size_t lastN = BACKLOG_MAX)
 {
@@ -110,8 +142,8 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	//emul::ComputerXT pc;
-	emul::ComputerPCjr pc;
+	emul::ComputerXT pc;
+	//emul::ComputerPCjr pc;
 
 	//emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	//testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
@@ -216,10 +248,21 @@ int main(int argc, char* args[])
 					}
 					else if (ch == 0)
 					{
+						std::string diskImage;
 						switch (ch = _getch())
 						{
 						case 59: // F1
+							if (SelectFile(diskImage))
+							{
+								pc.GetFloppy().LoadDiskImage(0, diskImage.c_str());
+							}
+							break;
 						case 60: // F2
+							if (SelectFile(diskImage))
+							{
+								pc.GetFloppy().LoadDiskImage(1, diskImage.c_str());
+							}
+							break;
 						case 61: // F3
 						case 62: // F4
 						case 63: // F5
