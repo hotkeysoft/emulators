@@ -1,6 +1,7 @@
 #include "Device8259.h"
 #include <assert.h>
 
+using emul::GetBit;
 using emul::SetBit;
 using emul::LowestSetBit;
 using emul::IsPowerOf2;
@@ -22,9 +23,18 @@ namespace pic
 
 	void Device8259::InterruptRequest(BYTE interrupt, bool value)
 	{
-		LogPrintf(LOG_DEBUG, "InterruptRequest: int=%d", interrupt);
+		//LogPrintf(LOG_DEBUG, "[%zu] InterruptRequest: int=%d", emul::g_ticks, interrupt);
 		assert(interrupt < 8);
-		SetBit(m_interruptRequestRegister, interrupt, value);
+
+		//bool isMasked = GetBit(m_interruptMaskRegister, interrupt);
+
+		// Edge triggered mode only
+		if (!GetBit(m_lastInterruptRequestRegister, interrupt) && value)
+		{
+			LogPrintf(LOG_DEBUG, "[%zu] InterruptRequest: int=%d got edge", emul::g_ticks, interrupt);
+			SetBit(m_interruptRequestRegister, interrupt, true);
+		}
+		SetBit(m_lastInterruptRequestRegister, interrupt, value);
 	}
 
 	void Device8259::Init()
@@ -38,7 +48,7 @@ namespace pic
 
 	BYTE Device8259::Read0()
 	{
-		LogPrintf(LOG_DEBUG, "Read0, value=%02X", *m_reg0);
+		LogPrintf(LOG_INFO, "Read0, value=%02X", *m_reg0);
 
 		return *m_reg0;
 	}
@@ -50,7 +60,7 @@ namespace pic
 		{
 			LogPrintf(LOG_INFO, "ICW1: Begin initialization sequence");
 			m_interruptMaskRegister = 0;
-			m_interruptRequestRegister = 0;
+			m_inServiceRegister = 0;
 			m_reg0 = &m_interruptRequestRegister;
 
 			m_init.icw4Needed = (value & 1);
@@ -228,9 +238,31 @@ namespace pic
 	bool Device8259::InterruptPending() const
 	{ 
 		return (m_interruptRequestRegister & (~m_interruptMaskRegister)) && !m_inServiceRegister;
+
+		BYTE requests = m_interruptRequestRegister & (~m_interruptMaskRegister);
+		if (requests)
+		{
+			if (!m_inServiceRegister)
+			{
+				return true;
+			}
+
+			// If already servicing an interrupt, allow if there is a higher priority interrupt pending
+			BYTE pending = LowestSetBit(requests);
+			BYTE servicing = LowestSetBit(m_inServiceRegister);
+
+			if (pending < servicing)
+			{
+				//LogPrintf(LOG_DEBUG, "InterruptPending, higher pending=[%d] vs servicing=[%d]", pending, servicing);
+			}
+			return pending < servicing;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
-	// TODO: simplification, doesn't handle multiple interrupts & priorities correctly
 	void Device8259::InterruptAcknowledge()
 	{
 		// Lowest set bit (higher priority by default)
@@ -240,17 +272,20 @@ namespace pic
 		m_interruptRequestRegister &= ~intBit; // Clear bit in IRR
 	}
 
-	// TODO: Only handles one active interrupt at a time
 	BYTE Device8259::GetPendingInterrupt() const
 	{
-		assert(IsPowerOf2(m_inServiceRegister));
-		return LogBase2(m_inServiceRegister) | m_init.interruptBase;
+		//assert(IsPowerOf2(m_inServiceRegister));
+		//return LogBase2(m_inServiceRegister) | m_init.interruptBase;
+
+		return LogBase2(LowestSetBit(m_inServiceRegister)) | m_init.interruptBase;
 	}
 
-	// TODO: Only handles one active interrupt at a time
 	void Device8259::EOI()
 	{
-		m_inServiceRegister = 0;
+		BYTE intBit = LowestSetBit(m_inServiceRegister);
+		LogPrintf(LOG_DEBUG, "EOI: ISR Before: %02xh", m_inServiceRegister);
+		m_inServiceRegister &= ~intBit; // Clear bit in IRR
+		LogPrintf(LOG_DEBUG, "EOI: ISR After: %02xh", m_inServiceRegister);
 	}
 
 }

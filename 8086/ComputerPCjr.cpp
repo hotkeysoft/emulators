@@ -87,7 +87,7 @@ namespace emul
 		m_pit.EnableLog(true, Logger::LOG_WARNING);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_WARNING);
+		m_pic.EnableLog(true, Logger::LOG_DEBUG);
 
 		m_ppi.Init();
 		m_ppi.EnableLog(true, Logger::LOG_WARNING);
@@ -128,8 +128,8 @@ namespace emul
 
 		m_floppy.Init();
 		m_floppy.EnableLog(true, Logger::LOG_INFO);
-		m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
-		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
+		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
+		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
 
 		m_uart.Init();
 		m_uart.EnableLog(true, Logger::LOG_WARNING);
@@ -177,6 +177,8 @@ namespace emul
 		{
 			m_pic.InterruptAcknowledge();
 			Interrupt(m_pic.GetPendingInterrupt());
+
+			LogPrintf(LOG_WARNING, "[%zu] Processing IRQ: %d", g_ticks, m_pic.GetPendingInterrupt()-8);
 			return true;
 		}
 		else if (!CPU8086::Step())
@@ -213,16 +215,12 @@ namespace emul
 			m_ppi.SetTimer2Output(timer2.GetOutput());
 
 			bool out = m_pit.GetCounter(0).GetOutput();
+			m_pic.InterruptRequest(0, out);
 			if (out != timer0Out)
 			{
-				if (out)
+				if (out && m_keyboard.GetTimer1Source() == kbd::CLK1::TIMER0_OUT)
 				{
-					m_pic.InterruptRequest(0);
-					if (m_keyboard.GetTimer1Source() == kbd::CLK1::TIMER0_OUT)
-					{
-						m_pit.GetCounter(1).Tick();
-					}
-
+					m_pit.GetCounter(1).Tick();
 				}
 				timer0Out = out;
 			}
@@ -237,7 +235,15 @@ namespace emul
 			{
 				static bool wasVSync = false;
 				m_video.Tick();
-				m_pic.InterruptRequest(5, (!wasVSync && m_video.IsVSync()));
+				m_pic.InterruptRequest(5, (/*!wasVSync && */m_video.IsVSync()));
+				if (!wasVSync && m_video.IsVSync())
+				{
+					LogPrintf(LOG_WARNING, "VSYNC 0->1");
+				}
+				else if (wasVSync && !m_video.IsVSync())
+				{
+					LogPrintf(LOG_WARNING, "VSYNC 1->0");
+				}
 				wasVSync = m_video.IsVSync();
 			}
 

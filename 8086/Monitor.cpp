@@ -257,8 +257,8 @@ namespace emul
 			break;
 		case RAMMode::CUSTOM:
 		default:
-			segment = 0;
-			offset = 0;
+			segment = m_customSegment;
+			offset = m_customOffset;
 			break;
 		}
 

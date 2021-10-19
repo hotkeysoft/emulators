@@ -21,11 +21,16 @@ namespace emul
 
 		void Init(CPU8086& cpu, Memory& memory);
 
+		void SetCustomMemoryView(WORD segment, WORD offset) { m_customSegment = segment; m_customOffset = offset; }
+
 		void Show();
 		MonitorState Run();
 		void Update();
 
 	protected:
+		WORD m_customSegment = 0;
+		WORD m_customOffset = 0;
+
 		struct Instruction
 		{
 			void AddRaw(BYTE b);

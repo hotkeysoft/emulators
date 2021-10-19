@@ -24,7 +24,7 @@
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
-#define NO_CONSOLE
+//#define NO_CONSOLE
 //#define CPU_TEST
 
 #ifdef CPU_TEST
@@ -122,7 +122,7 @@ void ToggleMode()
 
 int main(int argc, char* args[])
 {
-	//logFile = fopen("./dump/dump.log", "w");
+	logFile = fopen("./dump/dump.log", "w");
 
 #ifndef NO_CONSOLE
 	console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
@@ -175,11 +175,13 @@ int main(int argc, char* args[])
 
 		while (run)
 		{ 
-			//if (pc.GetCurrentAddress() == emul::S2A(0xF000, 0x01DD))
-			//{
-			//	monitor.Show();
-			//	mode = Mode::MONITOR;
-			//}
+			if ((pc.GetCurrentAddress() == emul::S2A(0xF000, 0x0450))/* &&
+				(pc.GetCurrentAddress() < emul::S2A(0xF000, 0x0E24F))*/)
+			{
+				monitor.SetCustomMemoryView(0x40, 0x80);
+				monitor.Show();
+				mode = Mode::MONITOR;
+			}
 
 			if (mode == Mode::MONITOR)
 			{

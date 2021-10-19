@@ -34,7 +34,7 @@ namespace emul
 	ComputerXT::ComputerXT() :
 		Logger("XT"),
 		Computer(m_memory, m_map),
-		m_base64K("RAM0", 0xA0000, emul::MemoryType::RAM),
+		m_base64K("RAM0", 0x20000, emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, 1193182),
@@ -50,16 +50,16 @@ namespace emul
 	void ComputerXT::Init()
 	{
 		m_memory.EnableLog(true, Logger::LOG_ERROR);
-		m_mmap.EnableLog(true, Logger::LOG_ERROR);
+		m_mmap.EnableLog(true, Logger::LOG_WARNING);
 
 		m_base64K.Clear(0xA5);
 		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_WARNING);
+		m_pit.EnableLog(true, Logger::LOG_DEBUG);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_WARNING);
+		m_pic.EnableLog(true, Logger::LOG_INFO);
 
 		m_ppi.Init();
 		m_ppi.EnableLog(true, Logger::LOG_WARNING);
@@ -96,14 +96,14 @@ namespace emul
 		m_keyboard.Init(&m_ppi, &m_pic);
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_INFO);
+		m_floppy.EnableLog(true, Logger::LOG_WARNING);
 		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-1.10.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 		// 
 		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
 		m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
 
-		m_inputs.EnableLog(true, Logger::LOG_INFO);
+		m_inputs.EnableLog(true, Logger::LOG_WARNING);
 		m_inputs.Init(&m_keyboard);
 
 		AddDevice(m_pic);
@@ -129,12 +129,6 @@ namespace emul
 	{
 		static auto lastTick = std::chrono::high_resolution_clock::now();
 		static int64_t syncTicks = 0;
-
-		// TODO: Temporary, need dynamic connections
-		// Timer 0: Time of day
-		// Timer 1: DMA RAM refresh
-		// Timer 2: Speaker
-		static bool timer0Out = false;
 
 		if (m_pic.InterruptPending() && CanInterrupt())
 		{
@@ -164,22 +158,18 @@ namespace emul
 			m_keyboard.Tick();
 
 			m_pit.Tick();
-			bool out = m_pit.GetCounter(0).GetOutput();
-			if (out != timer0Out)
-			{
-				if (out)
-				{
-					m_pic.InterruptRequest(0);
-				}
-				timer0Out = out;
-			}
+			m_pic.InterruptRequest(0, m_pit.GetCounter(0).GetOutput());
 
 			m_pcSpeaker.Tick();
 
 			if (m_floppy.IsInterruptPending())
 			{
-				m_pic.InterruptRequest(6);
+				m_pic.InterruptRequest(6, true);
 				m_floppy.ClearInterrupt();
+			}
+			else
+			{
+				m_pic.InterruptRequest(6, false);
 			}
 
 			m_dma.Tick();

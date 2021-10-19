@@ -17,16 +17,27 @@ namespace kbd
 	void DeviceKeyboardXT::Tick()
 	{
 		static int cooldown = 0;
-		if (m_keyBufRead != m_keyBufWrite && !cooldown)
-		{
-			((ppi::Device8255XT*)m_ppi)->SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
-			m_pic->InterruptRequest(1);
-			cooldown = 10000;
-		}
+		static bool keySent = false;
 
 		if (cooldown)
 		{
 			--cooldown;
+			return;
 		}
+
+		cooldown = 10000;
+
+		if (keySent)
+		{
+			keySent = false;
+			m_pic->InterruptRequest(1, false);
+		}
+		else if (m_keyBufRead != m_keyBufWrite)
+		{
+			((ppi::Device8255XT*)m_ppi)->SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
+			m_pic->InterruptRequest(1);
+			keySent = true;
+		}
+
 	}
 }
