@@ -89,8 +89,6 @@ namespace pit
 				m_value = m_n & (m_out ? ~0 : ~1);
 
 			}
-			//LogPrintf(LOG_DEBUG, "Mode3: value=%04Xh, out=%d", m_value, m_out);
-			// Real 8254 counts by two and does an adjustement for odd values
 			break;
 		default:
 			break;
