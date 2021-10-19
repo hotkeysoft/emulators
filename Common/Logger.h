@@ -15,7 +15,7 @@ public:
 	static void RegisterLogCallback(void(*)(const char *));
 
 protected:
-	void LogPrintf(SEVERITY, const char *, ...);
+	void LogPrintf(SEVERITY, const char *, ...) const;
 
 private:
 	Logger();

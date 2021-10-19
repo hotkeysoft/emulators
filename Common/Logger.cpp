@@ -41,7 +41,7 @@ void Logger::RegisterLogCallback(void(*logCallbackFunc)(const char *))
 	m_logCallbackFunc = logCallbackFunc;
 }
 
-void Logger::LogPrintf(SEVERITY sev, const char *msg, ...)
+void Logger::LogPrintf(SEVERITY sev, const char *msg, ...) const
 {
 	if (!m_enabled || sev < m_minSeverity)
 		return;
