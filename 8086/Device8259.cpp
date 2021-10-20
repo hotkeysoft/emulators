@@ -23,18 +23,29 @@ namespace pic
 
 	void Device8259::InterruptRequest(BYTE interrupt, bool value)
 	{
-		//LogPrintf(LOG_DEBUG, "[%zu] InterruptRequest: int=%d", emul::g_ticks, interrupt);
+		if (m_state != STATE::READY)
+		{
+			return;
+		}
+
 		assert(interrupt < 8);
 
-		//bool isMasked = GetBit(m_interruptMaskRegister, interrupt);
-
 		// Edge triggered mode only
-		if (!GetBit(m_lastInterruptRequestRegister, interrupt) && value)
+		if (!GetBit(m_lastInterruptRequestRegister, interrupt))
 		{
-			LogPrintf(LOG_DEBUG, "[%zu] InterruptRequest: int=%d got edge", emul::g_ticks, interrupt);
-			SetBit(m_interruptRequestRegister, interrupt, true);
+			SetBit(m_interruptRequestRegister, interrupt, value);
+			SetBit(m_lastInterruptRequestRegister, interrupt, value);
+
+			if (value)
+			{
+				LogPrintf(LOG_DEBUG, "InterruptRequest: int=%d got edge", interrupt);
+			}
 		}
-		SetBit(m_lastInterruptRequestRegister, interrupt, value);
+		else if (!value)
+		{
+			SetBit(m_interruptRequestRegister, interrupt, false);
+			SetBit(m_lastInterruptRequestRegister, interrupt, false);
+		}
 	}
 
 	void Device8259::Init()
@@ -61,6 +72,11 @@ namespace pic
 			LogPrintf(LOG_INFO, "ICW1: Begin initialization sequence");
 			m_interruptMaskRegister = 0;
 			m_inServiceRegister = 0;
+
+			// Reset IRR edge detection
+			m_interruptRequestRegister = 0;
+			m_lastInterruptRequestRegister = 0xFF;
+
 			m_reg0 = &m_interruptRequestRegister;
 
 			m_init.icw4Needed = (value & 1);
@@ -115,18 +131,18 @@ namespace pic
 			break;
 
 		case 0b011:
-			LogPrintf(LOG_ERROR, "OCW2: Specific EOI, not implemented");
+			throw std::exception("OCW2: Specific EOI, not implemented");
 			break;
 
 		case 0b101:
 		case 0b100:
 		case 0b000:
 		case 0b111:
-			LogPrintf(LOG_ERROR, "OCW2: Rotate, not implemented");
+			throw std::exception("OCW2: Rotate, not implemented");
 			break;
 
 		case 0b110:
-			LogPrintf(LOG_ERROR, "OCW2: Set Priority, not implemented");
+			throw std::exception("OCW2: Set Priority, not implemented");
 			break;
 
 		case 0b010:
@@ -237,8 +253,6 @@ namespace pic
 
 	bool Device8259::InterruptPending() const
 	{ 
-		return (m_interruptRequestRegister & (~m_interruptMaskRegister)) && !m_inServiceRegister;
-
 		BYTE requests = m_interruptRequestRegister & (~m_interruptMaskRegister);
 		if (requests)
 		{
@@ -251,10 +265,6 @@ namespace pic
 			BYTE pending = LowestSetBit(requests);
 			BYTE servicing = LowestSetBit(m_inServiceRegister);
 
-			if (pending < servicing)
-			{
-				//LogPrintf(LOG_DEBUG, "InterruptPending, higher pending=[%d] vs servicing=[%d]", pending, servicing);
-			}
 			return pending < servicing;
 		}
 		else
@@ -265,8 +275,15 @@ namespace pic
 
 	void Device8259::InterruptAcknowledge()
 	{
+		BYTE requests = m_interruptRequestRegister & (~m_interruptMaskRegister);
+		if (!requests)
+		{
+			requests = 0x80; // Fallback to IRQ7
+		}
+
 		// Lowest set bit (higher priority by default)
-		BYTE intBit = LowestSetBit(m_interruptRequestRegister);
+		BYTE intBit = LowestSetBit(requests);
+		LogPrintf(LOG_DEBUG, "Acknowledge, IRQ(bit): %02xh", intBit);
 
 		m_inServiceRegister |= intBit; // Set bit in ISR
 		m_interruptRequestRegister &= ~intBit; // Clear bit in IRR
@@ -274,10 +291,9 @@ namespace pic
 
 	BYTE Device8259::GetPendingInterrupt() const
 	{
-		//assert(IsPowerOf2(m_inServiceRegister));
-		//return LogBase2(m_inServiceRegister) | m_init.interruptBase;
-
-		return LogBase2(LowestSetBit(m_inServiceRegister)) | m_init.interruptBase;
+		BYTE irq = LogBase2(LowestSetBit(m_inServiceRegister));
+		LogPrintf(LOG_DEBUG, "Pending IRQ: %d", irq);
+		return irq | m_init.interruptBase;
 	}
 
 	void Device8259::EOI()

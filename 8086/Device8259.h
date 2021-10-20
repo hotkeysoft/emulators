@@ -74,7 +74,7 @@ namespace pic
 		
 		void EOI();
 
-		BYTE m_lastInterruptRequestRegister = 0; // For edge detection
+		BYTE m_lastInterruptRequestRegister = 0xFF; // For edge detection
 		BYTE m_interruptRequestRegister = 0;
 
 		BYTE m_inServiceRegister = 0;
