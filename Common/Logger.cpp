@@ -41,11 +41,8 @@ void Logger::RegisterLogCallback(void(*logCallbackFunc)(const char *))
 	m_logCallbackFunc = logCallbackFunc;
 }
 
-void Logger::LogPrintf(SEVERITY sev, const char *msg, ...) const
+void Logger::_LogPrintf(SEVERITY sev, const char *msg, ...) const
 {
-	if (!m_enabled || sev < m_minSeverity)
-		return;
-
 	va_list args;
 	va_start(args, msg);
 

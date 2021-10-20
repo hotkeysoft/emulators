@@ -2,6 +2,9 @@
 #include <string>
 #include <map>
 
+#define LogPrintf(sev, fmt, ...) \
+	do { if (IsLog(sev)) _LogPrintf(sev, fmt, __VA_ARGS__); } while (0)
+
 class Logger
 {
 public:
@@ -15,7 +18,8 @@ public:
 	static void RegisterLogCallback(void(*)(const char *));
 
 protected:
-	void LogPrintf(SEVERITY, const char *, ...) const;
+	bool IsLog(SEVERITY sev) const { return m_enabled && sev >= m_minSeverity; }
+	void _LogPrintf(SEVERITY, const char *, ...) const;
 
 private:
 	Logger();
