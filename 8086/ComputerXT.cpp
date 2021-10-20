@@ -56,10 +56,10 @@ namespace emul
 		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_DEBUG);
+		m_pit.EnableLog(true, Logger::LOG_INFO);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_INFO);
+		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
 		m_ppi.EnableLog(true, Logger::LOG_WARNING);
@@ -162,19 +162,10 @@ namespace emul
 
 			m_pcSpeaker.Tick();
 
-			if (m_floppy.IsInterruptPending())
-			{
-				m_pic.InterruptRequest(6, true);
-				m_floppy.ClearInterrupt();
-			}
-			else
-			{
-				m_pic.InterruptRequest(6, false);
-			}
-
 			m_dma.Tick();
 			m_video.Tick();
 			m_floppy.Tick();
+			m_pic.InterruptRequest(6, m_floppy.IsInterruptPending());
 
 			// TODO: faking it
 			if (m_floppy.IsDMAPending())

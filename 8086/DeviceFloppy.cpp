@@ -149,6 +149,12 @@ namespace fdc
 
 	BYTE DeviceFloppy::ReadMainStatusReg()
 	{
+		// In non-DMA mode a read or write clears the interrupt pin
+		if (m_nonDMA)
+		{
+			ClearInterrupt();
+		}
+
 		LogPrintf(Logger::LOG_DEBUG, "ReadMainStatusReg [%cRQM %cDIO %cEXM %cBUSY %cACTD %cATCD %cACTB %cACTA]",
 			m_dataRegisterReady ? ' ' : '/',
 			(m_dataInputOutput == DataDirection::FDC2CPU) ? ' ' : '/',
@@ -174,11 +180,22 @@ namespace fdc
 
 	BYTE DeviceFloppy::ReadDataFIFO()
 	{
+		// In non-DMA mode a read or write clears the interrupt pin
+		if (m_nonDMA)
+		{
+			ClearInterrupt();
+		}
+
 		BYTE result = 0xFF;
 		LogPrintf(Logger::LOG_DEBUG, "ReadDataFIFO");
 		switch (m_state)
 		{
 		case STATE::RESULT_WAIT:
+			// In DMA mode a reading the first result clears the interrupt pin
+			if (!m_nonDMA)
+			{
+				ClearInterrupt();
+			}
 			m_commandBusy = true;
 			RQMDelay(STATE::RESULT_WAIT);
 			result = Pop();
@@ -199,6 +216,12 @@ namespace fdc
 
 	void DeviceFloppy::WriteDataFIFO(BYTE value)
 	{
+		// In non-DMA mode a read or write clears the interrupt pin
+		if (m_nonDMA)
+		{
+			ClearInterrupt();
+		}
+
 		LogPrintf(Logger::LOG_DEBUG, "WriteDataFIFO, value=%02X", value);
 
 		Push(value);

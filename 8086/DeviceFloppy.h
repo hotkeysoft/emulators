@@ -42,7 +42,6 @@ namespace fdc
 		void WriteDataFIFO(BYTE value);
 
 		bool IsInterruptPending() const { return m_interruptPending; }
-		void ClearInterrupt() { m_interruptPending = false; }
 
 		bool IsDMAPending() const { return m_dmaPending; }
 		void DMAAcknowledge();
@@ -113,6 +112,7 @@ namespace fdc
 
 		bool m_interruptPending = false;
 		virtual void SetInterruptPending() { m_interruptPending = true; }
+		void ClearInterrupt() { m_interruptPending = false; }
 
 		// Status
 		enum MSR
