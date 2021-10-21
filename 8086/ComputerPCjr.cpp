@@ -87,7 +87,7 @@ namespace emul
 		m_pit.EnableLog(true, Logger::LOG_WARNING);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_DEBUG);
+		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
 		m_ppi.EnableLog(true, Logger::LOG_WARNING);
@@ -162,10 +162,6 @@ namespace emul
 		static auto lastTick = std::chrono::high_resolution_clock::now();
 		static int64_t syncTicks = 0;
 
-		// TODO: Temporary, need dynamic connections
-		// Timer 0: Time of day
-		// Timer 1: 
-		// Timer 2: Speaker
 		static bool timer0Out = false;
 
 		if (m_keyboard.NMIPending())
@@ -177,8 +173,6 @@ namespace emul
 		{
 			m_pic.InterruptAcknowledge();
 			Interrupt(m_pic.GetPendingInterrupt());
-
-			LogPrintf(LOG_WARNING, "[%zu] Processing IRQ: %d", g_ticks, m_pic.GetPendingInterrupt()-8);
 			return true;
 		}
 		else if (!CPU8086::Step())
@@ -233,18 +227,8 @@ namespace emul
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)
 			{
-				static bool wasVSync = false;
 				m_video.Tick();
-				m_pic.InterruptRequest(5, (/*!wasVSync && */m_video.IsVSync()));
-				if (!wasVSync && m_video.IsVSync())
-				{
-					LogPrintf(LOG_WARNING, "VSYNC 0->1");
-				}
-				else if (wasVSync && !m_video.IsVSync())
-				{
-					LogPrintf(LOG_WARNING, "VSYNC 1->0");
-				}
-				wasVSync = m_video.IsVSync();
+				m_pic.InterruptRequest(5, (m_video.IsVSync()));
 			}
 
 			m_uart.Tick();
