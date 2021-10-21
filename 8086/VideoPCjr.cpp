@@ -85,7 +85,9 @@ namespace video
 		m_pageRegister.cpuPage = (value >> 3) & 7;
 		m_pageRegister.videoAddressMode = (value >> 6) & 3;
 
-		if (m_mode.hiBandwidth)
+		// For hi bw graphics modes the low order bit
+		// is cleared to align page on 32kb boundary
+		if (m_mode.hiBandwidth && m_mode.graphics)
 		{
 			emul::SetBit(m_pageRegister.crtPage, 0, false);
 		}
