@@ -51,6 +51,12 @@ namespace ppi
 
 		virtual void SetCurrentKeyCode(BYTE keyCode);
 
+		bool GetTimer2Gate() const { return m_portBData & 1; }
+		void SetTimer2Output(bool value)
+		{
+			m_timer2Out = value;
+		}
+
 	protected:
 		virtual BYTE PORTA_IN() override;
 		virtual void PORTA_OUT(BYTE value)override;
@@ -60,6 +66,8 @@ namespace ppi
 
 		virtual BYTE PORTC_IN() override;
 		virtual void PORTC_OUT(BYTE value) override;
+
+		bool m_timer2Out = false;
 
 		// Motherboard configuration switches
 		BYTE m_switches = 0;

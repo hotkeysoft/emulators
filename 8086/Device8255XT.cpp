@@ -76,11 +76,11 @@ namespace ppi
 
 	BYTE Device8255XT::PORTC_IN()
 	{
-		// TODO: PC4-7 == 0 for now
+		// TODO: PC4 == 0 for now
+
+		BYTE ret = (m_timer2Out << 5);
 
 		bool PB6 = (m_portBData & 0x08);
-
-		BYTE ret;
 		if (PB6)
 		{
 			ret = (m_switches & 0xF0) >> 4;

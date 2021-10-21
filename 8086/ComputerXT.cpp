@@ -157,10 +157,15 @@ namespace emul
 
 			m_keyboard.Tick();
 
+			pit::Counter& timer2 = m_pit.GetCounter(2);
+			timer2.SetGate(m_ppi.GetTimer2Gate());
+
 			m_pit.Tick();
+			m_ppi.SetTimer2Output(timer2.GetOutput());
+
 			m_pic.InterruptRequest(0, m_pit.GetCounter(0).GetOutput());
 
-			m_pcSpeaker.Tick();
+			if (!m_turbo) m_pcSpeaker.Tick();
 
 			m_dma.Tick();
 			m_video.Tick();
@@ -203,20 +208,20 @@ namespace emul
 				}
 			}
 
-			++syncTicks;
-			// Every 11932 ticks (~10ms) make an adjustment
-			if (!m_turbo && (syncTicks >= 11931))
-			{
-				auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
+			//++syncTicks;
+			//// Every 11932 ticks (~10ms) make an adjustment
+			//if (!m_turbo && (syncTicks >= 11931))
+			//{
+			//	auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
 
-				if (delta < std::chrono::microseconds(10000))
-				{
-					little_sleep(std::chrono::microseconds(10000)-delta);
-				}
+			//	if (delta < std::chrono::microseconds(10000))
+			//	{
+			//		little_sleep(std::chrono::microseconds(10000)-delta);
+			//	}
 
-				syncTicks = 0;
-				lastTick = std::chrono::high_resolution_clock::now();
-			}
+			//	syncTicks = 0;
+			//	lastTick = std::chrono::high_resolution_clock::now();
+			//}
 		}
 		cpuTicks %= 4;
 

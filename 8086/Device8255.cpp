@@ -33,27 +33,6 @@ namespace ppi
 		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&Device8255::CONTROL_OUT));
 	}
 
-	//BYTE Device8255::PORTA_IN()
-	//{
-	//}
-	//void Device8255::PORTA_OUT(BYTE value)
-	//{
-	//}
-	//
-	//BYTE Device8255::PORTB_IN()
-	//{
-	//}
-	//void Device8255::PORTB_OUT(BYTE value)
-	//{
-	//}
-
-	//BYTE Device8255::PORTC_IN()
-	//{
-	//}
-	//void Device8255::PORTC_OUT(BYTE value)
-	//{
-	//}
-
 	BYTE Device8255::CONTROL_IN()
 	{
 		LogPrintf(LOG_DEBUG, "GET Control word, ret=%02X", m_controlWord);
@@ -117,6 +96,6 @@ namespace ppi
 
 	bool Device8255::IsSoundON()
 	{
-		return (m_portBData & 3) == 3;
+		return (m_portBData & 2);
 	}
 }
