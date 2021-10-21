@@ -1,13 +1,29 @@
 #include "DevicePCSpeaker.h"
+#include <thread>
 #include <assert.h>
 
 #include <SDL.h>
 
 namespace beeper
 {
-	DevicePCSpeaker::DevicePCSpeaker() : Logger("SPK")
+	DevicePCSpeaker::DevicePCSpeaker(WORD bufferSize) : 
+		Logger("SPK"),
+		m_bufferSize(bufferSize)
 	{
+		assert(emul::IsPowerOf2(bufferSize));
+
+		m_bufSilence = new int8_t[m_bufferSize];
+		m_bufPlaying = new int8_t[m_bufferSize];
+		m_bufNext = new int8_t[m_bufferSize];
+
 		Reset();
+	}
+
+	DevicePCSpeaker::~DevicePCSpeaker()
+	{
+		delete[] m_bufSilence;
+		delete[] m_bufPlaying;
+		delete[] m_bufNext;
 	}
 
 	void DevicePCSpeaker::Reset()
@@ -40,11 +56,15 @@ namespace beeper
 		DevicePCSpeaker* This = (DevicePCSpeaker*)(userData);
 		const SDL_AudioSpec& spec = This->GetAudioSpec();
 
-		int8_t* buffer = (int8_t*)stream;
+		assert(length == spec.samples); // 8 bit mono, should match 1 to 1
 
-		for (int i = 0; i < length; ++i)
+		int8_t* dest = (int8_t*)stream;
+		int8_t* source = This->IsFull() ? This->GetPlayingBuffer() : This->GetSilenceBuffer();
+
+		memcpy(dest, source, length);
+		if (This->IsFull())
 		{
-			buffer[i] = This->GetNextSample();
+			This->ResetBuffer();
 		}
 	}
 
@@ -54,50 +74,42 @@ namespace beeper
 		want.freq = 44100;
 		want.format = AUDIO_S8;
 		want.channels = 1;
-		want.samples = 1024;
+		want.samples = m_bufferSize;
 		want.callback = &AudioCallback;
 		want.userdata = this;
 
 		m_audioDeviceID = SDL_OpenAudioDevice(0, 0, &want, &m_audioSpec, /*SDL_AUDIO_ALLOW_ANY_CHANGE*/0);
+
+		for (WORD i = 0; i < m_bufferSize; ++i)
+		{
+			m_bufSilence[i] = m_audioSpec.silence;
+			m_bufNext[i] = m_audioSpec.silence;
+			m_bufPlaying[i] = m_audioSpec.silence;
+		}
+
 		SDL_PauseAudioDevice(m_audioDeviceID, false);
 	}
 
 	void DevicePCSpeaker::Tick()
 	{
-		Uint16 period = PeriodToSamples(m_8254->GetCounter(2).GetPeriodMicro());
-		if (period != m_soundPeriod)
+		static int sample = 0;
+		static int32_t avg = 0;
+
+		// temp hack, avg 27 samples
+		avg += (m_8255->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 64 : 0;
+		++sample;
+		if (sample == 27)
 		{
-			m_soundPeriod = period;
-			m_onCount = period / 2;
-			m_offCount = period / 2;
-			if (period & 1)
-			{
-				++m_onCount;
-			}
-			LogPrintf(LOG_INFO, "New period: %d samples (%d on / %d off)", period, m_onCount, m_offCount);
-			
-			m_currSample = true;
-			m_currCount = m_onCount;
+			avg /= 27; // Average
+			avg -= 32; // Center around zero
+			sample = 0;
+
+			// Crude synchronization
+			while (IsFull()) { std::this_thread::yield(); };
+
+			AddSample(avg);
+			avg = 0;
 		}
-
-	}
-
-	uint8_t DevicePCSpeaker::GetNextSample()
-	{
-		if (!m_8255->IsSoundON())
-		{
-			return 0;
-		}
-
-		--m_currCount;
-
-		if (m_currCount == 0)
-		{
-			m_currSample = !m_currSample;
-			m_currCount = m_currSample ? m_offCount : m_onCount;
-		}
-
-		return m_currSample ? 127 : -128;
 	}
 
 	uint16_t DevicePCSpeaker::PeriodToSamples(float period)
