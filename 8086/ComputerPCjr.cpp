@@ -241,7 +241,7 @@ namespace emul
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment
-			if (syncTicks >= 11931)
+			if (!m_turbo && (syncTicks >= 11931))
 			{
 				auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
 

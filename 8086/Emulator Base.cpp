@@ -24,7 +24,7 @@
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
-//#define NO_CONSOLE
+#define NO_CONSOLE
 //#define CPU_TEST
 
 #ifdef CPU_TEST
@@ -120,9 +120,18 @@ void ToggleMode()
 	}
 }
 
+bool ToggleTurbo()
+{
+	static bool turbo = false;
+
+	turbo = !turbo;
+	fprintf(stderr, "Turbo [%s]\n", turbo ? "ON" : "OFF");
+	return turbo;
+}
+
 int main(int argc, char* args[])
 {
-	logFile = fopen("./dump/dump.log", "w");
+	//logFile = fopen("./dump/dump.log", "w");
 
 #ifndef NO_CONSOLE
 	console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
@@ -142,8 +151,8 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	//emul::ComputerXT pc;
-	emul::ComputerPCjr pc;
+	emul::ComputerXT pc;
+	//emul::ComputerPCjr pc;
 
 	//emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	//testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
@@ -175,13 +184,13 @@ int main(int argc, char* args[])
 
 		while (run)
 		{ 
-			if ((pc.GetCurrentAddress() == emul::S2A(0xF000, 0x0450))/* &&
-				(pc.GetCurrentAddress() < emul::S2A(0xF000, 0x0E24F))*/)
-			{
-				monitor.SetCustomMemoryView(0x40, 0x80);
-				monitor.Show();
-				mode = Mode::MONITOR;
-			}
+			//if ((pc.GetCurrentAddress() == emul::S2A(0xF000, 0x0450))/* &&
+			//	(pc.GetCurrentAddress() < emul::S2A(0xF000, 0x0E24F))*/)
+			//{
+			//	monitor.SetCustomMemoryView(0x40, 0x80);
+			//	monitor.Show();
+			//	mode = Mode::MONITOR;
+			//}
 
 			if (mode == Mode::MONITOR)
 			{
@@ -266,6 +275,8 @@ int main(int argc, char* args[])
 							}
 							break;
 						case 61: // F3
+							pc.SetTurbo(ToggleTurbo());
+							break;
 						case 62: // F4
 						case 63: // F5
 						case 64: // F6

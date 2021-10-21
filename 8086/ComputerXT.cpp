@@ -34,7 +34,7 @@ namespace emul
 	ComputerXT::ComputerXT() :
 		Logger("XT"),
 		Computer(m_memory, m_map),
-		m_base64K("RAM0", 0x20000, emul::MemoryType::RAM),
+		m_base64K("RAM0", 0xA0000, emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, 1193182),
@@ -56,7 +56,7 @@ namespace emul
 		m_memory.Allocate(&m_base64K, 0);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_INFO);
+		m_pit.EnableLog(true, Logger::LOG_WARNING);
 
 		m_pic.Init();
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
@@ -205,7 +205,7 @@ namespace emul
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment
-			if (syncTicks >= 11931)
+			if (!m_turbo && (syncTicks >= 11931))
 			{
 				auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
 

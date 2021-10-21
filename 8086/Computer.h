@@ -21,11 +21,14 @@ namespace emul
 		virtual kbd::DeviceKeyboard& GetKeyboard() = 0;
 
 		virtual void Reboot(bool hard = false);
+		void SetTurbo(bool turbo) { m_turbo = turbo; }
 
 	protected:
 		Computer(Memory& memory, MemoryMap& mmap);
 
 		Memory m_memory;
 		MemoryMap m_map;
+
+		bool m_turbo = false;
 	};
 }
