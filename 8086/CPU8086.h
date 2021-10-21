@@ -63,9 +63,10 @@ namespace emul
 		virtual void Reset();
 		virtual void Reset(WORD segment, WORD offset);
 
-		void Interrupt(BYTE interrupt) { assert(!inSegOverride); TICK(61); INT(interrupt); }
+		void Interrupt(BYTE irq) { m_irqPending = irq; }
 		bool CanInterrupt() 
 		{ 
+			// TODO: last check only if interrupts were disabled previously
 			return GetFlag(FLAG::FLAG_I) && (m_lastOp != 0xFB);
 		}
 
@@ -123,6 +124,7 @@ namespace emul
 		inline void TICKRM(uint32_t r, uint32_t m) { m_opTicks += (m_regMem == REGMEM::REG) ? r : m; };
 
 		BYTE m_lastOp = 0;
+		int m_irqPending = -1;
 
 		PortAggregator m_ports;
 

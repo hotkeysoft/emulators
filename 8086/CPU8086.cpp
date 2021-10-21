@@ -40,8 +40,17 @@ namespace emul
 		bool ret = CPU::Step();
 		if (ret && inSegOverride)
 		{
-			return CPU::Step();
+			ret = CPU::Step();
 		}
+
+		if (m_irqPending != -1)
+		{
+			assert(!inSegOverride);
+			TICK(61);
+			INT(m_irqPending);
+			m_irqPending = -1;
+		}
+
 		return ret;
 	}
 
