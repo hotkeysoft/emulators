@@ -24,6 +24,7 @@ namespace sn76489
 		if (m_n == 0 || m_n == 1)
 		{
 			SetOutput(true);
+			return;
 		}
 
 		if (--m_counter == 0)
@@ -53,6 +54,7 @@ namespace sn76489
 
 	VoiceNoise::VoiceNoise(const char* label) : Voice(label)
 	{
+		SetOutput(false);
 	}
 
 	void VoiceNoise::Tick()
