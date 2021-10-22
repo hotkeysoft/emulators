@@ -43,6 +43,7 @@ namespace pit
 			{
 			case CounterMode::Mode0:
 			{
+				m_out = false;
 				m_value = m_n;
 				size_t ticks = (size_t)GetMaxValue() + 1;
 				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
