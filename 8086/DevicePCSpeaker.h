@@ -23,10 +23,13 @@ namespace beeper
 		DevicePCSpeaker(DevicePCSpeaker&&) = delete;
 		DevicePCSpeaker& operator=(DevicePCSpeaker&&) = delete;
 
+
 		void Init(ppi::Device8255* ppi, pit::Device8254* pit);
 		void Reset();
 
 		void Tick(WORD mixWith = 0);
+
+		void StreamToFile(bool stream, const char* outFile = nullptr);
 
 		const SDL_AudioSpec& GetAudioSpec() const { return m_audioSpec; }
 
@@ -56,5 +59,6 @@ namespace beeper
 
 		int8_t* m_bufNext = nullptr;
 
+		FILE* m_outputFile = nullptr;
 	};
 }

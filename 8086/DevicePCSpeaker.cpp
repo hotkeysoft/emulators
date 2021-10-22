@@ -98,7 +98,9 @@ namespace beeper
 		// temp hack, avg 27 samples
 		// possibly 4 incoming channels + this one, max possible value = 255*5, 
 		// must divide again by 5 to scale down
-		avg += (m_8255->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 128 : 0;
+		BYTE speakerData = (m_8255->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 128 : 0;
+		if (m_outputFile) fputc(speakerData, m_outputFile);
+		avg += speakerData;
 		avg += mixWith;
 		++sample;
 		if (sample == 27)
@@ -118,6 +120,32 @@ namespace beeper
 	uint16_t DevicePCSpeaker::PeriodToSamples(float period)
 	{
 		return (uint16_t)(period * m_audioSpec.freq / 1000000.0);
+	}
+
+	void DevicePCSpeaker::StreamToFile(bool stream, const char* outFile)
+	{
+		if (!stream && m_outputFile)
+		{
+			LogPrintf(LOG_INFO, "StreamToFile: Stop audio stream dump to file");
+			fclose(m_outputFile);
+			m_outputFile = nullptr;
+			return;
+		}
+		else
+		{
+			if (!outFile)
+			{
+				outFile = "speaker.bin";
+			}
+
+			LogPrintf(LOG_INFO, "StreamToFile: Start audio stream dump to file [%s]", outFile);
+
+			m_outputFile = fopen(outFile, "wb");
+			if (!m_outputFile)
+			{
+				LogPrintf(LOG_ERROR, "StreamToFile: error opening file");
+			}
+		}
 	}
 
 }
