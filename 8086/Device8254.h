@@ -15,16 +15,20 @@ namespace pit
 	enum class RWMode { RW_LSB, RW_MSB, RW_LSBMSB };
 	enum class CounterMode { Mode0, Mode1, Mode2, Mode3, Mode4, Mode5 };
 
-	class Counter : public Logger
+	class Device8254;
+
+	class Counter : public PortConnector
 	{
 	public:
-		Counter(const char* label);
+		Counter(Device8254* parent, BYTE id, const char* label);
 
 		Counter() = delete;
 		Counter(const Counter&) = delete;
 		Counter& operator=(const Counter&) = delete;
 		Counter(Counter&&) = delete;
 		Counter& operator=(Counter&&) = delete;
+
+		void Init();
 
 		void Tick();
 
@@ -35,14 +39,18 @@ namespace pit
 		void SetGate(bool gate) { m_gate = gate; }
 
 		void LatchValue();
-		BYTE Get();
-		void Set(BYTE);
 
 		void SetRWMode(RWMode rw);
 		void SetMode(CounterMode rw);
 		void SetBCD(bool bcd);
 
 	protected:
+		Device8254* m_parent = nullptr;
+		BYTE m_id = 0;
+
+		BYTE ReadData();
+		void WriteData(BYTE value);
+
 		size_t GetMaxValue() const
 		{
 			return m_n ? m_n : (m_rwMode == RWMode::RW_LSB ? 256 : 65536);
@@ -82,20 +90,13 @@ namespace pit
 		void Init();
 		void Reset();
 
+		virtual bool ConnectTo(emul::PortAggregator& dest) override;
+
 		void Tick();
 
-		BYTE T0_IN();
-		void T0_OUT(BYTE value);
-
-		BYTE T1_IN();
-		void T1_OUT(BYTE value);
-
-		BYTE T2_IN();
-		void T2_OUT(BYTE value);
-
-		void CONTROL_OUT(BYTE value);
-
 		Counter& GetCounter(size_t counter);
+
+		WORD GetBaseAdress() const { return m_baseAddress; }
 
 	protected:
 		enum CTRL {
@@ -111,8 +112,8 @@ namespace pit
 
 		const WORD m_baseAddress;
 
-		Counter m_counter0;
-		Counter m_counter1;
-		Counter m_counter2;
+		void WriteControl(BYTE value);
+
+		Counter m_counters[3];
 	};
 }

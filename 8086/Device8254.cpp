@@ -1,4 +1,7 @@
 #include "Device8254.h"
+#include "PortAggregator.h"
+
+#include <assert.h>
 
 using emul::GetHByte;
 using emul::GetLByte;
@@ -7,8 +10,20 @@ using emul::SetHByte;
 
 namespace pit
 {
-	Counter::Counter(const char* label) : Logger(label)
+	Counter::Counter(Device8254* parent, BYTE id, const char* label) :
+		Logger(label),
+		m_parent(parent),
+		m_id(id)
 	{
+		assert(parent);
+	}
+
+	void Counter::Init()
+	{
+		Connect(m_parent->GetBaseAdress() + m_id, static_cast<PortConnector::INFunction>(&Counter::ReadData));
+		Connect(m_parent->GetBaseAdress() + m_id, static_cast<PortConnector::OUTFunction>(&Counter::WriteData));
+
+		SetGate(true);
 	}
 
 	void Counter::Tick()
@@ -21,6 +36,7 @@ namespace pit
 		if (m_newValue)
 		{
 			m_newValue = false;
+			bool wasRunning = m_run;
 			m_run = true;
 
 			switch (m_mode)
@@ -30,15 +46,19 @@ namespace pit
 				m_value = m_n;
 				size_t ticks = (size_t)GetMaxValue() + 1;
 				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
-				LogPrintf(LOG_INFO, "Starting Count, interval = %0.2fus", m_periodMicro);
+				LogPrintf(LOG_INFO, "[%zu] Mode0: Starting Count, interval = %0.2fus", emul::g_ticks, m_periodMicro);
 				// Start counting on next tick
 				return;
 			}
 			case CounterMode::Mode2:
 			{
+				if (!wasRunning)
+				{
+					m_value = m_n;
+				}
 				size_t ticks = GetMaxValue();
 				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
-				LogPrintf(LOG_INFO, "Starting Count, period = %0.2fus", m_periodMicro);
+				LogPrintf(LOG_INFO, "[%zu] Mode2: Starting Count, period = %0.2fus", emul::g_ticks, m_periodMicro);
 				break;
 			}
 			case CounterMode::Mode3:
@@ -46,7 +66,7 @@ namespace pit
 				size_t ticks = GetMaxValue();
 				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
 				float freq = (float)s_clockSpeed / (float)ticks;
-				LogPrintf(LOG_INFO, "Frequency = %0.2fHz", freq);
+				LogPrintf(LOG_INFO, "Mode3: Frequency = %0.2fHz", freq);
 				break;
 			}
 			}
@@ -63,7 +83,7 @@ namespace pit
 			--m_value;
 			if (m_value == 0)
 			{
-				LogPrintf(LOG_INFO, "Count Done");
+				LogPrintf(LOG_DEBUG, "[%zu] Mode0: Count Done", emul::g_ticks);
 				m_run = false;
 				m_out = true;
 			}
@@ -73,10 +93,12 @@ namespace pit
 			if (m_value == 1)
 			{
 				m_out = false;
+				LogPrintf(LOG_DEBUG, "[%zu] Mode2: LOW", emul::g_ticks);
 			}
 			else if (m_value == 0)
 			{
 				m_out = true;
+				LogPrintf(LOG_DEBUG, "[%zu] Mode2: HI, reset", emul::g_ticks);
 				m_value = m_n;
 			}
 			break;
@@ -95,7 +117,7 @@ namespace pit
 		}
 	}
 
-	BYTE Counter::Get()
+	BYTE Counter::ReadData()
 	{
 		BYTE ret;
 		WORD value = (m_latched) ? m_latchedValue : m_value;
@@ -131,14 +153,19 @@ namespace pit
 		return ret;
 	}
 
-	void Counter::Set(BYTE value)
+	void Counter::WriteData(BYTE value)
 	{
+		LogPrintf(LOG_DEBUG, "WriteData, value=%02Xh", value);
 		switch (m_rwMode)
 		{
 		case RWMode::RW_LSBMSB:
 			if (!m_flipFlopLSBMSB)
 			{
 				SetLByte(m_n, value);
+				if (m_mode == CounterMode::Mode0)
+				{
+					m_run = false;
+				}
 			}
 			else
 			{
@@ -179,15 +206,15 @@ namespace pit
 		switch (rw)
 		{
 		case RWMode::RW_LSB:
-			LogPrintf(LOG_DEBUG, "SetRWMode: LSB");
+			LogPrintf(LOG_INFO, "SetRWMode: LSB");
 			break;
 
 		case RWMode::RW_MSB:
-			LogPrintf(LOG_DEBUG, "SetRWMode: MSB");
+			LogPrintf(LOG_INFO, "SetRWMode: MSB");
 			break;
 
 		case RWMode::RW_LSBMSB:
-			LogPrintf(LOG_DEBUG, "SetRWMode: LSBMSB");
+			LogPrintf(LOG_INFO, "SetRWMode: LSBMSB");
 			m_flipFlopLSBMSB = false;
 			break;
 
@@ -215,7 +242,7 @@ namespace pit
 			break;
 		case CounterMode::Mode2:
 			LogPrintf(LOG_INFO, "SetMode: 2 - RATE GENERATOR");
-			m_out = false;
+			m_out = true;
 			break;
 		case CounterMode::Mode3:
 			LogPrintf(LOG_INFO, "SetMode: 3 - SQUARE WAVE MODE");
@@ -249,9 +276,11 @@ namespace pit
 
 	Device8254::Device8254(WORD baseAddress, size_t clockSpeedHz) : 
 		Logger("PIT8254"), 
-		m_counter0("PIT_T0"),
-		m_counter1("PIT_T1"),
-		m_counter2("PIT_T2"),
+		m_counters{
+			{this, 0, "pit.t0"},
+			{this, 1, "pit.t1"},
+			{this, 2, "pit.t2"}
+		},
 		m_baseAddress(baseAddress)
 	{
 		Reset();
@@ -260,9 +289,10 @@ namespace pit
 
 	void Device8254::EnableLog(bool enable, SEVERITY minSev)
 	{
-		m_counter0.EnableLog(enable, minSev);
-		m_counter1.EnableLog(enable, minSev);
-		m_counter2.EnableLog(enable, minSev);
+		Logger::EnableLog(enable, minSev);
+		m_counters[0].EnableLog(enable, minSev);
+		m_counters[1].EnableLog(false, minSev); // RAM Refresh, noise in logs
+		m_counters[2].EnableLog(enable, minSev);
 	}
 
 	void Device8254::Reset()
@@ -272,124 +302,91 @@ namespace pit
 
 	void Device8254::Init()
 	{
-		Connect(m_baseAddress + 0, static_cast<PortConnector::INFunction>(&Device8254::T0_IN));
-		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&Device8254::T0_OUT));
+		// Register ports 0..2
+		m_counters[0].Init();
+		m_counters[1].Init();
+		m_counters[2].Init();
 
-		Connect(m_baseAddress + 1, static_cast<PortConnector::INFunction>(&Device8254::T1_IN));
-		Connect(m_baseAddress + 1, static_cast<PortConnector::OUTFunction>(&Device8254::T1_OUT));
-
-		Connect(m_baseAddress + 2, static_cast<PortConnector::INFunction>(&Device8254::T2_IN));
-		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&Device8254::T2_OUT));
-
-		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&Device8254::CONTROL_OUT));
-
-		m_counter0.SetGate(true);
-		m_counter1.SetGate(true);
-		m_counter2.SetGate(true);
+		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&Device8254::WriteControl));
 	}
 
-	BYTE Device8254::T0_IN()
+	bool Device8254::ConnectTo(emul::PortAggregator& dest)
 	{
-		return m_counter0.Get();
-	}
-	void Device8254::T0_OUT(BYTE value)
-	{
-		m_counter0.Set(value);
-	}
-
-	BYTE Device8254::T1_IN()
-	{
-		return m_counter1.Get();
+		// Connect sub devices
+		dest.Connect(m_counters[0]);
+		dest.Connect(m_counters[1]);
+		dest.Connect(m_counters[2]);
+		return PortConnector::ConnectTo(dest);
 	}
 
-	void Device8254::T1_OUT(BYTE value)
+	void Device8254::WriteControl(BYTE value)
 	{
-		m_counter1.Set(value);
-	}
+		LogPrintf(LOG_DEBUG, "WriteControl, value=%02Xh", value);
 
-	BYTE Device8254::T2_IN()
-	{
-		return m_counter2.Get();
-	}
-	void Device8254::T2_OUT(BYTE value)
-	{
-		m_counter2.Set(value);
-	}
-
-	void Device8254::CONTROL_OUT(BYTE value)
-	{
-		Counter* counter = 0;
-
-		switch (value & (CTRL_SC1 | CTRL_SC0))
+		int counterSel = (value >> 6);
+		if (counterSel == 4)
 		{
-		case 0:        counter = &m_counter0; break;
-		case CTRL_SC0: counter = &m_counter1; break;
-		case CTRL_SC1: counter = &m_counter2; break;
-		case CTRL_SC1 | CTRL_SC0:
-		default:
-			throw std::exception("SC: Not implemented");
+			throw std::exception("SC: Readback: Not implemented");
 		}
+
+		Counter& counter = m_counters[counterSel];
 
 		switch (value & (CTRL_RW1 | CTRL_RW0))
 		{
 		case 0:
-			counter->LatchValue(); 
+			counter.LatchValue(); 
 			// Not a control command, latch value and return
 			// without setting rw/mode/bcd
 			return;
 
-		case CTRL_RW0: counter->SetRWMode(RWMode::RW_LSB); break;
-		case CTRL_RW1: counter->SetRWMode(RWMode::RW_MSB); break;
-		case CTRL_RW1 | CTRL_RW0: counter->SetRWMode(RWMode::RW_LSBMSB); break;
+		case CTRL_RW0: counter.SetRWMode(RWMode::RW_LSB); break;
+		case CTRL_RW1: counter.SetRWMode(RWMode::RW_MSB); break;
+		case CTRL_RW1 | CTRL_RW0: counter.SetRWMode(RWMode::RW_LSBMSB); break;
 		default:
-			throw std::exception("RW: Not implemented");
+			throw std::exception("not possible");
 		}
 
+		CounterMode mode;
 		switch (value & (CTRL_M2 | CTRL_M1 | CTRL_M0))
 		{
-		case 0:
-			counter->SetMode(CounterMode::Mode0); break;
+		case 0: 
+			mode = CounterMode::Mode0; break;
 		case CTRL_M0:
-			counter->SetMode(CounterMode::Mode1); break;
+			mode = CounterMode::Mode1; break;
 
 		case CTRL_M1:
 		case CTRL_M2|CTRL_M1:
-			counter->SetMode(CounterMode::Mode2); break;
+			mode = CounterMode::Mode2; break;
 
 		case CTRL_M1 | CTRL_M0:
 		case CTRL_M2 | CTRL_M1 | CTRL_M0:
-			counter->SetMode(CounterMode::Mode3); break;
+			mode = CounterMode::Mode3; break;
 
 		case CTRL_M2:
-			counter->SetMode(CounterMode::Mode4); break;
+			mode = CounterMode::Mode4; break;
 
 		case CTRL_M2 | CTRL_M0:
-			counter->SetMode(CounterMode::Mode5); break;
+			mode = CounterMode::Mode5; break;
 
 		default:
 			throw std::exception("Mode: Not implemented");
 		}
 
-		counter->SetBCD(value & CTRL_BCD);
+		counter.SetMode(mode);
+		counter.SetBCD(value & CTRL_BCD);
 	}
 
 	void Device8254::Tick()
 	{
-		m_counter0.Tick();
-		m_counter1.Tick();
-		m_counter2.Tick();
+		m_counters[0].Tick();
+		m_counters[1].Tick();
+		m_counters[2].Tick();
 	}
 
 	Counter& Device8254::GetCounter(size_t counter)
 	{
-		switch (counter)
-		{
-		case 0: return m_counter0;
-		case 1: return m_counter1;
-		case 2: return m_counter2;
-		default:
-			throw std::exception("Device8254::GetCounter:: invalid counter id");
-		}
+		assert(counter < 3);
+		return m_counters[counter];
 	}
 
 }
