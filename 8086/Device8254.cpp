@@ -28,8 +28,17 @@ namespace pit
 
 	void Counter::Tick()
 	{
+		m_lastGate = true;
 		if (!m_gate)
 		{
+			m_lastGate = false;
+			// Mode 0 not affected by gate, only pauses count
+			if (m_mode != CounterMode::Mode0)
+			{
+				// Mode 2 & 3, if gate is low, out goes high.
+				// When back high again, reset counter to n
+				m_out = true;
+			}
 			return;
 		}
 
@@ -71,7 +80,7 @@ namespace pit
 				break;
 			}
 			}
-		}
+		} 
 
 		if (!m_run)
 		{
@@ -91,31 +100,46 @@ namespace pit
 			break;
 		case CounterMode::Mode2:
 			--m_value;
-			if (m_value == 1)
+
+			if (m_lastGate == false)
+			{
+				LogPrintf(LOG_DEBUG, "[%zu] Mode2: HI, Reset after Gate 0->1", emul::g_ticks);
+				m_out = true;
+				m_value = m_n;
+			}
+			else if (m_value == 1)
 			{
 				m_out = false;
 				LogPrintf(LOG_DEBUG, "[%zu] Mode2: LOW", emul::g_ticks);
 			}
 			else if (m_value == 0)
 			{
-				m_out = true;
 				LogPrintf(LOG_DEBUG, "[%zu] Mode2: HI, reset", emul::g_ticks);
+				m_out = true;
 				m_value = m_n;
 			}
 			break;
 		case CounterMode::Mode3:
 			m_value -= (m_value & 1) ? 1 : 2;
-			if (m_value == 0)
+
+			if (m_lastGate == false)
+			{
+				LogPrintf(LOG_WARNING, "[%zu] Mode3: HI, Reset after Gate 0->1", emul::g_ticks);
+				m_out = true;
+				m_value = m_n;
+			}
+			else if (m_value == 0)
 			{
 				m_out = !m_out;
 
 				m_value = m_n & (m_out ? ~0 : ~1);
-
 			}
 			break;
 		default:
 			break;
 		}
+
+		m_lastGate = true;
 	}
 
 	BYTE Counter::ReadData()

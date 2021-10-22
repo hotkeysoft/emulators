@@ -60,7 +60,8 @@ namespace pit
 		CounterMode m_mode = CounterMode::Mode0;
 		bool m_bcd = false;
 
-		bool m_gate = false;
+		bool m_gate = true;
+		bool m_lastGate = true;
 		bool m_out = false;
 		bool m_run = false;
 		bool m_newValue = false;
