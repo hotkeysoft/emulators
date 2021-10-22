@@ -26,7 +26,7 @@ namespace beeper
 		void Init(ppi::Device8255* ppi, pit::Device8254* pit);
 		void Reset();
 
-		void Tick(BYTE mixWith = 0);
+		void Tick(WORD mixWith = 0);
 
 		const SDL_AudioSpec& GetAudioSpec() const { return m_audioSpec; }
 

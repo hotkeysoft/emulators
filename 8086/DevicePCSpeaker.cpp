@@ -90,26 +90,28 @@ namespace beeper
 		SDL_PauseAudioDevice(m_audioDeviceID, false);
 	}
 
-	void DevicePCSpeaker::Tick(BYTE mixWith)
+	void DevicePCSpeaker::Tick(WORD mixWith)
 	{
 		static int sample = 0;
 		static int32_t avg = 0;
 
 		// temp hack, avg 27 samples
-		avg += (m_8255->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 64 : 0;
+		// possibly 4 incoming channels + this one, max possible value = 255*5, 
+		// must divide again by 5 to scale down
+		avg += (m_8255->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 128 : 0;
 		avg += mixWith;
 		++sample;
 		if (sample == 27)
 		{
-			avg /= 27; // Average
-			avg -= 32; // Center around zero
-			sample = 0;
+			avg /= (27 * 5); // Average
+			avg -= 127; // Center around zero
 
 			// Crude synchronization
 			while (IsFull()) { std::this_thread::yield(); };
 
 			AddSample(avg);
 			avg = 0;
+			sample = 0;
 		}
 	}
 

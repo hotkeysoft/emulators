@@ -10,7 +10,7 @@ namespace sn76489
 	void Voice::SetAttenuation(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "SetAttenuation, value=%02Xh", value);
-		m_attenuation = value;
+		m_attenuation = value &= 0b1111;
 	}
 
 	// =================================
@@ -21,10 +21,10 @@ namespace sn76489
 
 	void VoiceSquare::Tick()
 	{
-		static WORD cooldown = m_tickDivider;
-		if (--cooldown != 0)
-			return;
-		cooldown = m_tickDivider;
+		if (m_n == 0 || m_n == 1)
+		{
+			SetOutput(true);
+		}
 
 		if (--m_counter == 0)
 		{
@@ -34,18 +34,19 @@ namespace sn76489
 		}
 	}
 
-	void VoiceSquare::SetLowData(BYTE value)
+	void VoiceSquare::SetData(BYTE value, bool highLow)
 	{
-		LogPrintf(LOG_DEBUG, "SetLowFrequency, value=%02Xh", value);
-		m_n &= 0b1111110000;
-		m_n |= value;
-	}
-
-	void VoiceSquare::SetHighData(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "SetHighFrequency, value=%02Xh", value);
-		m_n &= 0b0000001111;
-		m_n |= ((WORD)value << 4);
+		LogPrintf(LOG_DEBUG, "SetData, value=%02Xh", value);
+		if (highLow)
+		{
+			m_n &= 0b0000001111;
+			m_n |= ((WORD)(value & 0b111111) << 4);
+		}
+		else
+		{
+			m_n &= 0b1111110000;
+			m_n |= (value & 0b1111);
+		}
 	}
 
 	// =================================
@@ -58,9 +59,9 @@ namespace sn76489
 	{
 	}
 
-	void VoiceNoise::SetLowData(BYTE value)
+	void VoiceNoise::SetData(BYTE value, bool)
 	{
-		LogPrintf(LOG_DEBUG, "SetNoiseData, value=%02Xh", value);
+		LogPrintf(LOG_DEBUG, "SetData, value=%02Xh", value);
 	}
 
 	// =================================
@@ -115,37 +116,50 @@ namespace sn76489
 	{
 		LogPrintf(LOG_DEBUG, "WriteData, value=%02Xh", value);
 
-		if (!(value & 0x80))
+		if (!(value & 0x80)) // Data command, uses currently last register as destination
 		{
-			m_currDest->SetHighData(value);
+			m_currFunc ? m_currDest->SetAttenuation(value) : m_currDest->SetData(value, true);
 		}
-		else
+		else // Latch/Data command
 		{
+			// Save register for subsequent Data commands
 			m_currDest = m_voices[(value >> 5) & 3];
-			bool select = value & 0b00010000;
-			value &= 0b1111;
-			if (select)
+			m_currFunc = value & 0b00010000;
+
+			if (m_currFunc)
 			{
 				m_currDest->SetAttenuation(value);
 			}
 			else
 			{
-				m_currDest->SetLowData(value);
+				m_currDest->SetData(value, false);
 			}
 		}
+
+		m_ready = 32;
 	}
 
 	void DeviceSN76489::Tick()
 	{
+		if (m_ready)
+		{
+			--m_ready;
+		}
+
+		static WORD cooldown = m_tickDivider;
+		if (--cooldown != 0)
+			return;
+		cooldown = m_tickDivider;
+
 		for (int i = 0; i < 4; ++i)
 		{
 			m_voices[i]->Tick();
 		}
 	}
 
-	BYTE DeviceSN76489::GetOutput()
+	WORD DeviceSN76489::GetOutput()
 	{
-		BYTE out = 0;
+		WORD out = 0;
 		for (int i = 0; i < 4; ++i)
 		{
 			out += m_voices[i]->GetOutput();

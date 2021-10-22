@@ -14,6 +14,8 @@ namespace sn76489
 {
 	static size_t s_clockSpeed = 1000000;
 
+	static const BYTE s_volumeTable[16] = { 255, 203, 161, 128, 102, 81, 64, 51, 41, 32, 25, 20, 16, 13, 10, 0 };
+
 	class Voice : public Logger
 	{
 	public:
@@ -29,11 +31,10 @@ namespace sn76489
 		virtual void Init() {}
 		virtual void Tick() = 0;
 
-		BYTE GetOutput() const { return m_out ? (15 - m_attenuation) : 0; }
+		BYTE GetOutput() const { return m_out ? s_volumeTable[m_attenuation] : 0; }
 
 		virtual void SetAttenuation(BYTE value);
-		virtual void SetLowData(BYTE value) {}
-		virtual void SetHighData(BYTE value) {}
+		virtual void SetData(BYTE value, bool highLow) {}
 
 	protected:
 		void ToggleOutput() { m_out = !m_out; }
@@ -57,12 +58,9 @@ namespace sn76489
 
 		virtual void Tick() override;
 
-		virtual void SetLowData(BYTE value) override;
-		virtual void SetHighData(BYTE value) override;
+		virtual void SetData(BYTE value, bool highLow) override;
 
 	protected:
-		const BYTE m_tickDivider = 16;
-
 		WORD m_n = 0b1111111111;
 		WORD m_counter = 0b1111111111;
 	};
@@ -80,7 +78,7 @@ namespace sn76489
 
 		virtual void Tick() override;
 
-		virtual void SetLowData(BYTE value) override;
+		virtual void SetData(BYTE value, bool) override;
 
 	protected:
 	};
@@ -104,14 +102,20 @@ namespace sn76489
 
 		void Tick();
 
-		BYTE GetOutput();
+		WORD GetOutput();
+
+		bool IsReady() const { return m_ready == 0; }
 
 	protected:
+		const BYTE m_tickDivider = 16;
+
+		size_t m_ready = 0;
 		void WriteData(BYTE value);
 
 		const WORD m_baseAddress;
 
 		Voice* m_currDest = nullptr;
+		bool m_currFunc = false; // true = Attenuation, false = hi freq / noise mode
 		Voice* m_voices[4];
 	};
 }
