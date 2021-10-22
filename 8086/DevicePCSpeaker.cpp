@@ -90,13 +90,14 @@ namespace beeper
 		SDL_PauseAudioDevice(m_audioDeviceID, false);
 	}
 
-	void DevicePCSpeaker::Tick()
+	void DevicePCSpeaker::Tick(BYTE mixWith)
 	{
 		static int sample = 0;
 		static int32_t avg = 0;
 
 		// temp hack, avg 27 samples
 		avg += (m_8255->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 64 : 0;
+		avg += mixWith;
 		++sample;
 		if (sample == 27)
 		{

@@ -7,6 +7,7 @@
 #include "Device8259.h"
 #include "DeviceFloppyXT.h"
 #include "DevicePCSpeaker.h"
+#include "DeviceSN76489.h"
 #include "DeviceKeyboardXT.h"
 #include "VideoCGA.h"
 #include "InputEvents.h"
@@ -38,6 +39,7 @@ namespace emul
 		fdc::DeviceFloppyXT m_floppy;
 		video::VideoCGA m_video;
 		beeper::DevicePCSpeaker m_pcSpeaker;
+		sn76489::DeviceSN76489 m_soundModule;
 		kbd::DeviceKeyboardXT m_keyboard;
 		events::InputEvents m_inputs;
 	};

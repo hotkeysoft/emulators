@@ -6,6 +6,7 @@
 #include "Device8255PCjr.h"
 #include "Device8259.h"
 #include "DevicePCSpeaker.h"
+#include "DeviceSN76489.h"
 #include "DeviceFloppyPCjr.h"
 #include "DeviceKeyboardPCjr.h"
 #include "VideoPCjr.h"
@@ -45,6 +46,7 @@ namespace emul
 		uart::Device8250 m_uart;
 		video::VideoPCjr m_video;
 		beeper::DevicePCSpeaker m_pcSpeaker;
+		sn76489::DeviceSN76489 m_soundModule;
 		events::InputEvents m_inputs;
 	};
 }

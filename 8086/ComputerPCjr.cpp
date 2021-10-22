@@ -9,10 +9,12 @@ namespace emul
 	static const size_t CPU_CLK_DIVIDER = 3;
 	static const size_t UART_CLK_DIVIDER = 8;
 	static const size_t PIT_CLK_DIVIDER = 12;
+	static const size_t SOUND_CLK_DIVIDER = 4;
 
 	static const size_t CPU_CLK = MAIN_CLK / CPU_CLK_DIVIDER;
 	static const size_t UART_CLK = MAIN_CLK / UART_CLK_DIVIDER;
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
+	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
 
 	static class DummyPort : public PortConnector
 	{
@@ -30,9 +32,6 @@ namespace emul
 			}
 
 			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteMfgTest));
-			
-			// PCjr sound
-			Connect(0xC0, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
 		}
 
 		BYTE ReadData()
@@ -64,7 +63,8 @@ namespace emul
 		m_keyboard(0xA0),
 		m_floppy(0xF0, PIT_CLK),
 		m_uart(0x2F8, UART_CLK),
-		m_inputs(1193182)
+		m_inputs(PIT_CLK),
+		m_soundModule(0xC0, SOUND_CLK)
 	{
 	}
 
@@ -101,6 +101,9 @@ namespace emul
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
 
+		m_soundModule.Init();
+		m_soundModule.EnableLog(true, Logger::LOG_INFO);
+
 		m_video.EnableLog(true, Logger::LOG_INFO);
 		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
 		
@@ -130,7 +133,7 @@ namespace emul
 		m_floppy.EnableLog(true, Logger::LOG_INFO);
 		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
 		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
-
+		
 		m_uart.Init();
 		m_uart.EnableLog(true, Logger::LOG_WARNING);
 
@@ -144,6 +147,7 @@ namespace emul
 		AddDevice(m_keyboard);
 		AddDevice(m_floppy);
 		AddDevice(m_uart);
+		AddDevice(m_soundModule);
 		AddDevice(dummyPort);
 	}
 
@@ -219,7 +223,11 @@ namespace emul
 				timer0Out = out;
 			}
 
-			m_pcSpeaker.Tick();
+			// SN76489 clock is 3x base clock
+			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
+
+			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
+			m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
 			m_floppy.Tick();
 			m_pic.InterruptRequest(6, m_floppy.IsWatchdogInterrupt());
@@ -241,18 +249,18 @@ namespace emul
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment
-			if (!m_turbo && (syncTicks >= 11931))
-			{
-				auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
+			//if (!m_turbo && (syncTicks >= 11931))
+			//{
+			//	auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
 
-				if (delta < std::chrono::microseconds(10000))
-				{
-					little_sleep(std::chrono::microseconds(10000)-delta);
-				}
+			//	if (delta < std::chrono::microseconds(10000))
+			//	{
+			//		little_sleep(std::chrono::microseconds(10000)-delta);
+			//	}
 
-				syncTicks = 0;
-				lastTick = std::chrono::high_resolution_clock::now();
-			}
+			//	syncTicks = 0;
+			//	lastTick = std::chrono::high_resolution_clock::now();
+			//}
 		}
 		cpuTicks %= 4;
 
