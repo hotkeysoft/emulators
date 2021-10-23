@@ -212,7 +212,7 @@ namespace video
 				{
 					currCharPos += (1 << 11);
 				}
-				bool underline = charUnderline & (y == data.vCharHeight - 1);
+				bool underline = draw && (charUnderline & (y == data.vCharHeight - 1));
 
 				uint32_t offset = 720 * (uint32_t)(data.vPos + y) + data.hPos;
 				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
