@@ -39,6 +39,8 @@ namespace beeper
 		bool IsStagingFull() const { return m_bufStagingPos == m_bufferSize; }
 		void ResetStaging() { m_bufStagingPos = 0; }
 
+		void SetMute(bool mute) { m_muted = mute; }
+
 	protected:
 		const WORD m_bufferSize;
 
@@ -61,5 +63,7 @@ namespace beeper
 		size_t m_bufStagingPos = 0;
 
 		FILE* m_outputFile = nullptr;
+
+		bool m_muted = false;
 	};
 }

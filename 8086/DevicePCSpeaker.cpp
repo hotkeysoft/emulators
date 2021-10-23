@@ -123,7 +123,7 @@ namespace beeper
 			// Crude synchronization
 			while (IsStagingFull()) { std::this_thread::yield(); };
 
-			AddSample(avg);
+			AddSample(m_muted ? 0 : avg);
 
 			avg = 0;
 			sample = 0;
