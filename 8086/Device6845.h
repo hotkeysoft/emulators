@@ -134,6 +134,6 @@ namespace crtc
 		// Called during Tick
 		virtual void RenderFrame() = 0;
 		virtual void NewFrame() = 0;
-		virtual void EndOfRow() = 0;
+		virtual void EndOfRow() {};
 	};
 }
