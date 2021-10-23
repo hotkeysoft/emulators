@@ -90,9 +90,6 @@
     <ClCompile Include="CPUInfo.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="Device6845.cpp">
-      <Filter>Source Files\Hardware</Filter>
-    </ClCompile>
     <ClCompile Include="Device8237.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
@@ -168,6 +165,12 @@
     <ClCompile Include="Monitor.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
+    <ClCompile Include="VideoMDA.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Device6845.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -187,9 +190,6 @@
     </ClInclude>
     <ClInclude Include="Computer.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Device6845.h">
-      <Filter>Header Files\Hardware</Filter>
     </ClInclude>
     <ClInclude Include="Device8237.h">
       <Filter>Header Files\Hardware</Filter>
@@ -280,6 +280,12 @@
     </ClInclude>
     <ClInclude Include="CartridgePCjr.h">
       <Filter>Header Files\Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoMDA.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Device6845.h">
+      <Filter>Header Files\Video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
