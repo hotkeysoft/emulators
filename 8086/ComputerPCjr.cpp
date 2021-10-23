@@ -102,9 +102,9 @@ namespace emul
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
 
 		m_soundModule.Init();
-		m_soundModule.EnableLog(true, Logger::LOG_INFO);
+		m_soundModule.EnableLog(true, Logger::LOG_WARNING);
 
-		m_video.EnableLog(true, Logger::LOG_INFO);
+		m_video.EnableLog(true, Logger::LOG_WARNING);
 		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
 		
 		m_biosF000.LoadFromFile("data/PCjr/BIOS_4860_1504036_F000.BIN");
@@ -130,14 +130,14 @@ namespace emul
 		//}
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_INFO);
+		m_floppy.EnableLog(true, Logger::LOG_WARNING);
 		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
 		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
 		
 		m_uart.Init();
 		m_uart.EnableLog(true, Logger::LOG_WARNING);
 
-		m_inputs.EnableLog(true, Logger::LOG_INFO);
+		m_inputs.EnableLog(true, Logger::LOG_WARNING);
 		m_inputs.Init(&m_keyboard);
 
 		AddDevice(m_pic);

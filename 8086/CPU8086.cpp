@@ -2334,7 +2334,7 @@ namespace emul
 		}
 		else if (interrupt == 0x13)
 		{
-			LogPrintf(LOG_ERROR, "FLOPPY, ah=%02X", regA.hl.h);
+			LogPrintf(LOG_INFO, "FLOPPY, ah=%02X", regA.hl.h);
 		}
 		else if (interrupt == 0x21)
 		{
