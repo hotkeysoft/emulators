@@ -4,6 +4,9 @@
 
 #include <assert.h>
 
+using emul::SetBit;
+using emul::GetBit;
+
 namespace video
 {
 	const float VSCALE = 2.4f;
@@ -131,12 +134,12 @@ namespace video
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteModeControlRegister, value=%02Xh", value);
 
-		m_mode.text80Columns = value & 1;
-		m_mode.graphics = value & 2;
-		m_mode.monochrome = value & 4;
-		m_mode.enableVideo = value & 8;
-		m_mode.hiResolution = value & 16;
-		m_mode.blink = value & 32;
+		m_mode.text80Columns = GetBit(value, 0);
+		m_mode.graphics = GetBit(value, 1);
+		m_mode.monochrome = GetBit(value, 2);
+		m_mode.enableVideo = GetBit(value, 3);
+		m_mode.hiResolution = GetBit(value, 4);
+		m_mode.blink = GetBit(value, 5);
 
 		LogPrintf(Logger::LOG_INFO, "WriteModeControlRegister [%c80COLUMNS %cGRAPH %cMONO %cVIDEO %cHIRES %cBLINK]",
 			m_mode.text80Columns ? ' ' : '/',
@@ -250,26 +253,26 @@ namespace video
 	{
 		if (m_currChar && IsDisplayArea() && ((m_data.vPos % m_data.vCharHeight) == 0))
 		{
-			BYTE* ch = m_currChar;
-			BYTE* attr = ch + 1;
-			BYTE bg = (*attr) >> 4;
-			BYTE fg = (*attr) & 0x0F;
+			bool isCursorChar = IsCursor();
+
+			BYTE ch = *(m_currChar++);
+			BYTE attr = *(m_currChar++);
+			BYTE bg = attr >> 4;
+			BYTE fg = attr & 0x0F;
 			bool charBlink = false;
 
 			// Background
 			if (m_mode.blink) // Hi bit: intense bg vs blink fg
 			{
-				charBlink = bg & 8;
-				bg = bg & 7;
+				charBlink = GetBit(bg, 3);
+				SetBit(bg, 3, false);
 			}
 
 			uint32_t fgRGB = m_alphaPalette[fg];
 			uint32_t bgRGB = m_alphaPalette[bg];
 
-			bool isCursorChar = IsCursor();
-
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((uint32_t)(*ch) * 8) + (m_data.vPos % m_data.vCharHeight);
+			BYTE* currCharPos = m_charROMStart + ((uint32_t)ch * 8) + (m_data.vPos % m_data.vCharHeight);
 			bool draw = !charBlink || (charBlink && IsBlink16());
 			for (int y = 0; y < m_data.vCharHeight; ++y)
 			{
@@ -281,8 +284,6 @@ namespace video
 					m_frameBuffer[offset + x] = (set || cursorLine) ? fgRGB : bgRGB;
 				}
 			}
-
-			m_currChar += 2;
 		}
 	}
 	void VideoCGA::Draw320x200()
