@@ -18,7 +18,7 @@ namespace crtc
 	class Device6845 : public PortConnector
 	{
 	public:
-		Device6845(WORD baseAddress);
+		Device6845(WORD baseAddress, BYTE charWidth = 8);
 		~Device6845();
 
 		Device6845() = delete;
@@ -44,6 +44,7 @@ namespace crtc
 
 	protected:
 		const WORD m_baseAddress;
+		const BYTE m_charWidth;
 
 		// CRT Controller
 		enum CRTRegister

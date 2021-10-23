@@ -3,9 +3,10 @@
 
 namespace crtc
 {
-	Device6845::Device6845(WORD baseAddress) :
+	Device6845::Device6845(WORD baseAddress, BYTE charWidth) :
 		Logger("crtc"),
-		m_baseAddress(baseAddress)
+		m_baseAddress(baseAddress),
+		m_charWidth(charWidth)
 	{
 		Reset();
 	}
@@ -156,17 +157,19 @@ namespace crtc
 
 	void Device6845::UpdateHVTotals()
 	{
-		m_data.hTotalDisp = m_config.hDisplayed * 8;
-		m_data.hTotal = m_config.hTotal * 8;
+		m_data.hTotalDisp = m_config.hDisplayed * m_charWidth;
+		m_data.hTotal = m_config.hTotal * m_charWidth;
 
 		m_data.vCharHeight = (m_config.maxScanlineAddress + 1);
 		m_data.vTotalDisp = m_config.vTotalDisplayed * m_data.vCharHeight;
 		m_data.vTotal = m_config.vTotal * m_data.vCharHeight + m_config.vTotalAdjust;
+
+		LogPrintf(LOG_INFO, "UpdateHVTotals: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
 	}
 
 	void Device6845::Tick()
 	{
-		m_data.hPos += 8;
+		m_data.hPos += m_charWidth;
 
 		if (m_data.hPos >= m_data.hTotal)
 		{
