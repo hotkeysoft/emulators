@@ -4,6 +4,9 @@
 
 #include <assert.h>
 
+using emul::SetBit;
+using emul::GetBit;
+
 namespace video
 {
 	const float VSCALE = 1.6f; // TODO
@@ -19,12 +22,6 @@ namespace video
 	{
 		0xFF000000, 0xFF020A00, 0xFF1D7700, 0xFF218400, 0xFF082300, 0xFF0B2D00, 0xFF186000, 0xFF2AA800,
 		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
-	};
-
-	const uint32_t Composite640Palette[16] =
-	{
-		0x00000000, 0x00006E31, 0x003109FF, 0x00008AFF, 0x00A70031, 0x00767676, 0x00EC11FF, 0x00BB92FF,
-		0x00315A00, 0x0000DB00, 0x00767676, 0x0045F7BB, 0x00EC6300, 0x00BBE400, 0x00FF7FBB, 0x00FFFFFF
 	};
 
 	VideoMDA::VideoMDA(WORD baseAddress) :
@@ -143,9 +140,9 @@ namespace video
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteModeControlRegister, value=%02Xh", value);
 
-		m_mode.hiResolution = value & 1;
-		m_mode.enableVideo = value & 8;
-		m_mode.blink = value & 32;
+		m_mode.hiResolution = GetBit(value, 0);
+		m_mode.enableVideo = GetBit(value, 3);
+		m_mode.blink = GetBit(value, 5);
 
 		LogPrintf(Logger::LOG_INFO, "WriteModeControlRegister [%cBLINK %cENABLE %cHIRES]",
 			m_mode.blink ? ' ' : '/',
@@ -193,26 +190,28 @@ namespace video
 	{
 		if (m_currChar && IsDisplayArea() && ((m_data.vPos % m_data.vCharHeight) == 0))
 		{
-			BYTE* ch = m_currChar;
-			BYTE* attr = ch + 1;
-			BYTE bg = (*attr) >> 4;
-			BYTE fg = (*attr) & 0x0F;
-			bool charBlink = false;
+			bool isCursorChar = IsCursor();
 
-			// Background
-			if (m_mode.blink) // Hi bit: intense bg vs blink fg
-			{
-				charBlink = bg & 8;
-				bg = bg & 7;
-			}
+			BYTE ch = *(m_currChar++);
+			BYTE attr = *(m_currChar++);
+
+			bool blinkBit = GetBit(attr, 7);
+			bool charBlink = m_mode.blink && blinkBit;
+			bool charUnderline = ((attr & 0b111) == 1); // Underline when attr[2:0] == b001
+
+			const BYTE bgFgMask = 0b01110111; // fg and bg without intensity and blink bits
+			bool charReverse = ((attr & bgFgMask) == 0b01110000);
+
+			BYTE fg = (attr & bgFgMask) ? (0b111 | (attr & 0b1000)) : 0b000; // Anything that's not black is on
+			fg ^= charReverse ? 0b111 : 0b000; // Flip for reverse video
+
+			BYTE bg = (charReverse || (!m_mode.blink && blinkBit)) ? 0xF : 0;
 
 			uint32_t fgRGB = m_alphaPalette[fg];
 			uint32_t bgRGB = m_alphaPalette[bg];
 
-			bool isCursorChar = IsCursor();
-
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((uint32_t)(*ch) * 8);
+			BYTE* currCharPos = m_charROMStart + ((uint32_t)ch * 8);
 			bool draw = !charBlink || (charBlink && IsBlink16());
 			for (int y = 0; y < m_data.vCharHeight; ++y)
 			{
@@ -221,27 +220,25 @@ namespace video
 				{
 					currCharPos += (1 << 11);
 				}
+				bool underline = charUnderline & (y == m_data.vCharHeight - 1);
 
 				uint32_t offset = 720 * (uint32_t)(m_data.vPos + y) + m_data.hPos;
 				bool cursorLine = isCursorChar && (y >= m_config.cursorStart) && (y <= m_config.cursorEnd);
 				for (int x = 0; x < 9; ++x)
 				{
-
 					if (x < 8)
 					{
 						m_lastDot = draw && ((*(currCharPos + (y & 7))) & (1 << (7 - x)));
 					}
 					// Characters C0h - DFh: 9th pixel == 8th pixel, otherwise blank
-					else if ((*ch < 0xC0) || (*ch > 0xDF))
+					else if ((ch < 0xC0) || (ch > 0xDF))
 					{
 						m_lastDot = 0;
 					}
 
-					m_frameBuffer[offset + x] = (m_lastDot || cursorLine) ? fgRGB : bgRGB;
+					m_frameBuffer[offset + x] = (m_lastDot || cursorLine || underline) ? fgRGB : bgRGB;
 				}
 			}
-
-			m_currChar += 2;
 		}
 	}
 }
