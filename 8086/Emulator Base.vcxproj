@@ -206,6 +206,7 @@
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="Video.cpp" />
     <ClCompile Include="VideoCGA.cpp" />
+    <ClCompile Include="VideoHGC.cpp" />
     <ClCompile Include="VideoMDA.cpp" />
     <ClCompile Include="VideoPCjr.cpp" />
   </ItemGroup>
@@ -247,6 +248,7 @@
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="Video.h" />
     <ClInclude Include="VideoCGA.h" />
+    <ClInclude Include="VideoHGC.h" />
     <ClInclude Include="VideoMDA.h" />
     <ClInclude Include="VideoPCjr.h" />
   </ItemGroup>

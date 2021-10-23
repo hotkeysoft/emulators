@@ -3,6 +3,7 @@
 #include "Console.h"
 #include "VideoCGA.h"
 #include "VideoMDA.h"
+#include "VideoHGC.h"
 #include <thread>
 
 namespace emul
@@ -22,8 +23,8 @@ namespace emul
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
 
-	enum class VIDEO { CGA, MDA };
-	static const VIDEO s_video = VIDEO::MDA;
+	enum class VIDEO { CGA, MDA, HGC };
+	static const VIDEO s_video = VIDEO::HGC;
 
 	static class DummyPort : public PortConnector
 	{
@@ -99,7 +100,7 @@ namespace emul
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
 		
-		m_pcSpeaker.SetMute(true); // MUTE HERE
+		m_pcSpeaker.SetMute(false); // MUTE HERE
 		//m_pcSpeaker.StreamToFile(true, "dump/audio.bin");
 
 		m_soundModule.Init();
@@ -125,6 +126,13 @@ namespace emul
 			m_video = mda;
 
 			mda->Init(m_memory, "data/XT/CGA_CHAR.BIN");
+		}
+		else if (s_video == VIDEO::HGC)
+		{
+			video::VideoHGC* hgc = new video::VideoHGC(0x3B0);
+			m_video = hgc;
+
+			hgc->Init(m_memory, "data/XT/CGA_CHAR.BIN");
 		}
 		else
 		{
@@ -196,7 +204,7 @@ namespace emul
 		assert(GetInstructionTicks());
 		cpuTicks += GetInstructionTicks();
 
-		for (int i = 0; i < cpuTicks / 4; ++i)
+		for (int i = 0; i < cpuTicks / 10; ++i)
 		{
 			++g_ticks;
 
@@ -278,7 +286,7 @@ namespace emul
 			//	lastTick = std::chrono::high_resolution_clock::now();
 			//}
 		}
-		cpuTicks %= 4;
+		cpuTicks %= 10;
 
 		return true;
 	}
