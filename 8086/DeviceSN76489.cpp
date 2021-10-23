@@ -1,5 +1,7 @@
 #include "DeviceSN76489.h"
 
+#include <assert.h>
+
 using emul::GetHByte;
 using emul::GetLByte;
 using emul::SetLByte;
@@ -52,18 +54,86 @@ namespace sn76489
 
 	// =================================
 
-	VoiceNoise::VoiceNoise(const char* label) : Voice(label)
+	VoiceNoise::VoiceNoise(const char* label, Voice* trigger) : 
+		Voice(label),
+		m_trigger(trigger)
 	{
+		assert(trigger);
+		ResetShiftRegister();
 		SetOutput(false);
 	}
 
 	void VoiceNoise::Tick()
+	{	
+		// voice 2 modulated
+		if (m_n == 0)
+		{
+			bool trigger = m_trigger->GetRawOutput();
+			if (!m_lastTrigger && trigger)
+			{
+				Shift();
+			}
+			m_lastTrigger = trigger;
+		}
+		else if (--m_counter == 0)
+		{
+			m_counter = m_n;
+			m_internalOutput = !m_internalOutput;
+			if (m_internalOutput)
+			{
+				Shift();
+			}
+		}
+	}
+
+	static bool parity(WORD val)
 	{
+		val ^= (val >> 8);
+		val ^= (val >> 4);
+		val ^= (val >> 2);
+		val ^= (val >> 1);
+		return val & 1;
+	}
+
+	void VoiceNoise::Shift()
+	{
+		bool input;
+		if (m_whiteNoise)
+		{
+			input = parity(m_shiftRegister & m_noisePattern);
+		}
+		else
+		{
+			input = (m_shiftRegister & 1);
+		}
+
+		m_shiftRegister = (m_shiftRegister >> 1);
+		m_shiftRegister |= (input << (m_shiftRegisterLen - 1));
+
+		SetOutput(m_shiftRegister & 1);
 	}
 
 	void VoiceNoise::SetData(BYTE value, bool)
 	{
 		LogPrintf(LOG_DEBUG, "SetData, value=%02Xh", value);
+
+		m_whiteNoise = value & 0b100;
+
+		BYTE shiftRate = value & 0b11;
+		switch (shiftRate)
+		{
+		case 0: m_n = 0x10; break;
+		case 1: m_n = 0x20; break;
+		case 2: m_n = 0x40; break;
+		case 3: m_n = 0; break; // Tone2
+		}
+		m_counter = m_n;
+
+		LogPrintf(LOG_INFO, "SetData, mode=[%s] counter=[%02Xh]",
+			m_whiteNoise ? "White Noise" : "Periodic",
+			m_n);
+
+		ResetShiftRegister();
 	}
 
 	// =================================
@@ -71,11 +141,11 @@ namespace sn76489
 	DeviceSN76489::DeviceSN76489(WORD baseAddress, size_t clockSpeedHz) :
 		Logger("SN76489"),
 		m_baseAddress(baseAddress)
-	{		
+	{
 		m_voices[0] = new VoiceSquare("SN76489_V0");
 		m_voices[1] = new VoiceSquare("SN76489_V1");
 		m_voices[2] = new VoiceSquare("SN76489_V2");
-		m_voices[3] = new VoiceNoise("SN76489_NOISE");
+		m_voices[3] = new VoiceNoise("SN76489_N", m_voices[2]);
 		m_currDest = m_voices[0];
 
 		s_clockSpeed = clockSpeedHz;

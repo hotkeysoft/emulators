@@ -31,6 +31,7 @@ namespace sn76489
 		virtual void Init() {}
 		virtual void Tick() = 0;
 
+		bool GetRawOutput() const { return m_out; }
 		BYTE GetOutput() const { return m_out ? s_volumeTable[m_attenuation] : 0; }
 
 		virtual void SetAttenuation(BYTE value);
@@ -39,6 +40,9 @@ namespace sn76489
 	protected:
 		void ToggleOutput() { m_out = !m_out; }
 		void SetOutput(bool out) { m_out = out; }
+
+		WORD m_n = 0b1111111111;
+		WORD m_counter = 0b1111111111;
 
 	private:
 		BYTE m_attenuation = 0xF;
@@ -59,16 +63,12 @@ namespace sn76489
 		virtual void Tick() override;
 
 		virtual void SetData(BYTE value, bool highLow) override;
-
-	protected:
-		WORD m_n = 0b1111111111;
-		WORD m_counter = 0b1111111111;
 	};
 
 	class VoiceNoise : public Voice
 	{
 	public:
-		VoiceNoise(const char* label);
+		VoiceNoise(const char* label, Voice* trigger);
 
 		VoiceNoise() = delete;
 		VoiceNoise(const VoiceNoise&) = delete;
@@ -81,6 +81,19 @@ namespace sn76489
 		virtual void SetData(BYTE value, bool) override;
 
 	protected:
+		Voice* m_trigger = nullptr;
+		bool m_lastTrigger = false;
+
+		bool m_whiteNoise = false;
+		bool m_internalOutput = false;
+
+		void Shift();
+		void ResetShiftRegister() { m_shiftRegister = (1 << (m_shiftRegisterLen - 1)); }
+ 
+		const BYTE m_shiftRegisterLen = 15;
+		WORD m_shiftRegister;
+		WORD m_noisePattern = 0b000000000010001;
+		
 	};
 
 	class DeviceSN76489 : public PortConnector
