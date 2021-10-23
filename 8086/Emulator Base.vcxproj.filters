@@ -69,9 +69,6 @@
     <ClCompile Include="ComputerXT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ComputerPCjr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Computer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -153,9 +150,6 @@
     <ClCompile Include="PortConnector.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="VideoPCjr.cpp">
-      <Filter>Source Files\Video</Filter>
-    </ClCompile>
     <ClCompile Include="VideoCGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
@@ -165,11 +159,20 @@
     <ClCompile Include="Monitor.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
+    <ClCompile Include="Device6845.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Video.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
     <ClCompile Include="VideoMDA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="Device6845.cpp">
+    <ClCompile Include="VideoPCjr.cpp">
       <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerPCjr.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -285,6 +288,9 @@
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="Device6845.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
   </ItemGroup>

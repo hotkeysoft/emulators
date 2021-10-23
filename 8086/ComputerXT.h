@@ -9,9 +9,8 @@
 #include "DevicePCSpeaker.h"
 #include "DeviceSN76489.h"
 #include "DeviceKeyboardXT.h"
-#include "VideoCGA.h"
-#include "VideoMDA.h"
 #include "InputEvents.h"
+#include "Video.h"
 
 namespace emul
 {
@@ -39,8 +38,7 @@ namespace emul
 		dma::Device8237 m_dma;
 		fdc::DeviceFloppyXT m_floppy;
 
-		video::VideoCGA m_videoCGA;
-		video::VideoMDA m_videoMDA;
+		video::Video* m_video = nullptr;
 
 		beeper::DevicePCSpeaker m_pcSpeaker;
 		sn76489::DeviceSN76489 m_soundModule;

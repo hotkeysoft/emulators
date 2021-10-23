@@ -1,11 +1,12 @@
 #include "VideoMDA.h"
-
-#include <SDL.h>
-
+#include "PortAggregator.h"
 #include <assert.h>
 
 using emul::SetBit;
 using emul::GetBit;
+
+using crtc::CRTCConfig;
+using crtc::CRTCData;
 
 namespace video
 {
@@ -24,39 +25,51 @@ namespace video
 		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
 	};
 
+	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
+	{
+		Video* mda = reinterpret_cast<Video*>(data);
+		mda->RenderFrame(720, 350);
+	}
+
+	static void OnNewFrame(crtc::Device6845* crtc, void* data)
+	{
+		VideoMDA* mda = reinterpret_cast<VideoMDA*>(data);
+		mda->NewFrame();
+	}
+
 	VideoMDA::VideoMDA(WORD baseAddress) :
+		Video(720, 350, VSCALE),
 		Logger("MDA"),
-		Device6845(baseAddress, CHAR_WIDTH),
+		m_baseAddress(baseAddress),
+		m_crtc(baseAddress, CHAR_WIDTH),
 		m_screenB000("MDA", 4096, emul::MemoryType::RAM),
 		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
 		m_alphaPalette(AlphaMonoGreenPalette)
 	{
 		Reset();
-		m_frameBuffer = new uint32_t[720 * 350];
-	}
-
-	VideoMDA::~VideoMDA()
-	{
-		delete[] m_frameBuffer;
 	}
 
 	void VideoMDA::Reset()
 	{
-		Device6845::Reset();
+		m_crtc.Reset();
 	}
 
-	void VideoMDA::Init(const char* charROM, BYTE border)
+	void VideoMDA::EnableLog(bool enable, SEVERITY minSev)
+	{
+		m_crtc.EnableLog(enable, minSev);
+		Video::EnableLog(enable, minSev);
+	}
+
+	void VideoMDA::Init(emul::Memory& memory, const char* charROM, BYTE border)
 	{
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadFromFile(charROM);
 		m_charROMStart = m_charROM.getPtr8(0);
 
-		m_sdlBorderPixels = border;
-		m_sdlHBorder = border;
-		m_sdlVBorder = (BYTE)(border / VSCALE);
-
-		Device6845::Init();
+		m_crtc.Init();
+		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
+		m_crtc.SetNewFrameCallback(OnNewFrame, this);
 
 		// Mode Control Register
 		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoMDA::WriteModeControlRegister));
@@ -64,47 +77,19 @@ namespace video
 		// Status Register
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoMDA::ReadStatusRegister));
 
-		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+		for (int i = 0; i < 8; ++i)
 		{
-			SDL_InitSubSystem(SDL_INIT_VIDEO);
+			memory.Allocate(&GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
 		}
 
-
-
-		SDL_CreateWindowAndRenderer(720 + (2 * border), (350 * VSCALE) + (2 * border), 0, &m_sdlWindow, &m_sdlRenderer);
-
-		m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 720, 350);
-
-		SDL_RenderSetScale(m_sdlRenderer, 1.0f, VSCALE);
+		Video::Init(border);
 	}
 
-	void VideoMDA::RenderFrame()
+	bool VideoMDA::ConnectTo(emul::PortAggregator& dest)
 	{
-		static size_t frames = 0;
-
-		// TODO: don't recompute every time
-		SDL_Rect srcRect = { 0, 0, 720, 350 };
-		SDL_Rect destRect = { m_sdlHBorder, m_sdlVBorder, 720, 350 };
-
-		SDL_UpdateTexture(m_sdlTexture, NULL, m_frameBuffer, 720 * sizeof(uint32_t));
-
-		SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &destRect);
-		SDL_RenderPresent(m_sdlRenderer);
-
-		Uint32 borderRGB = m_alphaPalette[/*m_color.color*/0];
-
-		Uint8 r = Uint8(borderRGB >> 16);
-		Uint8 g = Uint8(borderRGB >> 8);
-		Uint8 b = Uint8(borderRGB);
-
-		SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
-		SDL_RenderClear(m_sdlRenderer);
-
-		if (++frames == 60)
-		{
-			LogPrintf(Logger::LOG_ERROR, "60 frames");
-			frames = 0;
-		}
+		// Connect sub devices
+		dest.Connect(m_crtc);
+		return PortConnector::ConnectTo(dest);
 	}
 
 	BYTE VideoMDA::ReadStatusRegister()
@@ -122,7 +107,7 @@ namespace video
 		bool dot = m_lastDot;
 
 		BYTE status =
-			(IsHSync() << 0) |
+			(m_crtc.IsHSync() << 0) |
 			(0 << 1) |
 			(0 << 2) |
 			(m_lastDot << 3) |
@@ -152,27 +137,29 @@ namespace video
 
 	void VideoMDA::Tick()
 	{
-		if (!m_mode.enableVideo || !IsInit())
+		if (!m_mode.enableVideo || !m_crtc.IsInit())
 		{
 			return;
 		}
 
 		(this->*m_drawFunc)();
 
-		Device6845::Tick();
+		m_crtc.Tick();
 	}
 
 	void VideoMDA::NewFrame()
 	{
+		const struct CRTCConfig& config = m_crtc.GetConfig();
+
 		// Pointers for alpha mode
-		m_currChar = m_screenB000.getPtr8(m_config.startAddress * 2u);
-		if (m_config.cursorAddress * 2u >= m_screenB000.GetSize())
+		m_currChar = m_screenB000.getPtr8(config.startAddress * 2u);
+		if (config.cursorAddress * 2u >= m_screenB000.GetSize())
 		{
 			m_cursorPos = nullptr;
 		}
 		else
 		{
-			m_cursorPos = m_screenB000.getPtr8(m_config.cursorAddress * 2u);
+			m_cursorPos = m_screenB000.getPtr8(config.cursorAddress * 2u);
 		}
 
 		// Select draw function
@@ -181,14 +168,19 @@ namespace video
 
 	bool VideoMDA::IsCursor() const
 	{
+		const struct CRTCConfig& config = m_crtc.GetConfig();
+
 		return (m_currChar == m_cursorPos) &&
-			(m_config.cursor != CRTCConfig::CURSOR_NONE) &&
-			((m_config.cursor == CRTCConfig::CURSOR_BLINK32 && IsBlink32()) || IsBlink16());
+			(config.cursor != CRTCConfig::CURSOR_NONE) &&
+			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
 
 	void VideoMDA::DrawTextMode()
 	{
-		if (m_currChar && IsDisplayArea() && ((m_data.vPos % m_data.vCharHeight) == 0))
+		const struct CRTCData& data = m_crtc.GetData();
+		const struct CRTCConfig& config = m_crtc.GetConfig();
+
+		if (m_currChar && m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
 		{
 			bool isCursorChar = IsCursor();
 
@@ -212,18 +204,18 @@ namespace video
 
 			// Draw character
 			BYTE* currCharPos = m_charROMStart + ((uint32_t)ch * 8);
-			bool draw = !charBlink || (charBlink && IsBlink16());
-			for (int y = 0; y < m_data.vCharHeight; ++y)
+			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
+			for (int y = 0; y < data.vCharHeight; ++y)
 			{
 				// Lower part of character is at A10=1 in ROM
 				if (y == 8)
 				{
 					currCharPos += (1 << 11);
 				}
-				bool underline = charUnderline & (y == m_data.vCharHeight - 1);
+				bool underline = charUnderline & (y == data.vCharHeight - 1);
 
-				uint32_t offset = 720 * (uint32_t)(m_data.vPos + y) + m_data.hPos;
-				bool cursorLine = isCursorChar && (y >= m_config.cursorStart) && (y <= m_config.cursorEnd);
+				uint32_t offset = 720 * (uint32_t)(data.vPos + y) + data.hPos;
+				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
 				for (int x = 0; x < 9; ++x)
 				{
 					if (x < 8)

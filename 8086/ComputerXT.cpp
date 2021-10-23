@@ -1,6 +1,8 @@
 #include "Common.h"
 #include "ComputerXT.h"
 #include "Console.h"
+#include "VideoCGA.h"
+#include "VideoMDA.h"
 #include <thread>
 
 namespace emul
@@ -53,8 +55,6 @@ namespace emul
 		m_pic(0x20),
 		m_ppi(0x60),
 		m_dma(0x00, m_memory),
-		m_videoMDA(0x3B0),
-		m_videoCGA(0x3D0),
 		m_floppy(0x03F0, PIT_CLK),
 		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
@@ -112,23 +112,26 @@ namespace emul
 		// TODO: Clean this, have one active video object instead of if/else
 		if (s_video == VIDEO::CGA)
 		{
-			m_videoCGA.EnableLog(true, Logger::LOG_WARNING);
-			m_videoCGA.Init("data/XT/CGA_CHAR.BIN");
-			//m_video.SetComposite(true);
+			video::VideoCGA* cga = new video::VideoCGA(0x3D0);
+			m_video = cga;
 
-			m_memory.Allocate(&m_videoCGA.GetVideoRAM(), emul::S2A(0xB800));
-			m_memory.Allocate(&m_videoCGA.GetVideoRAM(), emul::S2A(0xBC00));
+			//cga->SetComposite(true);
+			cga->Init(m_memory, "data/XT/CGA_CHAR.BIN");
+
 		}
 		else if (s_video == VIDEO::MDA)
 		{
-			m_videoMDA.EnableLog(true, Logger::LOG_INFO);
-			m_videoMDA.Init("data/XT/CGA_CHAR.BIN");
+			video::VideoMDA* mda = new video::VideoMDA(0x3B0);
+			m_video = mda;
 
-			for (int i = 0; i < 8; ++i)
-			{
-				m_memory.Allocate(&m_videoMDA.GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
-			}
+			mda->Init(m_memory, "data/XT/CGA_CHAR.BIN");
 		}
+		else
+		{
+			throw std::exception("Invalid mode");
+		}
+		assert(m_video);
+		m_video->EnableLog(true, Logger::LOG_INFO);
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
@@ -153,14 +156,7 @@ namespace emul
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_dma);
-		if (s_video == VIDEO::CGA)
-		{
-			AddDevice(m_videoCGA);
-		}
-		else 
-		{
-			AddDevice(m_videoMDA);
-		}
+		AddDevice(*m_video);
 		AddDevice(m_floppy);
 		AddDevice(m_soundModule);
 		AddDevice(dummyPort);
@@ -227,14 +223,7 @@ namespace emul
 			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
 			m_dma.Tick();
-			if (s_video == VIDEO::CGA)
-			{
-				m_videoCGA.Tick();
-			}
-			else
-			{
-				m_videoMDA.Tick();
-			}
+			m_video->Tick();
 			m_floppy.Tick();
 			m_pic.InterruptRequest(6, m_floppy.IsInterruptPending());
 

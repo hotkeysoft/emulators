@@ -204,6 +204,7 @@
     <ClCompile Include="PortAggregator.cpp" />
     <ClCompile Include="PortConnector.cpp" />
     <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="Video.cpp" />
     <ClCompile Include="VideoCGA.cpp" />
     <ClCompile Include="VideoMDA.cpp" />
     <ClCompile Include="VideoPCjr.cpp" />
@@ -244,6 +245,7 @@
     <ClInclude Include="PortAggregator.h" />
     <ClInclude Include="PortConnector.h" />
     <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="Video.h" />
     <ClInclude Include="VideoCGA.h" />
     <ClInclude Include="VideoMDA.h" />
     <ClInclude Include="VideoPCjr.h" />

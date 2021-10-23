@@ -1,26 +1,20 @@
 #pragma once
 
 #include "Common.h"
-#include "PortConnector.h"
-#include "Logger.h"
 #include "MemoryBlock.h"
+#include "Memory.h"
 #include "Device6845.h"
+#include "Video.h"
 
-using emul::PortConnector;
 using emul::WORD;
 using emul::BYTE;
 
-struct SDL_Window;
-struct SDL_Renderer;
-struct SDL_Texture;
-
 namespace video
 {
-	class VideoMDA : public crtc::Device6845
+	class VideoMDA : public Video
 	{
 	public:
 		VideoMDA(WORD baseAddress);
-		virtual ~VideoMDA();
 
 		VideoMDA() = delete;
 		VideoMDA(const VideoMDA&) = delete;
@@ -28,14 +22,22 @@ namespace video
 		VideoMDA(VideoMDA&&) = delete;
 		VideoMDA& operator=(VideoMDA&&) = delete;
 
-		void Init(const char* charROM, BYTE border = 10);
+		void Init(emul::Memory& memory, const char* charROM, BYTE border = 10);
 		virtual void Reset() override;
-
 		virtual void Tick() override;
+
+		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO) override;
 
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB000; }
 
+		void RenderFrame();
+		void NewFrame();
+
 	protected:
+		const WORD m_baseAddress;
+
+		virtual bool ConnectTo(emul::PortAggregator& dest) override;
+
 		bool IsCursor() const;
 
 		// Mode Control Register
@@ -66,21 +68,9 @@ namespace video
 
 		const uint32_t* m_alphaPalette = nullptr;
 
-		// SDL
-		SDL_Window* m_sdlWindow = nullptr;
-		SDL_Renderer* m_sdlRenderer = nullptr;
-		SDL_Texture* m_sdlTexture = nullptr;
-
-		BYTE m_sdlBorderPixels;
-		BYTE m_sdlHBorder;
-		BYTE m_sdlVBorder;
-
-		uint32_t* m_frameBuffer;
-
 		// dot information (status register)
 		bool m_lastDot = 0;
 
-		virtual void RenderFrame() override;
-		virtual void NewFrame() override;
+		crtc::Device6845 m_crtc;
 	};
 }

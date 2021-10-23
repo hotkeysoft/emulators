@@ -1,26 +1,20 @@
 #pragma once
 
 #include "Common.h"
-#include "PortConnector.h"
-#include "Logger.h"
 #include "MemoryBlock.h"
+#include "Memory.h"
 #include "Device6845.h"
+#include "Video.h"
 
-using emul::PortConnector;
 using emul::WORD;
 using emul::BYTE;
 
-struct SDL_Window;
-struct SDL_Renderer;
-struct SDL_Texture;
-
 namespace video
 {
-	class VideoCGA : public crtc::Device6845
+	class VideoCGA : public Video
 	{
 	public:
 		VideoCGA(WORD baseAddress);
-		virtual ~VideoCGA();
 
 		VideoCGA() = delete;
 		VideoCGA(const VideoCGA&) = delete;
@@ -28,16 +22,25 @@ namespace video
 		VideoCGA(VideoCGA&&) = delete;
 		VideoCGA& operator=(VideoCGA&&) = delete;
 
-		void Init(const char* charROM, BYTE border = 10);
+		void Init(emul::Memory& memory, const char* charROM, BYTE border = 10);
 		virtual void Reset() override;
-
 		virtual void Tick() override;
+
+		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO) override;
 
 		void SetComposite(bool composite) { m_composite = composite; }
 
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB800; }
 
+		void RenderFrame();
+		void NewFrame();
+		void EndOfRow();
+
 	protected:
+		const WORD m_baseAddress;
+
+		virtual bool ConnectTo(emul::PortAggregator& dest) override;
+
 		bool IsCursor() const;
 
 		// Mode Control Register
@@ -90,19 +93,6 @@ namespace video
 		const uint32_t* m_alphaPalette = nullptr;
 		uint32_t m_currGraphPalette[4];
 
-		// SDL
-		SDL_Window* m_sdlWindow = nullptr;
-		SDL_Renderer* m_sdlRenderer = nullptr;
-		SDL_Texture* m_sdlTexture = nullptr;
-
-		BYTE m_sdlBorderPixels;
-		BYTE m_sdlHBorder;
-		BYTE m_sdlVBorder;
-
-		uint32_t* m_frameBuffer;
-
-		virtual void RenderFrame() override;
-		virtual void NewFrame() override;
-		virtual void EndOfRow() override;
+		crtc::Device6845 m_crtc;
 	};
 }

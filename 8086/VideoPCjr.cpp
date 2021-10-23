@@ -1,12 +1,13 @@
 #include "VideoPCjr.h"
-
-#include <SDL.h>
-
+#include "PortAggregator.h"
 #include <assert.h>
 
 using emul::Memory;
 using emul::MemoryBlock;
 using emul::S2A;
+
+using crtc::CRTCConfig;
+using crtc::CRTCData;
 
 namespace video
 {
@@ -18,9 +19,23 @@ namespace video
 		0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
 	};
 
+	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
+	{
+		VideoPCjr* video = reinterpret_cast<VideoPCjr*>(data);
+		video->RenderFrame();
+	}
+
+	static void OnNewFrame(crtc::Device6845* crtc, void* data)
+	{
+		VideoPCjr* video = reinterpret_cast<VideoPCjr*>(data);
+		video->NewFrame();
+	}
+
 	VideoPCjr::VideoPCjr(WORD baseAddress) :
+		Video(640, 200, VSCALE),
 		Logger("vidPCjr"),
-		Device6845(baseAddress),
+		m_baseAddress(baseAddress),
+		m_crtc(baseAddress),
 		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
 		m_alphaPalette(AlphaColorPalette)
 	{
@@ -28,14 +43,15 @@ namespace video
 		m_frameBuffer = new uint32_t[640 * 200];
 	}
 
-	VideoPCjr::~VideoPCjr()
-	{
-		delete[] m_frameBuffer;
-	}
-
 	void VideoPCjr::Reset()
 	{
-		Device6845::Reset();
+		m_crtc.Reset();
+	}
+
+	void VideoPCjr::EnableLog(bool enable, SEVERITY minSev)
+	{
+		m_crtc.EnableLog(enable, minSev);
+		Video::EnableLog(enable, minSev);
 	}
 
 	void VideoPCjr::Init(Memory* memory, const char* charROM, BYTE border)
@@ -52,7 +68,9 @@ namespace video
 		m_sdlHBorder = border;
 		m_sdlVBorder = (BYTE)(border / VSCALE);
 
-		Device6845::Init();
+		m_crtc.Init();
+		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
+		m_crtc.SetNewFrameCallback(OnNewFrame, this);
 
 		// Registers
 		// 
@@ -65,16 +83,14 @@ namespace video
 		// Gate Array Register: Status
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoPCjr::ReadStatusRegister));
 
-		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
-		{
-			SDL_InitSubSystem(SDL_INIT_VIDEO);
-		}
+		Video::Init(border);
+	}
 
-		SDL_CreateWindowAndRenderer(640 + (2 * border), 480 + (2 * border), 0, &m_sdlWindow, &m_sdlRenderer);
-
-		m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 640, 200);
-
-		SDL_RenderSetScale(m_sdlRenderer, 1.0f, VSCALE);
+	bool VideoPCjr::ConnectTo(emul::PortAggregator& dest)
+	{
+		// Connect sub devices
+		dest.Connect(m_crtc);
+		return PortConnector::ConnectTo(dest);
 	}
 
 	void VideoPCjr::WritePageRegister(BYTE value)
@@ -236,10 +252,10 @@ namespace video
 		bool dot = (m_lastDot & (1 << (m_mode.currRegister & 3)));
 
 		BYTE status =
-			(IsDisplayArea() << 0) |
+			(m_crtc.IsDisplayArea() << 0) |
 			(0 << 1) | // Light Pen Trigger
 			(1 << 2) | // Light Pen switch
-			(IsVSync() << 3) |
+			(m_crtc.IsVSync() << 3) |
 			(dot << 4); // Video dots
 
 		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister, value=%02Xh", status);
@@ -249,58 +265,38 @@ namespace video
 
 	void VideoPCjr::RenderFrame()
 	{
-		static size_t frames = 0;
-
 		// TODO: don't recompute every time
-		int w = (m_data.hTotalDisp * 2) / m_xAxisDivider;
+		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
 
-		SDL_Rect srcRect = { 0, 0, w, 200 };
-		SDL_Rect destRect = { m_sdlHBorder, m_sdlVBorder, 640, 200 };
-
-		SDL_UpdateTexture(m_sdlTexture, NULL, m_frameBuffer, 640 * sizeof(uint32_t));
-
-		SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &destRect);
-		SDL_RenderPresent(m_sdlRenderer);
-
-		Uint32 borderRGB = m_alphaPalette[m_mode.borderColor];
-
-		Uint8 r = Uint8(borderRGB >> 16);
-		Uint8 g = Uint8(borderRGB >> 8);
-		Uint8 b = Uint8(borderRGB);
-
-		SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
-		SDL_RenderClear(m_sdlRenderer);
-
-		if (++frames == 60)
-		{
-			LogPrintf(Logger::LOG_ERROR, "60 frames");
-			frames = 0;
-		}
+		uint32_t borderRGB = m_alphaPalette[m_mode.borderColor];
+		Video::RenderFrame(w, 200, borderRGB);
 	}
 
 	void VideoPCjr::Tick()
 	{
-		if (!m_mode.enableVideo || !IsInit())
+		if (!m_mode.enableVideo || !m_crtc.IsInit())
 		{
 			return;
 		}
 
 		(this->*m_drawFunc)();
 
-		Device6845::Tick();
+		m_crtc.Tick();
 	}
 
 	void VideoPCjr::NewFrame()
 	{
+		const struct CRTCConfig& config = m_crtc.GetConfig();
+
 		// Pointers for alpha mode
-		m_currChar = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + (m_config.startAddress * 2u));
-		if (m_config.cursorAddress >= (m_config.startAddress + 0x1000))
+		m_currChar = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + (config.startAddress * 2u));
+		if (config.cursorAddress >= (config.startAddress + 0x1000))
 		{
 			m_cursorPos = nullptr;
 		}
 		else
 		{
-			m_cursorPos = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + (m_config.cursorAddress * 2u));
+			m_cursorPos = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + (config.cursorAddress * 2u));
 		}
 
 		//// Pointers for graphics mode
@@ -344,20 +340,21 @@ namespace video
 		}
 	}
 
-	void VideoPCjr::EndOfRow()
-	{
-	}
-
 	bool VideoPCjr::IsCursor() const
 	{
+		const struct CRTCConfig& config = m_crtc.GetConfig();
+
 		return (m_currChar == m_cursorPos) &&
-			(m_config.cursor != CRTCConfig::CURSOR_NONE) &&
-			((m_config.cursor == CRTCConfig::CURSOR_BLINK32 && IsBlink32()) || IsBlink16());
+			(config.cursor != CRTCConfig::CURSOR_NONE) &&
+			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
 
 	void VideoPCjr::DrawTextMode()
 	{
-		if (m_currChar && IsDisplayArea() && ((m_data.vPos % m_data.vCharHeight) == 0))
+		const struct CRTCData& data = m_crtc.GetData();
+		const struct CRTCConfig& config = m_crtc.GetConfig();
+
+		if (m_currChar && m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
 		{
 			BYTE* ch = m_currChar;
 			BYTE* attr = ch + 1;
@@ -375,12 +372,12 @@ namespace video
 			bool isCursorChar = IsCursor();
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((size_t)(*ch) * 8) + (m_data.vPos % m_data.vCharHeight);
-			bool draw = !charBlink || (charBlink && IsBlink16());
-			for (int y = 0; y < m_data.vCharHeight; ++y)
+			BYTE* currCharPos = m_charROMStart + ((size_t)(*ch) * 8) + (data.vPos % data.vCharHeight);
+			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
+			for (int y = 0; y < data.vCharHeight; ++y)
 			{
-				uint32_t offset = 640 * (uint32_t)(m_data.vPos + y) + m_data.hPos;
-				bool cursorLine = isCursorChar && (y >= m_config.cursorStart) && (y <= m_config.cursorEnd);
+				uint32_t offset = 640 * (uint32_t)(data.vPos + y) + data.hPos;
+				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
 				for (int x = 0; x < 8; ++x)
 				{
 					bool set = cursorLine || (draw && ((*(currCharPos + y)) & (1 << (7 - x))));
@@ -395,10 +392,12 @@ namespace video
 
 	void VideoPCjr::Draw160x200x16()
 	{
+		const struct CRTCData& data = m_crtc.GetData();
+
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		BYTE*& currChar = m_banks[m_data.vPos & 1];
-		if (IsDisplayArea() && m_data.hPos < 160)
+		BYTE*& currChar = m_banks[data.vPos & 1];
+		if (m_crtc.IsDisplayArea() && data.hPos < 160)
 		{
 			for (int w = 0; w < 4; ++w)
 			{
@@ -408,7 +407,7 @@ namespace video
 					BYTE val = ch & 15;
 					ch >>= 4;
 
-					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 2) + (1 - x)] = GetColor(val);
+					m_frameBuffer[640 * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
 
 				++currChar;
@@ -418,10 +417,12 @@ namespace video
 
 	void VideoPCjr::Draw320x200x4()
 	{
+		const struct CRTCData& data = m_crtc.GetData();
+
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-		BYTE*& currChar = m_banks[m_data.vPos & 1];
-		if (IsDisplayArea())
+		BYTE*& currChar = m_banks[data.vPos & 1];
+		if (m_crtc.IsDisplayArea())
 		{
 			for (int w = 0; w < 2; ++w)
 			{
@@ -431,7 +432,7 @@ namespace video
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 4) + (3 - x)] = GetColor(val);
+					m_frameBuffer[640 * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(val);
 				}
 
 				++currChar;
@@ -441,12 +442,14 @@ namespace video
 
 	void VideoPCjr::Draw320x200x16()
 	{
+		const struct CRTCData& data = m_crtc.GetData();
+
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		if ((m_data.vPos & 3) > 3)
+		if ((data.vPos & 3) > 3)
 			return;
-		BYTE*& currChar = m_banks[m_data.vPos & 3];
-		if (IsDisplayArea() && m_data.hPos < 320)
+		BYTE*& currChar = m_banks[data.vPos & 3];
+		if (m_crtc.IsDisplayArea() && data.hPos < 320)
 		{
 			for (int w = 0; w < 4; ++w)
 			{
@@ -456,7 +459,7 @@ namespace video
 					BYTE val = ch & 15;
 					ch >>= 4;
 
-					m_frameBuffer[640 * m_data.vPos + m_data.hPos + (w * 2) + (1 - x)] = GetColor(val);
+					m_frameBuffer[640 * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
 
 				++currChar;
@@ -465,14 +468,16 @@ namespace video
 	}
 	void VideoPCjr::Draw640x200x2()
 	{
+		const struct CRTCData& data = m_crtc.GetData();
+
 		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
 		// In this mode 1 byte = 8 pixels
 
-		if (IsDisplayArea())
+		if (m_crtc.IsDisplayArea())
 		{
-			BYTE*& currChar = m_banks[m_data.vPos & 1];
+			BYTE*& currChar = m_banks[data.vPos & 1];
 
-			uint32_t baseX = (640 * m_data.vPos) + (m_data.hPos * 2);
+			uint32_t baseX = (640 * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -489,12 +494,14 @@ namespace video
 	}
 	void VideoPCjr::Draw640x200x4()
 	{
+		const struct CRTCData& data = m_crtc.GetData();
+
 		// Called every 8 horizontal pixels
 		// In this mode 2 bytes = 8 pixels
-		BYTE*& currChar = m_banks[m_data.vPos & 3];
-		if (IsDisplayArea())
+		BYTE*& currChar = m_banks[data.vPos & 3];
+		if (m_crtc.IsDisplayArea())
 		{
-			uint32_t baseX = (640 * m_data.vPos) + m_data.hPos;
+			uint32_t baseX = (640 * data.vPos) + data.hPos;
 
 			BYTE chEven = *currChar++;
 			BYTE chOdd = *currChar++;
