@@ -10,6 +10,7 @@
 #include "DeviceSN76489.h"
 #include "DeviceKeyboardXT.h"
 #include "VideoCGA.h"
+#include "VideoMDA.h"
 #include "InputEvents.h"
 
 namespace emul
@@ -37,7 +38,10 @@ namespace emul
 		ppi::Device8255XT m_ppi;
 		dma::Device8237 m_dma;
 		fdc::DeviceFloppyXT m_floppy;
-		video::VideoCGA m_video;
+
+		video::VideoCGA m_videoCGA;
+		video::VideoMDA m_videoMDA;
+
 		beeper::DevicePCSpeaker m_pcSpeaker;
 		sn76489::DeviceSN76489 m_soundModule;
 		kbd::DeviceKeyboardXT m_keyboard;

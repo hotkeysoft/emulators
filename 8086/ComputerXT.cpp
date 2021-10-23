@@ -20,6 +20,9 @@ namespace emul
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
 
+	enum class VIDEO { CGA, MDA };
+	static const VIDEO s_video = VIDEO::MDA;
+
 	static class DummyPort : public PortConnector
 	{
 	public:
@@ -50,7 +53,8 @@ namespace emul
 		m_pic(0x20),
 		m_ppi(0x60),
 		m_dma(0x00, m_memory),
-		m_video(0x3D0),
+		m_videoMDA(0x3B0),
+		m_videoCGA(0x3D0),
 		m_floppy(0x03F0, PIT_CLK),
 		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
@@ -67,6 +71,8 @@ namespace emul
 
 		m_pit.Init();
 		m_pit.EnableLog(true, Logger::LOG_WARNING);
+		//m_pit.GetCounter(2).EnableLog(true, LOG_INFO);
+		//m_pit.GetCounter(0).EnableLog(true, LOG_INFO);
 
 		m_pic.Init();
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
@@ -79,12 +85,22 @@ namespace emul
 			m_ppi.SetPOSTLoop(false);
 			m_ppi.SetMathCoprocessor(false);
 			m_ppi.SetRAMConfig(ppi::RAMSIZE::RAM_256K);
-			m_ppi.SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
+			if (s_video == VIDEO::CGA)
+			{
+				m_ppi.SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
+			}
+			else
+			{
+				m_ppi.SetDisplayConfig(ppi::DISPLAY::MONO_80x25);
+			}
 			m_ppi.SetFloppyCount(2);
 		}
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
+		
+		m_pcSpeaker.SetMute(true); // MUTE HERE
+		//m_pcSpeaker.StreamToFile(true, "dump/audio.bin");
 
 		m_soundModule.Init();
 		m_soundModule.EnableLog(true, Logger::LOG_INFO);
@@ -93,12 +109,26 @@ namespace emul
 		m_dma.EnableLog(false);
 		m_dma.EnableLog(true, Logger::LOG_WARNING);
 
-		m_video.EnableLog(true, Logger::LOG_WARNING);
-		m_video.Init("data/XT/CGA_CHAR.BIN");
-		//m_video.SetComposite(true);
+		// TODO: Clean this, have one active video object instead of if/else
+		if (s_video == VIDEO::CGA)
+		{
+			m_videoCGA.EnableLog(true, Logger::LOG_WARNING);
+			m_videoCGA.Init("data/XT/CGA_CHAR.BIN");
+			//m_video.SetComposite(true);
 
-		m_memory.Allocate(&m_video.GetVideoRAM(), emul::S2A(0xB800));
-		m_memory.Allocate(&m_video.GetVideoRAM(), emul::S2A(0xBC00));
+			m_memory.Allocate(&m_videoCGA.GetVideoRAM(), emul::S2A(0xB800));
+			m_memory.Allocate(&m_videoCGA.GetVideoRAM(), emul::S2A(0xBC00));
+		}
+		else if (s_video == VIDEO::MDA)
+		{
+			m_videoMDA.EnableLog(true, Logger::LOG_INFO);
+			m_videoMDA.Init("data/XT/CGA_CHAR.BIN");
+
+			for (int i = 0; i < 8; ++i)
+			{
+				m_memory.Allocate(&m_videoMDA.GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
+			}
+		}
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
@@ -123,7 +153,14 @@ namespace emul
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_dma);
-		AddDevice(m_video);
+		if (s_video == VIDEO::CGA)
+		{
+			AddDevice(m_videoCGA);
+		}
+		else 
+		{
+			AddDevice(m_videoMDA);
+		}
 		AddDevice(m_floppy);
 		AddDevice(m_soundModule);
 		AddDevice(dummyPort);
@@ -147,12 +184,16 @@ namespace emul
 		if (m_pic.InterruptPending() && CanInterrupt())
 		{
 			m_pic.InterruptAcknowledge();
+			LogPrintf(LOG_DEBUG, "IRQ %d", m_pic.GetPendingInterrupt()-8);
 			Interrupt(m_pic.GetPendingInterrupt());
 			return true;
 		}
-		else if (!CPU8086::Step())
+		else if (m_soundModule.IsReady())
 		{
-			return false;
+			if (!CPU8086::Step())
+			{
+				return false;
+			}
 		}
 
 		static uint32_t cpuTicks = 0;
@@ -186,7 +227,14 @@ namespace emul
 			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
 			m_dma.Tick();
-			m_video.Tick();
+			if (s_video == VIDEO::CGA)
+			{
+				m_videoCGA.Tick();
+			}
+			else
+			{
+				m_videoMDA.Tick();
+			}
 			m_floppy.Tick();
 			m_pic.InterruptRequest(6, m_floppy.IsInterruptPending());
 
