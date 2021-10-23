@@ -13,6 +13,7 @@ namespace emul
 	public:
 		MemoryBlock(const char* id, DWORD size, MemoryType type = MemoryType::RAM);
 		MemoryBlock(const char* id, const std::vector<BYTE>data, MemoryType type = MemoryType::RAM);
+		MemoryBlock(const char* id, MemoryType type = MemoryType::RAM);
 		MemoryBlock(const MemoryBlock& block);
 
 		virtual ~MemoryBlock();
@@ -22,6 +23,8 @@ namespace emul
 		const std::string& GetId() const { return m_id; }
 		DWORD GetSize() const { return m_size; };
 		MemoryType GetType() const { return m_type; };
+
+		bool Alloc(DWORD size);
 
 		virtual bool LoadFromFile(const char* file, WORD offset = 0);
 
@@ -33,8 +36,6 @@ namespace emul
 		virtual void write(ADDRESS offset, char data);
 
 	protected:
-		MemoryBlock(const char* id, MemoryType type = MemoryType::RAM);
-
 		DWORD RoundBlockSize(DWORD size);
 
 		std::string m_id;

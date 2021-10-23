@@ -18,15 +18,7 @@ namespace emul
 
 	MemoryBlock::MemoryBlock(const char* id, DWORD size, MemoryType type) : MemoryBlock(id, type)
 	{
-		if (size == 0 || size > MaxBlockSize)
-		{
-			throw std::exception("Invalid block size");
-		}
-
-		m_size = RoundBlockSize(size);
-		m_data = new BYTE[m_size];
-
-		Clear();
+		Alloc(size);
 	}
 
 	MemoryBlock::MemoryBlock(const char* id, const std::vector<BYTE>data, MemoryType type /*=RAM*/) :
@@ -58,6 +50,26 @@ namespace emul
 			LogPrintf(Logger::LOG_WARNING, "Rounding block size [%s] -> [%d]", size, newSize);
 		}
 		return newSize;
+	}
+
+	bool MemoryBlock::Alloc(DWORD size)
+	{
+		if (m_data)
+		{
+			delete[] m_data;
+			m_data = nullptr;
+			m_size = 0;
+		}
+
+		if (size == 0 || size > MaxBlockSize)
+		{
+			throw std::exception("Invalid block size");
+		}
+
+		m_size = RoundBlockSize(size);
+		m_data = new BYTE[m_size];
+
+		Clear();
 	}
 
 	void MemoryBlock::Clear(BYTE filler)
