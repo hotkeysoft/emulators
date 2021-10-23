@@ -128,9 +128,11 @@ namespace crtc
 		void SetNewFrameCallback(CRTCCallback func, void* userData);
 		void SetEndOfRowCallback(CRTCCallback func, void* userData);
 
+		void SetCharWidth(BYTE charWidth) { m_charWidth = charWidth; }
+
 	protected:
 		const WORD m_baseAddress;
-		const BYTE m_charWidth;
+		BYTE m_charWidth;
 
 		CRTCConfig m_config;
 
