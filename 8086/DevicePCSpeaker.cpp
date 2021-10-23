@@ -112,8 +112,8 @@ namespace beeper
 		++sample;
 		if (sample == 27)
 		{
-			avg /= (27 * 5); // Average
-			avg -= 127; // Center around zero
+			avg /= (27 * 5 * 2); // Average
+			//avg -= 127; // Center around zero
 
 			if (IsStagingFull())
 			{
