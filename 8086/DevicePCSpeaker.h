@@ -35,8 +35,9 @@ namespace beeper
 
 		int8_t* GetPlayingBuffer() const { return m_bufPlaying; }
 		int8_t* GetSilenceBuffer() const { return m_bufSilence; }
-		bool IsFull() const { return m_bufNextPos == m_bufferSize; }
-		void ResetBuffer() { m_bufNextPos = 0; }
+
+		bool IsStagingFull() const { return m_bufStagingPos == m_bufferSize; }
+		void ResetStaging() { m_bufStagingPos = 0; }
 
 	protected:
 		const WORD m_bufferSize;
@@ -45,7 +46,8 @@ namespace beeper
 
 		void InitSDLAudio();
 
-		void AddSample(int8_t s) { m_bufPlaying[m_bufNextPos++] = s; }
+		void AddSample(int8_t s) { m_bufStaging[m_bufStagingPos++] = s; }
+		void MoveToPlayingBuffer();
 
 		ppi::Device8255* m_8255 = nullptr;
 		pit::Device8254* m_8254 = nullptr;
@@ -55,9 +57,8 @@ namespace beeper
 
 		int8_t* m_bufSilence = nullptr;
 		int8_t* m_bufPlaying = nullptr;
-		size_t m_bufNextPos = 0;
-
-		int8_t* m_bufNext = nullptr;
+		int8_t* m_bufStaging = nullptr;
+		size_t m_bufStagingPos = 0;
 
 		FILE* m_outputFile = nullptr;
 	};

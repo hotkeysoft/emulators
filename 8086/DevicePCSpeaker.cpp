@@ -14,7 +14,7 @@ namespace beeper
 
 		m_bufSilence = new int8_t[m_bufferSize];
 		m_bufPlaying = new int8_t[m_bufferSize];
-		m_bufNext = new int8_t[m_bufferSize];
+		m_bufStaging = new int8_t[m_bufferSize];
 
 		Reset();
 	}
@@ -23,7 +23,7 @@ namespace beeper
 	{
 		delete[] m_bufSilence;
 		delete[] m_bufPlaying;
-		delete[] m_bufNext;
+		delete[] m_bufStaging;
 	}
 
 	void DevicePCSpeaker::Reset()
@@ -59,12 +59,12 @@ namespace beeper
 		assert(length == spec.samples); // 8 bit mono, should match 1 to 1
 
 		int8_t* dest = (int8_t*)stream;
-		int8_t* source = This->IsFull() ? This->GetPlayingBuffer() : This->GetSilenceBuffer();
+		int8_t* source = This->GetPlayingBuffer();
 
 		memcpy(dest, source, length);
-		if (This->IsFull())
+		if (This->IsStagingFull())
 		{
-			This->ResetBuffer();
+			This->ResetStaging();
 		}
 	}
 
@@ -83,11 +83,18 @@ namespace beeper
 		for (WORD i = 0; i < m_bufferSize; ++i)
 		{
 			m_bufSilence[i] = m_audioSpec.silence;
-			m_bufNext[i] = m_audioSpec.silence;
+			m_bufStaging[i] = m_audioSpec.silence;
 			m_bufPlaying[i] = m_audioSpec.silence;
 		}
 
 		SDL_PauseAudioDevice(m_audioDeviceID, false);
+	}
+
+	void DevicePCSpeaker::MoveToPlayingBuffer()
+	{
+		SDL_LockAudio();
+		memcpy(m_bufPlaying, m_bufStaging, m_bufferSize);
+		SDL_UnlockAudio();
 	}
 
 	void DevicePCSpeaker::Tick(WORD mixWith)
@@ -108,10 +115,16 @@ namespace beeper
 			avg /= (27 * 5); // Average
 			avg -= 127; // Center around zero
 
+			if (IsStagingFull())
+			{
+				MoveToPlayingBuffer();
+			}
+
 			// Crude synchronization
-			while (IsFull()) { std::this_thread::yield(); };
+			while (IsStagingFull()) { std::this_thread::yield(); };
 
 			AddSample(avg);
+
 			avg = 0;
 			sample = 0;
 		}
