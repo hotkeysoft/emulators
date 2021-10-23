@@ -42,7 +42,7 @@ namespace video
 		Logger("MDA"),
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress, CHAR_WIDTH),
-		m_screenB000("MDA", 4096, emul::MemoryType::RAM),
+		m_screenB000("MDA", emul::MemoryType::RAM),
 		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
 		m_alphaPalette(AlphaMonoGreenPalette)
 	{
@@ -77,6 +77,8 @@ namespace video
 		// Status Register
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoMDA::ReadStatusRegister));
 
+		// 4KB video memory buffer, repeated from B000 to B7FF
+		m_screenB000.Alloc(4096);
 		for (int i = 0; i < 8; ++i)
 		{
 			memory.Allocate(&GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
@@ -137,12 +139,15 @@ namespace video
 
 	void VideoMDA::Tick()
 	{
-		if (!m_mode.enableVideo || !m_crtc.IsInit())
+		if (!m_crtc.IsInit())
 		{
 			return;
 		}
 
-		(this->*m_drawFunc)();
+		if (m_mode.enableVideo)
+		{
+			(this->*m_drawFunc)();
+		}
 
 		m_crtc.Tick();
 	}

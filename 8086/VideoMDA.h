@@ -30,8 +30,7 @@ namespace video
 
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB000; }
 
-		void RenderFrame();
-		void NewFrame();
+		virtual void NewFrame();
 
 	protected:
 		const WORD m_baseAddress;
@@ -47,14 +46,14 @@ namespace video
 			bool hiResolution = false;
 			bool blink = false;
 		} m_mode;
-		void WriteModeControlRegister(BYTE value);
+		virtual void WriteModeControlRegister(BYTE value);
 
 		typedef void(VideoMDA::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoMDA::DrawTextMode;
 		void DrawTextMode();
 
 		// Status Register
-		BYTE ReadStatusRegister();
+		virtual BYTE ReadStatusRegister();
 
 		// 4K screen buffer
 		emul::MemoryBlock m_screenB000;
