@@ -64,7 +64,7 @@ namespace emul
 		m_pic(0x20),
 		m_ppi(0x60),
 		m_video(0x3D0),
-		m_floppy(0xF0, PIT_CLK),
+		m_floppy(0x3F0, PIT_CLK),
 		m_uart(0x2F8, UART_CLK),
 		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
@@ -109,10 +109,10 @@ namespace emul
 		m_keyboard.Init(&m_ppi, &m_pic);
 		m_keyboard.EnableLog(true, Logger::LOG_WARNING);
 
-		//m_floppy.Init();
-		//m_floppy.EnableLog(true, Logger::LOG_WARNING);
-		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
-		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
+		m_floppy.Init();
+		m_floppy.EnableLog(true, Logger::LOG_INFO);
+		m_floppy.LoadDiskImage(0, "data/floppy/TANDY-MS-DOS-2.11.22.img");
+		m_floppy.LoadDiskImage(1, "data/floppy/TANDY-DESKMATE-1.01.00.img");
 		
 		m_uart.Init();
 		m_uart.EnableLog(true, Logger::LOG_WARNING);
@@ -126,7 +126,7 @@ namespace emul
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_video);
-		//AddDevice(m_floppy);
+		AddDevice(m_floppy);
 		//AddDevice(m_uart);
 		AddDevice(m_soundModule);
 		AddDevice(dummyPortTandy);
@@ -209,7 +209,7 @@ namespace emul
 			m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
 			m_floppy.Tick();
-			m_pic.InterruptRequest(6, m_floppy.IsWatchdogInterrupt());
+			m_pic.InterruptRequest(6, m_floppy.IsInterruptPending());
 
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)

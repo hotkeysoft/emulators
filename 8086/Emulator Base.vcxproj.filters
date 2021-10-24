@@ -186,6 +186,9 @@
     <ClCompile Include="VideoTandy.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="DeviceFloppyTandy.cpp">
+      <Filter>Source Files\Storage</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -316,6 +319,9 @@
     </ClInclude>
     <ClInclude Include="VideoTandy.h">
       <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceFloppyTandy.h">
+      <Filter>Header Files\Storage</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

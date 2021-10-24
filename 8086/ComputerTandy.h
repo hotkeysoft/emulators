@@ -7,7 +7,7 @@
 #include "Device8259.h"
 #include "DevicePCSpeaker.h"
 #include "DeviceSN76489.h"
-#include "DeviceFloppyPCjr.h"
+#include "DeviceFloppyTandy.h"
 #include "DeviceKeyboardXT.h"
 #include "VideoTandy.h"
 #include "InputEvents.h"
@@ -37,7 +37,7 @@ namespace emul
 		pit::Device8254 m_pit;
 		pic::Device8259 m_pic;
 		ppi::Device8255Tandy m_ppi;
-		fdc::DeviceFloppyPCjr m_floppy;
+		fdc::DeviceFloppyTandy m_floppy;
 		kbd::DeviceKeyboardXT m_keyboard;
 		uart::Device8250 m_uart;
 		video::VideoTandy m_video;
