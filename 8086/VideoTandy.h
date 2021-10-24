@@ -32,7 +32,7 @@ namespace video
 
 		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO) override;
 
-		void SetRAMBase(ADDRESS base) { m_ramBase = base; }
+		void SetRAMBase(ADDRESS base);
 
 		void RenderFrame();
 		void NewFrame();
@@ -64,6 +64,8 @@ namespace video
 
 		} m_pageRegister;
 		void WritePageRegister(BYTE value);
+
+		void UpdatePageRegisters();
 
 		enum GateArrayAddress
 		{

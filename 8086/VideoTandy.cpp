@@ -108,35 +108,28 @@ namespace video
 			emul::SetBit(m_pageRegister.crtPage, 0, false);
 		}
 
-		const char* modeStr;
 		switch (m_pageRegister.videoAddressMode)
 		{
-		case 0:
-			m_pageRegister.addressMode = PageRegister::ADDRESSMODE::ALPHA;
-			modeStr = "ALPHA";
-			break;
-		case 1:
-			m_pageRegister.addressMode = PageRegister::ADDRESSMODE::GRAPH_LOW;
-			modeStr = "GRAPH LOW";
-			break;
-		case 2:
-			m_pageRegister.addressMode = PageRegister::ADDRESSMODE::GRAPH_HI;
-			modeStr = "GRAPH HI";
-			break;
+		case 0: m_pageRegister.addressMode = PageRegister::ADDRESSMODE::ALPHA; break;
+		case 1: m_pageRegister.addressMode = PageRegister::ADDRESSMODE::GRAPH_LOW; break;
+		case 2: m_pageRegister.addressMode = PageRegister::ADDRESSMODE::GRAPH_HI; break;
 		default:
-			modeStr = "UNUSED";
 			LogPrintf(LOG_WARNING, "WritePageRegister: Unused/Reserved mode");
 		}
 
+		UpdatePageRegisters();
+	}
+
+	void VideoTandy::UpdatePageRegisters()
+	{
 		// Pages are 16K (0x4000)
 		m_pageRegister.crtBaseAddress = m_ramBase + (m_pageRegister.crtPage * 0x4000);
 		m_pageRegister.cpuBaseAddress = m_ramBase + (m_pageRegister.cpuPage * 0x4000);
 
-		LogPrintf(Logger::LOG_INFO, "Set Page Register: cpuPage[%d][%05Xh] crtPage=[%d][%05Xh] videoAddressMode=[%d][%s]", 
+		LogPrintf(Logger::LOG_INFO, "Set Page Register: cpuPage[%d][%05Xh] crtPage=[%d][%05Xh]",
 			m_pageRegister.crtPage, m_pageRegister.crtBaseAddress,
-			m_pageRegister.cpuPage, m_pageRegister.cpuBaseAddress,
-			m_pageRegister.videoAddressMode, modeStr);
-		
+			m_pageRegister.cpuPage, m_pageRegister.cpuBaseAddress);
+
 		// TODO: Need to 'unmap'?
 		if (m_ramBase != 0xA0000)
 		{
@@ -148,6 +141,12 @@ namespace video
 	void VideoTandy::MapB800Window()
 	{
 		m_memory->MapWindow(m_pageRegister.cpuBaseAddress, 0xB8000, 0x4000);
+	}
+
+	void VideoTandy::SetRAMBase(ADDRESS base)
+	{ 
+		m_ramBase = base;
+		UpdatePageRegisters();
 	}
 
 	void VideoTandy::WriteGateArrayRegister(BYTE value)
