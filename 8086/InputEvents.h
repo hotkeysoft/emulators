@@ -12,6 +12,8 @@ namespace kbd { class DeviceKeyboard; }
 
 namespace events
 {
+	enum class KBDMapping { XT, TANDY };
+
 	class Key
 	{
 	public:
@@ -36,6 +38,8 @@ namespace events
 		ExtendedKey(BYTE prefix, BYTE scancode, bool repeat = true) : Key(scancode, prefix, repeat) {}
 	};
 
+	typedef std::map<SDL_Scancode, Key> KeyMap;
+
 	class InputEvents : public Logger
 	{
 	public:
@@ -47,7 +51,7 @@ namespace events
 		InputEvents(InputEvents&&) = delete;
 		InputEvents& operator=(InputEvents&&) = delete;
 
-		void Init(kbd::DeviceKeyboard* kbd);
+		void Init(kbd::DeviceKeyboard* kbd, KBDMapping mapping = KBDMapping::XT);
 
 		void Tick();
 
@@ -62,6 +66,7 @@ namespace events
 		bool m_quit = false;
 
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
+		const KeyMap* m_keyMap = nullptr;
 	};
 
 }
