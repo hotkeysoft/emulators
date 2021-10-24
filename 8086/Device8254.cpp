@@ -28,20 +28,6 @@ namespace pit
 
 	void Counter::Tick()
 	{
-		m_lastGate = true;
-		if (!m_gate)
-		{
-			m_lastGate = false;
-			// Mode 0 not affected by gate, only pauses count
-			if (m_mode != CounterMode::Mode0)
-			{
-				// Mode 2 & 3, if gate is low, out goes high.
-				// When back high again, reset counter to n
-				m_out = true;
-			}
-			return;
-		}
-
 		if (m_newValue)
 		{
 			m_newValue = false;
@@ -81,6 +67,20 @@ namespace pit
 			}
 			}
 		} 
+
+		m_lastGate = true;
+		if (!m_gate)
+		{
+			m_lastGate = false;
+			// Mode 0 not affected by gate, only pauses count
+			if (m_mode != CounterMode::Mode0)
+			{
+				// Mode 2 & 3, if gate is low, out goes high.
+				// When back high again, reset counter to n
+				m_out = true;
+			}
+			return;
+		}
 
 		if (!m_run)
 		{
