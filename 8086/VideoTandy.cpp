@@ -32,7 +32,7 @@ namespace video
 	}
 
 	VideoTandy::VideoTandy(WORD baseAddress) :
-		Video(640, 200, VSCALE),
+		Video(640, 225, VSCALE),
 		Logger("vidTandy"),
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress),
@@ -40,7 +40,7 @@ namespace video
 		m_alphaPalette(AlphaColorPalette)
 	{
 		Reset();
-		m_frameBuffer = new uint32_t[640 * 200];
+		m_frameBuffer = new uint32_t[640 * 225];
 	}
 
 	void VideoTandy::Reset()
@@ -380,7 +380,12 @@ namespace video
 			// Draw character
 			BYTE* currCharPos = m_charROMStart + ((size_t)(*ch) * 8) + (data.vPos % data.vCharHeight);
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
-			for (int y = 0; y < data.vCharHeight; ++y)
+
+			// TODO: 225 lines char mode: Extend line 8 to 9 for some characters, need info.
+			// For now leave lines above 8 blank
+			WORD charHeight = std::min((WORD)8, data.vCharHeight);
+
+			for (int y = 0; y < charHeight; ++y)
 			{
 				uint32_t offset = 640 * (uint32_t)(data.vPos + y) + data.hPos;
 				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
@@ -388,6 +393,7 @@ namespace video
 				{
 					bool set = cursorLine || (draw && ((*(currCharPos + y)) & (1 << (7 - x))));
 					m_lastDot = set ? fg : bg;
+					assert(offset + x < (640 * 225));
 					m_frameBuffer[offset + x] = GetColor(m_lastDot);
 				}
 			}
