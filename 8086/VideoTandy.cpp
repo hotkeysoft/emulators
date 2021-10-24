@@ -5,6 +5,7 @@
 using emul::Memory;
 using emul::MemoryBlock;
 using emul::S2A;
+using emul::GetBit;
 
 using crtc::CRTCConfig;
 using crtc::CRTCData;
@@ -13,10 +14,16 @@ namespace video
 {
 	const float VSCALE = 2.4f;
 
-	const uint32_t AlphaColorPalette[16] =
+	const uint32_t ColorPalette[16] =
 	{
 		0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA,
 		0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
+	};
+
+	const uint32_t MonoGreyPalette[16] =
+	{
+		0xFF000000, 0xFF0C0C0C, 0xFF7A7A7A, 0xFF868686, 0xFF242424, 0xFF303030, 0xFF616161, 0xFFAAAAAA,
+		0xFF555555, 0xFF616161, 0xFFCFCFCF, 0xFFDBDBDB, 0xFF797979, 0xFF858585, 0xFFF3F3F3, 0xFFFFFFFF
 	};
 
 	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
@@ -37,7 +44,7 @@ namespace video
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress),
 		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
-		m_alphaPalette(AlphaColorPalette)
+		m_colors(ColorPalette)
 	{
 		Reset();
 		m_frameBuffer = new uint32_t[640 * 225];
@@ -73,15 +80,24 @@ namespace video
 		m_crtc.SetNewFrameCallback(OnNewFrame, this);
 
 		// Registers
-		// 
+
+		// Mode Control Register
+		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoTandy::WriteModeControlRegister));
+
+		// Color Select Register
+		Connect(m_baseAddress + 9, static_cast<PortConnector::OUTFunction>(&VideoTandy::WriteColorSelectRegister));
+
+		// Status Register
+		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoTandy::ReadStatusRegister));
+
+
+		// Video Array Address
+		Connect(m_baseAddress + 0xA, static_cast<PortConnector::OUTFunction>(&VideoTandy::WriteVideoArrayAddress));
+		// Video Array Data
+		Connect(m_baseAddress + 0xE, static_cast<PortConnector::OUTFunction>(&VideoTandy::WriteVideoArrayData));
+		
 		// CRT, Processor Page Register
 		Connect(m_baseAddress + 0xF, static_cast<PortConnector::OUTFunction>(&VideoTandy::WritePageRegister));
-		//
-		// Gate Array Register: Address/Data
-		Connect(m_baseAddress + 0xA, static_cast<PortConnector::OUTFunction>(&VideoTandy::WriteGateArrayRegister));
-		//
-		// Gate Array Register: Status
-		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoTandy::ReadStatusRegister));
 
 		Video::Init(border);
 	}
@@ -91,6 +107,33 @@ namespace video
 		// Connect sub devices
 		dest.Connect(m_crtc);
 		return PortConnector::ConnectTo(dest);
+	}
+
+	void VideoTandy::WriteModeControlRegister(BYTE value)
+	{
+		LogPrintf(Logger::LOG_DEBUG, "WriteModeControlRegister, value=%02Xh", value);
+
+		m_mode.hiDotClock = GetBit(value, 0);
+		m_mode.graphics = GetBit(value, 1);
+		m_mode.monochrome = GetBit(value, 2);
+		m_mode.enableVideo = GetBit(value, 3);
+		m_mode.hiResolution = GetBit(value, 4);
+		m_mode.blink = GetBit(value, 5);
+
+		LogPrintf(Logger::LOG_INFO, "WriteModeControlRegister [%c80HIDOTCLK %cGRAPH %cMONO %cVIDEO %cHIRES %cBLINK]",
+			m_mode.hiDotClock ? ' ' : '/',
+			m_mode.graphics ? ' ' : '/',
+			m_mode.monochrome ? ' ' : '/',
+			m_mode.enableVideo ? ' ' : '/',
+			m_mode.hiResolution ? ' ' : '/',
+			m_mode.blink ? ' ' : '/');
+
+		m_colors = m_mode.monochrome ? MonoGreyPalette : ColorPalette;
+	}
+
+	void VideoTandy::WriteColorSelectRegister(BYTE value)
+	{
+		LogPrintf(Logger::LOG_DEBUG, "WriteColorSelectRegister, value=%02Xh", value);
 	}
 
 	void VideoTandy::WritePageRegister(BYTE value)
@@ -103,10 +146,12 @@ namespace video
 
 		// For hi bw graphics modes the low order bit
 		// is cleared to align page on 32kb boundary
-		if (m_mode.hiBandwidth && m_mode.graphics)
+		if (m_mode.graph640x200x4 || (false)/*TODO*/)
 		{
 			emul::SetBit(m_pageRegister.crtPage, 0, false);
 		}
+
+		// TODO? cpuPage: If an odd page number is selected (1, 3, 5) the window is reduced to 16K
 
 		switch (m_pageRegister.videoAddressMode)
 		{
@@ -137,10 +182,13 @@ namespace video
 		}
 	}
 
-	// This maps the zone of memory pointed to by the cpu page register to a 16k window at B800:0000
+	// This maps the zone of memory pointed to by the cpu page register to a 16/32K window at B800:0000
 	void VideoTandy::MapB800Window()
 	{
-		m_memory->MapWindow(m_pageRegister.cpuBaseAddress, 0xB8000, 0x4000);
+		// Window size is 16K for odd page numbers TODO: Validate?
+		WORD windowSize = (m_pageRegister.cpuPage & 1) ? 0x4000 : 0x8000;
+
+		m_memory->MapWindow(m_pageRegister.cpuBaseAddress, 0xB8000, windowSize);
 	}
 
 	void VideoTandy::SetRAMBase(ADDRESS base)
@@ -149,98 +197,58 @@ namespace video
 		UpdatePageRegisters();
 	}
 
-	void VideoTandy::WriteGateArrayRegister(BYTE value)
+	void VideoTandy::WriteVideoArrayAddress(BYTE value)
 	{
-		LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, value=%02Xh", value);
-
-		// Set Register Address
-		if (m_mode.addressDataFlipFlop == false)
+		LogPrintf(Logger::LOG_DEBUG, "WriteVideoArrayAddress, value=%02Xh", value);
+		m_videoArrayRegisterAddress = (VideoArrayAddress)value;
+	}
+	void VideoTandy::WriteVideoArrayData(BYTE value)
+	{
+		LogPrintf(Logger::LOG_DEBUG, "WriteVideoArrayData, data=%02Xh", value);
+		if (m_videoArrayRegisterAddress & GA_PALETTE)
 		{
-			value &= GA_MASK;
-			m_mode.currRegister = (GateArrayAddress)value;
-			LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, set address=%02Xh", value);
+			// TODO: When loading the palette, the video is 'disabled' and the color viewed on the screen
+			// is the data contained in the register being addressed by the processor.
+			//
+			// Video returns to normal after register address is changed to < 10h
+			value &= 0b1111;
+			BYTE reg = m_videoArrayRegisterAddress - GA_PALETTE;
+			LogPrintf(Logger::LOG_INFO, "WriteVideoArrayData: Palette Register[%d] = %02Xh", reg, value);
+			m_mode.paletteRegister[reg] = value;
 		}
-		else // Set Register value
+		else switch (m_videoArrayRegisterAddress)
 		{
-			LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister, data=%02Xh", value);
-			if (m_mode.currRegister & GA_PALETTE)
-			{
-				// TODO: When loading the palette, the video is 'disabled' and the color viewed on the screen
-				// is the data contained in the register being addressed by the processor.
-				//
-				// Video returns to normal after register address is changed to < 10h
-				value &= 0b1111;
-				BYTE reg = m_mode.currRegister - GA_PALETTE;
-				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Palette Register[%d] = %02Xh", reg, value);
-				m_mode.paletteRegister[reg] = value;
-			}
-			else switch (m_mode.currRegister)
-			{
-			case GA_MODE_CTRL_1:
-				LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister: Set Mode Control 1 = %02Xh", value);
-				m_mode.hiBandwidth =   value & 1;
-				m_mode.graphics =      value & 2;
-				m_mode.monochrome =    value & 4;
-				m_mode.enableVideo =   value & 8;
-				m_mode.graph16Colors = value & 16;
+		case VA_PALETTE_MASK:
+			value &= 0b1111;
+			LogPrintf(Logger::LOG_INFO, "WriteVideoArrayData: Set Palette Mask = %02Xh", value);
+			m_mode.paletteMask = value;
+			break;
+		case VA_BORDER_COLOR:
+			value &= 0b1111;
+			LogPrintf(Logger::LOG_INFO, "WriteVideoArrayData: Set Border Color = % 02Xh", value);
+			m_mode.borderColor = value;
+			break;
+		case VA_MODE_CTRL:
+			LogPrintf(Logger::LOG_DEBUG, "WriteVideoArrayData: Set Mode Control = %02Xh", value);
 
-				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister SetMode1 [%cHIBW %cGRAPH %cMONO %cVIDEO %cGRAPH16COLORS]",
-					m_mode.hiBandwidth ? ' ' : '/',
-					m_mode.graphics ? ' ' : '/',
-					m_mode.monochrome ? ' ' : '/',
-					m_mode.enableVideo ? ' ' : '/',
-					m_mode.graph16Colors ? ' ' : '/');
-				break;
-			case GA_PALETTE_MASK:
-				value &= 0b1111;
-				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Set Palette Mask = %02Xh", value);
-				m_mode.paletteMask = value;
-				break;
-			case GA_BORDER_COLOR:
-				value &= 0b1111;
-				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Set Border Color = % 02Xh", value);
-				m_mode.borderColor = value;
-				break;
-			case GA_MODE_CTRL_2:
-				LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister: Set Mode Control 2 = %02Xh", value);
-				m_mode.blink = value & 2;
-				m_mode.graph2Colors = value & 8;
+			m_mode.borderEnable = GetBit(value, 2);
+			m_mode.graph640x200x4 = GetBit(value, 3);
+			m_mode.graph16Colors = GetBit(value, 4);
 
-				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister SetMode2 [%cBLINK %cGRAPH2COLORS]",
-					m_mode.blink ? ' ' : '/',
-					m_mode.graph2Colors ? ' ' : '/');
-				break;
-			case GA_RESET:
-				value &= 0b11;
-				LogPrintf(Logger::LOG_DEBUG, "WriteGateArrayRegister: Reset, value = %02Xh", value);
-				// We don't really have to do anything special for the resets
-				if (!value)
-				{
-					LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Reset Completed");
-				}
-				if (value & 1)
-				{
-					LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Asynchronous Reset");
-				}
-				else if (value & 2)
-				{
-					LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister: Synchronous Reset");
-				}
-				break;
-			default:
-				LogPrintf(Logger::LOG_WARNING, "WriteGateArrayRegister: Invalid register address = %02Xh", m_mode.currRegister);
-				break;
-			}
+			LogPrintf(Logger::LOG_INFO, "WriteVideoArrayData SetMode [%cBORDER_EN %c640x400x4 %cGRAPH16]",
+				m_mode.borderEnable ? ' ' : '/',
+				m_mode.graph640x200x4 ? ' ' : '/',
+				m_mode.graph16Colors ? ' ' : '/');
+			break;
+		default:
+			LogPrintf(Logger::LOG_WARNING, "WriteVideoArrayData: Invalid register address = %02Xh", m_videoArrayRegisterAddress);
+			break;
 		}
 
-		m_mode.addressDataFlipFlop = !m_mode.addressDataFlipFlop;
 	}
 
 	BYTE VideoTandy::ReadStatusRegister()
 	{
-		// Reading the status register resets the GateArrayRegister address/data flip-flop
-		m_mode.addressDataFlipFlop = false;
-
 		// Bit0: 1:Display enabled
 		// 
 		// Light pen, not implemented
@@ -251,15 +259,11 @@ namespace video
 		// 
 		// Bit4 1:Video dot
 
-		// register "address" selects the video dot to inspect (0-3: [B,G,R,I])
-		bool dot = (m_lastDot & (1 << (m_mode.currRegister & 3)));
-
 		BYTE status =
 			(m_crtc.IsDisplayArea() << 0) |
 			(0 << 1) | // Light Pen Trigger
 			(1 << 2) | // Light Pen switch
-			(m_crtc.IsVSync() << 3) |
-			(dot << 4); // Video dots
+			(m_crtc.IsVSync() << 3);
 
 		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister, value=%02Xh", status);
 
@@ -271,8 +275,8 @@ namespace video
 		// TODO: don't recompute every time
 		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
 
-		uint32_t borderRGB = m_alphaPalette[m_mode.borderColor];
-		Video::RenderFrame(w, 200, borderRGB);
+		uint32_t borderRGB = m_colors[m_mode.borderColor];
+		Video::RenderFrame(w, 225, borderRGB);
 	}
 
 	void VideoTandy::Tick()
@@ -282,7 +286,7 @@ namespace video
 			return;
 		}
 
-		//if (m_mode.enableVideo)
+		if (m_mode.enableVideo)
 		{
 			(this->*m_drawFunc)();
 		}
@@ -308,36 +312,26 @@ namespace video
 		//// Pointers for graphics mode
 		m_banks[0] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x0000);
 		m_banks[1] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
-		m_banks[2] = m_mode.hiBandwidth ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x4000) : nullptr;
-		m_banks[3] = m_mode.hiBandwidth ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x6000) : nullptr;
+
+		bool graph32K = (m_mode.hiDotClock && m_mode.graphics);
+		m_banks[2] = graph32K ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x4000) : nullptr;
+		m_banks[3] = graph32K ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x6000) : nullptr;
 
 		//// Select draw function
 		m_xAxisDivider = 2;
-		if (true/*!m_mode.graphics*/)
+		if (!m_mode.graphics)
 		{
 			m_drawFunc = &VideoTandy::DrawTextMode;
 		}
-		else if (m_mode.graph2Colors)
+		else if (m_mode.hiResolution)
 		{
-			m_drawFunc = &VideoTandy::Draw640x200x2;
+			m_drawFunc = m_mode.graph640x200x4 ? &VideoTandy::Draw640x200x4 : &VideoTandy::Draw640x200x2;
 			m_xAxisDivider = 1;
 		}
 		else if (m_mode.graph16Colors)
 		{
-			if (m_mode.hiBandwidth)
-			{
-				m_drawFunc = &VideoTandy::Draw320x200x16;
-				m_xAxisDivider = 4;
-			} 
-			else
-			{
-				m_drawFunc = &VideoTandy::Draw160x200x16;
-				m_xAxisDivider = 4;
-			}
-		}
-		else if (m_mode.hiBandwidth)
-		{
-			m_drawFunc = &VideoTandy::Draw640x200x4;
+			m_drawFunc = m_mode.hiDotClock ? m_drawFunc = &VideoTandy::Draw320x200x16 : &VideoTandy::Draw160x200x16;
+			m_xAxisDivider = 4;
 		}
 		else
 		{
@@ -383,15 +377,13 @@ namespace video
 
 			// TODO: 225 lines char mode: Extend line 8 to 9 for some characters, need info.
 			// For now leave lines above 8 blank
-			WORD charHeight = std::min((WORD)8, data.vCharHeight);
-
-			for (int y = 0; y < charHeight; ++y)
+			for (int y = 0; y < data.vCharHeight; ++y)
 			{
 				uint32_t offset = 640 * (uint32_t)(data.vPos + y) + data.hPos;
 				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
 				for (int x = 0; x < 8; ++x)
 				{
-					bool set = cursorLine || (draw && ((*(currCharPos + y)) & (1 << (7 - x))));
+					bool set = cursorLine || (draw && (y < 8) && ((*(currCharPos + y)) & (1 << (7 - x))));
 					m_lastDot = set ? fg : bg;
 					assert(offset + x < (640 * 225));
 					m_frameBuffer[offset + x] = GetColor(m_lastDot);
