@@ -274,12 +274,15 @@ namespace video
 
 	void VideoPCjr::Tick()
 	{
-		if (!m_mode.enableVideo || !m_crtc.IsInit())
+		if (!m_crtc.IsInit())
 		{
 			return;
 		}
 
-		(this->*m_drawFunc)();
+		if (m_mode.enableVideo)
+		{
+			(this->*m_drawFunc)();
+		}
 
 		m_crtc.Tick();
 	}
