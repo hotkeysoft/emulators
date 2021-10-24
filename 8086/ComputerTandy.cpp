@@ -64,7 +64,6 @@ namespace emul
 		m_pic(0x20),
 		m_ppi(0x60),
 		m_video(0x3D0),
-//		m_keyboard(0xA0),
 		m_floppy(0xF0, PIT_CLK),
 		m_uart(0x2F8, UART_CLK),
 		m_inputs(PIT_CLK),
@@ -107,8 +106,8 @@ namespace emul
 		m_biosFC00.LoadFromFile("data/Tandy/BIOS_Tandy1000A_FC00.BIN");
 		m_memory.Allocate(&m_biosFC00, emul::S2A(0xFC00));
 
-		//m_keyboard.Init(&m_ppi, &m_pic);
-		//m_keyboard.EnableLog(true, Logger::LOG_WARNING);
+		m_keyboard.Init(&m_ppi, &m_pic);
+		m_keyboard.EnableLog(true, Logger::LOG_WARNING);
 
 		//m_floppy.Init();
 		//m_floppy.EnableLog(true, Logger::LOG_WARNING);
@@ -119,7 +118,7 @@ namespace emul
 		m_uart.EnableLog(true, Logger::LOG_WARNING);
 
 		m_inputs.EnableLog(true, Logger::LOG_WARNING);
-		//m_inputs.Init(&m_keyboard);
+		m_inputs.Init(&m_keyboard, events::KBDMapping::TANDY);
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));
 
@@ -127,9 +126,8 @@ namespace emul
 		AddDevice(m_pit);
 		AddDevice(m_ppi);
 		AddDevice(m_video);
-		//AddDevice(m_keyboard);
-		AddDevice(m_floppy);
-		AddDevice(m_uart);
+		//AddDevice(m_floppy);
+		//AddDevice(m_uart);
 		AddDevice(m_soundModule);
 		AddDevice(dummyPortTandy);
 		AddDevice(*this);
@@ -192,13 +190,9 @@ namespace emul
 				return false;
 			}
 
-			//m_keyboard.Tick();
+			m_keyboard.Tick();
 
 			m_pit.GetCounter(0).Tick();
-			//if (m_keyboard.GetTimer1Source() == kbd::CLK1::MAIN_CLK)
-			//{
-			//	m_pit.GetCounter(1).Tick();
-			//}
 
 			pit::Counter& timer2 = m_pit.GetCounter(2);
 			timer2.SetGate(m_ppi.GetTimer2Gate());
@@ -206,16 +200,7 @@ namespace emul
 
 			m_ppi.SetTimer2Output(timer2.GetOutput());
 
-			bool out = m_pit.GetCounter(0).GetOutput();
-			m_pic.InterruptRequest(0, out);
-			//if (out != timer0Out)
-			//{
-			//	if (out && m_keyboard.GetTimer1Source() == kbd::CLK1::TIMER0_OUT)
-			//	{
-			//		m_pit.GetCounter(1).Tick();
-			//	}
-			//	timer0Out = out;
-			//}
+			m_pic.InterruptRequest(0, m_pit.GetCounter(0).GetOutput());
 
 			// SN76489 clock is 3x base clock
 			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
@@ -233,13 +218,13 @@ namespace emul
 				m_pic.InterruptRequest(5, (m_video.IsVSync()));
 			}
 
-			m_uart.Tick();
-			// UART clock is 1.5x base clock
-			if (syncTicks & 1)
-			{
-				m_uart.Tick();
-			}
-			m_pic.InterruptRequest(3, m_uart.IsInterrupt());
+			//m_uart.Tick();
+			//// UART clock is 1.5x base clock
+			//if (syncTicks & 1)
+			//{
+			//	m_uart.Tick();
+			//}
+			//m_pic.InterruptRequest(3, m_uart.IsInterrupt());
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment
