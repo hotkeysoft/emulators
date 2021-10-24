@@ -2,10 +2,11 @@
 
 ## General
 
-- Connections between components
-
-### Interrupt controller
-- Multiple interrupts in one cycle
+- Dynamic connections between components
+- Adjust CPU speed
+- Improve clock sync between components, use dynamic ratios
+- Sync is based on audio only at the moment
+- Dynamic hardware selection
 
 ### Floppy controller
 - Write
@@ -24,7 +25,6 @@
 ### Keyboard
 - BIOS Function KBD_RESET(F9E2)
 - Diagnostics
-- Use SDL
 
 ### POST failures:
 - KEYBOARD TEST
@@ -34,14 +34,27 @@
 ## PCjr
 
 ### POST failures:
-- ERROR D: RS232
 - PC-DOS boot fail: command.com memory error
 
 ## Graphics
 
+### General
+- Window dynamic resize on mode changes
+- Proper aspect ratio for all modes
+
 ### CGA
+- Mostly done, need tests
 - Composite mode
 - Graphic glitches (ex: load game SQ1)
+
+### MDA
+- Mostly done, need tests
+
+### PCjr
+- Mostly done, need tests
+
+### TGA
+- In progress
 
 ### EGA
 - Everything
@@ -49,18 +62,27 @@
 ## Sound
 
 ### PC Speaker
-- Use T2 output directly instead of keeping separate count
+- Mostly done, need tests
+- Samples work in World Class Leader Board golf and Gauntlet 2
 
 ### SN76496 (PCjr/Tandy)
+- Switches in the 8255
 - Everything
+
+### General
+- Proper mixing
+- Filtering
+
+## Tandy
+- Just started
 
 ## UI
 
 ### Main Window
 - Floppy indicators
-- Change floppy
 - Change cartridge (PCjr)
 - Adjust resolution/scaling
+- Frame rate indicator
 
 ### Debugger
 - Logging when using debugger
