@@ -220,12 +220,9 @@ namespace pic
 
 			// D2 = master slave, not used
 
+			// TODO: Buffered mode not implemented, not needed until we cascade timers
 			m_init.buffered = (value & 8);
 			LogPrintf(LOG_INFO, "ICW4: Buffered mode: %d", m_init.buffered);
-			if (!m_init.buffered)
-			{
-				throw std::exception("ICW4: Non buffered mode not supported");
-			}
 
 			m_init.sfnm = (value & 16);
 			LogPrintf(LOG_INFO, "ICW4: Special Fully Nested mode: %d", m_init.sfnm);
