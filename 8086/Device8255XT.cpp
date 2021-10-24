@@ -16,8 +16,8 @@ namespace ppi
 	// Outputs diagnostic code
 	BYTE Device8255XT::PORTA_IN()
 	{
-		LogPrintf(LOG_DEBUG, "Read Keyboard, current key=%02X", m_currentKey);
-		return m_currentKey;
+		LogPrintf(LOG_DEBUG, "Read Keyboard, current key=%02X", m_portAData);
+		return m_portAData;
 	}
 	void Device8255XT::PORTA_OUT(BYTE value)
 	{
@@ -152,10 +152,5 @@ namespace ppi
 	{
 		m_switches &= ~SW_COPROCESSOR;
 		m_switches |= (set ? SW_COPROCESSOR : 0);
-	}
-
-	void Device8255XT::SetCurrentKeyCode(BYTE keyCode)
-	{ 
-		m_currentKey = keyCode;
 	}
 }

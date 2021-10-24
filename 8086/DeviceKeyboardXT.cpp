@@ -10,7 +10,8 @@ namespace kbd
 
 	void DeviceKeyboardXT::Init(ppi::Device8255* ppi, pic::Device8259* pic)
 	{
-		assert(dynamic_cast<ppi::Device8255XT*>(ppi));
+		assert(ppi);
+		assert(pic);
 		DeviceKeyboard::Init(ppi, pic);
 	}
 
@@ -34,7 +35,7 @@ namespace kbd
 		}
 		else if (m_keyBufRead != m_keyBufWrite)
 		{
-			((ppi::Device8255XT*)m_ppi)->SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
+			m_ppi->SetCurrentKeyCode(m_keyBuf[m_keyBufRead++]);
 			m_pic->InterruptRequest(1);
 			keySent = true;
 		}

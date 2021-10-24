@@ -49,8 +49,6 @@ namespace ppi
 		void SetPOSTLoop(bool);
 		void SetMathCoprocessor(bool);
 
-		virtual void SetCurrentKeyCode(BYTE keyCode);
-
 		bool GetTimer2Gate() const { return m_portBData & 1; }
 		void SetTimer2Output(bool value)
 		{
@@ -71,7 +69,5 @@ namespace ppi
 
 		// Motherboard configuration switches
 		BYTE m_switches = 0;
-
-		BYTE m_currentKey = 0xAA;
 	};
 }

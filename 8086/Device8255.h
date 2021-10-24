@@ -28,6 +28,8 @@ namespace ppi
 
 		virtual bool IsSoundON();
 
+		virtual void SetCurrentKeyCode(BYTE keyCode) { m_portAData = keyCode; }
+
 	protected:
 		virtual BYTE PORTA_IN() = 0;
 		virtual void PORTA_OUT(BYTE value) = 0;
