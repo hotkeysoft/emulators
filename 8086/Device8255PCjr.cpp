@@ -52,7 +52,7 @@ namespace ppi
 		}
 
 		if (diff & 0x40) LogPrintf(LOG_INFO, "PB6: SPKR Switch 1 %s", value & 0x40 ? "HI" : "LOW");
-		if (diff & 0x40) LogPrintf(LOG_INFO, "PB5: SPKR Switch 0 %s", value & 0x40 ? "HI" : "LOW");
+		if (diff & 0x20) LogPrintf(LOG_INFO, "PB5: SPKR Switch 0 %s", value & 0x20 ? "HI" : "LOW");
 		if (diff & 0x10) LogPrintf(LOG_INFO, "PB4: Internal Beeper/Cassette Motor Relay %s", value & 0x10 ? "DISABLE" : "ENABLE");
 		if (diff & 0x08) LogPrintf(LOG_INFO, "PB3: Cassette Motor %s", value & 0x08 ? "OFF" : "ON");
 		if (diff & 0x04) LogPrintf(LOG_INFO, "PB2: Video Mode %s", value & 0x04 ? "ALPHA" : "GRAPHICS");
