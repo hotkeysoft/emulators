@@ -11,7 +11,7 @@ namespace ppi
 
 	void Device8255::Reset()
 	{
-		LogPrintf(LOG_INFO, "Reset");
+		LogPrintf(LOG_DEBUG, "Reset");
 		SetControlWord(DEFAULT_CONTROLWORD);
 		m_portAData = 0;
 		m_portBData = 0;
@@ -55,24 +55,24 @@ namespace ppi
 		switch (ctrl & (CTRL_GA_MODE2 | CTRL_GA_MODE1))
 		{
 		case 0:
-			LogPrintf(LOG_INFO, "GROUP A   : MODE 0");
+			LogPrintf(LOG_DEBUG, "GROUP A   : MODE 0");
 			break;
 		case CTRL_GA_MODE1:
-			LogPrintf(LOG_INFO, "GROUP A   : MODE 1");
+			LogPrintf(LOG_DEBUG, "GROUP A   : MODE 1");
 			throw std::exception("GROUP A MODE 1 not implemented");
 		default:
-			LogPrintf(LOG_INFO, "GROUP A   : MODE 2");
+			LogPrintf(LOG_DEBUG, "GROUP A   : MODE 2");
 			throw std::exception("GROUP A MODE 2 not implemented");
 		}
 
 		if (ctrl & CTRL_GB_MODE1)
 		{
-			LogPrintf(LOG_INFO, "GROUP B   : MODE 1");
+			LogPrintf(LOG_DEBUG, "GROUP B   : MODE 1");
 			throw std::exception("GROUP B MODE 1 not implemented");
 		}
 		else
 		{
-			LogPrintf(LOG_INFO, "GROUP B   : MODE 0");
+			LogPrintf(LOG_DEBUG, "GROUP B   : MODE 0");
 		}
 
 		// Assume mode 0 for now
@@ -82,14 +82,14 @@ namespace ppi
 		m_portCHDirection = (m_controlWord & CTRL_GA_C_DIR_H) ? DIRECTION::INPUT : DIRECTION::OUTPUT;
 		m_portCLDirection = (m_controlWord & CTRL_GB_C_DIR_L) ? DIRECTION::INPUT : DIRECTION::OUTPUT;
 
-		LogPrintf(LOG_INFO, "PORT A    : %s", GetPortDirectionStr(m_portADirection));
-		LogPrintf(LOG_INFO, "PORT B    : %s", GetPortDirectionStr(m_portBDirection));
-		LogPrintf(LOG_INFO, "PORT C(hi): %s", GetPortDirectionStr(m_portCHDirection));
-		LogPrintf(LOG_INFO, "PORT C(lo): %s", GetPortDirectionStr(m_portCLDirection));
+		LogPrintf(LOG_DEBUG, "PORT A    : %s", GetPortDirectionStr(m_portADirection));
+		LogPrintf(LOG_DEBUG, "PORT B    : %s", GetPortDirectionStr(m_portBDirection));
+		LogPrintf(LOG_DEBUG, "PORT C(hi): %s", GetPortDirectionStr(m_portCHDirection));
+		LogPrintf(LOG_DEBUG, "PORT C(lo): %s", GetPortDirectionStr(m_portCLDirection));
 
-		m_portAData = 0;
-		m_portBData = 0;
-		m_portCData = 0;
+		//m_portAData = 0;
+		//m_portBData = 0;
+		//m_portCData = 0;
 
 		return;
 	}

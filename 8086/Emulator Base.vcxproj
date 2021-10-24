@@ -173,6 +173,7 @@
     <ClCompile Include="CartridgePCjr.cpp" />
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="ComputerPCjr.cpp" />
+    <ClCompile Include="ComputerTandy.cpp" />
     <ClCompile Include="ComputerXT.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="CPU.cpp" />
@@ -185,6 +186,7 @@
     <ClCompile Include="Device8254.cpp" />
     <ClCompile Include="Device8255.cpp" />
     <ClCompile Include="Device8255PCjr.cpp" />
+    <ClCompile Include="Device8255Tandy.cpp" />
     <ClCompile Include="Device8255XT.cpp" />
     <ClCompile Include="Device8259.cpp" />
     <ClCompile Include="DeviceFloppy.cpp" />
@@ -209,6 +211,7 @@
     <ClCompile Include="VideoHGC.cpp" />
     <ClCompile Include="VideoMDA.cpp" />
     <ClCompile Include="VideoPCjr.cpp" />
+    <ClCompile Include="VideoTandy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h" />
@@ -216,6 +219,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="Computer.h" />
     <ClInclude Include="ComputerPCjr.h" />
+    <ClInclude Include="ComputerTandy.h" />
     <ClInclude Include="ComputerXT.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="CPU.h" />
@@ -228,6 +232,7 @@
     <ClInclude Include="Device8254.h" />
     <ClInclude Include="Device8255.h" />
     <ClInclude Include="Device8255PCjr.h" />
+    <ClInclude Include="Device8255Tandy.h" />
     <ClInclude Include="Device8255XT.h" />
     <ClInclude Include="Device8259.h" />
     <ClInclude Include="DeviceFloppy.h" />
@@ -251,6 +256,7 @@
     <ClInclude Include="VideoHGC.h" />
     <ClInclude Include="VideoMDA.h" />
     <ClInclude Include="VideoPCjr.h" />
+    <ClInclude Include="VideoTandy.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">

@@ -9,6 +9,7 @@
 
 #include "ComputerXT.h"
 #include "ComputerPCjr.h"
+#include "ComputerTandy.h"
 
 #include <conio.h>
 #include <vector>
@@ -151,8 +152,9 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	emul::ComputerXT pc;
+	//emul::ComputerXT pc;
 	//emul::ComputerPCjr pc;
+	emul::ComputerTandy pc;
 
 	//emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	//testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");

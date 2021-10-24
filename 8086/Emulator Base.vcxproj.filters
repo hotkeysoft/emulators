@@ -177,6 +177,15 @@
     <ClCompile Include="VideoHGC.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="ComputerTandy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Device8255Tandy.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoTandy.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -297,6 +306,15 @@
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="VideoHGC.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputerTandy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Device8255Tandy.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoTandy.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
   </ItemGroup>
