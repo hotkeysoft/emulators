@@ -280,7 +280,14 @@ int main(int argc, char* args[])
 							pc.SetTurbo(ToggleTurbo());
 							break;
 						case 62: // F4
+							break;
 						case 63: // F5
+						{
+							char buf[128];
+							sprintf(buf, "dump/memdump_%zu.bin", time(nullptr));
+							pc.GetMemory().Dump(0, 65536 * 2, buf);
+							break;
+						}
 						case 64: // F6
 						case 65: // F7
 						case 66: // F8
