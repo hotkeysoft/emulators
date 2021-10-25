@@ -290,6 +290,12 @@ namespace video
 		{
 			(this->*m_drawFunc)();
 		}
+		else
+		{
+			// TODO: Check if correct
+			uint32_t borderRGB = m_colors[m_mode.borderColor];
+			std::fill(m_frameBuffer + 0, m_frameBuffer + 640*225, borderRGB);
+		}
 
 		m_crtc.Tick();
 	}
