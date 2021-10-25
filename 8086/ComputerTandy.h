@@ -32,6 +32,7 @@ namespace emul
 
 		// TODO: Should be dynamic
 		emul::MemoryBlock m_base128K;
+		emul::MemoryBlock m_ramExtension;
 		emul::MemoryBlock m_biosFC00;
 
 		pit::Device8254 m_pit;

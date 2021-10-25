@@ -32,7 +32,7 @@ namespace emul
 			}
 
 			// Optional DMA Controller
-			for (WORD w = 0; w < 0xF; ++w)
+			for (WORD w = 0; w <= 0xF; ++w)
 			{
 				Connect(w, static_cast<PortConnector::INFunction>(&DummyPortTandy::ReadData));
 				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortTandy::WriteData));
@@ -58,7 +58,8 @@ namespace emul
 	ComputerTandy::ComputerTandy() :
 		Logger("Tandy"),
 		Computer(m_memory, m_map),
-		m_base128K("RAM0", 0x20000, emul::MemoryType::RAM),
+		m_base128K("SYSRAM", 0x20000, emul::MemoryType::RAM),
+		m_ramExtension("EXTRAM", 0x80000, emul::MemoryType::RAM),
 		m_biosFC00("BIOS", 0x4000, emul::MemoryType::ROM),
 		m_pit(0x40, PIT_CLK),
 		m_pic(0x20),
@@ -82,8 +83,11 @@ namespace emul
 		m_memory.EnableLog(true, Logger::LOG_WARNING);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
 
-		m_base128K.Clear(0xA5);
-		m_memory.Allocate(&m_base128K, 0);
+		m_ramExtension.Clear(0xA5);
+		m_memory.Allocate(&m_ramExtension, 0);
+
+		m_base128K.Clear(0x5A);
+		m_memory.Allocate(&m_base128K, 0x2000);
 
 		m_pit.Init();
 		m_pit.EnableLog(true, Logger::LOG_INFO);
@@ -92,7 +96,7 @@ namespace emul
 		m_pic.EnableLog(true, Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_INFO);
+		m_ppi.EnableLog(true, Logger::LOG_WARNING);
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
 		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
@@ -110,7 +114,7 @@ namespace emul
 		m_keyboard.EnableLog(true, Logger::LOG_WARNING);
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_INFO);
+		m_floppy.EnableLog(true, Logger::LOG_WARNING);
 		m_floppy.LoadDiskImage(0, "data/floppy/TANDY-MS-DOS-2.11.22.img");
 		m_floppy.LoadDiskImage(1, "data/floppy/TANDY-DESKMATE-1.01.00.img");
 		
@@ -135,6 +139,8 @@ namespace emul
 
 	void ComputerTandy::SetRAMPage(BYTE value)
 	{
+		m_memory.EnableLog(true, LOG_INFO);
+
 		value >>= 1;
 		value &= 0b111;
 
@@ -142,9 +148,16 @@ namespace emul
 
 		LogPrintf(LOG_WARNING, "Set RAM Page: [%d][%05Xh]", value, ramBase);
 
-		m_memory.EnableLog(true, LOG_INFO);
+		// Remove base ram and extension
 		m_memory.Free(&m_base128K);
+		m_memory.Free(&m_ramExtension);
+
+		// Put extended memory at 0
+		m_memory.Allocate(&m_ramExtension, 0);
+
+		// Put base/video mem on top at proper offset
 		m_memory.Allocate(&m_base128K, ramBase);
+		// Notify video module
 		m_video.SetRAMBase(ramBase);
 	}
 
@@ -180,7 +193,7 @@ namespace emul
 		assert(GetInstructionTicks());
 		cpuTicks += GetInstructionTicks();
 
-		for (int i = 0; i < cpuTicks / 4; ++i)
+		for (int i = 0; i < cpuTicks / 8; ++i)
 		{
 			++g_ticks;
 
@@ -241,7 +254,7 @@ namespace emul
 			//	lastTick = std::chrono::high_resolution_clock::now();
 			//}
 		}
-		cpuTicks %= 4;
+		cpuTicks %= 8;
 
 		return true;
 	}
