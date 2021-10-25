@@ -1,6 +1,8 @@
 #include "DeviceFloppy.h"
 #include <assert.h>
 
+using emul::GetBit;
+
 namespace fdc
 {
 	const size_t RESET_DELAY_US = 10 * 1000; // 10 ms
@@ -405,8 +407,7 @@ namespace fdc
 		LogPrintf(LOG_DEBUG, "ReadCommand, cmd = %02X", m_currcommandID);
 
 		// Only check 5 lower bits, hi bits are parameters or fixed 0/1
-		m_currcommandID &= 0b00011111;
-		CommandMap::const_iterator it = m_commandMap.find((CMD)m_currcommandID);
+		CommandMap::const_iterator it = m_commandMap.find((CMD)(m_currcommandID & 0b00011111));
 		if (it != m_commandMap.end())
 		{
 			m_currCommand = &(it->second);
@@ -574,12 +575,13 @@ namespace fdc
 		BYTE gpl = Pop();
 		BYTE dtl = Pop();
 
-		LogPrintf(LOG_INFO, "COMMAND: Read Data drive=[%d] head=[%d]", m_currDrive, head);
-		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
-
 		m_currHead = head;
 		m_currSector = r;
 		m_maxSector = eot;
+		m_multiTrack = GetBit(m_currcommandID, 7);
+
+		LogPrintf(LOG_INFO, "COMMAND: Read Data drive=[%d] head=[%d] multitrack=[%d]", m_currDrive, head, m_multiTrack);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		// TODO: Error handling, validation
 		m_pcn = c;
@@ -587,9 +589,6 @@ namespace fdc
 		//{
 		//	throw std::exception("cylinder != current cylinder");
 		//}
-
-		// TODO: Multitrack + extract bit because it's stripped of m_currcommandID
-		// (m_currcommandID & 0x80) //MT 
 
 		// Only this configuration is supported at the moment
 		assert(n == 2);		// All floppy drives use 512 bytes/sector
@@ -644,12 +643,13 @@ namespace fdc
 		BYTE gpl = Pop();
 		BYTE dtl = Pop();
 
-		LogPrintf(LOG_INFO, "COMMAND: Read Track drive=[%d] head=[%d]", m_currDrive, head);
-		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
-
 		m_currHead = head;
 		m_currSector = 1;
 		m_maxSector = eot;
+		m_multiTrack = false; // No multitrack bit in command id
+
+		LogPrintf(LOG_INFO, "COMMAND: Read Track drive=[%d] head=[%d] multitrack=[%d]", m_currDrive, head, m_multiTrack);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		// TODO: Error handling, validation
 		m_pcn = c;
@@ -657,9 +657,6 @@ namespace fdc
 		//{
 		//	throw std::exception("cylinder != current cylinder");
 		//}
-
-		// TODO: Multitrack
-		// (m_currcommandID & 0x80) //MT
 
 		// Only this configuration is supported at the moment
 		assert(n == 2);      // All floppy drives use 512 bytes/sector
@@ -701,25 +698,21 @@ namespace fdc
 		FloppyDisk& disk = m_images[m_currDrive];
 		// TODO: Handle not loaded
 
-		BYTE maxSector = m_nonDMA ? std::min(m_maxSector, disk.geometry.sect) : disk.geometry.sect;
-
 		if (m_fifo.size() == 0)
-		{		
-			++m_currSector;
-			if (m_currSector > maxSector)
+		{
+			bool isEOT = UpdateCurrPos();
+			if (isEOT)
 			{
-				m_currSector = 1;
-
-				// TODO for now don't auto move to next track
+				LogPrintf(LOG_INFO, "ReadSector done, end of track");
 				m_currOpWait = DelayToTicks(10);
 				m_nextState = STATE::RW_DONE;
 				m_state = STATE::CMD_EXEC_DELAY;
 				return;
 			}
 
-			LogPrintf(LOG_INFO, "ReadSector done, reading next sector %d", m_currSector);
+			LogPrintf(LOG_INFO, "ReadSector done, caching next sector %d", m_currSector);
 			// Put the whole sector in the fifo
-			// TODO: Avoid duplication
+			// TODO: Avoid duplication, check out of bounds
 			uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
 			for (size_t b = 0; b < 512; ++b)
 			{
@@ -766,12 +759,13 @@ namespace fdc
 		BYTE gpl = Pop();
 		BYTE dtl = Pop();
 
-		LogPrintf(LOG_INFO, "COMMAND: Write Data drive=[%d] head=[%d]", m_currDrive, head);
-		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
-
 		m_currHead = head;
 		m_currSector = r;
 		m_maxSector = eot;
+		m_multiTrack = GetBit(m_currcommandID, 7);
+
+		LogPrintf(LOG_INFO, "COMMAND: Write Data drive=[%d] head=[%d] multitrack=[%d]", m_currDrive, head, m_multiTrack);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		// TODO: Error handling, validation
 		m_pcn = c;
@@ -779,9 +773,6 @@ namespace fdc
 		//{
 		//	throw std::exception("cylinder != current cylinder");
 		//}
-
-		// TODO: Multitrack
-		// (m_currcommandID & 0x80) //MT
 
 		// Only this configuration is supported at the moment
 		assert(n == 2);      // All floppy drives use 512 bytes/sector
@@ -832,11 +823,9 @@ namespace fdc
 				disk.data[offset + b] = Pop();
 			}
 
-			++m_currSector;
-			if (m_currSector > maxSector)
+			bool isEOT = UpdateCurrPos();
+			if (isEOT)
 			{
-				m_currSector = 1;
-
 				m_dataRegisterReady = false;
 				m_currOpWait = DelayToTicks(10);
 				m_nextState = STATE::RW_DONE;
@@ -864,5 +853,30 @@ namespace fdc
 		m_currOpWait = DelayToTicks(10);
 		m_nextState = STATE::RW_DONE;
 		m_state = STATE::CMD_EXEC_DELAY;
+	}
+	
+	bool DeviceFloppy::UpdateCurrPos()
+	{
+		const FloppyDisk& disk = m_images[m_currDrive];
+		BYTE maxSector = m_nonDMA ? std::min(m_maxSector, disk.geometry.sect) : disk.geometry.sect;
+
+		bool isEOT = (m_currSector >= maxSector);
+		LogPrintf(LOG_DEBUG, "UpdateCurrPos mt=[%d], head=[%d], EOT=[%d]", m_multiTrack, m_currHead, isEOT);
+
+		if (m_multiTrack)
+		{
+			m_pcn += (isEOT && m_currHead) ? 1 : 0;
+			m_currHead ^= isEOT ? 1 : 0; // Toggle head
+		}
+		else
+		{
+			m_pcn += isEOT ? 1 : 0;
+		}
+		m_currSector = isEOT ? 1 : (m_currSector + 1);
+		LogPrintf(LOG_INFO, "UpdateCurrPos done: cyl=[%d] head=[%d] sector=[%d]", m_pcn, m_currHead, m_currSector);
+
+		// TODO: In multitrack mode, should continue if eot and head passes from 0 to 1
+		// Does anyone uses this?
+		return isEOT;
 	}
 }

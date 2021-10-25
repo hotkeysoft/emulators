@@ -94,6 +94,7 @@ namespace fdc
 		void ReadSector();
 		void RWSectorEnd();
 		void WriteSector();
+		bool UpdateCurrPos();
 
 		// FDC Commands
 		typedef STATE(DeviceFloppy::* ExecFunc)();
@@ -157,6 +158,7 @@ namespace fdc
 		BYTE m_currSector = 0;
 		BYTE m_maxSector = 0;
 		BYTE m_currHead = 0;
+		bool m_multiTrack = false;
 
 		BYTE m_srt = 0; // Step Rate Time, time between cylinders (ms)
 		BYTE m_hlt = 0; // Head Load Time, time to wait between activating head and before read (ms)
