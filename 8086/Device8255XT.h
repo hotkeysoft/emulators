@@ -39,6 +39,8 @@ namespace ppi
 			SW_FLOPPY_H =    0x80, // SW8
 		};
 	
+		virtual void Reset() override;
+
 		// Amount of memory on system board
 		void SetRAMConfig(RAMSIZE);
 

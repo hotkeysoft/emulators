@@ -6,6 +6,14 @@ namespace ppi
 		Logger("8255XT"),
 		Device8255(baseAddress)
 	{
+		Reset();
+	}
+
+	void Device8255XT::Reset()
+	{
+		// For POST test
+		// TODO: Need proper keyboard emulation, still get POST error
+		m_portAData = 0xAA;
 	}
 
 	// PORT A: KEYBOARD DATA (INPUT)

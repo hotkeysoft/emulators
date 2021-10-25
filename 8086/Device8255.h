@@ -21,16 +21,16 @@ namespace ppi
 		Device8255(Device8255&&) = delete;
 		Device8255& operator=(Device8255&&) = delete;
 
-		void Init();
-		void Reset();
-
-		void SetControlWord(BYTE ctrl);
+		virtual void Init();
+		virtual void Reset();
 
 		virtual bool IsSoundON();
 
 		virtual void SetCurrentKeyCode(BYTE keyCode) { m_portAData = keyCode; }
 
 	protected:
+		void SetControlWord(BYTE ctrl);
+
 		virtual BYTE PORTA_IN() = 0;
 		virtual void PORTA_OUT(BYTE value) = 0;
 
