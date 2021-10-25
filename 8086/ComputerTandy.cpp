@@ -16,6 +16,8 @@ namespace emul
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
 
+	static bool RAM_EXTENSION = true;
+
 	static class DummyPortTandy : public PortConnector
 	{
 	public:
@@ -74,8 +76,6 @@ namespace emul
 
 	void ComputerTandy::Init()
 	{
-		bool RAM128K = true;
-
 		LogPrintf(LOG_INFO, "CPU Clock:  [%zu]", CPU_CLK);
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
@@ -83,8 +83,11 @@ namespace emul
 		m_memory.EnableLog(true, Logger::LOG_WARNING);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
 
-		m_ramExtension.Clear(0xA5);
-		m_memory.Allocate(&m_ramExtension, 0);
+		if (RAM_EXTENSION)
+		{
+			m_ramExtension.Clear(0xA5);
+			m_memory.Allocate(&m_ramExtension, 0);
+		}
 
 		m_base128K.Clear(0x5A);
 		m_memory.Allocate(&m_base128K, 0x2000);
@@ -150,10 +153,13 @@ namespace emul
 
 		// Remove base ram and extension
 		m_memory.Free(&m_base128K);
-		m_memory.Free(&m_ramExtension);
 
-		// Put extended memory at 0
-		m_memory.Allocate(&m_ramExtension, 0);
+		if (RAM_EXTENSION)
+		{
+			m_memory.Free(&m_ramExtension);
+			// Put extended memory at 0
+			m_memory.Allocate(&m_ramExtension, 0);
+		}
 
 		// Put base/video mem on top at proper offset
 		m_memory.Allocate(&m_base128K, ramBase);
