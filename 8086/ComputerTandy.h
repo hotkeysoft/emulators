@@ -8,7 +8,7 @@
 #include "DevicePCSpeaker.h"
 #include "DeviceSN76489.h"
 #include "DeviceFloppyTandy.h"
-#include "DeviceKeyboardXT.h"
+#include "DeviceKeyboardTandy.h"
 #include "VideoTandy.h"
 #include "InputEvents.h"
 
@@ -39,7 +39,7 @@ namespace emul
 		pic::Device8259 m_pic;
 		ppi::Device8255Tandy m_ppi;
 		fdc::DeviceFloppyTandy m_floppy;
-		kbd::DeviceKeyboardXT m_keyboard;
+		kbd::DeviceKeyboardTandy m_keyboard;
 		uart::Device8250 m_uart;
 		video::VideoTandy m_video;
 		beeper::DevicePCSpeaker m_pcSpeaker;

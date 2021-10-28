@@ -28,6 +28,8 @@ namespace ppi
 			m_timer2Out = value; 
 		}
 
+		bool IsKeyboardBusy() const { return emul::GetBit(m_portBData, 7); }
+
 	protected:
 		virtual BYTE PORTA_IN() override;
 		virtual void PORTA_OUT(BYTE value) override;

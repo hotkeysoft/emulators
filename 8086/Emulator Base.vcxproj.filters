@@ -189,6 +189,9 @@
     <ClCompile Include="DeviceFloppyTandy.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
+    <ClCompile Include="DeviceKeyboardTandy.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -322,6 +325,9 @@
     </ClInclude>
     <ClInclude Include="DeviceFloppyTandy.h">
       <Filter>Header Files\Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceKeyboardTandy.h">
+      <Filter>Header Files\IO</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

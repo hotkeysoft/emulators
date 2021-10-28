@@ -25,7 +25,7 @@ namespace kbd
 
 		virtual void Tick() = 0;
 
-		void InputKey(BYTE ch) { m_keyBuf[m_keyBufWrite++] = ch; }
+		void InputKey(BYTE ch) { LogPrintf(LOG_DEBUG, "InputKey %02Xh", ch); m_keyBuf[m_keyBufWrite++] = ch; }
 
 	protected:
 		ppi::Device8255* m_ppi = nullptr;
