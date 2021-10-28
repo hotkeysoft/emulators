@@ -219,8 +219,8 @@ namespace events
 		{ SDL_SCANCODE_INSERT, 0x55 },
 		{ SDL_SCANCODE_DELETE, 0x53 },
 
-		{ SDL_SCANCODE_F11, 0x57 }, // *
-		{ SDL_SCANCODE_F12, 0x58 }, // *
+		{ SDL_SCANCODE_F11, 0x59 }, // *
+		{ SDL_SCANCODE_F12, 0x5A }, // *
 
 		{ SDL_SCANCODE_KP_PERIOD, 0x56 }, // *
 		{ SDL_SCANCODE_KP_ENTER, 0x57 }, // *
