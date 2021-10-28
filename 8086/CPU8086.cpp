@@ -2351,7 +2351,12 @@ namespace emul
 			}
 #endif
 		}
-
+#if 0
+		else if (interrupt >= 0x09 && interrupt < 0x10)
+		{
+			LogPrintf(LOG_WARNING, "IRQ(%d)", interrupt - 8);
+		}
+#endif
 		PUSH(flags);
 		PUSH(regCS);
 		PUSH(inRep ? repIP : regIP);
