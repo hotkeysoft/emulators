@@ -2171,12 +2171,12 @@ namespace emul
 
 		if (PreREP())
 		{
-			BYTE val;
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), val);
-			m_memory.Write(S2A(regES, regDI), val);
+			BYTE l, h;
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), l);
+			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI + 1), h);
 
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI+1), val);
-			m_memory.Write(S2A(regES, regDI+1), val);
+			m_memory.Write(S2A(regES, regDI), l);
+			m_memory.Write(S2A(regES, regDI+1), h);
 
 			IndexIncDec(regSI);
 			IndexIncDec(regSI);
