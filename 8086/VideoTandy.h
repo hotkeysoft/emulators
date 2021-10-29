@@ -68,6 +68,15 @@ namespace video
 		void UpdatePageRegisters();
 
 		void WriteModeControlRegister(BYTE value);
+
+		// Color Select Register
+		struct COLORSelect
+		{
+			BYTE color = 0; // bits 0-3: bgri border (alpha) / border+bg (320x200) / fg (640x200)
+
+			bool palIntense = false; // bit 4 intensity palette (320x200) and non-blink alpha mode
+			bool palSelect = false; // bit 5 graph palette (320x200)
+		} m_color;
 		void WriteColorSelectRegister(BYTE value);
 
 		enum VideoArrayAddress
@@ -145,10 +154,7 @@ namespace video
 		BYTE* m_banks[4] = { 0, 0, 0, 0 };
 
 		const uint32_t* m_colors = nullptr;
-
-		// Diagnostics: dot information (status register)
-		// Only works in alpha modes for the moment
-		BYTE m_lastDot = 0; 
+		BYTE m_currGraphPalette[4];
 
 		crtc::Device6845 m_crtc;
 	};

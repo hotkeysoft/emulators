@@ -128,12 +128,24 @@ namespace video
 			m_mode.hiResolution ? ' ' : '/',
 			m_mode.blink ? ' ' : '/');
 
-		m_colors = m_mode.monochrome ? MonoGreyPalette : ColorPalette;
+		// TODO: We use the color palette even in mono mode because of CGA mode 5 
+		// which is used with the monochrome bit set. The mono palette should only
+		// be used for monochrome monitors
+		m_colors = /*m_mode.monochrome ? MonoGreyPalette :*/ ColorPalette;
 	}
 
 	void VideoTandy::WriteColorSelectRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteColorSelectRegister, value=%02Xh", value);
+
+		m_color.color = (value & 15);
+		m_color.palIntense = GetBit(value, 4);
+		m_color.palSelect = GetBit(value, 5);
+
+		LogPrintf(Logger::LOG_INFO, "WriteColorSelectRegister color=%d, palette %d, intense %d",
+			m_color.color,
+			m_color.palSelect,
+			m_color.palIntense);
 	}
 
 	void VideoTandy::WritePageRegister(BYTE value)
@@ -275,7 +287,7 @@ namespace video
 		// TODO: don't recompute every time
 		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
 
-		uint32_t borderRGB = m_colors[m_mode.borderColor];
+		uint32_t borderRGB = m_colors[m_mode.borderEnable ? m_mode.borderColor: m_color.color];
 		Video::RenderFrame(w, 225, borderRGB);
 	}
 
@@ -344,6 +356,16 @@ namespace video
 			m_drawFunc = &VideoTandy::Draw320x200x4;
 			m_xAxisDivider = 2;
 		}
+
+		m_currGraphPalette[0] = m_color.color;
+		for (int i = 1; i < 4; ++i)
+		{
+			m_currGraphPalette[i] =
+				(m_color.palIntense << 3) | // Intensity
+				(i << 1) |
+				(m_color.palSelect && !m_mode.monochrome) | // Palette shift for non mono modes
+				(m_mode.monochrome & (i & 1)); // Palette shift for mono modes
+		}
 	}
 
 	bool VideoTandy::IsCursor() const
@@ -390,9 +412,8 @@ namespace video
 				for (int x = 0; x < 8; ++x)
 				{
 					bool set = cursorLine || (draw && (y < 8) && ((*(currCharPos + y)) & (1 << (7 - x))));
-					m_lastDot = set ? fg : bg;
 					assert(offset + x < (640 * 225));
-					m_frameBuffer[offset + x] = GetColor(m_lastDot);
+					m_frameBuffer[offset + x] = GetColor(set ? fg : bg);
 				}
 			}
 
@@ -442,7 +463,7 @@ namespace video
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					m_frameBuffer[640 * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(val);
+					m_frameBuffer[640 * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(m_currGraphPalette[val]);
 				}
 
 				++currChar;
@@ -496,7 +517,7 @@ namespace video
 				for (int x = 0; x < 8; ++x)
 				{
 					bool val = (ch & (1 << (7-x)));
-					m_frameBuffer[baseX++] = GetColor(val);
+					m_frameBuffer[baseX++] = GetColor(val ? 0xF : 0);
 				}
 				++currChar;
 			}
