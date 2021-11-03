@@ -55,6 +55,9 @@
     <Filter Include="Source Files\Video">
       <UniqueIdentifier>{57687403-4194-4180-a0d6-d13846833012}</UniqueIdentifier>
     </Filter>
+    <Filter Include="3rd Party">
+      <UniqueIdentifier>{6e23faae-71e7-41ac-8cae-5fb2768eadd8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Emulator Base.cpp">
@@ -191,6 +194,9 @@
     </ClCompile>
     <ClCompile Include="DeviceKeyboardTandy.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -329,6 +335,15 @@
     <ClInclude Include="DeviceKeyboardTandy.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\json.hpp">
+      <Filter>3rd Party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\inipp.h">
+      <Filter>3rd Party</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">
@@ -338,5 +353,8 @@
       <Filter>config</Filter>
     </None>
     <None Include="TODO.md" />
+    <None Include="config\config.ini">
+      <Filter>config</Filter>
+    </None>
   </ItemGroup>
 </Project>

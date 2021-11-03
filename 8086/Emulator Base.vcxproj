@@ -175,6 +175,7 @@
     <ClCompile Include="ComputerPCjr.cpp" />
     <ClCompile Include="ComputerTandy.cpp" />
     <ClCompile Include="ComputerXT.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="CPU.cpp" />
     <ClCompile Include="CPU8086.cpp" />
@@ -216,6 +217,8 @@
     <ClCompile Include="VideoTandy.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\inipp.h" />
+    <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="CartridgePCjr.h" />
     <ClInclude Include="Common.h" />
@@ -223,6 +226,7 @@
     <ClInclude Include="ComputerPCjr.h" />
     <ClInclude Include="ComputerTandy.h" />
     <ClInclude Include="ComputerXT.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="CPU.h" />
     <ClInclude Include="CPU8086.h" />
@@ -269,6 +273,7 @@
     <None Include="config\8086.json">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="config\config.ini" />
     <None Include="TODO.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
