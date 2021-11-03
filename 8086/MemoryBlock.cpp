@@ -47,7 +47,7 @@ namespace emul
 		DWORD newSize = ((size + BlockGranularity - 1) / BlockGranularity) * BlockGranularity;
 		if (newSize != size)
 		{
-			LogPrintf(Logger::LOG_WARNING, "Rounding block size [%s] -> [%d]", size, newSize);
+			LogPrintf(Logger::LOG_WARNING, "Rounding block size [%d] -> [%d]", size, newSize);
 		}
 		return newSize;
 	}
