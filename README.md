@@ -14,7 +14,7 @@ Emulators for 8080- and TMS1000-family CPUs
     - Boots various versions of PC/MS-DOS
     - Various games load from floppy
     - Partial emulation of components
-      - Keyboard (input from terminal window, not graph window)
+      - Keyboard
       - μPD765A Floppy drive controller
       - 8237 DMA controller (for floppy)
       - 8259 IRQ controller
@@ -24,20 +24,40 @@ Emulators for 8080- and TMS1000-family CPUs
         - 6845 CRT Controller
         - CGA text modes
         - CGA graphic modes (except 16 color composite)
-      - PC Speaker sound (incomplete, no samples/pwm)
+      - MDA graphics (Monochrome display adapter)
+      - HGC graphics (Hercules, 720x348 monochrome)
+      - PC Speaker sound
   - IBM PCjr
-    - Loads original BIOS ROM (passes POST except RS-232 test) 
-    - Shares many components w/XT (8259, 8254, 8255)
+    - Loads original BIOS ROM (passes POST) 
+    - Shares many components w/XT (8254, 8255, 8259, fdc)
     - Some cartridge games work
     - Floppy loads some booter games
     - Many versions of DOS give COMMAND.COM memory error, TODO
     - Additional or PCjr-specific components
+      - 8250 UART, only for POST test at the moment 
       - Cartridges (no dynamic load)
       - Floppy (no DMA/IRQ, watchdog)
       - Keyboard (serial data stream)
       - PCjr graphics
         - Map B800 window in main memory
         - Special modes, indexed colors
+  - Tandy 1000
+    - Loads original Tandy 1000 (base model) BIOS ROM (passes POST)
+    - Shares components w/XT (8254, 8255, 8259, fdc)
+    - 360Kx2 floppy drives (no DMA)
+    - Loads MS-DOS 2.11 (Tandy version)
+	  - Some issues (loading ANSI.SYS)
+	- Loads and runs Deskmate 1.01
+	- Runs some games
+    - Additional Tandy 1000 components
+      - Base/video RAM relocation
+      - Keyboard (different mapping, busy flag)
+      - TGA graphics (mostly compatible with CGA and PCjr)
+  - Sound module: SN76489
+    - PCjr, Tandy (and usable in XT)
+    - 3 voices + noise channel
+    - Basics working
+
 
 - TMS1000: TMS1000/1100/1400/1700 Emulator (used in old electronic games)
   - Simple monitor
