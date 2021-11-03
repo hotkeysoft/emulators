@@ -195,8 +195,8 @@ int main(int argc, char* args[])
 	pc->Reset(0xF000, 0);
 #endif
 
-	pc->EnableLog(true, Logger::LOG_INFO);
-	//pc->EnableLog(true, Logger::LOG_DEBUG);
+	pc->EnableLog(Logger::LOG_INFO);
+	//pc->EnableLog(Logger::LOG_DEBUG);
 
 #ifndef NO_CONSOLE
 	monitor.Init(pc, pc.GetMemory());

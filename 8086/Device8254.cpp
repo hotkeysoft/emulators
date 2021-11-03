@@ -312,12 +312,12 @@ namespace pit
 		s_clockSpeed = clockSpeedHz;
 	}
 
-	void Device8254::EnableLog(bool enable, SEVERITY minSev)
+	void Device8254::EnableLog(SEVERITY minSev)
 	{
-		Logger::EnableLog(enable, minSev);
-		m_counters[0].EnableLog(enable, minSev);
-		m_counters[1].EnableLog(false, minSev); // RAM Refresh, noise in logs
-		m_counters[2].EnableLog(enable, minSev);
+		Logger::EnableLog(minSev);
+		m_counters[0].EnableLog(minSev);
+		m_counters[1].EnableLog(LOG_OFF); // RAM Refresh, noise in logs
+		m_counters[2].EnableLog(minSev);
 	}
 
 	void Device8254::Reset()

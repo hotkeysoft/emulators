@@ -13,12 +13,12 @@ public:
 
 	enum SEVERITY { LOG_DEBUG = 0, LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_OFF = 999 };
 
-	virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
+	virtual void EnableLog(SEVERITY minSev = LOG_INFO);
 
 	static void RegisterLogCallback(void(*)(const char *));
 
 protected:
-	bool IsLog(SEVERITY sev) const { return m_enabled && sev >= m_minSeverity; }
+	inline bool IsLog(SEVERITY sev) const { return sev >= m_minSeverity; }
 	void _LogPrintf(SEVERITY, const char *, ...) const;
 
 private:
@@ -28,7 +28,6 @@ private:
 
 	void RegisterModuleID(const char* moduleID);
 
-	bool m_enabled;
 	SEVERITY m_minSeverity;
 	std::string m_moduleID;
 

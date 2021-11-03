@@ -55,10 +55,10 @@ namespace video
 		m_crtc.Reset();
 	}
 
-	void VideoTandy::EnableLog(bool enable, SEVERITY minSev)
+	void VideoTandy::EnableLog(SEVERITY minSev)
 	{
-		m_crtc.EnableLog(enable, minSev);
-		Video::EnableLog(enable, minSev);
+		m_crtc.EnableLog(minSev);
+		Video::EnableLog(minSev);
 	}
 
 	void VideoTandy::Init(Memory* memory, const char* charROM, BYTE border)

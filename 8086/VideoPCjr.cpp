@@ -48,10 +48,10 @@ namespace video
 		m_crtc.Reset();
 	}
 
-	void VideoPCjr::EnableLog(bool enable, SEVERITY minSev)
+	void VideoPCjr::EnableLog(SEVERITY minSev)
 	{
-		m_crtc.EnableLog(enable, minSev);
-		Video::EnableLog(enable, minSev);
+		m_crtc.EnableLog(minSev);
+		Video::EnableLog(minSev);
 	}
 
 	void VideoPCjr::Init(Memory* memory, const char* charROM, BYTE border)

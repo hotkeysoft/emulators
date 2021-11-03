@@ -78,44 +78,44 @@ namespace emul
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
-		m_memory.EnableLog(true, Logger::LOG_WARNING);
-		m_mmap.EnableLog(true, Logger::LOG_ERROR);
+		m_memory.EnableLog(Logger::LOG_WARNING);
+		m_mmap.EnableLog(Logger::LOG_ERROR);
 
 		InitRAM(baseRAM);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_INFO);
+		m_pit.EnableLog(Logger::LOG_INFO);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_WARNING);
+		m_pic.EnableLog(Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_WARNING);
+		m_ppi.EnableLog(Logger::LOG_WARNING);
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
-		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
+		m_pcSpeaker.EnableLog(Logger::LOG_WARNING);
 
 		m_soundModule.Init();
-		m_soundModule.EnableLog(true, Logger::LOG_WARNING);
+		m_soundModule.EnableLog(Logger::LOG_WARNING);
 
-		m_video.EnableLog(true, Logger::LOG_INFO);
+		m_video.EnableLog(Logger::LOG_INFO);
 		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
 		
 		m_biosFC00.LoadFromFile("data/Tandy/BIOS_Tandy1000A_FC00.BIN");
 		m_memory.Allocate(&m_biosFC00, emul::S2A(0xFC00));
 
 		m_keyboard.Init(&m_ppi, &m_pic);
-		m_keyboard.EnableLog(true, Logger::LOG_WARNING);
+		m_keyboard.EnableLog(Logger::LOG_WARNING);
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_WARNING);
+		m_floppy.EnableLog(Logger::LOG_WARNING);
 		m_floppy.LoadDiskImage(0, "data/floppy/TANDY-MS-DOS-2.11.22.img");
 		m_floppy.LoadDiskImage(1, "data/floppy/TANDY-DESKMATE-1.01.00.img");
 		
 		m_uart.Init();
-		m_uart.EnableLog(true, Logger::LOG_WARNING);
+		m_uart.EnableLog(Logger::LOG_WARNING);
 
-		m_inputs.EnableLog(true, Logger::LOG_WARNING);
+		m_inputs.EnableLog(Logger::LOG_WARNING);
 		m_inputs.Init(&m_keyboard, events::KBDMapping::TANDY);
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));

@@ -8,9 +8,8 @@ void(*Logger::m_logCallbackFunc)(const char *str);
 char Logger::m_logBuffer[1024];
 Logger::ModuleList Logger::m_moduleList;
 
-Logger::Logger(const char* moduleID) : 
-	m_moduleID(moduleID), 
-	m_enabled(true), 
+Logger::Logger(const char* moduleID) :
+	m_moduleID(moduleID),
 	m_minSeverity(SEVERITY::LOG_DEBUG)
 {
 	RegisterModuleID(moduleID);
@@ -30,9 +29,8 @@ void Logger::RegisterModuleID(const char* moduleID)
 	m_moduleList.insert(std::pair<std::string, Logger*>(moduleID, this));
 }
 
-void Logger::EnableLog(bool enable, SEVERITY minSev)
+void Logger::EnableLog(SEVERITY minSev)
 {
-	m_enabled = enable;
 	m_minSeverity = minSev;
 }
 
@@ -62,6 +60,9 @@ void Logger::_LogPrintf(SEVERITY sev, const char *msg, ...) const
 		break;
 	case LOG_ERROR:
 		pos = strcat(pos, "[ERR]") + 5;
+		break;
+	case LOG_OFF: // Should not really be used...
+		pos = strcat(pos, "[OFF]") + 5;
 		break;
 	}
 

@@ -86,7 +86,7 @@ namespace pit
 		Device8254(Device8254&&) = delete;
 		Device8254& operator=(Device8254&&) = delete;
 
-		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
+		virtual void EnableLog(SEVERITY minSev = LOG_INFO);
 
 		void Init();
 		void Reset();

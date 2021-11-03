@@ -30,7 +30,7 @@ namespace video
 
 		bool IsVSync() const { return m_crtc.IsVSync(); }
 
-		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO) override;
+		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		void SetRAMBase(ADDRESS base);
 

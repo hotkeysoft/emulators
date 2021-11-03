@@ -85,7 +85,7 @@ namespace dma
 
 		WORD GetBaseAdress() { return m_baseAddress; }
 
-		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
+		virtual void EnableLog(SEVERITY minSev = LOG_INFO);
 
 		void Init();
 		void Reset();

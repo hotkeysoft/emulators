@@ -1198,7 +1198,7 @@ namespace emul
 
 	void CPU8086::HLT()
 	{
-		EnableLog(true, LOG_DEBUG);
+		EnableLog(LOG_DEBUG);
 		LogPrintf(LOG_ERROR, "HALT");
 		Dump();
 		m_state = CPUState::STOP;
@@ -1273,7 +1273,7 @@ namespace emul
 
 	void CPU8086::NotImplemented(BYTE op)
 	{
-		EnableLog(true, LOG_DEBUG);
+		EnableLog(LOG_DEBUG);
 		LogPrintf(LOG_ERROR, "Not implemented op=%x", op);
 		m_state = CPUState::STOP;
 	}

@@ -75,19 +75,19 @@ namespace emul
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
-		m_memory.EnableLog(true, Logger::LOG_WARNING);
-		m_mmap.EnableLog(true, Logger::LOG_ERROR);
+		m_memory.EnableLog(Logger::LOG_WARNING);
+		m_mmap.EnableLog(Logger::LOG_ERROR);
 
 		InitRAM(baseRAM);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_WARNING);
+		m_pit.EnableLog(Logger::LOG_WARNING);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_WARNING);
+		m_pic.EnableLog(Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_WARNING);
+		m_ppi.EnableLog(Logger::LOG_WARNING);
 		{
 			m_ppi.SetKeyboardConnected(true);
 			m_ppi.SetRAMExpansion(baseRAM > 64);
@@ -96,12 +96,12 @@ namespace emul
 		}
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
-		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
+		m_pcSpeaker.EnableLog(Logger::LOG_WARNING);
 
 		m_soundModule.Init();
-		m_soundModule.EnableLog(true, Logger::LOG_WARNING);
+		m_soundModule.EnableLog(Logger::LOG_WARNING);
 
-		m_video.EnableLog(true, Logger::LOG_WARNING);
+		m_video.EnableLog(Logger::LOG_WARNING);
 		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
 		
 		m_biosF000.LoadFromFile("data/PCjr/BIOS_4860_1504036_F000.BIN");
@@ -111,7 +111,7 @@ namespace emul
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
 		m_keyboard.Init(&m_ppi, &m_pic);
-		m_keyboard.EnableLog(true, Logger::LOG_WARNING);
+		m_keyboard.EnableLog(Logger::LOG_WARNING);
 
 		// TODO: Make this dynamic
 		// Cartridges
@@ -127,14 +127,14 @@ namespace emul
 		//}
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_WARNING);
+		m_floppy.EnableLog(Logger::LOG_WARNING);
 		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
 		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
 		
 		m_uart.Init();
-		m_uart.EnableLog(true, Logger::LOG_WARNING);
+		m_uart.EnableLog(Logger::LOG_WARNING);
 
-		m_inputs.EnableLog(true, Logger::LOG_WARNING);
+		m_inputs.EnableLog(Logger::LOG_WARNING);
 		m_inputs.Init(&m_keyboard);
 
 		AddDevice(m_pic);

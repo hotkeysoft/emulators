@@ -26,7 +26,7 @@ namespace video
 		virtual void Reset() override;
 		virtual void Tick() override;
 
-		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO) override;
+		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB000; }
 

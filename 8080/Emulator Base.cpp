@@ -296,9 +296,9 @@ int main(void)
 	Logger::RegisterLogCallback(LogCallback);
 
 	Memory memory;
-	memory.EnableLog(false);
+	memory.EnableLog(Logger::LOG_OFF);
 	MemoryMap mmap;
-	mmap.EnableLog(false);
+	mmap.EnableLog(Logger::LOG_OFF);
 
 	std::vector<MemoryBlock> monitorRom;
 	if (readIntelHex("data/main.ihx", monitorRom))
@@ -319,7 +319,7 @@ int main(void)
 
 	UART uart(0x60);
 	uart.Init();
-	uart.EnableLog(false);
+	uart.EnableLog(Logger::LOG_OFF);
 
 	Interrupts interrupts;
 	interrupts.Allocate(CPU8080::RST65, &uart);

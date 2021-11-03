@@ -64,21 +64,21 @@ namespace emul
 
 	void ComputerXT::Init(WORD baseRAM)
 	{
-		m_memory.EnableLog(true, Logger::LOG_ERROR);
-		m_mmap.EnableLog(true, Logger::LOG_WARNING);
+		m_memory.EnableLog(Logger::LOG_ERROR);
+		m_mmap.EnableLog(Logger::LOG_WARNING);
 
 		InitRAM(baseRAM);
 
 		m_pit.Init();
-		m_pit.EnableLog(true, Logger::LOG_WARNING);
-		//m_pit.GetCounter(2).EnableLog(true, LOG_INFO);
-		//m_pit.GetCounter(0).EnableLog(true, LOG_INFO);
+		m_pit.EnableLog(Logger::LOG_WARNING);
+		//m_pit.GetCounter(2).EnableLog(LOG_INFO);
+		//m_pit.GetCounter(0).EnableLog(LOG_INFO);
 
 		m_pic.Init();
-		m_pic.EnableLog(true, Logger::LOG_WARNING);
+		m_pic.EnableLog(Logger::LOG_WARNING);
 
 		m_ppi.Init();
-		m_ppi.EnableLog(true, Logger::LOG_WARNING);
+		m_ppi.EnableLog(Logger::LOG_WARNING);
 
 		// Configuration switches
 		{
@@ -97,17 +97,16 @@ namespace emul
 		}
 
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
-		m_pcSpeaker.EnableLog(true, Logger::LOG_WARNING);
+		m_pcSpeaker.EnableLog(Logger::LOG_WARNING);
 		
 		m_pcSpeaker.SetMute(false); // MUTE HERE
 		//m_pcSpeaker.StreamToFile(true, "dump/audio.bin");
 
 		m_soundModule.Init();
-		m_soundModule.EnableLog(true, Logger::LOG_INFO);
+		m_soundModule.EnableLog(Logger::LOG_INFO);
 
 		m_dma.Init();
-		m_dma.EnableLog(false);
-		m_dma.EnableLog(true, Logger::LOG_WARNING);
+		m_dma.EnableLog(Logger::LOG_WARNING);
 
 		// TODO: Clean this, have one active video object instead of if/else
 		if (s_video == VIDEO::CGA)
@@ -138,7 +137,7 @@ namespace emul
 			throw std::exception("Invalid mode");
 		}
 		assert(m_video);
-		m_video->EnableLog(true, Logger::LOG_INFO);
+		m_video->EnableLog(Logger::LOG_INFO);
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
@@ -149,14 +148,14 @@ namespace emul
 		m_keyboard.Init(&m_ppi, &m_pic);
 
 		m_floppy.Init();
-		m_floppy.EnableLog(true, Logger::LOG_WARNING);
+		m_floppy.EnableLog(Logger::LOG_WARNING);
 		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-1.10.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 		// 
 		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
 		m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
 
-		m_inputs.EnableLog(true, Logger::LOG_WARNING);
+		m_inputs.EnableLog(Logger::LOG_WARNING);
 		m_inputs.Init(&m_keyboard);
 
 		AddDevice(m_pic);

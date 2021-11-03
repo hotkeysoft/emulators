@@ -108,7 +108,7 @@ namespace sn76489
 		DeviceSN76489(DeviceSN76489&&) = delete;
 		DeviceSN76489& operator=(DeviceSN76489&&) = delete;
 
-		virtual void EnableLog(bool enable, SEVERITY minSev = LOG_INFO);
+		virtual void EnableLog(SEVERITY minSev = LOG_INFO);
 
 		void Init();
 		void Reset();

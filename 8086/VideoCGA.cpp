@@ -76,10 +76,10 @@ namespace video
 		m_crtc.Reset();
 	}
 
-	void VideoCGA::EnableLog(bool enable, SEVERITY minSev)
+	void VideoCGA::EnableLog(SEVERITY minSev)
 	{
-		m_crtc.EnableLog(enable, minSev);
-		Video::EnableLog(enable, minSev);
+		m_crtc.EnableLog(minSev);
+		Video::EnableLog(minSev);
 	}
 
 	void VideoCGA::Init(emul::Memory& memory, const char* charROM, BYTE border)

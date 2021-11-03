@@ -54,10 +54,10 @@ namespace video
 		m_crtc.Reset();
 	}
 
-	void VideoMDA::EnableLog(bool enable, SEVERITY minSev)
+	void VideoMDA::EnableLog(SEVERITY minSev)
 	{
-		m_crtc.EnableLog(enable, minSev);
-		Video::EnableLog(enable, minSev);
+		m_crtc.EnableLog(minSev);
+		Video::EnableLog(minSev);
 	}
 
 	void VideoMDA::Init(emul::Memory& memory, const char* charROM, BYTE border)

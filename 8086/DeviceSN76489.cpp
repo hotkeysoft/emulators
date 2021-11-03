@@ -161,12 +161,12 @@ namespace sn76489
 		}
 	}
 
-	void DeviceSN76489::EnableLog(bool enable, SEVERITY minSev)
+	void DeviceSN76489::EnableLog(SEVERITY minSev)
 	{
-		Logger::EnableLog(enable, minSev);
+		Logger::EnableLog(minSev);
 		for (int i = 0; i < 4; ++i)
 		{
-			m_voices[i]->EnableLog(enable, minSev);
+			m_voices[i]->EnableLog(minSev);
 		}
 	}
 
