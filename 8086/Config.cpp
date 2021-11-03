@@ -34,22 +34,21 @@ namespace cfg
 		return true;
 	}
 
-	std::string Config::GetValueStr(const char* section, const char* key)
+	std::string Config::GetValueStr(const char* section, const char* key, const char* defaultValue)
 	{
+		assert(defaultValue);
 		assert(section);
 		assert(key);
 		std::string ret;
-		inipp::get_value(m_config.sections[section], key, ret);
-		return ret;
+		return inipp::get_value(m_config.sections[section], key, ret) ? ret : defaultValue;
 	}
 
-	int32_t Config::GetValueInt32(const char* section, const char* key)
+	int32_t Config::GetValueInt32(const char* section, const char* key, int32_t defaultValue)
 	{
 		assert(section);
 		assert(key);
 		int32_t ret;
-		inipp::get_value(m_config.sections[section], key, ret);
-		return ret;
+		return inipp::get_value(m_config.sections[section], key, ret) ? ret : defaultValue;
 	}
 
 }
