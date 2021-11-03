@@ -6,7 +6,7 @@
 
 namespace emul
 {
-	const DWORD MaxBlockSize = 65536*10;
+	const DWORD MaxBlockSize = 1024 * 1024;
 	const WORD BlockGranularity = 4096;
 
 	MemoryBlock::MemoryBlock(const char* id, MemoryType type) :
