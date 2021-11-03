@@ -5,6 +5,8 @@
 #include "DeviceFloppy.h"
 #include "InputEvents.h"
 
+using emul::WORD;
+
 namespace emul
 {
 	class Computer : public CPU8086
@@ -12,7 +14,7 @@ namespace emul
 	public:
 		virtual ~Computer() {}
 
-		virtual void Init() = 0;
+		virtual void Init(WORD baseRAM) = 0;
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
 		

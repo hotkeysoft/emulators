@@ -19,7 +19,7 @@ namespace emul
 	public:
 		ComputerXT();
 
-		virtual void Init() override;
+		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;
 
@@ -27,8 +27,8 @@ namespace emul
 		virtual kbd::DeviceKeyboard& GetKeyboard() override { return m_keyboard; }
 
 	protected:
-		// TODO: Should be dynamic
-		emul::MemoryBlock m_base64K;
+		void InitRAM(emul::WORD baseRAM);
+		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_biosF000;
 		emul::MemoryBlock m_biosF800;
 

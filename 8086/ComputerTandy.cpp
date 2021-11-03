@@ -16,8 +16,6 @@ namespace emul
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
 
-	static bool RAM_EXTENSION = true;
-
 	static class DummyPortTandy : public PortConnector
 	{
 	public:
@@ -61,7 +59,7 @@ namespace emul
 		Logger("Tandy"),
 		Computer(m_memory, m_map),
 		m_base128K("SYSRAM", 0x20000, emul::MemoryType::RAM),
-		m_ramExtension("EXTRAM", 0x80000, emul::MemoryType::RAM),
+		m_ramExtension("EXTRAM", emul::MemoryType::RAM),
 		m_biosFC00("BIOS", 0x4000, emul::MemoryType::ROM),
 		m_pit(0x40, PIT_CLK),
 		m_pic(0x20),
@@ -74,7 +72,7 @@ namespace emul
 	{
 	}
 
-	void ComputerTandy::Init()
+	void ComputerTandy::Init(WORD baseRAM)
 	{
 		LogPrintf(LOG_INFO, "CPU Clock:  [%zu]", CPU_CLK);
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
@@ -83,14 +81,7 @@ namespace emul
 		m_memory.EnableLog(true, Logger::LOG_WARNING);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
 
-		if (RAM_EXTENSION)
-		{
-			m_ramExtension.Clear(0xA5);
-			m_memory.Allocate(&m_ramExtension, 0);
-		}
-
-		m_base128K.Clear(0x5A);
-		m_memory.Allocate(&m_base128K, 0x2000);
+		InitRAM(baseRAM);
 
 		m_pit.Init();
 		m_pit.EnableLog(true, Logger::LOG_INFO);
@@ -140,10 +131,40 @@ namespace emul
 		AddDevice(*this);
 	}
 
+	void ComputerTandy::InitRAM(emul::WORD baseRAM)
+	{
+		LogPrintf(LOG_INFO, "Requested base RAM: %dKB", baseRAM);
+
+		if (baseRAM < 128)
+		{
+			LogPrintf(LOG_WARNING, "Requested base RAM too low (%dKB), using 128KB", baseRAM);
+			baseRAM = 128;
+		}
+
+		// 128KB Base memory
+		m_base128K.Clear(0x5A);
+		LogPrintf(LOG_INFO, "Allocating base 128KB block");
+		// Memory block is moved to the appropriate location via SetRAMPage, no need to allocate it here
+
+		// Extra RAM
+		if (baseRAM > 128)
+		{
+			if (baseRAM > 768)
+			{
+				baseRAM = 768;
+				LogPrintf(LOG_WARNING, "Setting maximum memory size to 768KB");
+			}
+			DWORD extraRAM = (baseRAM - 128);
+			LogPrintf(LOG_INFO, "Allocating %dKB extra RAM", extraRAM);
+
+			m_ramExtension.Alloc(extraRAM * 1024);
+			m_ramExtension.Clear(0xA5);
+			m_memory.Allocate(&m_ramExtension, 0);
+		}
+	}
+
 	void ComputerTandy::SetRAMPage(BYTE value)
 	{
-		m_memory.EnableLog(true, LOG_INFO);
-
 		value >>= 1;
 		value &= 0b111;
 
@@ -154,10 +175,10 @@ namespace emul
 		// Remove base ram and extension
 		m_memory.Free(&m_base128K);
 
-		if (RAM_EXTENSION)
+		if (m_ramExtension.GetSize())
 		{
 			m_memory.Free(&m_ramExtension);
-			// Put extended memory at 0
+			// Put memory extension at 0
 			m_memory.Allocate(&m_ramExtension, 0);
 		}
 

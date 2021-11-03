@@ -53,7 +53,8 @@ namespace emul
 		Logger("PCjr"),
 		Computer(m_memory, m_map),
 		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
-		m_ext64K("RAM1", 0x10000, emul::MemoryType::RAM),
+		m_ext64K("RAM1", emul::MemoryType::RAM),
+		m_extraRAM("EXTRAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, PIT_CLK),
@@ -68,10 +69,8 @@ namespace emul
 	{
 	}
 
-	void ComputerPCjr::Init()
+	void ComputerPCjr::Init(WORD baseRAM)
 	{
-		bool RAM128K = true;
-
 		LogPrintf(LOG_INFO, "CPU Clock:  [%zu]", CPU_CLK);
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
@@ -79,9 +78,7 @@ namespace emul
 		m_memory.EnableLog(true, Logger::LOG_WARNING);
 		m_mmap.EnableLog(true, Logger::LOG_ERROR);
 
-		m_base64K.Clear(0xA5);
-		m_memory.Allocate(&m_base64K, 0);
-		m_memory.Allocate(RAM128K ? &m_ext64K : &m_base64K, 0x10000);
+		InitRAM(baseRAM);
 
 		m_pit.Init();
 		m_pit.EnableLog(true, Logger::LOG_WARNING);
@@ -93,7 +90,7 @@ namespace emul
 		m_ppi.EnableLog(true, Logger::LOG_WARNING);
 		{
 			m_ppi.SetKeyboardConnected(true);
-			m_ppi.SetRAMExpansion(RAM128K);
+			m_ppi.SetRAMExpansion(baseRAM > 64);
 			m_ppi.SetDisketteCard(true);
 			m_ppi.SetModemCard(false);
 		}
@@ -149,6 +146,52 @@ namespace emul
 		AddDevice(m_uart);
 		AddDevice(m_soundModule);
 		AddDevice(dummyPort);
+	}
+
+	void ComputerPCjr::InitRAM(emul::WORD baseRAM)
+	{
+		LogPrintf(LOG_INFO, "Requested base RAM: %dKB", baseRAM);
+
+		if (baseRAM < 64)
+		{
+			LogPrintf(LOG_WARNING, "Requested base RAM too low (%dKB), using 64KB", baseRAM);
+			baseRAM = 64;
+		}
+
+		// 64KB Base memory
+		m_base64K.Clear(0xA5);
+		LogPrintf(LOG_INFO, "Allocating base 64KB block");
+		m_memory.Allocate(&m_base64K, 0);
+
+		// 64KB Memory extension
+		if (baseRAM > 64)
+		{
+			m_ext64K.Alloc(0x10000);
+			m_ext64K.Clear(0x5A);
+			LogPrintf(LOG_INFO, "Allocating 64KB block extension");
+			m_memory.Allocate(&m_ext64K, 0x10000);
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "Duplicating base 64K at 0x10000");
+			m_memory.Allocate(&m_base64K, 0x10000);
+		}
+
+		// Extra RAM
+		if (baseRAM > 128)
+		{
+			if (baseRAM > 768)
+			{
+				baseRAM = 768;
+				LogPrintf(LOG_WARNING, "Setting maximum memory size to 768KB");
+			}
+			DWORD extraRAM = (baseRAM - 128);
+			LogPrintf(LOG_INFO, "Allocating %dKB extra RAM at address 0", extraRAM);
+
+			m_extraRAM.Alloc(extraRAM * 1024);
+			m_extraRAM.Clear(0xA5);
+			m_memory.Allocate(&m_extraRAM, 0x20000);
+		}
 	}
 
 	static void little_sleep(std::chrono::microseconds us)

@@ -12,6 +12,8 @@
 #include "VideoTandy.h"
 #include "InputEvents.h"
 
+using emul::WORD;
+
 namespace emul
 {
 	class ComputerTandy : public Computer, public PortConnector
@@ -19,7 +21,7 @@ namespace emul
 	public:
 		ComputerTandy();
 
-		virtual void Init() override;
+		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;
 
@@ -29,8 +31,7 @@ namespace emul
 
 	protected:
 		void SetRAMPage(BYTE value);
-
-		// TODO: Should be dynamic
+		void InitRAM(WORD baseRAM);
 		emul::MemoryBlock m_base128K;
 		emul::MemoryBlock m_ramExtension;
 		emul::MemoryBlock m_biosFC00;

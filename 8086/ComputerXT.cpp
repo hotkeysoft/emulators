@@ -49,7 +49,7 @@ namespace emul
 	ComputerXT::ComputerXT() :
 		Logger("XT"),
 		Computer(m_memory, m_map),
-		m_base64K("RAM0", 0xA0000, emul::MemoryType::RAM),
+		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_pit(0x40, 1193182),
@@ -62,13 +62,12 @@ namespace emul
 	{
 	}
 
-	void ComputerXT::Init()
+	void ComputerXT::Init(WORD baseRAM)
 	{
 		m_memory.EnableLog(true, Logger::LOG_ERROR);
 		m_mmap.EnableLog(true, Logger::LOG_WARNING);
 
-		m_base64K.Clear(0xA5);
-		m_memory.Allocate(&m_base64K, 0);
+		InitRAM(baseRAM);
 
 		m_pit.Init();
 		m_pit.EnableLog(true, Logger::LOG_WARNING);
@@ -168,6 +167,26 @@ namespace emul
 		AddDevice(m_floppy);
 		AddDevice(m_soundModule);
 		AddDevice(dummyPort);
+	}
+
+	void ComputerXT::InitRAM(emul::WORD baseRAM)
+	{
+		LogPrintf(LOG_INFO, "Requested base RAM: %dKB", baseRAM);
+
+		if (baseRAM < 64)
+		{
+			LogPrintf(LOG_WARNING, "Requested base RAM too low (%dKB), using 64KB", baseRAM);
+			baseRAM = 64;
+		}
+		else if (baseRAM > 768)
+		{
+			baseRAM = 768;
+			LogPrintf(LOG_WARNING, "Setting maximum memory size to 768KB");
+		}
+
+		m_baseRAM.Alloc(baseRAM * 1024);
+		m_baseRAM.Clear(0xA5);
+		m_memory.Allocate(&m_baseRAM, 0);
 	}
 
 	static void little_sleep(std::chrono::microseconds us)

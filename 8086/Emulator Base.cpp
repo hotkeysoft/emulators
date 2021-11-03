@@ -183,7 +183,9 @@ int main(int argc, char* args[])
 		return 2;
 	}
 
-	pc->Init();
+	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
+
+	pc->Init(baseRAM);
 	pc->Reset();
 
 #if 0

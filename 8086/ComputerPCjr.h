@@ -13,6 +13,8 @@
 #include "CartridgePCjr.h"
 #include "InputEvents.h"
 
+using emul::WORD;
+
 namespace emul
 {
 	class ComputerPCjr : public Computer
@@ -20,7 +22,7 @@ namespace emul
 	public:
 		ComputerPCjr();
 
-		virtual void Init() override;
+		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;
 
@@ -29,9 +31,11 @@ namespace emul
 		virtual kbd::DeviceKeyboard& GetKeyboard() override { return m_keyboard; }
 
 	protected:
-		// TODO: Should be dynamic
+		void InitRAM(WORD baseRAM);
 		emul::MemoryBlock m_base64K;
 		emul::MemoryBlock m_ext64K;
+		emul::MemoryBlock m_extraRAM;
+
 		emul::MemoryBlock m_biosF000;
 		emul::MemoryBlock m_biosF800;
 
