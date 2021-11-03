@@ -11,6 +11,8 @@
 #include "ComputerPCjr.h"
 #include "ComputerTandy.h"
 
+#include "Config.h"
+
 #include <conio.h>
 #include <vector>
 #include <deque>
@@ -31,6 +33,8 @@ const short CONSOLE_COLS = 80;
 #ifdef CPU_TEST
 #include "CPU8086Test.h"
 #endif
+
+using cfg::Config;
 
 size_t emul::g_ticks = 0;
 
@@ -140,6 +144,11 @@ int main(int argc, char* args[])
 
 	Logger::RegisterLogCallback(LogCallback);
 
+	if (!Config::Instance().LoadConfigFile("config/config.ini"))
+	{
+		return 1;
+	}
+
 #ifdef CPU_TEST
 	{
 		emul::Memory mem(20);
@@ -152,22 +161,40 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	emul::ComputerXT pc;
-	//emul::ComputerPCjr pc;
-	//emul::ComputerTandy pc;
+	emul::Computer* pc = nullptr;
 
-	pc.Init();
-	pc.Reset();
+	std::string arch = Config::Instance().GetValueStr("core", "arch");
+	if (arch == "xt")
+	{
+		pc = new emul::ComputerXT();
+	}
+	else if (arch == "pcjr")
+	{
+		pc = new emul::ComputerPCjr();
+		
+	}
+	else if (arch == "tandy")
+	{
+		pc = new emul::ComputerTandy();
+	}
+	else
+	{
+		fprintf(stderr, "Unknown architecture: [core].arch=[%s]", arch.c_str());
+		return 2;
+	}
+
+	pc->Init();
+	pc->Reset();
 
 #if 0
 	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	testROMF000.LoadFromFile(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\segpr.bin)");
-	pc.GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
-	pc.Reset(0xF000, 0);
+	pc->GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
+	pc->Reset(0xF000, 0);
 #endif
 
-	pc.EnableLog(true, Logger::LOG_INFO);
-	//pc.EnableLog(true, Logger::LOG_DEBUG);
+	pc->EnableLog(true, Logger::LOG_INFO);
+	//pc->EnableLog(true, Logger::LOG_DEBUG);
 
 #ifndef NO_CONSOLE
 	monitor.Init(pc, pc.GetMemory());
@@ -207,7 +234,7 @@ int main(int argc, char* args[])
 				case emul::MonitorState::WAIT:
 					break;
 				case emul::MonitorState::RUN:
-					run = pc.Step();
+					run = pc->Step();
 					break;
 				case emul::MonitorState::SWITCH_MODE:
 					ToggleMode();
@@ -216,7 +243,7 @@ int main(int argc, char* args[])
 			}
 			else
 			{
-				run = pc.Step();
+				run = pc->Step();
 			}
 
 			// TODO: Keyboard input is now handled in InputEvents.
@@ -270,17 +297,17 @@ int main(int argc, char* args[])
 						case 59: // F1
 							if (SelectFile(diskImage))
 							{
-								pc.GetFloppy().LoadDiskImage(0, diskImage.c_str());
+								pc->GetFloppy().LoadDiskImage(0, diskImage.c_str());
 							}
 							break;
 						case 60: // F2
 							if (SelectFile(diskImage))
 							{
-								pc.GetFloppy().LoadDiskImage(1, diskImage.c_str());
+								pc->GetFloppy().LoadDiskImage(1, diskImage.c_str());
 							}
 							break;
 						case 61: // F3
-							pc.SetTurbo(ToggleTurbo());
+							pc->SetTurbo(ToggleTurbo());
 							break;
 						case 62: // F4
 							break;
@@ -288,7 +315,7 @@ int main(int argc, char* args[])
 						{
 							char buf[128];
 							sprintf(buf, "dump/memdump_%zu.bin", time(nullptr));
-							pc.GetMemory().Dump(0, 65536 * 2, buf);
+							pc->GetMemory().Dump(0, 65536 * 2, buf);
 							break;
 						}
 						case 64: // F6
@@ -297,7 +324,7 @@ int main(int argc, char* args[])
 						case 67: // F9
 							break;
 						case 68: // F10
-							pc.Reboot();
+							pc->Reboot();
 							break;
 						case 71: // HOME
 						case 72: // UP
@@ -329,7 +356,7 @@ int main(int argc, char* args[])
 
 					if (newKeycode)
 					{
-						kbd::DeviceKeyboard& kbd = pc.GetKeyboard();
+						kbd::DeviceKeyboard& kbd = pc->GetKeyboard();
 
 
 						if (shift) kbd.InputKey(0x2A);
@@ -358,12 +385,15 @@ int main(int argc, char* args[])
 
 	time(&stopTime);
 
-	pc.Dump();
+	pc->Dump();
 
-	pc.GetMemory().Dump(0, 65536, "dump/memdump.bin");
-	//pc.GetFloppy().SaveDiskImage(0, "dump/floppy0.img");
+	pc->GetMemory().Dump(0, 65536, "dump/memdump.bin");
+	//pc->GetFloppy().SaveDiskImage(0, "dump/floppy0.img");
 
 	//DumpBackLog();
+
+	delete pc;
+	pc = nullptr;
 
 	if (logFile)
 	{
