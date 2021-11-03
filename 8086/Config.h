@@ -25,6 +25,9 @@ namespace cfg
 		std::string GetValueStr(const char* section, const char* key, const char* defaultValue = "");
 		int32_t GetValueInt32(const char* section, const char* key, int32_t defaultValue = 0);
 
+		// Reads from section [loglevels]
+		Logger::SEVERITY GetLogLevel(const char* key);
+
 	protected:
 		inipp::Ini<char> m_config;
 
