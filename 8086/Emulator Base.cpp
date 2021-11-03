@@ -152,17 +152,20 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	//emul::ComputerXT pc;
+	emul::ComputerXT pc;
 	//emul::ComputerPCjr pc;
-	emul::ComputerTandy pc;
-
-	//emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
-	//testROMF000.LoadBinary(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\div.bin)");
-	//pc.GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
+	//emul::ComputerTandy pc;
 
 	pc.Init();
 	pc.Reset();
-	//pc.Reset(0xF000, 0);
+
+#if 0
+	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
+	testROMF000.LoadFromFile(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\segpr.bin)");
+	pc.GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
+	pc.Reset(0xF000, 0);
+#endif
+
 	pc.EnableLog(true, Logger::LOG_INFO);
 	//pc.EnableLog(true, Logger::LOG_DEBUG);
 

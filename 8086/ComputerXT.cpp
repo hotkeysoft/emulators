@@ -24,7 +24,7 @@ namespace emul
 	const SCREENWIDTH screenWidth = COLS80;
 
 	enum class VIDEO { CGA, MDA, HGC };
-	static const VIDEO s_video = VIDEO::HGC;
+	static const VIDEO s_video = VIDEO::CGA;
 
 	static class DummyPort : public PortConnector
 	{
