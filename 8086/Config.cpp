@@ -56,9 +56,9 @@ namespace cfg
 		// in .ini file, 0=off;
 		// No value should be considered LOG_INFO
 		int32_t level;
-		if (!inipp::get_value(m_config.sections["loglevel"], key, level))
+		if (!inipp::get_value(m_config.sections["loglevels"], key, level))
 		{
-			LogPrintf(LOG_WARNING, "No key [loglevel].%s, using default level [LOG_INFO]", key);
+			LogPrintf(LOG_WARNING, "No key [loglevels].%s, using default level [LOG_INFO]", key);
 			return Logger::SEVERITY::LOG_INFO;
 		}
 
@@ -75,7 +75,7 @@ namespace cfg
 		case 4:
 			return Logger::SEVERITY::LOG_DEBUG;
 		default:
-			LogPrintf(LOG_WARNING, "Unknown log level [%d], using default level [LOG_INFO]");
+			LogPrintf(LOG_WARNING, "Unknown log level [%d] for key [loglevels].%s, using default level [LOG_INFO]", level, key);
 			return Logger::SEVERITY::LOG_INFO;
 		}
 	}

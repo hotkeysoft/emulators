@@ -12,7 +12,6 @@ namespace ppi
 	class Device8255 : public PortConnector
 	{
 	public:
-		Device8255(WORD baseAddress);
 		virtual ~Device8255() {}
 
 		Device8255() = delete;
@@ -29,6 +28,8 @@ namespace ppi
 		virtual void SetCurrentKeyCode(BYTE keyCode) { m_portAData = keyCode; }
 
 	protected:
+		Device8255(WORD baseAddress);
+
 		void SetControlWord(BYTE ctrl);
 
 		virtual BYTE PORTA_IN() = 0;

@@ -6,7 +6,6 @@ namespace ppi
 		Logger("8255"), 
 		m_baseAddress(baseAddress)
 	{
-		Reset();
 	}
 
 	void Device8255::Reset()
@@ -20,6 +19,8 @@ namespace ppi
 
 	void Device8255::Init()
 	{
+		Reset();
+
 		Connect(m_baseAddress + 0, static_cast<PortConnector::INFunction>(&Device8255::PORTA_IN));
 		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&Device8255::PORTA_OUT));
 

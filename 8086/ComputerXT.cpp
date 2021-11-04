@@ -1,10 +1,14 @@
 #include "Common.h"
 #include "ComputerXT.h"
+#include "Config.h"
 #include "Console.h"
 #include "VideoCGA.h"
 #include "VideoMDA.h"
 #include "VideoHGC.h"
+
 #include <thread>
+
+using cfg::Config;
 
 namespace emul
 {
@@ -64,21 +68,19 @@ namespace emul
 
 	void ComputerXT::Init(WORD baseRAM)
 	{
-		m_memory.EnableLog(Logger::LOG_ERROR);
-		m_mmap.EnableLog(Logger::LOG_WARNING);
+		m_memory.EnableLog(Config::Instance().GetLogLevel("memory"));
+		m_mmap.EnableLog(Config::Instance().GetLogLevel("mmap"));
 
 		InitRAM(baseRAM);
 
+		m_pit.EnableLog(Config::Instance().GetLogLevel("pit"));
 		m_pit.Init();
-		m_pit.EnableLog(Logger::LOG_WARNING);
-		//m_pit.GetCounter(2).EnableLog(LOG_INFO);
-		//m_pit.GetCounter(0).EnableLog(LOG_INFO);
 
+		m_pic.EnableLog(Config::Instance().GetLogLevel("pic"));
 		m_pic.Init();
-		m_pic.EnableLog(Logger::LOG_WARNING);
 
+		m_ppi.EnableLog(Config::Instance().GetLogLevel("ppi"));
 		m_ppi.Init();
-		m_ppi.EnableLog(Logger::LOG_WARNING);
 
 		// Configuration switches
 		{
@@ -96,24 +98,23 @@ namespace emul
 			m_ppi.SetFloppyCount(2);
 		}
 
+		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound"));
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
-		m_pcSpeaker.EnableLog(Logger::LOG_WARNING);
-		
 		m_pcSpeaker.SetMute(false); // MUTE HERE
 		//m_pcSpeaker.StreamToFile(true, "dump/audio.bin");
 
+		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
-		m_soundModule.EnableLog(Logger::LOG_INFO);
 
+		m_dma.EnableLog(Config::Instance().GetLogLevel("dma"));
 		m_dma.Init();
-		m_dma.EnableLog(Logger::LOG_WARNING);
 
 		// TODO: Clean this, have one active video object instead of if/else
 		if (s_video == VIDEO::CGA)
 		{
 			video::VideoCGA* cga = new video::VideoCGA(0x3D0);
 			m_video = cga;
-
+			m_video->EnableLog(Config::Instance().GetLogLevel("video"));
 			//cga->SetComposite(true);
 			cga->Init(m_memory, "data/XT/CGA_CHAR.BIN");
 
@@ -122,14 +123,14 @@ namespace emul
 		{
 			video::VideoMDA* mda = new video::VideoMDA(0x3B0);
 			m_video = mda;
-
+			m_video->EnableLog(Config::Instance().GetLogLevel("video"));
 			mda->Init(m_memory, "data/XT/CGA_CHAR.BIN");
 		}
 		else if (s_video == VIDEO::HGC)
 		{
 			video::VideoHGC* hgc = new video::VideoHGC(0x3B0);
 			m_video = hgc;
-
+			m_video->EnableLog(Config::Instance().GetLogLevel("video"));
 			hgc->Init(m_memory, "data/XT/CGA_CHAR.BIN");
 		}
 		else
@@ -137,7 +138,6 @@ namespace emul
 			throw std::exception("Invalid mode");
 		}
 		assert(m_video);
-		m_video->EnableLog(Logger::LOG_INFO);
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
@@ -145,17 +145,18 @@ namespace emul
 		m_biosF800.LoadFromFile("data/XT/BIOS_5160_V3_F800.BIN");
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
+		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
 		m_keyboard.Init(&m_ppi, &m_pic);
 
+		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
 		m_floppy.Init();
-		m_floppy.EnableLog(Logger::LOG_WARNING);
 		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-1.10.img");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 		// 
 		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
 		m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
 
-		m_inputs.EnableLog(Logger::LOG_WARNING);
+		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
 		m_inputs.Init(&m_keyboard);
 
 		AddDevice(m_pic);
@@ -222,7 +223,7 @@ namespace emul
 		assert(GetInstructionTicks());
 		cpuTicks += GetInstructionTicks();
 
-		for (int i = 0; i < cpuTicks / 10; ++i)
+		for (uint32_t i = 0; i < cpuTicks / 10; ++i)
 		{
 			++g_ticks;
 

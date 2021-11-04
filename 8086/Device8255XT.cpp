@@ -3,8 +3,8 @@
 namespace ppi
 {
 	Device8255XT::Device8255XT(WORD baseAddress) :
-		Logger("8255XT"),
-		Device8255(baseAddress)
+		Device8255(baseAddress),
+		Logger("8255XT")
 	{
 		Reset();
 	}

@@ -13,7 +13,6 @@ namespace crtc
 		m_endOfRowFunc(CRTCNullFunc),
 		m_newFrameFunc(CRTCNullFunc)
 	{
-		Reset();
 	}
 
 	Device6845::~Device6845()
@@ -28,6 +27,8 @@ namespace crtc
 
 	void Device6845::Init()
 	{
+		Reset();
+
 		// CRTC Register Select
 		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&Device6845::SelectCRTCRegister));
 		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&Device6845::SelectCRTCRegister));

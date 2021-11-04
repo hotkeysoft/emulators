@@ -1,6 +1,10 @@
 #include "Common.h"
 #include "ComputerTandy.h"
+#include "Config.h"
+
 #include <thread>
+
+using cfg::Config;
 
 namespace emul
 {
@@ -78,45 +82,45 @@ namespace emul
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
-		m_memory.EnableLog(Logger::LOG_WARNING);
-		m_mmap.EnableLog(Logger::LOG_ERROR);
+		m_memory.EnableLog(Config::Instance().GetLogLevel("memory"));
+		m_mmap.EnableLog(Config::Instance().GetLogLevel("mmap"));
 
 		InitRAM(baseRAM);
 
+		m_pit.EnableLog(Config::Instance().GetLogLevel("pit"));
 		m_pit.Init();
-		m_pit.EnableLog(Logger::LOG_INFO);
 
+		m_pic.EnableLog(Config::Instance().GetLogLevel("pic"));
 		m_pic.Init();
-		m_pic.EnableLog(Logger::LOG_WARNING);
 
+		m_ppi.EnableLog(Config::Instance().GetLogLevel("ppi"));
 		m_ppi.Init();
-		m_ppi.EnableLog(Logger::LOG_WARNING);
 
+		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound"));
 		m_pcSpeaker.Init(&m_ppi, &m_pit);
-		m_pcSpeaker.EnableLog(Logger::LOG_WARNING);
 
+		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
-		m_soundModule.EnableLog(Logger::LOG_WARNING);
 
-		m_video.EnableLog(Logger::LOG_INFO);
+		m_video.EnableLog(Config::Instance().GetLogLevel("video"));
 		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
 		
 		m_biosFC00.LoadFromFile("data/Tandy/BIOS_Tandy1000A_FC00.BIN");
 		m_memory.Allocate(&m_biosFC00, emul::S2A(0xFC00));
 
+		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
 		m_keyboard.Init(&m_ppi, &m_pic);
-		m_keyboard.EnableLog(Logger::LOG_WARNING);
 
+		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
 		m_floppy.Init();
-		m_floppy.EnableLog(Logger::LOG_WARNING);
 		m_floppy.LoadDiskImage(0, "data/floppy/TANDY-MS-DOS-2.11.22.img");
 		m_floppy.LoadDiskImage(1, "data/floppy/TANDY-DESKMATE-1.01.00.img");
 		
+		m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
 		m_uart.Init();
-		m_uart.EnableLog(Logger::LOG_WARNING);
 
-		m_inputs.EnableLog(Logger::LOG_WARNING);
 		m_inputs.Init(&m_keyboard, events::KBDMapping::TANDY);
+		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));
 
@@ -220,7 +224,7 @@ namespace emul
 		assert(GetInstructionTicks());
 		cpuTicks += GetInstructionTicks();
 
-		for (int i = 0; i < cpuTicks / 8; ++i)
+		for (uint32_t i = 0; i < cpuTicks / 8; ++i)
 		{
 			++g_ticks;
 

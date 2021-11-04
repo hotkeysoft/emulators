@@ -185,6 +185,7 @@ int main(int argc, char* args[])
 
 	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
 
+	pc->EnableLog(Config::Instance().GetLogLevel("pc"));
 	pc->Init(baseRAM);
 	pc->Reset();
 
@@ -194,9 +195,6 @@ int main(int argc, char* args[])
 	pc->GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
 	pc->Reset(0xF000, 0);
 #endif
-
-	pc->EnableLog(Logger::LOG_INFO);
-	//pc->EnableLog(Logger::LOG_DEBUG);
 
 #ifndef NO_CONSOLE
 	monitor.Init(pc, pc.GetMemory());
