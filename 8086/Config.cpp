@@ -51,6 +51,20 @@ namespace cfg
 		return inipp::get_value(m_config.sections[section], key, ret) ? ret : defaultValue;
 	}
 
+	bool Config::GetValueBool(const char* section, const char* key)
+	{
+		assert(section);
+		assert(key);
+		std::string str;
+		if (!inipp::get_value(m_config.sections[section], key, str))
+		{
+			return false;
+		}
+
+		// TODO: Case insensitive
+		return (str == "1") || (str == "true");
+	}
+
 	Logger::SEVERITY Config::GetLogLevel(const char* key)
 	{
 		// in .ini file, 0=off;
