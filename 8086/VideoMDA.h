@@ -65,8 +65,6 @@ namespace video
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
 
-		const uint32_t* m_alphaPalette = nullptr;
-
 		// dot information (status register)
 		bool m_lastDot = 0;
 

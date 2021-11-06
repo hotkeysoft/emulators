@@ -99,7 +99,7 @@ namespace video
 				for (int x = 0; x < 8; ++x)
 				{
 					bool val = (ch & (1 << (7 - x)));
-					m_frameBuffer[baseX++] = m_alphaPalette[val ? 0x0F : 0];
+					m_frameBuffer[baseX++] = GetMonitorPalette()[val ? 0x0F : 0];
 				}
 				++currChar;
 			}

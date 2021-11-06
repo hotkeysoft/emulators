@@ -12,24 +12,6 @@ namespace video
 {
 	const float VSCALE = 2.4f;
 
-	const uint32_t AlphaColorPalette[16] = 
-	{
-		0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA,
-		0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
-	};
-
-	const uint32_t AlphaMonoGreyPalette[16] =
-	{
-		0xFF000000, 0xFF0C0C0C, 0xFF7A7A7A, 0xFF868686, 0xFF242424, 0xFF303030, 0xFF616161, 0xFFAAAAAA,
-		0xFF555555, 0xFF616161, 0xFFCFCFCF, 0xFFDBDBDB, 0xFF797979, 0xFF858585, 0xFFF3F3F3, 0xFFFFFFFF
-	};
-
-	const uint32_t AlphaMonoGreenPalette[16] =
-	{
-		0xFF000000, 0xFF020A00, 0xFF1D7700, 0xFF218400, 0xFF082300, 0xFF0B2D00, 0xFF186000, 0xFF2AA800,
-		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
-	};
-
 	const uint32_t Composite640Palette[16] =
 	{
 		0x00000000, 0x00006E31, 0x003109FF, 0x00008AFF, 0x00A70031, 0x00767676, 0x00EC11FF, 0x00BB92FF,
@@ -65,8 +47,7 @@ namespace video
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress),
 		m_screenB800("CGA", 16384, emul::MemoryType::RAM),
-		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
-		m_alphaPalette(AlphaColorPalette)
+		m_charROM("CHAR", 8192, emul::MemoryType::ROM)
 	{
 		Reset();
 	}
@@ -118,7 +99,7 @@ namespace video
 
 	void VideoCGA::RenderFrame()
 	{
-		uint32_t borderRGB = m_alphaPalette[m_color.color];
+		uint32_t borderRGB = GetMonitorPalette()[m_color.color];
 		uint16_t width = (m_mode.text80Columns || m_mode.hiResolution) ? 640 : 320;
 		Video::RenderFrame(width, 200, borderRGB);
 	}
@@ -203,11 +184,10 @@ namespace video
 		if (m_mode.hiResolution) m_drawFunc = &VideoCGA::Draw640x200;
 
 		// TODO: Do this for each line instead of each frame
-		m_alphaPalette = (m_mode.monochrome && m_composite) ? AlphaMonoGreyPalette : AlphaColorPalette;
-		m_currGraphPalette[0] = m_alphaPalette[m_color.color];
+		m_currGraphPalette[0] = GetMonitorPalette()[m_color.color];
 		for (int i = 1; i < 4; ++i)
 		{
-			m_currGraphPalette[i] = m_alphaPalette[
+			m_currGraphPalette[i] = GetMonitorPalette()[
 				(m_color.palIntense << 3) // Intensity
 				| (i << 1)
 				| (m_color.palSelect && !m_mode.monochrome) // Palette shift for non mono modes
@@ -222,7 +202,7 @@ namespace video
 	void VideoCGA::EndOfRow()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
-		if (!m_mode.hiResolution || !m_composite || data.vPos >= data.vTotalDisp)
+		if (!m_mode.hiResolution || !IsCompositeMonitor() || data.vPos >= data.vTotalDisp)
 			return;
 
 		uint32_t baseX = (640 * data.vPos);
@@ -278,8 +258,8 @@ namespace video
 				SetBit(bg, 3, false);
 			}
 
-			uint32_t fgRGB = m_alphaPalette[fg];
-			uint32_t bgRGB = m_alphaPalette[bg];
+			uint32_t fgRGB = GetMonitorPalette()[fg];
+			uint32_t bgRGB = GetMonitorPalette()[bg];
 
 			// Draw character
 			BYTE* currCharPos = m_charROMStart + ((uint32_t)ch * 8) + (data.vPos % data.vCharHeight);
@@ -334,8 +314,8 @@ namespace video
 		{
 			BYTE*& currChar = (data.vPos & 1) ? m_bank1 : m_bank0;
 
-			uint32_t fg = m_alphaPalette[m_color.color];
-			uint32_t bg = m_alphaPalette[0];
+			uint32_t fg = GetMonitorPalette()[m_color.color];
+			uint32_t bg = GetMonitorPalette()[0];
 
 			uint32_t baseX = (640 * data.vPos) + (data.hPos * 2);
 
@@ -345,7 +325,7 @@ namespace video
 			{
 				BYTE ch = *currChar;
 
-				if (m_composite)
+				if (IsCompositeMonitor())
 				{
 					BYTE colorH = ch >> 4;
 					BYTE colorL = ch & 15;

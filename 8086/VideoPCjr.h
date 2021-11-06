@@ -101,7 +101,7 @@ namespace video
 
 		void MapB800Window();
 
-		uint32_t GetColor(BYTE index) { return m_alphaPalette[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
+		uint32_t GetColor(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
 
 		typedef void(VideoPCjr::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoPCjr::DrawTextMode;
@@ -123,8 +123,6 @@ namespace video
 
 		// Graph mode banks
 		BYTE* m_banks[4] = { 0, 0, 0, 0 };
-
-		const uint32_t* m_alphaPalette = nullptr;
 
 		// Diagnostics: dot information (status register)
 		// Only works in alpha modes for the moment

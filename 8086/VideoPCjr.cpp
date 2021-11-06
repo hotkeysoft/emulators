@@ -13,12 +13,6 @@ namespace video
 {
 	const float VSCALE = 2.4f;
 
-	const uint32_t AlphaColorPalette[16] =
-	{
-		0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA,
-		0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
-	};
-
 	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
 	{
 		VideoPCjr* video = reinterpret_cast<VideoPCjr*>(data);
@@ -36,8 +30,7 @@ namespace video
 		Logger("vidPCjr"),
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress),
-		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
-		m_alphaPalette(AlphaColorPalette)
+		m_charROM("CHAR", 8192, emul::MemoryType::ROM)
 	{
 		Reset();
 		m_frameBuffer = new uint32_t[640 * 200];
@@ -268,7 +261,7 @@ namespace video
 		// TODO: don't recompute every time
 		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
 
-		uint32_t borderRGB = m_alphaPalette[m_mode.borderColor];
+		uint32_t borderRGB = GetMonitorPalette()[m_mode.borderColor];
 		Video::RenderFrame(w, 200, borderRGB);
 	}
 

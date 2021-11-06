@@ -130,7 +130,7 @@ namespace video
 
 		void MapB800Window();
 
-		uint32_t GetColor(BYTE index) { return m_colors[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
+		uint32_t GetColor(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
 
 		typedef void(VideoTandy::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoTandy::DrawTextMode;
@@ -153,7 +153,6 @@ namespace video
 		// Graph mode banks
 		BYTE* m_banks[4] = { 0, 0, 0, 0 };
 
-		const uint32_t* m_colors = nullptr;
 		BYTE m_currGraphPalette[4];
 
 		crtc::Device6845 m_crtc;

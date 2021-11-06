@@ -28,8 +28,6 @@ namespace video
 
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
-		void SetComposite(bool composite) { m_composite = composite; }
-
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB800; }
 
 		void RenderFrame();
@@ -77,8 +75,6 @@ namespace video
 		// 16K screen buffer
 		emul::MemoryBlock m_screenB800;
 
-		bool m_composite = false; // Composite artifact colors
-
 		// Text mode pointers
 		BYTE* m_cursorPos = nullptr;
 		BYTE* m_currChar = nullptr;
@@ -90,7 +86,6 @@ namespace video
 		BYTE* m_bank0 = nullptr;
 		BYTE* m_bank1 = nullptr;
 
-		const uint32_t* m_alphaPalette = nullptr;
 		uint32_t m_currGraphPalette[4];
 
 		crtc::Device6845 m_crtc;

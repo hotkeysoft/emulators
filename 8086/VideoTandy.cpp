@@ -14,18 +14,6 @@ namespace video
 {
 	const float VSCALE = 2.4f;
 
-	const uint32_t ColorPalette[16] =
-	{
-		0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA,
-		0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
-	};
-
-	const uint32_t MonoGreyPalette[16] =
-	{
-		0xFF000000, 0xFF0C0C0C, 0xFF7A7A7A, 0xFF868686, 0xFF242424, 0xFF303030, 0xFF616161, 0xFFAAAAAA,
-		0xFF555555, 0xFF616161, 0xFFCFCFCF, 0xFFDBDBDB, 0xFF797979, 0xFF858585, 0xFFF3F3F3, 0xFFFFFFFF
-	};
-
 	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
 	{
 		VideoTandy* video = reinterpret_cast<VideoTandy*>(data);
@@ -43,8 +31,7 @@ namespace video
 		Logger("vidTandy"),
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress),
-		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
-		m_colors(ColorPalette)
+		m_charROM("CHAR", 8192, emul::MemoryType::ROM)
 	{
 		Reset();
 		m_frameBuffer = new uint32_t[640 * 225];
@@ -127,11 +114,6 @@ namespace video
 			m_mode.enableVideo ? ' ' : '/',
 			m_mode.hiResolution ? ' ' : '/',
 			m_mode.blink ? ' ' : '/');
-
-		// TODO: We use the color palette even in mono mode because of CGA mode 5 
-		// which is used with the monochrome bit set. The mono palette should only
-		// be used for monochrome monitors
-		m_colors = /*m_mode.monochrome ? MonoGreyPalette :*/ ColorPalette;
 	}
 
 	void VideoTandy::WriteColorSelectRegister(BYTE value)
@@ -287,7 +269,7 @@ namespace video
 		// TODO: don't recompute every time
 		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
 
-		uint32_t borderRGB = m_colors[m_mode.borderEnable ? m_mode.borderColor: m_color.color];
+		uint32_t borderRGB = GetMonitorPalette()[m_mode.borderEnable ? m_mode.borderColor: m_color.color];
 		Video::RenderFrame(w, 225, borderRGB);
 	}
 
@@ -305,7 +287,7 @@ namespace video
 		else
 		{
 			// TODO: Check if correct
-			uint32_t borderRGB = m_colors[m_mode.borderColor];
+			uint32_t borderRGB = GetMonitorPalette()[m_mode.borderColor];
 			std::fill(m_frameBuffer + 0, m_frameBuffer + 640*225, borderRGB);
 		}
 

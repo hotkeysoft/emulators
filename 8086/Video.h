@@ -26,13 +26,30 @@ namespace video
 		Video& operator=(Video&&) = delete;
 
 		virtual void Reset() {};
-		void Init(BYTE border = 10);
+		void Init(BYTE border = 10, bool forceMono = false);
 
 		virtual void Tick() = 0;
 
 		void RenderFrame(uint16_t w, uint16_t h, uint32_t borderRGB = 0xFF000000);
 
 	protected:
+		enum class MonitorType
+		{
+			RGB = 1,
+			COMPOSITE,
+
+			MONO = 0x80,
+			MONO_WHITE,
+			MONO_AMBER,
+			MONO_GREEN,
+		} m_monitor = MonitorType::RGB;
+
+		void InitMonitor(bool forceMono);
+		bool IsMonochromeMonitor() const { return (uint8_t)m_monitor & (uint8_t)MonitorType::MONO; }
+		bool IsRGBMonitor() const { return m_monitor == MonitorType::RGB; }
+		bool IsCompositeMonitor() const { return m_monitor == MonitorType::COMPOSITE; }
+
+		const uint32_t* GetMonitorPalette() const { return m_monitorPalette; }
 
 		// SDL
 		SDL_Window* m_sdlWindow = nullptr;
@@ -47,6 +64,8 @@ namespace video
 		BYTE m_sdlVBorder;
 
 		float m_vScale = 1.0f;
+
+		const uint32_t* m_monitorPalette = nullptr;
 
 		uint32_t* m_frameBuffer;
 	};

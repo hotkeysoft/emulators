@@ -13,18 +13,6 @@ namespace video
 	const float VSCALE = 1.6f; // TODO
 	const BYTE CHAR_WIDTH = 9;
 	
-	const uint32_t AlphaMonoGreyPalette[16] =
-	{
-		0xFF000000, 0xFF0C0C0C, 0xFF7A7A7A, 0xFF868686, 0xFF242424, 0xFF303030, 0xFF616161, 0xFFAAAAAA,
-		0xFF555555, 0xFF616161, 0xFFCFCFCF, 0xFFDBDBDB, 0xFF797979, 0xFF858585, 0xFFF3F3F3, 0xFFFFFFFF
-	};
-
-	const uint32_t AlphaMonoGreenPalette[16] =
-	{
-		0xFF000000, 0xFF020A00, 0xFF1D7700, 0xFF218400, 0xFF082300, 0xFF0B2D00, 0xFF186000, 0xFF2AA800,
-		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
-	};
-
 	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
 	{
 		Video* mda = reinterpret_cast<Video*>(data);
@@ -43,8 +31,7 @@ namespace video
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress, CHAR_WIDTH),
 		m_screenB000("MDA", emul::MemoryType::RAM),
-		m_charROM("CHAR", 8192, emul::MemoryType::ROM),
-		m_alphaPalette(AlphaMonoGreenPalette)
+		m_charROM("CHAR", 8192, emul::MemoryType::ROM)
 	{
 		Reset();
 	}
@@ -84,7 +71,7 @@ namespace video
 			memory.Allocate(&GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
 		}
 
-		Video::Init(border);
+		Video::Init(border, true);
 	}
 
 	bool VideoMDA::ConnectTo(emul::PortAggregator& dest)
@@ -204,8 +191,8 @@ namespace video
 
 			BYTE bg = (charReverse || (!m_mode.blink && blinkBit)) ? 0xF : 0;
 
-			uint32_t fgRGB = m_alphaPalette[fg];
-			uint32_t bgRGB = m_alphaPalette[bg];
+			uint32_t fgRGB = GetMonitorPalette()[fg];
+			uint32_t bgRGB = GetMonitorPalette()[bg];
 
 			// Draw character
 			BYTE* currCharPos = m_charROMStart + ((uint32_t)ch * 8);
