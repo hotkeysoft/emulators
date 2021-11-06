@@ -2,10 +2,6 @@
 
 #include "Computer.h"
 #include "Device8250.h"
-#include "Device8254.h"
-#include "Device8255Tandy.h"
-#include "Device8259.h"
-#include "DevicePCSpeaker.h"
 #include "DeviceSN76489.h"
 #include "DeviceFloppyTandy.h"
 #include "DeviceKeyboardTandy.h"
@@ -36,14 +32,10 @@ namespace emul
 		emul::MemoryBlock m_ramExtension;
 		emul::MemoryBlock m_biosFC00;
 
-		pit::Device8254 m_pit;
-		pic::Device8259 m_pic;
-		ppi::Device8255Tandy m_ppi;
 		fdc::DeviceFloppyTandy m_floppy;
 		kbd::DeviceKeyboardTandy m_keyboard;
 		uart::Device8250 m_uart;
 		video::VideoTandy m_video;
-		beeper::DevicePCSpeaker m_pcSpeaker;
 		sn76489::DeviceSN76489 m_soundModule;
 		events::InputEvents m_inputs;
 	};

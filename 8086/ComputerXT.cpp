@@ -5,6 +5,7 @@
 #include "VideoCGA.h"
 #include "VideoMDA.h"
 #include "VideoHGC.h"
+#include "Device8255XT.h"
 
 #include <thread>
 
@@ -56,9 +57,6 @@ namespace emul
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
-		m_pit(0x40, 1193182),
-		m_pic(0x20),
-		m_ppi(0x60),
 		m_dma(0x00, m_memory),
 		m_floppy(0x03F0, PIT_CLK),
 		m_inputs(PIT_CLK),
@@ -72,36 +70,28 @@ namespace emul
 		m_mmap.EnableLog(Config::Instance().GetLogLevel("mmap"));
 
 		InitRAM(baseRAM);
-
-		m_pit.EnableLog(Config::Instance().GetLogLevel("pit"));
-		m_pit.Init();
-
-		m_pic.EnableLog(Config::Instance().GetLogLevel("pic"));
-		m_pic.Init();
-
-		m_ppi.EnableLog(Config::Instance().GetLogLevel("ppi"));
-		m_ppi.Init();
+		InitPIT(new pit::Device8254(0x40, PIT_CLK));
+		InitPIC(new pic::Device8259(0x20));
+		InitPPI(new ppi::Device8255XT(0x60));
 
 		// Configuration switches
 		{
-			m_ppi.SetPOSTLoop(false);
-			m_ppi.SetMathCoprocessor(false);
-			m_ppi.SetRAMConfig(ppi::RAMSIZE::RAM_256K);
+			ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
+			ppi->SetPOSTLoop(false);
+			ppi->SetMathCoprocessor(false);
+			ppi->SetRAMConfig(ppi::RAMSIZE::RAM_256K);
 			if (s_video == VIDEO::CGA)
 			{
-				m_ppi.SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
+				ppi->SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
 			}
 			else
 			{
-				m_ppi.SetDisplayConfig(ppi::DISPLAY::MONO_80x25);
+				ppi->SetDisplayConfig(ppi::DISPLAY::MONO_80x25);
 			}
-			m_ppi.SetFloppyCount(2);
+			ppi->SetFloppyCount(2);
 		}
 
-		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound"));
-		m_pcSpeaker.Init(&m_ppi, &m_pit);
-		m_pcSpeaker.SetMute(false); // MUTE HERE
-		//m_pcSpeaker.StreamToFile(true, "dump/audio.bin");
+		InitSound();
 
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
@@ -146,7 +136,7 @@ namespace emul
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
 		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
-		m_keyboard.Init(&m_ppi, &m_pic);
+		m_keyboard.Init(m_ppi, m_pic);
 
 		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
 		m_floppy.Init();
@@ -159,9 +149,9 @@ namespace emul
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
 		m_inputs.Init(&m_keyboard);
 
-		AddDevice(m_pic);
-		AddDevice(m_pit);
-		AddDevice(m_ppi);
+		AddDevice(*m_pic);
+		AddDevice(*m_pit);
+		AddDevice(*m_ppi);
 		AddDevice(m_dma);
 		AddDevice(*m_video);
 		AddDevice(m_floppy);
@@ -204,11 +194,11 @@ namespace emul
 		static auto lastTick = std::chrono::high_resolution_clock::now();
 		static int64_t syncTicks = 0;
 
-		if (m_pic.InterruptPending() && CanInterrupt())
+		if (m_pic->InterruptPending() && CanInterrupt())
 		{
-			m_pic.InterruptAcknowledge();
-			LogPrintf(LOG_DEBUG, "IRQ %d", m_pic.GetPendingInterrupt()-8);
-			Interrupt(m_pic.GetPendingInterrupt());
+			m_pic->InterruptAcknowledge();
+			LogPrintf(LOG_DEBUG, "IRQ %d", m_pic->GetPendingInterrupt()-8);
+			Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
 		else if (m_soundModule.IsReady())
@@ -223,6 +213,8 @@ namespace emul
 		assert(GetInstructionTicks());
 		cpuTicks += GetInstructionTicks();
 
+		ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
+
 		for (uint32_t i = 0; i < cpuTicks / 10; ++i)
 		{
 			++g_ticks;
@@ -235,13 +227,13 @@ namespace emul
 
 			m_keyboard.Tick();
 
-			pit::Counter& timer2 = m_pit.GetCounter(2);
-			timer2.SetGate(m_ppi.GetTimer2Gate());
+			pit::Counter& timer2 = m_pit->GetCounter(2);
+			timer2.SetGate(ppi->GetTimer2Gate());
 
-			m_pit.Tick();
-			m_ppi.SetTimer2Output(timer2.GetOutput());
+			m_pit->Tick();
+			ppi->SetTimer2Output(timer2.GetOutput());
 
-			m_pic.InterruptRequest(0, m_pit.GetCounter(0).GetOutput());
+			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
 			// SN76489 clock is 3x base clock
 			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
@@ -252,7 +244,7 @@ namespace emul
 			m_dma.Tick();
 			m_video->Tick();
 			m_floppy.Tick();
-			m_pic.InterruptRequest(6, m_floppy.IsInterruptPending());
+			m_pic->InterruptRequest(6, m_floppy.IsInterruptPending());
 
 			// TODO: faking it
 			if (m_floppy.IsDMAPending())

@@ -2,10 +2,6 @@
 
 #include "Computer.h"
 #include "Device8250.h"
-#include "Device8254.h"
-#include "Device8255PCjr.h"
-#include "Device8259.h"
-#include "DevicePCSpeaker.h"
 #include "DeviceSN76489.h"
 #include "DeviceFloppyPCjr.h"
 #include "DeviceKeyboardPCjr.h"
@@ -42,14 +38,10 @@ namespace emul
 		cart::CartridgePCjr m_cart1;
 		cart::CartridgePCjr m_cart2;
 
-		pit::Device8254 m_pit;
-		pic::Device8259 m_pic;
-		ppi::Device8255PCjr m_ppi;
 		fdc::DeviceFloppyPCjr m_floppy;
 		kbd::DeviceKeyboardPCjr m_keyboard;
 		uart::Device8250 m_uart;
 		video::VideoPCjr m_video;
-		beeper::DevicePCSpeaker m_pcSpeaker;
 		sn76489::DeviceSN76489 m_soundModule;
 		events::InputEvents m_inputs;
 	};

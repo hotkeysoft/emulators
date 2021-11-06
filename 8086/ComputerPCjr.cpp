@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "ComputerPCjr.h"
 #include "Config.h"
+#include "Device8255PCjr.h"
 
 #include <thread>
 
@@ -61,9 +62,6 @@ namespace emul
 		m_extraRAM("EXTRAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
-		m_pit(0x40, PIT_CLK),
-		m_pic(0x20),
-		m_ppi(0x60),
 		m_video(0x3D0),
 		m_keyboard(0xA0),
 		m_floppy(0xF0, PIT_CLK),
@@ -83,25 +81,19 @@ namespace emul
 		m_mmap.EnableLog(Config::Instance().GetLogLevel("mmap"));
 
 		InitRAM(baseRAM);
+		InitPIT(new pit::Device8254(0x40, PIT_CLK));
+		InitPIC(new pic::Device8259(0x20));
+		InitPPI(new ppi::Device8255PCjr(0x60));
 
-		m_pit.EnableLog(Config::Instance().GetLogLevel("pit"));
-		m_pit.Init();
-
-		m_pic.EnableLog(Config::Instance().GetLogLevel("pic"));
-		m_pic.Init();
-
-		m_ppi.EnableLog(Config::Instance().GetLogLevel("ppi"));
-		m_ppi.Init();
 		{
-			m_ppi.SetKeyboardConnected(true);
-			m_ppi.SetRAMExpansion(baseRAM > 64);
-			m_ppi.SetDisketteCard(true);
-			m_ppi.SetModemCard(false);
+			ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
+			ppi->SetKeyboardConnected(true);
+			ppi->SetRAMExpansion(baseRAM > 64);
+			ppi->SetDisketteCard(true);
+			ppi->SetModemCard(false);
 		}
 
-		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound"));
-		m_pcSpeaker.Init(&m_ppi, &m_pit);
-		m_pcSpeaker.SetMute(false); // MUTE HERE
+		InitSound();
 
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
@@ -116,7 +108,7 @@ namespace emul
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
 		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
-		m_keyboard.Init(&m_ppi, &m_pic);
+		m_keyboard.Init(m_ppi, m_pic);
 
 		// TODO: Make this dynamic
 		// Cartridges
@@ -142,9 +134,9 @@ namespace emul
 		m_inputs.Init(&m_keyboard);
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
 
-		AddDevice(m_pic);
-		AddDevice(m_pit);
-		AddDevice(m_ppi);
+		AddDevice(*m_pic);
+		AddDevice(*m_pit);
+		AddDevice(*m_ppi);
 		AddDevice(m_video);
 		AddDevice(m_keyboard);
 		AddDevice(m_floppy);
@@ -221,10 +213,10 @@ namespace emul
 			Interrupt(2);
 			return true;
 		}
-		else if (m_pic.InterruptPending() && CanInterrupt())
+		else if (m_pic->InterruptPending() && CanInterrupt())
 		{
-			m_pic.InterruptAcknowledge();
-			Interrupt(m_pic.GetPendingInterrupt());
+			m_pic->InterruptAcknowledge();
+			Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
 		else if (!CPU8086::Step())
@@ -235,6 +227,8 @@ namespace emul
 		static uint32_t cpuTicks = 0;
 		assert(GetInstructionTicks());
 		cpuTicks += GetInstructionTicks();
+
+		ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
 
 		for (uint32_t i = 0; i < cpuTicks / 4; ++i)
 		{
@@ -248,25 +242,25 @@ namespace emul
 
 			m_keyboard.Tick();
 
-			m_pit.GetCounter(0).Tick();
+			m_pit->GetCounter(0).Tick();
 			if (m_keyboard.GetTimer1Source() == kbd::CLK1::MAIN_CLK)
 			{
-				m_pit.GetCounter(1).Tick();
+				m_pit->GetCounter(1).Tick();
 			}
 
-			pit::Counter& timer2 = m_pit.GetCounter(2);
-			timer2.SetGate(m_ppi.GetTimer2Gate());
+			pit::Counter& timer2 = m_pit->GetCounter(2);
+			timer2.SetGate(ppi->GetTimer2Gate());
 			timer2.Tick();
 
-			m_ppi.SetTimer2Output(timer2.GetOutput());
+			ppi->SetTimer2Output(timer2.GetOutput());
 
-			bool out = m_pit.GetCounter(0).GetOutput();
-			m_pic.InterruptRequest(0, out);
+			bool out = m_pit->GetCounter(0).GetOutput();
+			m_pic->InterruptRequest(0, out);
 			if (out != timer0Out)
 			{
 				if (out && m_keyboard.GetTimer1Source() == kbd::CLK1::TIMER0_OUT)
 				{
-					m_pit.GetCounter(1).Tick();
+					m_pit->GetCounter(1).Tick();
 				}
 				timer0Out = out;
 			}
@@ -278,13 +272,13 @@ namespace emul
 			m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
 			m_floppy.Tick();
-			m_pic.InterruptRequest(6, m_floppy.IsWatchdogInterrupt());
+			m_pic->InterruptRequest(6, m_floppy.IsWatchdogInterrupt());
 
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)
 			{
 				m_video.Tick();
-				m_pic.InterruptRequest(5, (m_video.IsVSync()));
+				m_pic->InterruptRequest(5, (m_video.IsVSync()));
 			}
 
 			m_uart.Tick();
@@ -293,7 +287,7 @@ namespace emul
 			{
 				m_uart.Tick();
 			}
-			m_pic.InterruptRequest(3, m_uart.IsInterrupt());
+			m_pic->InterruptRequest(3, m_uart.IsInterrupt());
 
 			++syncTicks;
 			// Every 11932 ticks (~10ms) make an adjustment

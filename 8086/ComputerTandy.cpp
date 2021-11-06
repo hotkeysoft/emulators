@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "ComputerTandy.h"
+#include "Device8255Tandy.h"
 #include "Config.h"
 
 #include <thread>
@@ -65,9 +66,6 @@ namespace emul
 		m_base128K("SYSRAM", 0x20000, emul::MemoryType::RAM),
 		m_ramExtension("EXTRAM", emul::MemoryType::RAM),
 		m_biosFC00("BIOS", 0x4000, emul::MemoryType::ROM),
-		m_pit(0x40, PIT_CLK),
-		m_pic(0x20),
-		m_ppi(0x60),
 		m_video(0x3D0),
 		m_floppy(0x3F0, PIT_CLK),
 		m_uart(0x2F8, UART_CLK),
@@ -86,18 +84,10 @@ namespace emul
 		m_mmap.EnableLog(Config::Instance().GetLogLevel("mmap"));
 
 		InitRAM(baseRAM);
-
-		m_pit.EnableLog(Config::Instance().GetLogLevel("pit"));
-		m_pit.Init();
-
-		m_pic.EnableLog(Config::Instance().GetLogLevel("pic"));
-		m_pic.Init();
-
-		m_ppi.EnableLog(Config::Instance().GetLogLevel("ppi"));
-		m_ppi.Init();
-
-		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound"));
-		m_pcSpeaker.Init(&m_ppi, &m_pit);
+		InitPIT(new pit::Device8254(0x40, PIT_CLK));
+		InitPIC(new pic::Device8259(0x20));
+		InitPPI(new ppi::Device8255Tandy(0x60));
+		InitSound();
 
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
@@ -109,7 +99,7 @@ namespace emul
 		m_memory.Allocate(&m_biosFC00, emul::S2A(0xFC00));
 
 		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
-		m_keyboard.Init(&m_ppi, &m_pic);
+		m_keyboard.Init(m_ppi, m_pic);
 
 		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
 		m_floppy.Init();
@@ -124,9 +114,9 @@ namespace emul
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));
 
-		AddDevice(m_pic);
-		AddDevice(m_pit);
-		AddDevice(m_ppi);
+		AddDevice(*m_pic);
+		AddDevice(*m_pit);
+		AddDevice(*m_ppi);
 		AddDevice(m_video);
 		AddDevice(m_floppy);
 		//AddDevice(m_uart);
@@ -209,10 +199,10 @@ namespace emul
 
 		static bool timer0Out = false;
 
-		if (m_pic.InterruptPending() && CanInterrupt())
+		if (m_pic->InterruptPending() && CanInterrupt())
 		{
-			m_pic.InterruptAcknowledge();
-			Interrupt(m_pic.GetPendingInterrupt());
+			m_pic->InterruptAcknowledge();
+			Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
 		else if (!CPU8086::Step())
@@ -223,6 +213,8 @@ namespace emul
 		static uint32_t cpuTicks = 0;
 		assert(GetInstructionTicks());
 		cpuTicks += GetInstructionTicks();
+
+		ppi::Device8255Tandy* ppi = (ppi::Device8255Tandy*)m_ppi;
 
 		for (uint32_t i = 0; i < cpuTicks / 8; ++i)
 		{
@@ -236,15 +228,15 @@ namespace emul
 
 			m_keyboard.Tick();
 
-			m_pit.GetCounter(0).Tick();
+			m_pit->GetCounter(0).Tick();
 
-			pit::Counter& timer2 = m_pit.GetCounter(2);
-			timer2.SetGate(m_ppi.GetTimer2Gate());
+			pit::Counter& timer2 = m_pit->GetCounter(2);
+			timer2.SetGate(ppi->GetTimer2Gate());
 			timer2.Tick();
 
-			m_ppi.SetTimer2Output(timer2.GetOutput());
+			ppi->SetTimer2Output(timer2.GetOutput());
 
-			m_pic.InterruptRequest(0, m_pit.GetCounter(0).GetOutput());
+			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
 			// SN76489 clock is 3x base clock
 			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
@@ -253,13 +245,13 @@ namespace emul
 			m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
 			m_floppy.Tick();
-			m_pic.InterruptRequest(6, m_floppy.IsInterruptPending());
+			m_pic->InterruptRequest(6, m_floppy.IsInterruptPending());
 
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)
 			{
 				m_video.Tick();
-				m_pic.InterruptRequest(5, (m_video.IsVSync()));
+				m_pic->InterruptRequest(5, (m_video.IsVSync()));
 			}
 
 			//m_uart.Tick();
