@@ -18,7 +18,7 @@ namespace video
 	{
 	}
 
-	void VideoHGC::Init(emul::Memory& memory, const char* charROM, BYTE border)
+	void VideoHGC::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
 	{
 		VideoMDA::Init(memory, charROM, border);
 
@@ -26,7 +26,7 @@ namespace video
 
 		// 64KB video memory buffer, repeated from B000 to BFFF
 		m_screenB000.Alloc(65536);
-		memory.Allocate(&GetVideoRAM(), emul::S2A(0xB000));
+		memory->Allocate(&GetVideoRAM(), emul::S2A(0xB000));
 	}
 
 	BYTE VideoHGC::ReadStatusRegister()

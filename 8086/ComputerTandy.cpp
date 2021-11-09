@@ -1,7 +1,8 @@
 #include "Common.h"
 #include "ComputerTandy.h"
-#include "Device8255Tandy.h"
 #include "Config.h"
+#include "Device8255Tandy.h"
+#include "VideoTandy.h"
 
 #include <thread>
 
@@ -66,7 +67,6 @@ namespace emul
 		m_base128K("SYSRAM", 0x20000, emul::MemoryType::RAM),
 		m_ramExtension("EXTRAM", emul::MemoryType::RAM),
 		m_biosFC00("BIOS", 0x4000, emul::MemoryType::ROM),
-		m_video(0x3D0),
 		m_floppy(0x3F0, PIT_CLK),
 		m_uart(0x2F8, UART_CLK),
 		m_inputs(PIT_CLK),
@@ -92,8 +92,7 @@ namespace emul
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
 
-		m_video.EnableLog(Config::Instance().GetLogLevel("video"));
-		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
+		InitVideo("tga");
 		
 		m_biosFC00.LoadFromFile("data/Tandy/BIOS_Tandy1000A_FC00.BIN");
 		m_memory.Allocate(&m_biosFC00, emul::S2A(0xFC00));
@@ -117,7 +116,7 @@ namespace emul
 		AddDevice(*m_pic);
 		AddDevice(*m_pit);
 		AddDevice(*m_ppi);
-		AddDevice(m_video);
+		AddDevice(*m_video);
 		AddDevice(m_floppy);
 		//AddDevice(m_uart);
 		AddDevice(m_soundModule);
@@ -179,7 +178,8 @@ namespace emul
 		// Put base/video mem on top at proper offset
 		m_memory.Allocate(&m_base128K, ramBase);
 		// Notify video module
-		m_video.SetRAMBase(ramBase);
+		video::VideoTandy* video = (video::VideoTandy*)m_video;
+		video->SetRAMBase(ramBase);
 	}
 
 	static void little_sleep(std::chrono::microseconds us)
@@ -215,6 +215,7 @@ namespace emul
 		cpuTicks += GetInstructionTicks();
 
 		ppi::Device8255Tandy* ppi = (ppi::Device8255Tandy*)m_ppi;
+		video::VideoTandy* video = (video::VideoTandy*)m_video;
 
 		for (uint32_t i = 0; i < cpuTicks / 8; ++i)
 		{
@@ -250,8 +251,8 @@ namespace emul
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)
 			{
-				m_video.Tick();
-				m_pic->InterruptRequest(5, (m_video.IsVSync()));
+				video->Tick();
+				m_pic->InterruptRequest(5, (video->IsVSync()));
 			}
 
 			//m_uart.Tick();

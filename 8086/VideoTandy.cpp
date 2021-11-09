@@ -48,7 +48,7 @@ namespace video
 		Video::EnableLog(minSev);
 	}
 
-	void VideoTandy::Init(Memory* memory, const char* charROM, BYTE border)
+	void VideoTandy::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
 	{
 		assert(memory);
 		m_memory = memory;
@@ -86,7 +86,7 @@ namespace video
 		// CRT, Processor Page Register
 		Connect(m_baseAddress + 0xF, static_cast<PortConnector::OUTFunction>(&VideoTandy::WritePageRegister));
 
-		Video::Init(border);
+		Video::Init(memory, charROM, border);
 	}
 
 	bool VideoTandy::ConnectTo(emul::PortAggregator& dest)

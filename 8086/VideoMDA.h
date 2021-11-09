@@ -22,9 +22,11 @@ namespace video
 		VideoMDA(VideoMDA&&) = delete;
 		VideoMDA& operator=(VideoMDA&&) = delete;
 
-		void Init(emul::Memory& memory, const char* charROM, BYTE border = 10);
+		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false) override;
 		virtual void Reset() override;
 		virtual void Tick() override;
+
+		virtual bool IsMonoAdapter() override { return true; }
 
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 

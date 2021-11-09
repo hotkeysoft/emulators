@@ -2,9 +2,6 @@
 #include "ComputerXT.h"
 #include "Config.h"
 #include "Console.h"
-#include "VideoCGA.h"
-#include "VideoMDA.h"
-#include "VideoHGC.h"
 #include "Device8255XT.h"
 
 #include <thread>
@@ -27,9 +24,6 @@ namespace emul
 
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
-
-	enum class VIDEO { CGA, MDA, HGC };
-	static const VIDEO s_video = VIDEO::CGA;
 
 	static class DummyPort : public PortConnector
 	{
@@ -74,23 +68,6 @@ namespace emul
 		InitPIC(new pic::Device8259(0x20));
 		InitPPI(new ppi::Device8255XT(0x60));
 
-		// Configuration switches
-		{
-			ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
-			ppi->SetPOSTLoop(false);
-			ppi->SetMathCoprocessor(false);
-			ppi->SetRAMConfig(ppi::RAMSIZE::RAM_256K);
-			if (s_video == VIDEO::CGA)
-			{
-				ppi->SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
-			}
-			else
-			{
-				ppi->SetDisplayConfig(ppi::DISPLAY::MONO_80x25);
-			}
-			ppi->SetFloppyCount(2);
-		}
-
 		InitSound();
 
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
@@ -99,35 +76,7 @@ namespace emul
 		m_dma.EnableLog(Config::Instance().GetLogLevel("dma"));
 		m_dma.Init();
 
-		// TODO: Clean this, have one active video object instead of if/else
-		if (s_video == VIDEO::CGA)
-		{
-			video::VideoCGA* cga = new video::VideoCGA(0x3D0);
-			m_video = cga;
-			m_video->EnableLog(Config::Instance().GetLogLevel("video"));
-			//cga->SetComposite(true);
-			cga->Init(m_memory, "data/XT/CGA_CHAR.BIN");
-
-		}
-		else if (s_video == VIDEO::MDA)
-		{
-			video::VideoMDA* mda = new video::VideoMDA(0x3B0);
-			m_video = mda;
-			m_video->EnableLog(Config::Instance().GetLogLevel("video"));
-			mda->Init(m_memory, "data/XT/CGA_CHAR.BIN");
-		}
-		else if (s_video == VIDEO::HGC)
-		{
-			video::VideoHGC* hgc = new video::VideoHGC(0x3B0);
-			m_video = hgc;
-			m_video->EnableLog(Config::Instance().GetLogLevel("video"));
-			hgc->Init(m_memory, "data/XT/CGA_CHAR.BIN");
-		}
-		else
-		{
-			throw std::exception("Invalid mode");
-		}
-		assert(m_video);
+		InitVideo("cga", { "cga", "mda", "hgc" });
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
@@ -148,6 +97,23 @@ namespace emul
 
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
 		m_inputs.Init(&m_keyboard);
+
+		// Configuration switches
+		{
+			ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
+			ppi->SetPOSTLoop(false);
+			ppi->SetMathCoprocessor(false);
+			ppi->SetRAMConfig(ppi::RAMSIZE::RAM_256K);
+			if (m_video->IsMonoAdapter())
+			{
+				ppi->SetDisplayConfig(ppi::DISPLAY::MONO_80x25);
+			}
+			else
+			{
+				ppi->SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
+			}
+			ppi->SetFloppyCount(2);
+		}
 
 		AddDevice(*m_pic);
 		AddDevice(*m_pit);

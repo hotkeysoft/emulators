@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Memory.h"
 #include "PortConnector.h"
 
 using emul::PortConnector;
@@ -26,9 +27,11 @@ namespace video
 		Video& operator=(Video&&) = delete;
 
 		virtual void Reset() {};
-		void Init(BYTE border = 10, bool forceMono = false);
+		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false);
 
 		virtual void Tick() = 0;
+
+		virtual bool IsMonoAdapter() { return false; }
 
 		void RenderFrame(uint16_t w, uint16_t h, uint32_t borderRGB = 0xFF000000);
 

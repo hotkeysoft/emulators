@@ -27,7 +27,7 @@ namespace video
 		VideoHGC(VideoHGC&&) = delete;
 		VideoHGC& operator=(VideoHGC&&) = delete;
 
-		void Init(emul::Memory& memory, const char* charROM, BYTE border = 10);
+		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false) override;
 
 		virtual void NewFrame() override;
 

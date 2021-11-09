@@ -46,8 +46,8 @@ namespace video
 		m_crtc.EnableLog(minSev);
 		Video::EnableLog(minSev);
 	}
-
-	void VideoMDA::Init(emul::Memory& memory, const char* charROM, BYTE border)
+	
+	void VideoMDA::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
 	{
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
@@ -68,10 +68,10 @@ namespace video
 		m_screenB000.Alloc(4096);
 		for (int i = 0; i < 8; ++i)
 		{
-			memory.Allocate(&GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
+			memory->Allocate(&GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
 		}
 
-		Video::Init(border, true);
+		Video::Init(memory, charROM, border, true);
 	}
 
 	bool VideoMDA::ConnectTo(emul::PortAggregator& dest)

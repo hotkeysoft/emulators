@@ -5,7 +5,6 @@
 #include "DeviceSN76489.h"
 #include "DeviceFloppyTandy.h"
 #include "DeviceKeyboardTandy.h"
-#include "VideoTandy.h"
 #include "InputEvents.h"
 
 using emul::WORD;
@@ -35,7 +34,6 @@ namespace emul
 		fdc::DeviceFloppyTandy m_floppy;
 		kbd::DeviceKeyboardTandy m_keyboard;
 		uart::Device8250 m_uart;
-		video::VideoTandy m_video;
 		sn76489::DeviceSN76489 m_soundModule;
 		events::InputEvents m_inputs;
 	};

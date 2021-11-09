@@ -5,7 +5,6 @@
 #include "DeviceSN76489.h"
 #include "DeviceFloppyPCjr.h"
 #include "DeviceKeyboardPCjr.h"
-#include "VideoPCjr.h"
 #include "CartridgePCjr.h"
 #include "InputEvents.h"
 
@@ -41,7 +40,6 @@ namespace emul
 		fdc::DeviceFloppyPCjr m_floppy;
 		kbd::DeviceKeyboardPCjr m_keyboard;
 		uart::Device8250 m_uart;
-		video::VideoPCjr m_video;
 		sn76489::DeviceSN76489 m_soundModule;
 		events::InputEvents m_inputs;
 	};

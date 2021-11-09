@@ -47,7 +47,7 @@ namespace video
 		Video::EnableLog(minSev);
 	}
 
-	void VideoPCjr::Init(Memory* memory, const char* charROM, BYTE border)
+	void VideoPCjr::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
 	{
 		assert(memory);
 		m_memory = memory;
@@ -76,7 +76,7 @@ namespace video
 		// Gate Array Register: Status
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoPCjr::ReadStatusRegister));
 
-		Video::Init(border);
+		Video::Init(memory, charROM, border);
 	}
 
 	bool VideoPCjr::ConnectTo(emul::PortAggregator& dest)

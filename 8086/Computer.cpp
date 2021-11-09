@@ -1,7 +1,12 @@
 #include "Common.h"
 #include "Computer.h"
-#include "DeviceKeyboard.h"
 #include "Config.h"
+#include "DeviceKeyboard.h"
+#include "VideoCGA.h"
+#include "VideoMDA.h"
+#include "VideoHGC.h"
+#include "VideoPCjr.h"
+#include "VideoTandy.h"
 
 #include <assert.h>
 
@@ -69,6 +74,64 @@ namespace emul
 		m_ppi = ppi;
 		m_ppi->EnableLog(Config::Instance().GetLogLevel("ppi"));
 		m_ppi->Init();
+	}
+
+
+	void Computer::InitVideo(const std::string& defaultMode, const VideoModes& supported)
+	{
+		assert(m_video == nullptr);
+		std::string mode = Config::Instance().GetValueStr("video", "mode");
+
+		if (supported.empty())
+		{
+			mode = defaultMode;
+		}
+		else if (supported.find(mode) == supported.end())
+		{
+			LogPrintf(LOG_WARNING, "Invalid or unsupported video mode [%s], using default [%s]", mode.c_str(), defaultMode.c_str());
+			mode = defaultMode;
+		}
+
+		if (mode == "cga")
+		{
+			m_video = new video::VideoCGA(0x3D0);
+		}
+		else if (mode == "mda")
+		{
+			m_video = new video::VideoMDA(0x3B0);
+		}
+		else if (mode == "hgc")
+		{
+			m_video = new video::VideoHGC(0x3B0);
+		}
+		else if (mode == "pcjr")
+		{
+			m_video = new video::VideoPCjr(0x3D0);
+		}
+		else if (mode == "tga")
+		{
+			m_video = new video::VideoTandy(0x3D0);
+		}
+		else
+		{
+			throw std::exception("Invalid video mode mode");
+		}
+		assert(m_video);
+		m_video->EnableLog(Config::Instance().GetLogLevel("video"));
+
+		LogPrintf(LOG_INFO, "Video mode: [%s]", mode.c_str());
+
+		uint32_t border = Config::Instance().GetValueInt32("video", "border", 10);
+		LogPrintf(LOG_INFO, "Border: [%d]", border);
+
+		std::string charROM = Config::Instance().GetValueStr("video", "charrom", "data/XT/CGA_CHAR.BIN");
+		// Check for override
+		std::string overrideKey = "charrom." + mode;
+		charROM = Config::Instance().GetValueStr("video", overrideKey.c_str(), charROM.c_str());
+
+		LogPrintf(LOG_INFO, "Character ROM: [%s]", charROM.c_str());
+
+		m_video->Init(&m_memory, charROM.c_str(), border);
 	}
 
 }

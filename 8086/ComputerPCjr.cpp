@@ -2,6 +2,7 @@
 #include "ComputerPCjr.h"
 #include "Config.h"
 #include "Device8255PCjr.h"
+#include "VideoPCjr.h"
 
 #include <thread>
 
@@ -62,7 +63,6 @@ namespace emul
 		m_extraRAM("EXTRAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
-		m_video(0x3D0),
 		m_keyboard(0xA0),
 		m_floppy(0xF0, PIT_CLK),
 		m_uart(0x2F8, UART_CLK),
@@ -98,8 +98,7 @@ namespace emul
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
 
-		m_video.EnableLog(Config::Instance().GetLogLevel("video"));
-		m_video.Init(&m_memory, "data/XT/CGA_CHAR.BIN");
+		InitVideo("pcjr");
 		
 		m_biosF000.LoadFromFile("data/PCjr/BIOS_4860_1504036_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
@@ -137,7 +136,7 @@ namespace emul
 		AddDevice(*m_pic);
 		AddDevice(*m_pit);
 		AddDevice(*m_ppi);
-		AddDevice(m_video);
+		AddDevice(*m_video);
 		AddDevice(m_keyboard);
 		AddDevice(m_floppy);
 		AddDevice(m_uart);
@@ -229,6 +228,7 @@ namespace emul
 		cpuTicks += GetInstructionTicks();
 
 		ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
+		video::VideoPCjr* video = (video::VideoPCjr*)m_video;
 
 		for (uint32_t i = 0; i < cpuTicks / 4; ++i)
 		{
@@ -277,8 +277,8 @@ namespace emul
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)
 			{
-				m_video.Tick();
-				m_pic->InterruptRequest(5, (m_video.IsVSync()));
+				video->Tick();
+				m_pic->InterruptRequest(5, (video->IsVSync()));
 			}
 
 			m_uart.Tick();

@@ -63,7 +63,7 @@ namespace video
 		Video::EnableLog(minSev);
 	}
 
-	void VideoCGA::Init(emul::Memory& memory, const char* charROM, BYTE border)
+	void VideoCGA::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
 	{
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
@@ -84,10 +84,10 @@ namespace video
 		// Status Register
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoCGA::ReadStatusRegister));
 
-		memory.Allocate(&GetVideoRAM(), emul::S2A(0xB800));
-		memory.Allocate(&GetVideoRAM(), emul::S2A(0xBC00));
+		memory->Allocate(&GetVideoRAM(), emul::S2A(0xB800));
+		memory->Allocate(&GetVideoRAM(), emul::S2A(0xBC00));
 
-		Video::Init(border);
+		Video::Init(memory, charROM, border);
 	}	
 	
 	bool VideoCGA::ConnectTo(emul::PortAggregator& dest)

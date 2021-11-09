@@ -45,7 +45,7 @@ namespace video
 		delete[] m_frameBuffer;
 	}
 
-	void Video::Init(BYTE border, bool forceMono)
+	void Video::Init(emul::Memory*, const char*, BYTE border, bool forceMono)
 	{
 		m_sdlBorderPixels = border;
 		m_sdlHBorder = border;

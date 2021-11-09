@@ -24,7 +24,7 @@ namespace video
 		VideoPCjr(VideoPCjr&&) = delete;
 		VideoPCjr& operator=(VideoPCjr&&) = delete;
 
-		void Init(emul::Memory* memory, const char* charROM, BYTE border = 10);
+		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false) override;
 		virtual void Reset() override;
 		virtual void Tick() override;
 
