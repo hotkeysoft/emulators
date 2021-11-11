@@ -44,6 +44,7 @@ namespace events
 	{
 	public:
 		InputEvents(size_t clockSpeedHz);
+		~InputEvents();
 
 		InputEvents() = delete;
 		InputEvents(const InputEvents&) = delete;
@@ -62,11 +63,16 @@ namespace events
 		size_t m_cooldown = m_pollRate;
 
 		void InputKey(SDL_KeyboardEvent& evt);
+		void InputControllerButton(uint8_t button, uint8_t state);
+		void InputControllerAxis(uint8_t axis, int16_t value);
 
 		bool m_quit = false;
 
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
 		const KeyMap* m_keyMap = nullptr;
+
+		SDL_GameController* m_gameController = nullptr;
+		SDL_JoystickID m_controllerID = -1;
 	};
 
 }
