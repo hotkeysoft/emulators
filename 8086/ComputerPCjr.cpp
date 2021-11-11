@@ -270,7 +270,7 @@ namespace emul
 			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
 
 			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
-			m_pcSpeaker.Tick(m_soundModule.GetOutput());
+			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
 			m_floppy.Tick();
 			m_pic->InterruptRequest(6, m_floppy.IsWatchdogInterrupt());
