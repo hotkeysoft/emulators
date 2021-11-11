@@ -181,6 +181,9 @@ namespace dma
 			LogPrintf(LOG_DEBUG, "DMA Write, value=%02X @ Address %04x", value, addr);
 			m_memory.Write(addr, value);
 			break;
+		case OPERATION::VERIFY:
+			LogPrintf(LOG_DEBUG, "DMA Verify, value=%02X @ Address %04x", value, addr);
+			break;
 		default:
 			throw std::exception("DMAOperation: Operation not supported");
 		}

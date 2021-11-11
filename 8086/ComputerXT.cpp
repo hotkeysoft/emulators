@@ -240,6 +240,9 @@ namespace emul
 					value = m_floppy.ReadDataFIFO();
 					channel.DMAOperation(value);
 					break;
+				case dma::OPERATION::VERIFY:
+					channel.DMAOperation(value);
+					break;
 				default:
 					throw std::exception("DMAOperation: Operation not supported");
 				}
