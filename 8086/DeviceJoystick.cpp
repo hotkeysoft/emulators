@@ -43,6 +43,15 @@ namespace joy
 		m_joysticks[1].axisCounter[1] = m_joysticks[1].axisValue[1];
 	}
 
+	void DeviceJoystick::SetConnected(uint8_t id, bool connected)
+	{
+		assert(id <= 1);
+		LogPrintf(LOG_INFO, "SetConnected id[%d]=%d", id, connected);
+		m_joysticks[id].connected = connected;
+		m_joysticks[id].axisValue[0] = 128;
+		m_joysticks[id].axisValue[1] = 128;
+	}
+
 	void DeviceJoystick::SetButtonState(uint8_t id, uint8_t button, bool pressed)
 	{
 		assert(id <= 1);
@@ -69,9 +78,15 @@ namespace joy
 		}
 
 		cooldown = 8;
-		DecrementCount(m_joysticks[0].axisCounter[0]);
-		DecrementCount(m_joysticks[0].axisCounter[1]);
-		DecrementCount(m_joysticks[1].axisCounter[0]);
-		DecrementCount(m_joysticks[1].axisCounter[1]);
+		if (m_joysticks[0].connected)
+		{
+			DecrementCount(m_joysticks[0].axisCounter[0]);
+			DecrementCount(m_joysticks[0].axisCounter[1]);
+		}
+		if (m_joysticks[1].connected)
+		{
+			DecrementCount(m_joysticks[1].axisCounter[0]);
+			DecrementCount(m_joysticks[1].axisCounter[1]);
+		}
 	}
 }

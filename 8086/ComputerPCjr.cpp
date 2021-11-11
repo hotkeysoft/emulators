@@ -129,8 +129,8 @@ namespace emul
 		InitJoystick(0x201, PIT_CLK);
 
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
-		m_inputs.Init(&m_keyboard);
-		m_inputs.SetJoystick(m_joystick);
+		m_inputs.InitKeyboard(&m_keyboard);
+		m_inputs.InitJoystick(m_joystick);
 
 		AddDevice(*m_pic);
 		AddDevice(*m_pit);

@@ -53,8 +53,8 @@ namespace events
 		InputEvents(InputEvents&&) = delete;
 		InputEvents& operator=(InputEvents&&) = delete;
 
-		void Init(kbd::DeviceKeyboard* kbd, KBDMapping mapping = KBDMapping::XT);
-		void SetJoystick(joy::DeviceJoystick* joy) { m_joystick = joy; }
+		void InitKeyboard(kbd::DeviceKeyboard* kbd, KBDMapping mapping = KBDMapping::XT);
+		void InitJoystick(joy::DeviceJoystick* joy);
 
 		void Tick();
 

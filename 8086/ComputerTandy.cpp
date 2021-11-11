@@ -107,8 +107,8 @@ namespace emul
 		InitJoystick(0x201, PIT_CLK);
 
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
-		m_inputs.Init(&m_keyboard, events::KBDMapping::TANDY);
-		m_inputs.SetJoystick(m_joystick);
+		m_inputs.InitKeyboard(&m_keyboard, events::KBDMapping::TANDY);
+		m_inputs.InitJoystick(m_joystick);
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));
 

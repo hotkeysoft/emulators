@@ -274,10 +274,11 @@ namespace events
 		}
 	}
 
-	void InputEvents::Init(kbd::DeviceKeyboard* kbd, KBDMapping mapping)
+	void InputEvents::InitKeyboard(kbd::DeviceKeyboard* kbd, KBDMapping mapping)
 	{
 		assert(kbd);
 		m_keyboard = kbd;
+
 		switch (mapping)
 		{
 		case KBDMapping::TANDY: m_keyMap = &s_keyMapTandy; break;
@@ -287,7 +288,13 @@ namespace events
 			m_keyMap = &s_keyMapXT;
 			LogPrintf(LOG_WARNING, "Unknown keyboard mapping");
 		}
+	}
 
+	void InputEvents::InitJoystick(joy::DeviceJoystick* joy)
+	{
+		assert(joy);
+		m_joystick = joy;
+		
 		if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) != 1)
 		{
 			SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
@@ -321,6 +328,8 @@ namespace events
 				LogPrintf(LOG_INFO, "Opened Game Controller %d", ctrlIndex);
 				LogPrintf(LOG_INFO, "  Name: %s", SDL_GameControllerNameForIndex(ctrlIndex));
 				LogPrintf(LOG_INFO, "  ID:   %d", m_controllerID);
+
+				m_joystick->SetConnected(0, true);
 
 				// Receive events
 				SDL_GameControllerEventState(SDL_ENABLE);

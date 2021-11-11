@@ -22,6 +22,7 @@ namespace joy
 
 		virtual void Tick();
 
+		void SetConnected(uint8_t id, bool connected);
 		void SetButtonState(uint8_t id, uint8_t button, bool pressed);
 		void SetAxisState(uint8_t id, uint8_t axis, uint8_t value);
 
@@ -36,6 +37,7 @@ namespace joy
 
 		struct JoystickState
 		{
+			bool connected = false;
 			bool buttons[2] = { false, false };
 			uint8_t axisValue[2] = { 128, 128 };
 
@@ -43,6 +45,5 @@ namespace joy
 		};
 
 		JoystickState m_joysticks[2];
-
 	};
 }
