@@ -22,22 +22,18 @@ namespace emul
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
 
-	static class DummyPort : public PortConnector
+	static class DummyPortPCjr : public PortConnector
 	{
 	public:
-		DummyPort() : Logger("DUMMY")
+		DummyPortPCjr() : Logger("DUMMY")
 		{
-			// Joystick
-			Connect(0x201, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
-			Connect(0x201, static_cast<PortConnector::INFunction>(&DummyPort::ReadData));
-
 			//EGA
 			for (WORD w = 0x3C0; w < 0x3D0; ++w)
 			{
-				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
+				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteData));
 			}
 
-			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteMfgTest));
+			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteMfgTest));
 		}
 
 		BYTE ReadData()
@@ -53,7 +49,7 @@ namespace emul
 		{
 			LogPrintf(LOG_ERROR, "MFG TEST: %02Xh", value);
 		}
-	} dummyPort;
+	} dummyPortPCjr;
 
 	ComputerPCjr::ComputerPCjr() :
 		Logger("PCjr"),
@@ -130,8 +126,11 @@ namespace emul
 		m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
 		m_uart.Init();
 
-		m_inputs.Init(&m_keyboard);
+		InitJoystick(0x201, PIT_CLK);
+
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
+		m_inputs.Init(&m_keyboard);
+		m_inputs.SetJoystick(m_joystick);
 
 		AddDevice(*m_pic);
 		AddDevice(*m_pit);
@@ -141,7 +140,8 @@ namespace emul
 		AddDevice(m_floppy);
 		AddDevice(m_uart);
 		AddDevice(m_soundModule);
-		AddDevice(dummyPort);
+		AddDevice(*m_joystick);
+		AddDevice(dummyPortPCjr);
 	}
 
 	void ComputerPCjr::InitRAM(emul::WORD baseRAM)
@@ -241,6 +241,7 @@ namespace emul
 			}
 
 			m_keyboard.Tick();
+			m_joystick->Tick();
 
 			m_pit->GetCounter(0).Tick();
 			if (m_keyboard.GetTimer1Source() == kbd::CLK1::MAIN_CLK)

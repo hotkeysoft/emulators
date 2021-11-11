@@ -76,6 +76,12 @@ namespace emul
 		m_ppi->Init();
 	}
 
+	void Computer::InitJoystick(WORD baseAddress, size_t baseClock)
+	{
+		m_joystick = new joy::DeviceJoystick(baseAddress, baseClock);
+		m_joystick->EnableLog(Config::Instance().GetLogLevel("joystick"));
+		m_joystick->Init();
+	}
 
 	void Computer::InitVideo(const std::string& defaultMode, const VideoModes& supported)
 	{

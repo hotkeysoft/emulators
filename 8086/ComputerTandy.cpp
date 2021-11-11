@@ -27,10 +27,6 @@ namespace emul
 	public:
 		DummyPortTandy() : Logger("DUMMY")
 		{
-			// Joystick
-			Connect(0x201, static_cast<PortConnector::OUTFunction>(&DummyPortTandy::WriteData));
-			Connect(0x201, static_cast<PortConnector::INFunction>(&DummyPortTandy::ReadData));
-
 			//EGA
 			for (WORD w = 0x3C0; w < 0x3D0; ++w)
 			{
@@ -108,8 +104,11 @@ namespace emul
 		m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
 		m_uart.Init();
 
-		m_inputs.Init(&m_keyboard, events::KBDMapping::TANDY);
+		InitJoystick(0x201, PIT_CLK);
+
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
+		m_inputs.Init(&m_keyboard, events::KBDMapping::TANDY);
+		m_inputs.SetJoystick(m_joystick);
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));
 
@@ -120,6 +119,7 @@ namespace emul
 		AddDevice(m_floppy);
 		//AddDevice(m_uart);
 		AddDevice(m_soundModule);
+		AddDevice(*m_joystick);
 		AddDevice(dummyPortTandy);
 		AddDevice(*this);
 	}
@@ -228,6 +228,7 @@ namespace emul
 			}
 
 			m_keyboard.Tick();
+			m_joystick->Tick();
 
 			m_pit->GetCounter(0).Tick();
 

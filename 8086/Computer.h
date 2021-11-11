@@ -8,6 +8,7 @@
 #include "Device8255.h"
 #include "Device8259.h"
 #include "DevicePCSpeaker.h"
+#include "DeviceJoystick.h"
 #include "Video.h"
 
 #include <set>
@@ -39,6 +40,7 @@ namespace emul
 		virtual void InitPIT(pit::Device8254* pit);
 		virtual void InitPIC(pic::Device8259* pic);
 		virtual void InitPPI(ppi::Device8255* ppi);
+		virtual void InitJoystick(WORD baseAddress, size_t baseClock);
 
 		typedef std::set<std::string> VideoModes;
 		virtual void InitVideo(const std::string& defaultMode, const VideoModes& supported = VideoModes());
@@ -50,6 +52,7 @@ namespace emul
 		pic::Device8259* m_pic = nullptr;
 		ppi::Device8255* m_ppi = nullptr;
 		video::Video* m_video = nullptr;
+		joy::DeviceJoystick* m_joystick = nullptr;
 
 		beeper::DevicePCSpeaker m_pcSpeaker;
 

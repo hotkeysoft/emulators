@@ -198,6 +198,9 @@
     <ClCompile Include="Config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DeviceJoystick.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -343,6 +346,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\inipp.h">
       <Filter>3rd Party</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceJoystick.h">
+      <Filter>Header Files\IO</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

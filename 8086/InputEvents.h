@@ -9,6 +9,7 @@
 
 using emul::BYTE;
 namespace kbd { class DeviceKeyboard; }
+namespace joy { class DeviceJoystick; }
 
 namespace events
 {
@@ -53,6 +54,7 @@ namespace events
 		InputEvents& operator=(InputEvents&&) = delete;
 
 		void Init(kbd::DeviceKeyboard* kbd, KBDMapping mapping = KBDMapping::XT);
+		void SetJoystick(joy::DeviceJoystick* joy) { m_joystick = joy; }
 
 		void Tick();
 
@@ -73,6 +75,8 @@ namespace events
 
 		SDL_GameController* m_gameController = nullptr;
 		SDL_JoystickID m_controllerID = -1;
+
+		joy::DeviceJoystick* m_joystick = nullptr;
 	};
 
 }

@@ -1,5 +1,6 @@
 #include "InputEvents.h"
 #include "DeviceKeyboard.h"
+#include "DeviceJoystick.h"
 
 #include <SDL.h>
 
@@ -404,21 +405,22 @@ namespace events
 	void InputEvents::InputControllerButton(uint8_t button, uint8_t state)
 	{
 		LogPrintf(LOG_DEBUG, "InputControllerButton: button[%d]=[%s]", button, (state == SDL_PRESSED) ? "PRESSED" : "RELEASED");
-		//if (m_joystick)
-		//{
-		//	// TODO: Only 1 joystick for now
-		//	m_joystick->SetButtonState(0, button, (state == SDL_PRESSED) ? true : false);
-		//}
-
+		if (m_joystick)
+		{
+			// TODO: Only 1 joystick for now
+			m_joystick->SetButtonState(0, button, (state == SDL_PRESSED) ? true : false);
+		}
 	}
 	void InputEvents::InputControllerAxis(uint8_t axis, int16_t value)
 	{
 		LogPrintf(LOG_DEBUG, "InputControllerAxis: axis[%d]=[%d]", axis, value);
-		//if (m_joystick)
-		//{
-		//	// TODO: Only 1 joystick for now
-		//	m_joystick->SetAxisState(0, axis, value / 256);
-		//}
+		if (m_joystick)
+		{
+			// TODO: Only 1 joystick for now
+			WORD adjValue = value / 256;
+			adjValue += 128;
+			m_joystick->SetAxisState(0, axis, adjValue);
+		}
 	}
 
 }

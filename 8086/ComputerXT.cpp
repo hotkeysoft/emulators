@@ -25,25 +25,22 @@ namespace emul
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
 
-	static class DummyPort : public PortConnector
+	static class DummyPortXT : public PortConnector
 	{
 	public:
-		DummyPort() : Logger("DUMMY")
+		DummyPortXT() : Logger("DUMMY")
 		{
-			// Joystick
-			Connect(0x201, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
-
 			//EGA
 			for (WORD w = 0x3C0; w < 0x3D0; ++w)
 			{
-				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPort::WriteData));
+				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
 			}
 		}
 
 		void WriteData(BYTE value)
 		{
 		}
-	} dummyPort;
+	} dummyPortXT;
 
 	ComputerXT::ComputerXT() :
 		Logger("XT"),
@@ -95,8 +92,11 @@ namespace emul
 		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
 		m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
 
+		InitJoystick(0x201, PIT_CLK);
+
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
 		m_inputs.Init(&m_keyboard);
+		m_inputs.SetJoystick(m_joystick);
 
 		// Configuration switches
 		{
@@ -122,7 +122,8 @@ namespace emul
 		AddDevice(*m_video);
 		AddDevice(m_floppy);
 		AddDevice(m_soundModule);
-		AddDevice(dummyPort);
+		AddDevice(*m_joystick);
+		AddDevice(dummyPortXT);
 	}
 
 	void ComputerXT::InitRAM(emul::WORD baseRAM)
@@ -192,6 +193,7 @@ namespace emul
 			}
 
 			m_keyboard.Tick();
+			m_joystick->Tick();
 
 			pit::Counter& timer2 = m_pit->GetCounter(2);
 			timer2.SetGate(ppi->GetTimer2Gate());
