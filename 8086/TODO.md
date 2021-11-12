@@ -54,7 +54,7 @@
 - Mostly done, need tests
 
 ### TGA
-- In progress
+- Mostly done, need tests
 
 ### EGA
 - Everything
@@ -67,14 +67,16 @@
 
 ### SN76496 (PCjr/Tandy)
 - Switches in the 8255
-- Everything
+- Some glitches
 
 ### General
 - Proper mixing
 - Filtering
 
 ## Tandy
-- Just started
+- Base model mostly done, some issues
+- DMA for FDC (comes with RAM extension)
+- Need to implement 1000HX to support 720K floppies
 
 ## UI
 

@@ -6,8 +6,8 @@ Emulators for 8080- and TMS1000-family CPUs
   - Most opcodes implemented
   - Partial timing implementation / sync 
   - Partial implementation of debugger/monitor in console
-  - **No user interface yet to load disks/configure machine**
-    - **Everything is done in code at the moment**
+  - Partial config file support (config/config.ini)
+    - architecture, base ram, video mode, monitor, log levels 
   - Terminal window + Display in separate SDL window
   - IBM PC/XT (5160)
     - Loads original BIOS ROM (passes POST except 301 error)
@@ -57,6 +57,9 @@ Emulators for 8080- and TMS1000-family CPUs
     - PCjr, Tandy (and usable in XT)
     - 3 voices + noise channel
     - Basics working
+  - Joystick support
+    - Uses first connected game controller 
+    - X-Y analog stick, A-B buttons
 
 
 - TMS1000: TMS1000/1100/1400/1700 Emulator (used in old electronic games)
