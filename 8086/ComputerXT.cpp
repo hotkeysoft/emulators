@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "Console.h"
 #include "Device8255XT.h"
+#include "DeviceHardDrive.h"
 
 #include <thread>
 
@@ -50,6 +51,7 @@ namespace emul
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_dma(0x00, m_memory),
 		m_floppy(0x03F0, PIT_CLK),
+		m_hardDrive(0x320, PIT_CLK),
 		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
 	{
@@ -115,12 +117,22 @@ namespace emul
 			ppi->SetFloppyCount(2);
 		}
 
+		m_hardDrive.EnableLog(LOG_DEBUG);
+		m_hardDrive.Init();
+		MemoryBlock* hddROM = new MemoryBlock("hdd", 8192, MemoryType::ROM);
+		//hddROM->LoadFromFile("data/hdd/IBM_XEBEC_6359121_1982.BIN");
+		hddROM->LoadFromFile("data/hdd/IBM_XEBEC_62X0822_1985.BIN");
+		//hddROM->LoadFromFile("data/hdd/WD1002S-WX2_62-000042-11.bin");
+		
+		m_memory.Allocate(hddROM, 0xC8000);
+
 		AddDevice(*m_pic);
 		AddDevice(*m_pit);
 		AddDevice(*m_ppi);
 		AddDevice(m_dma);
 		AddDevice(*m_video);
 		AddDevice(m_floppy);
+		AddDevice(m_hardDrive);
 		AddDevice(m_soundModule);
 		AddDevice(*m_joystick);
 		AddDevice(dummyPortXT);
@@ -213,6 +225,9 @@ namespace emul
 			m_video->Tick();
 			m_floppy.Tick();
 			m_pic->InterruptRequest(6, m_floppy.IsInterruptPending());
+
+			m_hardDrive.Tick();
+			m_pic->InterruptRequest(5, m_hardDrive.IsInterruptPending());
 
 			// TODO: faking it
 			if (m_floppy.IsDMAPending())

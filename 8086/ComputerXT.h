@@ -3,6 +3,7 @@
 #include "Computer.h"
 #include "Device8237.h"
 #include "DeviceFloppyXT.h"
+#include "DeviceHardDrive.h"
 #include "DevicePCSpeaker.h"
 #include "DeviceSN76489.h"
 #include "DeviceKeyboardXT.h"
@@ -30,6 +31,7 @@ namespace emul
 
 		dma::Device8237 m_dma;
 		fdc::DeviceFloppyXT m_floppy;
+		hdd::DeviceHardDrive m_hardDrive;
 
 		sn76489::DeviceSN76489 m_soundModule;
 		kbd::DeviceKeyboardXT m_keyboard;

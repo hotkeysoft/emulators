@@ -194,6 +194,7 @@
     <ClCompile Include="DeviceFloppyPCjr.cpp" />
     <ClCompile Include="DeviceFloppyTandy.cpp" />
     <ClCompile Include="DeviceFloppyXT.cpp" />
+    <ClCompile Include="DeviceHardDrive.cpp" />
     <ClCompile Include="DeviceJoystick.cpp" />
     <ClCompile Include="DeviceKeyboard.cpp" />
     <ClCompile Include="DeviceKeyboardPCjr.cpp" />
@@ -246,6 +247,7 @@
     <ClInclude Include="DeviceFloppyPCjr.h" />
     <ClInclude Include="DeviceFloppyTandy.h" />
     <ClInclude Include="DeviceFloppyXT.h" />
+    <ClInclude Include="DeviceHardDrive.h" />
     <ClInclude Include="DeviceJoystick.h" />
     <ClInclude Include="DeviceKeyboard.h" />
     <ClInclude Include="DeviceKeyboardPCjr.h" />

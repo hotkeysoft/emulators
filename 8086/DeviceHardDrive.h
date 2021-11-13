@@ -1,0 +1,270 @@
+#pragma once
+
+#include "Common.h"
+#include "PortConnector.h"
+#include "Logger.h"
+#include <vector>
+#include <deque>
+
+using emul::PortConnector;
+using emul::WORD;
+using emul::BYTE;
+
+namespace hdd
+{
+	class DeviceHardDrive : public PortConnector
+	{
+
+	public:
+		DeviceHardDrive(WORD baseAddress, size_t clockSpeedHz);
+		virtual ~DeviceHardDrive() {};
+
+		DeviceHardDrive() = delete;
+		DeviceHardDrive(const DeviceHardDrive&) = delete;
+		DeviceHardDrive& operator=(const DeviceHardDrive&) = delete;
+		DeviceHardDrive(DeviceHardDrive&&) = delete;
+		DeviceHardDrive& operator=(DeviceHardDrive&&) = delete;
+
+		virtual void Init();
+		virtual void Reset();
+
+		virtual void Tick();
+
+		bool LoadDiskImage(BYTE drive, BYTE type, const char* path);
+
+		size_t DelayToTicks(size_t delayMS);
+
+		BYTE ReadDataFIFO();
+		void WriteDataFIFO(BYTE value);
+
+		BYTE ReadStatus();
+		void WriteControllerReset(BYTE value);
+
+		BYTE ReadOptionJumpers();
+		void WriteControllerSelectPulse(BYTE);
+
+		void WriteMaskRegister(BYTE value);
+
+		bool IsInterruptPending() const { return m_interruptPending; }
+
+		bool IsDMAPending() const { return m_dmaPending; }
+		void DMAAcknowledge();
+		void DMATerminalCount();
+
+	protected:
+		const WORD m_baseAddress;
+		size_t m_clockSpeed;
+		size_t m_currOpWait = 0;
+
+		enum class STATE
+		{
+			RESET_START,
+			RESET_ACTIVE,
+			RESET_DONE,
+
+			RQM_DELAY,
+
+			PARAM_WAIT,
+
+			CMD_WAIT,
+			CMD_READ,
+			CMD_ERROR,
+			CMD_EXEC,
+			CMD_EXEC_DELAY,
+			CMD_EXEC_DONE,
+
+			READ_START,
+			READ_EXEC,
+
+			WRITE_START,
+			WRITE_EXEC,
+
+			RW_DONE,
+
+			DMA_WAIT,
+			DMA_ACK,
+
+			NDMA_WAIT,
+
+			RESULT_WAIT,
+		};
+		STATE m_state = STATE::CMD_WAIT;
+		STATE m_nextState = STATE::CMD_WAIT;
+
+		// State machine processing
+		void RQMDelay(STATE nextState);
+		void ReadCommand();
+		void ExecuteCommand();
+		void ReadSector() {} // TODO: Temp
+		void RWSectorEnd() {} // TODO: Temp
+		void WriteSector() {} // TODO: Temp
+		bool UpdateCurrPos();
+
+		// HDC Commands
+		typedef STATE(DeviceHardDrive::* ExecFunc)();
+		STATE NotImplemented();
+
+		bool m_dmaEnabled = false;
+		bool m_dmaPending = false;
+		virtual void SetDMAPending() { m_dmaPending = true; }
+
+		bool m_irqEnabled = false;
+		bool m_interruptPending = false;
+		virtual void SetInterruptPending() { m_interruptPending = true; }
+		void ClearInterrupt() { m_interruptPending = false; }
+
+		// Status
+		enum HWSTATUS
+		{
+			HWS_REQ  = 0x01, // 1 = Ready for data to be transferred
+			HWS_DIO  = 0x02, // 1 = Controller->CPU, 0 = CPU->Controller
+			HWS_CD   = 0x04, // 1 = Data byte, 0 = command/status
+			HWS_BUSY = 0x08, // 1 = Device Busy
+			HWS_DRQ  = 0x10, // 1 = Ready for DMA transfer
+			HWS_IRQ  = 0x20 // 1 = Interrupt pending
+		};
+
+		enum HDCERROR
+		{
+			ERR_OK = 0b000000, // Not an error
+
+			// Errors type 0
+			ERR_NO_INDEX = 0b000001,
+			ERR_NO_SEEK = 0b000010,
+			ERR_WRITE_FAULT = 0b000011,
+			ERR_NOT_READY = 0b000100,
+			ERR_NO_TRACK0 = 0b000110,
+			ERR_SEEKING = 0b001000, // Drive is still seeking (Test Drive Ready command)
+
+			// Errors type 1
+			ERR_ID_READ = 0b010000,
+			ERR_DATA = 0b010001,
+			ERR_ADDRESS = 0b010010,
+			ERR_SECTOR = 0b010100,
+			ERR_SEEK = 0b010101,
+			ERR_CORRECTABLE = 0b011000,
+			ERR_BAD_TRACK = 0b011001,
+
+			// Errors type 2
+			ERR_INVALID_CMD = 0b100000,
+			ERR_ILLEGAL_ADDR = 0b100001,
+
+			// Errors type 3
+			ERR_DIAG_RAM = 0b110000,
+			ERR_DIAG_CHKSUM = 0b110001,
+			ERR_DIAG_ECC = 0b110010
+		};
+
+		// Sense Bytes
+		struct Sense
+		{
+			// set if previous command required a disk address
+			bool addressValid = false;
+
+			HDCERROR error = ERR_OK;
+
+			BYTE drive = 0; // 0-1
+			BYTE head = 0;
+			WORD cylinder = 0;
+			BYTE sector = 0;
+		} m_sense;
+
+		BYTE m_currDrive = 0; // 0-1
+		WORD m_currCylinder = 0;
+		BYTE m_currSector = 0;
+		BYTE m_maxSector = 0;
+		BYTE m_currHead = 0;
+
+		WORD m_stepRate = 3000; // Step Rate Time, time between cylinders (us)
+
+		bool m_commandBusy = false;
+		bool m_commandError = false;
+		bool m_dataRegisterReady = true;
+
+		enum class ControlData { CONTROL = 0, DATA = 1 };
+		ControlData m_controlData = ControlData::CONTROL;
+
+		enum class DataDirection { CPU2HDC = 0, HDC2CPU = 1 };
+		DataDirection m_dataInputOutput = DataDirection::CPU2HDC;
+
+		// Command/Response/Parameters FIFO
+		void Push(BYTE value) { m_fifo.push_back(value); }
+		BYTE Pop() { BYTE ret = m_fifo.front(); m_fifo.pop_front(); return ret; }
+		std::deque<BYTE> m_fifo;
+
+		enum CMD
+		{
+			TEST_DRIVE = 0,
+			RECALIBRATE = 1,
+			SENSE = 3,
+			FORMAT_DRIVE = 4,
+			READ_VERIFY = 5,
+			FORMAT_TRACK = 6,
+			FORMAT_BAD_TRACK = 7,
+			READ = 8,
+			WRITE = 10,
+			SEEK = 11,
+			INIT_DRIVE = 12,
+			READ_ECC_BURST_LEN = 13,
+			READ_DATA_BUFFER = 14,
+			WRITE_DATA_BUFFER = 15,
+
+			RAM_DIAGNOSTIC = 0xE0
+		};
+
+		struct Command
+		{
+			const char* name;
+			size_t paramCount;
+			ExecFunc func;
+			bool interrupt;
+		};
+		const Command* m_currCommand = nullptr;
+		BYTE m_currcommandID = 0;
+
+		typedef std::map<CMD, Command> CommandMap;
+		const CommandMap m_commandMap = {
+			{ CMD::TEST_DRIVE,        { "Test Drive",            5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::RECALIBRATE,       { "Recalibrate",           5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::SENSE,             { "Sense",                 5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::FORMAT_DRIVE,      { "Format Drive",          5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::READ_VERIFY,       { "Read Verify",           5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::FORMAT_TRACK,      { "Format Track",          5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::FORMAT_BAD_TRACK,  { "Format Bad Track",      5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::READ,              { "Read",                  5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::WRITE,             { "Write",                 5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::SEEK,              { "Seek",                  5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::INIT_DRIVE,        { "Init Drive",            5 + 8, &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::READ_ECC_BURST_LEN,{ "Read ECC Burst Length", 5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::READ_DATA_BUFFER,  { "Read Data Buffer",      5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::WRITE_DATA_BUFFER, { "Write Data Buffer",     5,   &DeviceHardDrive::NotImplemented, false } },
+			{ CMD::RAM_DIAGNOSTIC,    { "RAM Diagnostic",        5,   &DeviceHardDrive::NotImplemented, false } }
+		};
+
+		struct Geometry
+		{
+			const char* name;
+			BYTE head;
+			WORD cyl;
+			BYTE sect;
+			WORD precomp;
+			uint32_t GetImageSize() const { return 512 * head * cyl * sect; }
+			uint32_t CHS2A(WORD c, BYTE h, BYTE s) const { return 512 * ((c * head + h) * sect + s - 1); }
+		};
+
+		typedef std::map<BYTE, Geometry> Geometries;
+		const Geometries m_geometries = {
+			{ 1, { "Type 1 (10MB)",  4, 306, 17, 0 } },
+			{ 16,{ "Type 16 (20MB)", 4, 612, 17, 0 } },
+			{ 2, { "Type 2 (20MB)",  4, 615, 17, 300 } },
+			{ 13,{ "Type 13 (20MB)", 8, 306, 17, 128 } },
+		};
+
+		struct HardDisk
+		{
+			bool loaded = false;
+			Geometry geometry;
+			FILE* data = nullptr;
+		} m_images[2];
+	};
+}

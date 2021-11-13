@@ -201,6 +201,9 @@
     <ClCompile Include="DeviceJoystick.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
+    <ClCompile Include="DeviceHardDrive.cpp">
+      <Filter>Source Files\Storage</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -349,6 +352,9 @@
     </ClInclude>
     <ClInclude Include="DeviceJoystick.h">
       <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceHardDrive.h">
+      <Filter>Header Files\Storage</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
