@@ -26,6 +26,12 @@ namespace emul
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
 
+	const BYTE IRQ_FLOPPY = 6;
+	const BYTE DMA_FLOPPY = 2;
+
+	const BYTE IRQ_HDD = 5;
+	const BYTE DMA_HDD = 3;
+
 	static class DummyPortXT : public PortConnector
 	{
 	public:
@@ -223,26 +229,24 @@ namespace emul
 
 			m_dma.Tick();
 			m_video->Tick();
+
 			m_floppy.Tick();
-			m_pic->InterruptRequest(6, m_floppy.IsInterruptPending());
+			m_pic->InterruptRequest(IRQ_FLOPPY, m_floppy.IsInterruptPending());
 
-			m_hardDrive.Tick();
-			m_pic->InterruptRequest(5, m_hardDrive.IsInterruptPending());
-
-			// TODO: faking it
+			// TODO: duplication with HDD
 			if (m_floppy.IsDMAPending())
 			{
-				m_dma.DMARequest(2, true);
+				m_dma.DMARequest(DMA_FLOPPY, true);
 			}
 
-			if (m_dma.DMAAcknowledged(2))
+			if (m_dma.DMAAcknowledged(DMA_FLOPPY))
 			{
-				m_dma.DMARequest(2, false);
+				m_dma.DMARequest(DMA_FLOPPY, false);
 
 				// Do it manually
 				m_floppy.DMAAcknowledge();
 
-				dma::DMAChannel& channel = m_dma.GetChannel(2);
+				dma::DMAChannel& channel = m_dma.GetChannel(DMA_FLOPPY);
 				dma::OPERATION op = channel.GetOperation();
 				BYTE value;
 				switch (op)
@@ -262,9 +266,50 @@ namespace emul
 					throw std::exception("DMAOperation: Operation not supported");
 				}
 
-				if (m_dma.GetTerminalCount(2))
+				if (m_dma.GetTerminalCount(DMA_FLOPPY))
 				{
 					m_floppy.DMATerminalCount();
+				}
+			}
+
+			m_hardDrive.Tick();
+			m_pic->InterruptRequest(IRQ_HDD, m_hardDrive.IsInterruptPending());
+
+			if (m_hardDrive.IsDMAPending())
+			{
+				m_dma.DMARequest(DMA_HDD, true);
+			}
+
+			if (m_dma.DMAAcknowledged(DMA_HDD))
+			{
+				m_dma.DMARequest(DMA_HDD, false);
+
+				// Do it manually
+				m_hardDrive.DMAAcknowledge();
+
+				dma::DMAChannel& channel = m_dma.GetChannel(DMA_HDD);
+				dma::OPERATION op = channel.GetOperation();
+				BYTE value;
+				switch (op)
+				{
+				case dma::OPERATION::READ:
+					channel.DMAOperation(value);
+					m_hardDrive.WriteDataFIFO(value);
+					break;
+				case dma::OPERATION::WRITE:
+					value = m_hardDrive.ReadDataFIFO();
+					channel.DMAOperation(value);
+					break;
+				case dma::OPERATION::VERIFY:
+					channel.DMAOperation(value);
+					break;
+				default:
+					throw std::exception("DMAOperation: Operation not supported");
+				}
+
+				if (m_dma.GetTerminalCount(DMA_HDD))
+				{
+					m_hardDrive.DMATerminalCount();
 				}
 			}
 
