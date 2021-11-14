@@ -102,11 +102,12 @@ namespace hdd
 		void ReadCommand();
 		void ExecuteCommand();
 		void ReadSector() {} // TODO: Temp
-		void RWSectorEnd() {} // TODO: Temp
-		void WriteSector() {} // TODO: Temp
+		void RWSectorEnd();
+		void WriteSector();
 		void SeekTo();
 		bool UpdateCurrPos();
 		void PushStatus();
+		void InitDrive2();
 
 		// HDC Commands
 		typedef STATE(DeviceHardDrive::* ExecFunc)();
@@ -114,6 +115,7 @@ namespace hdd
 		STATE Diagnostic();
 		STATE Recalibrate();
 		STATE InitDrive();
+		STATE WriteDataBuffer();
 
 		bool m_dmaEnabled = false;
 		bool m_dmaPending = false;
@@ -272,12 +274,12 @@ namespace hdd
 			{ CMD::INIT_DRIVE,        { "Init Drive",            5,  &DeviceHardDrive::InitDrive } },
 			{ CMD::READ_ECC_BURST_LEN,{ "Read ECC Burst Length", 5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::READ_DATA_BUFFER,  { "Read Data Buffer",      5,  &DeviceHardDrive::NotImplemented } },
-			{ CMD::WRITE_DATA_BUFFER, { "Write Data Buffer",     5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::WRITE_DATA_BUFFER, { "Write Data Buffer",     5,  &DeviceHardDrive::WriteDataBuffer } },
 			{ CMD::RAM_DIAGNOSTIC,    { "RAM Diagnostic",        5,  &DeviceHardDrive::Diagnostic } },
 			{ CMD::DRIVE_DIAGNOSTIC,  { "Drive Diagnostic",      5,  &DeviceHardDrive::Diagnostic } },
 			{ CMD::CTRL_DIAGNOSTIC,   { "Controller Diagnostic", 5,  &DeviceHardDrive::Diagnostic } },
 			{ CMD::READ_LONG,         { "Read Long",             5,  &DeviceHardDrive::NotImplemented } },
-			{ CMD::WRITE_LONG,        { "Write LongDiagnostic",  5,  &DeviceHardDrive::NotImplemented } }
+			{ CMD::WRITE_LONG,        { "Write Long",            5,  &DeviceHardDrive::NotImplemented } }
 		};
 
 		struct Geometry
@@ -305,5 +307,8 @@ namespace hdd
 			Geometry geometry;
 			FILE* data = nullptr;
 		} m_images[2];
+
+		BYTE m_sectorBuffer[512];
+		WORD m_sectorBufferPos = 0;
 	};
 }

@@ -326,7 +326,8 @@ namespace hdd
 			if (m_fifo.size() == 8)
 			{
 				LogPrintf(Logger::LOG_DEBUG, "Read all [%d] drive parameters", m_fifo.size());
-				throw std::exception("not implemented");
+				InitDrive2();
+				CommandExecutionDone();
 			}
 			break;
 		case STATE::DMA_WAIT:
@@ -362,16 +363,17 @@ namespace hdd
 	{
 		LogPrintf(Logger::LOG_INFO, "Command Execution done");
 		m_dataRegisterReady = true;
-		m_controlData = ControlData::CONTROL;
 
 		// No results, ready for next command
 		if (m_fifo.size() == 0)
 		{
+			m_controlData = ControlData::CONTROL;
 			m_dataInputOutput = DataDirection::CPU2HDC;
 			m_state = STATE::CMD_WAIT;
 		}
 		else
 		{
+			m_controlData = ControlData::DATA;
 			m_dataInputOutput = DataDirection::HDC2CPU;
 			m_state = STATE::RESULT_WAIT;
 		}
@@ -457,7 +459,7 @@ namespace hdd
 	void DeviceHardDrive::ReadCommandBlock()
 	{
 		BYTE val = Pop();
-		m_commandBlock.drive = val & 0b00100000;
+		m_commandBlock.drive = (val & 0b00100000) >> 5;
 		m_commandBlock.head = val & 0b00011111;
 		val = Pop();
 		m_commandBlock.cylinder = (val & 0b11100000) << 3;
@@ -490,7 +492,7 @@ namespace hdd
 
 	DeviceHardDrive::STATE DeviceHardDrive::Diagnostic()
 	{	
-		LogPrintf(LOG_INFO, "COMMAND: ", m_currCommand->name);
+		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
 
 		ReadCommandBlock();
 		assert(m_fifo.size() == 0);
@@ -505,10 +507,12 @@ namespace hdd
 
 	DeviceHardDrive::STATE DeviceHardDrive::Recalibrate()
 	{
-		LogPrintf(LOG_INFO, "COMMAND: ", m_currCommand->name);
+		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
 
 		ReadCommandBlock();
 		assert(m_fifo.size() == 0);
+
+		m_commandBlock.cylinder = 0; // Target cylinder for recalibrate
 
 		m_currDrive = m_commandBlock.drive;
 		m_currCylinder = 100; // TODO: TEMP
@@ -520,7 +524,7 @@ namespace hdd
 
 	DeviceHardDrive::STATE DeviceHardDrive::InitDrive()
 	{
-		LogPrintf(LOG_INFO, "COMMAND: ", m_currCommand->name);
+		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
 
 		ReadCommandBlock();
 		assert(m_fifo.size() == 0);
@@ -531,6 +535,98 @@ namespace hdd
 
 		return STATE::INIT;
 	}
+
+	void DeviceHardDrive::InitDrive2()
+	{
+		LogPrintf(LOG_INFO, "InitDrive (Part 2)");
+		assert(m_fifo.size() == 8);
+		
+		WORD cylinders = (Pop() << 8) | Pop();
+		LogPrintf(LOG_INFO, "| Number of cylinders: %d", cylinders);
+
+		BYTE heads = Pop();
+		LogPrintf(LOG_INFO, "| Number of heads:     %d", heads);
+
+		WORD rmcStartCylinder = (Pop() << 8) | Pop();
+		LogPrintf(LOG_INFO, "| RWC start cyl:       %d", rmcStartCylinder);
+
+		WORD precompStartCylinder = (Pop() << 8) | Pop();
+		LogPrintf(LOG_INFO, "| Precomp start cyl:   %d", precompStartCylinder);
+
+		BYTE eccBurst = Pop();
+		LogPrintf(LOG_INFO, "| Max ECC burst:       %d", eccBurst);
+
+		m_currDrive = m_commandBlock.drive;
+		m_commandError = false;
+		PushStatus();
+	}
+
+	DeviceHardDrive::STATE DeviceHardDrive::WriteDataBuffer()
+	{
+		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
+
+		ReadCommandBlock();
+		assert(m_fifo.size() == 0);
+
+		m_currDrive = m_commandBlock.drive;
+		m_currOpWait = DelayToTicks(100);
+		m_commandError = false;
+		m_sectorBufferPos = 0;
+
+		return STATE::WRITE_START;
+	}
+
+	void DeviceHardDrive::WriteSector()
+	{
+		LogPrintf(LOG_DEBUG, "WriteSector, fifo=%d", m_fifo.size());
+
+		if (m_fifo.size() == 512)
+		{
+
+			uint32_t offset = m_images[0].geometry.CHS2A(m_currCylinder, m_currHead, m_currSector);
+			for (size_t b = 0; b < 512; ++b)
+			{
+				m_sectorBuffer[b] = Pop();
+//				disk.data[offset + b] = Pop();
+			}
+
+			//bool isEOT = UpdateCurrPos();
+			//if (isEOT)
+			//{
+
+			// This only goes to the buffer, not on the actual disk
+			if (m_currcommandID == WRITE_DATA_BUFFER)
+			{
+				m_dataRegisterReady = false;
+				m_currOpWait = DelayToTicks(10);
+				m_nextState = STATE::RW_DONE;
+				m_state = STATE::CMD_EXEC_DELAY;
+				return;
+			}
+			//}
+
+//			LogPrintf(LOG_INFO, "WriteSector done, writing next sector %d", m_currSector);
+		}
+
+		SetDMAPending();
+
+		// Timeout
+		m_currOpWait = DelayToTicks(100 * 1000);
+
+		m_state = m_dmaEnabled ? STATE::DMA_WAIT : STATE::NDMA_WAIT;
+	}
+
+	void DeviceHardDrive::RWSectorEnd()
+	{
+		LogPrintf(LOG_INFO, "ReadWriteSectorEnd, fifo=%d", m_fifo.size());
+
+		m_fifo.clear();
+
+		m_currDrive = m_commandBlock.drive;
+		m_commandError = false;
+		PushStatus();
+	}
+
 	void DeviceHardDrive::DMATerminalCount()
 	{
 		LogPrintf(LOG_INFO, "DMATerminalCount");
@@ -541,5 +637,4 @@ namespace hdd
 		m_nextState = STATE::RW_DONE;
 		m_state = STATE::CMD_EXEC_DELAY;
 	}
-
 }
