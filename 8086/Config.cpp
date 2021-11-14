@@ -88,6 +88,8 @@ namespace cfg
 			return Logger::SEVERITY::LOG_INFO;
 		case 4:
 			return Logger::SEVERITY::LOG_DEBUG;
+		case 5:
+			return Logger::SEVERITY::LOG_TRACE;
 		default:
 			LogPrintf(LOG_WARNING, "Unknown log level [%d] for key [loglevels].%s, using default level [LOG_INFO]", level, key);
 			return Logger::SEVERITY::LOG_INFO;

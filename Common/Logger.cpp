@@ -49,6 +49,9 @@ void Logger::_LogPrintf(SEVERITY sev, const char *msg, ...) const
 
 	switch (sev)
 	{
+	case LOG_TRACE:
+		pos = strcat(pos, "[TRC]") + 5;
+		break;
 	case LOG_DEBUG:
 		pos = strcat(pos, "[DBG]") + 5;
 		break;

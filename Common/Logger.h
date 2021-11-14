@@ -11,7 +11,7 @@ public:
 	Logger(const char* moduleID);
 	virtual ~Logger();
 
-	enum SEVERITY { LOG_DEBUG = 0, LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_OFF = 999 };
+	enum SEVERITY { LOG_TRACE = 0, LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_OFF = 999 };
 
 	virtual void EnableLog(SEVERITY minSev = LOG_INFO);
 
