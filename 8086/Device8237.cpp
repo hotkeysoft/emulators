@@ -374,12 +374,12 @@ namespace dma
 
 	void Device8237::DMARequest(BYTE channel, bool state)
 	{
-		if (channel > 2) throw std::exception("invalid dma channel");
+		if (channel > 3) throw std::exception("invalid dma channel");
 		DMARequests[channel & 3] = state;
 	}
 	bool Device8237::DMAAcknowledged(BYTE channel)
 	{
-		if (channel > 2) throw std::exception("invalid dma channel");
+		if (channel > 3) throw std::exception("invalid dma channel");
 		// TODO
 		bool ack = DMARequests[channel & 3];
 		DMARequests[channel & 3] = false;
