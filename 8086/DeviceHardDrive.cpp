@@ -101,13 +101,7 @@ namespace hdd
 
 	BYTE DeviceHardDrive::ReadStatus()
 	{
-		//// In non-DMA mode a read or write clears the interrupt pin
-		//if (m_nonDMA)
-		//{
-		//	ClearInterrupt();
-		//}
-
-		LogPrintf(Logger::LOG_DEBUG, "ReadStatus [%cIRQ %cDRQ %cBSY %cDATAcmd %cINout %cREQ]",
+		LogPrintf(Logger::LOG_TRACE, "ReadStatus [%cIRQ %cDRQ %cBSY %cDATAcmd %cINout %cREQ]",
 			m_interruptPending ? ' ' : '/',
 			m_dmaPending ? ' ' : '/',
 			m_commandBusy ? ' ' : '/',
@@ -128,14 +122,8 @@ namespace hdd
 
 	BYTE DeviceHardDrive::ReadDataFIFO()
 	{
-		// In non-DMA mode a read or write clears the interrupt pin
-		//if (m_nonDMA)
-		//{
-		//	ClearInterrupt();
-		//}
-
 		BYTE result = 0xFF;
-		LogPrintf(Logger::LOG_DEBUG, "ReadDataFIFO");
+		LogPrintf(Logger::LOG_TRACE, "ReadDataFIFO");
 		switch (m_state)
 		{
 		case STATE::RESULT_WAIT:
@@ -180,7 +168,8 @@ namespace hdd
 			m_state = STATE::CMD_READ;
 			break;
 		case STATE::PARAM_WAIT:
-			m_state = STATE::PARAM_WAIT;
+		case STATE::INIT_PARAM_WAIT:
+			// No state change
 			break;
 		case STATE::DMA_WAIT:
 		case STATE::NDMA_WAIT:
@@ -275,27 +264,7 @@ namespace hdd
 			}
 			break;
 		case STATE::CMD_EXEC_DONE:
-			LogPrintf(Logger::LOG_INFO, "Command Execution done");
-			m_dataRegisterReady = true;
-			m_controlData = ControlData::CONTROL;
-
-			// No results, ready for next command
-			if (m_fifo.size() == 0)
-			{
-				m_dataInputOutput = DataDirection::CPU2HDC;
-				m_state = STATE::CMD_WAIT;
-			}
-			else
-			{
-				m_dataInputOutput = DataDirection::HDC2CPU;
-				m_state = STATE::RESULT_WAIT;
-			}
-
-			if (m_currCommand->interrupt)
-			{
-				LogPrintf(LOG_DEBUG, "Interrupt Pending");
-				SetInterruptPending();
-			}
+			CommandExecutionDone();
 			break;
 		case STATE::PARAM_WAIT:
 			if (m_currCommand->paramCount == m_fifo.size())
@@ -337,6 +306,29 @@ namespace hdd
 			LogPrintf(Logger::LOG_INFO, "Write Sector");
 			WriteSector();
 			break;
+		case STATE::SEEK_EXEC:
+			if (m_currOpWait)
+			{
+				--m_currOpWait;
+			}
+			else
+			{
+				SeekTo();
+			}
+			break;
+		case STATE::INIT:
+			// We end the current command but wait for drive config parameters
+			CommandExecutionDone();
+			// Wait for 8 config arguments
+			m_state = STATE::INIT_PARAM_WAIT;
+			break;
+		case STATE::INIT_PARAM_WAIT:
+			if (m_fifo.size() == 8)
+			{
+				LogPrintf(Logger::LOG_DEBUG, "Read all [%d] drive parameters", m_fifo.size());
+				throw std::exception("not implemented");
+			}
+			break;
 		case STATE::DMA_WAIT:
 			LogPrintf(Logger::LOG_DEBUG, "DMA Wait");
 			if (--m_currOpWait == 0)
@@ -364,6 +356,28 @@ namespace hdd
 			LogPrintf(Logger::LOG_ERROR, "Tick() Unknown State: %d", m_state);
 			throw std::exception("Unknown state");
 		}
+	}
+
+	void DeviceHardDrive::CommandExecutionDone()
+	{
+		LogPrintf(Logger::LOG_INFO, "Command Execution done");
+		m_dataRegisterReady = true;
+		m_controlData = ControlData::CONTROL;
+
+		// No results, ready for next command
+		if (m_fifo.size() == 0)
+		{
+			m_dataInputOutput = DataDirection::CPU2HDC;
+			m_state = STATE::CMD_WAIT;
+		}
+		else
+		{
+			m_dataInputOutput = DataDirection::HDC2CPU;
+			m_state = STATE::RESULT_WAIT;
+		}
+
+		LogPrintf(LOG_DEBUG, "Interrupt Pending");
+		SetInterruptPending();
 	}
 
 	void DeviceHardDrive::RQMDelay(STATE nextState)
@@ -414,6 +428,24 @@ namespace hdd
 		m_dmaPending = false;
 	}
 
+	void DeviceHardDrive::SeekTo()
+	{
+		if (m_currCylinder != m_commandBlock.cylinder)
+		{
+			m_currCylinder += (m_currCylinder > m_commandBlock.cylinder) ? -1 : -1;
+			LogPrintf(LOG_DEBUG, "[%zu] Seeking, curr=[%d], target=[%d]", emul::g_ticks, m_currCylinder, m_commandBlock.cylinder);
+			m_currOpWait = DelayToTicks(1 * 1000); //TODO
+			m_state = STATE::SEEK_EXEC;
+		}
+		else
+		{
+			LogPrintf(LOG_DEBUG, "Seek done, currcylinder=[%d]", m_currCylinder);
+			m_commandError = false;
+			PushStatus();
+			m_state = STATE::CMD_EXEC_DONE;
+		}
+	}
+
 	DeviceHardDrive::STATE DeviceHardDrive::NotImplemented()
 	{
 		LogPrintf(LOG_ERROR, "Command [%s] not implemented", m_currCommand->name);
@@ -422,7 +454,83 @@ namespace hdd
 		return STATE::CMD_EXEC_DONE;
 	}
 
+	void DeviceHardDrive::ReadCommandBlock()
+	{
+		BYTE val = Pop();
+		m_commandBlock.drive = val & 0b00100000;
+		m_commandBlock.head = val & 0b00011111;
+		val = Pop();
+		m_commandBlock.cylinder = (val & 0b11100000) << 3;
+		m_commandBlock.sector = val & 0b00011111;
+		val = Pop();
+		m_commandBlock.cylinder |= val;
+		val = Pop();
+		m_commandBlock.blockCount = val;
+		val = Pop();
+		m_commandBlock.noRetries = val & 0b10000000;
+		m_commandBlock.eccRetry = val & 0b01000000;
+		m_commandBlock.stepCode = val & 0b00000111;
 
+		LogPrintf(LOG_INFO, "CommandBlock: drive[%d] head[%d] cyl[%d], sect[%d], count[%d], R1[%d] R2[%d] SP[%d]",
+			m_commandBlock.drive,
+			m_commandBlock.head,
+			m_commandBlock.cylinder,
+			m_commandBlock.sector,
+			m_commandBlock.blockCount,
+			m_commandBlock.noRetries,
+			m_commandBlock.eccRetry,
+			m_commandBlock.stepCode);
+	}
+
+	void DeviceHardDrive::PushStatus()
+	{
+		BYTE status = (m_commandError * 2) | (m_currDrive * 32);
+		Push(status);
+	}
+
+	DeviceHardDrive::STATE DeviceHardDrive::Diagnostic()
+	{	
+		LogPrintf(LOG_INFO, "COMMAND: ", m_currCommand->name);
+
+		ReadCommandBlock();
+		assert(m_fifo.size() == 0);
+
+		m_currDrive = m_commandBlock.drive;
+		m_commandError = false;
+		PushStatus();
+
+		m_currOpWait = DelayToTicks(10 * 1000); // 10 ms
+		return STATE::CMD_EXEC_DONE;
+	}
+
+	DeviceHardDrive::STATE DeviceHardDrive::Recalibrate()
+	{
+		LogPrintf(LOG_INFO, "COMMAND: ", m_currCommand->name);
+
+		ReadCommandBlock();
+		assert(m_fifo.size() == 0);
+
+		m_currDrive = m_commandBlock.drive;
+		m_currCylinder = 100; // TODO: TEMP
+		m_currOpWait = DelayToTicks(100);
+		m_commandError = false;
+
+		return STATE::SEEK_EXEC;
+	}
+
+	DeviceHardDrive::STATE DeviceHardDrive::InitDrive()
+	{
+		LogPrintf(LOG_INFO, "COMMAND: ", m_currCommand->name);
+
+		ReadCommandBlock();
+		assert(m_fifo.size() == 0);
+
+		m_currDrive = m_commandBlock.drive;
+		m_currOpWait = DelayToTicks(100);
+		m_commandError = false;
+
+		return STATE::INIT;
+	}
 	void DeviceHardDrive::DMATerminalCount()
 	{
 		LogPrintf(LOG_INFO, "DMATerminalCount");

@@ -30,6 +30,8 @@ namespace hdd
 
 		virtual void Tick();
 
+		void CommandExecutionDone();
+
 		bool LoadDiskImage(BYTE drive, BYTE type, const char* path);
 
 		size_t DelayToTicks(size_t delayMS);
@@ -45,9 +47,9 @@ namespace hdd
 
 		void WriteMaskRegister(BYTE value);
 
-		bool IsInterruptPending() const { return m_interruptPending; }
+		bool IsInterruptPending() const { return m_irqEnabled && m_interruptPending; }
 
-		bool IsDMAPending() const { return m_dmaPending; }
+		bool IsDMAPending() const { return m_dmaEnabled && m_dmaPending; }
 		void DMAAcknowledge();
 		void DMATerminalCount();
 
@@ -79,6 +81,10 @@ namespace hdd
 			WRITE_START,
 			WRITE_EXEC,
 
+			SEEK_EXEC,
+			INIT,
+			INIT_PARAM_WAIT,
+
 			RW_DONE,
 
 			DMA_WAIT,
@@ -98,11 +104,16 @@ namespace hdd
 		void ReadSector() {} // TODO: Temp
 		void RWSectorEnd() {} // TODO: Temp
 		void WriteSector() {} // TODO: Temp
+		void SeekTo();
 		bool UpdateCurrPos();
+		void PushStatus();
 
 		// HDC Commands
 		typedef STATE(DeviceHardDrive::* ExecFunc)();
 		STATE NotImplemented();
+		STATE Diagnostic();
+		STATE Recalibrate();
+		STATE InitDrive();
 
 		bool m_dmaEnabled = false;
 		bool m_dmaPending = false;
@@ -112,6 +123,26 @@ namespace hdd
 		bool m_interruptPending = false;
 		virtual void SetInterruptPending() { m_interruptPending = true; }
 		void ClearInterrupt() { m_interruptPending = false; }
+
+		// CommandBlock
+		struct CommandBlock
+		{
+			BYTE drive = 0; // 0-1
+			BYTE head = 0;
+			WORD cylinder = 0;
+			BYTE sector = 0;
+			union
+			{
+				BYTE blockCount = 0;
+				BYTE interleave;
+			};
+			bool noRetries = false;
+			bool eccRetry = false;
+
+			BYTE stepCode = 0;
+
+		} m_commandBlock;
+		void ReadCommandBlock();
 
 		// Status
 		enum HWSTATUS
@@ -209,7 +240,12 @@ namespace hdd
 			READ_DATA_BUFFER = 14,
 			WRITE_DATA_BUFFER = 15,
 
-			RAM_DIAGNOSTIC = 0xE0
+			RAM_DIAGNOSTIC = 0xE0,
+			DRIVE_DIAGNOSTIC = 0xE3,
+			CTRL_DIAGNOSTIC = 0xE4,
+
+			READ_LONG = 0xE5,
+			WRITE_LONG = 0xE6,
 		};
 
 		struct Command
@@ -217,28 +253,31 @@ namespace hdd
 			const char* name;
 			size_t paramCount;
 			ExecFunc func;
-			bool interrupt;
 		};
 		const Command* m_currCommand = nullptr;
 		BYTE m_currcommandID = 0;
 
 		typedef std::map<CMD, Command> CommandMap;
 		const CommandMap m_commandMap = {
-			{ CMD::TEST_DRIVE,        { "Test Drive",            5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::RECALIBRATE,       { "Recalibrate",           5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::SENSE,             { "Sense",                 5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::FORMAT_DRIVE,      { "Format Drive",          5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::READ_VERIFY,       { "Read Verify",           5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::FORMAT_TRACK,      { "Format Track",          5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::FORMAT_BAD_TRACK,  { "Format Bad Track",      5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::READ,              { "Read",                  5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::WRITE,             { "Write",                 5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::SEEK,              { "Seek",                  5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::INIT_DRIVE,        { "Init Drive",            5 + 8, &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::READ_ECC_BURST_LEN,{ "Read ECC Burst Length", 5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::READ_DATA_BUFFER,  { "Read Data Buffer",      5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::WRITE_DATA_BUFFER, { "Write Data Buffer",     5,   &DeviceHardDrive::NotImplemented, false } },
-			{ CMD::RAM_DIAGNOSTIC,    { "RAM Diagnostic",        5,   &DeviceHardDrive::NotImplemented, false } }
+			{ CMD::TEST_DRIVE,        { "Test Drive",            5,  &DeviceHardDrive::Diagnostic } },
+			{ CMD::RECALIBRATE,       { "Recalibrate",           5,  &DeviceHardDrive::Recalibrate } },
+			{ CMD::SENSE,             { "Sense",                 5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::FORMAT_DRIVE,      { "Format Drive",          5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::READ_VERIFY,       { "Read Verify",           5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::FORMAT_TRACK,      { "Format Track",          5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::FORMAT_BAD_TRACK,  { "Format Bad Track",      5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::READ,              { "Read",                  5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::WRITE,             { "Write",                 5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::SEEK,              { "Seek",                  5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::INIT_DRIVE,        { "Init Drive",            5,  &DeviceHardDrive::InitDrive } },
+			{ CMD::READ_ECC_BURST_LEN,{ "Read ECC Burst Length", 5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::READ_DATA_BUFFER,  { "Read Data Buffer",      5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::WRITE_DATA_BUFFER, { "Write Data Buffer",     5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::RAM_DIAGNOSTIC,    { "RAM Diagnostic",        5,  &DeviceHardDrive::Diagnostic } },
+			{ CMD::DRIVE_DIAGNOSTIC,  { "Drive Diagnostic",      5,  &DeviceHardDrive::Diagnostic } },
+			{ CMD::CTRL_DIAGNOSTIC,   { "Controller Diagnostic", 5,  &DeviceHardDrive::Diagnostic } },
+			{ CMD::READ_LONG,         { "Read Long",             5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::WRITE_LONG,        { "Write LongDiagnostic",  5,  &DeviceHardDrive::NotImplemented } }
 		};
 
 		struct Geometry
