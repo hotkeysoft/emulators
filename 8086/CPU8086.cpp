@@ -2334,7 +2334,16 @@ namespace emul
 		}
 		else if (interrupt == 0x13)
 		{
-			LogPrintf(LOG_INFO, "FLOPPY, ah=%02X", regA.hl.h);
+			switch (regA.hl.h)
+			{
+			case 0x00: LogPrintf(LOG_INFO, "DISK[%02X]: Reset drive", regD.hl.l); break;
+			case 0x01: LogPrintf(LOG_INFO, "DISK[%02X]: Get Status drive", regD.hl.l); break;
+			case 0x02: LogPrintf(LOG_INFO, "DISK[%02X]: Read Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", regD.hl.l, regA.hl.l, regC.hl.h, regD.hl.h, regC.hl.l & 63); break;
+			case 0x03: LogPrintf(LOG_INFO, "DISK[%02X]: Write Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", regD.hl.l, regA.hl.l, regC.hl.h, regD.hl.h, regC.hl.l & 63); break;
+			case 0x04: LogPrintf(LOG_INFO, "DISK[%02X]: Verify Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", regD.hl.l, regA.hl.l, regC.hl.h, regD.hl.h, regC.hl.l & 63); break;
+
+			default: LogPrintf(LOG_INFO, "DISK[%02X], Other function ah=%02X", regD.hl.l, regA.hl.h); break;
+			}
 		}
 		else if (interrupt == 0x21)
 		{
