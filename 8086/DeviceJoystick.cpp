@@ -13,8 +13,11 @@ namespace joy
 
 	void DeviceJoystick::Init()
 	{
-		Connect(m_baseAddress, static_cast<PortConnector::INFunction>(&DeviceJoystick::ReadJoystick));
-		Connect(m_baseAddress, static_cast<PortConnector::OUTFunction>(&DeviceJoystick::WriteJoystick));
+		for (int i = 0; i < 8; ++i)
+		{
+			Connect(m_baseAddress + i, static_cast<PortConnector::INFunction>(&DeviceJoystick::ReadJoystick));
+			Connect(m_baseAddress + i, static_cast<PortConnector::OUTFunction>(&DeviceJoystick::WriteJoystick));
+		}
 	}
 
 	BYTE DeviceJoystick::ReadJoystick()

@@ -19,8 +19,11 @@ namespace kbd
 		// Port A0 is not strictly part of the keyboard but it handles NMI masking and a keyboard IR bit
 		//
 		// the other bits are Timer1-related and HRQ(unimplemented)
-		Connect(m_baseAddress, static_cast<PortConnector::INFunction>(&DeviceKeyboardPCjr::ReadPortA0));
-		Connect(m_baseAddress, static_cast<PortConnector::OUTFunction>(&DeviceKeyboardPCjr::WritePortA0));
+		for (int i = 0; i < 8; ++i)
+		{
+			Connect(m_baseAddress + i, static_cast<PortConnector::INFunction>(&DeviceKeyboardPCjr::ReadPortA0));
+			Connect(m_baseAddress + i, static_cast<PortConnector::OUTFunction>(&DeviceKeyboardPCjr::WritePortA0));
+		}
 	}
 
 	BYTE DeviceKeyboardPCjr::ReadPortA0()
