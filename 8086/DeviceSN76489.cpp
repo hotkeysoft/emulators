@@ -176,7 +176,10 @@ namespace sn76489
 
 	void DeviceSN76489::Init()
 	{
-		Connect(m_baseAddress, static_cast<PortConnector::OUTFunction>(&DeviceSN76489::WriteData));
+		for (int i = 0; i < 8; ++i)
+		{
+			Connect(m_baseAddress + i, static_cast<PortConnector::OUTFunction>(&DeviceSN76489::WriteData));
+		}
 
 		for (int i = 0; i < 4; ++i)
 		{
