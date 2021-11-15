@@ -17,7 +17,7 @@ namespace hdd
 
 	public:
 		DeviceHardDrive(WORD baseAddress, size_t clockSpeedHz);
-		virtual ~DeviceHardDrive() {};
+		virtual ~DeviceHardDrive();
 
 		DeviceHardDrive() = delete;
 		DeviceHardDrive(const DeviceHardDrive&) = delete;

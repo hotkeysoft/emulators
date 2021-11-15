@@ -15,6 +15,19 @@ namespace hdd
 	{
 	}
 
+	DeviceHardDrive::~DeviceHardDrive()
+	{
+		if (m_images[0].data)
+		{
+			fclose(m_images[0].data);
+		}
+
+		if (m_images[1].data)
+		{
+			fclose(m_images[1].data);
+		}
+	}
+
 	void DeviceHardDrive::Reset()
 	{
 		m_fifo.clear();
@@ -462,7 +475,7 @@ namespace hdd
 		m_commandBlock.drive = (val & 0b00100000) >> 5;
 		m_commandBlock.head = val & 0b00011111;
 		val = Pop();
-		m_commandBlock.cylinder = (val & 0b11100000) << 3;
+		m_commandBlock.cylinder = (val & 0b11000000) << 2;
 		m_commandBlock.sector = val & 0b00011111;
 		val = Pop();
 		m_commandBlock.cylinder |= val;
@@ -728,7 +741,7 @@ namespace hdd
 		bool isEOT = (m_currSector >= disk.geometry.sect-1);
 		LogPrintf(LOG_DEBUG, "UpdateCurrPos cyl=[%d] head=[%d] sector=[%d], EOT=[%d]", m_currCylinder, m_currHead, m_currSector, isEOT);
 
-		m_currCylinder += (isEOT && (m_currHead == disk.geometry.head)) ? 1 : 0;
+		m_currCylinder += (isEOT && (m_currHead == (disk.geometry.head - 1))) ? 1 : 0;
 		if (isEOT)
 		{
 			++m_currHead;
