@@ -66,7 +66,7 @@ namespace hdd
 			return false;
 		}
 
-		FILE* f = fopen(path, "rb");
+		FILE* f = fopen(path, "r+b");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadDiskImage: error opening binary file");
@@ -590,6 +590,37 @@ namespace hdd
 		return STATE::READ_START;
 	}
 
+	DeviceHardDrive::STATE DeviceHardDrive::WriteSectors()
+	{
+		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
+
+		ReadCommandBlock();
+		assert(m_fifo.size() == 0);
+
+		m_currDrive = m_commandBlock.drive;
+		m_currCylinder = m_commandBlock.cylinder;
+		m_currHead = m_commandBlock.head;
+		m_currSector = m_commandBlock.sector;
+
+		if (m_currSector >= m_images[0].geometry.sect)
+		{
+			LogPrintf(LOG_ERROR, "Invalid sector [%d]", m_currSector);
+			throw std::exception("Invalid sector");
+		}
+		if (m_currCylinder >= m_images[0].geometry.cyl)
+		{
+			LogPrintf(LOG_ERROR, "Invalid cylinder [%d]", m_currCylinder);
+			throw std::exception("Invalid cylinder");
+		}
+		if (m_currHead > m_images[0].geometry.head)
+		{
+			LogPrintf(LOG_ERROR, "Invalid head [%d]", m_currHead);
+			throw std::exception("Invalid head");
+		}
+
+		return STATE::WRITE_START;
+	}
+
 	void DeviceHardDrive::ReadSector()
 	{
 		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
@@ -634,30 +665,30 @@ namespace hdd
 
 		if (m_fifo.size() == 512)
 		{
-
-			uint32_t offset = m_images[0].geometry.CHS2A(m_currCylinder, m_currHead, m_currSector);
 			for (size_t b = 0; b < 512; ++b)
 			{
 				m_sectorBuffer[b] = Pop();
-//				disk.data[offset + b] = Pop();
 			}
 
-			//bool isEOT = UpdateCurrPos();
-			//if (isEOT)
-			//{
-
-			// This only goes to the buffer, not on the actual disk
-			if (m_currcommandID == WRITE_DATA_BUFFER)
+			// Actual write to disk image
+			if (m_currcommandID != WRITE_DATA_BUFFER)
 			{
-				m_dataRegisterReady = false;
+				uint32_t offset = m_images[0].geometry.CHS2A(m_currCylinder, m_currHead, m_currSector);
+				fseek(m_images[0].data, offset, SEEK_SET);
+				fwrite(m_sectorBuffer, 512, 1, m_images[0].data);
+			}
+
+			if (!m_commandBlock.blockCount || m_currcommandID == WRITE_DATA_BUFFER)
+			{
 				m_currOpWait = DelayToTicks(10);
 				m_nextState = STATE::RW_DONE;
 				m_state = STATE::CMD_EXEC_DELAY;
 				return;
 			}
-			//}
 
-//			LogPrintf(LOG_INFO, "WriteSector done, writing next sector %d", m_currSector);
+			UpdateCurrPos();
+
+			--m_commandBlock.blockCount;
 		}
 
 		SetDMAPending();

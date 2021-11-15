@@ -117,6 +117,7 @@ namespace hdd
 		STATE InitDrive();
 		STATE WriteDataBuffer();
 		STATE ReadSectors();
+		STATE WriteSectors();
 
 		bool m_dmaEnabled = false;
 		bool m_dmaPending = false;
@@ -270,7 +271,7 @@ namespace hdd
 			{ CMD::FORMAT_TRACK,      { "Format Track",          5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::FORMAT_BAD_TRACK,  { "Format Bad Track",      5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::READ,              { "Read",                  5,  &DeviceHardDrive::ReadSectors } },
-			{ CMD::WRITE,             { "Write",                 5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::WRITE,             { "Write",                 5,  &DeviceHardDrive::WriteSectors } },
 			{ CMD::SEEK,              { "Seek",                  5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::INIT_DRIVE,        { "Init Drive",            5,  &DeviceHardDrive::InitDrive } },
 			{ CMD::READ_ECC_BURST_LEN,{ "Read ECC Burst Length", 5,  &DeviceHardDrive::NotImplemented } },
