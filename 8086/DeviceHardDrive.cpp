@@ -331,14 +331,14 @@ namespace hdd
 			}
 			break;
 		case STATE::DMA_WAIT:
-			LogPrintf(Logger::LOG_DEBUG, "DMA Wait");
+			LogPrintf(Logger::LOG_TRACE, "DMA Wait");
 			if (--m_currOpWait == 0)
 			{
 				m_state = STATE::CMD_ERROR;
 			}
 			break;
 		case STATE::NDMA_WAIT:
-			LogPrintf(Logger::LOG_DEBUG, "NDMA Wait");
+			LogPrintf(Logger::LOG_TRACE, "NDMA Wait");
 			m_dataRegisterReady = true;
 			if (--m_currOpWait == 0)
 			{
@@ -473,10 +473,10 @@ namespace hdd
 		m_commandBlock.eccRetry = val & 0b01000000;
 		m_commandBlock.stepCode = val & 0b00000111;
 
-		LogPrintf(LOG_INFO, "CommandBlock: drive[%d] head[%d] cyl[%d], sect[%d], count[%d], R1[%d] R2[%d] SP[%d]",
+		LogPrintf(LOG_INFO, "CommandBlock: drive[%d] cyl[%d] head[%d] sect[%d], count[%d], R1[%d] R2[%d] SP[%d]",
 			m_commandBlock.drive,
-			m_commandBlock.head,
 			m_commandBlock.cylinder,
+			m_commandBlock.head,
 			m_commandBlock.sector,
 			m_commandBlock.blockCount,
 			m_commandBlock.noRetries,
@@ -571,9 +571,61 @@ namespace hdd
 		m_currDrive = m_commandBlock.drive;
 		m_currOpWait = DelayToTicks(100);
 		m_commandError = false;
-		m_sectorBufferPos = 0;
 
 		return STATE::WRITE_START;
+	}
+
+	DeviceHardDrive::STATE DeviceHardDrive::ReadSectors()
+	{
+		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
+
+		ReadCommandBlock();
+		assert(m_fifo.size() == 0);
+
+		m_currDrive = m_commandBlock.drive;
+		m_currCylinder = m_commandBlock.cylinder;
+		m_currHead = m_commandBlock.head;
+		m_currSector = m_commandBlock.sector;
+
+		return STATE::READ_START;
+	}
+
+	void DeviceHardDrive::ReadSector()
+	{
+		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
+
+		// TODO: Handle not loaded
+
+		if (m_fifo.size() == 0)
+		{ 
+			if (!m_commandBlock.blockCount)
+			{
+				LogPrintf(LOG_INFO, "ReadSector done, end of track");
+				m_currOpWait = DelayToTicks(10);
+				m_nextState = STATE::RW_DONE;
+				m_state = STATE::CMD_EXEC_DELAY;
+				return;
+			}
+
+			uint32_t offset = m_images[0].geometry.CHS2A(m_currCylinder, m_currHead, m_currSector);
+			fseek(m_images[0].data, offset, SEEK_SET);
+			fread(m_sectorBuffer, 512, 1, m_images[0].data);
+			for (size_t b = 0; b < 512; ++b)
+			{
+				Push(m_sectorBuffer[b]);
+			}
+
+			UpdateCurrPos();
+
+			--m_commandBlock.blockCount;
+		}
+
+		SetDMAPending();
+
+		// Timeout
+		m_currOpWait = DelayToTicks(100 * 1000);
+
+		m_state = m_dmaEnabled ? STATE::DMA_WAIT : STATE::NDMA_WAIT;
 	}
 
 	void DeviceHardDrive::WriteSector()
@@ -636,5 +688,28 @@ namespace hdd
 		m_currOpWait = DelayToTicks(10);
 		m_nextState = STATE::RW_DONE;
 		m_state = STATE::CMD_EXEC_DELAY;
+	}
+
+	bool DeviceHardDrive::UpdateCurrPos()
+	{
+		const HardDisk& disk = m_images[0];
+
+		bool isEOT = (m_currSector >= disk.geometry.sect-1);
+		LogPrintf(LOG_DEBUG, "UpdateCurrPos cyl=[%d] head=[%d] sector=[%d], EOT=[%d]", m_currCylinder, m_currHead, m_currSector, isEOT);
+
+		m_currCylinder += (isEOT && (m_currHead == disk.geometry.head)) ? 1 : 0;
+		if (isEOT)
+		{
+			++m_currHead;
+			if (m_currHead >= disk.geometry.head)
+			{
+				m_currHead = 0;
+			}
+		}
+
+		m_currSector = isEOT ? 0 : (m_currSector + 1);
+		LogPrintf(LOG_INFO, "UpdateCurrPos done: cyl=[%d] head=[%d] sector=[%d]", m_currCylinder, m_currHead, m_currSector);
+
+		return isEOT;
 	}
 }

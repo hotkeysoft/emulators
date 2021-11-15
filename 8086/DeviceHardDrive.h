@@ -101,7 +101,7 @@ namespace hdd
 		void RQMDelay(STATE nextState);
 		void ReadCommand();
 		void ExecuteCommand();
-		void ReadSector() {} // TODO: Temp
+		void ReadSector();
 		void RWSectorEnd();
 		void WriteSector();
 		void SeekTo();
@@ -116,6 +116,7 @@ namespace hdd
 		STATE Recalibrate();
 		STATE InitDrive();
 		STATE WriteDataBuffer();
+		STATE ReadSectors();
 
 		bool m_dmaEnabled = false;
 		bool m_dmaPending = false;
@@ -268,7 +269,7 @@ namespace hdd
 			{ CMD::READ_VERIFY,       { "Read Verify",           5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::FORMAT_TRACK,      { "Format Track",          5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::FORMAT_BAD_TRACK,  { "Format Bad Track",      5,  &DeviceHardDrive::NotImplemented } },
-			{ CMD::READ,              { "Read",                  5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::READ,              { "Read",                  5,  &DeviceHardDrive::ReadSectors } },
 			{ CMD::WRITE,             { "Write",                 5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::SEEK,              { "Seek",                  5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::INIT_DRIVE,        { "Init Drive",            5,  &DeviceHardDrive::InitDrive } },
@@ -290,7 +291,7 @@ namespace hdd
 			BYTE sect;
 			WORD precomp;
 			uint32_t GetImageSize() const { return 512 * head * cyl * sect; }
-			uint32_t CHS2A(WORD c, BYTE h, BYTE s) const { return 512 * ((c * head + h) * sect + s - 1); }
+			uint32_t CHS2A(WORD c, BYTE h, BYTE s) const { return 512 * ((c * head + h) * sect + s); }
 		};
 
 		typedef std::map<BYTE, Geometry> Geometries;
@@ -309,6 +310,5 @@ namespace hdd
 		} m_images[2];
 
 		BYTE m_sectorBuffer[512];
-		WORD m_sectorBufferPos = 0;
 	};
 }
