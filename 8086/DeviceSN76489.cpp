@@ -11,8 +11,9 @@ namespace sn76489
 {
 	void Voice::SetAttenuation(BYTE value)
 	{
+		value &= 0b1111;
 		LogPrintf(LOG_DEBUG, "SetAttenuation, value=%02Xh", value);
-		m_attenuation = value &= 0b1111;
+		m_attenuation = value;
 	}
 
 	// =================================
@@ -193,21 +194,21 @@ namespace sn76489
 
 		if (!(value & 0x80)) // Data command, uses currently last register as destination
 		{
-			m_currFunc ? m_currDest->SetAttenuation(value) : m_currDest->SetData(value, true);
+			if (m_currFunc == Function::DATA)
+			{
+				m_currDest->SetData(value, true);
+			}
 		}
 		else // Latch/Data command
 		{
 			// Save register for subsequent Data commands
 			m_currDest = m_voices[(value >> 5) & 3];
-			m_currFunc = value & 0b00010000;
-
-			if (m_currFunc)
+			m_currFunc = (value & 0b00010000) ? Function::VOL : Function::DATA;
+			
+			switch (m_currFunc)
 			{
-				m_currDest->SetAttenuation(value);
-			}
-			else
-			{
-				m_currDest->SetData(value, false);
+			case Function::VOL: m_currDest->SetAttenuation(value); break;
+			case Function::DATA: m_currDest->SetData(value, false); break;
 			}
 		}
 

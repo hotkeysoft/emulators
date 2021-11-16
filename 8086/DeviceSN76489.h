@@ -35,7 +35,7 @@ namespace sn76489
 		BYTE GetOutput() const { return m_out ? s_volumeTable[m_attenuation] : 0; }
 
 		virtual void SetAttenuation(BYTE value);
-		virtual void SetData(BYTE value, bool highLow) {}
+		virtual void SetData(BYTE value, bool highLow) = 0;
 
 	protected:
 		void ToggleOutput() { m_out = !m_out; }
@@ -128,7 +128,8 @@ namespace sn76489
 		const WORD m_baseAddress;
 
 		Voice* m_currDest = nullptr;
-		bool m_currFunc = false; // true = Attenuation, false = hi freq / noise mode
+		enum class Function { VOL, DATA };
+		Function m_currFunc = Function::DATA; // true = Attenuation, false = hi freq / noise mode
 		Voice* m_voices[4];
 	};
 }
