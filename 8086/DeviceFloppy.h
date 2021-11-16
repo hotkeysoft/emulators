@@ -77,12 +77,12 @@ namespace fdc
 
 			RW_DONE,
 
+			NDMA_WAIT,
 			DMA_WAIT,
 			DMA_ACK,
 
-			NDMA_WAIT,
-
 			RESULT_WAIT,
+			NOT_READY,
 		};
 		STATE m_state = STATE::CMD_WAIT;
 		STATE m_nextState = STATE::CMD_WAIT;

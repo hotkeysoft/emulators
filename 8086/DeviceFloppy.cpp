@@ -386,6 +386,13 @@ namespace fdc
 			Push(m_st0);
 			m_state = STATE::CMD_EXEC_DONE;
 			break;
+		case STATE::NOT_READY:
+			LogPrintf(Logger::LOG_WARNING, "Drive Not Ready");
+			m_st0 |= 0xC0;
+			m_fifo.clear();
+			Push(m_st0);
+			m_state = STATE::CMD_EXEC_DONE;
+			break;
 		default: 
 			LogPrintf(Logger::LOG_ERROR, "Tick() Unknown State: %d", m_state);
 			throw std::exception("Unknown state");
@@ -508,13 +515,14 @@ namespace fdc
 
 		LogPrintf(LOG_INFO, "COMMAND: Seek d=[%d] h=[%d] cyl=[%d] (travel: [%d])", driveNumber, head, cylinder, travel);
 
+
 		m_dataRegisterReady = false;
 		m_driveActive[driveNumber] = true;
 		m_st0 = SE | (param & 7); // Set Seek end + head + drive
 		m_pcn = cylinder;
 
 		assert(m_fifo.size() == 0);
-		// Response: Interrupt
+
 		m_currOpWait = DelayToTicks(travel * (size_t)m_srt * 1000);
 		return STATE::CMD_EXEC_DONE;
 	}
@@ -598,6 +606,14 @@ namespace fdc
 
 		FloppyDisk& disk = m_images[m_currDrive];
 
+		if (!disk.loaded)
+		{
+			m_st0 = NR | (param & 7); // Not Ready + head + drive
+
+			m_currOpWait = DelayToTicks(100 * 1000); // 100ms
+			return STATE::NOT_READY;
+		}
+
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
 
@@ -665,6 +681,14 @@ namespace fdc
 		assert(m_fifo.size() == 0);
 
 		FloppyDisk& disk = m_images[m_currDrive];
+
+		if (!disk.loaded)
+		{
+			m_st0 = NR | (param & 7); // Not Ready + head + drive
+
+			m_currOpWait = DelayToTicks(100 * 1000); // 100ms
+			return STATE::NOT_READY;
+		}
 
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
@@ -781,6 +805,14 @@ namespace fdc
 		assert(m_fifo.size() == 0);
 
 		FloppyDisk& disk = m_images[m_currDrive];
+
+		if (!disk.loaded)
+		{
+			m_st0 = NR | (param & 7); // Not Ready + head + drive
+
+			m_currOpWait = DelayToTicks(100 * 1000); // 100ms
+			return STATE::NOT_READY;
+		}
 
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
