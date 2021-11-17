@@ -524,7 +524,7 @@ namespace hdd
 		ReadCommandBlock();
 		assert(m_fifo.size() == 0);
 
-		m_currDrive = m_commandBlock.drive & 1;
+		m_currDrive = m_commandBlock.drive;
 		if (m_images[m_currDrive].loaded)
 		{
 			m_commandError = false;
@@ -676,17 +676,19 @@ namespace hdd
 		m_currHead = m_commandBlock.head;
 		m_currSector = m_commandBlock.sector;
 
-		if (m_currSector >= m_images[0].geometry.sect)
+		const HardDisk& disk = m_images[m_currDrive];
+
+		if (m_currSector >= disk.geometry.sect)
 		{
 			LogPrintf(LOG_ERROR, "Invalid sector [%d]", m_currSector);
 			throw std::exception("Invalid sector");
 		}
-		if (m_currCylinder >= m_images[0].geometry.cyl)
+		if (m_currCylinder >= disk.geometry.cyl)
 		{
 			LogPrintf(LOG_ERROR, "Invalid cylinder [%d]", m_currCylinder);
 			throw std::exception("Invalid cylinder");
 		}
-		if (m_currHead > m_images[0].geometry.head)
+		if (m_currHead > disk.geometry.head)
 		{
 			LogPrintf(LOG_ERROR, "Invalid head [%d]", m_currHead);
 			throw std::exception("Invalid head");
@@ -699,8 +701,6 @@ namespace hdd
 	{
 		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
 
-		// TODO: Handle not loaded
-
 		if (m_fifo.size() == 0)
 		{ 
 			if (!m_commandBlock.blockCount)
@@ -712,9 +712,10 @@ namespace hdd
 				return;
 			}
 
-			uint32_t offset = m_images[0].geometry.CHS2A(m_currCylinder, m_currHead, m_currSector);
-			fseek(m_images[0].data, offset, SEEK_SET);
-			fread(m_sectorBuffer, 512, 1, m_images[0].data);
+			const HardDisk& disk = m_images[m_currDrive];
+			uint32_t offset = disk.geometry.CHS2A(m_currCylinder, m_currHead, m_currSector);
+			fseek(disk.data, offset, SEEK_SET);
+			fread(m_sectorBuffer, 512, 1, disk.data);
 			for (size_t b = 0; b < 512; ++b)
 			{
 				Push(m_sectorBuffer[b]);
@@ -747,9 +748,10 @@ namespace hdd
 			// Actual write to disk image
 			if (m_currcommandID != WRITE_DATA_BUFFER)
 			{
-				uint32_t offset = m_images[0].geometry.CHS2A(m_currCylinder, m_currHead, m_currSector);
-				fseek(m_images[0].data, offset, SEEK_SET);
-				fwrite(m_sectorBuffer, 512, 1, m_images[0].data);
+				const HardDisk& disk = m_images[m_currDrive];
+				uint32_t offset = disk.geometry.CHS2A(m_currCylinder, m_currHead, m_currSector);
+				fseek(disk.data, offset, SEEK_SET);
+				fwrite(m_sectorBuffer, 512, 1, disk.data);
 			}
 
 			if (!m_commandBlock.blockCount || m_currcommandID == WRITE_DATA_BUFFER)
@@ -798,7 +800,7 @@ namespace hdd
 
 	bool DeviceHardDrive::UpdateCurrPos()
 	{
-		const HardDisk& disk = m_images[0];
+		const HardDisk& disk = m_images[m_currDrive];
 
 		bool isEOT = (m_currSector >= disk.geometry.sect-1);
 		LogPrintf(LOG_DEBUG, "UpdateCurrPos cyl=[%d] head=[%d] sector=[%d], EOT=[%d]", m_currCylinder, m_currHead, m_currSector, isEOT);
