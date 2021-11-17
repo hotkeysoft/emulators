@@ -456,6 +456,7 @@ namespace hdd
 		{
 			LogPrintf(LOG_DEBUG, "Seek done, currcylinder=[%d]", m_currCylinder);
 			m_commandError = false;
+			SetLastState(ERR_OK, true);
 			PushStatus();
 			m_state = STATE::CMD_EXEC_DONE;
 		}
@@ -497,10 +498,68 @@ namespace hdd
 			m_commandBlock.stepCode);
 	}
 
+	void DeviceHardDrive::SetLastState(HDCERROR state, bool addressValid)
+	{
+		m_sense.error = state;
+		m_sense.addressValid = addressValid;
+		m_sense.drive = m_commandBlock.drive;
+		if (addressValid)
+		{
+			m_sense.cylinder = m_commandBlock.cylinder;
+			m_sense.head = m_commandBlock.head;
+			m_sense.sector = m_commandBlock.sector;
+		}
+	}
+
 	void DeviceHardDrive::PushStatus()
 	{
 		BYTE status = (m_commandError * 2) | (m_currDrive * 32);
 		Push(status);
+	}
+
+	DeviceHardDrive::STATE DeviceHardDrive::TestDriveReady()
+	{
+		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
+
+		ReadCommandBlock();
+		assert(m_fifo.size() == 0);
+
+		m_currDrive = m_commandBlock.drive & 1;
+		if (m_images[m_currDrive].loaded)
+		{
+			m_commandError = false;
+			SetLastState(ERR_OK);
+		}
+		else
+		{
+			m_commandError = true;
+			SetLastState(ERR_NOT_READY);
+		}
+		PushStatus();
+
+		m_currOpWait = DelayToTicks(10 * 1000); // 10 ms
+		return STATE::CMD_EXEC_DONE;
+	}
+
+	DeviceHardDrive::STATE DeviceHardDrive::SenseStatus()
+	{
+		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
+
+		ReadCommandBlock();
+		assert(m_fifo.size() == 0);
+
+		BYTE value = (m_sense.addressValid << 7) | (m_sense.error & 0b111111);
+		Push(value);
+		value = (m_sense.drive << 5) | (m_sense.head & 0b11111);
+		Push(value);
+		value = ((m_sense.cylinder >> 2) & 0b11000000) | (m_sense.sector & 0b111111);
+		Push(value);
+		value = (m_sense.cylinder & 0b11111111);
+		Push(value);
+
+		m_commandError = false;
+		PushStatus();
+		return STATE::CMD_EXEC_DONE;
 	}
 
 	DeviceHardDrive::STATE DeviceHardDrive::Diagnostic()
@@ -515,6 +574,7 @@ namespace hdd
 		PushStatus();
 
 		m_currOpWait = DelayToTicks(10 * 1000); // 10 ms
+		SetLastState(ERR_OK);
 		return STATE::CMD_EXEC_DONE;
 	}
 
@@ -571,6 +631,7 @@ namespace hdd
 
 		m_currDrive = m_commandBlock.drive;
 		m_commandError = false;
+		SetLastState(ERR_OK);
 		PushStatus();
 	}
 
@@ -584,7 +645,7 @@ namespace hdd
 		m_currDrive = m_commandBlock.drive;
 		m_currOpWait = DelayToTicks(100);
 		m_commandError = false;
-
+		SetLastState(ERR_OK);
 		return STATE::WRITE_START;
 	}
 
@@ -720,6 +781,7 @@ namespace hdd
 
 		m_currDrive = m_commandBlock.drive;
 		m_commandError = false;
+		SetLastState(ERR_OK, true);
 		PushStatus();
 	}
 

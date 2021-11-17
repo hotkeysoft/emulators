@@ -112,6 +112,8 @@ namespace hdd
 		// HDC Commands
 		typedef STATE(DeviceHardDrive::* ExecFunc)();
 		STATE NotImplemented();
+		STATE TestDriveReady();
+		STATE SenseStatus();
 		STATE Diagnostic();
 		STATE Recalibrate();
 		STATE InitDrive();
@@ -203,6 +205,7 @@ namespace hdd
 			WORD cylinder = 0;
 			BYTE sector = 0;
 		} m_sense;
+		void SetLastState(HDCERROR state, bool addressValid = false);
 
 		BYTE m_currDrive = 0; // 0-1
 		WORD m_currCylinder = 0;
@@ -263,9 +266,9 @@ namespace hdd
 
 		typedef std::map<CMD, Command> CommandMap;
 		const CommandMap m_commandMap = {
-			{ CMD::TEST_DRIVE,        { "Test Drive",            5,  &DeviceHardDrive::Diagnostic } },
+			{ CMD::TEST_DRIVE,        { "Test Drive",            5,  &DeviceHardDrive::TestDriveReady } },
 			{ CMD::RECALIBRATE,       { "Recalibrate",           5,  &DeviceHardDrive::Recalibrate } },
-			{ CMD::SENSE,             { "Sense",                 5,  &DeviceHardDrive::NotImplemented } },
+			{ CMD::SENSE,             { "Sense",                 5,  &DeviceHardDrive::SenseStatus } },
 			{ CMD::FORMAT_DRIVE,      { "Format Drive",          5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::READ_VERIFY,       { "Read Verify",           5,  &DeviceHardDrive::NotImplemented } },
 			{ CMD::FORMAT_TRACK,      { "Format Track",          5,  &DeviceHardDrive::NotImplemented } },
