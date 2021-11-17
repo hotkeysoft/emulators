@@ -293,17 +293,20 @@ namespace hdd
 			BYTE head;
 			WORD cyl;
 			BYTE sect;
-			WORD precomp;
+
 			uint32_t GetImageSize() const { return 512 * head * cyl * sect; }
 			uint32_t CHS2A(WORD c, BYTE h, BYTE s) const { return 512 * ((c * head + h) * sect + s); }
 		};
 
 		typedef std::map<BYTE, Geometry> Geometries;
 		const Geometries m_geometries = {
-			{ 1, { "Type 1 (10MB)",  4, 306, 17, 0 } },
-			{ 16,{ "Type 16 (20MB)", 4, 612, 17, 0 } },
-			{ 2, { "Type 2 (20MB)",  4, 615, 17, 300 } },
-			{ 13,{ "Type 13 (20MB)", 8, 306, 17, 128 } },
+			{ 1, { "Type 1 (10MB)",  4, 306, 17 } },
+			{ 16,{ "Type 16 (20MB)", 4, 612, 17 } },
+			{ 2, { "Type 2 (20MB)",  4, 615, 17 } },
+			{ 13,{ "Type 13 (20MB)", 8, 306, 17 } },
+
+			// Custom 
+			{ 33,{ "Type 33 (33MB)", 4, 1000, 17 } }
 		};
 
 		struct HardDisk
