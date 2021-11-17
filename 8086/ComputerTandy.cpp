@@ -110,7 +110,7 @@ namespace emul
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));
 
-		m_hardDrive.EnableLog(LOG_INFO);
+		m_hardDrive.EnableLog(Config::Instance().GetLogLevel("hdd"));
 		m_hardDrive.Init();
 		m_hardDrive.LoadDiskImage(0, 2, R"(P:\floppy\c20.img)");
 		MemoryBlock* hddROM = new MemoryBlock("hdd", 8192, MemoryType::ROM);

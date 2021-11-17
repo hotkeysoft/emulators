@@ -94,11 +94,11 @@ namespace emul
 
 		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
 		m_floppy.Init();
-		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-1.10.img");
+		//m_floppy.LoadDiskImage(0, R"(P:\floppy\MS-DOS.3.3.d1.img)");
 		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
 		// 
-		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
-		m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
+		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
+		//m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
 
 		InitJoystick(0x201, PIT_CLK);
 
@@ -123,12 +123,13 @@ namespace emul
 			ppi->SetFloppyCount(2);
 		}
 
-		m_hardDrive.EnableLog(LOG_DEBUG);
+		m_hardDrive.EnableLog(Config::Instance().GetLogLevel("hdd"));
 		m_hardDrive.Init();
+		m_hardDrive.LoadDiskImage(0, 2, R"(P:\floppy\c20.img)");
 		MemoryBlock* hddROM = new MemoryBlock("hdd", 8192, MemoryType::ROM);
 		//hddROM->LoadFromFile("data/hdd/IBM_XEBEC_6359121_1982.BIN");
-		hddROM->LoadFromFile("data/hdd/IBM_XEBEC_62X0822_1985.BIN");
-		//hddROM->LoadFromFile("data/hdd/WD1002S-WX2_62-000042-11.bin");
+		//hddROM->LoadFromFile("data/hdd/IBM_XEBEC_62X0822_1985.BIN");
+		hddROM->LoadFromFile("data/hdd/WD1002S-WX2_62-000042-11.bin");
 		
 		m_memory.Allocate(hddROM, 0xC8000);
 
