@@ -300,13 +300,30 @@ namespace hdd
 
 		typedef std::map<BYTE, Geometry> Geometries;
 		const Geometries m_geometries = {
-			{ 1, { "Type 1 (10MB)",  4, 306, 17 } },
-			{ 16,{ "Type 16 (20MB)", 4, 612, 17 } },
-			{ 2, { "Type 2 (20MB)",  4, 615, 17 } },
-			{ 13,{ "Type 13 (20MB)", 8, 306, 17 } },
+			// IBM/XEBEC BIOS
+			//{ 1, { "Type 1 (10MB)",  4, 306, 17 } },
+			//{ 16,{ "Type 16 (20MB)", 4, 612, 17 } },
+			//{ 2, { "Type 2 (20MB)",  4, 615, 17 } },
+			//{ 13,{ "Type 13 (20MB)", 8, 306, 17 } },
 
-			// Custom 
-			{ 33,{ "Type 33 (33MB)", 4, 1000, 17 } }
+			// WD1002S-WX2 BIOS
+			{ 0, { "Type 0 (20MB)", 4, 612, 17 } },
+			{ 1, { "Type 1 (10MB)", 2, 612, 17 } },
+			{ 2, { "Type 2 (20MB)", 4, 612, 17 } },
+			{ 3, { "Type 3 (10MB)", 4, 306, 17 } },
+
+			// Custom
+			// 
+			// Dip switches return "0" for both drives.
+			// The first drive table entry in ROM is 306/4/17 or 612/4/17 
+			// depending on BIOS used. We can use images with different 
+			// cylinder count, but the head and sector count must stay the 
+			// same for it to work correctly.
+			//
+			// TODO: Ideally the image geometry would be patched in the BIOS.
+			// This would allow using the maximum number of heads allowed.
+			{ 20,{ "Type 20 (20MB)", 4, 615, 17 } },
+			{ 33,{ "Type 33 (33MB)", 4, 1000, 17 } },
 		};
 
 		struct HardDisk

@@ -226,7 +226,7 @@ namespace hdd
 		m_irqEnabled = value & 2;
 		m_dmaEnabled = value & 1;
 
-		LogPrintf(Logger::LOG_INFO, "WriteMaskRegister, IRQEN=[%d], DMAEN=[%d]", m_irqEnabled, m_dmaEnabled);
+		LogPrintf(Logger::LOG_DEBUG, "WriteMaskRegister, IRQEN=[%d], DMAEN=[%d]", m_irqEnabled, m_dmaEnabled);
 	}
 
 	void DeviceHardDrive::Tick()
@@ -297,26 +297,26 @@ namespace hdd
 			}
 			break;
 		case STATE::READ_START:
-			LogPrintf(Logger::LOG_INFO, "Start Read");
+			LogPrintf(Logger::LOG_DEBUG, "Start Read");
 			m_state = STATE::READ_EXEC;
 			m_currOpWait = DelayToTicks(100 * 1000);
 			break;
 		case STATE::READ_EXEC:
-			LogPrintf(Logger::LOG_INFO, "Read Sector");
+			LogPrintf(Logger::LOG_DEBUG, "Read Sector");
 			ReadSector();
 			break;
 		case STATE::RW_DONE:
-			LogPrintf(Logger::LOG_INFO, "End Read/Write");
+			LogPrintf(Logger::LOG_DEBUG, "End Read/Write");
 			RWSectorEnd();
 			m_state = STATE::CMD_EXEC_DONE;
 			break;
 		case STATE::WRITE_START:
-			LogPrintf(Logger::LOG_INFO, "Start Write");
+			LogPrintf(Logger::LOG_DEBUG, "Start Write");
 			m_state = STATE::WRITE_EXEC;
 			m_currOpWait = DelayToTicks(100 * 1000);
 			break;
 		case STATE::WRITE_EXEC:
-			LogPrintf(Logger::LOG_INFO, "Write Sector");
+			LogPrintf(Logger::LOG_DEBUG, "Write Sector");
 			WriteSector();
 			break;
 		case STATE::SEEK_EXEC:
@@ -613,21 +613,33 @@ namespace hdd
 	{
 		LogPrintf(LOG_INFO, "InitDrive (Part 2)");
 		assert(m_fifo.size() == 8);
-		
+
+		const HardDisk& disk = m_images[m_currDrive];
+
 		WORD cylinders = (Pop() << 8) | Pop();
-		LogPrintf(LOG_INFO, "| Number of cylinders: %d", cylinders);
+		LogPrintf(LOG_INFO, "  Number of cylinders: %d", cylinders);
+
+		if (disk.loaded && (cylinders != disk.geometry.cyl))
+		{
+			LogPrintf(LOG_WARNING, "InitDrive: cylinder count mismatch: init=[%d] image=[%d]", cylinders, disk.geometry.cyl);
+		}
 
 		BYTE heads = Pop();
-		LogPrintf(LOG_INFO, "| Number of heads:     %d", heads);
+		LogPrintf(LOG_INFO, "  Number of heads:     %d", heads);
+
+		if (disk.loaded && (heads != disk.geometry.head))
+		{
+			LogPrintf(LOG_WARNING, "InitDrive: head count mismatch: init=[%d] image=[%d]", heads, disk.geometry.head);
+		}
 
 		WORD rmcStartCylinder = (Pop() << 8) | Pop();
-		LogPrintf(LOG_INFO, "| RWC start cyl:       %d", rmcStartCylinder);
+		LogPrintf(LOG_INFO, "  RWC start cyl:       %d", rmcStartCylinder);
 
 		WORD precompStartCylinder = (Pop() << 8) | Pop();
-		LogPrintf(LOG_INFO, "| Precomp start cyl:   %d", precompStartCylinder);
+		LogPrintf(LOG_INFO, "  Precomp start cyl:   %d", precompStartCylinder);
 
 		BYTE eccBurst = Pop();
-		LogPrintf(LOG_INFO, "| Max ECC burst:       %d", eccBurst);
+		LogPrintf(LOG_INFO, "  Max ECC burst:       %d", eccBurst);
 
 		m_currDrive = m_commandBlock.drive;
 		m_commandError = false;
@@ -705,7 +717,6 @@ namespace hdd
 		{ 
 			if (!m_commandBlock.blockCount)
 			{
-				LogPrintf(LOG_INFO, "ReadSector done, end of track");
 				m_currOpWait = DelayToTicks(10);
 				m_nextState = STATE::RW_DONE;
 				m_state = STATE::CMD_EXEC_DELAY;
@@ -777,7 +788,7 @@ namespace hdd
 
 	void DeviceHardDrive::RWSectorEnd()
 	{
-		LogPrintf(LOG_INFO, "ReadWriteSectorEnd, fifo=%d", m_fifo.size());
+		LogPrintf(LOG_DEBUG, "ReadWriteSectorEnd, fifo=%d", m_fifo.size());
 
 		m_fifo.clear();
 
@@ -789,7 +800,7 @@ namespace hdd
 
 	void DeviceHardDrive::DMATerminalCount()
 	{
-		LogPrintf(LOG_INFO, "DMATerminalCount");
+		LogPrintf(LOG_DEBUG, "DMATerminalCount");
 
 		// TODO: Check that we are in correct state;
 		m_dmaPending = false;
@@ -816,7 +827,7 @@ namespace hdd
 		}
 
 		m_currSector = isEOT ? 0 : (m_currSector + 1);
-		LogPrintf(LOG_INFO, "UpdateCurrPos done: cyl=[%d] head=[%d] sector=[%d]", m_currCylinder, m_currHead, m_currSector);
+		LogPrintf(LOG_DEBUG, "UpdateCurrPos done: cyl=[%d] head=[%d] sector=[%d]", m_currCylinder, m_currHead, m_currSector);
 
 		return isEOT;
 	}
