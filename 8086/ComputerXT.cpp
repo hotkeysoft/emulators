@@ -42,8 +42,18 @@ namespace emul
 			{
 				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
 			}
+
+			// MPU-401
+			Connect(0x330, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
+			Connect(0x330, static_cast<PortConnector::INFunction>(&DummyPortXT::ReadData));
+			Connect(0x331, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
+			Connect(0x331, static_cast<PortConnector::INFunction>(&DummyPortXT::ReadData));
 		}
 
+		BYTE ReadData()
+		{
+			return 0xFF;
+		}
 		void WriteData(BYTE value)
 		{
 		}
@@ -57,7 +67,6 @@ namespace emul
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_dma(0x00, m_memory),
 		m_floppy(0x03F0, PIT_CLK),
-		m_hardDrive(0x320, PIT_CLK),
 		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
 	{
@@ -94,11 +103,18 @@ namespace emul
 
 		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
 		m_floppy.Init();
-		//m_floppy.LoadDiskImage(0, R"(P:\floppy\MS-DOS.3.3.d1.img)");
-		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\boot games\img\000310_montezumas_revenge\disk1.img)");
-		// 
-		//m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PC\Dos3.3.img)");
-		//m_floppy.LoadDiskImage(1, R"(P:\floppy\kq1.img)");
+
+		std::string floppy = Config::Instance().GetValueStr("floppy", "floppy.1");
+		if (floppy.size())
+		{
+			m_floppy.LoadDiskImage(0, floppy.c_str());
+		}
+
+		floppy = Config::Instance().GetValueStr("floppy", "floppy.2");
+		if (floppy.size())
+		{
+			m_floppy.LoadDiskImage(1, floppy.c_str());
+		}
 
 		InitJoystick(0x201, PIT_CLK);
 
@@ -123,15 +139,7 @@ namespace emul
 			ppi->SetFloppyCount(2);
 		}
 
-		m_hardDrive.EnableLog(Config::Instance().GetLogLevel("hdd"));
-		m_hardDrive.Init();
-		m_hardDrive.LoadDiskImage(0, 2, R"(P:\floppy\c20.img)");
-		MemoryBlock* hddROM = new MemoryBlock("hdd", 8192, MemoryType::ROM);
-		//hddROM->LoadFromFile("data/hdd/IBM_XEBEC_6359121_1982.BIN");
-		//hddROM->LoadFromFile("data/hdd/IBM_XEBEC_62X0822_1985.BIN");
-		hddROM->LoadFromFile("data/hdd/WD1002S-WX2_62-000042-11.bin");
-		
-		m_memory.Allocate(hddROM, 0xC8000);
+		InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK));
 
 		AddDevice(*m_pic);
 		AddDevice(*m_pit);
@@ -139,7 +147,7 @@ namespace emul
 		AddDevice(m_dma);
 		AddDevice(*m_video);
 		AddDevice(m_floppy);
-		AddDevice(m_hardDrive);
+		AddDevice(*m_hardDrive);
 		AddDevice(m_soundModule);
 		AddDevice(*m_joystick);
 		AddDevice(dummyPortXT);
@@ -273,10 +281,10 @@ namespace emul
 				}
 			}
 
-			m_hardDrive.Tick();
-			m_pic->InterruptRequest(IRQ_HDD, m_hardDrive.IsInterruptPending());
+			m_hardDrive->Tick();
+			m_pic->InterruptRequest(IRQ_HDD, m_hardDrive->IsInterruptPending());
 
-			if (m_hardDrive.IsDMAPending())
+			if (m_hardDrive->IsDMAPending())
 			{
 				m_dma.DMARequest(DMA_HDD, true);
 			}
@@ -286,7 +294,7 @@ namespace emul
 				m_dma.DMARequest(DMA_HDD, false);
 
 				// Do it manually
-				m_hardDrive.DMAAcknowledge();
+				m_hardDrive->DMAAcknowledge();
 
 				dma::DMAChannel& channel = m_dma.GetChannel(DMA_HDD);
 				dma::OPERATION op = channel.GetOperation();
@@ -295,10 +303,10 @@ namespace emul
 				{
 				case dma::OPERATION::READ:
 					channel.DMAOperation(value);
-					m_hardDrive.WriteDataFIFO(value);
+					m_hardDrive->WriteDataFIFO(value);
 					break;
 				case dma::OPERATION::WRITE:
-					value = m_hardDrive.ReadDataFIFO();
+					value = m_hardDrive->ReadDataFIFO();
 					channel.DMAOperation(value);
 					break;
 				case dma::OPERATION::VERIFY:
@@ -310,7 +318,7 @@ namespace emul
 
 				if (m_dma.GetTerminalCount(DMA_HDD))
 				{
-					m_hardDrive.DMATerminalCount();
+					m_hardDrive->DMATerminalCount();
 				}
 			}
 

@@ -15,6 +15,8 @@
 
 using emul::WORD;
 
+namespace hdd { class DeviceHardDrive; }
+
 namespace emul
 {
 	class Computer : public CPU8086
@@ -36,25 +38,35 @@ namespace emul
 	protected:
 		Computer(Memory& memory, MemoryMap& mmap);
 
+		typedef std::set<std::string> VideoModes;
+		virtual void InitVideo(const std::string& defaultMode, const VideoModes& supported = VideoModes());
 		virtual void InitSound();
 		virtual void InitPIT(pit::Device8254* pit);
 		virtual void InitPIC(pic::Device8259* pic);
 		virtual void InitPPI(ppi::Device8255* ppi);
 		virtual void InitJoystick(WORD baseAddress, size_t baseClock);
+		virtual void InitHardDrive(hdd::DeviceHardDrive* hdd);
 
-		typedef std::set<std::string> VideoModes;
-		virtual void InitVideo(const std::string& defaultMode, const VideoModes& supported = VideoModes());
+		struct HardDriveImageInfo
+		{
+			bool set = false;
+			BYTE type = 0;
+			std::string file;
+		};
+		HardDriveImageInfo GetHardDriveImageInfo(int id);
 
 		Memory m_memory;
 		MemoryMap m_map;
+
+		MemoryBlock m_hddROM;
 
 		pit::Device8254* m_pit = nullptr;
 		pic::Device8259* m_pic = nullptr;
 		ppi::Device8255* m_ppi = nullptr;
 		video::Video* m_video = nullptr;
 		joy::DeviceJoystick* m_joystick = nullptr;
-
 		beeper::DevicePCSpeaker m_pcSpeaker;
+		hdd::DeviceHardDrive* m_hardDrive = nullptr;
 
 		bool m_turbo = false;
 	};

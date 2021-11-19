@@ -5,7 +5,6 @@
 #include "Device8250.h"
 #include "DeviceSN76489.h"
 #include "DeviceFloppyTandy.h"
-#include "DeviceHardDrive.h"
 #include "DeviceKeyboardTandy.h"
 #include "InputEvents.h"
 
@@ -35,7 +34,6 @@ namespace emul
 
 		dma::Device8237 m_dma;
 		fdc::DeviceFloppyTandy m_floppy;
-		hdd::DeviceHardDrive m_hardDrive;
 
 		kbd::DeviceKeyboardTandy m_keyboard;
 		uart::Device8250 m_uart;

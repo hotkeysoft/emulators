@@ -2,6 +2,7 @@
 #include "Computer.h"
 #include "Config.h"
 #include "DeviceKeyboard.h"
+#include "DeviceHardDrive.h"
 #include "VideoCGA.h"
 #include "VideoMDA.h"
 #include "VideoHGC.h"
@@ -17,7 +18,8 @@ namespace emul
 	Computer::Computer(Memory& memory, MemoryMap& mmap) :
 		Logger("PC"),
 		CPU8086(m_memory, m_map),
-		m_memory(emul::CPU8086_ADDRESS_BITS)
+		m_memory(emul::CPU8086_ADDRESS_BITS),
+		m_hddROM("hdd", 8192, MemoryType::ROM)
 	{
 	}
 
@@ -40,47 +42,6 @@ namespace emul
 			GetKeyboard().InputKey(0x38); // ALT
 			GetKeyboard().InputKey(0x53); // DELETE
 		}
-	}
-
-	void Computer::InitSound()
-	{
-		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound"));
-		m_pcSpeaker.Init(m_ppi, m_pit);
-		m_pcSpeaker.SetMute(Config::Instance().GetValueBool("sound", "mute"));
-		std::string audioStream = Config::Instance().GetValueStr("sound", "raw");
-		if (audioStream.size())
-		{
-			m_pcSpeaker.StreamToFile(true, audioStream.c_str());
-		}
-	}
-
-	void Computer::InitPIT(pit::Device8254* pit)
-	{
-		assert(pit);
-		m_pit = pit;
-		m_pit->EnableLog(Config::Instance().GetLogLevel("pit"));
-		m_pit->Init();
-	}
-	void Computer::InitPIC(pic::Device8259* pic)
-	{
-		assert(pic);
-		m_pic = pic;
-		m_pic->EnableLog(Config::Instance().GetLogLevel("pic"));
-		m_pic->Init();
-	}
-	void Computer::InitPPI(ppi::Device8255* ppi)
-	{
-		assert(ppi);
-		m_ppi = ppi;
-		m_ppi->EnableLog(Config::Instance().GetLogLevel("ppi"));
-		m_ppi->Init();
-	}
-
-	void Computer::InitJoystick(WORD baseAddress, size_t baseClock)
-	{
-		m_joystick = new joy::DeviceJoystick(baseAddress, baseClock);
-		m_joystick->EnableLog(Config::Instance().GetLogLevel("joystick"));
-		m_joystick->Init();
 	}
 
 	void Computer::InitVideo(const std::string& defaultMode, const VideoModes& supported)
@@ -140,4 +101,104 @@ namespace emul
 		m_video->Init(&m_memory, charROM.c_str(), border);
 	}
 
+	void Computer::InitSound()
+	{
+		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound"));
+		m_pcSpeaker.Init(m_ppi, m_pit);
+		m_pcSpeaker.SetMute(Config::Instance().GetValueBool("sound", "mute"));
+		std::string audioStream = Config::Instance().GetValueStr("sound", "raw");
+		if (audioStream.size())
+		{
+			m_pcSpeaker.StreamToFile(true, audioStream.c_str());
+		}
+	}
+
+	void Computer::InitPIT(pit::Device8254* pit)
+	{
+		assert(pit);
+		m_pit = pit;
+		m_pit->EnableLog(Config::Instance().GetLogLevel("pit"));
+		m_pit->Init();
+	}
+	void Computer::InitPIC(pic::Device8259* pic)
+	{
+		assert(pic);
+		m_pic = pic;
+		m_pic->EnableLog(Config::Instance().GetLogLevel("pic"));
+		m_pic->Init();
+	}
+	void Computer::InitPPI(ppi::Device8255* ppi)
+	{
+		assert(ppi);
+		m_ppi = ppi;
+		m_ppi->EnableLog(Config::Instance().GetLogLevel("ppi"));
+		m_ppi->Init();
+	}
+
+	void Computer::InitJoystick(WORD baseAddress, size_t baseClock)
+	{
+		m_joystick = new joy::DeviceJoystick(baseAddress, baseClock);
+		m_joystick->EnableLog(Config::Instance().GetLogLevel("joystick"));
+		m_joystick->Init();
+	}
+
+	void Computer::InitHardDrive(hdd::DeviceHardDrive* hdd)
+	{
+		assert(hdd);
+		m_hardDrive = hdd;
+
+		m_hardDrive->EnableLog(Config::Instance().GetLogLevel("hdd"));
+		m_hardDrive->Init();
+
+		for (int i = 0; i < 2; i++)
+		{
+			const HardDriveImageInfo& img = GetHardDriveImageInfo(i + 1);
+			if (img.set)
+			{
+				m_hardDrive->LoadDiskImage(i, img.type, img.file.c_str());
+			}
+		}
+
+		std::string romFile = Config::Instance().GetValueStr("hdd", "rom");
+		if (romFile.empty())
+		{
+			romFile = "data/hdd/WD1002S-WX2_62-000042-11.bin";
+		}
+		m_hddROM.LoadFromFile(romFile.c_str());
+		m_memory.Allocate(&m_hddROM, 0xC8000);
+	}
+
+	Computer::HardDriveImageInfo Computer::GetHardDriveImageInfo(int id)
+	{
+		char key[16];
+		sprintf(key, "hdd.%d", id);
+
+		std::string imageStr = Config::Instance().GetValueStr("hdd", key);
+		HardDriveImageInfo info;
+		if (imageStr.size())
+		{
+			std::stringstream ss(imageStr);
+			std::string type;
+			std::getline(ss, type, ',');
+			if (type.size())
+			{
+				info.type = atoi(type.c_str());
+			}
+			else
+			{
+				LogPrintf(LOG_ERROR, "GetHDDImageConfig: Error parsing hdd image type for key [hdd][%s]", key);
+			}
+			std::getline(ss, info.file);
+			if (info.file.size())
+			{
+				info.set = true;
+			}
+			else
+			{
+				LogPrintf(LOG_ERROR, "GetHDDImageConfig: Error parsing hdd image file for key [hdd][%s]", key);
+			}
+		}
+
+		return info;
+	}
 }

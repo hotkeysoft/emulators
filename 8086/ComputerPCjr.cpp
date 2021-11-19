@@ -120,8 +120,18 @@ namespace emul
 
 		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
 		m_floppy.Init();
-		//m_floppy.LoadDiskImage(0, "data/floppy/PC-DOS-2.10d1.img");
-		m_floppy.LoadDiskImage(0, R"(D:\Dloads\Emulation\PCjr\Games\KQ1PCJR.IMG)");
+
+		std::string floppy = Config::Instance().GetValueStr("floppy", "floppy.1");
+		if (floppy.size())
+		{
+			m_floppy.LoadDiskImage(0, floppy.c_str());
+		}
+
+		floppy = Config::Instance().GetValueStr("floppy", "floppy.2");
+		if (floppy.size())
+		{
+			m_floppy.LoadDiskImage(1, floppy.c_str());
+		}
 		
 		m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
 		m_uart.Init();
