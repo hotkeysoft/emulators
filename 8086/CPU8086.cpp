@@ -488,9 +488,9 @@ namespace emul
 		// MOV
 		// ----------
 		// MOV AL, MEM8
-		case 0xA0: TICK(10); MOV8(&regA.hl.l, *m_memory.GetPtr8(S2A(inSegOverride ? segOverride : regDS, FetchWord()))); break;
+		case 0xA0: TICK(10); MOV8(&regA.hl.l, m_memory.Read8(S2A(inSegOverride ? segOverride : regDS, FetchWord()))); break;
 		// MOV AX, MEM16
-		case 0xA1: TICK(10); MOV16(&regA.x, *m_memory.GetPtr16(S2A(inSegOverride ? segOverride : regDS, FetchWord()))); break;
+		case 0xA1: TICK(10); MOV16(&regA.x, m_memory.Read16(S2A(inSegOverride ? segOverride : regDS, FetchWord()))); break;
 
 		// MOV
 		// ----------
@@ -830,17 +830,16 @@ namespace emul
 
 	BYTE CPU8086::FetchByte()
 	{
-		BYTE b;
-		m_memory.Read(GetCurrentAddress(), b);
+		BYTE b = m_memory.Read8(GetCurrentAddress());
 		++regIP;
 		return b;
 	}
 	WORD CPU8086::FetchWord()
 	{
 		Register r;
-		m_memory.Read(GetCurrentAddress(), r.hl.l);
+		r.hl.l = m_memory.Read8(GetCurrentAddress());
 		++regIP;
-		m_memory.Read(GetCurrentAddress(), r.hl.h);
+		r.hl.h = m_memory.Read8(GetCurrentAddress());
 		++regIP;
 
 		return r.x;
@@ -2037,16 +2036,15 @@ namespace emul
 	void CPU8086::PUSH(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "PUSH %04X", w);
-		m_memory.Write(S2A(regSS, --regSP), GetHByte(w));
-		m_memory.Write(S2A(regSS, --regSP), GetLByte(w));
+		m_memory.Write8(S2A(regSS, --regSP), GetHByte(w));
+		m_memory.Write8(S2A(regSS, --regSP), GetLByte(w));
 	}
 
 	void CPU8086::POP(WORD& w)
 	{
 		LogPrintf(LOG_DEBUG, "POP %04X", w);
-		BYTE lo, hi;
-		m_memory.Read(S2A(regSS, regSP++), lo);
-		m_memory.Read(S2A(regSS, regSP++), hi);
+		BYTE lo = m_memory.Read8(S2A(regSS, regSP++));
+		BYTE hi = m_memory.Read8(S2A(regSS, regSP++));
 		w = MakeWord(hi, lo);
 	}
 
@@ -2060,7 +2058,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), regA.hl.l);
+			regA.hl.l = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS, regSI));
 			IndexIncDec(regSI);
 		}
 		PostREP(false);
@@ -2076,8 +2074,8 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), regA.hl.l);
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI+1), regA.hl.h);
+			regA.hl.l = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS, regSI));
+			regA.hl.h = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS, regSI+1));
 			IndexIncDec(regSI);
 			IndexIncDec(regSI);
 		}
@@ -2090,7 +2088,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Write(S2A(regES, regDI), regA.hl.l);
+			m_memory.Write8(S2A(regES, regDI), regA.hl.l);
 			IndexIncDec(regDI);
 		}
 		PostREP(false);
@@ -2101,8 +2099,8 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Write(S2A(regES, regDI), regA.hl.l);
-			m_memory.Write(S2A(regES, regDI+1), regA.hl.h);
+			m_memory.Write8(S2A(regES, regDI), regA.hl.l);
+			m_memory.Write8(S2A(regES, regDI+1), regA.hl.h);
 			IndexIncDec(regDI);
 			IndexIncDec(regDI);
 		}
@@ -2153,9 +2151,8 @@ namespace emul
 
 		if (PreREP())
 		{
-			BYTE val;
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), val);
-			m_memory.Write(S2A(regES, regDI), val);
+			BYTE val = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS, regSI));
+			m_memory.Write8(S2A(regES, regDI), val);
 			IndexIncDec(regSI);
 			IndexIncDec(regDI);
 		}
@@ -2171,12 +2168,11 @@ namespace emul
 
 		if (PreREP())
 		{
-			BYTE l, h;
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI), l);
-			m_memory.Read(S2A(inSegOverride ? segOverride : regDS, regSI + 1), h);
+			BYTE l = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS, regSI));
+			BYTE h = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS, regSI + 1));
 
-			m_memory.Write(S2A(regES, regDI), l);
-			m_memory.Write(S2A(regES, regDI+1), h);
+			m_memory.Write8(S2A(regES, regDI), l);
+			m_memory.Write8(S2A(regES, regDI+1), h);
 
 			IndexIncDec(regSI);
 			IndexIncDec(regSI);
@@ -2380,8 +2376,8 @@ namespace emul
 		CLI();
 		
 		ADDRESS interruptAddress = interrupt * 4;
-		regCS = *m_memory.GetPtr16(interruptAddress + 2);
-		regIP = *m_memory.GetPtr16(interruptAddress);
+		regCS = m_memory.Read16(interruptAddress + 2);
+		regIP = m_memory.Read16(interruptAddress);
 	}
 
 	void CPU8086::IRET()
@@ -2442,7 +2438,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "XLAT");
 
 		WORD offset = regB.x + regA.hl.l; // TODO: Wrap around?
-		m_memory.Read(S2A(inSegOverride ? segOverride : regDS, offset), regA.hl.l);
+		regA.hl.l = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS, offset));
 	}
 
 	void CPU8086::AAA()

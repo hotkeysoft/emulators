@@ -130,10 +130,9 @@ namespace emul
 		return true;
 	}
 	
-
-	BYTE* Memory::GetPtr8(ADDRESS address)
+	BYTE* Memory::GetPtr8(ADDRESS address) const
 	{
-		MemorySlot& slot = m_memory[address / BlockGranularity];
+		const MemorySlot& slot = m_memory[address / BlockGranularity];
 		MemoryBlock* block = slot.block;
 
 		if (block)
@@ -148,9 +147,9 @@ namespace emul
 		}
 	}
 
-	WORD* Memory::GetPtr16(ADDRESS address)
+	WORD* Memory::GetPtr16(ADDRESS address) const
 	{
-		MemorySlot& slot = m_memory[address / BlockGranularity];
+		const MemorySlot& slot = m_memory[address / BlockGranularity];
 		MemoryBlock* block = slot.block;
 
 		if (block)
@@ -179,15 +178,21 @@ namespace emul
 		return block->LoadFromFile(file, baseAddress - slot.base);
 	}
 
-	void Memory::Read(ADDRESS address, BYTE& value)
+	BYTE Memory::Read8(ADDRESS address) const
 	{
-		BYTE* mem = GetPtr8(address);
-		value = *mem;
+		const BYTE* mem = GetPtr8(address);
+		return *mem;
 	}
 
-	void Memory::Write(ADDRESS address, BYTE value)
+	WORD Memory::Read16(ADDRESS address) const
 	{
-		MemorySlot& slot = m_memory[address / BlockGranularity];
+		const WORD* mem = GetPtr16(address);
+		return *mem;
+	}
+
+	void Memory::Write8(ADDRESS address, BYTE value)
+	{
+		const MemorySlot& slot = m_memory[address / BlockGranularity];
 		MemoryBlock* block = slot.block;
 
 		if (block)

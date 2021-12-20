@@ -174,12 +174,12 @@ namespace dma
 		switch (m_operation)
 		{
 		case OPERATION::READ:
-			m_memory.Read(addr, value);
+			value = m_memory.Read8(addr);
 			LogPrintf(LOG_DEBUG, "DMA Read, value=%02X @ Address %04x", value, addr);
 			break;
 		case OPERATION::WRITE:
 			LogPrintf(LOG_DEBUG, "DMA Write, value=%02X @ Address %04x", value, addr);
-			m_memory.Write(addr, value);
+			m_memory.Write8(addr, value);
 			break;
 		case OPERATION::VERIFY:
 			LogPrintf(LOG_DEBUG, "DMA Verify, value=%02X @ Address %04x", value, addr);

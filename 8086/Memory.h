@@ -25,13 +25,14 @@ namespace emul
 
 		bool MapWindow(ADDRESS source, ADDRESS window, DWORD len);
 
-		void Read(ADDRESS address, BYTE& value);
-		void Write(ADDRESS address, BYTE value);
+		BYTE Read8(ADDRESS address) const;
+		WORD Read16(ADDRESS address) const;
+		void Write8(ADDRESS address, BYTE value);
 
 		void Dump(ADDRESS start, DWORD len, const char* outFile);
 
-		BYTE* GetPtr8(ADDRESS address);
-		WORD* GetPtr16(ADDRESS address);
+		BYTE* GetPtr8(ADDRESS address) const;
+		WORD* GetPtr16(ADDRESS address) const;
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress);
 

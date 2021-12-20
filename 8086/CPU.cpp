@@ -32,9 +32,9 @@ namespace emul
 			m_opTicks = 0;
 
 			// Fetch opcode
-			unsigned char opcode;
 			m_state = CPUState::RUN;
-			m_memory.Read(GetCurrentAddress(), opcode);
+			unsigned char opcode = m_memory.Read8(GetCurrentAddress());
+			
 			// Execute instruction
 			Exec(opcode);
 		}
