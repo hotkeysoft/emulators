@@ -24,7 +24,7 @@ namespace emul
 		DWORD GetSize() const { return m_size; };
 		MemoryType GetType() const { return m_type; };
 
-		bool Alloc(DWORD size);
+		void Alloc(DWORD size);
 
 		virtual bool LoadFromFile(const char* file, WORD offset = 0);
 

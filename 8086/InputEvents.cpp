@@ -428,7 +428,7 @@ namespace events
 			// TODO: Only 1 joystick for now
 			WORD adjValue = value / 256;
 			adjValue += 128;
-			m_joystick->SetAxisState(0, axis, adjValue);
+			m_joystick->SetAxisState(0, axis, (uint8_t)adjValue);
 		}
 	}
 

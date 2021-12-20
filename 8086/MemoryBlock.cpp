@@ -52,7 +52,7 @@ namespace emul
 		return newSize;
 	}
 
-	bool MemoryBlock::Alloc(DWORD size)
+	void MemoryBlock::Alloc(DWORD size)
 	{
 		if (m_data)
 		{

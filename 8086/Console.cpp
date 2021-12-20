@@ -93,7 +93,7 @@ void Console::WriteAt(short x, short y, const char* text, size_t len, WORD attr)
 	{
 		len = strlen(text);
 	}
-	WriteConsoleA(m_hConsole, text, len, &written, NULL);
+	WriteConsoleA(m_hConsole, text, (DWORD)len, &written, NULL);
 }
 
 void Console::WriteAttrAt(short x, short y, const WORD* attr, size_t len)
@@ -101,7 +101,7 @@ void Console::WriteAttrAt(short x, short y, const WORD* attr, size_t len)
 	COORD pos{ x - 1, y - 1 };
 	DWORD dummy;
 
-	WriteConsoleOutputAttribute(m_hConsole, attr, len, pos, &dummy);
+	WriteConsoleOutputAttribute(m_hConsole, attr, (DWORD)len, pos, &dummy);
 }
 
 void Console::WriteAttrAt(short x, short y, const WORD attr, size_t len)
@@ -109,7 +109,7 @@ void Console::WriteAttrAt(short x, short y, const WORD attr, size_t len)
 	COORD pos = { x - 1, y - 1 };
 	DWORD dummy;
 
-	FillConsoleOutputAttribute(m_hConsole, attr, len, pos, &dummy);
+	FillConsoleOutputAttribute(m_hConsole, attr, (DWORD)len, pos, &dummy);
 }
 
 void Console::WriteAt(short x, short y, char ch, WORD attr)

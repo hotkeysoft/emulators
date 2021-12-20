@@ -66,7 +66,7 @@ namespace uart
 		// Transmit clock (/BAUDOUT) is 'hardwired' internally to RCLK
 		bool GetBaudOut() const { return false; }
 
-		WORD GetBaudRate() const { return s_clockSpeed / ((size_t)m_divisorLatch * 16); }
+		WORD GetBaudRate() const { return (WORD)(s_clockSpeed / ((size_t)m_divisorLatch * 16)); }
 
 		BYTE GetDataLength() const { return m_dataConfig.dataLength; }
 		Parity GetParity() const { return m_dataConfig.parity; }

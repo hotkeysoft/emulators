@@ -319,7 +319,7 @@ namespace emul
 		m_console.WriteAt(pos.x, pos.y, (const char*)instr.raw, instr.len);
 		for (int i = 0; i < rawPos.w - instr.len; ++i)
 		{
-			m_console.WriteAt(pos.x + instr.len + i, pos.y, 0xFA, 8);
+			m_console.WriteAt(pos.x + instr.len + i, pos.y, 0xFAu, 8);
 		}
 
 		pos.x = textPos.x;

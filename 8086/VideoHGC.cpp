@@ -60,7 +60,6 @@ namespace video
 
 	void VideoHGC::NewFrame()
 	{
-		BYTE charWidth;
 		if (m_modeHGC.graphics)
 		{
 			// Pointers for graphics mode
