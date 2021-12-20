@@ -399,20 +399,20 @@ namespace emul
 			if (disp == 8)
 			{
 				offset++;
-				BYTE* disp8 = m_memory->GetPtr8(S2A(segment, offset));
-				decoded.AddRaw(*disp8);
+				BYTE disp8 = m_memory->Read8(S2A(segment, offset));
+				decoded.AddRaw(disp8);
 
-				sprintf(buf, "0%Xh", *disp8);
+				sprintf(buf, "0%Xh", disp8);
 				replace(text, "{d8}", buf);
 			}
 			else if (disp == 16)
 			{
 				offset++;
-				WORD* disp16 = m_memory->GetPtr16(S2A(segment, offset));
+				WORD disp16 = m_memory->Read16(S2A(segment, offset));
 				offset++;
-				decoded.AddRaw(*disp16);
+				decoded.AddRaw(disp16);
 
-				sprintf(buf, "0%Xh", *disp16);
+				sprintf(buf, "0%Xh", disp16);
 				replace(text, "{d16}", buf);
 			}
 		}
@@ -433,25 +433,25 @@ namespace emul
 		case CPUInfo::Opcode::IMM::W16:
 		{
 			++offset;
-			WORD* imm16 = m_memory->GetPtr16(S2A(segment, offset));
+			WORD imm16 = m_memory->Read16(S2A(segment, offset));
 			offset++;
-			decoded.AddRaw(*imm16);
+			decoded.AddRaw(imm16);
 
-			sprintf(buf, "0%Xh", *imm16);
+			sprintf(buf, "0%Xh", imm16);
 			replace(text, "{i16}", buf);
 			break;
 		}
 		case CPUInfo::Opcode::IMM::W32:
 		{
 			++offset;
-			WORD* imm16Offset = m_memory->GetPtr16(S2A(segment, offset));
+			WORD imm16Offset = m_memory->Read16(S2A(segment, offset));
 			offset++;
-			decoded.AddRaw(*imm16Offset);
+			decoded.AddRaw(imm16Offset);
 			offset++;
-			WORD* imm16Segment = m_memory->GetPtr16(S2A(segment, offset));
+			WORD imm16Segment = m_memory->Read16(S2A(segment, offset));
 			offset++;
-			decoded.AddRaw(*imm16Segment);
-			sprintf(buf, "0%Xh:0%Xh", *imm16Segment, *imm16Offset);
+			decoded.AddRaw(imm16Segment);
+			sprintf(buf, "0%Xh:0%Xh", imm16Segment, imm16Offset);
 			replace(text, "{i32}", buf);
 			break;
 		}

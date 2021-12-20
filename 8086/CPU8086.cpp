@@ -816,10 +816,10 @@ namespace emul
 		for (BYTE interrupt = 0; interrupt <= 0x1F; ++interrupt)
 		{
 			emul::ADDRESS interruptAddress = interrupt * 4;
-			WORD* CS = m_memory.GetPtr16(interruptAddress + 2);
-			WORD* IP = m_memory.GetPtr16(interruptAddress);
+			WORD CS = m_memory.Read16(interruptAddress + 2);
+			WORD IP = m_memory.Read16(interruptAddress);
 
-			LogPrintf(LOG_ERROR, "\tINT%02X: %04X:%04X", interrupt, *CS, *IP);
+			LogPrintf(LOG_ERROR, "\tINT%02X: %04X:%04X", interrupt, CS, IP);
 		}
 	}
 
