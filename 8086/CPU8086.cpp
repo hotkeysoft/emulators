@@ -1063,6 +1063,7 @@ namespace emul
 		{
 		case 0xC0: // REG
 			m_regMem = REGMEM::REG;
+			LogPrintf(LOG_DEBUG, "GetModRM16: REG %s", GetReg16Str(modrm));
 			return GetReg16(modrm);
 		case 0x00: // NO DISP (or DIRECT)
 			if ((modrm & 7) == 6) // Direct 
@@ -1094,6 +1095,8 @@ namespace emul
 		}
 
 		offset = (direct ? 0 : offset) + displacement;
+
+		LogPrintf(LOG_DEBUG, "GetModRM16: MEM %04X:%04X", segment, offset);
 		return m_memory.GetPtr16(S2A(segment, offset));
 	}
 
@@ -1298,7 +1301,6 @@ namespace emul
 
 	void CPU8086::INC8(BYTE& b)
 	{
-		LogPrintf(LOG_DEBUG, "INC8");
 		BYTE before = b;
 
 		++b;
@@ -1308,6 +1310,8 @@ namespace emul
 		AdjustZero(b);
 		SetFlag(FLAG_A, ((before & 0x0F) == 0x0F));
 		AdjustParity(b);
+
+		LogPrintf(LOG_DEBUG, "INC8 %02X->%02X", before, b);
 	}
 
 	void CPU8086::DEC8(BYTE& b)
@@ -1322,11 +1326,12 @@ namespace emul
 		AdjustZero(b);
 		SetFlag(FLAG_A, ((before & 0x0F) == 0));
 		AdjustParity(b);
+
+		LogPrintf(LOG_DEBUG, "DEC8 %02X->%02X", before, b);
 	}
 
 	void CPU8086::INC16(WORD& w)
 	{
-		LogPrintf(LOG_DEBUG, "INC16");
 		WORD before = w;
 
 		++w;
@@ -1336,10 +1341,10 @@ namespace emul
 		AdjustZero(w);
 		SetFlag(FLAG_A, ((before & 0x000F) == 0x0F));
 		AdjustParity(w);
+		LogPrintf(LOG_DEBUG, "INC16 %04X->%04X", before, w);
 	}
 	void CPU8086::DEC16(WORD& w)
 	{
-		LogPrintf(LOG_DEBUG, "DEC16");
 		WORD before = w;
 
 		--w;
@@ -1349,6 +1354,8 @@ namespace emul
 		AdjustZero(w);
 		SetFlag(FLAG_A, ((before & 0x000F) == 0));
 		AdjustParity(w);
+
+		LogPrintf(LOG_DEBUG, "DEC16 %04X->%04X", before, w);
 	}
 
 	void CPU8086::MOV8(BYTE* d, BYTE s)
@@ -2027,7 +2034,7 @@ namespace emul
 
 	void CPU8086::XCHG16(WORD& w1, WORD& w2)
 	{
-		LogPrintf(LOG_DEBUG, "XCHG16");
+		LogPrintf(LOG_DEBUG, "XCHG16 %04X<=>%04X", w1, w2);
 		WORD temp = w1;
 		w1 = w2;
 		w2 = temp;
@@ -2042,10 +2049,10 @@ namespace emul
 
 	void CPU8086::POP(WORD& w)
 	{
-		LogPrintf(LOG_DEBUG, "POP %04X", w);
 		BYTE lo = m_memory.Read8(S2A(regSS, regSP++));
 		BYTE hi = m_memory.Read8(S2A(regSS, regSP++));
 		w = MakeWord(hi, lo);
+		LogPrintf(LOG_DEBUG, "POP %04X", w);
 	}
 
 	void CPU8086::LODS8()
