@@ -56,7 +56,7 @@ namespace video
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadFromFile(charROM);
-		m_charROMStart = m_charROM.getPtr8(4096 + 2048);
+		m_charROMStart = m_charROM.getPtr(4096 + 2048);
 
 		m_sdlBorderPixels = border;
 		m_sdlHBorder = border;

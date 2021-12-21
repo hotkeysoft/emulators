@@ -57,7 +57,7 @@ namespace video
 				GRAPH_LOW = 1,
 				GRAPH_HI = 2,
 				RESERVED = 3
-			} addressMode;
+			} addressMode = ADDRESSMODE::ALPHA;
 
 			ADDRESS crtBaseAddress = 0;
 			ADDRESS cpuBaseAddress = 0;

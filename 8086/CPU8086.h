@@ -29,12 +29,44 @@ namespace emul
 		BYTE* dest = nullptr;
 	};
 
+	struct Mem32
+	{
+		WORD GetValue() const { return value; }
+
+		DWORD value;
+	};
+
+	struct Mem16
+	{
+		Mem16() {}
+		Mem16(Memory& memory, ADDRESS a) { SetAddress(memory, a); }
+		Mem16(Register& reg) : l(&reg.hl.l), h(&reg.hl.h) {}
+
+		void SetAddress(Memory& memory, ADDRESS a)
+		{
+			this->a = a;
+			this->l = memory.GetPtr8(a);
+			this->h = memory.GetPtr8(a + 1);
+		}
+
+		void Increment(Memory& memory)
+		{
+			SetAddress(memory, this->a + 2);
+		}
+
+		WORD GetValue() const { return MakeWord(*h, *l); }
+		void SetValue(WORD value) { *l = GetLByte(value); *h = GetHByte(value); }
+
+		BYTE* h = nullptr;
+		BYTE* l = nullptr;
+
+		ADDRESS a = uint32_t(-1);
+	};
+
 	struct SourceDest16
 	{
-		SourceDest16() {}
-		SourceDest16(WORD* d, WORD* s) : dest(d), source(s) {}
-		WORD* source = nullptr;
-		WORD* dest = nullptr;
+		Mem16 source;
+		Mem16 dest;
 	};
 
 	typedef WORD(*RawOpFunc8)(BYTE& dest, const BYTE& src, bool);
@@ -49,7 +81,7 @@ namespace emul
 		virtual ~CPU8086();
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
-		virtual ADDRESS GetCurrentAddress() const { return S2A(regCS, regIP); }
+		virtual ADDRESS GetCurrentAddress() const { return S2A(regCS.x, regIP.x); }
 
 		virtual bool Step() override;
 
@@ -76,18 +108,18 @@ namespace emul
 		Register regC; // Count
 		Register regD; // Data
 
-		WORD regSP = 0; // Stack Pointer
-		WORD regBP = 0; // Base Pointer
-		WORD regSI = 0; // Source Index
-		WORD regDI = 0; // Destination Index
+		Register regSP; // Stack Pointer
+		Register regBP; // Base Pointer
+		Register regSI; // Source Index
+		Register regDI; // Destination Index
 
 		// Segment Registers
-		WORD regCS = 0; // Code Segment
-		WORD regDS = 0; // Data Segment
-		WORD regSS = 0; // Stack Segment
-		WORD regES = 0; // Extra Segment
+		Register regCS; // Code Segment
+		Register regDS; // Data Segment
+		Register regSS; // Stack Segment
+		Register regES; // Extra Segment
 
-		WORD regIP = 0; // Instruction Pointer
+		Register regIP; // Instruction Pointer
 
 		enum FLAG : WORD
 		{
@@ -110,11 +142,11 @@ namespace emul
 			FLAG_R15 = 0x8000, // Reserved, 0
 		};
 
-		WORD flags = 0;
+		Register flags;
 
 		void ClearFlags();
-		bool GetFlag(FLAG f) { return (flags & f) ? true : false; };
-		void SetFlag(FLAG f, bool v) { if (v) flags |= f; else flags &= ~f; };
+		bool GetFlag(FLAG f) { return (flags.x & f) ? true : false; };
+		void SetFlag(FLAG f, bool v) { if (v) flags.x |= f; else flags.x &= ~f; };
 
 		static const char* GetReg8Str(BYTE reg);
 		static const char* GetReg16Str(BYTE reg, bool segReg = false);
@@ -159,7 +191,7 @@ namespace emul
 		WORD FetchWord();
 
 		BYTE* GetModRM8(BYTE modrm);
-		WORD* GetModRM16(BYTE modrm);
+		Mem16 GetModRM16(BYTE modrm);
 		enum class REGMEM { REG, MEM } m_regMem;
 
 		SourceDest8 GetModRegRM8(BYTE modregrm, bool toReg = true);
@@ -169,20 +201,20 @@ namespace emul
 		static const char* GetEAStr(BYTE modregrm, bool direct);
 
 		BYTE* GetReg8(BYTE reg);
-		WORD* GetReg16(BYTE reg, bool segReg = false);
+		Mem16 GetReg16(BYTE reg, bool segReg = false);
 
 		// Opcodes
 
 		void CALLfar();
 		void CALLNear(WORD offset);
 		void CALLIntra(WORD address);
-		void CALLInter(WORD* destPtr);
+		void CALLInter(Mem16 destPtr);
 
 		void JMPfar();
 		void JMPNear(BYTE offset);
 		void JMPNear(WORD offset);
 		void JMPIntra(WORD address);
-		void JMPInter(WORD* destPtr);
+		void JMPInter(Mem16 destPtr);
 
 		void CLC();
 		void CMC();
@@ -205,13 +237,13 @@ namespace emul
 		void DEC16(WORD&);
 
 		void MOV8(BYTE* d, BYTE s);
-		void MOV16(WORD* d, WORD s);
+		void MOV16(Mem16 d, WORD s);
 
 		void MOV8(SourceDest8 sd);
 		void MOV16(SourceDest16 sd);
 
 		void MOVIMM8(BYTE* dest);
-		void MOVIMM16(WORD* dest);
+		void MOVIMM16(Mem16 dest);
 
 		void SAHF();
 		void LAHF();
@@ -224,7 +256,7 @@ namespace emul
 		void Arithmetic8(SourceDest8 sd, RawOpFunc8 func);
 		void Arithmetic16(SourceDest16 sd, RawOpFunc16 func);
 		void ArithmeticImm8(BYTE& dest, BYTE imm, RawOpFunc8 func);
-		void ArithmeticImm16(WORD& dest, WORD imm, RawOpFunc16 func);
+		void ArithmeticImm16(Mem16 dest, WORD imm, RawOpFunc16 func);
 
 		void ArithmeticImm8(BYTE op2);
 		void ArithmeticImm16(BYTE op2, bool signExtend);
@@ -247,8 +279,9 @@ namespace emul
 		void XCHG16(SourceDest16 sd);
 		void XCHG16(WORD& w1, WORD& w2);
 
-		void PUSH(WORD& w);
-		void POP(WORD& w);
+		void PUSH(WORD w);
+		void PUSH(Mem16 w);
+		void POP(Mem16 w);
 
 		void LODS8();
 		void LODS16();

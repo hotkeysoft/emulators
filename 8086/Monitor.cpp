@@ -200,19 +200,19 @@ namespace emul
 		WriteValueHex(m_cpu->regD.hl.h, g_CPUInfo.GetCoord("DH"));
 		WriteValueHex(m_cpu->regD.hl.l, g_CPUInfo.GetCoord("DL"));
 
-		WriteValueHex(m_cpu->regDS, g_CPUInfo.GetCoord("DS"));
-		WriteValueHex(m_cpu->regSI, g_CPUInfo.GetCoord("SI"));
+		WriteValueHex(m_cpu->regDS.x, g_CPUInfo.GetCoord("DS"));
+		WriteValueHex(m_cpu->regSI.x, g_CPUInfo.GetCoord("SI"));
 
-		WriteValueHex(m_cpu->regES, g_CPUInfo.GetCoord("ES"));
-		WriteValueHex(m_cpu->regDI, g_CPUInfo.GetCoord("DI"));
+		WriteValueHex(m_cpu->regES.x, g_CPUInfo.GetCoord("ES"));
+		WriteValueHex(m_cpu->regDI.x, g_CPUInfo.GetCoord("DI"));
 
-		WriteValueHex(m_cpu->regBP, g_CPUInfo.GetCoord("BP"));
+		WriteValueHex(m_cpu->regBP.x, g_CPUInfo.GetCoord("BP"));
 
-		WriteValueHex(m_cpu->regCS, g_CPUInfo.GetCoord("CS"));
-		WriteValueHex(m_cpu->regIP, g_CPUInfo.GetCoord("IP"));
+		WriteValueHex(m_cpu->regCS.x, g_CPUInfo.GetCoord("CS"));
+		WriteValueHex(m_cpu->regIP.x, g_CPUInfo.GetCoord("IP"));
 
-		WriteValueHex(m_cpu->regSS, g_CPUInfo.GetCoord("SS"));
-		WriteValueHex(m_cpu->regSP, g_CPUInfo.GetCoord("SP"));
+		WriteValueHex(m_cpu->regSS.x, g_CPUInfo.GetCoord("SS"));
+		WriteValueHex(m_cpu->regSP.x, g_CPUInfo.GetCoord("SP"));
 	}
 
 	void Monitor::UpdateFlags()
@@ -221,7 +221,7 @@ namespace emul
 
 		for (int i = 0; i < 12; ++i)
 		{
-			attr[11-i] = (m_cpu->flags & (1 << i)) ? 15 : 8;
+			attr[11-i] = (m_cpu->flags.x & (1 << i)) ? 15 : 8;
 		}
 
 		static CPUInfo::Coord coord = g_CPUInfo.GetCoord("FLAGS");
@@ -244,16 +244,16 @@ namespace emul
 		switch (m_ramMode)
 		{
 		case RAMMode::DSSI:
-			segment = m_cpu->regDS;
-			offset = m_cpu->regSI;
+			segment = m_cpu->regDS.x;
+			offset = m_cpu->regSI.x;
 			break;
 		case RAMMode::ESDI:
-			segment = m_cpu->regES;
-			offset = m_cpu->regDI;
+			segment = m_cpu->regES.x;
+			offset = m_cpu->regDI.x;
 			break;
 		case RAMMode::STACK:
-			segment = m_cpu->regSS;
-			offset = m_cpu->regSP;
+			segment = m_cpu->regSS.x;
+			offset = m_cpu->regSP.x;
 			break;
 		case RAMMode::CUSTOM:
 		default:
@@ -330,7 +330,7 @@ namespace emul
 	{
 		static CPUInfo::Coord codePos = g_CPUInfo.GetCoord("CODE");
 
-		SegmentOffset address = std::make_tuple(m_cpu->regCS, m_cpu->regIP);
+		SegmentOffset address = std::make_tuple(m_cpu->regCS.x, m_cpu->regIP.x);
 
 		for (int i = 0; i < 12; ++i)
 		{

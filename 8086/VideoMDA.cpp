@@ -52,7 +52,7 @@ namespace video
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadFromFile(charROM);
-		m_charROMStart = m_charROM.getPtr8(0);
+		m_charROMStart = m_charROM.getPtr(0);
 
 		m_crtc.Init();
 		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
@@ -144,14 +144,14 @@ namespace video
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
 		// Pointers for alpha mode
-		m_currChar = m_screenB000.getPtr8(config.startAddress * 2u);
+		m_currChar = m_screenB000.getPtr(config.startAddress * 2u);
 		if (config.cursorAddress * 2u >= m_screenB000.GetSize())
 		{
 			m_cursorPos = nullptr;
 		}
 		else
 		{
-			m_cursorPos = m_screenB000.getPtr8(config.cursorAddress * 2u);
+			m_cursorPos = m_screenB000.getPtr(config.cursorAddress * 2u);
 		}
 
 		// Select draw function
@@ -195,7 +195,7 @@ namespace video
 			uint32_t bgRGB = GetMonitorPalette()[bg];
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((uint32_t)ch * 8);
+			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8);
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
 			for (int y = 0; y < data.vCharHeight; ++y)
 			{

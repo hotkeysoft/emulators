@@ -191,13 +191,14 @@ int main(int argc, char* args[])
 
 #if 0
 	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
-	testROMF000.LoadFromFile(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\fail\segpr.bin)");
+	
+	testROMF000.LoadFromFile(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\pass\add.bin)");
 	pc->GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
 	pc->Reset(0xF000, 0);
 #endif
 
 #ifndef NO_CONSOLE
-	monitor.Init(pc, pc.GetMemory());
+	monitor.Init(*pc, pc->GetMemory());
 #endif
 
 	fprintf(stderr, "Press any key to continue\n");

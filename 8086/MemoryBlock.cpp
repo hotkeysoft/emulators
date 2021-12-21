@@ -83,22 +83,10 @@ namespace emul
 		return m_data[offset];
 	}
 
-	BYTE* MemoryBlock::getPtr8(ADDRESS offset)
+	BYTE* MemoryBlock::getPtr(ADDRESS offset)
 	{
 		assert(offset < m_size);
 		return m_data+(offset);
-	}
-
-	WORD* MemoryBlock::getPtr16(ADDRESS offset)
-	{
-		if (offset + 1 >= m_size)
-		{
-			throw std::exception("Not implemented: can not cross memory block boundary with WORD access");
-		}
-		else
-		{
-			return (WORD*)(m_data + offset);
-		}
 	}
 
 	void MemoryBlock::write(ADDRESS offset, char data)

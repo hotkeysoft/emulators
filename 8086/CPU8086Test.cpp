@@ -26,10 +26,10 @@ namespace emul
 	DWORD rawTest16(WORD&, const WORD&, bool);
 
 	// Arithmetic functions internal tests
-	#define ATEST8(F,A,B,R,O,S,Z,C) { flags=0; d8=A; s8=B; Arithmetic8(sd8, F); assert(*sd8.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define ATEST16(F,A,B,R,O,S,Z,C) { flags=0; d16=A; s16=B; Arithmetic16(sd16, F); assert(*sd16.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define ATEST8C(F,A,B,R,O,S,Z,C) { flags=FLAG_C; d8=A; s8=B; Arithmetic8(sd8, F); assert(*sd8.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define ATEST16C(F,A,B,R,O,S,Z,C) { flags=FLAG_C; d16=A; s16=B; Arithmetic16(sd16, F); assert(*sd16.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST8(F,A,B,R,O,S,Z,C) { flags.x=0; d8=A; s8=B; Arithmetic8(sd8, F); assert(*sd8.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST16(F,A,B,R,O,S,Z,C) { flags.x=0; d16.x=A; s16.x=B; Arithmetic16(sd16, F); assert(sd16.dest.GetValue()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST8C(F,A,B,R,O,S,Z,C) { flags.x=FLAG_C; d8=A; s8=B; Arithmetic8(sd8, F); assert(*sd8.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST16C(F,A,B,R,O,S,Z,C) { flags.x=FLAG_C; d16.x=A; s16.x=B; Arithmetic16(sd16, F); assert(sd16.dest.GetValue()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
 	void CPU8086Test::TestArithmetic()
 	{
@@ -123,11 +123,11 @@ namespace emul
 
 		// Arithmetic16
 		{
-			WORD s16;
-			WORD d16;
+			Register s16;
+			Register d16;
 			SourceDest16 sd16;
-			sd16.source = &s16;
-			sd16.dest = &d16;
+			sd16.source = s16;
+			sd16.dest = d16;
 
 			//      op        A       B       RES     OFLOW  SIGN   ZERO   CARRY
 			ATEST16(rawAdd16, 0x7FFF, 0x0000, 0x7FFF, false, false, false, false);
@@ -171,10 +171,10 @@ namespace emul
 		}
 	}
 
-	#define SHIFTROTTEST8(CLR,F,N,R,O,S,Z,C) { flags=(CLR?0:flags); SHIFTROT8(F, N); assert(regA.hl.l == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define SHIFTROTTEST8noO(CLR,F,N,R,S,Z,C) { flags=(CLR?0:flags); SHIFTROT8(F, N); assert(regA.hl.l == R); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST8(CLR,F,N,R,O,S,Z,C) { flags.x=(CLR?0:flags.x); SHIFTROT8(F, N); assert(regA.hl.l == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST8noO(CLR,F,N,R,S,Z,C) { flags.x=(CLR?0:flags.x); SHIFTROT8(F, N); assert(regA.hl.l == R); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
-	#define SHIFTROTTEST16(CLR,F,N,R,O,S,Z,C) { flags=(CLR?0:flags); SHIFTROT16(F, N); assert(regA.x == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST16(CLR,F,N,R,O,S,Z,C) { flags.x=(CLR?0:flags.x); SHIFTROT16(F, N); assert(regA.x == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
 
 	void CPU8086Test::TestShiftRotate()
@@ -262,7 +262,7 @@ namespace emul
 			SHIFTROTTEST8(true, ROR, 1, 0x40, true,  false, false, false);
 
 			// RCL
-			regA.hl.l = 0x01; flags = 0;
+			regA.hl.l = 0x01; flags.x = 0;
 			//            clrf   op   n  RES   OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(false, RCL, 1, 0x02, false, false, false, false);
 			SHIFTROTTEST8(false, RCL, 1, 0x04, false, false, false, false);
@@ -276,7 +276,7 @@ namespace emul
 			SHIFTROTTEST8(false, RCL, 1, 0x02, false, false, false, false);
 
 			// RCR
-			regA.hl.l = 0x80; flags = 0;
+			regA.hl.l = 0x80; flags.x = 0;
 			//            clrf   op   n  RES   OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(false, RCR, 1, 0x40, true,  false, false, false);
 			SHIFTROTTEST8(false, RCR, 1, 0x20, false, false, false, false);

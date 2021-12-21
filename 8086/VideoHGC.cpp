@@ -65,10 +65,10 @@ namespace video
 			// Pointers for graphics mode
 			WORD page = m_modeHGC.displayPage ? 0x8000 : 0;
 
-			m_banks[0] = m_screenB000.getPtr8(page + 0x0000);
-			m_banks[1] = m_screenB000.getPtr8(page + 0x2000);
-			m_banks[2] = m_screenB000.getPtr8(page + 0x4000);
-			m_banks[3] = m_screenB000.getPtr8(page + 0x6000);
+			m_banks[0] = m_screenB000.getPtr(page + 0x0000);
+			m_banks[1] = m_screenB000.getPtr(page + 0x2000);
+			m_banks[2] = m_screenB000.getPtr(page + 0x4000);
+			m_banks[3] = m_screenB000.getPtr(page + 0x6000);
 
 			m_drawFunc = (DrawFunc)&VideoHGC::Draw720x348;
 		}

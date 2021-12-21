@@ -137,30 +137,13 @@ namespace emul
 
 		if (block)
 		{
-			return block->getPtr8(address - slot.base);
+			return block->getPtr(address - slot.base);
 		}
 		else
 		{
 			LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
 			s_uninitialized = 0xF00F; // Reset 'initialized' value in case someone wrote in it
 			return (BYTE*)&Memory::s_uninitialized;
-		}
-	}
-
-	WORD* Memory::GetPtr16(ADDRESS address) const
-	{
-		const MemorySlot& slot = m_memory[address / BlockGranularity];
-		MemoryBlock* block = slot.block;
-
-		if (block)
-		{
-			return block->getPtr16(address - slot.base);
-		}
-		else
-		{
-			LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
-			s_uninitialized = 0xF00F; // Reset 'initialized' value in case someone wrote in it
-			return &Memory::s_uninitialized;
 		}
 	}
 
@@ -186,8 +169,9 @@ namespace emul
 
 	WORD Memory::Read16(ADDRESS address) const
 	{
-		const WORD* mem = GetPtr16(address);
-		return *mem;
+		BYTE l = Read8(address);
+		BYTE h = Read8(address + 1);
+		return MakeWord(h, l);
 	}
 
 	void Memory::Write8(ADDRESS address, BYTE value)

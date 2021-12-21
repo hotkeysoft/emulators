@@ -31,8 +31,7 @@ namespace emul
 		bool Dump(ADDRESS offset, DWORD len, const char* outFile);
 
 		virtual BYTE read(ADDRESS offset);
-		virtual BYTE* getPtr8(ADDRESS offset);
-		virtual WORD* getPtr16(ADDRESS offset);
+		virtual BYTE* getPtr(ADDRESS offset);
 		virtual void write(ADDRESS offset, char data);
 
 	protected:
