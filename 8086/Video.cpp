@@ -62,8 +62,8 @@ namespace video
 		LogPrintf(LOG_INFO, "Full screen: %d", fullScreen);
 
 		SDL_CreateWindowAndRenderer(
-			m_sdlWidth + (2 * border),
-			(int)(m_sdlHeight * m_vScale) + (2 * border),
+			(int)((m_sdlWidth + (2 * border)) * scale),
+			(int)(((m_sdlHeight * m_vScale) + (2 * border)) * scale),
 			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0,
 			&m_sdlWindow,
 			&m_sdlRenderer);
@@ -80,6 +80,10 @@ namespace video
 		}
 
 		std::string filtering = Config::Instance().GetValueStr("video", "filtering", "0");
+		if (filtering.empty())
+		{
+			filtering = "0";
+		}
 		LogPrintf(LOG_INFO, "Render Scale Quality: %s", filtering.c_str());
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, filtering.c_str());
 
