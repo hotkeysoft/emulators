@@ -51,6 +51,14 @@ namespace cfg
 		return inipp::get_value(m_config.sections[section], key, ret) ? ret : defaultValue;
 	}
 
+	float Config::GetValueFloat(const char* section, const char* key, float defaultValue)
+	{
+		assert(section);
+		assert(key);
+		float ret;
+		return inipp::get_value(m_config.sections[section], key, ret) ? ret : defaultValue;
+	}
+
 	bool Config::GetValueBool(const char* section, const char* key)
 	{
 		assert(section);

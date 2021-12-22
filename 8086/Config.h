@@ -24,6 +24,7 @@ namespace cfg
 
 		std::string GetValueStr(const char* section, const char* key, const char* defaultValue = "");
 		int32_t GetValueInt32(const char* section, const char* key, int32_t defaultValue = 0);
+		float GetValueFloat(const char* section, const char* key, float defaultValue = 0.0f);
 		bool GetValueBool(const char* section, const char* key);
 
 		// Reads from section [loglevels]

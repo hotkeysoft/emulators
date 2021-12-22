@@ -201,8 +201,8 @@ int main(int argc, char* args[])
 	monitor.Init(*pc, pc->GetMemory());
 #endif
 
-	fprintf(stderr, "Press any key to continue\n");
-	_getch();
+	//fprintf(stderr, "Press any key to continue\n");
+	//_getch();
 
 	if (mode == Mode::MONITOR)
 		monitor.Show();

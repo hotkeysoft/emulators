@@ -56,16 +56,25 @@ namespace video
 			SDL_InitSubSystem(SDL_INIT_VIDEO);
 		}
 
+		float scale = std::max(1.0f, Config::Instance().GetValueFloat("video", "scale", 1.0f));
+		bool fullScreen = Config::Instance().GetValueBool("video", "fullscreen");
+		LogPrintf(LOG_INFO, "Scale factor: %f", scale);
+		LogPrintf(LOG_INFO, "Full screen: %d", fullScreen);
+
 		SDL_CreateWindowAndRenderer(
 			m_sdlWidth + (2 * border),
 			(int)(m_sdlHeight * m_vScale) + (2 * border),
-			0,
+			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0,
 			&m_sdlWindow,
 			&m_sdlRenderer);
 
+		int actualW, actualH;
+		SDL_GetWindowSize(m_sdlWindow, &actualW, &actualH);
+		LogPrintf(LOG_INFO, "Window Size: %dx%d", actualW, actualH);
+
 		m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, m_sdlWidth, m_sdlHeight);
 
-		SDL_RenderSetScale(m_sdlRenderer, 1.0f, m_vScale);
+		SDL_RenderSetScale(m_sdlRenderer, scale, scale*m_vScale);
 
 		InitMonitor(forceMono);
 	}
