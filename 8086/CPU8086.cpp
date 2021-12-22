@@ -659,7 +659,7 @@ namespace emul
 		// IN AL, IMM8
 		case 0xE4: TICK(10); IN8(FetchByte()); break;
 		// IN AX, IMM16
-		case 0xE5: TICK(10); NotImplemented(opcode); break;
+		case 0xE5: TICK(10); IN16(FetchByte()); break;
 
 		// OUT fixed
 		// --------
@@ -682,7 +682,7 @@ namespace emul
 		// IN AL, DX
 		case 0xEC: TICK(8); IN8(regD.x); break;
 		// IN AX, DX
-		case 0xED: TICK(8); NotImplemented(opcode); break;
+		case 0xED: TICK(8); IN16(regD.x); break;
 
 		// OUT variable
 		// --------
@@ -1685,8 +1685,15 @@ namespace emul
 
 	void CPU8086::IN8(WORD port)
 	{
-		LogPrintf(LOG_DEBUG, "IN port %04X", port);
+		LogPrintf(LOG_DEBUG, "IN8 port %04X", port);
 		m_ports.In(port, regA.hl.l);
+	}
+
+	void CPU8086::IN16(WORD port)
+	{
+		LogPrintf(LOG_DEBUG, "IN16 port %04X", port);
+		m_ports.In(port, regA.hl.l);
+		m_ports.In(port+1, regA.hl.h);
 	}
 
 	void CPU8086::OUT8(WORD port)

@@ -265,6 +265,7 @@ namespace emul
 		void ArithmeticMulti16(BYTE op2);
 
 		void IN8(WORD port);
+		void IN16(WORD port);
 		void OUT8(WORD port);
 		void OUT16(WORD port);
 
