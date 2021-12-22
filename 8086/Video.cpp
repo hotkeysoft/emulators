@@ -72,9 +72,20 @@ namespace video
 		SDL_GetWindowSize(m_sdlWindow, &actualW, &actualH);
 		LogPrintf(LOG_INFO, "Window Size: %dx%d", actualW, actualH);
 
+		// Center image in fullscreen mode
+		if (fullScreen)
+		{
+			m_sdlHBorder += std::max(0, (((int)(actualW / scale) - m_sdlWidth) / 2));
+			m_sdlVBorder += std::max(0, ((int)(actualH / (scale * m_vScale)) - m_sdlHeight) / 2);
+		}
+
+		std::string filtering = Config::Instance().GetValueStr("video", "filtering", "0");
+		LogPrintf(LOG_INFO, "Render Scale Quality: %s", filtering.c_str());
+		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, filtering.c_str());
+
 		m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, m_sdlWidth, m_sdlHeight);
 
-		SDL_RenderSetScale(m_sdlRenderer, scale, scale*m_vScale);
+		SDL_RenderSetScale(m_sdlRenderer, scale, scale * m_vScale);
 
 		InitMonitor(forceMono);
 	}
