@@ -18,15 +18,28 @@ namespace events
 	class Key
 	{
 	public:
-		Key(BYTE scancode, BYTE prefix = 0, bool repeat = true) : m_scancode(scancode), m_prefix(prefix), m_repeat(repeat) {}
+		Key(BYTE scancode, BYTE prefix = 0, bool repeat = true, bool isToggle = false, bool toggleState = false) :
+			m_scancode(scancode),
+			m_prefix(prefix),
+			m_repeat(repeat),
+			m_isToggle(isToggle),
+			m_toggleState(toggleState)
+		{
+		}
 
 		BYTE GetScancode() const { return m_scancode; }
 		BYTE GetPrefix() const { return m_prefix; }
 		bool IsRepeat() const { return m_repeat; }
+		bool IsToggle() const { return m_isToggle; }
+		bool GetToggleState() const { return m_toggleState; }
+
+		void Toggle() { m_toggleState = !m_toggleState; }
 	private:
 		BYTE m_scancode;
 		BYTE m_prefix = 0;
 		bool m_repeat = true;
+		bool m_isToggle = false;
+		bool m_toggleState = false;
 	};
 	class NonRepeatingKey : public Key
 	{
@@ -37,6 +50,11 @@ namespace events
 	{
 	public:
 		ExtendedKey(BYTE prefix, BYTE scancode, bool repeat = true) : Key(scancode, prefix, repeat) {}
+	};
+	class ToggleKey : public Key
+	{
+	public:
+		ToggleKey(BYTE scancode, bool state = false) : Key(scancode, 0, false, true, state) {}
 	};
 
 	typedef std::map<SDL_Scancode, Key> KeyMap;
@@ -71,7 +89,7 @@ namespace events
 		bool m_quit = false;
 
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
-		const KeyMap* m_keyMap = nullptr;
+		KeyMap* m_keyMap = nullptr;
 
 		SDL_GameController* m_gameController = nullptr;
 		SDL_JoystickID m_controllerID = -1;

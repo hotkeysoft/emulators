@@ -8,7 +8,7 @@
 
 namespace events
 {
-	static const KeyMap s_keyMapXT =
+	static KeyMap s_keyMapXT =
 	{
 		{ SDL_SCANCODE_ESCAPE, 0x01 },
 		{ SDL_SCANCODE_1, 0x02 },
@@ -73,7 +73,7 @@ namespace events
 		{ SDL_SCANCODE_KP_MULTIPLY, 0x37 },
 		{ SDL_SCANCODE_LALT, NonRepeatingKey(0x38) },
 		{ SDL_SCANCODE_SPACE, 0x39 },
-		{ SDL_SCANCODE_CAPSLOCK, NonRepeatingKey(0x3A) },
+		{ SDL_SCANCODE_CAPSLOCK, ToggleKey(0x3A) },
 
 		{ SDL_SCANCODE_F1, 0x3B },
 		{ SDL_SCANCODE_F2, 0x3C },
@@ -86,7 +86,7 @@ namespace events
 		{ SDL_SCANCODE_F9, 0x43 },
 		{ SDL_SCANCODE_F10, 0x44 },
 
-		{ SDL_SCANCODE_NUMLOCKCLEAR, NonRepeatingKey(0x45) },
+		{ SDL_SCANCODE_NUMLOCKCLEAR, ToggleKey(0x45, true) },
 		{ SDL_SCANCODE_SCROLLLOCK, NonRepeatingKey(0x46) },
 
 		{ SDL_SCANCODE_KP_7, 0x47 },
@@ -126,7 +126,7 @@ namespace events
 		{ SDL_SCANCODE_DELETE, ExtendedKey(0xE0, 0x53) },
 	};
 
-	static const KeyMap s_keyMapTandy =
+	static KeyMap s_keyMapTandy =
 	{
 		{ SDL_SCANCODE_ESCAPE, 0x01 },
 		{ SDL_SCANCODE_1, 0x02 },
@@ -188,7 +188,7 @@ namespace events
 
 		{ SDL_SCANCODE_LALT, NonRepeatingKey(0x38) },
 		{ SDL_SCANCODE_SPACE, 0x39 },
-		{ SDL_SCANCODE_CAPSLOCK, NonRepeatingKey(0x3A) },
+		{ SDL_SCANCODE_CAPSLOCK, ToggleKey(0x3A) },
 
 		{ SDL_SCANCODE_F1, 0x3B },
 		{ SDL_SCANCODE_F2, 0x3C },
@@ -201,7 +201,7 @@ namespace events
 		{ SDL_SCANCODE_F9, 0x43 },
 		{ SDL_SCANCODE_F10, 0x44 },
 
-		{ SDL_SCANCODE_NUMLOCKCLEAR, NonRepeatingKey(0x45) },
+		{ SDL_SCANCODE_NUMLOCKCLEAR, ToggleKey(0x45, true) },
 
 		{ SDL_SCANCODE_KP_7, 0x47 },
 		{ SDL_SCANCODE_KP_8, 0x48 },
@@ -389,10 +389,10 @@ namespace events
 	void InputEvents::InputKey(SDL_KeyboardEvent& evt)
 	{
 		LogPrintf(LOG_DEBUG, "InputKey: [%s] key: %d, repeat: %d", evt.state == SDL_PRESSED ? "DOWN" : "UP", evt.keysym.scancode, evt.repeat);
-		KeyMap::const_iterator it = m_keyMap->find(evt.keysym.scancode);
+		KeyMap::iterator it = m_keyMap->find(evt.keysym.scancode);
 		if (it != m_keyMap->end())
 		{
-			const Key& key = it->second;
+			Key& key = it->second;
 
 			if (evt.repeat && !key.IsRepeat())
 			{
@@ -403,7 +403,16 @@ namespace events
 			{
 				m_keyboard->InputKey(key.GetPrefix());
 			}
-			m_keyboard->InputKey(key.GetScancode() | (evt.state == SDL_PRESSED ? 0 : 0x80));
+
+			if (!key.IsToggle())
+			{
+				m_keyboard->InputKey(key.GetScancode() | (evt.state == SDL_PRESSED ? 0 : 0x80));
+			}
+			else if (evt.state == SDL_PRESSED)
+			{
+				m_keyboard->InputKey(key.GetScancode() | (key.GetToggleState() ? 0 : 0x80));
+				key.Toggle();
+			}
 		}
 		else
 		{
