@@ -63,8 +63,8 @@ namespace video
 		uint16_t m_sdlHeight = 0;
 
 		BYTE m_sdlBorderPixels;
-		BYTE m_sdlHBorder;
-		BYTE m_sdlVBorder;
+		WORD m_sdlHBorder;
+		WORD m_sdlVBorder;
 
 		float m_vScale = 1.0f;
 
