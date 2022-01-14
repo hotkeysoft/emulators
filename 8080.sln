@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2000
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Emulator Base", "Emulator Base.vcxproj", "{B70DD2FD-1B0A-4F88-B98D-8203FBE72D7E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hotkey80emu", "8080\hotkey80emu.vcxproj", "{B70DD2FD-1B0A-4F88-B98D-8203FBE72D7E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

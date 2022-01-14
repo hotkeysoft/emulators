@@ -23,6 +23,7 @@
     <ProjectGuid>{B70DD2FD-1B0A-4F88-B98D-8203FBE72D7E}</ProjectGuid>
     <RootNamespace>EmulatorBase</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>hotkey80emu</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
