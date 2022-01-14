@@ -320,10 +320,12 @@ int main(int argc, char* args[])
 						case 64: // F6
 						case 65: // F7
 						case 66: // F8
+							break;
 						case 67: // F9
+							pc->Reboot(false); // Soft reboot = CTRL-ALT-DEL
 							break;
 						case 68: // F10
-							pc->Reboot();
+							pc->Reboot(true); // Hard reboot
 							break;
 						case 71: // HOME
 						case 72: // UP
