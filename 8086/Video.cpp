@@ -68,6 +68,8 @@ namespace video
 			&m_sdlWindow,
 			&m_sdlRenderer);
 
+		SDL_SetWindowTitle(m_sdlWindow, "hotkey86");
+
 		int actualW, actualH;
 		SDL_GetWindowSize(m_sdlWindow, &actualW, &actualH);
 		LogPrintf(LOG_INFO, "Window Size: %dx%d", actualW, actualH);
