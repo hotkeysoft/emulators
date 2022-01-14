@@ -22,6 +22,8 @@ namespace emul
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
 
+	static const size_t BASE_CPU2PIT_RATIO = PIT_CLK_DIVIDER / CPU_CLK_DIVIDER;
+
 	static class DummyPortPCjr : public PortConnector
 	{
 	public:
@@ -240,7 +242,7 @@ namespace emul
 		ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
 		video::VideoPCjr* video = (video::VideoPCjr*)m_video;
 
-		for (uint32_t i = 0; i < cpuTicks / 4; ++i)
+		for (uint32_t i = 0; i < cpuTicks / BASE_CPU2PIT_RATIO; ++i)
 		{
 			++g_ticks;
 
@@ -301,21 +303,8 @@ namespace emul
 			m_pic->InterruptRequest(3, m_uart.IsInterrupt());
 
 			++syncTicks;
-			// Every 11932 ticks (~10ms) make an adjustment
-			//if (!m_turbo && (syncTicks >= 11931))
-			//{
-			//	auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
-
-			//	if (delta < std::chrono::microseconds(10000))
-			//	{
-			//		little_sleep(std::chrono::microseconds(10000)-delta);
-			//	}
-
-			//	syncTicks = 0;
-			//	lastTick = std::chrono::high_resolution_clock::now();
-			//}
 		}
-		cpuTicks %= 4;
+		cpuTicks %= BASE_CPU2PIT_RATIO;
 
 		return true;
 	}

@@ -29,6 +29,8 @@ namespace emul
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
 
+	static const size_t BASE_CPU2PIT_RATIO = 12; //PIT_CLK_DIVIDER / CPU_CLK_DIVIDER;
+
 	static class DummyPortTandy : public PortConnector
 	{
 	public:
@@ -235,7 +237,7 @@ namespace emul
 		ppi::Device8255Tandy* ppi = (ppi::Device8255Tandy*)m_ppi;
 		video::VideoTandy* video = (video::VideoTandy*)m_video;
 
-		for (uint32_t i = 0; i < cpuTicks / 8; ++i)
+		for (uint32_t i = 0; i < cpuTicks / BASE_CPU2PIT_RATIO; ++i)
 		{
 			++g_ticks;
 
@@ -364,21 +366,8 @@ namespace emul
 			//m_pic.InterruptRequest(3, m_uart.IsInterrupt());
 
 			++syncTicks;
-			// Every 11932 ticks (~10ms) make an adjustment
-			//if (!m_turbo && (syncTicks >= 11931))
-			//{
-			//	auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
-
-			//	if (delta < std::chrono::microseconds(10000))
-			//	{
-			//		little_sleep(std::chrono::microseconds(10000)-delta);
-			//	}
-
-			//	syncTicks = 0;
-			//	lastTick = std::chrono::high_resolution_clock::now();
-			//}
 		}
-		cpuTicks %= 8;
+		cpuTicks %= BASE_CPU2PIT_RATIO;
 
 		return true;
 	}

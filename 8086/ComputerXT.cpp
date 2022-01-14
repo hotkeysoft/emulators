@@ -23,6 +23,8 @@ namespace emul
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
 
+	static const size_t BASE_CPU2PIT_RATIO = 10; //PIT_CLK_DIVIDER / CPU_CLK_DIVIDER;
+
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
 
@@ -209,7 +211,7 @@ namespace emul
 
 		ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
 
-		for (uint32_t i = 0; i < cpuTicks / 10; ++i)
+		for (uint32_t i = 0; i < cpuTicks / BASE_CPU2PIT_RATIO; ++i)
 		{
 			++g_ticks;
 
@@ -321,23 +323,8 @@ namespace emul
 					m_hardDrive->DMATerminalCount();
 				}
 			}
-
-			//++syncTicks;
-			//// Every 11932 ticks (~10ms) make an adjustment
-			//if (!m_turbo && (syncTicks >= 11931))
-			//{
-			//	auto delta = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - lastTick);
-
-			//	if (delta < std::chrono::microseconds(10000))
-			//	{
-			//		little_sleep(std::chrono::microseconds(10000)-delta);
-			//	}
-
-			//	syncTicks = 0;
-			//	lastTick = std::chrono::high_resolution_clock::now();
-			//}
 		}
-		cpuTicks %= 10;
+		cpuTicks %= BASE_CPU2PIT_RATIO;
 
 		return true;
 	}
