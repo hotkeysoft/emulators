@@ -1,9 +1,9 @@
 #include "Common.h"
 #include "ComputerXT.h"
 #include "Config.h"
-#include "Console.h"
-#include "Device8255XT.h"
-#include "DeviceHardDrive.h"
+#include "IO/Console.h"
+#include "Hardware/Device8255XT.h"
+#include "Storage/DeviceHardDrive.h"
 
 #include <thread>
 

@@ -1,8 +1,8 @@
 #include "Common.h"
 #include "ComputerPCjr.h"
 #include "Config.h"
-#include "Device8255PCjr.h"
-#include "VideoPCjr.h"
+#include "Hardware/Device8255PCjr.h"
+#include "Video/VideoPCjr.h"
 
 #include <thread>
 

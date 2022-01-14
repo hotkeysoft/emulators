@@ -1,9 +1,9 @@
 #include "Common.h"
 #include "ComputerTandy.h"
 #include "Config.h"
-#include "Device8255Tandy.h"
-#include "DeviceHardDrive.h"
-#include "VideoTandy.h"
+#include "Hardware/Device8255Tandy.h"
+#include "Storage/DeviceHardDrive.h"
+#include "Video/VideoTandy.h"
 
 #include <thread>
 

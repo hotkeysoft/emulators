@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Computer.h"
-#include "Device8250.h"
-#include "DeviceSN76489.h"
-#include "DeviceFloppyPCjr.h"
-#include "DeviceKeyboardPCjr.h"
-#include "CartridgePCjr.h"
-#include "InputEvents.h"
+#include "Hardware/Device8250.h"
+#include "Sound/DeviceSN76489.h"
+#include "Storage/DeviceFloppyPCjr.h"
+#include "Storage/CartridgePCjr.h"
+#include "IO/InputEvents.h"
+#include "IO/DeviceKeyboardPCjr.h"
 
 using emul::WORD;
 

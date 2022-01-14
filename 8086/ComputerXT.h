@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Computer.h"
-#include "Device8237.h"
-#include "DeviceFloppyXT.h"
-#include "DevicePCSpeaker.h"
-#include "DeviceSN76489.h"
-#include "DeviceKeyboardXT.h"
-#include "InputEvents.h"
+#include "Hardware/Device8237.h"
+#include "Storage/DeviceFloppyXT.h"
+#include "Sound/DevicePCSpeaker.h"
+#include "Sound/DeviceSN76489.h"
+#include "IO/InputEvents.h"
+#include "IO/DeviceKeyboardXT.h"
 
 namespace emul
 {

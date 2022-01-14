@@ -1,15 +1,15 @@
 #pragma once
 
-#include "CPU8086.h"
-#include "Memory.h"
-#include "DeviceFloppy.h"
-#include "InputEvents.h"
-#include "Device8254.h"
-#include "Device8255.h"
-#include "Device8259.h"
-#include "DevicePCSpeaker.h"
-#include "DeviceJoystick.h"
-#include "Video.h"
+#include "CPU/CPU8086.h"
+#include "CPU/Memory.h"
+#include "Storage/DeviceFloppy.h"
+#include "IO/InputEvents.h"
+#include "Hardware/Device8254.h"
+#include "Hardware/Device8255.h"
+#include "Hardware/Device8259.h"
+#include "Sound/DevicePCSpeaker.h"
+#include "IO/DeviceJoystick.h"
+#include "Video/Video.h"
 
 #include <set>
 

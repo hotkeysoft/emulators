@@ -60,10 +60,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Emulator Base.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="StdAfx.cpp">
+    <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\Logger.cpp">
@@ -75,141 +72,138 @@
     <ClCompile Include="Computer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CartridgePCjr.cpp">
+    <ClCompile Include="Storage\CartridgePCjr.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="CPU.cpp">
+    <ClCompile Include="CPU\CPU.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="CPU8086.cpp">
+    <ClCompile Include="CPU\CPU8086.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="CPU8086Test.cpp">
+    <ClCompile Include="CPU\CPU8086Test.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="CPUInfo.cpp">
+    <ClCompile Include="CPU\CPUInfo.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="Device8237.cpp">
+    <ClCompile Include="Hardware\Device8237.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Device8250.cpp">
+    <ClCompile Include="Hardware\Device8250.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Device8254.cpp">
+    <ClCompile Include="Hardware\Device8254.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Device8255.cpp">
+    <ClCompile Include="Hardware\Device8255.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Device8255PCjr.cpp">
+    <ClCompile Include="Hardware\Device8255PCjr.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Device8255XT.cpp">
+    <ClCompile Include="Hardware\Device8255XT.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Device8259.cpp">
+    <ClCompile Include="Hardware\Device8259.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceFloppy.cpp">
+    <ClCompile Include="Storage\DeviceFloppy.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceFloppyPCjr.cpp">
+    <ClCompile Include="Storage\DeviceFloppyPCjr.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceFloppyXT.cpp">
+    <ClCompile Include="Storage\DeviceFloppyXT.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceKeyboard.cpp">
+    <ClCompile Include="IO\DeviceKeyboard.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceKeyboardPCjr.cpp">
+    <ClCompile Include="IO\DeviceKeyboardPCjr.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceKeyboardXT.cpp">
+    <ClCompile Include="IO\DeviceKeyboardXT.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
-    <ClCompile Include="DevicePCSpeaker.cpp">
+    <ClCompile Include="Sound\DevicePCSpeaker.cpp">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceSN76489.cpp">
+    <ClCompile Include="Sound\DeviceSN76489.cpp">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="Memory.cpp">
+    <ClCompile Include="CPU\Memory.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="MemoryBlock.cpp">
+    <ClCompile Include="CPU\MemoryBlock.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="MemoryMap.cpp">
+    <ClCompile Include="CPU\MemoryMap.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="Console.cpp">
+    <ClCompile Include="IO\Console.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
-    <ClCompile Include="PortAggregator.cpp">
+    <ClCompile Include="CPU\PortAggregator.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="PortConnector.cpp">
+    <ClCompile Include="CPU\PortConnector.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="VideoCGA.cpp">
+    <ClCompile Include="Video\VideoCGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="InputEvents.cpp">
+    <ClCompile Include="IO\InputEvents.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
-    <ClCompile Include="Monitor.cpp">
+    <ClCompile Include="IO\Monitor.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
-    <ClCompile Include="Device6845.cpp">
+    <ClCompile Include="Video\Video.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="Video.cpp">
+    <ClCompile Include="Video\VideoMDA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="VideoMDA.cpp">
-      <Filter>Source Files\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="VideoPCjr.cpp">
+    <ClCompile Include="Video\VideoPCjr.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="ComputerPCjr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VideoHGC.cpp">
+    <ClCompile Include="Video\VideoHGC.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="ComputerTandy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Device8255Tandy.cpp">
+    <ClCompile Include="Hardware\Device8255Tandy.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="VideoTandy.cpp">
+    <ClCompile Include="Video\VideoTandy.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceFloppyTandy.cpp">
+    <ClCompile Include="Storage\DeviceFloppyTandy.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceKeyboardTandy.cpp">
+    <ClCompile Include="IO\DeviceKeyboardTandy.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
     <ClCompile Include="Config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceJoystick.cpp">
+    <ClCompile Include="IO\DeviceJoystick.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
-    <ClCompile Include="DeviceHardDrive.cpp">
+    <ClCompile Include="Storage\DeviceHardDrive.cpp">
       <Filter>Source Files\Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\Device6845.cpp">
+      <Filter>Source Files\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="StdAfx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\Logger.h">
@@ -224,122 +218,113 @@
     <ClInclude Include="Computer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Device8237.h">
+    <ClInclude Include="Hardware\Device8237.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Device8250.h">
+    <ClInclude Include="Hardware\Device8250.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Device8254.h">
+    <ClInclude Include="Hardware\Device8254.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Device8255.h">
+    <ClInclude Include="Hardware\Device8255.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Device8255PCjr.h">
+    <ClInclude Include="Hardware\Device8255PCjr.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Device8255XT.h">
+    <ClInclude Include="Hardware\Device8255XT.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Device8259.h">
+    <ClInclude Include="Hardware\Device8259.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceFloppy.h">
+    <ClInclude Include="Storage\DeviceFloppy.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceFloppyPCjr.h">
+    <ClInclude Include="Storage\DeviceFloppyPCjr.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceFloppyXT.h">
+    <ClInclude Include="Storage\DeviceFloppyXT.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceSN76489.h">
+    <ClInclude Include="Sound\DeviceSN76489.h">
       <Filter>Header Files\Sound</Filter>
     </ClInclude>
-    <ClInclude Include="DevicePCSpeaker.h">
+    <ClInclude Include="Sound\DevicePCSpeaker.h">
       <Filter>Header Files\Sound</Filter>
     </ClInclude>
-    <ClInclude Include="VideoPCjr.h">
+    <ClInclude Include="Video\VideoPCjr.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
-    <ClInclude Include="VideoCGA.h">
+    <ClInclude Include="Video\VideoCGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
-    <ClInclude Include="Console.h">
+    <ClInclude Include="IO\Console.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceKeyboard.h">
+    <ClInclude Include="IO\DeviceKeyboard.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceKeyboardPCjr.h">
+    <ClInclude Include="IO\DeviceKeyboardPCjr.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceKeyboardXT.h">
+    <ClInclude Include="IO\DeviceKeyboardXT.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="InputEvents.h">
+    <ClInclude Include="IO\InputEvents.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="CPU.h">
+    <ClInclude Include="CPU\CPU.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="CPU8086.h">
+    <ClInclude Include="CPU\CPU8086.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="CPU8086Test.h">
+    <ClInclude Include="CPU\CPU8086Test.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="CPUInfo.h">
+    <ClInclude Include="CPU\CPUInfo.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="Memory.h">
+    <ClInclude Include="CPU\Memory.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryBlock.h">
+    <ClInclude Include="CPU\MemoryBlock.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryMap.h">
+    <ClInclude Include="CPU\MemoryMap.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="Monitor.h">
-      <Filter>Header Files\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="PortAggregator.h">
+    <ClInclude Include="CPU\PortAggregator.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="PortConnector.h">
+    <ClInclude Include="CPU\PortConnector.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="CartridgePCjr.h">
+    <ClInclude Include="Storage\CartridgePCjr.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="VideoMDA.h">
+    <ClInclude Include="Video\VideoMDA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
-    <ClInclude Include="Device6845.h">
+    <ClInclude Include="Video\Video.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
-    <ClInclude Include="Video.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoHGC.h">
+    <ClInclude Include="Video\VideoHGC.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="ComputerTandy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Device8255Tandy.h">
+    <ClInclude Include="Hardware\Device8255Tandy.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="VideoTandy.h">
+    <ClInclude Include="Video\VideoTandy.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceFloppyTandy.h">
+    <ClInclude Include="Storage\DeviceFloppyTandy.h">
       <Filter>Header Files\Storage</Filter>
-    </ClInclude>
-    <ClInclude Include="DeviceKeyboardTandy.h">
-      <Filter>Header Files\IO</Filter>
     </ClInclude>
     <ClInclude Include="Config.h">
       <Filter>Header Files</Filter>
@@ -350,11 +335,20 @@
     <ClInclude Include="..\Common\inipp.h">
       <Filter>3rd Party</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceJoystick.h">
+    <ClInclude Include="Storage\DeviceHardDrive.h">
+      <Filter>Header Files\Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\Device6845.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\DeviceJoystick.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceHardDrive.h">
-      <Filter>Header Files\Storage</Filter>
+    <ClInclude Include="IO\DeviceKeyboardTandy.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\Monitor.h">
+      <Filter>Header Files\IO</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,13 +1,13 @@
 #include "Common.h"
 #include "Computer.h"
 #include "Config.h"
-#include "DeviceKeyboard.h"
-#include "DeviceHardDrive.h"
-#include "VideoCGA.h"
-#include "VideoMDA.h"
-#include "VideoHGC.h"
-#include "VideoPCjr.h"
-#include "VideoTandy.h"
+#include "IO/DeviceKeyboard.h"
+#include "Storage/DeviceHardDrive.h"
+#include "Video/VideoCGA.h"
+#include "Video/VideoMDA.h"
+#include "Video/VideoHGC.h"
+#include "Video/VideoPCjr.h"
+#include "Video/VideoTandy.h"
 
 #include <assert.h>
 
