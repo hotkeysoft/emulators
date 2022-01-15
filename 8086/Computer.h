@@ -29,6 +29,7 @@ namespace emul
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
 		
 		Memory& GetMemory() { return m_memory; }
+		beeper::DevicePCSpeaker& GetSound() { return m_pcSpeaker; } // TODO: Sound interface
 		virtual fdc::DeviceFloppy& GetFloppy() = 0;
 		virtual kbd::DeviceKeyboard& GetKeyboard() = 0;
 

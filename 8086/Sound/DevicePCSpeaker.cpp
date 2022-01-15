@@ -1,6 +1,7 @@
 #include "DevicePCSpeaker.h"
 #include <thread>
 #include <assert.h>
+#include <algorithm>
 
 #include <SDL.h>
 
@@ -58,10 +59,10 @@ namespace beeper
 
 		assert(length == spec.samples); // 8 bit mono, should match 1 to 1
 
-		int8_t* dest = (int8_t*)stream;
-		int8_t* source = This->GetPlayingBuffer();
+		const uint8_t* source = (const uint8_t*)This->GetPlayingBuffer();
 
-		memcpy(dest, source, length);
+		memset(stream, 0, length);
+		SDL_MixAudioFormat(stream, source, spec.format, length, This->GetMasterVolume());
 		if (This->IsStagingFull())
 		{
 			This->ResetStaging();
@@ -128,6 +129,12 @@ namespace beeper
 			avg = 0;
 			sample = 0;
 		}
+	}
+
+	void DevicePCSpeaker::SetMasterVolume(int vol)
+	{
+		m_masterVolume = std::min(SDL_MIX_MAXVOLUME, std::max(0, vol));
+		LogPrintf(LOG_INFO, "Set Master Volume [%d]", m_masterVolume);
 	}
 
 	uint16_t DevicePCSpeaker::PeriodToSamples(float period)

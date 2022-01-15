@@ -181,6 +181,9 @@ int main(int argc, char* args[])
 		return 2;
 	}
 
+	int masterVolume = Config::Instance().GetValueInt32("sound", "volume", 128);
+	pc->GetSound().SetMasterVolume(masterVolume);
+
 	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
 
 	pc->EnableLog(Config::Instance().GetLogLevel("pc"));
@@ -327,32 +330,28 @@ int main(int argc, char* args[])
 						case 68: // F10
 							pc->Reboot(true); // Hard reboot
 							break;
-						case 71: // HOME
-						case 72: // UP
-						case 73: // PGUP
-						case 74: // -
-						case 75: // LEFT
-						case 76: // 5
-						case 77: // RIGHT
-						case 78: // +
-						case 79: // END
-						case 80: // DOWN
-						case 81: // PGDOWN
-						case 82: // INSERT
-						case 83: // DELETE
-							keyCode = ch;
-							newKeycode = true;
-							break;
 						}
 					}
 					else
 					{
-						SHORT vkey = VkKeyScanA(ch);
-						shift = GetAsyncKeyState(VK_SHIFT);
-						ctrl = GetAsyncKeyState(VK_CONTROL);
-						alt = GetAsyncKeyState(VK_MENU);
-						keyCode = MapVirtualKeyA(LOBYTE(vkey), 0);
-						newKeycode = true;
+						switch (ch)
+						{
+						case '-':
+							pc->GetSound().SetMasterVolume(pc->GetSound().GetMasterVolume() - 1);
+							break;
+						case '+':
+							pc->GetSound().SetMasterVolume(pc->GetSound().GetMasterVolume() + 1);
+							break;
+						default:
+							{
+								SHORT vkey = VkKeyScanA(ch);
+								shift = GetAsyncKeyState(VK_SHIFT);
+								ctrl = GetAsyncKeyState(VK_CONTROL);
+								alt = GetAsyncKeyState(VK_MENU);
+								keyCode = MapVirtualKeyA(LOBYTE(vkey), 0);
+								newKeycode = true;
+							}
+						}
 					}
 
 					if (newKeycode)

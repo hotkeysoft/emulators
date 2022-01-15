@@ -41,6 +41,9 @@ namespace beeper
 
 		void SetMute(bool mute) { m_muted = mute; }
 
+		int GetMasterVolume() const { return m_masterVolume; }
+		void SetMasterVolume(int vol);
+
 	protected:
 		const WORD m_bufferSize;
 
@@ -65,5 +68,6 @@ namespace beeper
 		FILE* m_outputFile = nullptr;
 
 		bool m_muted = false;
+		int m_masterVolume = SDL_MIX_MAXVOLUME; // 0..128
 	};
 }
