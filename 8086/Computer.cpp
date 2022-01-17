@@ -25,9 +25,14 @@ namespace emul
 
 	Computer::~Computer()
 	{
+		delete m_floppy;
+		delete m_hardDrive;
+		delete m_joystick;
+		delete m_video;
 		delete m_pit;
 		delete m_pic;
 		delete m_ppi;
+		delete m_dma;
 	}
 
 	void Computer::AddCPUSpeed(const CPUSpeed& speed)
@@ -113,6 +118,7 @@ namespace emul
 		LogPrintf(LOG_INFO, "Character ROM: [%s]", charROM.c_str());
 
 		m_video->Init(&m_memory, charROM.c_str(), border);
+		AddDevice(*m_video);
 	}
 
 	void Computer::InitSound()
@@ -133,6 +139,7 @@ namespace emul
 		m_pit = pit;
 		m_pit->EnableLog(Config::Instance().GetLogLevel("pit"));
 		m_pit->Init();
+		AddDevice(*m_pit);
 	}
 	void Computer::InitPIC(pic::Device8259* pic)
 	{
@@ -140,6 +147,7 @@ namespace emul
 		m_pic = pic;
 		m_pic->EnableLog(Config::Instance().GetLogLevel("pic"));
 		m_pic->Init();
+		AddDevice(*m_pic);
 	}
 	void Computer::InitPPI(ppi::Device8255* ppi)
 	{
@@ -147,6 +155,16 @@ namespace emul
 		m_ppi = ppi;
 		m_ppi->EnableLog(Config::Instance().GetLogLevel("ppi"));
 		m_ppi->Init();
+		AddDevice(*m_ppi);
+	}
+
+	void Computer::InitDMA(dma::Device8237* dma)
+	{
+		assert(dma);
+		m_dma = dma;
+		m_dma->EnableLog(Config::Instance().GetLogLevel("dma"));
+		m_dma->Init();
+		AddDevice(*m_dma);
 	}
 
 	void Computer::InitJoystick(WORD baseAddress, size_t baseClock)
@@ -154,15 +172,42 @@ namespace emul
 		m_joystick = new joy::DeviceJoystick(baseAddress, baseClock);
 		m_joystick->EnableLog(Config::Instance().GetLogLevel("joystick"));
 		m_joystick->Init();
+		AddDevice(*m_joystick);
 	}
 
-	void Computer::InitHardDrive(hdd::DeviceHardDrive* hdd)
+	void Computer::InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq, BYTE dma)
+	{
+		assert(fdd);
+		m_floppy = fdd;
+		m_floppyIRQ = irq;
+		m_floppyDMA = dma;
+
+		m_floppy->EnableLog(Config::Instance().GetLogLevel("floppy"));
+		m_floppy->Init();
+		AddDevice(*m_floppy);
+
+		std::string floppy = Config::Instance().GetValueStr("floppy", "floppy.1");
+		if (floppy.size())
+		{
+			m_floppy->LoadDiskImage(0, floppy.c_str());
+		}
+
+		floppy = Config::Instance().GetValueStr("floppy", "floppy.2");
+		if (floppy.size())
+		{
+			m_floppy->LoadDiskImage(1, floppy.c_str());
+		}
+	}
+	void Computer::InitHardDrive(hdd::DeviceHardDrive* hdd, BYTE irq, BYTE dma)
 	{
 		assert(hdd);
 		m_hardDrive = hdd;
+		m_hddIRQ = irq;
+		m_hddDMA = dma;
 
 		m_hardDrive->EnableLog(Config::Instance().GetLogLevel("hdd"));
 		m_hardDrive->Init();
+		AddDevice(*m_hardDrive);
 
 		for (int i = 0; i < 2; i++)
 		{
@@ -214,5 +259,113 @@ namespace emul
 		}
 
 		return info;
+	}
+
+	void Computer::TickHardDrive()
+	{
+		if (!m_hardDrive)
+		{
+			return;
+		}
+
+		m_hardDrive->Tick();
+		m_pic->InterruptRequest(m_hddIRQ, m_hardDrive->IsInterruptPending());
+
+		if (!m_hddDMA)
+		{
+			return;
+		}
+
+		if (m_hardDrive->IsDMAPending())
+		{
+			m_dma->DMARequest(m_hddDMA, true);
+		}
+
+		if (m_dma->DMAAcknowledged(m_hddDMA))
+		{
+			m_dma->DMARequest(m_hddDMA, false);
+
+			// Do it manually
+			m_hardDrive->DMAAcknowledge();
+
+			dma::DMAChannel& channel = m_dma->GetChannel(m_hddDMA);
+			dma::OPERATION op = channel.GetOperation();
+			BYTE value;
+			switch (op)
+			{
+			case dma::OPERATION::READ:
+				channel.DMAOperation(value);
+				m_hardDrive->WriteDataFIFO(value);
+				break;
+			case dma::OPERATION::WRITE:
+				value = m_hardDrive->ReadDataFIFO();
+				channel.DMAOperation(value);
+				break;
+			case dma::OPERATION::VERIFY:
+				channel.DMAOperation(value);
+				break;
+			default:
+				throw std::exception("DMAOperation: Operation not supported");
+			}
+
+			if (m_dma->GetTerminalCount(m_hddDMA))
+			{
+				m_hardDrive->DMATerminalCount();
+			}
+		}
+	}
+	void Computer::TickFloppy()
+	{
+		if (!m_floppy)
+		{
+			return;
+		}
+
+		m_floppy->Tick();
+		m_pic->InterruptRequest(m_floppyIRQ, m_floppy->IsInterruptPending());
+
+		if (!m_floppyDMA)
+		{
+			return;
+		}
+
+		// TODO: duplication with HDD
+		if (m_floppy->IsDMAPending())
+		{
+			m_dma->DMARequest(m_floppyDMA, true);
+		}
+
+		if (m_dma->DMAAcknowledged(m_floppyDMA))
+		{
+			m_dma->DMARequest(m_floppyDMA, false);
+
+			// Do it manually
+			m_floppy->DMAAcknowledge();
+
+			dma::DMAChannel& channel = m_dma->GetChannel(m_floppyDMA);
+			dma::OPERATION op = channel.GetOperation();
+			BYTE value;
+			switch (op)
+			{
+			case dma::OPERATION::READ:
+				channel.DMAOperation(value);
+				m_floppy->WriteDataFIFO(value);
+				break;
+			case dma::OPERATION::WRITE:
+				value = m_floppy->ReadDataFIFO();
+				channel.DMAOperation(value);
+				break;
+			case dma::OPERATION::VERIFY:
+				channel.DMAOperation(value);
+				break;
+			default:
+				throw std::exception("DMAOperation: Operation not supported");
+			}
+
+			if (m_dma->GetTerminalCount(m_floppyDMA))
+			{
+				m_floppy->DMATerminalCount();
+			}
+		}
 	}
 }

@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "IO/Console.h"
 #include "Hardware/Device8255XT.h"
+#include "Storage/DeviceFloppyXT.h"
 #include "Storage/DeviceHardDrive.h"
 
 #include <thread>
@@ -24,11 +25,11 @@ namespace emul
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
 
-	const BYTE IRQ_FLOPPY = 6;
-	const BYTE DMA_FLOPPY = 2;
+	static const BYTE IRQ_FLOPPY = 6;
+	static const BYTE DMA_FLOPPY = 2;
 
-	const BYTE IRQ_HDD = 5;
-	const BYTE DMA_HDD = 3;
+	static const BYTE IRQ_HDD = 5;
+	static const BYTE DMA_HDD = 3;
 
 	static class DummyPortXT : public PortConnector
 	{
@@ -63,8 +64,6 @@ namespace emul
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
-		m_dma(0x00, m_memory),
-		m_floppy(0x03F0, PIT_CLK),
 		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
 	{
@@ -86,14 +85,11 @@ namespace emul
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
 		InitPIC(new pic::Device8259(0x20));
 		InitPPI(new ppi::Device8255XT(0x60));
-
+		InitDMA(new dma::Device8237(0x00, m_memory));
 		InitSound();
 
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
-
-		m_dma.EnableLog(Config::Instance().GetLogLevel("dma"));
-		m_dma.Init();
 
 		InitVideo("cga", { "cga", "mda", "hgc" });
 
@@ -106,26 +102,23 @@ namespace emul
 		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
 		m_keyboard.Init(m_ppi, m_pic);
 
-		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
-		m_floppy.Init();
-
-		std::string floppy = Config::Instance().GetValueStr("floppy", "floppy.1");
-		if (floppy.size())
-		{
-			m_floppy.LoadDiskImage(0, floppy.c_str());
-		}
-
-		floppy = Config::Instance().GetValueStr("floppy", "floppy.2");
-		if (floppy.size())
-		{
-			m_floppy.LoadDiskImage(1, floppy.c_str());
-		}
-
 		InitJoystick(0x201, PIT_CLK);
 
 		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
 		m_inputs.InitKeyboard(&m_keyboard);
 		m_inputs.InitJoystick(m_joystick);
+
+		int floppyCount = 0;
+		if (Config::Instance().GetValueBool("floppy", "enable"))
+		{
+			InitFloppy(new fdc::DeviceFloppyXT(0x03F0, PIT_CLK), IRQ_FLOPPY, DMA_FLOPPY);
+			floppyCount = 2;
+		}
+
+		if (Config::Instance().GetValueBool("hdd", "enable"))
+		{
+			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
+		}
 
 		// Configuration switches
 		{
@@ -141,20 +134,10 @@ namespace emul
 			{
 				ppi->SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
 			}
-			ppi->SetFloppyCount(2);
+			ppi->SetFloppyCount(floppyCount);
 		}
 
-		InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK));
-
-		AddDevice(*m_pic);
-		AddDevice(*m_pit);
-		AddDevice(*m_ppi);
-		AddDevice(m_dma);
-		AddDevice(*m_video);
-		AddDevice(m_floppy);
-		AddDevice(*m_hardDrive);
 		AddDevice(m_soundModule);
-		AddDevice(*m_joystick);
 		AddDevice(dummyPortXT);
 	}
 
@@ -241,91 +224,11 @@ namespace emul
 			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
 			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
-			m_dma.Tick();
+			m_dma->Tick();
 			m_video->Tick();
 
-			m_floppy.Tick();
-			m_pic->InterruptRequest(IRQ_FLOPPY, m_floppy.IsInterruptPending());
-
-			// TODO: duplication with HDD
-			if (m_floppy.IsDMAPending())
-			{
-				m_dma.DMARequest(DMA_FLOPPY, true);
-			}
-
-			if (m_dma.DMAAcknowledged(DMA_FLOPPY))
-			{
-				m_dma.DMARequest(DMA_FLOPPY, false);
-
-				// Do it manually
-				m_floppy.DMAAcknowledge();
-
-				dma::DMAChannel& channel = m_dma.GetChannel(DMA_FLOPPY);
-				dma::OPERATION op = channel.GetOperation();
-				BYTE value;
-				switch (op)
-				{
-				case dma::OPERATION::READ:
-					channel.DMAOperation(value);
-					m_floppy.WriteDataFIFO(value);
-					break;
-				case dma::OPERATION::WRITE:
-					value = m_floppy.ReadDataFIFO();
-					channel.DMAOperation(value);
-					break;
-				case dma::OPERATION::VERIFY:
-					channel.DMAOperation(value);
-					break;
-				default:
-					throw std::exception("DMAOperation: Operation not supported");
-				}
-
-				if (m_dma.GetTerminalCount(DMA_FLOPPY))
-				{
-					m_floppy.DMATerminalCount();
-				}
-			}
-
-			m_hardDrive->Tick();
-			m_pic->InterruptRequest(IRQ_HDD, m_hardDrive->IsInterruptPending());
-
-			if (m_hardDrive->IsDMAPending())
-			{
-				m_dma.DMARequest(DMA_HDD, true);
-			}
-
-			if (m_dma.DMAAcknowledged(DMA_HDD))
-			{
-				m_dma.DMARequest(DMA_HDD, false);
-
-				// Do it manually
-				m_hardDrive->DMAAcknowledge();
-
-				dma::DMAChannel& channel = m_dma.GetChannel(DMA_HDD);
-				dma::OPERATION op = channel.GetOperation();
-				BYTE value;
-				switch (op)
-				{
-				case dma::OPERATION::READ:
-					channel.DMAOperation(value);
-					m_hardDrive->WriteDataFIFO(value);
-					break;
-				case dma::OPERATION::WRITE:
-					value = m_hardDrive->ReadDataFIFO();
-					channel.DMAOperation(value);
-					break;
-				case dma::OPERATION::VERIFY:
-					channel.DMAOperation(value);
-					break;
-				default:
-					throw std::exception("DMAOperation: Operation not supported");
-				}
-
-				if (m_dma.GetTerminalCount(DMA_HDD))
-				{
-					m_hardDrive->DMATerminalCount();
-				}
-			}
+			TickFloppy();
+			TickHardDrive();
 		}
 		cpuTicks %= GetCPUSpeedRatio();
 

@@ -3,17 +3,12 @@
 #include "Config.h"
 #include "Hardware/Device8255Tandy.h"
 #include "Storage/DeviceHardDrive.h"
+#include "Storage/DeviceFloppyTandy.h"
 #include "Video/VideoTandy.h"
 
 #include <thread>
 
 using cfg::Config;
-
-const BYTE IRQ_FLOPPY = 6;
-const BYTE DMA_FLOPPY = 2;
-
-const BYTE IRQ_HDD = 2;
-const BYTE DMA_HDD = 3;
 
 namespace emul
 {
@@ -26,6 +21,14 @@ namespace emul
 	static const size_t UART_CLK = MAIN_CLK / UART_CLK_DIVIDER;
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
+
+	static const BYTE IRQ_FLOPPY = 6;
+	static const BYTE DMA_FLOPPY = 2;
+
+	static const BYTE IRQ_HDD = 2;
+	static const BYTE DMA_HDD = 3;
+
+	static const BYTE IRQ_VSYNC = 5;
 
 	static class DummyPortTandy : public PortConnector
 	{
@@ -61,8 +64,6 @@ namespace emul
 		m_base128K("SYSRAM", 0x20000, emul::MemoryType::RAM),
 		m_ramExtension("EXTRAM", emul::MemoryType::RAM),
 		m_biosFC00("BIOS", 0x4000, emul::MemoryType::ROM),
-		m_dma(0x00, m_memory),
-		m_floppy(0x3F0, PIT_CLK),
 		m_uart(0x2F8, UART_CLK),
 		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
@@ -85,15 +86,13 @@ namespace emul
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
 		InitPIC(new pic::Device8259(0x20));
 		InitPPI(new ppi::Device8255Tandy(0x60));
+		InitDMA(new dma::Device8237(0x00, m_memory));
 		InitSound();
 
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
 
 		InitVideo("tga");
-		
-		m_dma.EnableLog(Config::Instance().GetLogLevel("dma"));
-		m_dma.Init();
 
 		m_biosFC00.LoadFromFile("data/Tandy/BIOS_Tandy1000A_FC00.BIN");
 		m_memory.Allocate(&m_biosFC00, emul::S2A(0xFC00));
@@ -101,21 +100,6 @@ namespace emul
 		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
 		m_keyboard.Init(m_ppi, m_pic);
 
-		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
-		m_floppy.Init();
-
-		std::string floppy = Config::Instance().GetValueStr("floppy", "floppy.1");
-		if (floppy.size())
-		{ 
-			m_floppy.LoadDiskImage(0, floppy.c_str());
-		}
-
-		floppy = Config::Instance().GetValueStr("floppy", "floppy.2");
-		if (floppy.size())
-		{
-			m_floppy.LoadDiskImage(1, floppy.c_str());
-		}
-		
 		m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
 		m_uart.Init();
 
@@ -127,18 +111,18 @@ namespace emul
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));
 
-		InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK));
+		if (Config::Instance().GetValueBool("floppy", "enable"))
+		{
+			InitFloppy(new fdc::DeviceFloppyTandy(0x3F0, PIT_CLK), IRQ_FLOPPY, DMA_FLOPPY);
+		}
 
-		AddDevice(*m_pic);
-		AddDevice(*m_pit);
-		AddDevice(*m_ppi);
-		AddDevice(m_dma);
-		AddDevice(*m_video);
-		AddDevice(m_floppy);
-		AddDevice(*m_hardDrive);
+		if (Config::Instance().GetValueBool("hdd", "enable"))
+		{
+			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
+		}
+
 		//AddDevice(m_uart);
 		AddDevice(m_soundModule);
-		AddDevice(*m_joystick);
 		AddDevice(dummyPortTandy);
 		AddDevice(*this);
 	}
@@ -265,95 +249,16 @@ namespace emul
 			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
 			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
-			m_dma.Tick();
+			m_dma->Tick();
 
-			m_floppy.Tick();
-			m_pic->InterruptRequest(IRQ_FLOPPY, m_floppy.IsInterruptPending());
-
-			// TODO: duplication with HDD
-			if (m_floppy.IsDMAPending())
-			{
-				m_dma.DMARequest(DMA_FLOPPY, true);
-			}
-
-			if (m_dma.DMAAcknowledged(DMA_FLOPPY))
-			{
-				m_dma.DMARequest(DMA_FLOPPY, false);
-
-				// Do it manually
-				m_floppy.DMAAcknowledge();
-
-				dma::DMAChannel& channel = m_dma.GetChannel(DMA_FLOPPY);
-				dma::OPERATION op = channel.GetOperation();
-				BYTE value;
-				switch (op)
-				{
-				case dma::OPERATION::READ:
-					channel.DMAOperation(value);
-					m_floppy.WriteDataFIFO(value);
-					break;
-				case dma::OPERATION::WRITE:
-					value = m_floppy.ReadDataFIFO();
-					channel.DMAOperation(value);
-					break;
-				case dma::OPERATION::VERIFY:
-					channel.DMAOperation(value);
-					break;
-				default:
-					throw std::exception("DMAOperation: Operation not supported");
-				}
-
-				if (m_dma.GetTerminalCount(DMA_FLOPPY))
-				{
-					m_floppy.DMATerminalCount();
-				}
-			}
-			m_hardDrive->Tick();
-			m_pic->InterruptRequest(IRQ_HDD, m_hardDrive->IsInterruptPending());
-
-			if (m_hardDrive->IsDMAPending())
-			{
-				m_dma.DMARequest(DMA_HDD, true);
-			}
-
-			if (m_dma.DMAAcknowledged(DMA_HDD))
-			{
-				m_dma.DMARequest(DMA_HDD, false);
-
-				// Do it manually
-				m_hardDrive->DMAAcknowledge();
-
-				dma::DMAChannel& channel = m_dma.GetChannel(DMA_HDD);
-				dma::OPERATION op = channel.GetOperation();
-				BYTE value;
-				switch (op)
-				{
-				case dma::OPERATION::READ:
-					channel.DMAOperation(value);
-					m_hardDrive->WriteDataFIFO(value);
-					break;
-				case dma::OPERATION::WRITE:
-					value = m_hardDrive->ReadDataFIFO();
-					channel.DMAOperation(value);
-					break;
-				case dma::OPERATION::VERIFY:
-					channel.DMAOperation(value);
-					break;
-				default:
-					throw std::exception("DMAOperation: Operation not supported");
-				}
-
-				if (m_dma.GetTerminalCount(DMA_HDD))
-				{
-					m_hardDrive->DMATerminalCount();
-				}
-			}
+			TickFloppy();
+			TickHardDrive();
 
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)
 			{
 				video->Tick();
-				m_pic->InterruptRequest(5, (video->IsVSync()));
+				m_pic->InterruptRequest(IRQ_VSYNC, (video->IsVSync()));
 			}
 
 			//m_uart.Tick();

@@ -3,7 +3,6 @@
 #include "Computer.h"
 #include "Hardware/Device8250.h"
 #include "Sound/DeviceSN76489.h"
-#include "Storage/DeviceFloppyPCjr.h"
 #include "Storage/CartridgePCjr.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardPCjr.h"
@@ -22,11 +21,13 @@ namespace emul
 		virtual bool Step() override;
 
 		Memory& GetMemory() { return m_memory; }
-		virtual fdc::DeviceFloppy& GetFloppy() override { return m_floppy; }
 		virtual kbd::DeviceKeyboard& GetKeyboard() override { return m_keyboard; }
 
 	protected:
 		void InitRAM(WORD baseRAM);
+
+		virtual void TickFloppy() override;
+
 		emul::MemoryBlock m_base64K;
 		emul::MemoryBlock m_ext64K;
 		emul::MemoryBlock m_extraRAM;
@@ -37,7 +38,6 @@ namespace emul
 		cart::CartridgePCjr m_cart1;
 		cart::CartridgePCjr m_cart2;
 
-		fdc::DeviceFloppyPCjr m_floppy;
 		kbd::DeviceKeyboardPCjr m_keyboard;
 		uart::Device8250 m_uart;
 		sn76489::DeviceSN76489 m_soundModule;

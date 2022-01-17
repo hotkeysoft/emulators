@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "Hardware/Device8255PCjr.h"
 #include "Video/VideoPCjr.h"
+#include "Storage/DeviceFloppyPCjr.h"
 
 #include <thread>
 
@@ -19,6 +20,10 @@ namespace emul
 	static const size_t UART_CLK = MAIN_CLK / UART_CLK_DIVIDER;
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
+
+	static const BYTE IRQ_FLOPPY = 6;
+	static const BYTE IRQ_UART = 3;
+	static const BYTE IRQ_VSYNC = 5;
 
 	static class DummyPortPCjr : public PortConnector
 	{
@@ -58,7 +63,6 @@ namespace emul
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_keyboard(0xA0),
-		m_floppy(0xF0, PIT_CLK),
 		m_uart(0x2F8, UART_CLK),
 		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
@@ -68,7 +72,6 @@ namespace emul
 	void ComputerPCjr::Init(WORD baseRAM)
 	{
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
-		AddCPUSpeed(CPUSpeed(PIT_CLK, 8));
 
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
@@ -118,19 +121,9 @@ namespace emul
 		//	m_memory.Allocate(&m_cart2, m_cart2.GetBaseAddress());
 		//}
 
-		m_floppy.EnableLog(Config::Instance().GetLogLevel("floppy"));
-		m_floppy.Init();
-
-		std::string floppy = Config::Instance().GetValueStr("floppy", "floppy.1");
-		if (floppy.size())
+		if (Config::Instance().GetValueBool("floppy", "enable"))
 		{
-			m_floppy.LoadDiskImage(0, floppy.c_str());
-		}
-
-		floppy = Config::Instance().GetValueStr("floppy", "floppy.2");
-		if (floppy.size())
-		{
-			m_floppy.LoadDiskImage(1, floppy.c_str());
+			InitFloppy(new fdc::DeviceFloppyPCjr(0xF0, PIT_CLK));
 		}
 		
 		m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
@@ -142,15 +135,9 @@ namespace emul
 		m_inputs.InitKeyboard(&m_keyboard);
 		m_inputs.InitJoystick(m_joystick);
 
-		AddDevice(*m_pic);
-		AddDevice(*m_pit);
-		AddDevice(*m_ppi);
-		AddDevice(*m_video);
 		AddDevice(m_keyboard);
-		AddDevice(m_floppy);
 		AddDevice(m_uart);
 		AddDevice(m_soundModule);
-		AddDevice(*m_joystick);
 		AddDevice(dummyPortPCjr);
 	}
 
@@ -282,14 +269,13 @@ namespace emul
 			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
 			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
-			m_floppy.Tick();
-			m_pic->InterruptRequest(6, m_floppy.IsWatchdogInterrupt());
+			TickFloppy();
 
 			// Skip one in four video ticks to sync up with pit timing
 			if ((syncTicks & 3) != 3)
 			{
 				video->Tick();
-				m_pic->InterruptRequest(5, (video->IsVSync()));
+				m_pic->InterruptRequest(IRQ_VSYNC, (video->IsVSync()));
 			}
 
 			m_uart.Tick();
@@ -298,12 +284,23 @@ namespace emul
 			{
 				m_uart.Tick();
 			}
-			m_pic->InterruptRequest(3, m_uart.IsInterrupt());
+			m_pic->InterruptRequest(IRQ_UART, m_uart.IsInterrupt());
 
 			++syncTicks;
 		}
 		cpuTicks %= GetCPUSpeedRatio();
 
 		return true;
+	}
+	void ComputerPCjr::TickFloppy()
+	{
+		if (!m_floppy)
+		{
+			return;
+		}
+
+		fdc::DeviceFloppyPCjr* floppy = (fdc::DeviceFloppyPCjr*)m_floppy;
+		floppy->Tick();
+		m_pic->InterruptRequest(IRQ_FLOPPY, floppy->IsWatchdogInterrupt());
 	}
 }
