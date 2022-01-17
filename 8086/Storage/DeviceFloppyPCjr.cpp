@@ -32,17 +32,17 @@ namespace fdc
 
 		if (!(value & DOR::FDC_RESET))
 		{
-			LogPrintf(LOG_INFO, "RESET");
+			LogPrintf(LOG_DEBUG, "RESET");
 			Reset();
 			return;
 		}
 
 		m_dor.driveEnable = (value & DOR::DRIVE_ENABLE);
-		LogPrintf(LOG_INFO, "Drive Motor: %s", m_dor.driveEnable ? "ON" : "OFF");
+		LogPrintf(LOG_DEBUG, "Drive Motor: %s", m_dor.driveEnable ? "ON" : "OFF");
 
 		bool lastEnable = m_dor.wdEnable;
 		m_dor.wdEnable = (value & DOR::WD_ENABLE);
-		LogPrintf(LOG_INFO, "Watchdog Timer: %s", m_dor.wdEnable ? "ENABLED" : "DISABLED");
+		LogPrintf(LOG_DEBUG, "Watchdog Timer: %s", m_dor.wdEnable ? "ENABLED" : "DISABLED");
 		if (!lastEnable && m_dor.wdEnable)
 		{
 			ResetWatchdog();
@@ -72,14 +72,14 @@ namespace fdc
 			if (m_wd.counter == 0)
 			{
 				m_wd.active = false;
-				LogPrintf(LOG_INFO, "Watchdog timer expired");
+				LogPrintf(LOG_DEBUG, "Watchdog timer expired");
 			}
 		}
 	}
 
 	void DeviceFloppyPCjr::ResetWatchdog()
 	{
-		LogPrintf(LOG_INFO, "Reset Watchdog timer");
+		LogPrintf(LOG_DEBUG, "Reset Watchdog timer");
 
 		m_wd.active = false;
 		m_wd.counter = 3 * m_clockSpeed; // 3 seconds
@@ -87,7 +87,7 @@ namespace fdc
 
 	void DeviceFloppyPCjr::LaunchWatchdog()
 	{
-		LogPrintf(LOG_INFO, "Launch Watchdog timer");
+		LogPrintf(LOG_DEBUG, "Launch Watchdog timer");
 		m_wd.active = true;
 	}
 

@@ -31,6 +31,7 @@ namespace fdc
 
 		virtual void Tick();
 
+		bool ClearDiskImage(BYTE drive);
 		bool LoadDiskImage(BYTE drive, const char* path);
 		bool SaveDiskImage(BYTE drive, const char* path);
 

@@ -235,7 +235,7 @@ namespace hdd
 		{
 		case STATE::RESET_START:
 			m_currOpWait = DelayToTicks(RESET_DELAY_US);
-			LogPrintf(Logger::LOG_INFO, "Start RESET, count=%zu", m_currOpWait);
+			LogPrintf(Logger::LOG_DEBUG, "Start RESET, count=%zu", m_currOpWait);
 			m_state = STATE::RESET_ACTIVE;
 			m_commandBusy = true;
 			break;
@@ -250,7 +250,7 @@ namespace hdd
 			}
 			break;
 		case STATE::RESET_DONE:
-			LogPrintf(Logger::LOG_INFO, "End RESET");
+			LogPrintf(Logger::LOG_DEBUG, "End RESET");
 			m_state = STATE::CMD_WAIT;
 			SetInterruptPending();
 			break;
@@ -363,7 +363,6 @@ namespace hdd
 			LogPrintf(Logger::LOG_INFO, "Command Error");
 			m_commandError = true;
 			m_fifo.clear();
-//			Push(m_st0);
 			m_state = STATE::CMD_EXEC_DONE;
 			break;
 		default: 
@@ -374,7 +373,7 @@ namespace hdd
 
 	void DeviceHardDrive::CommandExecutionDone()
 	{
-		LogPrintf(Logger::LOG_INFO, "Command Execution done");
+		LogPrintf(Logger::LOG_DEBUG, "Command Execution done");
 		m_dataRegisterReady = true;
 
 		// No results, ready for next command

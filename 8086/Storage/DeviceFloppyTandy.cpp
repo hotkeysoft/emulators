@@ -37,7 +37,7 @@ namespace fdc
 
 		if (!(value & DOR::RESET))
 		{
-			LogPrintf(LOG_INFO, "RESET");
+			LogPrintf(LOG_DEBUG, "RESET");
 			Reset();
 			return;
 		}
@@ -47,11 +47,11 @@ namespace fdc
 
 		for (size_t drive = 0; drive < 2; ++drive)
 		{
-			LogPrintf(LOG_INFO, "Drive %d Motor: %s", drive, m_dor.motor[drive] ? "ON" : "OFF");
+			LogPrintf(LOG_DEBUG, "Drive %d Motor: %s", drive, m_dor.motor[drive] ? "ON" : "OFF");
 		}
 
 		m_dor.irqDMAEnabled = (value & DOR::IRQ);
-		LogPrintf(LOG_INFO, "IRQ/DMA: %s", m_dor.irqDMAEnabled ? "Enabled" : "Disabled");
+		LogPrintf(LOG_DEBUG, "IRQ/DMA: %s", m_dor.irqDMAEnabled ? "Enabled" : "Disabled");
 
 		switch (value & (DOR::DSEL1 | DOR::DSEL0))
 		{
@@ -62,11 +62,11 @@ namespace fdc
 		default: throw std::exception("not possible");
 		}
 
-		LogPrintf(LOG_INFO, "Drive Select: %d", m_dor.driveSel);
+		LogPrintf(LOG_DEBUG, "Drive Select: %d", m_dor.driveSel);
 
 		bool lastTerminalCount = m_dor.terminalCount;
 		m_dor.terminalCount = (value & DOR::TC);
-		LogPrintf(LOG_INFO, "Terminal Count: %d", m_dor.terminalCount);
+		LogPrintf(LOG_DEBUG, "Terminal Count: %d", m_dor.terminalCount);
 		if (!lastTerminalCount && m_dor.terminalCount)
 		{
 			DMATerminalCount();

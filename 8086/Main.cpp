@@ -304,48 +304,76 @@ int main(int argc, char* args[])
 					}
 					else if (ch == 0)
 					{
+						const int FKEY = 58;
+						const int SHIFT = 25;
+						const int CTRL = 35;
+						const int ALT = 45;
+
 						std::string diskImage;
 						switch (ch = _getch())
 						{
-						case 59: // F1
+
+						// F1/F2: Load Floppy disk image in drive 0-1
+						// Shift-F1/F2: Clear floppy disk image in drive 0-1
+						case FKEY+1:
 							if (SelectFile(diskImage))
 							{
 								pc->GetFloppy().LoadDiskImage(0, diskImage.c_str());
 							}
 							break;
-						case 60: // F2
+						case SHIFT+FKEY+1:
+							pc->GetFloppy().ClearDiskImage(0);
+							break;
+						case FKEY+2:
 							if (SelectFile(diskImage))
 							{
 								pc->GetFloppy().LoadDiskImage(1, diskImage.c_str());
 							}
 							break;
-						case 61: // F3
+						case SHIFT+FKEY+2:
+							pc->GetFloppy().ClearDiskImage(1);
+							break;
+
+						// F3: Max speed (no sound synchronization)
+						case FKEY+3:
 							pc->SetTurbo(ToggleTurbo());
 							break;
-						case 62: // F4
+
+						// F4: Toggle CPU speed
+						case FKEY+4:
 							if (++currSpeed == speedList.end())
 							{
 								currSpeed = speedList.begin();
 							}
 							pc->SetCPUSpeed(*currSpeed);
 							break;
-						case 63: // F5
+
+						// F5: Dump first 64KB of RAM to file
+						case FKEY+5:
 						{
 							char buf[128];
 							sprintf(buf, "dump/memdump_%zu.bin", time(nullptr));
 							pc->GetMemory().Dump(0, 65536 * 2, buf);
 							break;
 						}
-						case 64: // F6
-						case 65: // F7
-						case 66: // F8
+
+						// F6-F8: Unassigned
+						case FKEY+6:
+						case FKEY+7:
+						case FKEY+8:
 							break;
-						case 67: // F9
-							pc->Reboot(false); // Soft reboot = CTRL-ALT-DEL
+
+						// F9: Soft reboot = CTRL-ALT-DEL
+						// F10: Hard reboot
+						case FKEY+9:
+							pc->Reboot(false);
 							break;
-						case 68: // F10
-							pc->Reboot(true); // Hard reboot
+						case FKEY+10:
+							pc->Reboot(true);
 							break;
+
+						default:
+							fprintf(stderr, "Unknown extended keycode: [0][%d]\n", ch);
 						}
 					}
 					else

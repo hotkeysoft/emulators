@@ -40,6 +40,20 @@ namespace fdc
 		m_state = STATE::RESET_START;
 	}
 
+	bool DeviceFloppy::ClearDiskImage(BYTE drive)
+	{
+		if (drive > 3)
+		{
+			LogPrintf(LOG_ERROR, "LoadDiskImage: invalid drive number %d", drive);
+			return false;
+		}
+
+		LogPrintf(LOG_INFO, "ClearDiskImage: unloading drive %d", drive);
+		m_images[drive].loaded = false;
+		m_images[drive].data.clear();
+		return true;
+	}
+
 	bool DeviceFloppy::LoadDiskImage(BYTE drive, const char* path)
 	{
 		if (drive > 3)
@@ -255,7 +269,7 @@ namespace fdc
 		{
 		case STATE::RESET_START:
 			m_currOpWait = DelayToTicks(RESET_DELAY_US);
-			LogPrintf(Logger::LOG_INFO, "Start RESET, count=%zu", m_currOpWait);
+			LogPrintf(Logger::LOG_DEBUG, "Start RESET, count=%zu", m_currOpWait);
 			m_state = STATE::RESET_ACTIVE;
 			m_commandBusy = true;
 			break;
@@ -270,7 +284,7 @@ namespace fdc
 			}
 			break;
 		case STATE::RESET_DONE:
-			LogPrintf(Logger::LOG_INFO, "End RESET");
+			LogPrintf(Logger::LOG_DEBUG, "End RESET");
 			m_state = STATE::CMD_WAIT;
 			SetInterruptPending();
 			break;
@@ -297,7 +311,7 @@ namespace fdc
 			}
 			break;
 		case STATE::CMD_EXEC_DONE:
-			LogPrintf(Logger::LOG_INFO, "Command Execution done");
+			LogPrintf(Logger::LOG_DEBUG, "Command Execution done");
 			m_driveActive[0] = false;
 			m_driveActive[1] = false;
 			m_driveActive[2] = false;
@@ -341,26 +355,26 @@ namespace fdc
 			}
 			break;
 		case STATE::READ_START:
-			LogPrintf(Logger::LOG_INFO, "Start Read");
+			LogPrintf(Logger::LOG_DEBUG, "Start Read");
 			m_state = STATE::READ_EXEC;
 			m_currOpWait = DelayToTicks(100 * 1000);
 			break;
 		case STATE::READ_EXEC:
-			LogPrintf(Logger::LOG_INFO, "Read Sector");
+			LogPrintf(Logger::LOG_DEBUG, "Read Sector");
 			ReadSector();
 			break;
 		case STATE::RW_DONE:
-			LogPrintf(Logger::LOG_INFO, "End Read/Write");
+			LogPrintf(Logger::LOG_DEBUG, "End Read/Write");
 			RWSectorEnd();
 			m_state = STATE::CMD_EXEC_DONE;
 			break;
 		case STATE::WRITE_START:
-			LogPrintf(Logger::LOG_INFO, "Start Write");
+			LogPrintf(Logger::LOG_DEBUG, "Start Write");
 			m_state = STATE::WRITE_EXEC;
 			m_currOpWait = DelayToTicks(100 * 1000);
 			break;
 		case STATE::WRITE_EXEC:
-			LogPrintf(Logger::LOG_INFO, "Write Sector");
+			LogPrintf(Logger::LOG_DEBUG, "Write Sector");
 			WriteSector();
 			break;
 		case STATE::DMA_WAIT:
@@ -380,7 +394,7 @@ namespace fdc
 			}
 			break;
 		case STATE::CMD_ERROR:
-			LogPrintf(Logger::LOG_INFO, "Command Error");
+			LogPrintf(Logger::LOG_WARNING, "Command Error");
 			m_st0 = 0x80;
 			m_fifo.clear();
 			Push(m_st0);
@@ -727,14 +741,14 @@ namespace fdc
 			bool isEOT = UpdateCurrPos();
 			if (isEOT)
 			{
-				LogPrintf(LOG_INFO, "ReadSector done, end of track");
+				LogPrintf(LOG_DEBUG, "ReadSector done, end of track");
 				m_currOpWait = DelayToTicks(10);
 				m_nextState = STATE::RW_DONE;
 				m_state = STATE::CMD_EXEC_DELAY;
 				return;
 			}
 
-			LogPrintf(LOG_INFO, "ReadSector done, caching next sector %d", m_currSector);
+			LogPrintf(LOG_DEBUG, "ReadSector done, caching next sector %d", m_currSector);
 			// Put the whole sector in the fifo
 			// TODO: Avoid duplication, check out of bounds
 			uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
@@ -754,7 +768,7 @@ namespace fdc
 
 	void DeviceFloppy::RWSectorEnd()
 	{
-		LogPrintf(LOG_INFO, "ReadSectorEnd, fifo=%d", m_fifo.size());
+		LogPrintf(LOG_DEBUG, "ReadSectorEnd, fifo=%d", m_fifo.size());
 		m_st0 = 0;
 
 		m_fifo.clear();
@@ -865,7 +879,7 @@ namespace fdc
 				return;
 			}
 
-			LogPrintf(LOG_INFO, "WriteSector done, writing next sector %d", m_currSector);
+			LogPrintf(LOG_DEBUG, "WriteSector done, writing next sector %d", m_currSector);
 		}
 
 		SetDMAPending();
@@ -878,7 +892,7 @@ namespace fdc
 
 	void DeviceFloppy::DMATerminalCount()
 	{
-		LogPrintf(LOG_INFO, "DMATerminalCount");
+		LogPrintf(LOG_DEBUG, "DMATerminalCount");
 
 		// TODO: Check that we are in correct state;
 		m_dmaPending = false;
@@ -905,7 +919,7 @@ namespace fdc
 			m_pcn += isEOT ? 1 : 0;
 		}
 		m_currSector = isEOT ? 1 : (m_currSector + 1);
-		LogPrintf(LOG_INFO, "UpdateCurrPos done: cyl=[%d] head=[%d] sector=[%d]", m_pcn, m_currHead, m_currSector);
+		LogPrintf(LOG_DEBUG, "UpdateCurrPos done: cyl=[%d] head=[%d] sector=[%d]", m_pcn, m_currHead, m_currSector);
 
 		// TODO: In multitrack mode, should continue if eot and head passes from 0 to 1
 		// Does anyone uses this?
