@@ -19,6 +19,21 @@ namespace hdd { class DeviceHardDrive; }
 
 namespace emul
 {
+	class CPUSpeed
+	{
+	public:
+		CPUSpeed() = default;
+		CPUSpeed(size_t baseSpeed, int ratio) : m_ratio(ratio), m_speed(baseSpeed * ratio) {}
+		size_t GetSpeed() const { return m_speed; }
+		int GetRatio() const { return m_ratio; }
+
+		bool operator<(const CPUSpeed& other) const { return this->m_ratio < other.m_ratio; }
+
+	protected:
+		int m_ratio = 4;
+		size_t m_speed = 4772726;
+	};
+
 	class Computer : public CPU8086
 	{
 	public:
@@ -36,6 +51,10 @@ namespace emul
 		virtual void Reboot(bool hard = false);
 		void SetTurbo(bool turbo) { m_turbo = turbo; }
 
+		typedef std::set<CPUSpeed> CPUSpeeds;
+		CPUSpeeds GetCPUSpeeds() const { return m_cpuSpeeds; }
+		void SetCPUSpeed(const CPUSpeed& speed);
+
 	protected:
 		Computer(Memory& memory, MemoryMap& mmap);
 
@@ -47,6 +66,9 @@ namespace emul
 		virtual void InitPPI(ppi::Device8255* ppi);
 		virtual void InitJoystick(WORD baseAddress, size_t baseClock);
 		virtual void InitHardDrive(hdd::DeviceHardDrive* hdd);
+
+		void AddCPUSpeed(const CPUSpeed& speed);
+		int GetCPUSpeedRatio() const { return m_cpuSpeed.GetRatio(); }
 
 		struct HardDriveImageInfo
 		{
@@ -70,5 +92,9 @@ namespace emul
 		hdd::DeviceHardDrive* m_hardDrive = nullptr;
 
 		bool m_turbo = false;
+
+	private:
+		CPUSpeed m_cpuSpeed;
+		CPUSpeeds m_cpuSpeeds;
 	};
 }

@@ -190,6 +190,17 @@ int main(int argc, char* args[])
 	pc->Init(baseRAM);
 	pc->Reset();
 
+	emul::Computer::CPUSpeeds speedList = pc->GetCPUSpeeds();
+	bool turbo = Config::Instance().GetValueBool("core", "turbo");
+
+	emul::Computer::CPUSpeeds::const_iterator currSpeed = speedList.begin();
+	if (turbo)
+	{
+		currSpeed = --speedList.end();
+	}
+
+	pc->SetCPUSpeed(*currSpeed);
+
 #if 0
 	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
 	
@@ -312,6 +323,11 @@ int main(int argc, char* args[])
 							pc->SetTurbo(ToggleTurbo());
 							break;
 						case 62: // F4
+							if (++currSpeed == speedList.end())
+							{
+								currSpeed = speedList.begin();
+							}
+							pc->SetCPUSpeed(*currSpeed);
 							break;
 						case 63: // F5
 						{

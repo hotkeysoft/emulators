@@ -13,17 +13,13 @@ namespace emul
 {
 	static const size_t MAIN_CLK = 14318180;
 
-	static const size_t CPU_CLK_DIVIDER = 3;
 	static const size_t UART_CLK_DIVIDER = 8;
 	static const size_t PIT_CLK_DIVIDER = 12;
 	static const size_t SOUND_CLK_DIVIDER = 4;
 
-	static const size_t CPU_CLK = MAIN_CLK / CPU_CLK_DIVIDER;
 	static const size_t UART_CLK = MAIN_CLK / UART_CLK_DIVIDER;
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
-
-	static const size_t BASE_CPU2PIT_RATIO = 10; //PIT_CLK_DIVIDER / CPU_CLK_DIVIDER;
 
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
@@ -76,6 +72,13 @@ namespace emul
 
 	void ComputerXT::Init(WORD baseRAM)
 	{
+		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
+		AddCPUSpeed(CPUSpeed(PIT_CLK, 8));
+		AddCPUSpeed(CPUSpeed(PIT_CLK, 12));
+
+		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
+		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
+
 		m_memory.EnableLog(Config::Instance().GetLogLevel("memory"));
 		m_mmap.EnableLog(Config::Instance().GetLogLevel("mmap"));
 
@@ -211,7 +214,7 @@ namespace emul
 
 		ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
 
-		for (uint32_t i = 0; i < cpuTicks / BASE_CPU2PIT_RATIO; ++i)
+		for (uint32_t i = 0; i < cpuTicks / GetCPUSpeedRatio(); ++i)
 		{
 			++g_ticks;
 
@@ -324,7 +327,7 @@ namespace emul
 				}
 			}
 		}
-		cpuTicks %= BASE_CPU2PIT_RATIO;
+		cpuTicks %= GetCPUSpeedRatio();
 
 		return true;
 	}

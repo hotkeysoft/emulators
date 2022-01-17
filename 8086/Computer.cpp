@@ -30,14 +30,28 @@ namespace emul
 		delete m_ppi;
 	}
 
+	void Computer::AddCPUSpeed(const CPUSpeed& speed)
+	{
+		LogPrintf(LOG_INFO, "Adding CPU Speed ratio: [%2d][%5.2f MHz]", speed.GetRatio(), (float)speed.GetSpeed()/1000000.0f);
+		m_cpuSpeeds.insert(speed);
+	}
+
+	void Computer::SetCPUSpeed(const CPUSpeed& speed)
+	{
+		LogPrintf(LOG_INFO, "Set CPU Speed ratio: [%2d][%5.2f MHz]", speed.GetRatio(), (float)speed.GetSpeed() / 1000000.0f);
+		m_cpuSpeed = speed;
+	}
+
 	void Computer::Reboot(bool hard)
 	{
 		if (hard)
 		{
+			LogPrintf(LOG_WARNING, "HARD Reset");
 			Reset();
 		}
 		else
 		{
+			LogPrintf(LOG_WARNING, "SOFT Reset (CTRL+ALT+DEL)");
 			GetKeyboard().InputKey(0x1D); // CTRL
 			GetKeyboard().InputKey(0x38); // ALT
 			GetKeyboard().InputKey(0x53); // DELETE

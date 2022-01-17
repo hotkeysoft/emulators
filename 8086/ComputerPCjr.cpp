@@ -12,17 +12,13 @@ namespace emul
 {
 	static const size_t MAIN_CLK = 14318180;
 
-	static const size_t CPU_CLK_DIVIDER = 3;
 	static const size_t UART_CLK_DIVIDER = 8;
 	static const size_t PIT_CLK_DIVIDER = 12;
 	static const size_t SOUND_CLK_DIVIDER = 4;
 
-	static const size_t CPU_CLK = MAIN_CLK / CPU_CLK_DIVIDER;
 	static const size_t UART_CLK = MAIN_CLK / UART_CLK_DIVIDER;
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
 	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
-
-	static const size_t BASE_CPU2PIT_RATIO = PIT_CLK_DIVIDER / CPU_CLK_DIVIDER;
 
 	static class DummyPortPCjr : public PortConnector
 	{
@@ -71,7 +67,9 @@ namespace emul
 
 	void ComputerPCjr::Init(WORD baseRAM)
 	{
-		LogPrintf(LOG_INFO, "CPU Clock:  [%zu]", CPU_CLK);
+		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
+		AddCPUSpeed(CPUSpeed(PIT_CLK, 8));
+
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
@@ -242,7 +240,7 @@ namespace emul
 		ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
 		video::VideoPCjr* video = (video::VideoPCjr*)m_video;
 
-		for (uint32_t i = 0; i < cpuTicks / BASE_CPU2PIT_RATIO; ++i)
+		for (uint32_t i = 0; i < cpuTicks / GetCPUSpeedRatio(); ++i)
 		{
 			++g_ticks;
 
@@ -304,7 +302,7 @@ namespace emul
 
 			++syncTicks;
 		}
-		cpuTicks %= BASE_CPU2PIT_RATIO;
+		cpuTicks %= GetCPUSpeedRatio();
 
 		return true;
 	}
