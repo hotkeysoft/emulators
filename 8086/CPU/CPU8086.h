@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Serializable.h"
 #include "CPU.h"
 #include "PortConnector.h"
 #include "PortAggregator.h"
@@ -74,7 +75,7 @@ namespace emul
 
 	typedef std::tuple<WORD, WORD> SegmentOffset;
 
-	class CPU8086 : public CPU
+	class CPU8086 : public CPU, public Serializable
 	{
 	public:
 		CPU8086(Memory& memory, MemoryMap& mmap);
@@ -91,6 +92,9 @@ namespace emul
 
 		void Dump();
 		void DumpInterruptTable();
+
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
 		virtual void Reset();
 		virtual void Reset(WORD segment, WORD offset);

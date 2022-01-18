@@ -10,6 +10,7 @@
 #include "Video/VideoTandy.h"
 
 #include <assert.h>
+#include <fstream>
 
 using cfg::Config;
 
@@ -367,5 +368,15 @@ namespace emul
 				m_floppy->DMATerminalCount();
 			}
 		}
+	}
+
+	void Computer::Serialize(json& to)
+	{
+		CPU8086::Serialize(to["cpu"]);
+	}
+
+	void Computer::Deserialize(json& from)
+	{
+		CPU8086::Deserialize(from["cpu"]);
 	}
 }

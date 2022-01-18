@@ -156,8 +156,66 @@ bool MakeSnapshotDirectory(std::string& dir)
 	}
 
 	dir = path.string();
+	dir.append("/");
 	return true;
 }
+
+void SaveSnapshot(const std::string& snapshotDir, emul::Computer* pc)
+{
+	json j;
+	j["core"]["arch"] = Config::Instance().GetValueStr("core", "arch");
+	j["core"]["baseram"] = Config::Instance().GetValueInt32("core", "baseram", 640);
+
+	pc->Serialize(j);
+
+	std::string outFile(snapshotDir);
+	outFile += "computer.json";
+	std::ofstream outStream(outFile);
+	outStream << std::setw(4) << j;
+
+	fprintf(stderr, "SaveSnapshot: Saved to [%s]\n", outFile.c_str());
+}
+
+void RestoreSnapshot(const std::string& snapshotDir, emul::Computer* pc)
+{
+	std::string inFile(snapshotDir);
+	inFile += "computer.json";
+	std::ifstream inStream(inFile);
+
+	fprintf(stderr, "RestoreSnapshot: Read from [%s]\n", inFile.c_str());
+
+	json j;
+	try
+	{
+		inStream >> j;
+	}
+	catch (std::exception e)
+	{
+		fprintf(stderr, "RestoreSnapshot: Error reading snapshot: %s\n", e.what());
+		return;
+	}
+
+	std::string archConfig = Config::Instance().GetValueStr("core", "arch");
+	std::string archSnapshot = j["core"]["arch"];
+	if (archConfig != archSnapshot)
+	{
+		fprintf(stderr, "RestoreSnapshot: Snapshot architecture[%s] different from config[%s]\n", 
+			archSnapshot.c_str(), archConfig.c_str());
+		return;
+	}
+
+	int baseRAMConfig = Config::Instance().GetValueInt32("core", "baseram", 640);
+	int baseRAMSnapshot = j["core"]["baseram"];
+	if (baseRAMConfig != baseRAMSnapshot)
+	{
+		fprintf(stderr, "RestoreSnapshot: Snapshot base RAM[%d] different from config[%d]\n",
+			baseRAMSnapshot, baseRAMConfig);
+		return;
+	}
+
+	pc->Deserialize(j);
+}
+
 
 int main(int argc, char* args[])
 {
@@ -251,6 +309,7 @@ int main(int argc, char* args[])
 
 	try
 	{
+		std::string snapshotDir;
 		bool run = true;
 		int cooldown = 10000;
 
@@ -378,10 +437,9 @@ int main(int argc, char* args[])
 						// F5: Save Snapshot
 						case FKEY+5:
 						{
-							std::string snapshot;
-							if (MakeSnapshotDirectory(snapshot))
+							if (MakeSnapshotDirectory(snapshotDir))
 							{
-								pc->SaveState(snapshot.c_str());
+								SaveSnapshot(snapshotDir, pc);
 							}
 							break;
 						}
@@ -392,6 +450,11 @@ int main(int argc, char* args[])
 
 						// F5: Restore Snapshot
 						case FKEY+7:
+							//TODO: This only restores the last snapshot in current session
+							if (snapshotDir.size())
+							{
+								RestoreSnapshot(snapshotDir, pc);
+							}
 							break;
 
 						case FKEY+8:

@@ -2655,4 +2655,65 @@ namespace emul
 		dest.SetValue(offset);
 	}
 
+	void CPU8086::Serialize(json& to)
+	{
+		to["ax"] = regA.x;
+		to["bx"] = regB.x;
+		to["cx"] = regC.x;
+		to["dx"] = regD.x;
+
+		to["sp"] = regSP.x;
+		to["bp"] = regBP.x;
+		to["si"] = regSI.x;
+		to["di"] = regDI.x;
+
+		to["cs"] = regCS.x;
+		to["ds"] = regDS.x;
+		to["ss"] = regSS.x;
+		to["es"] = regES.x;
+
+		to["ip"] = regIP.x;
+		to["flags"] = flags.x;
+
+		to["lastOp"] = m_lastOp;
+		to["irqPending"] = m_irqPending;
+
+		to["inRep"] = inRep;
+		to["repIP"] = repIP;
+		to["repZ"] = repZ;
+
+		to["inSegOverride"] = inSegOverride;
+		to["segOverride"] = segOverride;
+	}
+
+	void CPU8086::Deserialize(json& from)
+	{
+		regA.x = from["ax"];
+		regB.x = from["bx"];
+		regC.x = from["cx"];
+		regD.x = from["dx"];
+
+		regSP.x = from["sp"];
+		regBP.x = from["bp"];
+		regSI.x = from["si"];
+		regDI.x = from["di"];
+
+		regCS.x = from["cs"];
+		regDS.x = from["ds"];
+		regSS.x = from["ss"];
+		regES.x = from["es"];
+
+		regIP.x = from["ip"];
+		flags.x = from["flags"];
+
+		m_lastOp = from["lastOp"];
+		m_irqPending = from["irqPending"];
+
+		inRep = from["inRep"];
+		repIP = from["repIP"];
+		repZ = from["repZ"];
+
+		inSegOverride = from["inSegOverride"];
+		segOverride = from["segOverride"];
+	}
 }

@@ -224,6 +224,7 @@
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
+    <ClInclude Include="Serializable.h" />
     <ClInclude Include="Storage\CartridgePCjr.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Computer.h" />

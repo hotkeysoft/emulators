@@ -350,6 +350,9 @@
     <ClInclude Include="IO\Monitor.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="Serializable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">

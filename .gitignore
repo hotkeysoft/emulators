@@ -9,4 +9,5 @@ x64
 /8086/data/*.txt
 /8086/*.img
 /8086/dump
+/8086/snapshots
 *.backup
