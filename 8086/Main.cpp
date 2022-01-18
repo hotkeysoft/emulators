@@ -18,6 +18,7 @@
 #include <sstream>
 #include <fstream>
 #include <time.h>
+#include <filesystem>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -30,8 +31,10 @@ const short CONSOLE_COLS = 80;
 
 #ifdef CPU_TEST
 #include "CPU8086Test.h"
+#include "Main.h"
 #endif
 
+namespace fs = std::filesystem;
 using cfg::Config;
 
 size_t emul::g_ticks = 0;
@@ -130,6 +133,30 @@ bool ToggleTurbo()
 	turbo = !turbo;
 	fprintf(stderr, "Turbo [%s]\n", turbo ? "ON" : "OFF");
 	return turbo;
+}
+
+bool MakeSnapshotDirectory(std::string& dir)
+{
+	std::string baseDir = Config::Instance().GetValueStr("dirs", "snapshot", "./snapshots");
+	fs::path path(baseDir);
+	if (!fs::is_directory(fs::status(path)))
+	{
+		fprintf(stderr, "MakeSnapshotDirectory: [%s] is not a directory", baseDir.c_str());
+		return false;
+	}
+
+	char buf[128];
+	sprintf(buf, "snap-%zu", time(nullptr));
+	path.append(buf);
+
+	if (!fs::create_directories(path))
+	{
+		fprintf(stderr, "MakeSnapshotDirectory: Unable to create directory [%s] in snapshot folder", buf);
+		return false;
+	}
+
+	dir = path.string();
+	return true;
 }
 
 int main(int argc, char* args[])
@@ -348,18 +375,25 @@ int main(int argc, char* args[])
 							pc->SetCPUSpeed(*currSpeed);
 							break;
 
-						// F5: Dump first 64KB of RAM to file
+						// F5: Save Snapshot
 						case FKEY+5:
 						{
-							char buf[128];
-							sprintf(buf, "dump/memdump_%zu.bin", time(nullptr));
-							pc->GetMemory().Dump(0, 65536 * 2, buf);
+							std::string snapshot;
+							if (MakeSnapshotDirectory(snapshot))
+							{
+								pc->SaveState(snapshot.c_str());
+							}
 							break;
 						}
 
-						// F6-F8: Unassigned
+						// F6: Unassigned
 						case FKEY+6:
+							break;
+
+						// F5: Restore Snapshot
 						case FKEY+7:
+							break;
+
 						case FKEY+8:
 							break;
 

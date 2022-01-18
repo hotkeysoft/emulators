@@ -56,6 +56,8 @@ namespace emul
 		CPUSpeeds GetCPUSpeeds() const { return m_cpuSpeeds; }
 		void SetCPUSpeed(const CPUSpeed& speed);
 
+		void SaveState(const char* snapshotDir) {}
+
 	protected:
 		Computer(Memory& memory, MemoryMap& mmap);
 
