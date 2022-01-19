@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Common.h"
+#include "../Serializable.h"
 #include "../CPU/PortConnector.h"
 #include <Logger.h>
 
@@ -17,7 +18,7 @@ namespace pit
 
 	class Device8254;
 
-	class Counter : public PortConnector
+	class Counter : public PortConnector, public emul::Serializable
 	{
 	public:
 		Counter(Device8254* parent, BYTE id, const char* label);
@@ -43,6 +44,9 @@ namespace pit
 		void SetRWMode(RWMode rw);
 		void SetMode(CounterMode rw);
 		void SetBCD(bool bcd);
+
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
 	protected:
 		Device8254* m_parent = nullptr;
@@ -75,7 +79,7 @@ namespace pit
 		float m_periodMicro = 0.0f;
 	};
 
-	class Device8254 : public PortConnector
+	class Device8254 : public PortConnector, public emul::Serializable
 	{
 	public:
 		Device8254(WORD baseAddress, size_t clockSpeedHz = 1000000);
@@ -98,6 +102,9 @@ namespace pit
 		Counter& GetCounter(size_t counter);
 
 		WORD GetBaseAdress() const { return m_baseAddress; }
+
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
 	protected:
 		enum CTRL {

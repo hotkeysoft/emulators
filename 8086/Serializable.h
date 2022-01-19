@@ -5,6 +5,12 @@ using json = nlohmann::json;
 
 namespace emul
 {
+	class SerializableException : public std::exception
+	{
+	public:
+		SerializableException(const char* const what) : std::exception(what) {}
+	};
+
 	class Serializable
 	{
 	public:

@@ -374,11 +374,13 @@ namespace emul
 	{
 		CPU8086::Serialize(to["cpu"]);
 		m_memory.Serialize(to["memory"]);
+		m_pit->Serialize(to["pit"]);
 	}
 
 	void Computer::Deserialize(json& from)
 	{
 		CPU8086::Deserialize(from["cpu"]);
 		m_memory.Deserialize(from["memory"]);
+		m_pit->Deserialize(from["pit"]);
 	}
 }

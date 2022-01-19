@@ -10,6 +10,10 @@ using emul::SetHByte;
 
 namespace pit
 {
+	// ------------------------------------------
+	// Counter
+	// ------------------------------------------
+
 	Counter::Counter(Device8254* parent, BYTE id, const char* label) :
 		Logger(label),
 		m_parent(parent),
@@ -298,6 +302,50 @@ namespace pit
 		}
 	}
 
+	void Counter::Serialize(json& to)
+	{
+		to["rwMode"] = m_rwMode;
+		to["mode"] = m_mode;
+		to["bcd"] = m_bcd;
+
+		to["gate"] = m_gate;
+		to["lastGate"] = m_lastGate;
+		to["out"] = m_out;
+		to["run"] = m_run;
+		to["newValue"] = m_newValue;
+		to["flipFlopLSBMSB"] = m_flipFlopLSBMSB;
+		to["n"] = m_n;
+		to["value"] = m_value;
+
+		to["latched"] = m_latched;
+		to["latchedValue"] = m_latchedValue;
+
+		to["periodMicro"] = m_periodMicro;
+	}
+	void Counter::Deserialize(json& from)
+	{
+		m_rwMode = from["rwMode"];
+		m_mode = from["mode"];
+		m_bcd = from["bcd"];
+
+		m_gate = from["gate"];
+		m_lastGate = from["lastGate"];
+		m_out = from["out"];
+		m_run = from["run"];
+		m_newValue = from["newValue"];
+		m_flipFlopLSBMSB = from["flipFlopLSBMSB"];
+		m_n = from["n"];
+		m_value = from["value"];
+
+		m_latched = from["latched"];
+		m_latchedValue = from["latchedValue"];
+
+		m_periodMicro = from["periodMicro"];
+	}
+
+	// ------------------------------------------
+	// Device8254
+	// ------------------------------------------
 
 	Device8254::Device8254(WORD baseAddress, size_t clockSpeedHz) : 
 		Logger("PIT8254"), 
@@ -413,5 +461,28 @@ namespace pit
 		assert(counter < 3);
 		return m_counters[counter];
 	}
+
+	void Device8254::Serialize(json& to)
+	{
+		to["baseAddress"] = m_baseAddress;
+		m_counters[0].Serialize(to["timer0"]);
+		m_counters[1].Serialize(to["timer1"]);
+		m_counters[2].Serialize(to["timer2"]);
+	}
+
+	void Device8254::Deserialize(json& from)
+	{
+		WORD baseAddress = from["baseAddress"];
+		{
+			if (baseAddress != m_baseAddress)
+			{
+				throw emul::SerializableException("Device8254: Incompatible baseAddress");
+			}
+		}
+		m_counters[0].Deserialize(from["timer0"]);
+		m_counters[1].Deserialize(from["timer1"]);
+		m_counters[2].Deserialize(from["timer2"]);
+	}
+
 
 }
