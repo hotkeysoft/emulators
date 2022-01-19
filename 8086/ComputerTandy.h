@@ -23,8 +23,14 @@ namespace emul
 		virtual kbd::DeviceKeyboard& GetKeyboard() override { return m_keyboard; }
 
 	protected:
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(json& from) override;
+
 		void SetRAMPage(BYTE value);
 		void InitRAM(WORD baseRAM);
+
+		void SetRAMBase(ADDRESS ramBase);
+		ADDRESS GetRAMBase() const { return m_ramBase; }
 
 		emul::MemoryBlock m_base128K;
 		emul::MemoryBlock m_ramExtension;
@@ -34,5 +40,8 @@ namespace emul
 		uart::Device8250 m_uart;
 		sn76489::DeviceSN76489 m_soundModule;
 		events::InputEvents m_inputs;
+
+	private:
+		ADDRESS m_ramBase = 0;
 	};
 }

@@ -167,7 +167,12 @@ namespace emul
 		ADDRESS ramBase = value * 0x20000;
 
 		LogPrintf(LOG_WARNING, "Set RAM Page: [%d][%05Xh]", value, ramBase);
+		SetRAMBase(ramBase);
+	}
 
+	void ComputerTandy::SetRAMBase(ADDRESS ramBase)
+	{
+		m_ramBase = ramBase;
 		// Remove base ram and extension
 		m_memory.Free(&m_base128K);
 
@@ -179,10 +184,10 @@ namespace emul
 		}
 
 		// Put base/video mem on top at proper offset
-		m_memory.Allocate(&m_base128K, ramBase);
+		m_memory.Allocate(&m_base128K, m_ramBase);
 		// Notify video module
 		video::VideoTandy* video = (video::VideoTandy*)m_video;
-		video->SetRAMBase(ramBase);
+		video->SetRAMBase(m_ramBase);
 	}
 
 	static void little_sleep(std::chrono::microseconds us)
@@ -275,4 +280,17 @@ namespace emul
 
 		return true;
 	}
+
+	void ComputerTandy::Serialize(json& to)
+	{
+		to["tandy"]["rambase"] = GetRAMBase();
+		Computer::Serialize(to);
+	}
+
+	void ComputerTandy::Deserialize(json& from)
+	{
+		SetRAMBase(from["tandy"]["rambase"]);
+		Computer::Deserialize(from);
+	}
+
 }
