@@ -301,4 +301,61 @@ namespace pic
 		LogPrintf(LOG_DEBUG, "EOI: ISR After: %02xh", m_inServiceRegister);
 	}
 
+	void Device8259::Serialize(json& to)
+	{
+		to["baseAddress"] = m_baseAddress;
+
+		to["state"] = m_state;
+
+		json init;
+		init["icw4Needed"] = m_init.icw4Needed;
+		init["single"] = m_init.single;
+		init["levelTriggered"] = m_init.levelTriggered;
+		init["interruptBase"] = m_init.interruptBase;
+		init["cpu8086"] = m_init.cpu8086;
+		init["autoEOI"] = m_init.autoEOI;
+		init["buffered"] = m_init.buffered;
+		init["sfnm"] = m_init.sfnm;
+		to["init"] = init;
+
+		to["irr0"] = m_lastInterruptRequestRegister;
+		to["irr"] = m_interruptRequestRegister;
+		to["isr"] = m_inServiceRegister;
+		to["imr"] = m_interruptMaskRegister;
+		to["reg0"] = (m_reg0 == &m_inServiceRegister) ? "isr" : "irr";
+	}
+	void Device8259::Deserialize(json& from)
+	{
+		WORD baseAddress = from["baseAddress"];
+		if (baseAddress != m_baseAddress)
+		{
+			throw emul::SerializableException("Device8259: Incompatible baseAddress");
+		}
+
+		m_state = from["state"];
+
+		const json& init = from["init"];
+		m_init.icw4Needed = init["icw4Needed"];
+		m_init.single = init["single"];
+		m_init.levelTriggered = init["levelTriggered"];
+		m_init.interruptBase = init["interruptBase"];
+		m_init.cpu8086 = init["cpu8086"];
+		m_init.autoEOI = init["autoEOI"];
+		m_init.buffered = init["buffered"];
+		m_init.sfnm = init["sfnm"];
+
+		m_lastInterruptRequestRegister = from["irr0"];
+		m_interruptRequestRegister = from["irr"];
+		m_inServiceRegister = from["isr"];
+		m_interruptMaskRegister = from["imr"];
+
+		if (from["reg0"] == "isr")
+		{
+			m_reg0 = &m_inServiceRegister;
+		}
+		else
+		{
+			m_reg0 = &m_interruptRequestRegister;
+		}
+	}
 }

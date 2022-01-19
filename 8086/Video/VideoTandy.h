@@ -5,6 +5,7 @@
 #include "../CPU/PortConnector.h"
 #include "Device6845.h"
 #include "Video.h"
+#include <array>
 
 using emul::PortConnector;
 using emul::WORD;
@@ -36,6 +37,10 @@ namespace video
 
 		void RenderFrame();
 		void NewFrame();
+
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(json& from) override;
+
 	protected:
 		const WORD m_baseAddress;
 
@@ -109,7 +114,7 @@ namespace video
 
 			// Video Array registers
 
-			BYTE paletteRegister[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+			std::array<BYTE, 16> paletteRegister = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 			BYTE paletteMask = 0x0F;
 
 			// Enables the border color register (addr=2). For 0=PC compatibility, 1=PCjr compatibility

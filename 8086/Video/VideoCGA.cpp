@@ -354,4 +354,57 @@ namespace video
 			}
 		}
 	}
+
+	void VideoCGA::Serialize(json& to)
+	{
+		to["baseAddress"] = m_baseAddress;
+		to["id"] = "cga";
+
+		json mode;
+		mode["text80Columns"] = m_mode.text80Columns;
+		mode["graphics"] = m_mode.graphics;
+		mode["monochrome"] = m_mode.monochrome;
+		mode["enableVideo"] = m_mode.enableVideo;
+		mode["hiResolution"] = m_mode.hiResolution;
+		mode["blink"] = m_mode.blink;
+		to["mode"] = mode;
+
+		json color;
+		color["color"] = m_color.color;
+		color["palIntense"] = m_color.palIntense;
+		color["palSelect"] = m_color.palSelect;
+		to["color"] = color;
+
+		m_crtc.Serialize(to["crtc"]);
+	}
+
+	void VideoCGA::Deserialize(json& from)
+	{
+		if (from["baseAddress"] != m_baseAddress)
+		{
+			throw emul::SerializableException("VideoCGA: Incompatible baseAddress");
+		}
+
+		if (from["id"] != "cga")
+		{
+			throw emul::SerializableException("VideoCGA: Incompatible mode");
+		}
+
+		const json& mode = from["mode"];
+		m_mode.text80Columns = mode["text80Columns"];
+		m_mode.graphics = mode["graphics"];
+		m_mode.monochrome = mode["monochrome"];
+		m_mode.enableVideo = mode["enableVideo"];
+		m_mode.hiResolution = mode["hiResolution"];
+		m_mode.blink = mode["blink"];
+
+		const json& color = from["color"];
+		m_color.color = color["color"];
+		m_color.palIntense = color["palIntense"];
+		m_color.palSelect = color["palSelect"];
+
+		m_crtc.Deserialize(from["crtc"]);
+
+		NewFrame();
+	}
 }

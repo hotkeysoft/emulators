@@ -31,6 +31,9 @@ namespace video
 
 		virtual void NewFrame() override;
 
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(json& from) override;
+
 	protected:
 		// Mode Control Register (Hercules)
 		struct MODEControl

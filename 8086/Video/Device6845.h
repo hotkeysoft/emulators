@@ -2,6 +2,7 @@
 
 #include <Logger.h>
 #include "../Common.h"
+#include "../Serializable.h"
 #include "../CPU/PortConnector.h"
 #include "../CPU/MemoryBlock.h"
 
@@ -94,7 +95,7 @@ namespace crtc
 		size_t frame = 0;
 	};
 
-	class Device6845 : public PortConnector
+	class Device6845 : public PortConnector, public emul::Serializable
 	{
 	public:
 		Device6845(WORD baseAddress, BYTE charWidth = 8);
@@ -129,6 +130,9 @@ namespace crtc
 		void SetEndOfRowCallback(CRTCCallback func, void* userData);
 
 		void SetCharWidth(BYTE charWidth) { m_charWidth = charWidth; }
+
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
 	protected:
 		const WORD m_baseAddress;

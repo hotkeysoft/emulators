@@ -473,11 +473,9 @@ namespace pit
 	void Device8254::Deserialize(json& from)
 	{
 		WORD baseAddress = from["baseAddress"];
+		if (baseAddress != m_baseAddress)
 		{
-			if (baseAddress != m_baseAddress)
-			{
-				throw emul::SerializableException("Device8254: Incompatible baseAddress");
-			}
+			throw emul::SerializableException("Device8254: Incompatible baseAddress");
 		}
 		m_counters[0].Deserialize(from["timer0"]);
 		m_counters[1].Deserialize(from["timer1"]);

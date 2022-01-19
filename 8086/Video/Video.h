@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Common.h"
+#include "../Serializable.h"
 #include "../CPU/Memory.h"
 #include "../CPU/PortConnector.h"
 
@@ -14,7 +15,7 @@ struct SDL_Texture;
 
 namespace video
 {
-	class Video : public PortConnector
+	class Video : public PortConnector, public emul::Serializable
 	{
 	public:
 		Video(uint16_t width, uint16_t height, float vScale = 1.0f);
@@ -34,6 +35,9 @@ namespace video
 		virtual bool IsMonoAdapter() { return false; }
 
 		void RenderFrame(uint16_t w, uint16_t h, uint32_t borderRGB = 0xFF000000);
+
+		virtual void Serialize(json& to) = 0;
+		virtual void Deserialize(json& from) = 0;
 
 	protected:
 		enum class MonitorType

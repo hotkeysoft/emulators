@@ -34,6 +34,9 @@ namespace video
 		void NewFrame();
 		void EndOfRow();
 
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(json& from) override;
+
 	protected:
 		const WORD m_baseAddress;
 

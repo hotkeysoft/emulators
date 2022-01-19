@@ -217,4 +217,91 @@ namespace crtc
 		m_endOfRowUserData = userData;
 	}
 
+	void Device6845::Serialize(json& to)
+	{
+		to["baseAddress"] = m_baseAddress;
+		to["id"] = "6845";
+
+		json config;
+		config["hTotal"] = m_config.hTotal;
+		config["hDisplayed"] = m_config.hDisplayed;
+		config["hSyncPos"] = m_config.hSyncPos;
+		config["hSyncWidth"] = m_config.hSyncWidth;
+		config["vTotal"] = m_config.vTotal;
+		config["vTotalAdjust"] = m_config.vTotalAdjust;
+		config["vTotalDisplayed"] = m_config.vTotalDisplayed;
+		config["vSyncPos"] = m_config.vSyncPos;
+		config["interlaceMode"] = m_config.interlaceMode;
+		config["maxScanlineAddress"] = m_config.maxScanlineAddress;
+		config["startAddress"] = m_config.startAddress;
+		config["cursorAddress"] = m_config.cursorAddress;
+		config["cursorStart"] = m_config.cursorStart;
+		config["cursorEnd"] = m_config.cursorEnd;
+		config["cursor"] = m_config.cursor;
+		to["config"] = config;
+
+		json data;
+		data["hPos"] = m_data.hPos;
+		data["hBorder"] = m_data.hBorder;
+		data["hTotal"] = m_data.hTotal;
+		data["hTotalDisp"] = m_data.hTotalDisp;
+		data["vPos"] = m_data.vPos;
+		data["vBorder"] = m_data.vBorder;
+		data["vTotal"] = m_data.vTotal;
+		data["vTotalDisp"] = m_data.vTotalDisp;
+		data["vCharHeight"] = m_data.vCharHeight;
+		data["frame"] = m_data.frame;
+		to["data"] = data;
+
+		to["charWidth"] = m_charWidth;
+		to["blink16"] = m_blink16;
+		to["blink32"] = m_blink32;
+	}
+
+	void Device6845::Deserialize(json& from)
+	{
+		if (from["baseAddress"] != m_baseAddress)
+		{
+			throw emul::SerializableException("Device6845: Incompatible baseAddress");
+		}
+
+		if (from["id"] != "6845")
+		{
+			throw emul::SerializableException("Device6845: Incompatible mode");
+		}
+
+		const json& config = from["config"];
+		m_config.hTotal = config["hTotal"];
+		m_config.hDisplayed = config["hDisplayed"];
+		m_config.hSyncPos = config["hSyncPos"];
+		m_config.hSyncWidth = config["hSyncWidth"];
+		m_config.vTotal = config["vTotal"];
+		m_config.vTotalAdjust = config["vTotalAdjust"];
+		m_config.vTotalDisplayed = config["vTotalDisplayed"];
+		m_config.vSyncPos = config["vSyncPos"];
+		m_config.interlaceMode = config["interlaceMode"];
+		m_config.maxScanlineAddress = config["maxScanlineAddress"];
+		m_config.startAddress = config["startAddress"];
+		m_config.cursorAddress = config["cursorAddress"];
+		m_config.cursorStart = config["cursorStart"];
+		m_config.cursorEnd = config["cursorEnd"];
+		m_config.cursor = config["cursor"];
+
+		const json& data = from["data"];
+		m_data.hPos = data["hPos"];
+		m_data.hBorder = data["hBorder"];
+		m_data.hTotal = data["hTotal"];
+		m_data.hTotalDisp = data["hTotalDisp"];
+		m_data.vPos = data["vPos"];
+		m_data.vBorder = data["vBorder"];
+		m_data.vTotal = data["vTotal"];
+		m_data.vTotalDisp = data["vTotalDisp"];
+		m_data.vCharHeight = data["vCharHeight"];
+		m_data.frame = data["frame"];
+
+		m_charWidth = from["charWidth"];
+		m_blink16 = from["blink16"];
+		m_blink32 = from["blink32"];
+
+	}
 }

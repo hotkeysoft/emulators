@@ -375,6 +375,8 @@ namespace emul
 		CPU8086::Serialize(to["cpu"]);
 		m_memory.Serialize(to["memory"]);
 		m_pit->Serialize(to["pit"]);
+		m_pic->Serialize(to["pic"]);
+		m_video->Serialize(to["video"]);
 	}
 
 	void Computer::Deserialize(json& from)
@@ -382,5 +384,7 @@ namespace emul
 		CPU8086::Deserialize(from["cpu"]);
 		m_memory.Deserialize(from["memory"]);
 		m_pit->Deserialize(from["pit"]);
+		m_pic->Deserialize(from["pic"]);
+		m_video->Deserialize(from["video"]);
 	}
 }

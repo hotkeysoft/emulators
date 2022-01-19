@@ -225,4 +225,44 @@ namespace video
 			}
 		}
 	}
+
+	void VideoMDA::Serialize(json& to)
+	{
+		to["baseAddress"] = m_baseAddress;
+		to["id"] = "mda";
+
+		json mode;
+		mode["enableVideo"] = m_mode.enableVideo;
+		mode["hiResolution"] = m_mode.hiResolution;
+		mode["blink"] = m_mode.blink;
+		to["mode"] = mode;
+
+		to["lastDot"] = m_lastDot;
+
+		m_crtc.Serialize(to["crtc"]);
+	}
+
+	void VideoMDA::Deserialize(json& from)
+	{
+		if (from["baseAddress"] != m_baseAddress)
+		{
+			throw emul::SerializableException("VideoMDA: Incompatible baseAddress");
+		}
+
+		if (from["id"] != "mda")
+		{
+			throw emul::SerializableException("VideoMDA: Incompatible mode");
+		}
+
+		const json& mode = from["mode"];
+		m_mode.enableVideo = mode["enableVideo"];
+		m_mode.hiResolution = mode["hiResolution"];
+		m_mode.blink = mode["blink"];
+
+		m_lastDot = from["lastDot"];
+
+		m_crtc.Deserialize(from["crtc"]);
+
+		NewFrame();
+	}
 }

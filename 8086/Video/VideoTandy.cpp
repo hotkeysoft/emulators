@@ -529,5 +529,94 @@ namespace video
 		}
 	}
 
+	void VideoTandy::Serialize(json& to)
+	{
+		to["baseAddress"] = m_baseAddress;
+		to["id"] = "tga";
 
+		json pageReg;
+		pageReg["crtPage"] = m_pageRegister.crtPage;
+		pageReg["cpuPage"] = m_pageRegister.cpuPage;
+		pageReg["videoAddressMode"] = m_pageRegister.videoAddressMode;
+		pageReg["addressMode"] = m_pageRegister.addressMode;
+		pageReg["crtBaseAddress"] = m_pageRegister.crtBaseAddress;
+		pageReg["cpuBaseAddress"] = m_pageRegister.cpuBaseAddress;
+		to["pageRegister"] = pageReg;
+
+		json color;
+		color["color"] = m_color.color;
+		color["palIntense"] = m_color.palIntense;
+		color["palSelect"] = m_color.palSelect;
+		to["color"] = color;
+
+		json mode;
+		mode["hiDotClock"] = m_mode.hiDotClock;
+		mode["graphics"] = m_mode.graphics;
+		mode["monochrome"] = m_mode.monochrome;
+		mode["enableVideo"] = m_mode.enableVideo;
+		mode["hiResolution"] = m_mode.hiResolution;
+		mode["blink"] = m_mode.blink;
+		mode["paletteRegister"] = m_mode.paletteRegister;
+		mode["paletteMask"] = m_mode.paletteMask;
+		mode["borderEnable"] = m_mode.borderEnable;
+		mode["borderColor"] = m_mode.borderColor;
+		mode["graph640x200x4"] = m_mode.graph640x200x4;
+		mode["graph16Colors"] = m_mode.graph16Colors;
+		to["mode"] = mode;
+
+		to["videoArrayRegisterAddress"] = m_videoArrayRegisterAddress;
+
+		to["xAxisDivider"] = m_xAxisDivider;
+
+		m_crtc.Serialize(to["crtc"]);
+	}
+
+	void VideoTandy::Deserialize(json& from)
+	{
+		if (from["baseAddress"] != m_baseAddress)
+		{
+			throw emul::SerializableException("VideoTandy: Incompatible baseAddress");
+		}
+
+		if (from["id"] != "tga")
+		{
+			throw emul::SerializableException("VideoTandy: Incompatible mode");
+		}
+
+		const json& pageReg = from["pageRegister"];
+		m_pageRegister.crtPage = pageReg["crtPage"];
+		m_pageRegister.cpuPage = pageReg["cpuPage"];
+		m_pageRegister.videoAddressMode = pageReg["videoAddressMode"];
+		m_pageRegister.addressMode = pageReg["addressMode"];
+		m_pageRegister.crtBaseAddress = pageReg["crtBaseAddress"];
+		m_pageRegister.cpuBaseAddress = pageReg["cpuBaseAddress"];
+
+		const json& color = from["color"];
+		m_color.color = color["color"];
+		m_color.palIntense = color["palIntense"];
+		m_color.palSelect = color["palSelect"];
+
+		const json& mode = from["mode"];
+		m_mode.hiDotClock = mode["hiDotClock"];
+		m_mode.graphics = mode["graphics"];
+		m_mode.monochrome = mode["monochrome"];
+		m_mode.enableVideo = mode["enableVideo"];
+		m_mode.hiResolution = mode["hiResolution"];
+		m_mode.blink = mode["blink"];
+		m_mode.paletteRegister = mode["paletteRegister"];
+		m_mode.paletteMask = mode["paletteMask"];
+		m_mode.borderEnable = mode["borderEnable"];
+		m_mode.borderColor = mode["borderColor"];
+		m_mode.graph640x200x4 = mode["graph640x200x4"];
+		m_mode.graph16Colors = mode["graph16Colors"];
+
+		m_videoArrayRegisterAddress = from["videoArrayRegisterAddress"];
+
+		m_xAxisDivider = from["xAxisDivider"];
+
+		m_crtc.Deserialize(from["crtc"]);
+
+		UpdatePageRegisters();
+		NewFrame();
+	}
 }

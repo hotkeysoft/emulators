@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Common.h"
+#include "../Serializable.h"
 #include "../CPU/PortConnector.h"
 #include <Logger.h>
 
@@ -10,7 +11,7 @@ using emul::BYTE;
 
 namespace pic
 {
-	class Device8259 : public PortConnector
+	class Device8259 : public PortConnector, public emul::Serializable
 	{
 	public:
 		Device8259(WORD baseAddress);
@@ -35,6 +36,9 @@ namespace pic
 		void InterruptAcknowledge();
 
 		BYTE GetPendingInterrupt() const;
+
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
 	protected:
 		const WORD m_baseAddress;

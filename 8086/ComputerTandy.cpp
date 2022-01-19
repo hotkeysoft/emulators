@@ -289,8 +289,8 @@ namespace emul
 
 	void ComputerTandy::Deserialize(json& from)
 	{
-		SetRAMBase(from["tandy"]["rambase"]);
 		Computer::Deserialize(from);
+		SetRAMBase(from["tandy"]["rambase"]);
 	}
 
 }
