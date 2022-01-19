@@ -28,7 +28,7 @@ namespace emul
 
 		virtual bool LoadFromFile(const char* file, WORD offset = 0);
 
-		bool Dump(ADDRESS offset, DWORD len, const char* outFile);
+		bool Dump(ADDRESS offset, DWORD len, const char* outFile) const;
 
 		virtual BYTE read(ADDRESS offset);
 		virtual BYTE* getPtr(ADDRESS offset);

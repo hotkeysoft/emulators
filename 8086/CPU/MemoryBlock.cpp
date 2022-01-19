@@ -12,6 +12,7 @@ namespace emul
 		m_id(id ? id : "?"),
 		m_type(type)
 	{
+		EnableLog(LOG_WARNING);
 	}
 
 	MemoryBlock::MemoryBlock(const char* id, DWORD size, MemoryType type) : MemoryBlock(id, type)
@@ -31,6 +32,7 @@ namespace emul
 		m_size(block.m_size),
 		m_type(block.m_type)
 	{
+		EnableLog(LOG_WARNING);
 		m_data = new BYTE[m_size];
 		memcpy(m_data, block.m_data, m_size);
 	}
@@ -127,7 +129,7 @@ namespace emul
 		return true;
 	}
 
-	bool MemoryBlock::Dump(ADDRESS offset, DWORD len, const char* outFile)
+	bool MemoryBlock::Dump(ADDRESS offset, DWORD len, const char* outFile) const
 	{
 		LogPrintf(LOG_INFO, "Dump: dumping block size=%d to %s", m_size, outFile);
 
@@ -142,12 +144,12 @@ namespace emul
 		size_t bytesWritten = fwrite(m_data+offset, sizeof(char), len, f);
 		if (bytesWritten != len)
 		{
-			LogPrintf(LOG_ERROR, "LoadBinary: error writing binary file");
+			LogPrintf(LOG_ERROR, "Dump: error writing binary file");
 			return false;
 		}
 		else
 		{
-			LogPrintf(LOG_INFO, "LoadBinary: wrote %d bytes to file", bytesWritten);
+			LogPrintf(LOG_INFO, "Dump: wrote %d bytes to file", bytesWritten);
 		}
 
 		fclose(f);

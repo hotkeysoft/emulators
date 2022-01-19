@@ -173,6 +173,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Logger.cpp" />
+    <ClCompile Include="Serializable.cpp" />
     <ClCompile Include="Storage\CartridgePCjr.cpp" />
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="ComputerPCjr.cpp" />

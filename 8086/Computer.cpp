@@ -20,7 +20,7 @@ namespace emul
 		Logger("PC"),
 		CPU8086(m_memory, m_map),
 		m_memory(emul::CPU8086_ADDRESS_BITS),
-		m_hddROM("hdd", 8192, MemoryType::ROM)
+		m_hddROM("HDD", 8192, MemoryType::ROM)
 	{
 	}
 
@@ -373,10 +373,12 @@ namespace emul
 	void Computer::Serialize(json& to)
 	{
 		CPU8086::Serialize(to["cpu"]);
+		m_memory.Serialize(to["memory"]);
 	}
 
 	void Computer::Deserialize(json& from)
 	{
 		CPU8086::Deserialize(from["cpu"]);
+		m_memory.Deserialize(from["memory"]);
 	}
 }

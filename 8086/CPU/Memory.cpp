@@ -52,6 +52,7 @@ namespace emul
 			m_memory[minSlot + i] = {block, base};
 		}
 
+		m_blocks.insert(block);
 		return true;
 	}
 
@@ -69,6 +70,7 @@ namespace emul
 			}
 		}
 
+		m_blocks.erase(block);
 		return true;
 	}
 
@@ -201,6 +203,74 @@ namespace emul
 		{
 			LogPrintf(LOG_WARNING, "No block allocated at address (%X)", start);
 		}
+	}
 
+	MemoryBlock* Memory::FindBlock(const char* id) const
+	{
+		for (auto it = m_blocks.begin(); it != m_blocks.end(); ++it)
+		{
+			const auto block = *it;
+			if (block->GetId() == id)
+			{
+				return block;
+			}
+		}
+		return nullptr;
+	}
+
+	void Memory::Serialize(json& to)
+	{
+		json blocks;
+		for (auto it = m_blocks.begin(); it != m_blocks.end(); ++it)
+		{
+			const auto block = *it;
+			json blockJson;
+			blockJson["size"] = block->GetSize();
+			blockJson["type"] = block->GetType();
+
+			std::string fileName = "memory_" + block->GetId() + ".bin";
+			std::string path = GetSerializationDir() + fileName;
+			block->Dump(0, block->GetSize(), path.c_str());
+			blockJson["file"] = fileName;
+
+			blocks[block->GetId()] = blockJson;
+
+		}
+		to["blocks"] = blocks;
+	}
+
+	void Memory::Deserialize(json& from)
+	{
+		json blocks = from["blocks"];
+		for (json::iterator it = blocks.begin(); it != blocks.end(); ++it)
+		{
+			std::string id = it.key();
+			json source = it.value();
+			DWORD size = source["size"];
+			MemoryType type = source["type"];
+			std::string fileName = source["file"];
+
+			MemoryBlock* dest = FindBlock(id.c_str());
+			if (!dest)
+			{
+				LogPrintf(LOG_ERROR, "Deserialize: Block not found [%s]", id.c_str());
+				return;
+			}
+			else if (size != dest->GetSize())
+			{
+				LogPrintf(LOG_ERROR, "Deserialize: Block size mismatch [%s]", id.c_str());
+				return;
+			}
+			else if (type != dest->GetType())
+			{
+				LogPrintf(LOG_ERROR, "Deserialize: Block type mismatch [%s]", id.c_str());
+				return;
+			}
+
+
+			std::string path = GetSerializationDir() + fileName;
+			dest->LoadFromFile(path.c_str());
+
+		}
 	}
 }

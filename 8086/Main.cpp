@@ -162,10 +162,12 @@ bool MakeSnapshotDirectory(std::string& dir)
 
 void SaveSnapshot(const std::string& snapshotDir, emul::Computer* pc)
 {
+
 	json j;
 	j["core"]["arch"] = Config::Instance().GetValueStr("core", "arch");
 	j["core"]["baseram"] = Config::Instance().GetValueInt32("core", "baseram", 640);
 
+	pc->SetSerializationDir(snapshotDir.c_str());
 	pc->Serialize(j);
 
 	std::string outFile(snapshotDir);
@@ -213,6 +215,7 @@ void RestoreSnapshot(const std::string& snapshotDir, emul::Computer* pc)
 		return;
 	}
 
+	pc->SetSerializationDir(snapshotDir.c_str());
 	pc->Deserialize(j);
 }
 

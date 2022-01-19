@@ -1,10 +1,11 @@
 #pragma once
 
+#include "../Serializable.h"
 #include "MemoryBlock.h"
 #include "../Common.h"
 #include <Logger.h>
 #include <vector>
-#include <tuple>
+#include <set>
 
 namespace emul
 {
@@ -14,7 +15,7 @@ namespace emul
 		ADDRESS base = 0;
 	};
 
-	class Memory : public Logger
+	class Memory : public Logger, public Serializable
 	{
 	public:
 		Memory(size_t addressBits);
@@ -35,11 +36,18 @@ namespace emul
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress);
 
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
+
+	protected:
+		MemoryBlock* FindBlock(const char* id) const;
+
 	private:
 		static WORD s_uninitialized;
 
 		const size_t m_addressBits;
 
 		std::vector<MemorySlot> m_memory;
+		std::set<MemoryBlock*> m_blocks;
 	};
 }
