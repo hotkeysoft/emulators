@@ -359,6 +359,9 @@ int main(int argc, char* args[])
 	// TODO: sdl window is created in Video class, not ideal
 	overlay.Init(pc->GetVideo().GetWindow(), pc->GetVideo().GetRenderer());
 
+	pc->GetVideo().AddRenderer(&overlay);
+	pc->GetInputs().AddEventHandler(&overlay);
+
 	try
 	{
 		std::string snapshotDir;

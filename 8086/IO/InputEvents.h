@@ -6,6 +6,7 @@
 #include <SDL.h>
 
 #include <map>
+#include <vector>
 
 using emul::BYTE;
 namespace kbd { class DeviceKeyboard; }
@@ -14,6 +15,12 @@ namespace joy { class DeviceJoystick; }
 namespace events
 {
 	enum class KBDMapping { XT, TANDY };
+
+	class EventHandler
+	{
+	public:
+		virtual bool HandleEvent(SDL_Event& e) = 0;
+	};
 
 	class Key
 	{
@@ -74,6 +81,8 @@ namespace events
 		void InitKeyboard(kbd::DeviceKeyboard* kbd, KBDMapping mapping = KBDMapping::XT);
 		void InitJoystick(joy::DeviceJoystick* joy);
 
+		void AddEventHandler(EventHandler* handler) { m_handlers.push_back(handler); }
+
 		void Tick();
 
 		bool IsQuit() { return m_quit; }
@@ -95,6 +104,8 @@ namespace events
 		SDL_JoystickID m_controllerID = -1;
 
 		joy::DeviceJoystick* m_joystick = nullptr;
+
+		std::vector<EventHandler*> m_handlers;
 	};
 
 }

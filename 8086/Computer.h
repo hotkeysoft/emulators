@@ -48,7 +48,9 @@ namespace emul
 		beeper::DevicePCSpeaker& GetSound() { return m_pcSpeaker; } // TODO: Sound interface
 		virtual fdc::DeviceFloppy& GetFloppy() { return *m_floppy; }
 		virtual kbd::DeviceKeyboard& GetKeyboard() = 0;
-		virtual video::Video& GetVideo() { return *m_video; }
+		video::Video& GetVideo() { return *m_video; }
+		events::InputEvents& GetInputs() { return *m_inputs; }
+		
 
 		virtual void Reboot(bool hard = false);
 		void SetTurbo(bool turbo) { m_turbo = turbo; }
@@ -73,6 +75,7 @@ namespace emul
 		virtual void InitJoystick(WORD baseAddress, size_t baseClock);
 		virtual void InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq=0, BYTE dma=0);
 		virtual void InitHardDrive(hdd::DeviceHardDrive* hdd, BYTE irq = 0, BYTE dma = 0);
+		virtual void InitInputs(size_t clockSpeedHz);
 
 		void AddCPUSpeed(const CPUSpeed& speed);
 		int GetCPUSpeedRatio() const { return m_cpuSpeed.GetRatio(); }
@@ -102,6 +105,7 @@ namespace emul
 		beeper::DevicePCSpeaker m_pcSpeaker;
 		hdd::DeviceHardDrive* m_hardDrive = nullptr;
 		fdc::DeviceFloppy* m_floppy = nullptr;
+		events::InputEvents* m_inputs = nullptr;
 
 		BYTE m_floppyIRQ = 0;
 		BYTE m_floppyDMA = 0;

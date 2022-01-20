@@ -176,6 +176,12 @@ namespace emul
 		AddDevice(*m_joystick);
 	}
 
+	void Computer::InitInputs(size_t clockSpeedHz)
+	{
+		m_inputs = new events::InputEvents(clockSpeedHz);
+		m_inputs->EnableLog(Config::Instance().GetLogLevel("inputs"));
+	}
+
 	void Computer::InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq, BYTE dma)
 	{
 		assert(fdd);

@@ -15,6 +15,12 @@ struct SDL_Texture;
 
 namespace video
 {
+	class Renderer
+	{
+	public:
+		virtual void Render() = 0;
+	};
+
 	class Video : public PortConnector, public emul::Serializable
 	{
 	public:
@@ -38,6 +44,8 @@ namespace video
 
 		virtual void Serialize(json& to) = 0;
 		virtual void Deserialize(json& from) = 0;
+
+		void AddRenderer(Renderer* r) { m_renderers.push_back(r); }
 
 		SDL_Window* GetWindow() const { return m_sdlWindow; }
 		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }
@@ -78,5 +86,7 @@ namespace video
 		const uint32_t* m_monitorPalette = nullptr;
 
 		uint32_t* m_frameBuffer;
+
+		std::vector<Renderer*> m_renderers;
 	};
 }

@@ -65,7 +65,6 @@ namespace emul
 		m_ramExtension("EXTRAM", emul::MemoryType::RAM),
 		m_biosFC00("BIOS", 0x4000, emul::MemoryType::ROM),
 		m_uart(0x2F8, UART_CLK),
-		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
 	{
 	}
@@ -105,9 +104,9 @@ namespace emul
 
 		InitJoystick(0x201, PIT_CLK);
 
-		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
-		m_inputs.InitKeyboard(&m_keyboard, events::KBDMapping::TANDY);
-		m_inputs.InitJoystick(m_joystick);
+		InitInputs(PIT_CLK);
+		GetInputs().InitKeyboard(&m_keyboard, events::KBDMapping::TANDY);
+		GetInputs().InitJoystick(m_joystick);
 
 		Connect(0xA0, static_cast<PortConnector::OUTFunction>(&ComputerTandy::SetRAMPage));
 
@@ -229,8 +228,8 @@ namespace emul
 		{
 			++g_ticks;
 
-			m_inputs.Tick();
-			if (m_inputs.IsQuit())
+			GetInputs().Tick();
+			if (GetInputs().IsQuit())
 			{
 				return false;
 			}

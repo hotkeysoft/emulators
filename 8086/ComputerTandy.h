@@ -39,7 +39,6 @@ namespace emul
 		kbd::DeviceKeyboardTandy m_keyboard;
 		uart::Device8250 m_uart;
 		sn76489::DeviceSN76489 m_soundModule;
-		events::InputEvents m_inputs;
 
 	private:
 		ADDRESS m_ramBase = 0;

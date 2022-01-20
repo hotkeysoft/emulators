@@ -64,7 +64,6 @@ namespace emul
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
-		m_inputs(PIT_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
 	{
 	}
@@ -104,9 +103,9 @@ namespace emul
 
 		InitJoystick(0x201, PIT_CLK);
 
-		m_inputs.EnableLog(Config::Instance().GetLogLevel("inputs"));
-		m_inputs.InitKeyboard(&m_keyboard);
-		m_inputs.InitJoystick(m_joystick);
+		InitInputs(PIT_CLK);
+		GetInputs().InitKeyboard(&m_keyboard);
+		GetInputs().InitJoystick(m_joystick);
 
 		int floppyCount = 0;
 		if (Config::Instance().GetValueBool("floppy", "enable"))
@@ -201,8 +200,8 @@ namespace emul
 		{
 			++g_ticks;
 
-			m_inputs.Tick();
-			if (m_inputs.IsQuit())
+			GetInputs().Tick();
+			if (GetInputs().IsQuit())
 			{
 				return false;
 			}

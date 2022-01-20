@@ -28,6 +28,5 @@ namespace emul
 
 		sn76489::DeviceSN76489 m_soundModule;
 		kbd::DeviceKeyboardXT m_keyboard;
-		events::InputEvents m_inputs;
 	};
 }

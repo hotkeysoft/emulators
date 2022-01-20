@@ -10,7 +10,10 @@
 #include <Core/Window.h>
 #include <Core/WindowManager.h>
 #include <Core/ResourceManager.h>
+#include <Core/Widget.h>
 #include <Widgets/Toolbar.h>
+#include <Widgets/ToolbarItem.h>
+#include <Widgets/Button.h>
 
 using namespace CoreUI;
 
@@ -52,5 +55,68 @@ namespace ui
 	bool Overlay::Update()
 	{
 		return true;
+	}
+
+	// video::Renderer
+	void Overlay::Render()
+	{
+		WINMGR().Draw();
+	}
+
+	void Overlay::OnClick(WidgetRef widget)
+	{
+		if (widget->GetId() == "b2")
+		{
+		}
+	}
+
+	// events::EventHangler
+	bool Overlay::HandleEvent(SDL_Event& e)
+	{
+		static Uint32 toolbarEvent = WINMGR().GetEventType(ToolbarItem::EventClassName());
+
+		bool handled = false;
+		bool redraw = false;
+
+		if (e.type == SDL_QUIT)
+		{
+			// Do nothing
+		}
+		else if (e.type == toolbarEvent)
+		{
+			OnClick((WidgetRef)e.user.data1);
+		}
+		else if (WINMGR().GetCapture() && WINMGR().GetCapture().Target.target->HandleEvent(&e))
+		{
+			handled = true;
+		} 
+		else if (e.type == SDL_MOUSEMOTION)
+		{
+			Point pt(e.button.x, e.button.y);
+			HitResult hit = WINMGR().HitTest(&pt);
+			if (hit)
+			{
+				handled = hit.target->HandleEvent(&e);
+			}
+		}
+		else if (e.type == SDL_MOUSEBUTTONDOWN)
+		{
+			if (e.button.button == SDL_BUTTON_LEFT)
+			{
+				Point pt(e.button.x, e.button.y);
+				HitResult hit = WINMGR().HitTest(&pt);
+				if (hit)
+				{
+					hit.target->SetActive();
+					handled = hit.target->HandleEvent(&e);
+				}
+			}
+		}
+		else // Pass to active window
+		{
+			handled = WINMGR().GetActive()->HandleEvent(&e);
+		}
+
+		return handled;
 	}
 }
