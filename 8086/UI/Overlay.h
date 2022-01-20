@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Common/Logger.h"
+#include <Common.h>
 
 namespace ui
 {
@@ -9,8 +10,11 @@ namespace ui
 	public:
 		Overlay();
 
-		bool Init();
+		bool Init(CoreUI::MainWindowRef win, CoreUI::RendererRef ren);
 		bool Update();
+	private:
+		CoreUI::RendererRef m_renderer = nullptr;
+		CoreUI::MainWindowRef m_window = nullptr;
 	};
 
 }

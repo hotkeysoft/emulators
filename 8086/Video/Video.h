@@ -39,6 +39,9 @@ namespace video
 		virtual void Serialize(json& to) = 0;
 		virtual void Deserialize(json& from) = 0;
 
+		SDL_Window* GetWindow() const { return m_sdlWindow; }
+		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }
+
 	protected:
 		enum class MonitorType
 		{

@@ -22,10 +22,6 @@
 #include <time.h>
 #include <filesystem>
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <commdlg.h>
-
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
 #define NO_CONSOLE
@@ -360,7 +356,8 @@ int main(int argc, char* args[])
 	time_t startTime, stopTime;
 	time(&startTime);
 
-	overlay.Init();
+	// TODO: sdl window is created in Video class, not ideal
+	overlay.Init(pc->GetVideo().GetWindow(), pc->GetVideo().GetRenderer());
 
 	try
 	{
@@ -378,10 +375,10 @@ int main(int argc, char* args[])
 			//	mode = Mode::MONITOR;
 			//}
 
-			if (!overlay.Update())
-			{
-				break;
-			}
+			//if (!overlay.Update())
+			//{
+			//	break;
+			//}
 
 			if (mode == Mode::MONITOR)
 			{

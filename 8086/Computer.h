@@ -48,6 +48,7 @@ namespace emul
 		beeper::DevicePCSpeaker& GetSound() { return m_pcSpeaker; } // TODO: Sound interface
 		virtual fdc::DeviceFloppy& GetFloppy() { return *m_floppy; }
 		virtual kbd::DeviceKeyboard& GetKeyboard() = 0;
+		virtual video::Video& GetVideo() { return *m_video; }
 
 		virtual void Reboot(bool hard = false);
 		void SetTurbo(bool turbo) { m_turbo = turbo; }

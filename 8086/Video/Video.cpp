@@ -3,6 +3,9 @@
 
 #include <SDL.h>
 
+#pragma warning(disable:4251)
+#include <Core/WindowManager.h>
+
 #include <assert.h>
 
 using cfg::Config;
@@ -142,6 +145,15 @@ namespace video
 		SDL_UpdateTexture(m_sdlTexture, NULL, m_frameBuffer, m_sdlWidth * sizeof(uint32_t));
 
 		SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &destRect);
+
+		// TODO: Temporary, should call overlay draw function
+		float scaleX, scaleY;
+		SDL_RenderGetScale(m_sdlRenderer, &scaleX, &scaleY);
+		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
+		CoreUI::WINMGR().Draw();
+		SDL_RenderSetClipRect(m_sdlRenderer, nullptr);
+		SDL_RenderSetScale(m_sdlRenderer, scaleX, scaleY);
+
 		SDL_RenderPresent(m_sdlRenderer);
 
 		Uint8 r = Uint8(borderRGB >> 16);
