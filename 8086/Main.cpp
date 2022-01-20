@@ -135,17 +135,29 @@ bool ToggleTurbo()
 	return turbo;
 }
 
-bool MakeSnapshotDirectory(std::string& dir)
+bool GetSnapshotBaseDirectory(fs::path& baseDir)
 {
-	std::string baseDir = Config::Instance().GetValueStr("dirs", "snapshot", "./snapshots");
-	fs::path path(baseDir);
+	fs::path path = Config::Instance().GetValueStr("dirs", "snapshot", "./snapshots");
+
 	if (!fs::is_directory(fs::status(path)))
 	{
-		fprintf(stderr, "MakeSnapshotDirectory: [%s] is not a directory", baseDir.c_str());
+		fprintf(stderr, "GetSnapshotBaseDirectory: [%s] is not a directory", path.string().c_str());
 		return false;
 	}
 
-	char buf[128];
+	baseDir = fs::absolute(path);
+	return true;
+}
+
+bool MakeSnapshotDirectory(std::string& dir)
+{
+	fs::path path;
+	if (!GetSnapshotBaseDirectory(path))
+	{
+		return false;
+	}
+
+	char buf[64];
 	sprintf(buf, "snap-%zu", time(nullptr));
 	path.append(buf);
 
@@ -155,8 +167,38 @@ bool MakeSnapshotDirectory(std::string& dir)
 		return false;
 	}
 
-	dir = path.string();
-	dir.append("/");
+	dir = fs::absolute(path).string();
+	dir += fs::path::preferred_separator;
+	return true;
+}
+
+bool GetLastSnapshotDirectory(std::string& snapshotDir)
+{
+	snapshotDir = "";
+
+	fs::path path;
+	if (!GetSnapshotBaseDirectory(path))
+	{
+		return false;
+	}
+
+	std::set<std::string> snapshots;
+	for (auto const& entry : std::filesystem::directory_iterator(path))
+	{
+		if (entry.is_directory())
+		{
+			snapshots.insert(entry.path().string());
+		}
+	}
+
+	if (!snapshots.size())
+	{
+		return false;
+	}
+
+	// Last one = more recent
+	snapshotDir = *(snapshots.rbegin());
+	snapshotDir += fs::path::preferred_separator;
 	return true;
 }
 
@@ -185,6 +227,12 @@ void RestoreSnapshot(const std::string& snapshotDir, emul::Computer* pc)
 	std::ifstream inStream(inFile);
 
 	fprintf(stderr, "RestoreSnapshot: Read from [%s]\n", inFile.c_str());
+
+	if (!inStream)
+	{
+		fprintf(stderr, "RestoreSnapshot: Error opening file\n");
+		return;
+	}
 
 	json j;
 	try
@@ -218,7 +266,6 @@ void RestoreSnapshot(const std::string& snapshotDir, emul::Computer* pc)
 	pc->SetSerializationDir(snapshotDir.c_str());
 	pc->Deserialize(j);
 }
-
 
 int main(int argc, char* args[])
 {
@@ -453,7 +500,14 @@ int main(int argc, char* args[])
 
 						// F5: Restore Snapshot
 						case FKEY+7:
-							//TODO: This only restores the last snapshot in current session
+							// If snapshotDir is already set, uses last snapshot current session.
+							// If not set, there was no snapshot in this session, so try to find 
+							// the latest one in the snapshot directory.
+							if (snapshotDir.empty())
+							{
+								GetLastSnapshotDirectory(snapshotDir);
+							}
+
 							if (snapshotDir.size())
 							{
 								RestoreSnapshot(snapshotDir, pc);
