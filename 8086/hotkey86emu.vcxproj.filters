@@ -58,6 +58,12 @@
     <Filter Include="3rd Party">
       <UniqueIdentifier>{6e23faae-71e7-41ac-8cae-5fb2768eadd8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{1483d33b-b0cf-4e28-a1a1-3ca8bb82f475}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{196c425d-fd08-439c-aa97-65af9d4dd314}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -203,6 +209,9 @@
     </ClCompile>
     <ClCompile Include="Serializable.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Overlay.cpp">
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -355,6 +364,9 @@
     </ClInclude>
     <ClInclude Include="Serializable.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Overlay.h">
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

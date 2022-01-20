@@ -4,6 +4,8 @@
 #include "IO/Console.h"
 #include "IO/Monitor.h"
 
+#include "UI/Overlay.h"
+
 #include "ComputerXT.h"
 #include "ComputerPCjr.h"
 #include "ComputerTandy.h"
@@ -295,6 +297,7 @@ int main(int argc, char* args[])
 #endif
 
 	emul::Computer* pc = nullptr;
+	ui::Overlay overlay;
 
 	std::string arch = Config::Instance().GetValueStr("core", "arch");
 	if (arch == "xt")
@@ -357,6 +360,8 @@ int main(int argc, char* args[])
 	time_t startTime, stopTime;
 	time(&startTime);
 
+	overlay.Init();
+
 	try
 	{
 		std::string snapshotDir;
@@ -372,6 +377,11 @@ int main(int argc, char* args[])
 			//	monitor.Show();
 			//	mode = Mode::MONITOR;
 			//}
+
+			if (!overlay.Update())
+			{
+				break;
+			}
 
 			if (mode == Mode::MONITOR)
 			{
