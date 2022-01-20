@@ -1,0 +1,3 @@
+[submodule "CoreUI"]
+	path = CoreUI
+	url = https://github.com/hotkeysoft/sdlCoreUILib.git
