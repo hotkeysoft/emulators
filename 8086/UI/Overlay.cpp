@@ -89,7 +89,12 @@ namespace ui
 		RES().Init(m_renderer);
 		WINMGR().Init(m_window, m_renderer);
 
-		m_mainWnd = WINMGR().AddWindow("status", { 0, 700, 800, 64 }, WIN_ACTIVE | WIN_CANMOVE | WIN_NOSCROLL);
+		Rect windowSize = WINMGR().GetWindowSize();
+		Rect toolbarRect = windowSize;
+		toolbarRect.h = 64;
+		toolbarRect.y = windowSize.h - toolbarRect.h;
+
+		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_NOSCROLL);
 
 		RES().LoadImageMap("toolbar", "./res/toolbar.png", 16, 16);
 
