@@ -136,7 +136,7 @@ namespace emul
 			ppi->SetFloppyCount(floppyCount);
 		}
 
-		AddDevice(m_soundModule);
+		//AddDevice(m_soundModule);
 		AddDevice(dummyPortXT);
 	}
 
