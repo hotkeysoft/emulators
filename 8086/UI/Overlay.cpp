@@ -1,4 +1,5 @@
 #include "Overlay.h"
+#include "../Config.h"
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -20,9 +21,12 @@
 #include <windows.h>
 #include <commdlg.h>
 
+#include <fstream>
 #include <filesystem>
+
 namespace fs = std::filesystem;
 
+using namespace cfg;
 using namespace CoreUI;
 
 namespace ui
@@ -196,6 +200,137 @@ namespace ui
 		UpdateSpeed();
 	}
 
+	void Overlay::SaveSnapshot(const std::string& snapshotDir)
+	{
+		json j;
+		j["core"]["arch"] = Config::Instance().GetValueStr("core", "arch");
+		j["core"]["baseram"] = Config::Instance().GetValueInt32("core", "baseram", 640);
+
+		m_pc->SetSerializationDir(snapshotDir.c_str());
+		m_pc->Serialize(j);
+
+		std::string outFile(snapshotDir);
+		outFile += "computer.json";
+		std::ofstream outStream(outFile);
+		outStream << std::setw(4) << j;
+
+		LogPrintf(LOG_INFO, "SaveSnapshot: Saved to [%s]\n", outFile.c_str());
+	}
+
+	void Overlay::RestoreSnapshot(const std::string& snapshotDir)
+	{
+		std::string inFile(snapshotDir);
+		inFile += "computer.json";
+		std::ifstream inStream(inFile);
+
+		LogPrintf(LOG_INFO, "RestoreSnapshot: Read from [%s]\n", inFile.c_str());
+
+		if (!inStream)
+		{
+			LogPrintf(LOG_ERROR, "RestoreSnapshot: Error opening file\n");
+			return;
+		}
+
+		json j;
+		try
+		{
+			inStream >> j;
+		}
+		catch (std::exception e)
+		{
+			LogPrintf(LOG_ERROR, "RestoreSnapshot: Error reading snapshot: %s\n", e.what());
+			return;
+		}
+
+		std::string archConfig = Config::Instance().GetValueStr("core", "arch");
+		std::string archSnapshot = j["core"]["arch"];
+		if (archConfig != archSnapshot)
+		{
+			LogPrintf(LOG_ERROR, "RestoreSnapshot: Snapshot architecture[%s] different from config[%s]\n",
+				archSnapshot.c_str(), archConfig.c_str());
+			return;
+		}
+
+		int baseRAMConfig = Config::Instance().GetValueInt32("core", "baseram", 640);
+		int baseRAMSnapshot = j["core"]["baseram"];
+		if (baseRAMConfig != baseRAMSnapshot)
+		{
+			LogPrintf(LOG_ERROR, "RestoreSnapshot: Snapshot base RAM[%d] different from config[%d]\n",
+				baseRAMSnapshot, baseRAMConfig);
+			return;
+		}
+
+		m_pc->SetSerializationDir(snapshotDir.c_str());
+		m_pc->Deserialize(j);
+	}
+
+	bool Overlay::GetSnapshotBaseDirectory(fs::path& baseDir)
+	{
+		fs::path path = Config::Instance().GetValueStr("dirs", "snapshot", "./snapshots");
+
+		if (!fs::is_directory(fs::status(path)))
+		{
+			LogPrintf(LOG_ERROR, "GetSnapshotBaseDirectory: [%s] is not a directory", path.string().c_str());
+			return false;
+		}
+
+		baseDir = fs::absolute(path);
+		return true;
+	}
+
+	bool Overlay::MakeSnapshotDirectory(std::string& dir)
+	{
+		fs::path path;
+		if (!GetSnapshotBaseDirectory(path))
+		{
+			return false;
+		}
+
+		char buf[64];
+		sprintf(buf, "snap-%zu", time(nullptr));
+		path.append(buf);
+
+		if (!fs::create_directories(path))
+		{
+			LogPrintf(LOG_ERROR, "MakeSnapshotDirectory: Unable to create directory [%s] in snapshot folder", buf);
+			return false;
+		}
+
+		dir = fs::absolute(path).string();
+		dir += fs::path::preferred_separator;
+		return true;
+	}
+
+	bool Overlay::GetLastSnapshotDirectory(std::string& snapshotDir)
+	{
+		snapshotDir = "";
+
+		fs::path path;
+		if (!GetSnapshotBaseDirectory(path))
+		{
+			return false;
+		}
+
+		std::set<std::string> snapshots;
+		for (auto const& entry : std::filesystem::directory_iterator(path))
+		{
+			if (entry.is_directory())
+			{
+				snapshots.insert(entry.path().string());
+			}
+		}
+
+		if (!snapshots.size())
+		{
+			return false;
+		}
+
+		// Last one = more recent
+		snapshotDir = *(snapshots.rbegin());
+		snapshotDir += fs::path::preferred_separator;
+		return true;
+	}
+
 	void Overlay::OnClick(WidgetRef widget)
 	{
 		if (widget->GetId() == "floppy0")
@@ -217,6 +352,24 @@ namespace ui
 		else if (widget->GetId() == "speed")
 		{
 			ToggleCPUSpeed();
+		}
+		else if (widget->GetId() == "saveSnapshot")
+		{
+			std::string snapshotDir;
+			if (MakeSnapshotDirectory(snapshotDir))
+			{
+				SaveSnapshot(snapshotDir);
+			}
+		}
+		else if (widget->GetId() == "loadSnapshot")
+		{
+			std::string snapshotDir;
+			GetLastSnapshotDirectory(snapshotDir);
+
+			if (snapshotDir.size())
+			{
+				RestoreSnapshot(snapshotDir);
+			}
 		}
 	}
 

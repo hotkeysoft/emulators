@@ -6,6 +6,8 @@
 #include "../Computer.h"
 #include <Common.h>
 
+#include <filesystem>
+
 namespace ui
 {
 	class Overlay : public Logger, public video::Renderer, public events::EventHandler
@@ -29,6 +31,13 @@ namespace ui
 
 		void LoadDiskImage(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* str, bool eject = false);
 		void ToggleCPUSpeed();
+
+		// TODO: Should be in separate class so it can be used by others
+		bool MakeSnapshotDirectory(std::string& dir);
+		bool GetSnapshotBaseDirectory(std::filesystem::path& baseDir);
+		bool GetLastSnapshotDirectory(std::string& snapshotDir);
+		void SaveSnapshot(const std::string& snapshotDir);
+		void RestoreSnapshot(const std::string& snapshotDir);
 
 		std::string m_title = "PC";
 

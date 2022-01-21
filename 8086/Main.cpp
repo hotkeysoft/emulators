@@ -102,138 +102,6 @@ bool ToggleTurbo()
 	return turbo;
 }
 
-bool GetSnapshotBaseDirectory(fs::path& baseDir)
-{
-	fs::path path = Config::Instance().GetValueStr("dirs", "snapshot", "./snapshots");
-
-	if (!fs::is_directory(fs::status(path)))
-	{
-		fprintf(stderr, "GetSnapshotBaseDirectory: [%s] is not a directory", path.string().c_str());
-		return false;
-	}
-
-	baseDir = fs::absolute(path);
-	return true;
-}
-
-bool MakeSnapshotDirectory(std::string& dir)
-{
-	fs::path path;
-	if (!GetSnapshotBaseDirectory(path))
-	{
-		return false;
-	}
-
-	char buf[64];
-	sprintf(buf, "snap-%zu", time(nullptr));
-	path.append(buf);
-
-	if (!fs::create_directories(path))
-	{
-		fprintf(stderr, "MakeSnapshotDirectory: Unable to create directory [%s] in snapshot folder", buf);
-		return false;
-	}
-
-	dir = fs::absolute(path).string();
-	dir += fs::path::preferred_separator;
-	return true;
-}
-
-bool GetLastSnapshotDirectory(std::string& snapshotDir)
-{
-	snapshotDir = "";
-
-	fs::path path;
-	if (!GetSnapshotBaseDirectory(path))
-	{
-		return false;
-	}
-
-	std::set<std::string> snapshots;
-	for (auto const& entry : std::filesystem::directory_iterator(path))
-	{
-		if (entry.is_directory())
-		{
-			snapshots.insert(entry.path().string());
-		}
-	}
-
-	if (!snapshots.size())
-	{
-		return false;
-	}
-
-	// Last one = more recent
-	snapshotDir = *(snapshots.rbegin());
-	snapshotDir += fs::path::preferred_separator;
-	return true;
-}
-
-void SaveSnapshot(const std::string& snapshotDir, emul::Computer* pc)
-{
-
-	json j;
-	j["core"]["arch"] = Config::Instance().GetValueStr("core", "arch");
-	j["core"]["baseram"] = Config::Instance().GetValueInt32("core", "baseram", 640);
-
-	pc->SetSerializationDir(snapshotDir.c_str());
-	pc->Serialize(j);
-
-	std::string outFile(snapshotDir);
-	outFile += "computer.json";
-	std::ofstream outStream(outFile);
-	outStream << std::setw(4) << j;
-
-	fprintf(stderr, "SaveSnapshot: Saved to [%s]\n", outFile.c_str());
-}
-
-void RestoreSnapshot(const std::string& snapshotDir, emul::Computer* pc)
-{
-	std::string inFile(snapshotDir);
-	inFile += "computer.json";
-	std::ifstream inStream(inFile);
-
-	fprintf(stderr, "RestoreSnapshot: Read from [%s]\n", inFile.c_str());
-
-	if (!inStream)
-	{
-		fprintf(stderr, "RestoreSnapshot: Error opening file\n");
-		return;
-	}
-
-	json j;
-	try
-	{
-		inStream >> j;
-	}
-	catch (std::exception e)
-	{
-		fprintf(stderr, "RestoreSnapshot: Error reading snapshot: %s\n", e.what());
-		return;
-	}
-
-	std::string archConfig = Config::Instance().GetValueStr("core", "arch");
-	std::string archSnapshot = j["core"]["arch"];
-	if (archConfig != archSnapshot)
-	{
-		fprintf(stderr, "RestoreSnapshot: Snapshot architecture[%s] different from config[%s]\n", 
-			archSnapshot.c_str(), archConfig.c_str());
-		return;
-	}
-
-	int baseRAMConfig = Config::Instance().GetValueInt32("core", "baseram", 640);
-	int baseRAMSnapshot = j["core"]["baseram"];
-	if (baseRAMConfig != baseRAMSnapshot)
-	{
-		fprintf(stderr, "RestoreSnapshot: Snapshot base RAM[%d] different from config[%d]\n",
-			baseRAMSnapshot, baseRAMConfig);
-		return;
-	}
-
-	pc->SetSerializationDir(snapshotDir.c_str());
-	pc->Deserialize(j);
-}
-
 int main(int argc, char* args[])
 {
 	//logFile = fopen("./dump/dump.log", "w");
@@ -430,45 +298,11 @@ int main(int argc, char* args[])
 						case FKEY+3:
 							pc->SetTurbo(ToggleTurbo());
 							break;
-
-						// F5: Save Snapshot
-						case FKEY+5:
-						{
-							if (MakeSnapshotDirectory(snapshotDir))
-							{
-								SaveSnapshot(snapshotDir, pc);
-							}
-							break;
-						}
-
-						// F6: Unassigned
-						case FKEY+6:
-							break;
-
-						// F5: Restore Snapshot
-						case FKEY+7:
-							// If snapshotDir is already set, uses last snapshot current session.
-							// If not set, there was no snapshot in this session, so try to find 
-							// the latest one in the snapshot directory.
-							if (snapshotDir.empty())
-							{
-								GetLastSnapshotDirectory(snapshotDir);
-							}
-
-							if (snapshotDir.size())
-							{
-								RestoreSnapshot(snapshotDir, pc);
-							}
-							break;
-
-						case FKEY+8:
-							break;
-
 						// F9: Soft reboot = CTRL-ALT-DEL
-						// F10: Hard reboot
 						case FKEY+9:
 							pc->Reboot(false);
 							break;
+						// F10: Hard reboot
 						case FKEY+10:
 							pc->Reboot(true);
 							break;
