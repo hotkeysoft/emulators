@@ -154,7 +154,7 @@ namespace ui
 		if (eject)
 		{
 			m_pc->GetFloppy().ClearDiskImage(drive);
-			m_floppy0->SetText(str);
+			toolbarItem->SetText(str);
 		}
 		else if (SelectFile(diskImage, GetHWND(m_window)))
 		{
