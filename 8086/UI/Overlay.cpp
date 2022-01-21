@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <SDL_syswm.h>
 
 #pragma warning(disable:4251)
 
@@ -15,10 +16,56 @@
 #include <Widgets/ToolbarItem.h>
 #include <Widgets/Button.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <commdlg.h>
+
+#include <filesystem>
+namespace fs = std::filesystem;
+
 using namespace CoreUI;
 
 namespace ui
 {
+	HWND GetHWND(SDL_Window* sdlWindow)
+	{
+		SDL_SysWMinfo wmInfo;
+		SDL_VERSION(&wmInfo.version);
+		SDL_GetWindowWMInfo(sdlWindow, &wmInfo);
+		return wmInfo.info.win.window;
+	}
+
+	bool SelectFile(fs::path& path, HWND parent)
+	{
+		OPENFILENAMEA ofn;
+		char szFile[1024];
+
+		// Initialize OPENFILENAME
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = parent;
+		ofn.lpstrFile = szFile;
+		// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+		// use the contents of szFile to initialize itself.
+		ofn.lpstrFile[0] = '\0';
+		ofn.nMaxFile = sizeof(szFile);
+		ofn.lpstrFilter = "All\0*.*\0Floppy Image\0*.IMG\0";
+		ofn.nFilterIndex = 1;
+		ofn.lpstrFileTitle = NULL;
+		ofn.nMaxFileTitle = 0;
+		ofn.lpstrInitialDir = NULL;
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+		// Display the Open dialog box.
+
+		if (!GetOpenFileNameA(&ofn))
+		{
+			return false;
+		}
+		path = szFile;
+		return true;
+	}
+
 	Overlay::Overlay() : Logger("GUI")
 	{
 	}
@@ -55,11 +102,17 @@ namespace ui
 		m_hddActive = RES().FindImage("toolbar", 5);
 
 		m_floppy0 = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
-		m_floppy1 = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
+		m_eject0 = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
 		toolbar->AddSeparator();
+
+		m_floppy1 = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
+		m_eject1 = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
+		toolbar->AddSeparator();
+
 		m_hdd0 = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
 		m_hdd1 = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
 		toolbar->AddSeparator();
+
 		m_speed = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
 		
 		//toolbar->AddToolbarItem("gamepad", RES().FindImage("toolbar", 2));
@@ -94,10 +147,42 @@ namespace ui
 		WINMGR().Draw();
 	}
 
+	void Overlay::LoadDiskImage(BYTE drive, ToolbarItemPtr toolbarItem, const char* str, bool eject)
+	{
+		fs::path diskImage;
+
+		if (eject)
+		{
+			m_pc->GetFloppy().ClearDiskImage(drive);
+			m_floppy0->SetText(str);
+		}
+		else if (SelectFile(diskImage, GetHWND(m_window)))
+		{
+			std::string label = str;
+			label += " ";
+			label += diskImage.filename().string();
+			m_pc->GetFloppy().LoadDiskImage(drive, diskImage.string().c_str());
+			toolbarItem->SetText(label.c_str());
+		}
+	}
+
 	void Overlay::OnClick(WidgetRef widget)
 	{
-		if (widget->GetId() == "b2")
+		if (widget->GetId() == "floppy0")
 		{
+			LoadDiskImage(0, m_floppy0, "A:");
+		}
+		else if (widget->GetId() == "floppy1")
+		{
+			LoadDiskImage(1, m_floppy1, "B:");
+		}
+		if (widget->GetId() == "eject0")
+		{
+			LoadDiskImage(0, m_floppy0, "A:", true);
+		}
+		else if (widget->GetId() == "eject1")
+		{
+			LoadDiskImage(1, m_floppy1, "B:", true);
 		}
 	}
 

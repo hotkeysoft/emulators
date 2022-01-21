@@ -27,6 +27,8 @@ namespace ui
 	protected:
 		void OnClick(CoreUI::WidgetRef widget);
 
+		void LoadDiskImage(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* str, bool eject = false);
+
 		std::string m_title = "PC";
 
 		emul::Computer* m_pc = nullptr;
@@ -40,16 +42,19 @@ namespace ui
 		CoreUI::ToolbarItemPtr m_floppy0;
 		CoreUI::ToolbarItemPtr m_floppy1;
 
+		CoreUI::ToolbarItemPtr m_eject0;
+		CoreUI::ToolbarItemPtr m_eject1;
+
 		CoreUI::ToolbarItemPtr m_hdd0;
 		CoreUI::ToolbarItemPtr m_hdd1;
 
 		CoreUI::ToolbarItemPtr m_speed;
 
-		CoreUI::ImageRef m_floppyInactive;
-		CoreUI::ImageRef m_floppyActive;
+		CoreUI::ImageRef m_floppyInactive = nullptr;
+		CoreUI::ImageRef m_floppyActive = nullptr;
 
-		CoreUI::ImageRef m_hddInactive;
-		CoreUI::ImageRef m_hddActive;
+		CoreUI::ImageRef m_hddInactive = nullptr;
+		CoreUI::ImageRef m_hddActive = nullptr;
 	};
 
 }

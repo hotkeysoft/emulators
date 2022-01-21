@@ -49,37 +49,6 @@ const size_t BACKLOG_MAX = 1000;
 std::string backLog[BACKLOG_MAX];
 size_t backLogPtr = 0;
 
-bool SelectFile(std::string& path)
-{
-	OPENFILENAMEA ofn;
-	char szFile[1024];
-
-	// Initialize OPENFILENAME
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = nullptr;
-	ofn.lpstrFile = szFile;
-	// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
-	// use the contents of szFile to initialize itself.
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFilter = "All\0*.*\0Floppy Image\0*.IMG\0";
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-	// Display the Open dialog box.
-
-	if (!GetOpenFileNameA(&ofn))
-	{
-		return false;
-	}
-	path = szFile;
-	return true;
-}
-
 void DumpBackLog(size_t lastN = BACKLOG_MAX)
 {
 	size_t ptr = (backLogPtr + (BACKLOG_MAX - lastN)) % BACKLOG_MAX;
@@ -455,31 +424,8 @@ int main(int argc, char* args[])
 						const int CTRL = 35;
 						const int ALT = 45;
 
-						std::string diskImage;
 						switch (ch = _getch())
 						{
-
-						// F1/F2: Load Floppy disk image in drive 0-1
-						// Shift-F1/F2: Clear floppy disk image in drive 0-1
-						case FKEY+1:
-							if (SelectFile(diskImage))
-							{
-								pc->GetFloppy().LoadDiskImage(0, diskImage.c_str());
-							}
-							break;
-						case SHIFT+FKEY+1:
-							pc->GetFloppy().ClearDiskImage(0);
-							break;
-						case FKEY+2:
-							if (SelectFile(diskImage))
-							{
-								pc->GetFloppy().LoadDiskImage(1, diskImage.c_str());
-							}
-							break;
-						case SHIFT+FKEY+2:
-							pc->GetFloppy().ClearDiskImage(1);
-							break;
-
 						// F3: Max speed (no sound synchronization)
 						case FKEY+3:
 							pc->SetTurbo(ToggleTurbo());
