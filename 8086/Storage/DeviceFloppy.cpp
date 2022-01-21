@@ -49,8 +49,7 @@ namespace fdc
 		}
 
 		LogPrintf(LOG_INFO, "ClearDiskImage: unloading drive %d", drive);
-		m_images[drive].loaded = false;
-		m_images[drive].data.clear();
+		m_images[drive].Clear();
 		return true;
 	}
 
@@ -61,9 +60,6 @@ namespace fdc
 			LogPrintf(LOG_ERROR, "LoadDiskImage: invalid drive number %d", drive);
 			return false;
 		}
-
-		m_images[drive].loaded = false;
-		m_images[drive].data.clear();
 
 		LogPrintf(LOG_INFO, "LoadDiskImage: loading %s in drive %d", path, drive);
 
@@ -78,10 +74,12 @@ namespace fdc
 			LogPrintf(LOG_ERROR, "LoadDiskImage: Unsupported image file, size=%d", size);
 			return false;
 		}
+
 		const Geometry& geometry = it->second;
 
 		LogPrintf(LOG_INFO, "LoadImage: Detected image geometry: %s", geometry.name);
 
+		m_images[drive].Clear();
 		m_images[drive].data.resize(size);
 
 		FILE* f = fopen(path, "rb");
@@ -102,6 +100,7 @@ namespace fdc
 			LogPrintf(LOG_INFO, "LoadDiskImage: read %d bytes", bytesRead);
 		}
 
+		m_images[drive].path = path;
 		m_images[drive].loaded = true;
 		m_images[drive].geometry = geometry;
 

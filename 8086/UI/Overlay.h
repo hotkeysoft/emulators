@@ -18,9 +18,6 @@ namespace ui
 		bool Init(emul::Computer* pc);
 		bool Update();
 
-		void UpdateSpeed();
-		void UpdateSnapshot();
-
 		// video::Renderer
 		virtual void Render() override;
 
@@ -29,6 +26,11 @@ namespace ui
 
 	protected:
 		void OnClick(CoreUI::WidgetRef widget);
+
+		void UpdateSpeed();
+		void UpdateSnapshot();
+		void UpdateFloppy(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* letter);
+		void UpdateHardDisk(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* letter);
 
 		void LoadDiskImage(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* str, bool eject = false);
 		void ToggleCPUSpeed();

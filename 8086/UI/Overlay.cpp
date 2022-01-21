@@ -116,11 +116,13 @@ namespace ui
 		{
 			m_floppy0 = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
 			m_eject0 = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
-
+			UpdateFloppy(0, m_floppy0, "A:");
 			toolbar->AddSeparator();
 
 			m_floppy1 = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
 			m_eject1 = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
+			UpdateFloppy(1, m_floppy1, "B:");
+			toolbar->AddSeparator();
 
 			toolbar->AddSeparator();
 		}
@@ -128,13 +130,18 @@ namespace ui
 		if (m_pc->GetHardDrive())
 		{
 			m_hdd0 = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
-			m_hdd1 = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
+			UpdateHardDisk(0, m_hdd0, "C:");
 
+			m_hdd1 = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
+			UpdateHardDisk(1, m_hdd0, "D:");
+
+			toolbar->AddSeparator();
 			toolbar->AddSeparator();
 		}
 
 		m_speed = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
 
+		toolbar->AddSeparator();
 		toolbar->AddSeparator();
 
 		m_snapshot = toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
@@ -176,6 +183,31 @@ namespace ui
 		}
 	}
 
+	void Overlay::UpdateFloppy(BYTE drive, ToolbarItemPtr toolbarItem, const char* path)
+	{
+		auto image = m_pc->GetFloppy()->GetImageInfo(drive);
+
+		std::string label = "[Empty]";
+		if (image.loaded)
+		{
+			std::ostringstream os(path);
+			os << " "
+				<< image.path.filename().string()
+				<< " ["
+				<< image.geometry.name
+				<< "]";
+
+			label = os.str();
+		}
+
+		toolbarItem->SetText(label.c_str());
+	}
+
+	void Overlay::UpdateHardDisk(BYTE drive, ToolbarItemPtr toolbarItem, const char* path)
+	{
+
+	}
+
 	bool Overlay::Update()
 	{
 		if (m_pc->GetFloppy())
@@ -210,16 +242,12 @@ namespace ui
 		if (eject)
 		{
 			m_pc->GetFloppy()->ClearDiskImage(drive);
-			toolbarItem->SetText(str);
 		}
 		else if (SelectFile(diskImage, GetHWND(m_window)))
 		{
-			std::string label = str;
-			label += " ";
-			label += diskImage.filename().string();
 			m_pc->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
-			toolbarItem->SetText(label.c_str());
 		}
+		UpdateFloppy(drive, toolbarItem, str);
 	}
 
 	void Overlay::ToggleCPUSpeed()

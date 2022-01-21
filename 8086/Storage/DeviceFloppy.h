@@ -5,6 +5,8 @@
 #include <Logger.h>
 #include <vector>
 #include <deque>
+#include <filesystem>
+#include <assert.h>
 
 using emul::PortConnector;
 using emul::WORD;
@@ -12,6 +14,32 @@ using emul::BYTE;
 
 namespace fdc
 {
+	struct Geometry
+	{
+		const char* name;
+		BYTE head;
+		BYTE cyl;
+		BYTE sect;
+		uint32_t GetImageSize() { return 512 * head * cyl * sect; }
+		uint32_t CHS2A(BYTE c, BYTE h, BYTE s) { return 512 * ((c * head + h) * sect + s - 1); }
+	};
+
+	class FloppyDisk
+	{
+	public:
+		void Clear()
+		{
+			path.clear();
+			loaded = false;
+			data.clear();
+		}
+
+		std::filesystem::path path;
+		bool loaded = false;
+		Geometry geometry;
+		std::vector<BYTE> data;
+	};
+
 	class DeviceFloppy : public PortConnector
 	{
 	protected:
@@ -34,6 +62,8 @@ namespace fdc
 		bool ClearDiskImage(BYTE drive);
 		bool LoadDiskImage(BYTE drive, const char* path);
 		bool SaveDiskImage(BYTE drive, const char* path);
+
+		const FloppyDisk& GetImageInfo(BYTE drive) { assert(drive < 4); return m_images[drive]; }
 
 		virtual bool IsActive(BYTE drive) = 0;
 
@@ -230,16 +260,6 @@ namespace fdc
 			{ CMD::SCAN_HIGH_OR_EQUAL, { "ScanHighOrEqual" , 8, &DeviceFloppy::NotImplemented,   false } }
 		};
 
-		struct Geometry
-		{
-			const char* name;
-			BYTE head;
-			BYTE cyl;
-			BYTE sect;
-			uint32_t GetImageSize() { return 512 * head * cyl * sect; }
-			uint32_t CHS2A(BYTE c, BYTE h, BYTE s) { return 512*((c * head + h) * sect + s - 1); }
-		};
-
 		typedef std::map<uint32_t, Geometry> Geometries;
 		const Geometries m_geometries = {
 			{ 163840,  { "160KB",  1, 40, 8 } },
@@ -256,11 +276,6 @@ namespace fdc
 			{ 1474560, { "1.44MB", 2, 80, 18 } },
 		};
 
-		struct FloppyDisk
-		{
-			bool loaded = false;
-			Geometry geometry;
-			std::vector<BYTE> data;
-		} m_images[4];
+		FloppyDisk m_images[4];
 	};
 }
