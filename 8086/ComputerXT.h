@@ -13,6 +13,8 @@ namespace emul
 	public:
 		ComputerXT();
 
+		virtual const char* GetName() const override { return "IBM XT"; };
+
 		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;

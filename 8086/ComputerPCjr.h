@@ -16,6 +16,8 @@ namespace emul
 	public:
 		ComputerPCjr();
 
+		virtual const char* GetName() const override { return "IBM PCjr"; };
+
 		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;

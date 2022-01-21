@@ -15,6 +15,8 @@ namespace emul
 	public:
 		ComputerTandy();
 
+		virtual const char* GetName() const override { return "Tandy 1000"; };
+
 		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;

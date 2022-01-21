@@ -40,6 +40,8 @@ namespace emul
 	public:
 		virtual ~Computer();
 
+		virtual const char* GetName() const = 0;
+
 		virtual void Init(WORD baseRAM) = 0;
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
@@ -57,6 +59,7 @@ namespace emul
 
 		typedef std::set<CPUSpeed> CPUSpeeds;
 		CPUSpeeds GetCPUSpeeds() const { return m_cpuSpeeds; }
+		CPUSpeed GetCPUSpeed() const { return m_cpuSpeed; }
 		void SetCPUSpeed(const CPUSpeed& speed);
 
 		virtual void Serialize(json& to);

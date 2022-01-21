@@ -357,7 +357,7 @@ int main(int argc, char* args[])
 	time(&startTime);
 
 	// TODO: sdl window is created in Video class, not ideal
-	overlay.Init(pc->GetVideo().GetWindow(), pc->GetVideo().GetRenderer());
+	overlay.Init(pc);
 
 	pc->GetVideo().AddRenderer(&overlay);
 	pc->GetInputs().AddEventHandler(&overlay);
@@ -378,10 +378,10 @@ int main(int argc, char* args[])
 			//	mode = Mode::MONITOR;
 			//}
 
-			//if (!overlay.Update())
-			//{
-			//	break;
-			//}
+			if (!overlay.Update())
+			{
+				break;
+			}
 
 			if (mode == Mode::MONITOR)
 			{
@@ -492,6 +492,7 @@ int main(int argc, char* args[])
 								currSpeed = speedList.begin();
 							}
 							pc->SetCPUSpeed(*currSpeed);
+							overlay.UpdateSpeed();
 							break;
 
 						// F5: Save Snapshot

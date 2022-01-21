@@ -23,9 +23,12 @@ namespace ui
 	{
 	}
 
-	bool Overlay::Init(MainWindowRef win, RendererRef ren)
+	bool Overlay::Init(emul::Computer* pc)
 	{
 		LogPrintf(LOG_TRACE, "Overlay::Init");
+
+		assert(pc);
+		m_pc = pc;
 
 		if (TTF_Init() == -1)
 		{
@@ -33,27 +36,55 @@ namespace ui
 			return false;
 		}
 
-		RES().Init(ren);
-		WINMGR().Init(win, ren);
+		m_renderer = pc->GetVideo().GetRenderer();
+		m_window = pc->GetVideo().GetWindow();
 
-		m_renderer = ren;
-		m_window = win;
+		RES().Init(m_renderer);
+		WINMGR().Init(m_window, m_renderer);
 
-		WindowPtr mainWnd = WINMGR().AddWindow("status", { 500, 700, 150, 54 }, WIN_ACTIVE | WIN_CANMOVE | WIN_NOSCROLL);
-		mainWnd->SetText("Status");
+		m_mainWnd = WINMGR().AddWindow("status", { 0, 700, 800, 64 }, WIN_ACTIVE | WIN_CANMOVE | WIN_NOSCROLL);
 
 		RES().LoadImageMap("toolbar", "./res/toolbar.png", 16, 16);
 
-		ToolbarPtr toolbar = Toolbar::CreateAutoSize(ren, "toolbar");
+		ToolbarPtr toolbar = Toolbar::CreateAutoSize(m_renderer, "toolbar");
 		toolbar->SetBackgroundColor(Color::C_MED_GREY);
-		toolbar->AddToolbarItem("image0", RES().FindImage("toolbar", 0));
-		mainWnd->SetToolbar(toolbar);
+
+		m_floppyInactive = RES().FindImage("toolbar", 0);
+		m_floppyActive = RES().FindImage("toolbar", 4);
+		m_hddInactive = RES().FindImage("toolbar", 1);
+		m_hddActive = RES().FindImage("toolbar", 5);
+
+		m_floppy0 = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
+		m_floppy1 = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
+		toolbar->AddSeparator();
+		m_hdd0 = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
+		m_hdd1 = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
+		toolbar->AddSeparator();
+		m_speed = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
+		
+		//toolbar->AddToolbarItem("gamepad", RES().FindImage("toolbar", 2));
+		//toolbar->AddSeparator();
+		//toolbar->AddToolbarItem("speaker", RES().FindImage("toolbar", 3));
+
+		m_mainWnd->SetToolbar(toolbar);
+		m_mainWnd->SetText(m_pc->GetName());
+		UpdateSpeed();
 
 		return true;
 	}
 
+	void Overlay::UpdateSpeed()
+	{
+		static char speedStr[32];
+		emul::CPUSpeed speed = m_pc->GetCPUSpeed();
+		sprintf(speedStr, "%5.2fMHz", speed.GetSpeed() / 1000000.0f);
+		m_speed->SetText(speedStr);
+	}
+
 	bool Overlay::Update()
 	{
+		m_floppy0->SetImage(m_pc->GetFloppy().IsActive(0) ? m_floppyActive : m_floppyInactive);
+		m_floppy1->SetImage(m_pc->GetFloppy().IsActive(1) ? m_floppyActive : m_floppyInactive);
 		return true;
 	}
 
