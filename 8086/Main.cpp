@@ -93,15 +93,6 @@ void ToggleMode()
 	}
 }
 
-bool ToggleTurbo()
-{
-	static bool turbo = false;
-
-	turbo = !turbo;
-	fprintf(stderr, "Turbo [%s]\n", turbo ? "ON" : "OFF");
-	return turbo;
-}
-
 int main(int argc, char* args[])
 {
 	//logFile = fopen("./dump/dump.log", "w");
@@ -294,19 +285,17 @@ int main(int argc, char* args[])
 
 						switch (ch = _getch())
 						{
-						// F3: Max speed (no sound synchronization)
-						case FKEY+3:
-							pc->SetTurbo(ToggleTurbo());
+						case FKEY + 1:
+						case FKEY + 2:
+						case FKEY + 3:
+						case FKEY + 4:
+						case FKEY + 5:
+						case FKEY + 6:
+						case FKEY + 7:
+						case FKEY + 8:
+						case FKEY + 9:
+						case FKEY + 10:
 							break;
-						// F9: Soft reboot = CTRL-ALT-DEL
-						case FKEY+9:
-							pc->Reboot(false);
-							break;
-						// F10: Hard reboot
-						case FKEY+10:
-							pc->Reboot(true);
-							break;
-
 						default:
 							fprintf(stderr, "Unknown extended keycode: [0][%d]\n", ch);
 						}

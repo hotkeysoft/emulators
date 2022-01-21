@@ -134,13 +134,13 @@ namespace ui
 
 		if (m_pc->GetFloppy())
 		{
-			m_floppy[0] = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
-			m_eject[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
+			m_floppyButton[0] = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
+			m_ejectButton[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
 			UpdateFloppy(0, "A:");
 			toolbar->AddSeparator();
 
-			m_floppy[1] = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
-			m_eject[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
+			m_floppyButton[1] = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
+			m_ejectButton[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
 			UpdateFloppy(1, "B:");
 			toolbar->AddSeparator();
 
@@ -149,17 +149,21 @@ namespace ui
 
 		if (m_pc->GetHardDrive())
 		{
-			m_hdd[0] = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
+			m_hddButton[0] = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
 			UpdateHardDisk(0, "C:");
 
-			m_hdd[1] = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
+			m_hddButton[1] = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
 			UpdateHardDisk(1, "D:");
 
 			toolbar->AddSeparator();
 			toolbar->AddSeparator();
 		}
 
-		m_speed = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
+		m_speedButton = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
+		UpdateSpeed();
+
+		m_turboButton = toolbar->AddToolbarItem("turbo", RES().FindImage("toolbar", 10));
+		UpdateTurbo();
 
 		toolbar->AddSeparator();
 		toolbar->AddSeparator();
@@ -167,9 +171,13 @@ namespace ui
 		toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
 		m_snapshot = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
 
+		toolbar->AddSeparator();
+		toolbar->AddSeparator();
+
+		toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
+
 		m_mainWnd->SetToolbar(toolbar);
 		m_mainWnd->SetText(m_pc->GetName());
-		UpdateSpeed();
 
 		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
 		LogPrintf(LOG_INFO, "Snapshot base directory is [%s]", m_snapshotBaseDirectory.string().c_str());
@@ -187,7 +195,7 @@ namespace ui
 		static char speedStr[32];
 		emul::CPUSpeed speed = m_pc->GetCPUSpeed();
 		sprintf(speedStr, "%5.2fMHz", speed.GetSpeed() / 1000000.0f);
-		m_speed->SetText(speedStr);
+		m_speedButton->SetText(speedStr);
 	}
 
 	void Overlay::UpdateSnapshot()
@@ -220,12 +228,17 @@ namespace ui
 			label = os.str();
 		}
 
-		m_floppy[drive]->SetText(label.c_str());
+		m_floppyButton[drive]->SetText(label.c_str());
 	}
 
 	void Overlay::UpdateHardDisk(BYTE drive, const char* path)
 	{
 
+	}
+
+	void Overlay::UpdateTurbo()
+	{
+		m_turboButton->SetBackgroundColor(m_turbo ? Color(174, 7, 0) : Color::C_LIGHT_GREY);
 	}
 
 	bool Overlay::Update()
@@ -234,7 +247,7 @@ namespace ui
 		{
 			for (int i = 0; i < 2; ++i)
 			{
-				m_floppy[i]->SetImage(m_pc->GetFloppy()->IsActive(i) ? m_floppyActive : m_floppyInactive);
+				m_floppyButton[i]->SetImage(m_pc->GetFloppy()->IsActive(i) ? m_floppyActive : m_floppyInactive);
 			}
 		}
 
@@ -243,7 +256,7 @@ namespace ui
 			for (int i = 0; i < 2; ++i)
 			{
 				m_hardDriveLEDs[i].Update(m_pc->GetHardDrive()->IsActive(i));
-				m_hdd[i]->SetImage(m_hardDriveLEDs[i].GetStatus() ? m_hddActive : m_hddInactive);
+				m_hddButton[i]->SetImage(m_hardDriveLEDs[i].GetStatus() ? m_hddActive : m_hddInactive);
 			}	
 		}
 
@@ -294,6 +307,14 @@ namespace ui
 		}
 		m_pc->SetCPUSpeed(*currIt);
 		UpdateSpeed();
+	}
+
+	void Overlay::ToggleTurbo()
+	{
+		m_turbo = !m_turbo;
+		LogPrintf(LOG_INFO, "Turbo [%s]\n", m_turbo ? "ON" : "OFF");
+		m_pc->SetTurbo(m_turbo);
+		UpdateTurbo();
 	}
 
 	void Overlay::SaveSnapshot(const fs::path& snapshotDir)
@@ -485,6 +506,15 @@ namespace ui
 			{
 				RestoreSnapshot(snapshotDir);
 			}
+		}
+		else if (widget->GetId() == "reboot")
+		{
+			// Shift+click = hard reboot
+			m_pc->Reboot(SDL_GetModState() & KMOD_SHIFT);
+		}
+		else if (widget->GetId() == "turbo")
+		{
+			ToggleTurbo();
 		}
 	}
 

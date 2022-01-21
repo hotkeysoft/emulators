@@ -46,9 +46,11 @@ namespace ui
 		void UpdateSnapshot();
 		void UpdateFloppy(BYTE drive, const char* letter);
 		void UpdateHardDisk(BYTE drive, const char* letter);
+		void UpdateTurbo();
 
 		void LoadDiskImage(BYTE drive, const char* str, bool eject = false);
 		void ToggleCPUSpeed();
+		void ToggleTurbo();
 
 		// TODO: Should be in separate class so it can be used by others
 		bool MakeSnapshotDirectory(std::filesystem::path& dir);
@@ -66,18 +68,22 @@ namespace ui
 
 		HardDriveLED m_hardDriveLEDs[2];
 
+		bool m_turbo = false;
+
 		// UI Elements
 		CoreUI::WindowPtr m_mainWnd;
 
 		CoreUI::RendererRef m_renderer = nullptr;
 		CoreUI::MainWindowRef m_window = nullptr;
 
-		CoreUI::ToolbarItemPtr m_floppy[2];
-		CoreUI::ToolbarItemPtr m_eject[2];
-		CoreUI::ToolbarItemPtr m_hdd[2];
+		CoreUI::ToolbarItemPtr m_floppyButton[2];
+		CoreUI::ToolbarItemPtr m_ejectButton[2];
+		CoreUI::ToolbarItemPtr m_hddButton[2];
 
-		CoreUI::ToolbarItemPtr m_speed;
+		CoreUI::ToolbarItemPtr m_speedButton;
 		CoreUI::ToolbarItemPtr m_snapshot;
+
+		CoreUI::ToolbarItemPtr m_turboButton;
 
 		CoreUI::ImageRef m_floppyInactive = nullptr;
 		CoreUI::ImageRef m_floppyActive = nullptr;
