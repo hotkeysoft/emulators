@@ -431,16 +431,6 @@ int main(int argc, char* args[])
 							pc->SetTurbo(ToggleTurbo());
 							break;
 
-						// F4: Toggle CPU speed
-						case FKEY+4:
-							if (++currSpeed == speedList.end())
-							{
-								currSpeed = speedList.begin();
-							}
-							pc->SetCPUSpeed(*currSpeed);
-							overlay.UpdateSpeed();
-							break;
-
 						// F5: Save Snapshot
 						case FKEY+5:
 						{

@@ -28,6 +28,7 @@ namespace ui
 		void OnClick(CoreUI::WidgetRef widget);
 
 		void LoadDiskImage(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* str, bool eject = false);
+		void ToggleCPUSpeed();
 
 		std::string m_title = "PC";
 

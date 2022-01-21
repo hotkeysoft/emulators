@@ -166,6 +166,27 @@ namespace ui
 		}
 	}
 
+	void Overlay::ToggleCPUSpeed()
+	{
+		const emul::CPUSpeed currSpeed = m_pc->GetCPUSpeed();
+		const emul::Computer::CPUSpeeds& speeds = m_pc->GetCPUSpeeds();
+		emul::Computer::CPUSpeeds::const_iterator currIt = speeds.find(currSpeed);
+		if (currIt == speeds.end())
+		{
+			currIt = speeds.begin();
+		}
+		else
+		{
+			++currIt;
+			if (currIt == speeds.end())
+			{
+				currIt = speeds.begin();
+			}		
+		}
+		m_pc->SetCPUSpeed(*currIt);
+		UpdateSpeed();
+	}
+
 	void Overlay::OnClick(WidgetRef widget)
 	{
 		if (widget->GetId() == "floppy0")
@@ -183,6 +204,10 @@ namespace ui
 		else if (widget->GetId() == "eject1")
 		{
 			LoadDiskImage(1, m_floppy1, "B:", true);
+		}
+		else if (widget->GetId() == "speed")
+		{
+			ToggleCPUSpeed();
 		}
 	}
 
