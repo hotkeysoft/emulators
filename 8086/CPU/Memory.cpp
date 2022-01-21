@@ -1,4 +1,7 @@
 #include "Memory.h"
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace emul
 {
@@ -229,8 +232,9 @@ namespace emul
 			blockJson["type"] = block->GetType();
 
 			std::string fileName = "memory_" + block->GetId() + ".bin";
-			std::string path = GetSerializationDir() + fileName;
-			block->Dump(0, block->GetSize(), path.c_str());
+			fs::path path = GetSerializationDir();
+			path.append(fileName);
+			block->Dump(0, block->GetSize(), path.string().c_str());
 			blockJson["file"] = fileName;
 
 			blocks[block->GetId()] = blockJson;
@@ -267,10 +271,9 @@ namespace emul
 				return;
 			}
 
-
-			std::string path = GetSerializationDir() + fileName;
-			dest->LoadFromFile(path.c_str());
-
+			fs::path path = GetSerializationDir();
+			path.append(fileName);
+			dest->LoadFromFile(path.string().c_str());
 		}
 	}
 }

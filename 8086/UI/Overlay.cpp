@@ -136,6 +136,14 @@ namespace ui
 		m_mainWnd->SetText(m_pc->GetName());
 		UpdateSpeed();
 
+		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
+		LogPrintf(LOG_INFO, "Snapshot base directory is [%s]", m_snapshotBaseDirectory.string().c_str());
+		if (!GetLastSnapshotDirectory(m_lastSnapshotDir))
+		{
+			m_lastSnapshotDir.clear();
+		}
+		UpdateSnapshot();
+
 		return true;
 	}
 
@@ -145,6 +153,19 @@ namespace ui
 		emul::CPUSpeed speed = m_pc->GetCPUSpeed();
 		sprintf(speedStr, "%5.2fMHz", speed.GetSpeed() / 1000000.0f);
 		m_speed->SetText(speedStr);
+	}
+
+	void Overlay::UpdateSnapshot()
+	{
+		if (m_lastSnapshotDir.empty())
+		{
+			m_snapshot->SetText("");
+		}
+		else
+		{
+			std::string name = GetSnapshotName(m_lastSnapshotDir);
+			m_snapshot->SetText(name.c_str());
+		}
 	}
 
 	bool Overlay::Update()
@@ -200,30 +221,34 @@ namespace ui
 		UpdateSpeed();
 	}
 
-	void Overlay::SaveSnapshot(const std::string& snapshotDir)
+	void Overlay::SaveSnapshot(const fs::path& snapshotDir)
 	{
 		json j;
 		j["core"]["arch"] = Config::Instance().GetValueStr("core", "arch");
 		j["core"]["baseram"] = Config::Instance().GetValueInt32("core", "baseram", 640);
 
-		m_pc->SetSerializationDir(snapshotDir.c_str());
+		m_pc->SetSerializationDir(snapshotDir);
 		m_pc->Serialize(j);
 
-		std::string outFile(snapshotDir);
-		outFile += "computer.json";
-		std::ofstream outStream(outFile);
+		fs::path outFile = snapshotDir;
+		outFile.append("computer.json");
+
+		std::ofstream outStream(outFile.string());
 		outStream << std::setw(4) << j;
 
-		LogPrintf(LOG_INFO, "SaveSnapshot: Saved to [%s]\n", outFile.c_str());
+		LogPrintf(LOG_INFO, "SaveSnapshot: Saved to [%s]\n", outFile.string().c_str());
+
+		m_lastSnapshotDir = snapshotDir;
+		UpdateSnapshot();
 	}
 
-	void Overlay::RestoreSnapshot(const std::string& snapshotDir)
+	void Overlay::RestoreSnapshot(const fs::path& snapshotDir)
 	{
-		std::string inFile(snapshotDir);
-		inFile += "computer.json";
+		fs::path inFile = snapshotDir;
+		inFile.append("computer.json");
 		std::ifstream inStream(inFile);
 
-		LogPrintf(LOG_INFO, "RestoreSnapshot: Read from [%s]\n", inFile.c_str());
+		LogPrintf(LOG_INFO, "RestoreSnapshot: Read from [%s]\n", inFile.string().c_str());
 
 		if (!inStream)
 		{
@@ -260,12 +285,13 @@ namespace ui
 			return;
 		}
 
-		m_pc->SetSerializationDir(snapshotDir.c_str());
+		m_pc->SetSerializationDir(snapshotDir);
 		m_pc->Deserialize(j);
 	}
 
 	bool Overlay::GetSnapshotBaseDirectory(fs::path& baseDir)
 	{
+		baseDir.clear();
 		fs::path path = Config::Instance().GetValueStr("dirs", "snapshot", "./snapshots");
 
 		if (!fs::is_directory(fs::status(path)))
@@ -278,12 +304,12 @@ namespace ui
 		return true;
 	}
 
-	bool Overlay::MakeSnapshotDirectory(std::string& dir)
+	bool Overlay::MakeSnapshotDirectory(fs::path& dir)
 	{
-		fs::path path;
-		if (!GetSnapshotBaseDirectory(path))
+		fs::path path = m_snapshotBaseDirectory;
+		if (path.empty())
 		{
-			return false;
+			LogPrintf(LOG_ERROR, "MakeSnapshotDirectory: Base directory not set");
 		}
 
 		char buf[64];
@@ -296,27 +322,26 @@ namespace ui
 			return false;
 		}
 
-		dir = fs::absolute(path).string();
-		dir += fs::path::preferred_separator;
+		dir = fs::absolute(path);
 		return true;
 	}
 
-	bool Overlay::GetLastSnapshotDirectory(std::string& snapshotDir)
+	bool Overlay::GetLastSnapshotDirectory(fs::path& snapshotDir)
 	{
-		snapshotDir = "";
+		snapshotDir.clear();
 
-		fs::path path;
-		if (!GetSnapshotBaseDirectory(path))
+		fs::path path = m_snapshotBaseDirectory;
+		if (path.empty())
 		{
-			return false;
+			LogPrintf(LOG_ERROR, "GetLastSnapshotDirectory: Base directory not set");
 		}
 
-		std::set<std::string> snapshots;
+		std::set<fs::path> snapshots;
 		for (auto const& entry : std::filesystem::directory_iterator(path))
 		{
 			if (entry.is_directory())
 			{
-				snapshots.insert(entry.path().string());
+				snapshots.insert(entry.path());
 			}
 		}
 
@@ -327,8 +352,23 @@ namespace ui
 
 		// Last one = more recent
 		snapshotDir = *(snapshots.rbegin());
-		snapshotDir += fs::path::preferred_separator;
 		return true;
+	}
+
+	std::string Overlay::GetSnapshotName(const fs::path& snapshotDir)
+	{
+		std::string name = snapshotDir.filename().string();
+
+		time_t value;
+		if (sscanf(name.c_str(), "snap-%zu", &value) == 1)
+		{
+			char buf[128];
+			struct tm* local = localtime(&value);
+			strftime(buf, sizeof(buf), "%c", local);
+			name = buf;
+		}
+
+		return name;
 	}
 
 	void Overlay::OnClick(WidgetRef widget)
@@ -355,7 +395,7 @@ namespace ui
 		}
 		else if (widget->GetId() == "saveSnapshot")
 		{
-			std::string snapshotDir;
+			fs::path snapshotDir;
 			if (MakeSnapshotDirectory(snapshotDir))
 			{
 				SaveSnapshot(snapshotDir);
@@ -363,10 +403,10 @@ namespace ui
 		}
 		else if (widget->GetId() == "loadSnapshot")
 		{
-			std::string snapshotDir;
+			fs::path snapshotDir;
 			GetLastSnapshotDirectory(snapshotDir);
 
-			if (snapshotDir.size())
+			if (!snapshotDir.empty())
 			{
 				RestoreSnapshot(snapshotDir);
 			}

@@ -2,5 +2,5 @@
 
 namespace emul
 {
-	std::string Serializable::m_serializationDir;
+	std::filesystem::path Serializable::m_serializationDir;
 }

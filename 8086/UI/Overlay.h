@@ -19,6 +19,7 @@ namespace ui
 		bool Update();
 
 		void UpdateSpeed();
+		void UpdateSnapshot();
 
 		// video::Renderer
 		virtual void Render() override;
@@ -33,15 +34,18 @@ namespace ui
 		void ToggleCPUSpeed();
 
 		// TODO: Should be in separate class so it can be used by others
-		bool MakeSnapshotDirectory(std::string& dir);
+		bool MakeSnapshotDirectory(std::filesystem::path& dir);
 		bool GetSnapshotBaseDirectory(std::filesystem::path& baseDir);
-		bool GetLastSnapshotDirectory(std::string& snapshotDir);
-		void SaveSnapshot(const std::string& snapshotDir);
-		void RestoreSnapshot(const std::string& snapshotDir);
+		bool GetLastSnapshotDirectory(std::filesystem::path& snapshotDir);
+		void SaveSnapshot(const std::filesystem::path& snapshotDir);
+		void RestoreSnapshot(const std::filesystem::path& snapshotDir);
+		std::string GetSnapshotName(const std::filesystem::path& snapshotDir);
 
 		std::string m_title = "PC";
 
 		emul::Computer* m_pc = nullptr;
+		std::filesystem::path m_snapshotBaseDirectory;
+		std::filesystem::path m_lastSnapshotDir;
 
 		// UI Elements
 		CoreUI::WindowPtr m_mainWnd;

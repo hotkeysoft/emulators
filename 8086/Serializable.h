@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include <json.hpp>
 using json = nlohmann::json;
 
@@ -17,11 +19,11 @@ namespace emul
 		virtual void Serialize(json& to) = 0;
 		virtual void Deserialize(json& from) = 0;
 
-		static std::string GetSerializationDir() { return m_serializationDir; }
-		static void SetSerializationDir(const char* dir) { m_serializationDir = dir; }
+		static std::filesystem::path GetSerializationDir() { return m_serializationDir; }
+		static void SetSerializationDir(std::filesystem::path dir) { m_serializationDir = dir; }
 		
 	protected:
-		static std::string m_serializationDir;
+		static std::filesystem::path m_serializationDir;
 	};
 }
 
