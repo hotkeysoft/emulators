@@ -26,6 +26,8 @@ namespace fdc
 
 		void WriteDigitalOutputReg(BYTE value);
 
+		virtual bool IsActive(BYTE drive) override { return m_dor.motor[drive]; };
+
 	protected:
 
 		virtual void SetDMAPending() override { m_dmaPending = m_dor.irqDMAEnabled; }

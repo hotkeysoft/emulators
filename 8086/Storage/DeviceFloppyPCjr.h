@@ -30,6 +30,9 @@ namespace fdc
 
 		bool IsWatchdogInterrupt() { return m_dor.wdEnable && (m_wd.counter == 0); }
 
+		// TODO
+		virtual bool IsActive(BYTE drive) override { return false; };
+
 	protected:
 
 		enum DOR

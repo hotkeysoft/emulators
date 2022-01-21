@@ -35,6 +35,8 @@ namespace fdc
 		bool LoadDiskImage(BYTE drive, const char* path);
 		bool SaveDiskImage(BYTE drive, const char* path);
 
+		virtual bool IsActive(BYTE drive) = 0;
+
 		size_t DelayToTicks(size_t delayMS);
 
 		BYTE ReadMainStatusReg();
