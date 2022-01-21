@@ -72,6 +72,26 @@ namespace ui
 		return true;
 	}
 
+	void HardDriveLED::Update(bool active)
+	{
+		m_active = active;
+		if (active)
+		{
+			m_cooldown = HardDriveLED::CooldownTime;
+			m_lastActive = true;
+		}
+		else if (m_lastActive) // 1->0
+		{
+			m_active = true;
+			--m_cooldown;
+			if (m_cooldown == 0)
+			{
+				m_active = false;
+				m_lastActive = false;
+			}
+		}
+	}
+
 	Overlay::Overlay() : Logger("GUI")
 	{
 	}
@@ -114,14 +134,14 @@ namespace ui
 
 		if (m_pc->GetFloppy())
 		{
-			m_floppy0 = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
-			m_eject0 = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
-			UpdateFloppy(0, m_floppy0, "A:");
+			m_floppy[0] = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
+			m_eject[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
+			UpdateFloppy(0, "A:");
 			toolbar->AddSeparator();
 
-			m_floppy1 = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
-			m_eject1 = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
-			UpdateFloppy(1, m_floppy1, "B:");
+			m_floppy[1] = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
+			m_eject[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
+			UpdateFloppy(1, "B:");
 			toolbar->AddSeparator();
 
 			toolbar->AddSeparator();
@@ -129,11 +149,11 @@ namespace ui
 
 		if (m_pc->GetHardDrive())
 		{
-			m_hdd0 = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
-			UpdateHardDisk(0, m_hdd0, "C:");
+			m_hdd[0] = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
+			UpdateHardDisk(0, "C:");
 
-			m_hdd1 = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
-			UpdateHardDisk(1, m_hdd0, "D:");
+			m_hdd[1] = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
+			UpdateHardDisk(1, "D:");
 
 			toolbar->AddSeparator();
 			toolbar->AddSeparator();
@@ -144,8 +164,8 @@ namespace ui
 		toolbar->AddSeparator();
 		toolbar->AddSeparator();
 
-		m_snapshot = toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
-		toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
+		toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
+		m_snapshot = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
 
 		m_mainWnd->SetToolbar(toolbar);
 		m_mainWnd->SetText(m_pc->GetName());
@@ -183,7 +203,7 @@ namespace ui
 		}
 	}
 
-	void Overlay::UpdateFloppy(BYTE drive, ToolbarItemPtr toolbarItem, const char* path)
+	void Overlay::UpdateFloppy(BYTE drive, const char* path)
 	{
 		auto image = m_pc->GetFloppy()->GetImageInfo(drive);
 
@@ -200,10 +220,10 @@ namespace ui
 			label = os.str();
 		}
 
-		toolbarItem->SetText(label.c_str());
+		m_floppy[drive]->SetText(label.c_str());
 	}
 
-	void Overlay::UpdateHardDisk(BYTE drive, ToolbarItemPtr toolbarItem, const char* path)
+	void Overlay::UpdateHardDisk(BYTE drive, const char* path)
 	{
 
 	}
@@ -212,14 +232,19 @@ namespace ui
 	{
 		if (m_pc->GetFloppy())
 		{
-			m_floppy0->SetImage(m_pc->GetFloppy()->IsActive(0) ? m_floppyActive : m_floppyInactive);
-			m_floppy1->SetImage(m_pc->GetFloppy()->IsActive(1) ? m_floppyActive : m_floppyInactive);
+			for (int i = 0; i < 2; ++i)
+			{
+				m_floppy[i]->SetImage(m_pc->GetFloppy()->IsActive(i) ? m_floppyActive : m_floppyInactive);
+			}
 		}
 
 		if (m_pc->GetHardDrive())
 		{
-			m_hdd0->SetImage(m_pc->GetHardDrive()->IsActive(0) ? m_hddActive : m_hddInactive);
-			m_hdd1->SetImage(m_pc->GetHardDrive()->IsActive(1) ? m_hddActive : m_hddInactive);
+			for (int i = 0; i < 2; ++i)
+			{
+				m_hardDriveLEDs[i].Update(m_pc->GetHardDrive()->IsActive(i));
+				m_hdd[i]->SetImage(m_hardDriveLEDs[i].GetStatus() ? m_hddActive : m_hddInactive);
+			}	
 		}
 
 		return true;
@@ -231,7 +256,7 @@ namespace ui
 		WINMGR().Draw();
 	}
 
-	void Overlay::LoadDiskImage(BYTE drive, ToolbarItemPtr toolbarItem, const char* str, bool eject)
+	void Overlay::LoadDiskImage(BYTE drive, const char* str, bool eject)
 	{
 		if (!m_pc->GetFloppy())
 		{
@@ -247,7 +272,7 @@ namespace ui
 		{
 			m_pc->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
 		}
-		UpdateFloppy(drive, toolbarItem, str);
+		UpdateFloppy(drive, str);
 	}
 
 	void Overlay::ToggleCPUSpeed()
@@ -425,19 +450,19 @@ namespace ui
 	{
 		if (widget->GetId() == "floppy0")
 		{
-			LoadDiskImage(0, m_floppy0, "A:");
+			LoadDiskImage(0, "A:");
 		}
 		else if (widget->GetId() == "floppy1")
 		{
-			LoadDiskImage(1, m_floppy1, "B:");
+			LoadDiskImage(1, "B:");
 		}
 		if (widget->GetId() == "eject0")
 		{
-			LoadDiskImage(0, m_floppy0, "A:", true);
+			LoadDiskImage(0, "A:", true);
 		}
 		else if (widget->GetId() == "eject1")
 		{
-			LoadDiskImage(1, m_floppy1, "B:", true);
+			LoadDiskImage(1, "B:", true);
 		}
 		else if (widget->GetId() == "speed")
 		{

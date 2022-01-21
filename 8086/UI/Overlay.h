@@ -10,6 +10,21 @@
 
 namespace ui
 {
+	// Adds some hysteresis so the light is visible
+	class HardDriveLED
+	{
+	public:
+		void Update(bool active);
+		bool GetStatus() const { return m_active; }
+
+	private:
+		static const int CooldownTime = 100000;
+
+		bool m_active = false;
+		bool m_lastActive = false;
+		int m_cooldown = CooldownTime;
+	};
+
 	class Overlay : public Logger, public video::Renderer, public events::EventHandler
 	{
 	public:
@@ -29,10 +44,10 @@ namespace ui
 
 		void UpdateSpeed();
 		void UpdateSnapshot();
-		void UpdateFloppy(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* letter);
-		void UpdateHardDisk(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* letter);
+		void UpdateFloppy(BYTE drive, const char* letter);
+		void UpdateHardDisk(BYTE drive, const char* letter);
 
-		void LoadDiskImage(BYTE drive, CoreUI::ToolbarItemPtr toolbarItem, const char* str, bool eject = false);
+		void LoadDiskImage(BYTE drive, const char* str, bool eject = false);
 		void ToggleCPUSpeed();
 
 		// TODO: Should be in separate class so it can be used by others
@@ -49,20 +64,17 @@ namespace ui
 		std::filesystem::path m_snapshotBaseDirectory;
 		std::filesystem::path m_lastSnapshotDir;
 
+		HardDriveLED m_hardDriveLEDs[2];
+
 		// UI Elements
 		CoreUI::WindowPtr m_mainWnd;
 
 		CoreUI::RendererRef m_renderer = nullptr;
 		CoreUI::MainWindowRef m_window = nullptr;
 
-		CoreUI::ToolbarItemPtr m_floppy0;
-		CoreUI::ToolbarItemPtr m_floppy1;
-
-		CoreUI::ToolbarItemPtr m_eject0;
-		CoreUI::ToolbarItemPtr m_eject1;
-
-		CoreUI::ToolbarItemPtr m_hdd0;
-		CoreUI::ToolbarItemPtr m_hdd1;
+		CoreUI::ToolbarItemPtr m_floppy[2];
+		CoreUI::ToolbarItemPtr m_eject[2];
+		CoreUI::ToolbarItemPtr m_hdd[2];
 
 		CoreUI::ToolbarItemPtr m_speed;
 		CoreUI::ToolbarItemPtr m_snapshot;
