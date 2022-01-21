@@ -50,6 +50,7 @@ namespace ui
 		CoreUI::ToolbarItemPtr m_hdd1;
 
 		CoreUI::ToolbarItemPtr m_speed;
+		CoreUI::ToolbarItemPtr m_snapshot;
 
 		CoreUI::ImageRef m_floppyInactive = nullptr;
 		CoreUI::ImageRef m_floppyActive = nullptr;

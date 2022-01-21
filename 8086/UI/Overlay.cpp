@@ -103,21 +103,25 @@ namespace ui
 
 		m_floppy0 = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
 		m_eject0 = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
+
 		toolbar->AddSeparator();
 
 		m_floppy1 = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
 		m_eject1 = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
+
 		toolbar->AddSeparator();
 
 		m_hdd0 = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
 		m_hdd1 = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
+
 		toolbar->AddSeparator();
 
 		m_speed = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
-		
-		//toolbar->AddToolbarItem("gamepad", RES().FindImage("toolbar", 2));
-		//toolbar->AddSeparator();
-		//toolbar->AddToolbarItem("speaker", RES().FindImage("toolbar", 3));
+
+		toolbar->AddSeparator();
+
+		m_snapshot = toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
+		toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
 
 		m_mainWnd->SetToolbar(toolbar);
 		m_mainWnd->SetText(m_pc->GetName());
