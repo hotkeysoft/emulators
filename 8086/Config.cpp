@@ -26,9 +26,9 @@ namespace cfg
 		m_config.clear();
 		m_config.parse(is);
 
-		for (auto it = m_config.errors.begin(); it != m_config.errors.end(); ++it)
+		for (auto error : m_config.errors)
 		{
-			LogPrintf(LOG_WARNING, "Parsing error: [%s]", it->c_str());
+			LogPrintf(LOG_WARNING, "Parsing error: [%s]", error.c_str());
 		}
 
 		return true;

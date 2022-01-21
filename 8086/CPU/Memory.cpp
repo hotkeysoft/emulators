@@ -210,9 +210,8 @@ namespace emul
 
 	MemoryBlock* Memory::FindBlock(const char* id) const
 	{
-		for (auto it = m_blocks.begin(); it != m_blocks.end(); ++it)
+		for (const auto block : m_blocks)
 		{
-			const auto block = *it;
 			if (block->GetId() == id)
 			{
 				return block;
@@ -224,9 +223,8 @@ namespace emul
 	void Memory::Serialize(json& to)
 	{
 		json blocks;
-		for (auto it = m_blocks.begin(); it != m_blocks.end(); ++it)
+		for (const auto block : m_blocks)
 		{
-			const auto block = *it;
 			json blockJson;
 			blockJson["size"] = block->GetSize();
 			blockJson["type"] = block->GetType();
@@ -246,10 +244,11 @@ namespace emul
 	void Memory::Deserialize(json& from)
 	{
 		json blocks = from["blocks"];
-		for (json::iterator it = blocks.begin(); it != blocks.end(); ++it)
+		for (auto& block : blocks.items())
 		{
-			std::string id = it.key();
-			json source = it.value();
+			
+			std::string id = block.key();
+			json source = block.value();
 			DWORD size = source["size"];
 			MemoryType type = source["type"];
 			std::string fileName = source["file"];

@@ -6,26 +6,26 @@ namespace emul
 	{
 		InputPortMap& inputs = ports.GetInputPorts();
 
-		for (InputPortMap::iterator it = inputs.begin(); it != inputs.end(); ++it)
+		for (const auto& input : inputs)
 		{
-			if (m_inputPorts.find(it->first) != m_inputPorts.end())
+			if (m_inputPorts.find(input.first) != m_inputPorts.end())
 			{
-				LogPrintf(LOG_ERROR, "Input Port 0x%04X already exists\n", it->first);
+				LogPrintf(LOG_ERROR, "Input Port 0x%04X already exists\n", input.first);
 			}
 
-			m_inputPorts[it->first] = it->second;
+			m_inputPorts[input.first] = input.second;
 		}
 
 		OutputPortMap& outputs = ports.GetOutputPorts();
 
-		for (OutputPortMap::iterator it = outputs.begin(); it != outputs.end(); ++it)
+		for (const auto& output : outputs)
 		{
-			if (m_outputPorts.find(it->first) != m_outputPorts.end())
+			if (m_outputPorts.find(output.first) != m_outputPorts.end())
 			{
-				LogPrintf(LOG_ERROR, "Output Port 0x%04X already exists\n", it->first);
+				LogPrintf(LOG_ERROR, "Output Port 0x%04X already exists\n", output.first);
 			}
 
-			m_outputPorts[it->first] = it->second;
+			m_outputPorts[output.first] = output.second;
 		}
 	}
 }
