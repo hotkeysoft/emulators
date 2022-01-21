@@ -48,7 +48,8 @@ namespace emul
 		
 		Memory& GetMemory() { return m_memory; }
 		beeper::DevicePCSpeaker& GetSound() { return m_pcSpeaker; } // TODO: Sound interface
-		virtual fdc::DeviceFloppy& GetFloppy() { return *m_floppy; }
+		fdc::DeviceFloppy* GetFloppy() { return m_floppy; }
+		hdd::DeviceHardDrive* GetHardDrive() { return m_hardDrive; }
 		virtual kbd::DeviceKeyboard& GetKeyboard() = 0;
 		video::Video& GetVideo() { return *m_video; }
 		events::InputEvents& GetInputs() { return *m_inputs; }

@@ -1,5 +1,7 @@
 #include "Overlay.h"
 #include "../Config.h"
+#include "../Storage/DeviceFloppy.h"
+#include "../Storage/DeviceHardDrive.h"
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -110,20 +112,26 @@ namespace ui
 		m_hddInactive = RES().FindImage("toolbar", 1);
 		m_hddActive = RES().FindImage("toolbar", 5);
 
-		m_floppy0 = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
-		m_eject0 = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
+		if (m_pc->GetFloppy())
+		{
+			m_floppy0 = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
+			m_eject0 = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
 
-		toolbar->AddSeparator();
+			toolbar->AddSeparator();
 
-		m_floppy1 = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
-		m_eject1 = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
+			m_floppy1 = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
+			m_eject1 = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
 
-		toolbar->AddSeparator();
+			toolbar->AddSeparator();
+		}
 
-		m_hdd0 = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
-		m_hdd1 = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
+		if (m_pc->GetHardDrive())
+		{
+			m_hdd0 = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
+			m_hdd1 = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
 
-		toolbar->AddSeparator();
+			toolbar->AddSeparator();
+		}
 
 		m_speed = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
 
@@ -170,8 +178,18 @@ namespace ui
 
 	bool Overlay::Update()
 	{
-		m_floppy0->SetImage(m_pc->GetFloppy().IsActive(0) ? m_floppyActive : m_floppyInactive);
-		m_floppy1->SetImage(m_pc->GetFloppy().IsActive(1) ? m_floppyActive : m_floppyInactive);
+		if (m_pc->GetFloppy())
+		{
+			m_floppy0->SetImage(m_pc->GetFloppy()->IsActive(0) ? m_floppyActive : m_floppyInactive);
+			m_floppy1->SetImage(m_pc->GetFloppy()->IsActive(1) ? m_floppyActive : m_floppyInactive);
+		}
+
+		if (m_pc->GetHardDrive())
+		{
+			m_hdd0->SetImage(m_pc->GetHardDrive()->IsActive(0) ? m_hddActive : m_hddInactive);
+			m_hdd1->SetImage(m_pc->GetHardDrive()->IsActive(1) ? m_hddActive : m_hddInactive);
+		}
+
 		return true;
 	}
 
@@ -183,11 +201,15 @@ namespace ui
 
 	void Overlay::LoadDiskImage(BYTE drive, ToolbarItemPtr toolbarItem, const char* str, bool eject)
 	{
+		if (!m_pc->GetFloppy())
+		{
+			return;
+		}
 		fs::path diskImage;
 
 		if (eject)
 		{
-			m_pc->GetFloppy().ClearDiskImage(drive);
+			m_pc->GetFloppy()->ClearDiskImage(drive);
 			toolbarItem->SetText(str);
 		}
 		else if (SelectFile(diskImage, GetHWND(m_window)))
@@ -195,7 +217,7 @@ namespace ui
 			std::string label = str;
 			label += " ";
 			label += diskImage.filename().string();
-			m_pc->GetFloppy().LoadDiskImage(drive, diskImage.string().c_str());
+			m_pc->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
 			toolbarItem->SetText(label.c_str());
 		}
 	}

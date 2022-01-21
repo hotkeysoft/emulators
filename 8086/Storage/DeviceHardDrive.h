@@ -32,6 +32,8 @@ namespace hdd
 
 		void CommandExecutionDone();
 
+		bool IsActive(BYTE drive) { return m_commandBusy && (m_currDrive == drive); }
+
 		bool LoadDiskImage(BYTE drive, BYTE type, const char* path);
 
 		size_t DelayToTicks(size_t delayMS);
