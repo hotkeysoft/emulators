@@ -70,6 +70,7 @@ namespace emul
 
 	void ComputerPCjr::Init(WORD baseRAM)
 	{
+		AddCPUSpeed(CPUSpeed(PIT_CLK, 3));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
 
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
