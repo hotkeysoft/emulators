@@ -13,9 +13,9 @@ namespace beeper
 	{
 		assert(emul::IsPowerOf2(bufferSize));
 
-		m_bufSilence = new int8_t[m_bufferSize];
-		m_bufPlaying = new int8_t[m_bufferSize];
-		m_bufStaging = new int8_t[m_bufferSize];
+		m_bufSilence = new int16_t[m_bufferSize];
+		m_bufPlaying = new int16_t[m_bufferSize];
+		m_bufStaging = new int16_t[m_bufferSize];
 
 		Reset();
 	}
@@ -57,11 +57,11 @@ namespace beeper
 		DevicePCSpeaker* This = (DevicePCSpeaker*)(userData);
 		const SDL_AudioSpec& spec = This->GetAudioSpec();
 
-		assert(length == spec.samples); // 8 bit mono, should match 1 to 1
+		assert(length == spec.samples);
 
 		const uint8_t* source = (const uint8_t*)This->GetPlayingBuffer();
 
-		memset(stream, 0, length);
+		memset(stream, 0, length * sizeof(uint16_t));
 		SDL_MixAudioFormat(stream, source, spec.format, length, This->GetMasterVolume());
 		if (This->IsStagingFull())
 		{
@@ -73,7 +73,7 @@ namespace beeper
 	{
 		SDL_AudioSpec want;
 		want.freq = 44100;
-		want.format = AUDIO_S8;
+		want.format = AUDIO_S16;
 		want.channels = 1;
 		want.samples = m_bufferSize;
 		want.callback = &AudioCallback;
@@ -94,7 +94,7 @@ namespace beeper
 	void DevicePCSpeaker::MoveToPlayingBuffer()
 	{
 		SDL_LockAudio();
-		memcpy(m_bufPlaying, m_bufStaging, m_bufferSize);
+		memcpy(m_bufPlaying, m_bufStaging, m_bufferSize * sizeof(uint16_t));
 		SDL_UnlockAudio();
 	}
 
@@ -103,9 +103,9 @@ namespace beeper
 		static int sample = 0;
 		static int32_t avg = 0;
 
-		// temp hack, avg 27 samples
-		// possibly 4 incoming channels + this one, max possible value = 255*5, 
-		// must divide again by 5 to scale down
+		// temp hack, "average" 27 samples
+		// possibly 4 incoming channels + this one, max possible value = 255*5 = 34425
+		// could clip with 4 channels + pc speaker full blast but very unlikely
 		BYTE speakerData = (m_8255->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 128 : 0;
 		if (m_outputFile) fputc(speakerData, m_outputFile);
 		avg += speakerData;
@@ -113,9 +113,6 @@ namespace beeper
 		++sample;
 		if (sample == 27)
 		{
-			avg /= (27 * 5 * 2); // Average
-			//avg -= 127; // Center around zero
-
 			if (IsStagingFull())
 			{
 				MoveToPlayingBuffer();
