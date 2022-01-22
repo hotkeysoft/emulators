@@ -50,6 +50,9 @@ namespace video
 
 	void Video::Init(emul::Memory*, const char*, BYTE border, bool forceMono)
 	{
+		//TODO
+		const int overlayHeight = 64;
+
 		m_sdlBorderPixels = border;
 		m_sdlHBorder = border;
 		m_sdlVBorder = (BYTE)(border / m_vScale);
@@ -66,7 +69,7 @@ namespace video
 
 		SDL_CreateWindowAndRenderer(
 			(int)((m_sdlWidth + (2 * border)) * scale),
-			(int)(((m_sdlHeight * m_vScale) + (2 * border)) * scale),
+			(int)(((m_sdlHeight * m_vScale) + border) * scale + overlayHeight),
 			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0,
 			&m_sdlWindow,
 			&m_sdlRenderer);

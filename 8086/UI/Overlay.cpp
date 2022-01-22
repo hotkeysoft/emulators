@@ -249,7 +249,7 @@ namespace ui
 
 	void Overlay::UpdateTurbo()
 	{
-		m_turboButton->SetBackgroundColor(m_turbo ? Color(174, 7, 0) : Color::C_LIGHT_GREY);
+		m_turboButton->SetBackgroundColor(m_turbo ? Color(255, 0, 0) : Color::C_LIGHT_GREY);
 	}
 
 	bool Overlay::Update()
