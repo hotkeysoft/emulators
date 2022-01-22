@@ -219,7 +219,7 @@ namespace ui
 		if (image.loaded)
 		{
 			std::ostringstream os(path);
-			os << image.path.filename().string()
+			os << image.path.stem().string()
 				<< " ["
 				<< image.geometry.name
 				<< "]";
@@ -238,7 +238,7 @@ namespace ui
 		if (image.loaded)
 		{
 			std::ostringstream os(path);
-			os << image.path.filename().string()
+			os << image.path.stem().string()
 				<< " ["
 				<< std::fixed << std::setprecision(1) << (image.geometry.GetImageSize() / 1048576.0)
 				<< "MB]";
@@ -270,7 +270,7 @@ namespace ui
 			{
 				m_hardDriveLEDs[i].Update(m_pc->GetHardDrive()->IsActive(i));
 				m_hddButton[i]->SetImage(m_hardDriveLEDs[i].GetStatus() ? m_hddActive : m_hddInactive);
-			}	
+			}
 		}
 
 		return true;

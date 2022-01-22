@@ -18,7 +18,7 @@ namespace ui
 		bool GetStatus() const { return m_active; }
 
 	private:
-		static const int CooldownTime = 100000;
+		static const int CooldownTime = 500000;
 
 		bool m_active = false;
 		bool m_lastActive = false;
