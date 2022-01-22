@@ -1,5 +1,6 @@
 #include "PortConnector.h"
 #include "PortAggregator.h"
+#include "../Config.h"
 
 namespace emul
 {
@@ -54,7 +55,9 @@ namespace emul
 		auto it = m_inputPorts.find(port);
 		if (it == m_inputPorts.end())
 		{
+#ifdef _DEBUG
 			LogPrintf(LOG_WARNING, "PortConnector::In: port 0x%04X not allocated", port);
+#endif
 			value = 0xFF;
 			return false;
 		}
@@ -72,7 +75,9 @@ namespace emul
 		auto it = m_outputPorts.find(port);
 		if (it == m_outputPorts.end())
 		{
+#ifdef _DEBUG
 			LogPrintf(LOG_WARNING, "PortConnector::Out(0x%04X, 0x%02X): port not allocated", port, value);
+#endif
 			return false;
 		}
 
