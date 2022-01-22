@@ -5,6 +5,8 @@
 #include <Logger.h>
 #include <vector>
 #include <deque>
+#include <filesystem>
+#include <assert.h>
 
 using emul::PortConnector;
 using emul::WORD;
@@ -12,6 +14,39 @@ using emul::BYTE;
 
 namespace hdd
 {
+	struct Geometry
+	{
+		const char* name;
+		BYTE head;
+		WORD cyl;
+		BYTE sect;
+
+		uint32_t GetImageSize() const { return 512 * head * cyl * sect; }
+		uint32_t CHS2A(WORD c, BYTE h, BYTE s) const { return 512 * ((c * head + h) * sect + s); }
+	};
+
+	class HardDisk
+	{
+	public:
+		~HardDisk() { Clear(); }
+		void Clear()
+		{
+			path.clear();
+			loaded = false;
+
+			if (data)
+			{
+				fclose(data);
+				data = nullptr;
+			}
+		}
+
+		std::filesystem::path path;
+		bool loaded = false;
+		Geometry geometry;
+		FILE* data = nullptr;
+	};
+
 	class DeviceHardDrive : public PortConnector
 	{
 
@@ -35,6 +70,8 @@ namespace hdd
 		bool IsActive(BYTE drive) { return m_commandBusy && (m_currDrive == drive); }
 
 		bool LoadDiskImage(BYTE drive, BYTE type, const char* path);
+
+		const HardDisk& GetImageInfo(BYTE drive) { assert(drive < 2); return m_images[drive]; }
 
 		size_t DelayToTicks(size_t delayMS);
 
@@ -289,17 +326,6 @@ namespace hdd
 			{ CMD::WRITE_LONG,        { "Write Long",            5,  &DeviceHardDrive::NotImplemented } }
 		};
 
-		struct Geometry
-		{
-			const char* name;
-			BYTE head;
-			WORD cyl;
-			BYTE sect;
-
-			uint32_t GetImageSize() const { return 512 * head * cyl * sect; }
-			uint32_t CHS2A(WORD c, BYTE h, BYTE s) const { return 512 * ((c * head + h) * sect + s); }
-		};
-
 		typedef std::map<BYTE, Geometry> Geometries;
 		const Geometries m_geometries = {
 			// IBM/XEBEC BIOS
@@ -328,12 +354,7 @@ namespace hdd
 			{ 33,{ "Type 33 (33MB)", 4, 1000, 17 } },
 		};
 
-		struct HardDisk
-		{
-			bool loaded = false;
-			Geometry geometry;
-			FILE* data = nullptr;
-		} m_images[2];
+		HardDisk m_images[2];
 
 		BYTE m_sectorBuffer[512];
 	};

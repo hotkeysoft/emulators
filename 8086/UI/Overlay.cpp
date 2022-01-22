@@ -213,7 +213,7 @@ namespace ui
 
 	void Overlay::UpdateFloppy(BYTE drive, const char* path)
 	{
-		auto image = m_pc->GetFloppy()->GetImageInfo(drive);
+		const auto& image = m_pc->GetFloppy()->GetImageInfo(drive);
 
 		std::string label = "[Empty]";
 		if (image.loaded)
@@ -233,7 +233,22 @@ namespace ui
 
 	void Overlay::UpdateHardDisk(BYTE drive, const char* path)
 	{
+		const auto& image = m_pc->GetHardDrive()->GetImageInfo(drive);
 
+		std::string label = "[Empty]";
+		if (image.loaded)
+		{
+			std::ostringstream os(path);
+			os << " "
+				<< image.path.filename().string()
+				<< " ["
+				<< std::fixed << std::setprecision(1) << (image.geometry.GetImageSize() / 1048576.0)
+				<< "MB]";
+
+			label = os.str();
+		}
+
+		m_hddButton[drive]->SetText(label.c_str());
 	}
 
 	void Overlay::UpdateTurbo()

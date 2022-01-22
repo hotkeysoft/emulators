@@ -49,14 +49,6 @@ namespace hdd
 			return false;
 		}
 
-		HardDisk& image = m_images[drive];
-		image.loaded = false;
-			if (image.data)
-			{
-				fclose(image.data);
-				image.data = nullptr;
-			}
-
 		LogPrintf(LOG_INFO, "LoadDiskImage: loading %s in drive %d", path, drive);
 
 		const auto it = m_geometries.find(type);
@@ -86,6 +78,9 @@ namespace hdd
 			return false;
 		}
 
+		HardDisk& image = m_images[drive];
+		image.Clear();
+		image.path = path;
 		image.loaded = true;
 		image.data = f;
 		image.geometry = geometry;
