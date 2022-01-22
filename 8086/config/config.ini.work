@@ -1,10 +1,8 @@
 [core]
 ; arch: type of computer: [pcjr, xt, tandy]
 ; baseram: amount of base RAM, in kb (64-640)
-; turbo: 0=lowest speed (default, usually 4.77MHz), 1=highest
 baseram=640
 arch=tandy
-turbo=1
 
 [video]
 ; mode: [cga, pcjr, tga (tandy), mda (mono), hgc (hercules mono)]
@@ -32,21 +30,17 @@ raw=
 volume=
 
 [floppy]
-; enable: 0=disable floppy controller
-; floppy.x: raw floppy disk image (auto-detect geometry 160/180/320/360/720/1.44)
-enable=1
+count=2
 floppy.1=
 floppy.2=
 
 [hdd]
-; enable: 0=disable hard disk controller
 ; rom: hdd controller rom image (default: data/hdd/WD1002S-WX2_62-000042-11.bin)
 ; hdd.x: [type],[image file]
 ;        where type=[20|33], (chs=[615|1000],4,17)
-enable=1
 rom=
 hdd.1=33,p:/floppy/c33-SIERRA1.img
-hdd.2=20,p:/floppy/c20-Games1.img
+hdd.2=20,p:/floppy/c20-Games4.img
 
 [debug]
 logfile=
@@ -55,18 +49,18 @@ customROMAddress=
 
 [loglevels]
 ; 0=off, 1=ERROR, 2=WARNING, 3=INFO, 4=DEBUG, 5=TRACE
-pc=3
+pc=2
 memory=0
 mmap=0
 pit=0
 pic=0
 ppi=0
 dma=0
-floppy=3
+floppy=0
 hdd=3
 uart=0
 keyboard=0
-video=0
+video=2
 sound=3
 sound.76489=0
 inputs=0

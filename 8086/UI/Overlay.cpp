@@ -132,18 +132,21 @@ namespace ui
 		m_hddInactive = RES().FindImage("toolbar", 1);
 		m_hddActive = RES().FindImage("toolbar", 5);
 
+		toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
+
+		toolbar->AddSeparator();
+		toolbar->AddSeparator();
+
 		if (m_pc->GetFloppy())
 		{
 			m_floppyButton[0] = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
 			m_ejectButton[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
 			UpdateFloppy(0, "A:");
-			toolbar->AddSeparator();
-
 			m_floppyButton[1] = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
 			m_ejectButton[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
 			UpdateFloppy(1, "B:");
-			toolbar->AddSeparator();
 
+			toolbar->AddSeparator();
 			toolbar->AddSeparator();
 		}
 
@@ -170,11 +173,6 @@ namespace ui
 
 		toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
 		m_snapshot = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
-
-		toolbar->AddSeparator();
-		toolbar->AddSeparator();
-
-		toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
 
 		m_mainWnd->SetToolbar(toolbar);
 		m_mainWnd->SetText(m_pc->GetName());
