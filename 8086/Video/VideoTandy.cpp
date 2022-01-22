@@ -140,12 +140,10 @@ namespace video
 
 		// For hi bw graphics modes the low order bit
 		// is cleared to align page on 32kb boundary
-		if (m_mode.graph640x200x4 || (false)/*TODO*/)
+		if (m_mode.graphics && m_mode.hiDotClock)
 		{
 			emul::SetBit(m_pageRegister.crtPage, 0, false);
 		}
-
-		// TODO? cpuPage: If an odd page number is selected (1, 3, 5) the window is reduced to 16K
 
 		switch (m_pageRegister.videoAddressMode)
 		{
@@ -313,7 +311,7 @@ namespace video
 		m_banks[0] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x0000);
 		m_banks[1] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
 
-		bool graph32K = (m_mode.hiDotClock && m_mode.graphics);
+		bool graph32K = m_mode.hiDotClock && m_mode.graphics;
 		m_banks[2] = graph32K ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x4000) : nullptr;
 		m_banks[3] = graph32K ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x6000) : nullptr;
 
