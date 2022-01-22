@@ -219,8 +219,7 @@ namespace ui
 		if (image.loaded)
 		{
 			std::ostringstream os(path);
-			os << " "
-				<< image.path.filename().string()
+			os << image.path.filename().string()
 				<< " ["
 				<< image.geometry.name
 				<< "]";
@@ -239,8 +238,7 @@ namespace ui
 		if (image.loaded)
 		{
 			std::ostringstream os(path);
-			os << " "
-				<< image.path.filename().string()
+			os << image.path.filename().string()
 				<< " ["
 				<< std::fixed << std::setprecision(1) << (image.geometry.GetImageSize() / 1048576.0)
 				<< "MB]";
@@ -284,12 +282,13 @@ namespace ui
 		WINMGR().Draw();
 	}
 
-	void Overlay::LoadDiskImage(BYTE drive, const char* str, bool eject)
+	void Overlay::LoadFloppyDiskImage(BYTE drive, const char* str, bool eject)
 	{
 		if (!m_pc->GetFloppy())
 		{
 			return;
 		}
+
 		fs::path diskImage;
 
 		if (eject)
@@ -301,6 +300,25 @@ namespace ui
 			m_pc->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
 		}
 		UpdateFloppy(drive, str);
+	}
+
+	void Overlay::LoadHardDiskImage(BYTE drive, const char* str)
+	{
+		if (!m_pc->GetHardDrive())
+		{
+			return;
+		}
+
+		fs::path diskImage;
+		if (SelectFile(diskImage, GetHWND(m_window)))
+		{
+			BYTE currImageType = m_pc->GetHardDrive()->GetImageInfo(drive).type;
+
+			// Assume same hdd type for now to simplify things.
+			// Incompatible images will be rejected
+			m_pc->GetHardDrive()->LoadDiskImage(drive, currImageType, diskImage.string().c_str());
+		}
+		UpdateHardDisk(drive, str);
 	}
 
 	void Overlay::ToggleCPUSpeed()
@@ -486,19 +504,27 @@ namespace ui
 	{
 		if (widget->GetId() == "floppy0")
 		{
-			LoadDiskImage(0, "A:");
+			LoadFloppyDiskImage(0, "A:");
 		}
 		else if (widget->GetId() == "floppy1")
 		{
-			LoadDiskImage(1, "B:");
+			LoadFloppyDiskImage(1, "B:");
 		}
 		if (widget->GetId() == "eject0")
 		{
-			LoadDiskImage(0, "A:", true);
+			LoadFloppyDiskImage(0, "A:", true);
 		}
 		else if (widget->GetId() == "eject1")
 		{
-			LoadDiskImage(1, "B:", true);
+			LoadFloppyDiskImage(1, "B:", true);
+		}
+		if (widget->GetId() == "hdd0")
+		{
+			LoadHardDiskImage(0, "C:");
+		}
+		else if (widget->GetId() == "hdd1")
+		{
+			LoadHardDiskImage(1, "D:");
 		}
 		else if (widget->GetId() == "speed")
 		{

@@ -31,6 +31,7 @@ namespace hdd
 		~HardDisk() { Clear(); }
 		void Clear()
 		{
+			type = 0;
 			path.clear();
 			loaded = false;
 
@@ -41,6 +42,7 @@ namespace hdd
 			}
 		}
 
+		BYTE type;
 		std::filesystem::path path;
 		bool loaded = false;
 		Geometry geometry;

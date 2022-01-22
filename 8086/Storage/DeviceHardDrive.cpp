@@ -80,6 +80,7 @@ namespace hdd
 
 		HardDisk& image = m_images[drive];
 		image.Clear();
+		image.type = type;
 		image.path = path;
 		image.loaded = true;
 		image.data = f;
