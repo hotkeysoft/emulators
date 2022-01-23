@@ -35,12 +35,6 @@ namespace video
 		cga->NewFrame();
 	}
 
-	static void OnEndOfRow(crtc::Device6845* crtc, void* data)
-	{
-		VideoCGA* cga = reinterpret_cast<VideoCGA*>(data);
-		cga->EndOfRow();
-	}
-
 	VideoCGA::VideoCGA(WORD baseAddress) :
 		Video(640, 200, VSCALE),
 		Logger("CGA"),
@@ -73,7 +67,6 @@ namespace video
 		m_crtc.Init();
 		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
 		m_crtc.SetNewFrameCallback(OnNewFrame, this);
-		m_crtc.SetEndOfRowCallback(OnEndOfRow, this);
 
 		// Mode Control Register
 		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteModeControlRegister));
@@ -195,36 +188,9 @@ namespace video
 			];
 		}
 	}
-
-	static uint32_t tempRowAlpha[640 + 2];
-	static uint32_t tempRow[640];
-
+	
 	void VideoCGA::EndOfRow()
 	{
-		const struct CRTCData& data = m_crtc.GetData();
-		if (!m_mode.hiResolution || !IsCompositeMonitor() || data.vPos >= data.vTotalDisp)
-			return;
-
-		uint32_t baseX = (640 * data.vPos);
-
-		memset(tempRowAlpha, 0, sizeof(tempRowAlpha));
-		for (int offset = 0; offset < 4; ++offset)
-		{
-			for (int x = 0; x < 640; ++x)
-			{
-				//tempRowAlpha[x + offset] += (tempRow[x] & 16) ? 0x3F000000 : 0;
-				tempRowAlpha[x + offset] += (tempRow[x] & 16) ? 1 : 0;
-			}
-		}
-
-		for (int i = 0; i < 640; ++i)
-		{
-			m_frameBuffer[baseX + i] = Composite640Palette[tempRow[i] & 15] | ((i%256) << 24);// tempRowAlpha[i + 2];
-			//m_frameBuffer[baseX + i] = TempGray[tempRowAlpha[i+2]];
-		}
-
-		// Clear temp row
-
 	}
 
 	bool VideoCGA::IsCursor() const
@@ -325,31 +291,14 @@ namespace video
 			{
 				BYTE ch = *currChar;
 
-				if (IsCompositeMonitor())
-				{
-					BYTE colorH = ch >> 4;
-					BYTE colorL = ch & 15;
-
-					tempRow[compositeOffset++] = colorH | ((ch & 0b10000000) ? 16 : 0);
-					tempRow[compositeOffset++] = colorH | ((ch & 0b01000000) ? 16 : 0);
-					tempRow[compositeOffset++] = colorH | ((ch & 0b00100000) ? 16 : 0);
-					tempRow[compositeOffset++] = colorH | ((ch & 0b00010000) ? 16 : 0);
-					tempRow[compositeOffset++] = colorL | ((ch & 0b00001000) ? 16 : 0);
-					tempRow[compositeOffset++] = colorL | ((ch & 0b00000100) ? 16 : 0);
-					tempRow[compositeOffset++] = colorL | ((ch & 0b00000010) ? 16 : 0);
-					tempRow[compositeOffset++] = colorL | ((ch & 0b00000001) ? 16 : 0);
-				}
-				else
-				{
-					m_frameBuffer[baseX++] = (ch & 0b10000000) ? fg : bg;
-					m_frameBuffer[baseX++] = (ch & 0b01000000) ? fg : bg;
-					m_frameBuffer[baseX++] = (ch & 0b00100000) ? fg : bg;
-					m_frameBuffer[baseX++] = (ch & 0b00010000) ? fg : bg;
-					m_frameBuffer[baseX++] = (ch & 0b00001000) ? fg : bg;
-					m_frameBuffer[baseX++] = (ch & 0b00000100) ? fg : bg;
-					m_frameBuffer[baseX++] = (ch & 0b00000010) ? fg : bg;
-					m_frameBuffer[baseX++] = (ch & 0b00000001) ? fg : bg;
-				}
+				m_frameBuffer[baseX++] = (ch & 0b10000000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b01000000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00100000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00010000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00001000) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00000100) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00000010) ? fg : bg;
+				m_frameBuffer[baseX++] = (ch & 0b00000001) ? fg : bg;
 				++currChar;
 			}
 		}
