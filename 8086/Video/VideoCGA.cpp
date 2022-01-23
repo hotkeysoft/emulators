@@ -99,8 +99,23 @@ namespace video
 
 	BYTE VideoCGA::ReadStatusRegister()
 	{
-		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister, hSync=%d, vSync=%d", m_crtc.IsHSync(), m_crtc.IsVSync());
-		return (m_crtc.IsDisplayArea() ? 1 : 0) | (m_crtc.IsVSync() ? 8 : 0);
+		// Bit0: 1:Display cpu access enabled (vsync | hsync)
+		// 
+		// Light pen, not implemented
+		// Bit1: 1:Light pen trigger set
+		// Bit2: 1:Light pen switch off, 0: switch on
+		//
+		// Bit3 1:Vertical retrace active
+
+		BYTE status =
+			((!m_crtc.IsDisplayArea()) << 0) |
+			(0 << 1) | // Light Pen Trigger
+			(1 << 2) | // Light Pen switch
+			(m_crtc.IsVSync() << 3);
+
+		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister, value=%02Xh", status);
+
+		return status;
 	}
 
 	void VideoCGA::WriteModeControlRegister(BYTE value)
