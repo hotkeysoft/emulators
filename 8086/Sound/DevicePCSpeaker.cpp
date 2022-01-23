@@ -57,7 +57,7 @@ namespace beeper
 		DevicePCSpeaker* This = (DevicePCSpeaker*)(userData);
 		const SDL_AudioSpec& spec = This->GetAudioSpec();
 
-		assert(length == spec.samples);
+		assert(length == spec.samples * 2);
 
 		const uint8_t* source = (const uint8_t*)This->GetPlayingBuffer();
 
