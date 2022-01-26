@@ -38,6 +38,7 @@ namespace video
 		// crtc::EventHandler
 		virtual void OnRenderFrame() override;
 		virtual void OnNewFrame() override;
+		virtual void OnEndOfRow() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
@@ -149,15 +150,11 @@ namespace video
 
 		int m_xAxisDivider = 1;
 
-		// Text mode pointers
-		BYTE* m_cursorPos = nullptr;
-		BYTE* m_currChar = nullptr;
-
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
 
 		// Graph mode banks
-		BYTE* m_banks[4] = { 0, 0, 0, 0 };
+		emul::ADDRESS m_banks[4] = { 0, 0, 0, 0 };
 
 		BYTE m_currGraphPalette[4];
 
