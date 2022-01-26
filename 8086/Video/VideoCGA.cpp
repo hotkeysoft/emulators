@@ -35,6 +35,12 @@ namespace video
 		cga->NewFrame();
 	}
 
+	static void OnEndOfRow(crtc::Device6845* crtc, void* data)
+	{
+		VideoCGA* cga = reinterpret_cast<VideoCGA*>(data);
+		cga->EndOfRow();
+	}
+
 	VideoCGA::VideoCGA(WORD baseAddress) :
 		Video(640, 200, VSCALE),
 		Logger("CGA"),
@@ -67,6 +73,7 @@ namespace video
 		m_crtc.Init();
 		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
 		m_crtc.SetNewFrameCallback(OnNewFrame, this);
+		m_crtc.SetEndOfRowCallback(OnEndOfRow, this);
 
 		// Mode Control Register
 		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteModeControlRegister));
@@ -171,48 +178,36 @@ namespace video
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		// Pointers for alpha mode
-		m_currChar = m_screenB800.getPtr(config.startAddress * 2u);
-		if (config.cursorAddress * 2u >= m_screenB800.GetSize())
-		{
-			m_cursorPos = nullptr;
-		}
-		else
-		{
-			m_cursorPos = m_screenB800.getPtr(config.cursorAddress * 2u);
-		}
+		unsigned int offset = config.startAddress * 2u;
 
-		// Pointers for graphics mode
-		m_bank0 = m_screenB800.getPtr(0x0000);
-		m_bank1 = m_screenB800.getPtr(0x2000);
+		m_bank0 = 0x0000 + offset;
+		m_bank1 = 0x2000 + offset;
 
 		// Select draw function
 		m_drawFunc = &VideoCGA::DrawTextMode;
 		if (m_mode.graphics) m_drawFunc = &VideoCGA::Draw320x200;
 		if (m_mode.hiResolution) m_drawFunc = &VideoCGA::Draw640x200;
-
-		// TODO: Do this for each line instead of each frame
+	}
+	
+	void VideoCGA::EndOfRow()
+	{
 		m_currGraphPalette[0] = GetMonitorPalette()[m_color.color];
 		for (int i = 1; i < 4; ++i)
 		{
 			m_currGraphPalette[i] = GetMonitorPalette()[
 				(m_color.palIntense << 3) // Intensity
-				| (i << 1)
-				| (m_color.palSelect && !m_mode.monochrome) // Palette shift for non mono modes
-				| (m_mode.monochrome & (i & 1)) // Palette shift for mono modes
+					| (i << 1)
+					| (m_color.palSelect && !m_mode.monochrome) // Palette shift for non mono modes
+					| (m_mode.monochrome & (i & 1)) // Palette shift for mono modes
 			];
 		}
-	}
-	
-	void VideoCGA::EndOfRow()
-	{
 	}
 
 	bool VideoCGA::IsCursor() const
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		return (m_currChar == m_cursorPos) &&
+		return ((m_bank0 / 2) == config.cursorAddress) &&
 			(config.cursor != CRTCConfig::CURSOR_NONE) &&
 			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
@@ -222,12 +217,13 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		if (m_currChar && m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
+		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
 		{
 			bool isCursorChar = IsCursor();
+			BYTE ch = m_screenB800.read(m_bank0++);
+			BYTE attr = m_screenB800.read(m_bank0++);
+			m_bank0 &= 0x3FFF;
 
-			BYTE ch = *(m_currChar++);
-			BYTE attr = *(m_currChar++);
 			BYTE bg = attr >> 4;
 			BYTE fg = attr & 0x0F;
 			bool charBlink = false;
@@ -245,6 +241,7 @@ namespace video
 			// Draw character
 			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.vPos % data.vCharHeight);
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
+
 			for (int y = 0; y < data.vCharHeight; ++y)
 			{
 				uint32_t offset = 640 * (uint32_t)(data.vPos + y) + data.hPos;
@@ -263,14 +260,13 @@ namespace video
 
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-
-		BYTE* &currChar = (data.vPos & 1) ? m_bank1 : m_bank0;
-
 		if (m_crtc.IsDisplayArea())
 		{
+			emul::ADDRESS& base = (data.vPos & 1) ? m_bank1 : m_bank0;
+
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = *currChar;
+				BYTE ch = m_screenB800.read(base++);
 				for (int x = 0; x < 4; ++x)
 				{
 					BYTE val = ch & 3;
@@ -278,9 +274,8 @@ namespace video
 
 					m_frameBuffer[640 * data.vPos + data.hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
 				}
-
-				++currChar;
 			}
+			base &= 0x3FFF;
 		}
 	}
 
@@ -293,18 +288,16 @@ namespace video
 
 		if (m_crtc.IsDisplayArea())
 		{
-			BYTE*& currChar = (data.vPos & 1) ? m_bank1 : m_bank0;
+			emul::ADDRESS& base = (data.vPos & 1) ? m_bank1 : m_bank0;
 
 			uint32_t fg = GetMonitorPalette()[m_color.color];
 			uint32_t bg = GetMonitorPalette()[0];
 
 			uint32_t baseX = (640 * data.vPos) + (data.hPos * 2);
 
-			uint32_t compositeOffset = data.hPos * 2;
-
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = *currChar;
+				BYTE ch = m_screenB800.read(base++);
 
 				m_frameBuffer[baseX++] = (ch & 0b10000000) ? fg : bg;
 				m_frameBuffer[baseX++] = (ch & 0b01000000) ? fg : bg;
@@ -314,8 +307,8 @@ namespace video
 				m_frameBuffer[baseX++] = (ch & 0b00000100) ? fg : bg;
 				m_frameBuffer[baseX++] = (ch & 0b00000010) ? fg : bg;
 				m_frameBuffer[baseX++] = (ch & 0b00000001) ? fg : bg;
-				++currChar;
 			}
+			base &= 0x3FFF;
 		}
 	}
 

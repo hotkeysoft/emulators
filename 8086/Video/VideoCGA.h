@@ -78,16 +78,12 @@ namespace video
 		// 16K screen buffer
 		emul::MemoryBlock m_screenB800;
 
-		// Text mode pointers
-		BYTE* m_cursorPos = nullptr;
-		BYTE* m_currChar = nullptr;
-
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
 
 		// Graph mode banks
-		BYTE* m_bank0 = nullptr;
-		BYTE* m_bank1 = nullptr;
+		emul::ADDRESS m_bank0 = 0;
+		emul::ADDRESS m_bank1 = 0;
 
 		uint32_t m_currGraphPalette[4];
 
