@@ -83,16 +83,24 @@ namespace crtc
 	{
 		WORD hPos = 0;
 		WORD hBorder = 0;
-		WORD hTotal = 0;
-		WORD hTotalDisp = 0;
 
 		WORD vPos = 0;
 		WORD vBorder = 0;
+
+		size_t frame = 0;
+
+		// Computed in UpdateHVTotals
+		WORD hTotal = 0;
+		WORD hTotalDisp = 0;
+		WORD hSyncMin = 0;
+		WORD hSyncMax = 0;
+
 		WORD vTotal = 0;
 		WORD vTotalDisp = 0;
 		WORD vCharHeight = 0;
 
-		size_t frame = 0;
+		WORD vSyncMin = 0;
+		WORD vSyncMax = 0;
 	};
 
 	class Device6845 : public PortConnector, public emul::Serializable
@@ -114,8 +122,8 @@ namespace crtc
 
 		bool IsInit() const { return m_data.hTotal && m_data.vTotal; }
 
-		bool IsHSync() const { return m_data.hPos >= m_data.hTotalDisp; }
-		bool IsVSync() const { return m_data.vPos >= m_data.vTotalDisp; }
+		bool IsHSync() const { return (m_data.hPos >= m_data.hSyncMin) && (m_data.hPos <= m_data.hSyncMax); }
+		bool IsVSync() const { return (m_data.vPos >= m_data.vSyncMin) && (m_data.vPos <= m_data.vSyncMax); }
 
 		bool IsDisplayArea() const { return (m_data.vPos < m_data.vTotalDisp) && (m_data.hPos < m_data.hTotalDisp); }
 

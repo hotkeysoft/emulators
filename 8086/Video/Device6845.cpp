@@ -1,5 +1,6 @@
 #include "Device6845.h"
 #include <assert.h>
+#include <algorithm>
 
 namespace crtc
 {
@@ -164,11 +165,17 @@ namespace crtc
 	void Device6845::UpdateHVTotals()
 	{
 		m_data.hTotalDisp = m_config.hDisplayed * m_charWidth;
-		m_data.hTotal = m_config.hTotal * m_charWidth;
+		m_data.hTotal = (m_config.hTotal + 1) * m_charWidth;
+
+		m_data.hSyncMin = m_config.hSyncPos * m_charWidth;
+		m_data.hSyncMax = std::min(m_data.hTotal, (WORD)(m_data.hSyncMin + (m_config.hSyncWidth * m_charWidth)));
 
 		m_data.vCharHeight = (m_config.maxScanlineAddress + 1);
 		m_data.vTotalDisp = m_config.vTotalDisplayed * m_data.vCharHeight;
-		m_data.vTotal = m_config.vTotal * m_data.vCharHeight + m_config.vTotalAdjust;
+		m_data.vTotal = (m_config.vTotal + 1) * m_data.vCharHeight + m_config.vTotalAdjust;
+
+		m_data.vSyncMin = m_config.vSyncPos * m_data.vCharHeight;
+		m_data.vSyncMax = std::min(m_data.vTotal, (WORD)(m_data.vSyncMin + 16));
 
 		LogPrintf(LOG_INFO, "UpdateHVTotals: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
 	}
@@ -243,13 +250,8 @@ namespace crtc
 		json data;
 		data["hPos"] = m_data.hPos;
 		data["hBorder"] = m_data.hBorder;
-		data["hTotal"] = m_data.hTotal;
-		data["hTotalDisp"] = m_data.hTotalDisp;
 		data["vPos"] = m_data.vPos;
 		data["vBorder"] = m_data.vBorder;
-		data["vTotal"] = m_data.vTotal;
-		data["vTotalDisp"] = m_data.vTotalDisp;
-		data["vCharHeight"] = m_data.vCharHeight;
 		data["frame"] = m_data.frame;
 		to["data"] = data;
 
@@ -290,14 +292,11 @@ namespace crtc
 		const json& data = from["data"];
 		m_data.hPos = data["hPos"];
 		m_data.hBorder = data["hBorder"];
-		m_data.hTotal = data["hTotal"];
-		m_data.hTotalDisp = data["hTotalDisp"];
 		m_data.vPos = data["vPos"];
 		m_data.vBorder = data["vBorder"];
-		m_data.vTotal = data["vTotal"];
-		m_data.vTotalDisp = data["vTotalDisp"];
-		m_data.vCharHeight = data["vCharHeight"];
 		m_data.frame = data["frame"];
+
+		UpdateHVTotals();
 
 		m_charWidth = from["charWidth"];
 		m_blink16 = from["blink16"];
