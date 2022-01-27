@@ -11,7 +11,7 @@ using emul::BYTE;
 
 namespace video
 {
-	class VideoCGA : public Video
+	class VideoCGA : public Video, public crtc::EventHandler
 	{
 	public:
 		VideoCGA(WORD baseAddress);
@@ -30,9 +30,10 @@ namespace video
 
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB800; }
 
-		void RenderFrame();
-		void NewFrame();
-		void EndOfRow();
+		// crtc::EventHandler
+		virtual void OnRenderFrame() override;
+		virtual void OnNewFrame() override;
+		virtual void OnEndOfRow() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;

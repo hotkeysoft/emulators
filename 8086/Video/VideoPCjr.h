@@ -14,7 +14,7 @@ using emul::ADDRESS;
 
 namespace video
 {
-	class VideoPCjr : public Video
+	class VideoPCjr : public Video, public crtc::EventHandler
 	{
 	public:
 		VideoPCjr(WORD baseAddress);
@@ -33,8 +33,9 @@ namespace video
 
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
-		void RenderFrame();
-		void NewFrame();
+		// crtc::EventHandler
+		virtual void OnRenderFrame() override;
+		virtual void OnNewFrame() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;

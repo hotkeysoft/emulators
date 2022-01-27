@@ -13,18 +13,6 @@ namespace video
 {
 	const float VSCALE = 2.4f;
 
-	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
-	{
-		VideoPCjr* video = reinterpret_cast<VideoPCjr*>(data);
-		video->RenderFrame();
-	}
-
-	static void OnNewFrame(crtc::Device6845* crtc, void* data)
-	{
-		VideoPCjr* video = reinterpret_cast<VideoPCjr*>(data);
-		video->NewFrame();
-	}
-
 	VideoPCjr::VideoPCjr(WORD baseAddress) :
 		Video(640, 200, VSCALE),
 		Logger("vidPCjr"),
@@ -62,8 +50,7 @@ namespace video
 		m_sdlVBorder = (BYTE)(border / VSCALE);
 
 		m_crtc.Init();
-		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
-		m_crtc.SetNewFrameCallback(OnNewFrame, this);
+		m_crtc.SetEventHandler(this);
 
 		// Registers
 		// 
@@ -256,7 +243,7 @@ namespace video
 		return status;
 	}
 
-	void VideoPCjr::RenderFrame()
+	void VideoPCjr::OnRenderFrame()
 	{
 		// TODO: don't recompute every time
 		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
@@ -280,7 +267,7 @@ namespace video
 		m_crtc.Tick();
 	}
 
-	void VideoPCjr::NewFrame()
+	void VideoPCjr::OnNewFrame()
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
@@ -587,6 +574,6 @@ namespace video
 		m_crtc.Deserialize(from["crtc"]);
 
 		MapB800Window();
-		NewFrame();
+		OnNewFrame();
 	}
 }

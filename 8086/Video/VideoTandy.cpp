@@ -14,18 +14,6 @@ namespace video
 {
 	const float VSCALE = 2.4f;
 
-	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
-	{
-		VideoTandy* video = reinterpret_cast<VideoTandy*>(data);
-		video->RenderFrame();
-	}
-
-	static void OnNewFrame(crtc::Device6845* crtc, void* data)
-	{
-		VideoTandy* video = reinterpret_cast<VideoTandy*>(data);
-		video->NewFrame();
-	}
-
 	VideoTandy::VideoTandy(WORD baseAddress) :
 		Video(640, 225, VSCALE),
 		Logger("vidTandy"),
@@ -63,8 +51,7 @@ namespace video
 		m_sdlVBorder = (BYTE)(border / VSCALE);
 
 		m_crtc.Init();
-		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
-		m_crtc.SetNewFrameCallback(OnNewFrame, this);
+		m_crtc.SetEventHandler(this);
 
 		// Registers
 
@@ -260,7 +247,7 @@ namespace video
 		return status;
 	}
 
-	void VideoTandy::RenderFrame()
+	void VideoTandy::OnRenderFrame()
 	{
 		// TODO: don't recompute every time
 		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
@@ -290,7 +277,7 @@ namespace video
 		m_crtc.Tick();
 	}
 
-	void VideoTandy::NewFrame()
+	void VideoTandy::OnNewFrame()
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
@@ -613,6 +600,6 @@ namespace video
 		m_crtc.Deserialize(from["crtc"]);
 
 		UpdatePageRegisters();
-		NewFrame();
+		OnNewFrame();
 	}
 }

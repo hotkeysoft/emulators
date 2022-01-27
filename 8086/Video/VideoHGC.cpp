@@ -58,7 +58,7 @@ namespace video
 			m_modeHGC.displayPage ? "Page 2" : "Page 1");
 	}
 
-	void VideoHGC::NewFrame()
+	void VideoHGC::OnNewFrame()
 	{
 		if (m_modeHGC.graphics)
 		{
@@ -74,7 +74,7 @@ namespace video
 		}
 		else
 		{
-			VideoMDA::NewFrame();
+			VideoMDA::OnNewFrame();
 		}
 	}
 
@@ -130,6 +130,6 @@ namespace video
 		m_modeHGC.graphics = mode["graphics"];
 		m_modeHGC.displayPage = mode["displayPage"];
 
-		NewFrame();
+		OnNewFrame();
 	}
 }

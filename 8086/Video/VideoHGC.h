@@ -29,7 +29,7 @@ namespace video
 
 		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false) override;
 
-		virtual void NewFrame() override;
+		virtual void OnNewFrame() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;

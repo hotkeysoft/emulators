@@ -16,8 +16,13 @@ struct SDL_Texture;
 
 namespace crtc
 {
-	class Device6845;
-	typedef void(*CRTCCallback)(Device6845* crtc, void* data);
+	class EventHandler
+	{
+	public:
+		virtual void OnRenderFrame() {}
+		virtual void OnNewFrame() {}
+		virtual void OnEndOfRow() {}
+	};
 
 	// CRT Controller
 	enum CRTRegister
@@ -133,9 +138,7 @@ namespace crtc
 		const CRTCConfig GetConfig() const { return m_config; }
 		const CRTCData GetData() const { return m_data; }
 
-		void SetRenderFrameCallback(CRTCCallback func, void* userData);
-		void SetNewFrameCallback(CRTCCallback func, void* userData);
-		void SetEndOfRowCallback(CRTCCallback func, void* userData);
+		void SetEventHandler(EventHandler* handler) { m_events = handler; }
 
 		void SetCharWidth(BYTE charWidth) { m_charWidth = charWidth; }
 
@@ -160,14 +163,6 @@ namespace crtc
 		bool m_blink16 = false;
 		bool m_blink32 = false;
 
-		// Callbacks, called during Tick
-		CRTCCallback m_renderFrameFunc = nullptr;
-		void* m_renderFrameUserData = nullptr;
-
-		CRTCCallback m_newFrameFunc = nullptr;
-		void* m_newFrameUserData = nullptr;
-
-		CRTCCallback m_endOfRowFunc = nullptr;
-		void* m_endOfRowUserData = nullptr;
+		EventHandler* m_events = nullptr;
 	};
 }

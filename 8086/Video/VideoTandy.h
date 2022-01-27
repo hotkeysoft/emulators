@@ -14,7 +14,7 @@ using emul::ADDRESS;
 
 namespace video
 {
-	class VideoTandy : public Video
+	class VideoTandy : public Video, public crtc::EventHandler
 	{
 	public:
 		VideoTandy(WORD baseAddress);
@@ -35,8 +35,9 @@ namespace video
 
 		void SetRAMBase(ADDRESS base);
 
-		void RenderFrame();
-		void NewFrame();
+		// crtc::EventHandler
+		virtual void OnRenderFrame() override;
+		virtual void OnNewFrame() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;

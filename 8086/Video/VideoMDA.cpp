@@ -13,18 +13,6 @@ namespace video
 	const float VSCALE = 1.6f; // TODO
 	const BYTE CHAR_WIDTH = 9;
 	
-	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
-	{
-		Video* mda = reinterpret_cast<Video*>(data);
-		mda->RenderFrame(720, 350);
-	}
-
-	static void OnNewFrame(crtc::Device6845* crtc, void* data)
-	{
-		VideoMDA* mda = reinterpret_cast<VideoMDA*>(data);
-		mda->NewFrame();
-	}
-
 	VideoMDA::VideoMDA(WORD baseAddress) :
 		Video(720, 350, VSCALE),
 		Logger("MDA"),
@@ -55,8 +43,7 @@ namespace video
 		m_charROMStart = m_charROM.getPtr(0);
 
 		m_crtc.Init();
-		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
-		m_crtc.SetNewFrameCallback(OnNewFrame, this);
+		m_crtc.SetEventHandler(this);
 
 		// Mode Control Register
 		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoMDA::WriteModeControlRegister));
@@ -79,6 +66,11 @@ namespace video
 		// Connect sub devices
 		dest.Connect(m_crtc);
 		return PortConnector::ConnectTo(dest);
+	}
+
+	void VideoMDA::OnRenderFrame()
+	{
+		Video::RenderFrame(720, 350);
 	}
 
 	BYTE VideoMDA::ReadStatusRegister()
@@ -139,7 +131,7 @@ namespace video
 		m_crtc.Tick();
 	}
 
-	void VideoMDA::NewFrame()
+	void VideoMDA::OnNewFrame()
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
@@ -263,6 +255,6 @@ namespace video
 
 		m_crtc.Deserialize(from["crtc"]);
 
-		NewFrame();
+		OnNewFrame();
 	}
 }

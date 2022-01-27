@@ -4,15 +4,13 @@
 
 namespace crtc
 {
-	void CRTCNullFunc(Device6845* crtc, void* data) {}
+	static EventHandler s_defaultHandler;
 
 	Device6845::Device6845(WORD baseAddress, BYTE charWidth) :
 		Logger("crtc"),
 		m_baseAddress(baseAddress),
 		m_charWidth(charWidth),
-		m_renderFrameFunc(CRTCNullFunc),
-		m_endOfRowFunc(CRTCNullFunc),
-		m_newFrameFunc(CRTCNullFunc)
+		m_events(&s_defaultHandler)
 	{
 	}
 
@@ -186,42 +184,23 @@ namespace crtc
 
 		if (m_data.hPos >= m_data.hTotal)
 		{
-			m_endOfRowFunc(this, m_endOfRowUserData);
+			m_events->OnEndOfRow();
 			m_data.hPos = 0;
 			++m_data.vPos;
 		}
 
 		if (m_data.vPos > m_data.vTotal)
 		{
-			m_renderFrameFunc(this, m_renderFrameUserData);
+			m_events->OnRenderFrame();
 
 			++m_data.frame;
 			m_data.vPos = 0;
 
-			m_newFrameFunc(this, m_newFrameUserData);
+			m_events->OnNewFrame();
 
 			if ((m_data.frame % 16) == 0) m_blink16 = !m_blink16;
 			if ((m_data.frame % 32) == 0) m_blink32 = !m_blink32;
 		}
-	}
-
-	void Device6845::SetRenderFrameCallback(CRTCCallback func, void* userData)
-	{
-		assert(func);
-		m_renderFrameFunc = func;
-		m_renderFrameUserData = userData;
-	}
-	void Device6845::SetNewFrameCallback(CRTCCallback func, void* userData)
-	{
-		assert(func);
-		m_newFrameFunc = func;
-		m_newFrameUserData = userData;
-	}
-	void Device6845::SetEndOfRowCallback(CRTCCallback func, void* userData)
-	{
-		assert(func);
-		m_endOfRowFunc = func;
-		m_endOfRowUserData = userData;
 	}
 
 	void Device6845::Serialize(json& to)

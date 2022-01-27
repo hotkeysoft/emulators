@@ -23,24 +23,6 @@ namespace video
 		0xFF000000, 0xFF3F3F3F, 0xFF7F7F7F, 0xFFFFFFFF
 	};
 
-	static void OnRenderFrame(crtc::Device6845* crtc, void* data)
-	{
-		VideoCGA* cga = reinterpret_cast<VideoCGA*>(data);
-		cga->RenderFrame();
-	}
-
-	static void OnNewFrame(crtc::Device6845* crtc, void* data)
-	{
-		VideoCGA* cga = reinterpret_cast<VideoCGA*>(data);
-		cga->NewFrame();
-	}
-
-	static void OnEndOfRow(crtc::Device6845* crtc, void* data)
-	{
-		VideoCGA* cga = reinterpret_cast<VideoCGA*>(data);
-		cga->EndOfRow();
-	}
-
 	VideoCGA::VideoCGA(WORD baseAddress) :
 		Video(640, 200, VSCALE),
 		Logger("CGA"),
@@ -71,9 +53,7 @@ namespace video
 		m_charROMStart = m_charROM.getPtr(4096 + 2048);
 
 		m_crtc.Init();
-		m_crtc.SetRenderFrameCallback(OnRenderFrame, this);
-		m_crtc.SetNewFrameCallback(OnNewFrame, this);
-		m_crtc.SetEndOfRowCallback(OnEndOfRow, this);
+		m_crtc.SetEventHandler(this);
 
 		// Mode Control Register
 		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoCGA::WriteModeControlRegister));
@@ -97,7 +77,7 @@ namespace video
 		return PortConnector::ConnectTo(dest);
 	}
 
-	void VideoCGA::RenderFrame()
+	void VideoCGA::OnRenderFrame()
 	{
 		uint32_t borderRGB = GetMonitorPalette()[m_color.color];
 		uint16_t width = (m_mode.text80Columns || m_mode.hiResolution) ? 640 : 320;
@@ -174,7 +154,7 @@ namespace video
 		m_crtc.Tick();
 	}
 
-	void VideoCGA::NewFrame()
+	void VideoCGA::OnNewFrame()
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
@@ -189,7 +169,7 @@ namespace video
 		if (m_mode.hiResolution) m_drawFunc = &VideoCGA::Draw640x200;
 	}
 	
-	void VideoCGA::EndOfRow()
+	void VideoCGA::OnEndOfRow()
 	{
 		m_currGraphPalette[0] = GetMonitorPalette()[m_color.color];
 		for (int i = 1; i < 4; ++i)
@@ -362,6 +342,6 @@ namespace video
 
 		m_crtc.Deserialize(from["crtc"]);
 
-		NewFrame();
+		OnNewFrame();
 	}
 }
