@@ -283,6 +283,7 @@
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="config\config.ini" />
+    <None Include="SDLPath.props" />
     <None Include="TODO.md" />
   </ItemGroup>
   <ItemGroup>

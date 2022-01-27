@@ -380,5 +380,6 @@
     <None Include="config\config.ini">
       <Filter>config</Filter>
     </None>
+    <None Include="SDLPath.props" />
   </ItemGroup>
 </Project>
