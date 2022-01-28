@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Common.h"
+#include "../Serializable.h"
 #include "../CPU/PortConnector.h"
 #include <Logger.h>
 
@@ -16,7 +17,7 @@ namespace sn76489
 
 	static const BYTE s_volumeTable[16] = { 255, 203, 161, 128, 102, 81, 64, 51, 41, 32, 25, 20, 16, 13, 10, 0 };
 
-	class Voice : public Logger
+	class Voice : public Logger, public emul::Serializable
 	{
 	public:
 		Voice(const char* label) : Logger(label) {}
@@ -36,6 +37,9 @@ namespace sn76489
 
 		virtual void SetAttenuation(BYTE value);
 		virtual void SetData(BYTE value, bool highLow) = 0;
+
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(json& from) override;
 
 	protected:
 		void ToggleOutput() { m_out = !m_out; }
@@ -80,6 +84,9 @@ namespace sn76489
 
 		virtual void SetData(BYTE value, bool) override;
 
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(json& from) override;
+
 	protected:
 		Voice* m_trigger = nullptr;
 		bool m_lastTrigger = false;
@@ -91,12 +98,11 @@ namespace sn76489
 		void ResetShiftRegister() { m_shiftRegister = (1 << (m_shiftRegisterLen - 1)); }
  
 		const BYTE m_shiftRegisterLen = 15;
+		const WORD m_noisePattern = 0b000000000010001;
 		WORD m_shiftRegister;
-		WORD m_noisePattern = 0b000000000010001;
-		
 	};
 
-	class DeviceSN76489 : public PortConnector
+	class DeviceSN76489 : public PortConnector, public emul::Serializable
 	{
 	public:
 		DeviceSN76489(WORD baseAddress, size_t clockSpeedHz = 1000000);
@@ -118,6 +124,9 @@ namespace sn76489
 		WORD GetOutput();
 
 		bool IsReady() const { return m_ready == 0; }
+
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(json& from) override;
 
 	protected:
 		const BYTE m_tickDivider = 16;

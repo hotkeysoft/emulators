@@ -16,6 +16,22 @@ namespace sn76489
 		m_attenuation = value;
 	}
 
+	void Voice::Serialize(json& to)
+	{
+		to["n"] = m_n;
+		to["counter"] = m_counter;
+		to["attenuation"] = m_attenuation;
+		to["out"] = m_out;
+	}
+
+	void Voice::Deserialize(json& from)
+	{
+		m_n = from["n"];
+		m_counter = from["counter"];
+		m_attenuation = from["attenuation"];
+		m_out = from["out"];
+	}
+
 	// =================================
 
 	VoiceSquare::VoiceSquare(const char* label) : Voice(label)
@@ -137,6 +153,25 @@ namespace sn76489
 		ResetShiftRegister();
 	}
 
+	void VoiceNoise::Serialize(json& to)
+	{
+		Voice::Serialize(to);
+
+		to["lastTrigger"] = m_lastTrigger;
+		to["whiteNoise"] = m_whiteNoise;
+		to["internalOutput"] = m_internalOutput;
+		to["shiftRegister"] = m_shiftRegister;
+	}
+	void VoiceNoise::Deserialize(json& from)
+	{
+		Voice::Deserialize(from);
+
+		m_lastTrigger = from["lastTrigger"];
+		m_whiteNoise = from["whiteNoise"];
+		m_internalOutput = from["internalOutput"];
+		m_shiftRegister = from["shiftRegister"];
+	}
+
 	// =================================
 
 	DeviceSN76489::DeviceSN76489(WORD baseAddress, size_t clockSpeedHz) :
@@ -242,5 +277,58 @@ namespace sn76489
 		}
 		return out;
 	}
+
+	void DeviceSN76489::Serialize(json& to)
+	{
+		to["baseAddress"] = m_baseAddress;
+
+		to["ready"] = m_ready;
+		to["function"] = m_currFunc;
+
+		if (m_currDest == nullptr)
+		{
+			to["currDest"] = -1;
+		}
+		else for (int i = 0; i < 4; ++i)
+		{
+			if (m_currDest == m_voices[i])
+			{
+				to["currDest"] = i;
+			}
+		}
+
+		m_voices[0]->Serialize(to["voice0"]);
+		m_voices[1]->Serialize(to["voice1"]);
+		m_voices[2]->Serialize(to["voice2"]);
+		m_voices[3]->Serialize(to["noise"]);
+	}
+
+	void DeviceSN76489::Deserialize(json& from)
+	{
+		WORD baseAddress = from["baseAddress"];
+		if (baseAddress != m_baseAddress)
+		{
+			throw emul::SerializableException("DeviceSN76489: Incompatible baseAddress");
+		}
+
+		m_ready = from["ready"];
+		m_currFunc = from["function"];
+
+		int currDest = from["currDest"];
+		if (currDest >= 0 && currDest <= 3)
+		{
+			m_currDest = m_voices[currDest];
+		}
+		else
+		{
+			m_currDest = nullptr;
+		}
+
+		m_voices[0]->Deserialize(from["voice0"]);
+		m_voices[1]->Deserialize(from["voice1"]);
+		m_voices[2]->Deserialize(from["voice2"]);
+		m_voices[3]->Deserialize(from["noise"]);
+	}
+
 
 }

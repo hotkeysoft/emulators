@@ -283,12 +283,14 @@ namespace emul
 	void ComputerTandy::Serialize(json& to)
 	{
 		to["tandy"]["rambase"] = GetRAMBase();
+		m_soundModule.Serialize(to["tandy"]["sn76489"]);
 		Computer::Serialize(to);
 	}
 
 	void ComputerTandy::Deserialize(json& from)
 	{
 		Computer::Deserialize(from);
+		m_soundModule.Deserialize(from["tandy"]["sn76489"]);
 		SetRAMBase(from["tandy"]["rambase"]);
 	}
 
