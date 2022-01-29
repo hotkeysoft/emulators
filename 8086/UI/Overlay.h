@@ -85,17 +85,19 @@ namespace ui
 		CoreUI::ToolbarItemPtr m_floppyButton[2];
 		CoreUI::ToolbarItemPtr m_ejectButton[2];
 		CoreUI::ToolbarItemPtr m_hddButton[2];
-
 		CoreUI::ToolbarItemPtr m_speedButton;
-		CoreUI::ToolbarItemPtr m_snapshot;
-
 		CoreUI::ToolbarItemPtr m_turboButton;
+		CoreUI::ToolbarItemPtr m_snapshot;
+		CoreUI::ToolbarItemPtr m_joystickButton;
 
 		CoreUI::ImageRef m_floppyInactive = nullptr;
 		CoreUI::ImageRef m_floppyActive = nullptr;
 
 		CoreUI::ImageRef m_hddInactive = nullptr;
 		CoreUI::ImageRef m_hddActive = nullptr;
+
+		CoreUI::ImageRef m_turboOff = nullptr;
+		CoreUI::ImageRef m_turboOn = nullptr;
 
 		CoreUI::LabelPtr m_trimX = nullptr;
 		CoreUI::LabelPtr m_trimY = nullptr;

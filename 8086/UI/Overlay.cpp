@@ -134,6 +134,9 @@ namespace ui
 		m_floppyActive = RES().FindImage("toolbar", 4);
 		m_hddInactive = RES().FindImage("toolbar", 1);
 		m_hddActive = RES().FindImage("toolbar", 5);
+		m_turboOff = RES().FindImage("toolbar", 10);
+		m_turboOn = RES().FindImage("toolbar", 12);
+
 
 		// Toolbar section: Reboot
 		toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
@@ -169,7 +172,7 @@ namespace ui
 		m_speedButton = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
 		UpdateSpeed();
 
-		m_turboButton = toolbar->AddToolbarItem("turbo", RES().FindImage("toolbar", 10));
+		m_turboButton = toolbar->AddToolbarItem("turbo", m_turboOff);
 		UpdateTurbo();
 
 		toolbar->AddSeparator();
@@ -191,7 +194,7 @@ namespace ui
 		// Toolbar section: Joystick
 		if (m_pc->GetInputs().GetJoystick())
 		{
-			toolbar->AddToolbarItem("joystick", RES().FindImage("toolbar", 2));
+			m_joystickButton = toolbar->AddToolbarItem("joystick", RES().FindImage("toolbar", 2));
 		}
 
 		return true;
@@ -258,7 +261,8 @@ namespace ui
 
 	void Overlay::UpdateTurbo()
 	{
-		m_turboButton->SetBackgroundColor(m_turbo ? Color(255, 0, 0) : Color::C_LIGHT_GREY);
+		m_turboButton->SetPushed(m_turbo);
+		m_turboButton->SetImage(m_turbo ? m_turboOn : m_turboOff);
 	}
 
 	void Overlay::UpdateTrim()
@@ -643,6 +647,7 @@ namespace ui
 		else if (widget->GetId() == "close")
 		{
 			m_joystickConfigWnd->Show(false);
+			m_joystickButton->SetPushed(false);
 		}
 	}
 
@@ -653,8 +658,11 @@ namespace ui
 			bool isVisible = m_joystickConfigWnd->GetShowState() & WindowState::WST_VISIBLE;
 
 			m_joystickConfigWnd->Show(isVisible ? false : true);
+			m_joystickButton->SetPushed(!isVisible);
 			return;
 		}
+
+		m_joystickButton->SetPushed(true);
 
 		const int width = 278;
 		const int height = 120;
