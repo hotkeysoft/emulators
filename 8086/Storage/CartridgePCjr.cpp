@@ -1,7 +1,5 @@
 #include "CartridgePCjr.h"
 
-using emul::DWORD;
-
 namespace cart
 {
 	CartridgePCjr::CartridgePCjr() : MemoryBlock("cartPCjr", emul::MemoryType::ROM)
@@ -49,14 +47,14 @@ namespace cart
 
 		// Determine ROM size
 		fseek(f, 0L, SEEK_END);
-		DWORD end = ftell(f);
+		emul::DWORD end = ftell(f);
 
 		fseek(f, sizeof(m_header), SEEK_SET);
-		DWORD curr = ftell(f);
+		emul::DWORD curr = ftell(f);
 
-		DWORD size = end - curr;
+		emul::DWORD size = end - curr;
 
-		if (!emul::IsPowerOf2((DWORD)size))
+		if (!emul::IsPowerOf2((emul::DWORD)size))
 		{
 			LogPrintf(LOG_WARNING, "LoadCartridge: size is not a power of two: [%d]", size);
 		}
