@@ -83,6 +83,9 @@ namespace events
 
 		void AddEventHandler(EventHandler* handler) { m_handlers.push_back(handler); }
 
+		kbd::DeviceKeyboard* GetKeyboard() const { return m_keyboard; }
+		joy::DeviceJoystick* GetJoystick() const { return m_joystick; }
+
 		void Tick();
 
 		bool IsQuit() { return m_quit; }

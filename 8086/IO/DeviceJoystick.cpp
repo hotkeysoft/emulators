@@ -1,6 +1,7 @@
 #include "DeviceKeyboard.h"
-#include <assert.h>
 #include "DeviceJoystick.h"
+#include "../Config.h"
+#include <assert.h>
 
 namespace joy
 {
@@ -18,6 +19,11 @@ namespace joy
 			Connect(m_baseAddress + i, static_cast<PortConnector::INFunction>(&DeviceJoystick::ReadJoystick));
 			Connect(m_baseAddress + i, static_cast<PortConnector::OUTFunction>(&DeviceJoystick::WriteJoystick));
 		}
+
+		AxisTrim trim;
+		trim.x = cfg::Config::Instance().GetValueInt32("joystick", "trim.x");
+		trim.y = cfg::Config::Instance().GetValueInt32("joystick", "trim.y");
+		SetAxisTrim(trim);
 	}
 
 	BYTE DeviceJoystick::ReadJoystick()
@@ -40,10 +46,10 @@ namespace joy
 	{
 		// Value is ignored, writing to the port only resets the counters
 		LogPrintf(LOG_DEBUG, "WriteJoystick");
-		m_joysticks[0].axisCounter[0] = m_joysticks[0].axisValue[0];
-		m_joysticks[0].axisCounter[1] = m_joysticks[0].axisValue[1];
-		m_joysticks[1].axisCounter[0] = m_joysticks[1].axisValue[0];
-		m_joysticks[1].axisCounter[1] = m_joysticks[1].axisValue[1];
+		m_joysticks[0].axisCounter[0] = Trim(0, m_joysticks[0].axisValue[0]);
+		m_joysticks[0].axisCounter[1] = Trim(1, m_joysticks[0].axisValue[1]);
+		m_joysticks[1].axisCounter[0] = Trim(0, m_joysticks[1].axisValue[0]);
+		m_joysticks[1].axisCounter[1] = Trim(1, m_joysticks[1].axisValue[1]);
 	}
 
 	void DeviceJoystick::SetConnected(uint8_t id, bool connected)
@@ -69,6 +75,20 @@ namespace joy
 		assert(axis <= 1);
 		LogPrintf(LOG_DEBUG, "SetAxisState id[%d][%d]=%d", id, axis, value);
 		m_joysticks[id].axisValue[axis] = value;
+	}
+
+	void DeviceJoystick::SetAxisTrim(AxisTrim t)
+	{ 
+		m_trim.x = std::clamp(t.x, -127, 127);
+		m_trim.y = std::clamp(t.y, -127, 127);
+
+		LogPrintf(LOG_INFO, "SetAxisTrim [%d][%d]", m_trim.x, m_trim.y);
+	}
+
+	uint8_t DeviceJoystick::Trim(const uint8_t axis, const uint8_t value)
+	{
+		int trimmedValue = value + (axis ? m_trim.y : m_trim.x);
+		return std::clamp(trimmedValue, 0, 255);
 	}
 
 	void DeviceJoystick::Tick()

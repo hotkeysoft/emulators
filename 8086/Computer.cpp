@@ -170,10 +170,13 @@ namespace emul
 
 	void Computer::InitJoystick(WORD baseAddress, size_t baseClock)
 	{
-		m_joystick = new joy::DeviceJoystick(baseAddress, baseClock);
-		m_joystick->EnableLog(Config::Instance().GetLogLevel("joystick"));
-		m_joystick->Init();
-		AddDevice(*m_joystick);
+		if (Config::Instance().GetValueBool("joystick", "enable"))
+		{
+			m_joystick = new joy::DeviceJoystick(baseAddress, baseClock);
+			m_joystick->EnableLog(Config::Instance().GetLogLevel("joystick"));
+			m_joystick->Init();
+			AddDevice(*m_joystick);
+		}
 	}
 
 	void Computer::InitInputs(size_t clockSpeedHz)

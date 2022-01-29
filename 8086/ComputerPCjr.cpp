@@ -238,7 +238,11 @@ namespace emul
 			}
 
 			m_keyboard.Tick();
-			m_joystick->Tick();
+
+			if (m_joystick)
+			{
+				m_joystick->Tick();
+			}
 
 			m_pit->GetCounter(0).Tick();
 			if (m_keyboard.GetTimer1Source() == kbd::CLK1::MAIN_CLK)

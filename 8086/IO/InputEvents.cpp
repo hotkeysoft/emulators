@@ -292,8 +292,12 @@ namespace events
 
 	void InputEvents::InitJoystick(joy::DeviceJoystick* joy)
 	{
-		assert(joy);
 		m_joystick = joy;
+
+		if (!m_joystick)
+		{
+			return;
+		}
 		
 		if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) != 1)
 		{

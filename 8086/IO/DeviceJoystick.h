@@ -8,6 +8,12 @@ using emul::PortConnector;
 
 namespace joy
 {
+	struct AxisTrim
+	{
+		int x = 0;
+		int y = 0;
+	};
+
 	class DeviceJoystick : public PortConnector
 	{
 	public:
@@ -26,6 +32,9 @@ namespace joy
 		void SetButtonState(uint8_t id, uint8_t button, bool pressed);
 		void SetAxisState(uint8_t id, uint8_t axis, uint8_t value);
 
+		void SetAxisTrim(AxisTrim t);
+		const AxisTrim& GetAxisTrim() const { return m_trim; }
+
 	protected:
 		WORD m_baseAddress;
 		size_t m_baseClock;
@@ -34,6 +43,8 @@ namespace joy
 		void WriteJoystick(BYTE);
 
 		static void DecrementCount(uint8_t& count) { if (count) --count; }
+
+		uint8_t Trim(const uint8_t id, const uint8_t value);
 
 		struct JoystickState
 		{
@@ -45,5 +56,8 @@ namespace joy
 		};
 
 		JoystickState m_joysticks[2];
+
+		// TODO: Separate trim for 2 joysticks
+		AxisTrim m_trim;
 	};
 }

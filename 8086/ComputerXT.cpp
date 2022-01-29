@@ -207,7 +207,11 @@ namespace emul
 			}
 
 			m_keyboard.Tick();
-			m_joystick->Tick();
+
+			if (m_joystick)
+			{
+				m_joystick->Tick();
+			}
 
 			pit::Counter& timer2 = m_pit->GetCounter(2);
 			timer2.SetGate(ppi->GetTimer2Gate());

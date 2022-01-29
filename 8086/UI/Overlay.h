@@ -47,11 +47,15 @@ namespace ui
 		void UpdateFloppy(BYTE drive, const char* letter);
 		void UpdateHardDisk(BYTE drive, const char* letter);
 		void UpdateTurbo();
+		void UpdateTrim();
 
 		void LoadFloppyDiskImage(BYTE drive, const char* str, bool eject = false);
 		void LoadHardDiskImage(BYTE drive, const char* str);
 		void ToggleCPUSpeed();
 		void ToggleTurbo();
+		void SetTrim();
+
+		void JoystickConfig();
 
 		// TODO: Should be in separate class so it can be used by others
 		bool MakeSnapshotDirectory(std::filesystem::path& dir);
@@ -73,6 +77,7 @@ namespace ui
 
 		// UI Elements
 		CoreUI::WindowPtr m_mainWnd;
+		CoreUI::WindowPtr m_joystickConfigWnd;
 
 		CoreUI::RendererRef m_renderer = nullptr;
 		CoreUI::MainWindowRef m_window = nullptr;
@@ -91,6 +96,11 @@ namespace ui
 
 		CoreUI::ImageRef m_hddInactive = nullptr;
 		CoreUI::ImageRef m_hddActive = nullptr;
+
+		CoreUI::LabelPtr m_trimX = nullptr;
+		CoreUI::LabelPtr m_trimY = nullptr;
+
+		joy::AxisTrim m_trim;
 	};
 
 }

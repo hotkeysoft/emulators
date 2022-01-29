@@ -3,10 +3,8 @@
 #include "../Storage/DeviceFloppy.h"
 #include "../Storage/DeviceHardDrive.h"
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
-#include <SDL_syswm.h>
+#include <fstream>
+#include <filesystem>
 
 #pragma warning(disable:4251)
 
@@ -18,13 +16,15 @@
 #include <Widgets/Toolbar.h>
 #include <Widgets/ToolbarItem.h>
 #include <Widgets/Button.h>
+#include <Widgets/Label.h>
+#include <Widgets/TextBox.h>
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <commdlg.h>
 
-#include <fstream>
-#include <filesystem>
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
+#include <SDL_syswm.h>
 
 namespace fs = std::filesystem;
 
@@ -127,16 +127,20 @@ namespace ui
 		ToolbarPtr toolbar = Toolbar::CreateAutoSize(m_renderer, "toolbar");
 		toolbar->SetBackgroundColor(Color::C_MED_GREY);
 
+		m_mainWnd->SetToolbar(toolbar);
+		m_mainWnd->SetText(m_pc->GetName());
+
 		m_floppyInactive = RES().FindImage("toolbar", 0);
 		m_floppyActive = RES().FindImage("toolbar", 4);
 		m_hddInactive = RES().FindImage("toolbar", 1);
 		m_hddActive = RES().FindImage("toolbar", 5);
 
+		// Toolbar section: Reboot
 		toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
 
 		toolbar->AddSeparator();
-		toolbar->AddSeparator();
 
+		// Toolbar section: Floppy drives
 		if (m_pc->GetFloppy())
 		{
 			m_floppyButton[0] = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
@@ -147,9 +151,9 @@ namespace ui
 			UpdateFloppy(1, "B:");
 
 			toolbar->AddSeparator();
-			toolbar->AddSeparator();
 		}
 
+		// Toolbar section: Hard disks
 		if (m_pc->GetHardDrive())
 		{
 			m_hddButton[0] = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
@@ -159,9 +163,9 @@ namespace ui
 			UpdateHardDisk(1, "D:");
 
 			toolbar->AddSeparator();
-			toolbar->AddSeparator();
 		}
 
+		// Toolbar section: Speed
 		m_speedButton = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
 		UpdateSpeed();
 
@@ -169,13 +173,10 @@ namespace ui
 		UpdateTurbo();
 
 		toolbar->AddSeparator();
-		toolbar->AddSeparator();
 
+		// Toolbar section: Snapshots
 		toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
 		m_snapshot = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
-
-		m_mainWnd->SetToolbar(toolbar);
-		m_mainWnd->SetText(m_pc->GetName());
 
 		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
 		LogPrintf(LOG_INFO, "Snapshot base directory is [%s]", m_snapshotBaseDirectory.string().c_str());
@@ -184,6 +185,14 @@ namespace ui
 			m_lastSnapshotDir.clear();
 		}
 		UpdateSnapshot();
+
+		toolbar->AddSeparator();
+
+		// Toolbar section: Joystick
+		if (m_pc->GetInputs().GetJoystick())
+		{
+			toolbar->AddToolbarItem("joystick", RES().FindImage("toolbar", 2));
+		}
 
 		return true;
 	}
@@ -250,6 +259,28 @@ namespace ui
 	void Overlay::UpdateTurbo()
 	{
 		m_turboButton->SetBackgroundColor(m_turbo ? Color(255, 0, 0) : Color::C_LIGHT_GREY);
+	}
+
+	void Overlay::UpdateTrim()
+	{
+		m_trim = m_pc->GetInputs().GetJoystick()->GetAxisTrim();
+		{
+			std::ostringstream os;
+			os << m_trim.x;
+			m_trimX->SetText(os.str().c_str());
+		}
+
+		{
+			std::ostringstream os;
+			os << m_trim.y;
+			m_trimY->SetText(os.str().c_str());
+		}
+	}
+
+	void Overlay::SetTrim()
+	{
+		m_pc->GetInputs().GetJoystick()->SetAxisTrim({ m_trim.x, m_trim.y });
+		UpdateTrim();
 	}
 
 	bool Overlay::Update()
@@ -555,12 +586,123 @@ namespace ui
 		{
 			ToggleTurbo();
 		}
+		else if (widget->GetId() == "joystick")
+		{
+			JoystickConfig();
+		}
+		else if (widget->GetId() == "trimX-")
+		{
+			--m_trim.x;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimX--")
+		{
+			m_trim.x -= 5;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimX+")
+		{
+			++m_trim.x;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimX++")
+		{
+			m_trim.x += 5;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimY-")
+		{
+			--m_trim.y;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimY--")
+		{
+			m_trim.y -= 5;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimY+")
+		{
+			++m_trim.y;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimY++")
+		{
+			m_trim.y += 5;
+			SetTrim();
+		}
+		else if (widget->GetId() == "resetX")
+		{
+			m_trim.x = 0;
+			SetTrim();
+		}
+		else if (widget->GetId() == "resetY")
+		{
+			m_trim.y = 0;
+			SetTrim();
+		}
+		else if (widget->GetId() == "close")
+		{
+			m_joystickConfigWnd->Show(false);
+		}
 	}
 
-	// events::EventHangler
+	void Overlay::JoystickConfig()
+	{
+		if (m_joystickConfigWnd)
+		{
+			bool isVisible = m_joystickConfigWnd->GetShowState() & WindowState::WST_VISIBLE;
+
+			m_joystickConfigWnd->Show(isVisible ? false : true);
+			return;
+		}
+
+		const int width = 278;
+		const int height = 120;
+		const int line0y = 4;
+		const int line1y = 28;
+		const int line2y = 56;
+		const int lineh = 24;
+
+		Rect r = WINMGR().GetWindowSize();
+		r.x = r.w - width;
+		r.y = r.h - (64 + height);
+		r.w = width;
+		r.h = height;
+		m_joystickConfigWnd = WINMGR().AddWindow("joystick", r, WIN_DIALOG | WIN_ACTIVE | WIN_CANMOVE | WIN_NOSCROLL);
+		m_joystickConfigWnd->SetText("Joystick");
+
+		m_joystickConfigWnd->AddControl(CoreUI::Label::CreateSingle("lx", m_renderer, Rect(0, line0y, 50, lineh), "Trim X"));
+		m_joystickConfigWnd->AddControl(CoreUI::Label::CreateSingle("ly", m_renderer, Rect(0, line1y, 50, lineh), "Trim Y"));
+
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX--", m_renderer, Rect(50, line0y, 28, lineh), "<<"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY--", m_renderer, Rect(50, line1y, 28, lineh), "<<"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX-", m_renderer, Rect(76, line0y, 24, lineh), "<"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY-", m_renderer, Rect(76, line1y, 24, lineh), "<"));
+
+		m_trimX = CoreUI::Label::CreateSingle("trimX", m_renderer, Rect(110, line0y, 28, lineh), "0", nullptr, CoreUI::Label::TEXT_H_CENTER);
+		m_joystickConfigWnd->AddControl(m_trimX);
+
+		m_trimY = CoreUI::Label::CreateSingle("trimY", m_renderer, Rect(110, line1y, 28, lineh), "0", nullptr, CoreUI::Label::TEXT_H_CENTER);
+		m_joystickConfigWnd->AddControl(m_trimY);
+
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX+", m_renderer, Rect(146, line0y, 24, lineh), ">"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY+", m_renderer, Rect(146, line1y, 24, lineh), ">"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX++", m_renderer, Rect(170, line0y, 28, lineh), ">>"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY++", m_renderer, Rect(170, line1y, 28, lineh), ">>"));
+
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("resetX", m_renderer, Rect(206, line0y, 60, lineh), "Reset"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("resetY", m_renderer, Rect(206, line1y, 60, lineh), "Reset"));
+
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("close", m_renderer, Rect(206, line2y, 60, lineh), "Close"));
+
+		UpdateTrim();
+	}
+
+	// events::EventHandler
 	bool Overlay::HandleEvent(SDL_Event& e)
 	{
 		static Uint32 toolbarEvent = WINMGR().GetEventType(ToolbarItem::EventClassName());
+		static Uint32 buttonEvent = WINMGR().GetEventType(Button::EventClassName());
 
 		bool handled = false;
 		bool redraw = false;
@@ -569,7 +711,7 @@ namespace ui
 		{
 			// Do nothing
 		}
-		else if (e.type == toolbarEvent)
+		else if (e.type == toolbarEvent || e.type == buttonEvent)
 		{
 			OnClick((WidgetRef)e.user.data1);
 		}

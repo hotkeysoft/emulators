@@ -1,8 +1,7 @@
 #pragma once
 #include "../Common.h"
 
-#include "windows.h"
-#include "wincon.h"
+#include <windef.h>
 
 class Console
 {

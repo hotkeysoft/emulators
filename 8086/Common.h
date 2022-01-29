@@ -1,4 +1,9 @@
 #pragma once
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+
 #include <cstdint>
 
 #define PRINTF_BIN_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
