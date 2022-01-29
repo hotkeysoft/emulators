@@ -130,7 +130,7 @@ namespace beeper
 
 	void DevicePCSpeaker::SetMasterVolume(int vol)
 	{
-		m_masterVolume = std::min(SDL_MIX_MAXVOLUME, std::max(0, vol));
+		m_masterVolume = std::clamp(vol, 0, SDL_MIX_MAXVOLUME);
 		LogPrintf(LOG_INFO, "Set Master Volume [%d]", m_masterVolume);
 	}
 
