@@ -263,11 +263,14 @@ namespace emul
 			TickHardDrive();
 
 			// Skip one in four video ticks to sync up with pit timing
-			if ((syncTicks & 3) != 3)
+			if (syncTicks & 1)
 			{
 				video->Tick();
 				m_pic->InterruptRequest(IRQ_VSYNC, (video->IsVSync()));
 			}
+			video->Tick();
+			m_pic->InterruptRequest(IRQ_VSYNC, (video->IsVSync()));
+
 
 			//m_uart.Tick();
 			//// UART clock is 1.5x base clock

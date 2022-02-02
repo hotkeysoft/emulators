@@ -146,6 +146,17 @@ namespace video
 			return;
 		}
 
+		// Halve the clock for all modes except 80 cols
+		if (!m_mode.text80Columns)
+		{ 
+			static bool div2 = false;
+			div2 = !div2;
+			if (div2)
+			{
+				return;
+			}
+		}
+
 		if (m_mode.enableVideo)
 		{
 			(this->*m_drawFunc)();
@@ -156,6 +167,7 @@ namespace video
 
 	void VideoCGA::OnNewFrame()
 	{
+		LogPrintf(LOG_DEBUG, "NewFrame");
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
 		unsigned int offset = config.startAddress * 2u;

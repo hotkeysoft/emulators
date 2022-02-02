@@ -264,6 +264,16 @@ namespace video
 			return;
 		}
 
+		if (!m_mode.hiDotClock)
+		{
+			static bool div2 = false;
+			div2 = !div2;
+			if (div2)
+			{
+				return;
+			}
+		}
+
 		if (m_mode.enableVideo)
 		{
 			(this->*m_drawFunc)();

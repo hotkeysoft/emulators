@@ -177,8 +177,8 @@ namespace emul
 
 		if (m_pic->InterruptPending() && CanInterrupt())
 		{
-			m_pic->InterruptAcknowledge();
-			LogPrintf(LOG_DEBUG, "IRQ %d", m_pic->GetPendingInterrupt()-8);
+			m_pic->InterruptAcknowledge(); 
+			LogPrintf(LOG_DEBUG, "[%zu] IRQ %d", g_ticks, m_pic->GetPendingInterrupt() - 8);
 			Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
@@ -222,16 +222,23 @@ namespace emul
 			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
 			// SN76489 clock is 3x base clock
-			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
+			//m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
 
 			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
 			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
 			m_dma->Tick();
+
+			if (syncTicks & 1)
+			{
+				m_video->Tick();
+			}
 			m_video->Tick();
 
 			TickFloppy();
 			TickHardDrive();
+
+			++syncTicks;
 		}
 		cpuTicks %= GetCPUSpeedRatio();
 
