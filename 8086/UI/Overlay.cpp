@@ -312,6 +312,28 @@ namespace ui
 	// video::Renderer
 	void Overlay::Render()
 	{
+		const size_t frames = 240;
+		static size_t frameCounter = 0;
+		static auto frameTime = std::chrono::high_resolution_clock::now();
+		float fps = 0.;
+
+		if (++frameCounter == 240)
+		{
+			auto now = std::chrono::high_resolution_clock::now();
+			auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - frameTime).count();
+			frameTime = now;
+			fps = frames * 1000.f / delta;
+			frameCounter = 0;
+		}
+
+		if (fps > 0.)
+		{
+			static char buf[128];
+
+			sprintf(buf, "%s [%.1f fps]", m_pc->GetName(), fps);
+			m_mainWnd->SetText(buf);
+		}
+
 		WINMGR().Draw();
 	}
 
