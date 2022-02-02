@@ -77,54 +77,54 @@ namespace crtc
 		case CRT_H_TOTAL_CHAR:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:             hTotal = %d characters", value);
 			m_config.hTotal = value;
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 		case CRT_H_DISPLAYED_CHAR:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         hDisplayed = %d characters", value);
 			m_config.hDisplayed = value;
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 		case CRT_H_SYNC_POS_CHAR:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           hSyncPos = %d characters", value);
 			m_config.hSyncPos = value;
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 		case CRT_H_SYNC_WIDTH_CHAR:
 			m_config.hSyncWidth = value & 15;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         hSyncWidth = %d characters", m_config.hSyncWidth);
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 
 		case CRT_V_TOTAL_ROW:
 			m_config.vTotal = value & 127;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:             vTotal = %d rows", m_config.vTotal);
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 		case CRT_V_TOTAL_ADJ_LINES:
 			m_config.vTotalAdjust = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       vTotalAdjust = %d scanlines", m_config.vTotalAdjust);
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 		case CRT_V_DISPLAYED_ROW:
 			m_config.vTotalDisplayed = value & 127;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:    vTotalDisplayed = %d rows", m_config.vTotalDisplayed);
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 		case CRT_V_SYNC_POS_ROW:
 			m_config.vSyncPos = value & 127;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           vSyncPos = %d rows", m_config.vSyncPos);
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 
 		case CRT_INTERLACE_MODE:
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:      interlaceMode = %d", value);
-			m_config.interlaceMode = value;
+			m_config.interlaceMode = value; // TODO Not implemented
 			break;
 
 		case CRT_MAX_SCANLINE_ADDR:
 			m_config.maxScanlineAddress = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: maxScanlineAddress = %d scanlines", m_config.maxScanlineAddress);
-			UpdateHVTotals();
+			m_configChanged = true;
 			break;
 
 		case CRT_CURSOR_START_LINE:
@@ -195,6 +195,13 @@ namespace crtc
 
 			++m_data.frame;
 			m_data.vPos = 0;
+
+			if (m_configChanged)
+			{
+				m_configChanged = false;
+				UpdateHVTotals();
+				m_events->OnChangeMode();
+			}
 
 			m_events->OnNewFrame();
 
@@ -275,11 +282,10 @@ namespace crtc
 		m_data.vBorder = data["vBorder"];
 		m_data.frame = data["frame"];
 
-		UpdateHVTotals();
-
 		m_charWidth = from["charWidth"];
 		m_blink16 = from["blink16"];
 		m_blink32 = from["blink32"];
 
+		UpdateHVTotals();
 	}
 }

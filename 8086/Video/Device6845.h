@@ -22,6 +22,7 @@ namespace crtc
 		virtual void OnRenderFrame() {}
 		virtual void OnNewFrame() {}
 		virtual void OnEndOfRow() {}
+		virtual void OnChangeMode() {}
 	};
 
 	// CRT Controller
@@ -125,7 +126,7 @@ namespace crtc
 
 		virtual void Tick();
 
-		bool IsInit() const { return m_data.hTotal && m_data.vTotal; }
+		bool IsInit() const { return m_config.maxScanlineAddress; }
 
 		bool IsHSync() const { return (m_data.hPos >= m_data.hSyncMin) && (m_data.hPos <= m_data.hSyncMax); }
 		bool IsVSync() const { return (m_data.vPos >= m_data.vSyncMin) && (m_data.vPos <= m_data.vSyncMax); }
@@ -164,5 +165,7 @@ namespace crtc
 		bool m_blink32 = false;
 
 		EventHandler* m_events = nullptr;
+
+		bool m_configChanged = false;
 	};
 }
