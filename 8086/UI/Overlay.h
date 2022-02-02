@@ -64,6 +64,11 @@ namespace ui
 		void SaveSnapshot(const std::filesystem::path& snapshotDir);
 		void RestoreSnapshot(const std::filesystem::path& snapshotDir);
 		std::string GetSnapshotName(const std::filesystem::path& snapshotDir);
+		void LoadSnapshotList();
+		void LoadLastSnapshot();
+		void RemoveSnapshotWindow();
+		void ShowSnapshotWindow();
+		void AddSnapshotItem(const std::filesystem::path& path, int index, int w, int h);
 
 		std::string m_title = "PC";
 
@@ -78,6 +83,7 @@ namespace ui
 		// UI Elements
 		CoreUI::WindowPtr m_mainWnd;
 		CoreUI::WindowPtr m_joystickConfigWnd;
+		CoreUI::WindowPtr m_snapshotWnd;
 
 		CoreUI::RendererRef m_renderer = nullptr;
 		CoreUI::MainWindowRef m_window = nullptr;
@@ -87,7 +93,7 @@ namespace ui
 		CoreUI::ToolbarItemPtr m_hddButton[2];
 		CoreUI::ToolbarItemPtr m_speedButton;
 		CoreUI::ToolbarItemPtr m_turboButton;
-		CoreUI::ToolbarItemPtr m_snapshot;
+		CoreUI::ToolbarItemPtr m_loadSnapshotButton;
 		CoreUI::ToolbarItemPtr m_joystickButton;
 
 		CoreUI::ImageRef m_floppyInactive = nullptr;
@@ -103,6 +109,8 @@ namespace ui
 		CoreUI::LabelPtr m_trimY = nullptr;
 
 		joy::AxisTrim m_trim;
+
+		std::set<std::filesystem::path> m_snapshots;
 	};
 
 }

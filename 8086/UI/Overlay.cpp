@@ -179,7 +179,7 @@ namespace ui
 
 		// Toolbar section: Snapshots
 		toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
-		m_snapshot = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
+		m_loadSnapshotButton = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
 
 		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
 		LogPrintf(LOG_INFO, "Snapshot base directory is [%s]", m_snapshotBaseDirectory.string().c_str());
@@ -200,6 +200,127 @@ namespace ui
 		return true;
 	}
 
+	void Overlay::OnClick(WidgetRef widget)
+	{
+		if (widget->GetId() == "floppy0")
+		{
+			LoadFloppyDiskImage(0, "A:");
+		}
+		else if (widget->GetId() == "floppy1")
+		{
+			LoadFloppyDiskImage(1, "B:");
+		}
+		if (widget->GetId() == "eject0")
+		{
+			LoadFloppyDiskImage(0, "A:", true);
+		}
+		else if (widget->GetId() == "eject1")
+		{
+			LoadFloppyDiskImage(1, "B:", true);
+		}
+		if (widget->GetId() == "hdd0")
+		{
+			LoadHardDiskImage(0, "C:");
+		}
+		else if (widget->GetId() == "hdd1")
+		{
+			LoadHardDiskImage(1, "D:");
+		}
+		else if (widget->GetId() == "speed")
+		{
+			ToggleCPUSpeed();
+		}
+		else if (widget->GetId() == "saveSnapshot")
+		{
+			RemoveSnapshotWindow();
+			fs::path snapshotDir;
+			if (MakeSnapshotDirectory(snapshotDir))
+			{
+				SaveSnapshot(snapshotDir);
+			}
+		}
+		else if (widget->GetId() == "loadSnapshot")
+		{
+			if (SDL_GetModState() & KMOD_SHIFT)
+			{
+				ShowSnapshotWindow();
+			}
+			else
+			{
+				RemoveSnapshotWindow();
+				LoadLastSnapshot();
+			}
+		}
+		else if (widget->GetId() == "reboot")
+		{
+			// Shift+click = hard reboot
+			m_pc->Reboot(SDL_GetModState() & KMOD_SHIFT);
+		}
+		else if (widget->GetId() == "turbo")
+		{
+			ToggleTurbo();
+		}
+		else if (widget->GetId() == "joystick")
+		{
+			JoystickConfig();
+		}
+		else if (widget->GetId() == "trimX-")
+		{
+			--m_trim.x;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimX--")
+		{
+			m_trim.x -= 5;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimX+")
+		{
+			++m_trim.x;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimX++")
+		{
+			m_trim.x += 5;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimY-")
+		{
+			--m_trim.y;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimY--")
+		{
+			m_trim.y -= 5;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimY+")
+		{
+			++m_trim.y;
+			SetTrim();
+		}
+		else if (widget->GetId() == "trimY++")
+		{
+			m_trim.y += 5;
+			SetTrim();
+		}
+		else if (widget->GetId() == "resetX")
+		{
+			m_trim.x = 0;
+			SetTrim();
+		}
+		else if (widget->GetId() == "resetY")
+		{
+			m_trim.y = 0;
+			SetTrim();
+		}
+		else if (widget->GetId() == "close")
+		{
+			m_joystickConfigWnd->Show(false);
+			m_joystickButton->SetPushed(false);
+		}
+	}
+
 	void Overlay::UpdateSpeed()
 	{
 		static char speedStr[32];
@@ -212,12 +333,12 @@ namespace ui
 	{
 		if (m_lastSnapshotDir.empty())
 		{
-			m_snapshot->SetText("");
+			m_loadSnapshotButton->SetText("");
 		}
 		else
 		{
 			std::string name = GetSnapshotName(m_lastSnapshotDir);
-			m_snapshot->SetText(name.c_str());
+			m_loadSnapshotButton->SetText(name.c_str());
 		}
 	}
 
@@ -510,32 +631,36 @@ namespace ui
 		return true;
 	}
 
-	bool Overlay::GetLastSnapshotDirectory(fs::path& snapshotDir)
+	void Overlay::LoadSnapshotList()
 	{
-		snapshotDir.clear();
-
 		fs::path path = m_snapshotBaseDirectory;
 		if (path.empty())
 		{
 			LogPrintf(LOG_ERROR, "GetLastSnapshotDirectory: Base directory not set");
 		}
-
-		std::set<fs::path> snapshots;
+	
 		for (auto const& entry : std::filesystem::directory_iterator(path))
 		{
 			if (entry.is_directory())
 			{
-				snapshots.insert(entry.path());
+				m_snapshots.insert(entry.path());
 			}
 		}
+	}
 
-		if (!snapshots.size())
+	bool Overlay::GetLastSnapshotDirectory(fs::path& snapshotDir)
+	{
+		snapshotDir.clear();
+
+		LoadSnapshotList();
+
+		if (!m_snapshots.size())
 		{
 			return false;
 		}
 
 		// Last one = more recent
-		snapshotDir = *(snapshots.rbegin());
+		snapshotDir = *(m_snapshots.rbegin());
 		return true;
 	}
 
@@ -555,122 +680,70 @@ namespace ui
 		return name;
 	}
 
-	void Overlay::OnClick(WidgetRef widget)
+	void Overlay::LoadLastSnapshot()
 	{
-		if (widget->GetId() == "floppy0")
-		{
-			LoadFloppyDiskImage(0, "A:");
-		}
-		else if (widget->GetId() == "floppy1")
-		{
-			LoadFloppyDiskImage(1, "B:");
-		}
-		if (widget->GetId() == "eject0")
-		{
-			LoadFloppyDiskImage(0, "A:", true);
-		}
-		else if (widget->GetId() == "eject1")
-		{
-			LoadFloppyDiskImage(1, "B:", true);
-		}
-		if (widget->GetId() == "hdd0")
-		{
-			LoadHardDiskImage(0, "C:");
-		}
-		else if (widget->GetId() == "hdd1")
-		{
-			LoadHardDiskImage(1, "D:");
-		}
-		else if (widget->GetId() == "speed")
-		{
-			ToggleCPUSpeed();
-		}
-		else if (widget->GetId() == "saveSnapshot")
-		{
-			fs::path snapshotDir;
-			if (MakeSnapshotDirectory(snapshotDir))
-			{
-				SaveSnapshot(snapshotDir);
-			}
-		}
-		else if (widget->GetId() == "loadSnapshot")
-		{
-			fs::path snapshotDir;
-			GetLastSnapshotDirectory(snapshotDir);
+		fs::path snapshotDir;
+		GetLastSnapshotDirectory(snapshotDir);
 
-			if (!snapshotDir.empty())
-			{
-				RestoreSnapshot(snapshotDir);
-			}
-		}
-		else if (widget->GetId() == "reboot")
+		if (!snapshotDir.empty())
 		{
-			// Shift+click = hard reboot
-			m_pc->Reboot(SDL_GetModState() & KMOD_SHIFT);
+			RestoreSnapshot(snapshotDir);
 		}
-		else if (widget->GetId() == "turbo")
+	}
+
+	void Overlay::RemoveSnapshotWindow()
+	{
+		if (m_snapshotWnd)
 		{
-			ToggleTurbo();
+			WINMGR().RemoveWindow("snapshots");
+			m_snapshotWnd = nullptr;
 		}
-		else if (widget->GetId() == "joystick")
+	}
+
+	void Overlay::ShowSnapshotWindow()
+	{	
+		RemoveSnapshotWindow();
+
+		const int nbItems = 16;
+		const int hItem = 24;
+		const int width = 400;
+		const int height = hItem * nbItems + 34;
+
+		Rect r = WINMGR().GetWindowSize();
+		r.x = (r.w - width) / 2;
+		r.y = r.h - (64 + height);
+		r.w = width;
+		r.h = height;
+
+		m_snapshotWnd = WINMGR().AddWindow("snapshots", r, WIN_CANMOVE);
+		m_snapshotWnd->SetText("Snapshots");
+		m_snapshotWnd->SetActive();
+
+		LoadSnapshotList();
+
+		int index = 0;
+		size_t count = m_snapshots.size();
+		for (fs::path snapshot : m_snapshots)
 		{
-			JoystickConfig();
+			AddSnapshotItem(snapshot, index++, width - ((count <= nbItems) ? 8 : 26), hItem);
 		}
-		else if (widget->GetId() == "trimX-")
-		{
-			--m_trim.x;
-			SetTrim();
-		}
-		else if (widget->GetId() == "trimX--")
-		{
-			m_trim.x -= 5;
-			SetTrim();
-		}
-		else if (widget->GetId() == "trimX+")
-		{
-			++m_trim.x;
-			SetTrim();
-		}
-		else if (widget->GetId() == "trimX++")
-		{
-			m_trim.x += 5;
-			SetTrim();
-		}
-		else if (widget->GetId() == "trimY-")
-		{
-			--m_trim.y;
-			SetTrim();
-		}
-		else if (widget->GetId() == "trimY--")
-		{
-			m_trim.y -= 5;
-			SetTrim();
-		}
-		else if (widget->GetId() == "trimY+")
-		{
-			++m_trim.y;
-			SetTrim();
-		}
-		else if (widget->GetId() == "trimY++")
-		{
-			m_trim.y += 5;
-			SetTrim();
-		}
-		else if (widget->GetId() == "resetX")
-		{
-			m_trim.x = 0;
-			SetTrim();
-		}
-		else if (widget->GetId() == "resetY")
-		{
-			m_trim.y = 0;
-			SetTrim();
-		}
-		else if (widget->GetId() == "close")
-		{
-			m_joystickConfigWnd->Show(false);
-			m_joystickButton->SetPushed(false);
-		}
+
+		m_snapshotWnd->GetScrollBars()->RefreshScrollBarStatus();
+		m_snapshotWnd->GetScrollBars()->ScrollTo(&Point(0, hItem * index));
+	}
+
+	void Overlay::AddSnapshotItem(const std::filesystem::path& path, int index, int w, int h)
+	{
+		std::string name = GetSnapshotName(path);
+		Rect pos(0, index * h, w-24, h);
+		Rect posDelete(w-24, index * h, 24, h);
+
+		char id[64];
+		sprintf(id, "snapshot%d", index);
+
+		m_snapshotWnd->AddControl(CoreUI::Button::Create(id, m_renderer, pos, name.c_str()));
+		strcat(id, "x");
+		m_snapshotWnd->AddControl(CoreUI::Button::Create(id, m_renderer, posDelete, "X"));
 	}
 
 	void Overlay::JoystickConfig()
@@ -681,6 +754,7 @@ namespace ui
 
 			m_joystickConfigWnd->Show(isVisible ? false : true);
 			m_joystickButton->SetPushed(!isVisible);
+			m_joystickConfigWnd->SetActive();
 			return;
 		}
 
@@ -698,8 +772,9 @@ namespace ui
 		r.y = r.h - (64 + height);
 		r.w = width;
 		r.h = height;
-		m_joystickConfigWnd = WINMGR().AddWindow("joystick", r, WIN_DIALOG | WIN_ACTIVE | WIN_CANMOVE | WIN_NOSCROLL);
+		m_joystickConfigWnd = WINMGR().AddWindow("joystick", r, WIN_DIALOG | WIN_CANMOVE | WIN_NOSCROLL);
 		m_joystickConfigWnd->SetText("Joystick");
+		m_joystickConfigWnd->SetActive();
 
 		m_joystickConfigWnd->AddControl(CoreUI::Label::CreateSingle("lx", m_renderer, Rect(0, line0y, 50, lineh), "Trim X"));
 		m_joystickConfigWnd->AddControl(CoreUI::Label::CreateSingle("ly", m_renderer, Rect(0, line1y, 50, lineh), "Trim Y"));
