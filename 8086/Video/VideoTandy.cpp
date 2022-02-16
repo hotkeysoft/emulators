@@ -13,17 +13,13 @@ using crtc::CRTCData;
 
 namespace video
 {
-	const float VSCALE = 2.4f;
-
 	VideoTandy::VideoTandy(WORD baseAddress) :
-		Video(640, 225, VSCALE),
 		Logger("vidTandy"),
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress),
 		m_charROM("CHAR", 8192, emul::MemoryType::ROM)
 	{
 		Reset();
-		m_frameBuffer = new uint32_t[640 * 225];
 	}
 
 	void VideoTandy::Reset()
@@ -37,7 +33,7 @@ namespace video
 		Video::EnableLog(minSev);
 	}
 
-	void VideoTandy::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
+	void VideoTandy::Init(emul::Memory* memory, const char* charROM, bool)
 	{
 		assert(memory);
 		m_memory = memory;
@@ -46,10 +42,6 @@ namespace video
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadFromFile(charROM);
 		m_charROMStart = m_charROM.getPtr(4096 + 2048);
-
-		m_sdlBorderPixels = border;
-		m_sdlHBorder = border;
-		m_sdlVBorder = (BYTE)(border / VSCALE);
 
 		m_crtc.Init();
 		m_crtc.SetEventHandler(this);
@@ -74,7 +66,7 @@ namespace video
 		// CRT, Processor Page Register
 		Connect(m_baseAddress + 0xF, static_cast<PortConnector::OUTFunction>(&VideoTandy::WritePageRegister));
 
-		Video::Init(memory, charROM, border);
+		Video::Init(memory, charROM);
 	}
 
 	bool VideoTandy::ConnectTo(emul::PortAggregator& dest)
@@ -248,13 +240,57 @@ namespace video
 		return status;
 	}
 
+	void VideoTandy::OnChangeMode()
+	{
+		uint16_t width = m_crtc.GetData().hTotal;
+
+		//// Select draw function
+		if (!m_mode.graphics)
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: DrawTextMode");
+			m_drawFunc = &VideoTandy::DrawTextMode;
+		}
+		else if (m_mode.hiResolution)
+		{
+			if (m_mode.graph640x200x4)
+			{
+				LogPrintf(LOG_INFO, "OnChangeMode: Draw640x200x4");
+				m_drawFunc = &VideoTandy::Draw640x200x4;
+			}
+			else
+			{
+				LogPrintf(LOG_INFO, "OnChangeMode: Draw640x200x2");
+				m_drawFunc = &VideoTandy::Draw640x200x2;
+				width *= 2;
+			}
+		}
+		else if (m_mode.graph16Colors)
+		{
+			if (m_mode.hiDotClock)
+			{
+				LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200x16");
+				m_drawFunc = &VideoTandy::Draw320x200x16;
+			}
+			else
+			{
+				LogPrintf(LOG_INFO, "OnChangeMode: Draw160x200x16");
+				m_drawFunc = &VideoTandy::Draw160x200x16;
+			}
+			width /= 2;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200x4");
+			m_drawFunc = &VideoTandy::Draw320x200x4;
+		}
+
+		InitFrameBuffer(width, m_crtc.GetData().vTotal);
+	}
+
 	void VideoTandy::OnRenderFrame()
 	{
-		// TODO: don't recompute every time
-		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
-
 		uint32_t borderRGB = GetMonitorPalette()[m_mode.borderEnable ? m_mode.borderColor: m_color.color];
-		Video::RenderFrame(w, 225, borderRGB);
+		Video::RenderFrame(borderRGB);
 	}
 
 	void VideoTandy::Tick()
@@ -280,9 +316,8 @@ namespace video
 		}
 		else
 		{
-			// TODO: Check if correct
-			uint32_t borderRGB = GetMonitorPalette()[m_mode.borderColor];
-			std::fill(m_frameBuffer + 0, m_frameBuffer + 640*225, borderRGB);
+			uint32_t borderRGB = GetMonitorPalette()[m_mode.borderEnable ? m_mode.borderColor : m_color.color];
+			std::fill(m_fb.begin(), m_fb.end(), borderRGB);
 		}
 
 		m_crtc.Tick();
@@ -299,28 +334,6 @@ namespace video
 		m_banks[1] = 0x2000 + offset;
 		m_banks[2] = 0x4000 + offset;
 		m_banks[3] = 0x6000 + offset;
-
-		//// Select draw function
-		m_xAxisDivider = 2;
-		if (!m_mode.graphics)
-		{
-			m_drawFunc = &VideoTandy::DrawTextMode;
-		}
-		else if (m_mode.hiResolution)
-		{
-			m_drawFunc = m_mode.graph640x200x4 ? &VideoTandy::Draw640x200x4 : &VideoTandy::Draw640x200x2;
-			m_xAxisDivider = 1;
-		}
-		else if (m_mode.graph16Colors)
-		{
-			m_drawFunc = m_mode.hiDotClock ? m_drawFunc = &VideoTandy::Draw320x200x16 : &VideoTandy::Draw160x200x16;
-			m_xAxisDivider = 4;
-		}
-		else
-		{
-			m_drawFunc = &VideoTandy::Draw320x200x4;
-			m_xAxisDivider = 2;
-		}
 	}
 
 	void VideoTandy::OnEndOfRow()
@@ -378,12 +391,12 @@ namespace video
 			// For now leave lines above 8 blank
 			for (int y = 0; y < data.vCharHeight; ++y)
 			{
-				uint32_t offset = 640 * (uint32_t)(data.vPos + y) + data.hPos;
+				uint32_t offset = m_fbWidth * (uint32_t)(data.vPos + y) + data.hPos;
 				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
 				for (int x = 0; x < 8; ++x)
 				{
 					bool set = cursorLine || (draw && (y < 8) && ((*(currCharPos + y)) & (1 << (7 - x))));
-					m_frameBuffer[offset + x] = GetColor(set ? fg : bg);
+					m_fb[offset + x] = GetColor(set ? fg : bg);
 				}
 			}
 		}
@@ -407,7 +420,7 @@ namespace video
 					BYTE val = ch & 15;
 					ch >>= 4;
 
-					m_frameBuffer[640 * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
+					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
 			}
 			base &= 0x7FFF;
@@ -432,7 +445,7 @@ namespace video
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					m_frameBuffer[640 * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(m_currGraphPalette[val]);
+					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(m_currGraphPalette[val]);
 				}
 			}
 			base &= 0x7FFF;
@@ -458,7 +471,7 @@ namespace video
 					BYTE val = ch & 15;
 					ch >>= 4;
 
-					m_frameBuffer[640 * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
+					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
 			}
 		}
@@ -473,7 +486,7 @@ namespace video
 		{
 			ADDRESS& base = m_banks[data.vPos & 1];
 
-			uint32_t baseX = (640 * data.vPos) + (data.hPos * 2);
+			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -482,7 +495,7 @@ namespace video
 				for (int x = 0; x < 8; ++x)
 				{
 					bool val = (ch & (1 << (7-x)));
-					m_frameBuffer[baseX++] = GetColor(val ? 0xF : 0);
+					m_fb[baseX++] = GetColor(val ? 0xF : 0);
 				}
 			}
 			base &= 0x7FFF;
@@ -498,7 +511,7 @@ namespace video
 		{
 			ADDRESS& base = m_banks[data.vPos & 3];
 
-			uint32_t baseX = (640 * data.vPos) + data.hPos;
+			uint32_t baseX = (m_fbWidth * data.vPos) + data.hPos;
 
 			BYTE chEven = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
 			BYTE chOdd = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
@@ -508,7 +521,7 @@ namespace video
 				BYTE val = 
 					((chEven & (1 << (7 - x))) ? 1 : 0) | 
 					((chOdd  & (1 << (7 - x))) ? 2 : 0);
-				m_frameBuffer[baseX++] = GetColor(val);
+				m_fb[baseX++] = GetColor(val);
 			}
 			base &= 0x7FFF;
 		}
@@ -550,8 +563,6 @@ namespace video
 		to["mode"] = mode;
 
 		to["videoArrayRegisterAddress"] = m_videoArrayRegisterAddress;
-
-		to["xAxisDivider"] = m_xAxisDivider;
 
 		m_crtc.Serialize(to["crtc"]);
 	}
@@ -597,11 +608,10 @@ namespace video
 
 		m_videoArrayRegisterAddress = from["videoArrayRegisterAddress"];
 
-		m_xAxisDivider = from["xAxisDivider"];
-
 		m_crtc.Deserialize(from["crtc"]);
 
 		UpdatePageRegisters();
+		OnChangeMode();
 		OnNewFrame();
 	}
 }

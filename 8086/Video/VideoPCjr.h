@@ -25,7 +25,7 @@ namespace video
 		VideoPCjr(VideoPCjr&&) = delete;
 		VideoPCjr& operator=(VideoPCjr&&) = delete;
 
-		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false) override;
+		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Reset() override;
 		virtual void Tick() override;
 
@@ -34,6 +34,7 @@ namespace video
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		// crtc::EventHandler
+		virtual void OnChangeMode() override;
 		virtual void OnRenderFrame() override;
 		virtual void OnNewFrame() override;
 
@@ -117,8 +118,6 @@ namespace video
 		void Draw320x200x16();
 		void Draw640x200x2();
 		void Draw640x200x4();
-
-		int m_xAxisDivider = 1;
 
 		// Text mode pointers
 		BYTE* m_cursorPos = nullptr;

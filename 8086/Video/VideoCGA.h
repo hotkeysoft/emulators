@@ -22,7 +22,7 @@ namespace video
 		VideoCGA(VideoCGA&&) = delete;
 		VideoCGA& operator=(VideoCGA&&) = delete;
 
-		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false) override;
+		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Reset() override;
 		virtual void Tick() override;
 
@@ -31,6 +31,7 @@ namespace video
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB800; }
 
 		// crtc::EventHandler
+		virtual void OnChangeMode() override;
 		virtual void OnRenderFrame() override;
 		virtual void OnNewFrame() override;
 		virtual void OnEndOfRow() override;

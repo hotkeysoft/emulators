@@ -10,17 +10,15 @@ using crtc::CRTCData;
 
 namespace video
 {
-	const float VSCALE = 1.6f; // TODO
-
 	VideoHGC::VideoHGC(WORD baseAddress) :
 		VideoMDA(baseAddress),
 		Logger("HGC")
 	{
 	}
 
-	void VideoHGC::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
+	void VideoHGC::Init(emul::Memory* memory, const char* charROM, bool)
 	{
-		VideoMDA::Init(memory, charROM, border);
+		VideoMDA::Init(memory, charROM);
 
 		// TODO, show 4kb repeated pages in text mode?
 
@@ -58,6 +56,20 @@ namespace video
 			m_modeHGC.displayPage ? "Page 2" : "Page 1");
 	}
 
+	void VideoHGC::OnChangeMode()
+	{
+		if (m_modeHGC.graphics)
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw720x348");
+			m_drawFunc = (DrawFunc)&VideoHGC::Draw720x348;
+			Video::InitFrameBuffer(m_crtc.GetData().hTotal * 2, m_crtc.GetData().vTotal);
+		}
+		else
+		{
+			VideoMDA::OnChangeMode();
+		}
+	}
+
 	void VideoHGC::OnNewFrame()
 	{
 		if (m_modeHGC.graphics)
@@ -69,8 +81,6 @@ namespace video
 			m_banks[1] = m_screenB000.getPtr(page + 0x2000);
 			m_banks[2] = m_screenB000.getPtr(page + 0x4000);
 			m_banks[3] = m_screenB000.getPtr(page + 0x6000);
-
-			m_drawFunc = (DrawFunc)&VideoHGC::Draw720x348;
 		}
 		else
 		{
@@ -89,7 +99,7 @@ namespace video
 		{
 			BYTE*& currChar = m_banks[data.vPos & 3];
 
-			uint32_t baseX = (720 * data.vPos) + (data.hPos * 2);
+			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -98,7 +108,7 @@ namespace video
 				for (int x = 0; x < 8; ++x)
 				{
 					bool val = (ch & (1 << (7 - x)));
-					m_frameBuffer[baseX++] = GetMonitorPalette()[val ? 0x0F : 0];
+					m_fb[baseX++] = GetMonitorPalette()[val ? 0x0F : 0];
 				}
 				++currChar;
 			}
@@ -119,8 +129,6 @@ namespace video
 
 	void VideoHGC::Deserialize(json& from)
 	{
-		VideoMDA::Deserialize(from);
-
 		if (from["id.ext"] != "hgc")
 		{
 			throw emul::SerializableException("VideoHGC: Incompatible mode");
@@ -130,6 +138,6 @@ namespace video
 		m_modeHGC.graphics = mode["graphics"];
 		m_modeHGC.displayPage = mode["displayPage"];
 
-		OnNewFrame();
+		VideoMDA::Deserialize(from);
 	}
 }

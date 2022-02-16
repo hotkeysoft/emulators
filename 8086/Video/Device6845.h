@@ -126,7 +126,7 @@ namespace crtc
 
 		virtual void Tick();
 
-		bool IsInit() const { return m_config.maxScanlineAddress; }
+		bool IsInit() const { return m_config.hTotal && m_config.vTotal; }
 
 		bool IsHSync() const { return (m_data.hPos >= m_data.hSyncMin) && (m_data.hPos <= m_data.hSyncMax); }
 		bool IsVSync() const { return (m_data.vPos >= m_data.vSyncMin) && (m_data.vPos <= m_data.vSyncMax); }

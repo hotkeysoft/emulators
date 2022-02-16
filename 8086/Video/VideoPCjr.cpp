@@ -14,14 +14,12 @@ namespace video
 	const float VSCALE = 2.4f;
 
 	VideoPCjr::VideoPCjr(WORD baseAddress) :
-		Video(640, 200, VSCALE),
 		Logger("vidPCjr"),
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress),
 		m_charROM("CHAR", 8192, emul::MemoryType::ROM)
 	{
 		Reset();
-		m_frameBuffer = new uint32_t[640 * 200];
 	}
 
 	void VideoPCjr::Reset()
@@ -35,7 +33,7 @@ namespace video
 		Video::EnableLog(minSev);
 	}
 
-	void VideoPCjr::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
+	void VideoPCjr::Init(emul::Memory* memory, const char* charROM, bool)
 	{
 		assert(memory);
 		m_memory = memory;
@@ -44,10 +42,6 @@ namespace video
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadFromFile(charROM);
 		m_charROMStart = m_charROM.getPtr(4096 + 2048);
-
-		m_sdlBorderPixels = border;
-		m_sdlHBorder = border;
-		m_sdlVBorder = (BYTE)(border / VSCALE);
 
 		m_crtc.Init();
 		m_crtc.SetEventHandler(this);
@@ -63,7 +57,7 @@ namespace video
 		// Gate Array Register: Status
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoPCjr::ReadStatusRegister));
 
-		Video::Init(memory, charROM, border);
+		Video::Init(memory, charROM);
 	}
 
 	bool VideoPCjr::ConnectTo(emul::PortAggregator& dest)
@@ -99,7 +93,7 @@ namespace video
 			m_pageRegister.addressMode = PageRegister::ADDRESSMODE::GRAPH_LOW;
 			modeStr = "GRAPH LOW";
 			break;
-		case 2:
+		case 3:
 			m_pageRegister.addressMode = PageRegister::ADDRESSMODE::GRAPH_HI;
 			modeStr = "GRAPH HI";
 			break;
@@ -243,13 +237,54 @@ namespace video
 		return status;
 	}
 
+	void VideoPCjr::OnChangeMode()
+	{
+		uint16_t width = m_crtc.GetData().hTotal;
+
+		//// Select draw function
+		if (!m_mode.graphics)
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: DrawTextMode");
+			m_drawFunc = &VideoPCjr::DrawTextMode;
+		}
+		else if (m_mode.graph2Colors)
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw640x200x2");
+			m_drawFunc = &VideoPCjr::Draw640x200x2;
+			width *= 2;
+		}
+		else if (m_mode.graph16Colors)
+		{
+			width /= 2;
+			if (m_mode.hiBandwidth)
+			{
+				LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200x16");
+				m_drawFunc = &VideoPCjr::Draw320x200x16;
+			}
+			else
+			{
+				LogPrintf(LOG_INFO, "OnChangeMode: Draw160x200x16");
+				m_drawFunc = &VideoPCjr::Draw160x200x16;
+			}
+		}
+		else if (m_mode.hiBandwidth)
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw640x200x4");
+			m_drawFunc = &VideoPCjr::Draw640x200x4;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200x4");
+			m_drawFunc = &VideoPCjr::Draw320x200x4;
+		}
+
+		InitFrameBuffer(width, m_crtc.GetData().vTotal);
+	}
+
 	void VideoPCjr::OnRenderFrame()
 	{
-		// TODO: don't recompute every time
-		int w = (m_crtc.GetData().hTotalDisp * 2) / m_xAxisDivider;
-
 		uint32_t borderRGB = GetMonitorPalette()[m_mode.borderColor];
-		Video::RenderFrame(w, 200, borderRGB);
+		Video::RenderFrame(borderRGB);
 	}
 
 	void VideoPCjr::Tick()
@@ -295,42 +330,8 @@ namespace video
 		//// Pointers for graphics mode
 		m_banks[0] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x0000);
 		m_banks[1] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
-		m_banks[2] = m_mode.hiBandwidth ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x4000) : nullptr;
-		m_banks[3] = m_mode.hiBandwidth ? m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x6000) : nullptr;
-
-		//// Select draw function
-		m_xAxisDivider = 2;
-		if (!m_mode.graphics)
-		{
-			m_drawFunc = &VideoPCjr::DrawTextMode;
-		}
-		else if (m_mode.graph2Colors)
-		{
-			m_drawFunc = &VideoPCjr::Draw640x200x2;
-			m_xAxisDivider = 1;
-		}
-		else if (m_mode.graph16Colors)
-		{
-			if (m_mode.hiBandwidth)
-			{
-				m_drawFunc = &VideoPCjr::Draw320x200x16;
-				m_xAxisDivider = 4;
-			} 
-			else
-			{
-				m_drawFunc = &VideoPCjr::Draw160x200x16;
-				m_xAxisDivider = 4;
-			}
-		}
-		else if (m_mode.hiBandwidth)
-		{
-			m_drawFunc = &VideoPCjr::Draw640x200x4;
-		}
-		else
-		{
-			m_drawFunc = &VideoPCjr::Draw320x200x4;
-			m_xAxisDivider = 2;
-		}
+		m_banks[2] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x4000);
+		m_banks[3] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x6000);
 	}
 
 	bool VideoPCjr::IsCursor() const
@@ -369,13 +370,13 @@ namespace video
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
 			for (int y = 0; y < data.vCharHeight; ++y)
 			{
-				uint32_t offset = 640 * (uint32_t)(data.vPos + y) + data.hPos;
+				uint32_t offset = m_fbWidth * (uint32_t)(data.vPos + y) + data.hPos;
 				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
 				for (int x = 0; x < 8; ++x)
 				{
 					bool set = cursorLine || (draw && ((*(currCharPos + y)) & (1 << (7 - x))));
 					m_lastDot = set ? fg : bg;
-					m_frameBuffer[offset + x] = GetColor(m_lastDot);
+					m_fb[offset + x] = GetColor(m_lastDot);
 				}
 			}
 
@@ -400,7 +401,7 @@ namespace video
 					BYTE val = ch & 15;
 					ch >>= 4;
 
-					m_frameBuffer[640 * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
+					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
 
 				++currChar;
@@ -425,7 +426,7 @@ namespace video
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					m_frameBuffer[640 * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(val);
+					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(val);
 				}
 
 				++currChar;
@@ -439,8 +440,6 @@ namespace video
 
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		if ((data.vPos & 3) > 3)
-			return;
 		BYTE*& currChar = m_banks[data.vPos & 3];
 		if (m_crtc.IsDisplayArea() && data.hPos < 320)
 		{
@@ -452,7 +451,7 @@ namespace video
 					BYTE val = ch & 15;
 					ch >>= 4;
 
-					m_frameBuffer[640 * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
+					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
 
 				++currChar;
@@ -470,7 +469,7 @@ namespace video
 		{
 			BYTE*& currChar = m_banks[data.vPos & 1];
 
-			uint32_t baseX = (640 * data.vPos) + (data.hPos * 2);
+			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -479,7 +478,7 @@ namespace video
 				for (int x = 0; x < 8; ++x)
 				{
 					bool val = (ch & (1 << (7-x)));
-					m_frameBuffer[baseX++] = GetColor(val);
+					m_fb[baseX++] = GetColor(val);
 				}
 				++currChar;
 			}
@@ -494,7 +493,7 @@ namespace video
 		BYTE*& currChar = m_banks[data.vPos & 3];
 		if (m_crtc.IsDisplayArea())
 		{
-			uint32_t baseX = (640 * data.vPos) + data.hPos;
+			uint32_t baseX = (m_fbWidth * data.vPos) + data.hPos;
 
 			BYTE chEven = *currChar++;
 			BYTE chOdd = *currChar++;
@@ -504,7 +503,7 @@ namespace video
 				BYTE val = 
 					((chEven & (1 << (7 - x))) ? 1 : 0) | 
 					((chOdd  & (1 << (7 - x))) ? 2 : 0);
-				m_frameBuffer[baseX++] = GetColor(val);
+				m_fb[baseX++] = GetColor(val);
 			}
 		}
 	}
@@ -538,7 +537,6 @@ namespace video
 		mode["addressDataFlipFlop"] = m_mode.addressDataFlipFlop;
 		to["mode"] = mode;
 
-		to["xAxisDivider"] = m_xAxisDivider;
 		to["lastDot"] = m_lastDot;
 
 		m_crtc.Serialize(to["crtc"]);
@@ -578,12 +576,12 @@ namespace video
 		m_mode.graph2Colors = mode["graph2Colors"];
 		m_mode.addressDataFlipFlop = mode["addressDataFlipFlop"];
 
-		m_xAxisDivider = from["xAxisDivider"];
 		m_lastDot = from["lastDot"];
 
 		m_crtc.Deserialize(from["crtc"]);
 
 		MapB800Window();
+		OnChangeMode();
 		OnNewFrame();
 	}
 }

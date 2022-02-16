@@ -24,23 +24,22 @@ namespace video
 	class Video : public PortConnector, public emul::Serializable
 	{
 	public:
-		Video(uint16_t width, uint16_t height, float vScale = 1.0f);
+		Video();
 		virtual ~Video();
 
-		Video() = delete;
 		Video(const Video&) = delete;
 		Video& operator=(const Video&) = delete;
 		Video(Video&&) = delete;
 		Video& operator=(Video&&) = delete;
 
 		virtual void Reset() {};
-		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false);
+		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);
 
 		virtual void Tick() = 0;
 
 		virtual bool IsMonoAdapter() { return false; }
 
-		void RenderFrame(uint16_t w, uint16_t h, uint32_t borderRGB = 0xFF000000);
+		void RenderFrame(uint32_t borderRGB = 0xFF000000);
 
 		virtual void Serialize(json& to) = 0;
 		virtual void Deserialize(json& from) = 0;
@@ -72,20 +71,22 @@ namespace video
 		// SDL
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
-		SDL_Texture* m_sdlTexture = nullptr;
 
 		uint16_t m_sdlWidth = 0;
 		uint16_t m_sdlHeight = 0;
 
-		BYTE m_sdlBorderPixels;
-		WORD m_sdlHBorder;
-		WORD m_sdlVBorder;
-
-		float m_vScale = 1.0f;
-
 		const uint32_t* m_monitorPalette = nullptr;
 
-		uint32_t* m_frameBuffer;
+		// Init frame buffer and associated sdl sdl texture
+		virtual void InitFrameBuffer(WORD width, WORD height);
+
+		// Clear framebuffer data and associated sdl texture
+		void DestroyFrameBuffer();
+
+		std::vector<uint32_t> m_fb;
+		WORD m_fbWidth = 0;
+		WORD m_fbHeight = 0;
+		SDL_Texture* m_sdlTexture = nullptr;
 
 		std::vector<Renderer*> m_renderers;
 	};

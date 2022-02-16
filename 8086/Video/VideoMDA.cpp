@@ -14,7 +14,6 @@ namespace video
 	const BYTE CHAR_WIDTH = 9;
 	
 	VideoMDA::VideoMDA(WORD baseAddress) :
-		Video(720, 350, VSCALE),
 		Logger("MDA"),
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress, CHAR_WIDTH),
@@ -35,7 +34,7 @@ namespace video
 		Video::EnableLog(minSev);
 	}
 	
-	void VideoMDA::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
+	void VideoMDA::Init(emul::Memory* memory, const char* charROM, bool)
 	{
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
@@ -58,7 +57,7 @@ namespace video
 			memory->Allocate(&GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
 		}
 
-		Video::Init(memory, charROM, border, true);
+		Video::Init(memory, charROM, true);
 	}
 
 	bool VideoMDA::ConnectTo(emul::PortAggregator& dest)
@@ -68,9 +67,18 @@ namespace video
 		return PortConnector::ConnectTo(dest);
 	}
 
+	void VideoMDA::OnChangeMode()
+	{
+		// Select draw function
+		LogPrintf(LOG_INFO, "OnChangeMode: DrawTextMode");
+		m_drawFunc = &VideoMDA::DrawTextMode;
+
+		Video::InitFrameBuffer(m_crtc.GetData().hTotal, m_crtc.GetData().vTotal);
+	}
+
 	void VideoMDA::OnRenderFrame()
 	{
-		Video::RenderFrame(720, 350);
+		Video::RenderFrame();
 	}
 
 	BYTE VideoMDA::ReadStatusRegister()
@@ -145,9 +153,6 @@ namespace video
 		{
 			m_cursorPos = m_screenB000.getPtr(config.cursorAddress * 2u);
 		}
-
-		// Select draw function
-		m_drawFunc = &VideoMDA::DrawTextMode;
 	}
 
 	bool VideoMDA::IsCursor() const
@@ -198,7 +203,7 @@ namespace video
 				}
 				bool underline = draw && (charUnderline & (y == data.vCharHeight - 1));
 
-				uint32_t offset = 720 * (uint32_t)(data.vPos + y) + data.hPos;
+				uint32_t offset = m_fbWidth * (uint32_t)(data.vPos + y) + data.hPos;
 				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
 				for (int x = 0; x < 9; ++x)
 				{
@@ -212,7 +217,7 @@ namespace video
 						m_lastDot = 0;
 					}
 
-					m_frameBuffer[offset + x] = (m_lastDot || cursorLine || underline) ? fgRGB : bgRGB;
+					m_fb[offset + x] = (m_lastDot || cursorLine || underline) ? fgRGB : bgRGB;
 				}
 			}
 		}
@@ -255,6 +260,7 @@ namespace video
 
 		m_crtc.Deserialize(from["crtc"]);
 
+		OnChangeMode();
 		OnNewFrame();
 	}
 }

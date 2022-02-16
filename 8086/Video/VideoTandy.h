@@ -25,7 +25,7 @@ namespace video
 		VideoTandy(VideoTandy&&) = delete;
 		VideoTandy& operator=(VideoTandy&&) = delete;
 
-		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false) override;
+		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Reset() override;
 		virtual void Tick() override;
 
@@ -36,6 +36,7 @@ namespace video
 		void SetRAMBase(ADDRESS base);
 
 		// crtc::EventHandler
+		virtual void OnChangeMode() override;
 		virtual void OnRenderFrame() override;
 		virtual void OnNewFrame() override;
 		virtual void OnEndOfRow() override;
@@ -147,8 +148,6 @@ namespace video
 		void Draw320x200x16();
 		void Draw640x200x2();
 		void Draw640x200x4();
-
-		int m_xAxisDivider = 1;
 
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;

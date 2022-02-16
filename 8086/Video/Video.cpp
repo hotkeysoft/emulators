@@ -30,32 +30,21 @@ namespace video
 		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
 	};
 
-	Video::Video(uint16_t width, uint16_t height, float vScale) :
-		m_sdlWidth(width),
-		m_sdlHeight(height),
-		m_vScale(vScale)
+	Video::Video() :
+		m_sdlWidth(800),
+		m_sdlHeight(600)
 	{
-		assert(width);
-		assert(height);
-		assert(vScale > 0.0f);
-
-		// TODO: Allow dynamic resizing for different modes
-		m_frameBuffer = new uint32_t[width * height];
 	}
 
 	Video::~Video()
 	{
-		delete[] m_frameBuffer;
+		DestroyFrameBuffer();
 	}
 
-	void Video::Init(emul::Memory*, const char*, BYTE border, bool forceMono)
+	void Video::Init(emul::Memory*, const char*, bool forceMono)
 	{
 		//TODO
 		const int overlayHeight = 64;
-
-		m_sdlBorderPixels = border;
-		m_sdlHBorder = border;
-		m_sdlVBorder = (BYTE)(border / m_vScale);
 
 		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 		{
@@ -67,10 +56,18 @@ namespace video
 		LogPrintf(LOG_INFO, "Scale factor: %f", scale);
 		LogPrintf(LOG_INFO, "Full screen: %d", fullScreen);
 
+		//TODO: Temporary, while working on rendering
+		//SDL_CreateWindowAndRenderer(
+		//	(int)((m_sdlWidth + (2 * border)) * scale),
+		//	(int)(((m_sdlHeight * m_vScale) + border) * scale + overlayHeight),
+		//	fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0,
+		//	&m_sdlWindow,
+		//	&m_sdlRenderer);
+
 		SDL_CreateWindowAndRenderer(
-			(int)((m_sdlWidth + (2 * border)) * scale),
-			(int)(((m_sdlHeight * m_vScale) + border) * scale + overlayHeight),
-			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0,
+			(int)(m_sdlWidth),
+			(int)(m_sdlHeight),
+			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_RESIZABLE,
 			&m_sdlWindow,
 			&m_sdlRenderer);
 
@@ -80,13 +77,6 @@ namespace video
 		SDL_GetWindowSize(m_sdlWindow, &actualW, &actualH);
 		LogPrintf(LOG_INFO, "Window Size: %dx%d", actualW, actualH);
 
-		// Center image in fullscreen mode
-		if (fullScreen)
-		{
-			m_sdlHBorder += std::max(0, (((int)(actualW / scale) - m_sdlWidth) / 2));
-			m_sdlVBorder += std::max(0, ((int)(actualH / (scale * m_vScale)) - m_sdlHeight) / 2);
-		}
-
 		std::string filtering = Config::Instance().GetValueStr("video", "filtering", "0");
 		if (filtering.empty())
 		{
@@ -95,11 +85,42 @@ namespace video
 		LogPrintf(LOG_INFO, "Render Scale Quality: %s", filtering.c_str());
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, filtering.c_str());
 
-		m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, m_sdlWidth, m_sdlHeight);
-
-		SDL_RenderSetScale(m_sdlRenderer, scale, scale * m_vScale);
+		//TODO: Temporary, while working on rendering
+		//SDL_RenderSetScale(m_sdlRenderer, scale, scale * m_vScale);
+		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
 
 		InitMonitor(forceMono);
+	}
+
+	void Video::InitFrameBuffer(WORD width, WORD height)
+	{
+		DestroyFrameBuffer();
+
+		LogPrintf(LOG_INFO, "InitFrameBuffer: %dx%d", width, height);
+		if (width && height)
+		{
+			m_fbWidth = width;
+			m_fbHeight = height;
+			m_fb.resize(width * height);
+
+			m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+		}
+		else
+		{
+			LogPrintf(LOG_WARNING, "InitFrameBuffer: width or height is zero");
+		}
+	}
+
+	void Video::DestroyFrameBuffer()
+	{
+		m_fbWidth = 0;
+		m_fbHeight = 0;
+
+		if (m_sdlTexture)
+		{
+			SDL_DestroyTexture(m_sdlTexture);
+			m_sdlTexture = nullptr;
+		}
 	}
 
 	void Video::InitMonitor(bool forceMono)
@@ -137,19 +158,20 @@ namespace video
 		}
 	}
 
-	void Video::RenderFrame(uint16_t w, uint16_t h, uint32_t borderRGB)
+	void Video::RenderFrame(uint32_t borderRGB)
 	{
 		static size_t frames = 0;
 
 		// TODO: don't recompute every time
-		SDL_Rect srcRect = { 0, 0, w, h };
-		SDL_Rect destRect = { m_sdlHBorder, m_sdlVBorder, m_sdlWidth, m_sdlHeight };
+		SDL_Rect srcRect = { 0, 0, m_fbWidth, m_fbHeight };
+		SDL_Rect destRect = { 0, 0, m_sdlWidth, m_sdlHeight };
 
-		SDL_UpdateTexture(m_sdlTexture, NULL, m_frameBuffer, m_sdlWidth * sizeof(uint32_t));
+		if (m_sdlTexture)
+		{
+			SDL_UpdateTexture(m_sdlTexture, nullptr, &m_fb[0], m_fbWidth * sizeof(uint32_t));
+			SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &destRect);
+		}
 
-		SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &destRect);
-
-		// TODO: Temporary, should call overlay draw function
 		float scaleX, scaleY;
 		SDL_RenderGetScale(m_sdlRenderer, &scaleX, &scaleY);
 		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);

@@ -24,7 +24,6 @@ namespace video
 	};
 
 	VideoCGA::VideoCGA(WORD baseAddress) :
-		Video(640, 200, VSCALE),
 		Logger("CGA"),
 		m_baseAddress(baseAddress),
 		m_crtc(baseAddress),
@@ -45,7 +44,7 @@ namespace video
 		Video::EnableLog(minSev);
 	}
 
-	void VideoCGA::Init(emul::Memory* memory, const char* charROM, BYTE border, bool)
+	void VideoCGA::Init(emul::Memory* memory, const char* charROM, bool)
 	{
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
@@ -67,7 +66,7 @@ namespace video
 		memory->Allocate(&GetVideoRAM(), emul::S2A(0xB800));
 		memory->Allocate(&GetVideoRAM(), emul::S2A(0xBC00));
 
-		Video::Init(memory, charROM, border);
+		Video::Init(memory, charROM);
 	}	
 	
 	bool VideoCGA::ConnectTo(emul::PortAggregator& dest)
@@ -77,11 +76,34 @@ namespace video
 		return PortConnector::ConnectTo(dest);
 	}
 
+	void VideoCGA::OnChangeMode()
+	{
+		// Select draw function
+		if (!m_mode.graphics)
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: DrawTextMode");
+			m_drawFunc = &VideoCGA::DrawTextMode;
+		}
+		else if (m_mode.hiResolution)
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw640x200");
+			m_drawFunc = &VideoCGA::Draw640x200;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200");
+			m_drawFunc = &VideoCGA::Draw320x200;
+		}
+
+		uint16_t xMultiplier = m_mode.hiResolution ? 2 : 1;
+
+		Video::InitFrameBuffer(m_crtc.GetData().hTotal * xMultiplier, m_crtc.GetData().vTotal);
+	}
+
 	void VideoCGA::OnRenderFrame()
 	{
 		uint32_t borderRGB = GetMonitorPalette()[m_color.color];
-		uint16_t width = (m_mode.text80Columns || m_mode.hiResolution) ? 640 : 320;
-		Video::RenderFrame(width, 200, borderRGB);
+		Video::RenderFrame(borderRGB);
 	}
 
 	BYTE VideoCGA::ReadStatusRegister()
@@ -174,11 +196,6 @@ namespace video
 
 		m_bank0 = 0x0000 + offset;
 		m_bank1 = 0x2000 + offset;
-
-		// Select draw function
-		m_drawFunc = &VideoCGA::DrawTextMode;
-		if (m_mode.graphics) m_drawFunc = &VideoCGA::Draw320x200;
-		if (m_mode.hiResolution) m_drawFunc = &VideoCGA::Draw640x200;
 	}
 	
 	void VideoCGA::OnEndOfRow()
@@ -236,12 +253,12 @@ namespace video
 
 			for (int y = 0; y < data.vCharHeight; ++y)
 			{
-				uint32_t offset = 640 * (uint32_t)(data.vPos + y) + data.hPos;
+				uint32_t offset = m_fbWidth * (uint32_t)(data.vPos + y) + data.hPos;
 				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
 				for (int x = 0; x < 8; ++x)
 				{
 					bool set = draw && ((*(currCharPos + y)) & (1 << (7 - x)));
-					m_frameBuffer[offset + x] = (set || cursorLine) ? fgRGB : bgRGB;
+					m_fb[offset + x] = (set || cursorLine) ? fgRGB : bgRGB;
 				}
 			}
 		}
@@ -264,7 +281,7 @@ namespace video
 					BYTE val = ch & 3;
 					ch >>= 2;
 
-					m_frameBuffer[640 * data.vPos + data.hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
+					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
 				}
 			}
 			base &= 0x3FFF;
@@ -285,20 +302,20 @@ namespace video
 			uint32_t fg = GetMonitorPalette()[m_color.color];
 			uint32_t bg = GetMonitorPalette()[0];
 
-			uint32_t baseX = (640 * data.vPos) + (data.hPos * 2);
+			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
 				BYTE ch = m_screenB800.read(base++);
 
-				m_frameBuffer[baseX++] = (ch & 0b10000000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b01000000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00100000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00010000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00001000) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00000100) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00000010) ? fg : bg;
-				m_frameBuffer[baseX++] = (ch & 0b00000001) ? fg : bg;
+				m_fb[baseX++] = (ch & 0b10000000) ? fg : bg;
+				m_fb[baseX++] = (ch & 0b01000000) ? fg : bg;
+				m_fb[baseX++] = (ch & 0b00100000) ? fg : bg;
+				m_fb[baseX++] = (ch & 0b00010000) ? fg : bg;
+				m_fb[baseX++] = (ch & 0b00001000) ? fg : bg;
+				m_fb[baseX++] = (ch & 0b00000100) ? fg : bg;
+				m_fb[baseX++] = (ch & 0b00000010) ? fg : bg;
+				m_fb[baseX++] = (ch & 0b00000001) ? fg : bg;
 			}
 			base &= 0x3FFF;
 		}
@@ -354,6 +371,7 @@ namespace video
 
 		m_crtc.Deserialize(from["crtc"]);
 
+		OnChangeMode();
 		OnNewFrame();
 	}
 }

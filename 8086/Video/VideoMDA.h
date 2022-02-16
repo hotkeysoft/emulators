@@ -22,7 +22,7 @@ namespace video
 		VideoMDA(VideoMDA&&) = delete;
 		VideoMDA& operator=(VideoMDA&&) = delete;
 
-		virtual void Init(emul::Memory* memory, const char* charROM, BYTE border, bool forceMono = false) override;
+		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Reset() override;
 		virtual void Tick() override;
 
@@ -33,6 +33,7 @@ namespace video
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB000; }
 
 		// crtc::EventHandler
+		virtual void OnChangeMode() override;
 		virtual void OnNewFrame() override;
 		virtual void OnRenderFrame() override;
 
