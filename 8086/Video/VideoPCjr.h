@@ -113,9 +113,8 @@ namespace video
 		typedef void(VideoPCjr::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoPCjr::DrawTextMode;
 		void DrawTextMode();
-		void Draw160x200x16();
+		void Draw16();
 		void Draw320x200x4();
-		void Draw320x200x16();
 		void Draw640x200x2();
 		void Draw640x200x4();
 

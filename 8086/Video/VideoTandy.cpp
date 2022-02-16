@@ -242,6 +242,8 @@ namespace video
 
 	void VideoTandy::OnChangeMode()
 	{
+		m_crtc.SetCharWidth(m_mode.graph16Colors ? 4 : 8);
+
 		uint16_t width = m_crtc.GetData().hTotal;
 
 		//// Select draw function
@@ -266,24 +268,15 @@ namespace video
 		}
 		else if (m_mode.graph16Colors)
 		{
-			if (m_mode.hiDotClock)
-			{
-				LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200x16");
-				m_drawFunc = &VideoTandy::Draw320x200x16;
-			}
-			else
-			{
-				LogPrintf(LOG_INFO, "OnChangeMode: Draw160x200x16");
-				m_drawFunc = &VideoTandy::Draw160x200x16;
-			}
-			width /= 2;
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw16");
+			m_drawFunc = &VideoTandy::Draw16;
 		}
 		else
 		{
 			LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200x4");
 			m_drawFunc = &VideoTandy::Draw320x200x4;
 		}
-
+		
 		InitFrameBuffer(width, m_crtc.GetData().vTotal);
 	}
 
@@ -402,17 +395,17 @@ namespace video
 		}
 	}
 
-	void VideoTandy::Draw160x200x16()
+	void VideoTandy::Draw16()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
-		// Called every 8 horizontal pixels
+		// Called every 4 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		if (m_crtc.IsDisplayArea() && data.hPos < 160)
+		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.vPos & 1];
+			ADDRESS& base = m_banks[data.rowAddress];
 
-			for (int w = 0; w < 4; ++w)
+			for (int w = 0; w < 2; ++w)
 			{
 				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
 				for (int x = 0; x < 2; ++x)
@@ -423,7 +416,6 @@ namespace video
 					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
 			}
-			base &= 0x7FFF;
 		}
 	}
 
@@ -435,7 +427,7 @@ namespace video
 		// In this mode 1 byte = 4 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.vPos & 1];
+			ADDRESS& base = m_banks[data.rowAddress];
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -452,30 +444,6 @@ namespace video
 		}
 	}
 
-	void VideoTandy::Draw320x200x16()
-	{
-		const struct CRTCData& data = m_crtc.GetData();
-
-		// Called every 8 horizontal pixels
-		// In this mode 1 byte = 2 pixels
-		if (m_crtc.IsDisplayArea() && data.hPos < 320)
-		{
-			ADDRESS& base = m_banks[data.vPos & 3];
-
-			for (int w = 0; w < 4; ++w)
-			{
-				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-
-				for (int x = 0; x < 2; ++x)
-				{
-					BYTE val = ch & 15;
-					ch >>= 4;
-
-					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
-				}
-			}
-		}
-	}
 	void VideoTandy::Draw640x200x2()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
@@ -484,7 +452,7 @@ namespace video
 		// In this mode 1 byte = 8 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.vPos & 1];
+			ADDRESS& base = m_banks[data.rowAddress];
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
@@ -509,7 +477,7 @@ namespace video
 		// In this mode 2 bytes = 8 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.vPos & 3];
+			ADDRESS& base = m_banks[data.rowAddress];
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + data.hPos;
 

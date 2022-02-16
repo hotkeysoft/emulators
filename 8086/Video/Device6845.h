@@ -93,6 +93,8 @@ namespace crtc
 		WORD vPos = 0;
 		WORD vBorder = 0;
 
+		WORD rowAddress = 0;
+
 		size_t frame = 0;
 
 		// Computed in UpdateHVTotals
@@ -141,7 +143,7 @@ namespace crtc
 
 		void SetEventHandler(EventHandler* handler) { m_events = handler; }
 
-		void SetCharWidth(BYTE charWidth) { m_charWidth = charWidth; }
+		void SetCharWidth(BYTE charWidth);
 
 		virtual void Serialize(json& to);
 		virtual void Deserialize(json& from);

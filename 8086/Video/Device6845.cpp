@@ -160,6 +160,12 @@ namespace crtc
 		}
 	}
 
+	void Device6845::SetCharWidth(BYTE charWidth)
+	{
+		m_charWidth = charWidth;
+		UpdateHVTotals();
+	}
+
 	void Device6845::UpdateHVTotals()
 	{
 		m_data.hTotalDisp = m_config.hDisplayed * m_charWidth;
@@ -187,6 +193,8 @@ namespace crtc
 			m_events->OnEndOfRow();
 			m_data.hPos = 0;
 			++m_data.vPos;
+			++m_data.rowAddress;
+			m_data.rowAddress %= m_config.maxScanlineAddress + 1;
 		}
 
 		if (m_data.vPos > m_data.vTotal)
@@ -195,6 +203,7 @@ namespace crtc
 
 			++m_data.frame;
 			m_data.vPos = 0;
+			m_data.rowAddress = 0;
 
 			if (m_configChanged)
 			{

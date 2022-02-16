@@ -239,6 +239,8 @@ namespace video
 
 	void VideoPCjr::OnChangeMode()
 	{
+		m_crtc.SetCharWidth(m_mode.graph16Colors ? 4 : 8);
+
 		uint16_t width = m_crtc.GetData().hTotal;
 
 		//// Select draw function
@@ -255,17 +257,8 @@ namespace video
 		}
 		else if (m_mode.graph16Colors)
 		{
-			width /= 2;
-			if (m_mode.hiBandwidth)
-			{
-				LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200x16");
-				m_drawFunc = &VideoPCjr::Draw320x200x16;
-			}
-			else
-			{
-				LogPrintf(LOG_INFO, "OnChangeMode: Draw160x200x16");
-				m_drawFunc = &VideoPCjr::Draw160x200x16;
-			}
+			LogPrintf(LOG_INFO, "OnChangeMode: Draw16");
+			m_drawFunc = &VideoPCjr::Draw16;
 		}
 		else if (m_mode.hiBandwidth)
 		{
@@ -384,16 +377,16 @@ namespace video
 		}
 	}
 
-	void VideoPCjr::Draw160x200x16()
+	void VideoPCjr::Draw16()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
-		// Called every 8 horizontal pixels
+		// Called every 4 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		BYTE*& currChar = m_banks[data.vPos & 1];
-		if (m_crtc.IsDisplayArea() && data.hPos < 160)
+		BYTE*& currChar = m_banks[data.rowAddress];
+		if (m_crtc.IsDisplayArea())
 		{
-			for (int w = 0; w < 4; ++w)
+			for (int w = 0; w < 2; ++w)
 			{
 				BYTE ch = *currChar;
 				for (int x = 0; x < 2; ++x)
@@ -415,7 +408,7 @@ namespace video
 
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-		BYTE*& currChar = m_banks[data.vPos & 1];
+		BYTE*& currChar = m_banks[data.rowAddress];
 		if (m_crtc.IsDisplayArea())
 		{
 			for (int w = 0; w < 2; ++w)
@@ -434,30 +427,6 @@ namespace video
 		}
 	}
 
-	void VideoPCjr::Draw320x200x16()
-	{
-		const struct CRTCData& data = m_crtc.GetData();
-
-		// Called every 8 horizontal pixels
-		// In this mode 1 byte = 2 pixels
-		BYTE*& currChar = m_banks[data.vPos & 3];
-		if (m_crtc.IsDisplayArea() && data.hPos < 320)
-		{
-			for (int w = 0; w < 4; ++w)
-			{
-				BYTE ch = *currChar;
-				for (int x = 0; x < 2; ++x)
-				{
-					BYTE val = ch & 15;
-					ch >>= 4;
-
-					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
-				}
-
-				++currChar;
-			}
-		}
-	}
 	void VideoPCjr::Draw640x200x2()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
@@ -467,7 +436,7 @@ namespace video
 
 		if (m_crtc.IsDisplayArea())
 		{
-			BYTE*& currChar = m_banks[data.vPos & 1];
+			BYTE*& currChar = m_banks[data.rowAddress];
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
@@ -490,7 +459,7 @@ namespace video
 
 		// Called every 8 horizontal pixels
 		// In this mode 2 bytes = 8 pixels
-		BYTE*& currChar = m_banks[data.vPos & 3];
+		BYTE*& currChar = m_banks[data.rowAddress];
 		if (m_crtc.IsDisplayArea())
 		{
 			uint32_t baseX = (m_fbWidth * data.vPos) + data.hPos;
