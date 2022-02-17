@@ -187,6 +187,7 @@ namespace crtc
 	void Device6845::Tick()
 	{
 		m_data.hPos += m_charWidth;
+		++m_data.memoryAddress;
 
 		if (m_data.hPos >= m_data.hTotal)
 		{
@@ -194,7 +195,12 @@ namespace crtc
 			m_data.hPos = 0;
 			++m_data.vPos;
 			++m_data.rowAddress;
-			m_data.rowAddress %= m_config.maxScanlineAddress + 1;
+			if (m_data.rowAddress > m_config.maxScanlineAddress)
+			{
+				m_data.rowAddress = 0;
+				++m_data.vPosChar;
+			}
+			m_data.memoryAddress = m_config.startAddress + (m_data.vPosChar * m_config.hDisplayed);
 		}
 
 		if (m_data.vPos > m_data.vTotal)
@@ -203,7 +209,9 @@ namespace crtc
 
 			++m_data.frame;
 			m_data.vPos = 0;
+			m_data.vPosChar = 0;
 			m_data.rowAddress = 0;
+			m_data.memoryAddress = m_config.startAddress;
 
 			if (m_configChanged)
 			{
@@ -217,6 +225,8 @@ namespace crtc
 			if ((m_data.frame % 16) == 0) m_blink16 = !m_blink16;
 			if ((m_data.frame % 32) == 0) m_blink32 = !m_blink32;
 		}
+
+		m_data.memoryAddress &= 0b11111111111111;
 	}
 
 	void Device6845::Serialize(json& to)

@@ -145,6 +145,8 @@ namespace video
 			m_mode.enableVideo ? ' ' : '/',
 			m_mode.hiResolution ? ' ' : '/',
 			m_mode.blink ? ' ' : '/');
+
+		OnChangeMode();
 	}
 
 	void VideoCGA::WriteColorSelectRegister(BYTE value)
@@ -190,12 +192,6 @@ namespace video
 	void VideoCGA::OnNewFrame()
 	{
 		LogPrintf(LOG_DEBUG, "NewFrame");
-		const struct CRTCConfig& config = m_crtc.GetConfig();
-
-		unsigned int offset = config.startAddress * 2u;
-
-		m_banks[0] = 0x0000 + offset;
-		m_banks[1] = 0x2000 + offset;
 	}
 	
 	void VideoCGA::OnEndOfRow()
@@ -215,8 +211,9 @@ namespace video
 	bool VideoCGA::IsCursor() const
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
+		const struct CRTCData& data = m_crtc.GetData();
 
-		return ((m_banks[0] / 2) == config.cursorAddress) &&
+		return (data.memoryAddress == config.cursorAddress) &&
 			(config.cursor != CRTCConfig::CURSOR_NONE) &&
 			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
@@ -228,12 +225,9 @@ namespace video
 
 		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
 		{
-			ADDRESS& base = m_banks[0];
-
 			bool isCursorChar = IsCursor();
-			BYTE ch = m_screenB800.read(base++);
-			BYTE attr = m_screenB800.read(base++);
-			base &= 0x3FFF; // TODO
+			BYTE ch = m_screenB800.read(data.memoryAddress * 2);
+			BYTE attr = m_screenB800.read(data.memoryAddress * 2 + 1);
 
 			BYTE bg = attr >> 4;
 			BYTE fg = attr & 0x0F;
@@ -273,7 +267,8 @@ namespace video
 		// In this mode 1 byte = 4 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			emul::ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = (data.rowAddress * 0x2000) + (data.memoryAddress * 2u);
+			base &= 0x3FFF;
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -286,7 +281,6 @@ namespace video
 					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
 				}
 			}
-			base &= 0x3FFF;
 		}
 	}
 
@@ -299,7 +293,7 @@ namespace video
 
 		if (m_crtc.IsDisplayArea())
 		{
-			emul::ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = (data.rowAddress * 0x2000) + (data.memoryAddress * 2u);
 
 			uint32_t fg = GetMonitorPalette()[m_color.color];
 			uint32_t bg = GetMonitorPalette()[0];
@@ -319,7 +313,6 @@ namespace video
 				m_fb[baseX++] = (ch & 0b00000010) ? fg : bg;
 				m_fb[baseX++] = (ch & 0b00000001) ? fg : bg;
 			}
-			base &= 0x3FFF;
 		}
 	}
 
