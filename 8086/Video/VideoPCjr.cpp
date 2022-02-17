@@ -309,29 +309,20 @@ namespace video
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		// Pointers for alpha mode
-		m_currChar = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + (config.startAddress * 2u));
-		if (config.cursorAddress >= (config.startAddress + 0x1000))
-		{
-			m_cursorPos = nullptr;
-		}
-		else
-		{
-			m_cursorPos = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + (config.cursorAddress * 2u));
-		}
+		unsigned int offset = config.startAddress * 2u;
 
 		//// Pointers for graphics mode
-		m_banks[0] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x0000);
-		m_banks[1] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x2000);
-		m_banks[2] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x4000);
-		m_banks[3] = m_memory->GetPtr8(m_pageRegister.crtBaseAddress + 0x6000);
+		m_banks[0] = 0x0000 + offset;
+		m_banks[1] = 0x2000 + offset;
+		m_banks[2] = 0x4000 + offset;
+		m_banks[3] = 0x6000 + offset;
 	}
 
 	bool VideoPCjr::IsCursor() const
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		return (m_currChar == m_cursorPos) &&
+		return ((m_banks[0] / 2) == config.cursorAddress) &&
 			(config.cursor != CRTCConfig::CURSOR_NONE) &&
 			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
@@ -341,12 +332,17 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		if (m_currChar && m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
+		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
 		{
-			BYTE* ch = m_currChar;
-			BYTE* attr = ch + 1;
-			BYTE bg = (*attr) >> 4;
-			BYTE fg = (*attr) & 0x0F;
+			ADDRESS& base = m_banks[0];
+
+			bool isCursorChar = IsCursor();
+			BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+			BYTE attr = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+			base &= 0x7FFF;
+
+			BYTE bg = attr >> 4;
+			BYTE fg = attr & 0x0F;
 			bool charBlink = false;
 
 			// Background
@@ -356,10 +352,8 @@ namespace video
 				bg = bg & 7;
 			}
 
-			bool isCursorChar = IsCursor();
-
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((size_t)(*ch) * 8) + (data.vPos % data.vCharHeight);
+			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.vPos % data.vCharHeight);
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
 			for (int y = 0; y < data.vCharHeight; ++y)
 			{
@@ -372,8 +366,6 @@ namespace video
 					m_fb[offset + x] = GetColor(m_lastDot);
 				}
 			}
-
-			m_currChar += 2;
 		}
 	}
 
@@ -383,12 +375,13 @@ namespace video
 
 		// Called every 4 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		BYTE*& currChar = m_banks[data.rowAddress];
 		if (m_crtc.IsDisplayArea())
 		{
+			ADDRESS& base = m_banks[data.rowAddress];
+
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = *currChar;
+				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
 				for (int x = 0; x < 2; ++x)
 				{
 					BYTE val = ch & 15;
@@ -396,8 +389,6 @@ namespace video
 
 					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
 				}
-
-				++currChar;
 			}
 		}
 	}
@@ -408,12 +399,13 @@ namespace video
 
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-		BYTE*& currChar = m_banks[data.rowAddress];
 		if (m_crtc.IsDisplayArea())
 		{
+			ADDRESS& base = m_banks[data.rowAddress];
+
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = *currChar;
+				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
 				for (int x = 0; x < 4; ++x)
 				{
 					BYTE val = ch & 3;
@@ -421,8 +413,7 @@ namespace video
 
 					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(val);
 				}
-
-				++currChar;
+				base &= 0x7FFF;
 			}
 		}
 	}
@@ -436,20 +427,20 @@ namespace video
 
 		if (m_crtc.IsDisplayArea())
 		{
-			BYTE*& currChar = m_banks[data.rowAddress];
+			ADDRESS& base = m_banks[data.rowAddress];
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = *currChar;
+				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
 
 				for (int x = 0; x < 8; ++x)
 				{
 					bool val = (ch & (1 << (7-x)));
 					m_fb[baseX++] = GetColor(val);
 				}
-				++currChar;
+				base &= 0x7FFF;
 			}
 		}
 	}
@@ -459,13 +450,14 @@ namespace video
 
 		// Called every 8 horizontal pixels
 		// In this mode 2 bytes = 8 pixels
-		BYTE*& currChar = m_banks[data.rowAddress];
 		if (m_crtc.IsDisplayArea())
 		{
+			ADDRESS& base = m_banks[data.rowAddress];
+
 			uint32_t baseX = (m_fbWidth * data.vPos) + data.hPos;
 
-			BYTE chEven = *currChar++;
-			BYTE chOdd = *currChar++;
+			BYTE chEven = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+			BYTE chOdd = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
 
 			for (int x = 0; x < 8; ++x)
 			{
@@ -474,6 +466,7 @@ namespace video
 					((chOdd  & (1 << (7 - x))) ? 2 : 0);
 				m_fb[baseX++] = GetColor(val);
 			}
+			base &= 0x7FFF;
 		}
 	}
 

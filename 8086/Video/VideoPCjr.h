@@ -118,10 +118,6 @@ namespace video
 		void Draw640x200x2();
 		void Draw640x200x4();
 
-		// Text mode pointers
-		BYTE* m_cursorPos = nullptr;
-		BYTE* m_currChar = nullptr;
-
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
 
