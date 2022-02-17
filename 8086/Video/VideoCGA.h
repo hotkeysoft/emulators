@@ -8,6 +8,7 @@
 
 using emul::WORD;
 using emul::BYTE;
+using emul::ADDRESS;
 
 namespace video
 {
@@ -84,8 +85,7 @@ namespace video
 		BYTE* m_charROMStart;
 
 		// Graph mode banks
-		emul::ADDRESS m_bank0 = 0;
-		emul::ADDRESS m_bank1 = 0;
+		ADDRESS m_banks[2] = { 0, 0 };
 
 		uint32_t m_currGraphPalette[4];
 

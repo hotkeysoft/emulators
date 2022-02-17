@@ -126,7 +126,7 @@ namespace video
 		BYTE* m_charROMStart;
 
 		// Graph mode banks
-		BYTE* m_banks[4] = { 0, 0, 0, 0 };
+		ADDRESS m_banks[4] = { 0, 0, 0, 0 };
 
 		// Diagnostics: dot information (status register)
 		// Only works in alpha modes for the moment

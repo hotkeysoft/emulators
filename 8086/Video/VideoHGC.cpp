@@ -97,7 +97,7 @@ namespace video
 
 		if (m_crtc.IsDisplayArea())
 		{
-			BYTE*& currChar = m_banks[data.vPos & 3];
+			BYTE*& currChar = m_banks[data.rowAddress];
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 

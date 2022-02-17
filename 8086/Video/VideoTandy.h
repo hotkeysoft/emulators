@@ -152,7 +152,7 @@ namespace video
 		BYTE* m_charROMStart;
 
 		// Graph mode banks
-		emul::ADDRESS m_banks[4] = { 0, 0, 0, 0 };
+		ADDRESS m_banks[4] = { 0, 0, 0, 0 };
 
 		BYTE m_currGraphPalette[4];
 

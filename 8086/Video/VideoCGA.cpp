@@ -194,8 +194,8 @@ namespace video
 
 		unsigned int offset = config.startAddress * 2u;
 
-		m_bank0 = 0x0000 + offset;
-		m_bank1 = 0x2000 + offset;
+		m_banks[0] = 0x0000 + offset;
+		m_banks[1] = 0x2000 + offset;
 	}
 	
 	void VideoCGA::OnEndOfRow()
@@ -216,7 +216,7 @@ namespace video
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		return ((m_bank0 / 2) == config.cursorAddress) &&
+		return ((m_banks[0] / 2) == config.cursorAddress) &&
 			(config.cursor != CRTCConfig::CURSOR_NONE) &&
 			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
@@ -228,10 +228,12 @@ namespace video
 
 		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
 		{
+			ADDRESS& base = m_banks[0];
+
 			bool isCursorChar = IsCursor();
-			BYTE ch = m_screenB800.read(m_bank0++);
-			BYTE attr = m_screenB800.read(m_bank0++);
-			m_bank0 &= 0x3FFF;
+			BYTE ch = m_screenB800.read(base++);
+			BYTE attr = m_screenB800.read(base++);
+			base &= 0x3FFF; // TODO
 
 			BYTE bg = attr >> 4;
 			BYTE fg = attr & 0x0F;
@@ -271,7 +273,7 @@ namespace video
 		// In this mode 1 byte = 4 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			emul::ADDRESS& base = (data.vPos & 1) ? m_bank1 : m_bank0;
+			emul::ADDRESS& base = m_banks[data.rowAddress];
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -297,7 +299,7 @@ namespace video
 
 		if (m_crtc.IsDisplayArea())
 		{
-			emul::ADDRESS& base = (data.vPos & 1) ? m_bank1 : m_bank0;
+			emul::ADDRESS& base = m_banks[data.rowAddress];
 
 			uint32_t fg = GetMonitorPalette()[m_color.color];
 			uint32_t bg = GetMonitorPalette()[0];
