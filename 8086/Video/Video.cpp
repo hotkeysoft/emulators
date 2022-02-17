@@ -94,14 +94,20 @@ namespace video
 
 	void Video::InitFrameBuffer(WORD width, WORD height)
 	{
+		LogPrintf(LOG_INFO, "InitFrameBuffer: %dx%d", width, height);
+		if (m_fbWidth == width && m_fbHeight == height)
+		{
+			return;
+		}
+
 		DestroyFrameBuffer();
 
-		LogPrintf(LOG_INFO, "InitFrameBuffer: %dx%d", width, height);
 		if (width && height)
 		{
 			m_fbWidth = width;
 			m_fbHeight = height;
 			m_fb.resize(width * height);
+			std::fill(m_fb.begin(), m_fb.end(), 0);
 
 			m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
 		}

@@ -54,6 +54,8 @@ namespace video
 		LogPrintf(LOG_INFO, "WriteModeControlRegister (HGC): [%s] [%s]",
 			m_modeHGC.graphics ? "GRAPHICS" : "TEXT",
 			m_modeHGC.displayPage ? "Page 2" : "Page 1");
+
+		OnChangeMode();
 	}
 
 	void VideoHGC::OnChangeMode()

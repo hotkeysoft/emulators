@@ -94,6 +94,8 @@ namespace video
 			m_mode.enableVideo ? ' ' : '/',
 			m_mode.hiResolution ? ' ' : '/',
 			m_mode.blink ? ' ' : '/');
+
+		OnChangeMode();
 	}
 
 	void VideoTandy::WriteColorSelectRegister(BYTE value)
@@ -211,6 +213,8 @@ namespace video
 				m_mode.borderEnable ? ' ' : '/',
 				m_mode.graph640x200x4 ? ' ' : '/',
 				m_mode.graph16Colors ? ' ' : '/');
+
+			OnChangeMode();
 			break;
 		default:
 			LogPrintf(Logger::LOG_WARNING, "WriteVideoArrayData: Invalid register address = %02Xh", m_videoArrayRegisterAddress);

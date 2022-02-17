@@ -161,6 +161,8 @@ namespace video
 					m_mode.monochrome ? ' ' : '/',
 					m_mode.enableVideo ? ' ' : '/',
 					m_mode.graph16Colors ? ' ' : '/');
+
+				OnChangeMode();
 				break;
 			case GA_PALETTE_MASK:
 				value &= 0b1111;
@@ -180,6 +182,8 @@ namespace video
 				LogPrintf(Logger::LOG_INFO, "WriteGateArrayRegister SetMode2 [%cBLINK %cGRAPH2COLORS]",
 					m_mode.blink ? ' ' : '/',
 					m_mode.graph2Colors ? ' ' : '/');
+
+				OnChangeMode();
 				break;
 			case GA_RESET:
 				value &= 0b11;
