@@ -140,6 +140,9 @@ namespace crtc
 		bool IsBlink16() const { return m_blink16; }
 		bool IsBlink32() const { return m_blink32; }
 
+		WORD GetMemoryAddress12() const { return m_data.memoryAddress & 0b111111111111; }
+		WORD GetMemoryAddress13() const { return m_data.memoryAddress & 0b1111111111111; }
+
 		const CRTCConfig GetConfig() const { return m_config; }
 		const CRTCData GetData() const { return m_data; }
 

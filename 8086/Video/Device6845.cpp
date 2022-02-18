@@ -203,7 +203,7 @@ namespace crtc
 			m_data.memoryAddress = m_config.startAddress + (m_data.vPosChar * m_config.hDisplayed);
 		}
 
-		if (m_data.vPos > m_data.vTotal)
+		if (m_data.vPos >= m_data.vTotal)
 		{
 			m_events->OnRenderFrame();
 
@@ -225,8 +225,6 @@ namespace crtc
 			if ((m_data.frame % 16) == 0) m_blink16 = !m_blink16;
 			if ((m_data.frame % 32) == 0) m_blink32 = !m_blink32;
 		}
-
-		m_data.memoryAddress &= 0b111111111111;
 	}
 
 	void Device6845::Serialize(json& to)

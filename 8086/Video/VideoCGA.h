@@ -40,6 +40,8 @@ namespace video
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
 
+		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_color.color]; }
+
 	protected:
 		const WORD m_baseAddress;
 

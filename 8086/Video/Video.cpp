@@ -164,6 +164,20 @@ namespace video
 		}
 	}
 
+	void Video::DrawBackground(WORD x, WORD y, BYTE width)
+	{
+		DrawBackground(x, y, width, GetBackgroundColor());
+	}
+
+	void Video::DrawBackground(WORD x, WORD y, BYTE width, uint32_t color)
+	{
+		if (m_fb.size())
+		{
+			size_t offset = (y * (size_t)m_fbWidth) + x;
+			std::fill_n(m_fb.begin() + offset, width, color);
+		}
+	}
+
 	void Video::RenderFrame(uint32_t borderRGB)
 	{
 		static size_t frames = 0;

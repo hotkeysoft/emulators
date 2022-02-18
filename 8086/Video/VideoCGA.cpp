@@ -181,10 +181,7 @@ namespace video
 			}
 		}
 
-		if (m_mode.enableVideo)
-		{
-			(this->*m_drawFunc)();
-		}
+		(this->*m_drawFunc)();
 
 		m_crtc.Tick();
 	}
@@ -222,9 +219,10 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
+		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS base = data.memoryAddress * 2u;
+			ADDRESS base = m_crtc.GetMemoryAddress13() * 2u;
+			base &= 0x3FFF;
 
 			bool isCursorChar = IsCursor();
 			BYTE ch = m_screenB800.read(base);
@@ -245,19 +243,20 @@ namespace video
 			uint32_t bgRGB = GetMonitorPalette()[bg];
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.vPos % data.vCharHeight);
+			BYTE currChar = m_charROMStart[((size_t)ch * 8) + data.rowAddress];
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
 
-			for (int y = 0; y < data.vCharHeight; ++y)
+			uint32_t offset = (m_fbWidth * data.vPos) + data.hPos;
+			bool cursorLine = isCursorChar && (data.rowAddress >= config.cursorStart) && (data.rowAddress <= config.cursorEnd);
+			for (int x = 0; x < 8; ++x)
 			{
-				uint32_t offset = m_fbWidth * (uint32_t)(data.vPos + y) + data.hPos;
-				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
-				for (int x = 0; x < 8; ++x)
-				{
-					bool set = draw && ((*(currCharPos + y)) & (1 << (7 - x)));
-					m_fb[offset + x] = (set || cursorLine) ? fgRGB : bgRGB;
-				}
+				bool set = draw && GetBit(currChar, 7 - x);
+				m_fb[offset + x] = (m_mode.enableVideo && (set || cursorLine)) ? fgRGB : bgRGB;
 			}
+		}
+		else
+		{
+			DrawBackground(data.hPos, data.vPos, 8);
 		}
 	}
 	void VideoCGA::Draw320x200()
@@ -268,7 +267,7 @@ namespace video
 		// In this mode 1 byte = 4 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS base = (data.rowAddress * 0x2000) + (data.memoryAddress * 2u);
+			ADDRESS base = (data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u);
 			base &= 0x3FFF;
 
 			for (int w = 0; w < 2; ++w)
@@ -276,12 +275,16 @@ namespace video
 				BYTE ch = m_screenB800.read(base++);
 				for (int x = 0; x < 4; ++x)
 				{
-					BYTE val = ch & 3;
+					BYTE val = m_mode.enableVideo ? (ch & 3) : 0;
 					ch >>= 2;
 
 					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
 				}
 			}
+		}
+		else
+		{
+			DrawBackground(data.hPos, data.vPos, 8);
 		}
 	}
 
@@ -292,12 +295,13 @@ namespace video
 		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
 		// In this mode 1 byte = 8 pixels
 
+		uint32_t fg = GetMonitorPalette()[m_mode.enableVideo ? m_color.color : 0];
+		uint32_t bg = GetMonitorPalette()[0];
+
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS base = (data.rowAddress * 0x2000) + (data.memoryAddress * 2u);
-
-			uint32_t fg = GetMonitorPalette()[m_color.color];
-			uint32_t bg = GetMonitorPalette()[0];
+			ADDRESS base = (data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u);
+			base &= 0x3FFF;
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
@@ -314,6 +318,10 @@ namespace video
 				m_fb[baseX++] = (ch & 0b00000010) ? fg : bg;
 				m_fb[baseX++] = (ch & 0b00000001) ? fg : bg;
 			}
+		}
+		else
+		{
+			DrawBackground(data.hPos * 2, data.vPos, 16, bg);
 		}
 	}
 

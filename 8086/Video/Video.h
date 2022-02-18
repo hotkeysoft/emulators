@@ -49,6 +49,8 @@ namespace video
 		SDL_Window* GetWindow() const { return m_sdlWindow; }
 		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }
 
+		virtual uint32_t GetBackgroundColor() const { return 0; }
+
 	protected:
 		enum class MonitorType
 		{
@@ -67,6 +69,8 @@ namespace video
 		bool IsCompositeMonitor() const { return m_monitor == MonitorType::COMPOSITE; }
 
 		const uint32_t* GetMonitorPalette() const { return m_monitorPalette; }
+		void DrawBackground(WORD x, WORD y, BYTE width);
+		void DrawBackground(WORD x, WORD y, BYTE width, uint32_t color);
 
 		// SDL
 		SDL_Window* m_sdlWindow = nullptr;
