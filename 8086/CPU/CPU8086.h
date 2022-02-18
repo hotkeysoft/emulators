@@ -328,6 +328,8 @@ namespace emul
 
 		void LEA(BYTE op2);
 
+		void SALC();
+
 		void NotImplemented(BYTE);
 	};
 }

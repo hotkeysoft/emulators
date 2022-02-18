@@ -634,9 +634,9 @@ namespace emul
 		// AAD
 		case 0xD5: TICK(60); AAD(FetchByte()); break;
 
-		// TODO: Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
+		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
 		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
-		// case 0xD6: SALC(); break
+		case 0xD6: TICK(3); SALC(); break;
 
 		// XLAT
 		case 0xD7: TICK(11); XLAT(); break;
@@ -2658,6 +2658,13 @@ namespace emul
 		offset = (direct ? 0 : offset) + displacement;
 
 		dest.SetValue(offset);
+	}
+
+	void CPU8086::SALC()
+	{
+		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
+		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
+		regA.hl.l = GetFlag(FLAG_C) ? 0xFF : 0;
 	}
 
 	void CPU8086::Serialize(json& to)
