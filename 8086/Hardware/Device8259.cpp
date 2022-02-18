@@ -127,11 +127,12 @@ namespace pic
 		{
 		case 0b001:
 			LogPrintf(LOG_INFO, "OCW2: Non-specific EOI");
-			EOI();
+			NonSpecificEOI();
 			break;
 
 		case 0b011:
-			throw std::exception("OCW2: Specific EOI, not implemented");
+			LogPrintf(LOG_INFO, "OCW2: Specific EOI [%d]", (value & 0b111));
+			SpecificEOI(value);
 			break;
 
 		case 0b101:
@@ -293,11 +294,18 @@ namespace pic
 		return irq | m_init.interruptBase;
 	}
 
-	void Device8259::EOI()
+	void Device8259::NonSpecificEOI()
 	{
 		BYTE intBit = LowestSetBit(m_inServiceRegister);
 		LogPrintf(LOG_DEBUG, "EOI: ISR Before: %02xh", m_inServiceRegister);
 		m_inServiceRegister &= ~intBit; // Clear bit in IRR
+		LogPrintf(LOG_DEBUG, "EOI: ISR After: %02xh", m_inServiceRegister);
+	}
+
+	void Device8259::SpecificEOI(BYTE level)
+	{
+		LogPrintf(LOG_DEBUG, "EOI: ISR Before: %02xh", m_inServiceRegister);
+		SetBit(m_inServiceRegister, (level & 0b111), false);
 		LogPrintf(LOG_DEBUG, "EOI: ISR After: %02xh", m_inServiceRegister);
 	}
 

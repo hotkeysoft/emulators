@@ -76,7 +76,8 @@ namespace pic
 		void OCW2(BYTE value);
 		void OCW3(BYTE value);
 		
-		void EOI();
+		void NonSpecificEOI();
+		void SpecificEOI(BYTE level);
 
 		BYTE m_lastInterruptRequestRegister = 0xFF; // For edge detection
 		BYTE m_interruptRequestRegister = 0;
