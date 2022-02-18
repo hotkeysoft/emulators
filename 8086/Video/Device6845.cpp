@@ -226,7 +226,7 @@ namespace crtc
 			if ((m_data.frame % 32) == 0) m_blink32 = !m_blink32;
 		}
 
-		m_data.memoryAddress &= 0b11111111111111;
+		m_data.memoryAddress &= 0b111111111111;
 	}
 
 	void Device6845::Serialize(json& to)
