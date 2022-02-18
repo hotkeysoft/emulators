@@ -191,7 +191,6 @@ namespace video
 
 	void VideoCGA::OnNewFrame()
 	{
-		LogPrintf(LOG_DEBUG, "NewFrame");
 	}
 	
 	void VideoCGA::OnEndOfRow()
@@ -225,9 +224,11 @@ namespace video
 
 		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
 		{
+			ADDRESS base = data.memoryAddress * 2u;
+
 			bool isCursorChar = IsCursor();
-			BYTE ch = m_screenB800.read(data.memoryAddress * 2);
-			BYTE attr = m_screenB800.read(data.memoryAddress * 2 + 1);
+			BYTE ch = m_screenB800.read(base);
+			BYTE attr = m_screenB800.read(base + 1);
 
 			BYTE bg = attr >> 4;
 			BYTE fg = attr & 0x0F;
