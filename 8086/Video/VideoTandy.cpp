@@ -311,11 +311,6 @@ namespace video
 		{
 			(this->*m_drawFunc)();
 		}
-		else
-		{
-			uint32_t borderRGB = GetMonitorPalette()[m_mode.borderEnable ? m_mode.borderColor : m_color.color];
-			std::fill(m_fb.begin(), m_fb.end(), borderRGB);
-		}
 
 		m_crtc.Tick();
 	}
@@ -352,9 +347,9 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
+		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (data.memoryAddress * 2u)) & 32767);
+			ADDRESS base = m_pageRegister.crtBaseAddress + ((m_crtc.GetMemoryAddress13() * 2u) & 0x7FFF);
 
 			bool isCursorChar = IsCursor();
 			BYTE ch = m_memory->Read8(base);
@@ -372,21 +367,30 @@ namespace video
 			}
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.vPos % data.vCharHeight);
-			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
-
-			// TODO: 225 lines char mode: Extend line 8 to 9 for some characters, need info.
-			// For now leave lines above 8 blank
-			for (int y = 0; y < data.vCharHeight; ++y)
+			// 225 lines char mode: Extend line 8 to 9 for some characters, need info (assuming B0-DF)
+			WORD rowAddress = data.rowAddress;
+			if (rowAddress > 7)
 			{
-				uint32_t offset = m_fbWidth * (uint32_t)(data.vPos + y) + data.hPos;
-				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
-				for (int x = 0; x < 8; ++x)
+				rowAddress = 7;
+				if ((ch < 0xB0) || (ch >= 0xE0))
 				{
-					bool set = cursorLine || (draw && (y < 8) && ((*(currCharPos + y)) & (1 << (7 - x))));
-					m_fb[offset + x] = GetColor(set ? fg : bg);
+					ch = 0;
 				}
 			}
+			BYTE currChar = m_charROMStart[((size_t)ch * 8) + rowAddress];
+			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
+
+			uint32_t offset = (m_fbWidth * data.vPos) + data.hPos;
+			bool cursorLine = isCursorChar && (data.rowAddress >= config.cursorStart) && (data.rowAddress <= config.cursorEnd);
+			for (int x = 0; x < 8; ++x)
+			{
+				bool set = draw && GetBit(currChar, 7 - x);
+				m_fb[offset + x] = GetColor((m_mode.enableVideo && (set || cursorLine)) ? fg : bg);
+			}
+		}
+		else
+		{
+			DrawBackground(data.hPos, data.vPos, 8);
 		}
 	}
 
@@ -398,7 +402,7 @@ namespace video
 		// In this mode 1 byte = 2 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (data.memoryAddress * 2u)) & 32767);
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u)) & 0x7FFF);
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -412,6 +416,10 @@ namespace video
 				}
 			}
 		}
+		else
+		{
+			DrawBackground(data.hPos, data.vPos, 4);
+		}
 	}
 
 	void VideoTandy::Draw320x200x4()
@@ -422,7 +430,7 @@ namespace video
 		// In this mode 1 byte = 4 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (data.memoryAddress * 2u)) & 32767);
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u)) & 0x7FFF);
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -436,6 +444,10 @@ namespace video
 				}
 			}
 		}
+		else
+		{
+			DrawBackground(data.hPos, data.vPos, 8);
+		}
 	}
 
 	void VideoTandy::Draw640x200x2()
@@ -446,9 +458,11 @@ namespace video
 		// In this mode 1 byte = 8 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS base = m_pageRegister.crtBaseAddress + (data.rowAddress * 0x2000) + (data.memoryAddress * 2u);
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u)) & 0x7FFF);
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
+			uint32_t fg = GetBackgroundColor();
+			uint32_t bg = GetMonitorPalette()[0];
 
 			for (int w = 0; w < 2; ++w)
 			{
@@ -457,9 +471,13 @@ namespace video
 				for (int x = 0; x < 8; ++x)
 				{
 					bool val = (ch & (1 << (7-x)));
-					m_fb[baseX++] = GetColor(val ? 0xF : 0);
+					m_fb[baseX++] = val ? fg : bg;
 				}
 			}
+		}
+		else
+		{
+			DrawBackground(data.hPos * 2, data.vPos, 16, GetMonitorPalette()[0]);
 		}
 	}
 	void VideoTandy::Draw640x200x4()
@@ -470,7 +488,7 @@ namespace video
 		// In this mode 2 bytes = 8 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS base = m_pageRegister.crtBaseAddress + (data.rowAddress * 0x2000) + (data.memoryAddress * 2u);
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u)) & 0x7FFF);
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + data.hPos;
 
@@ -484,7 +502,10 @@ namespace video
 					((chOdd  & (1 << (7 - x))) ? 2 : 0);
 				m_fb[baseX++] = GetColor(val);
 			}
-			base &= 0x7FFF;
+		}
+		else
+		{
+			DrawBackground(data.hPos, data.vPos, 8);
 		}
 	}
 
