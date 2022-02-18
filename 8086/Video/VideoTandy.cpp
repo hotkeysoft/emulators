@@ -322,15 +322,6 @@ namespace video
 
 	void VideoTandy::OnNewFrame()
 	{
-		const struct CRTCConfig& config = m_crtc.GetConfig();
-
-		unsigned int offset = config.startAddress * 2u;
-
-		//// Pointers for graphics mode
-		m_banks[0] = 0x0000 + offset;
-		m_banks[1] = 0x2000 + offset;
-		m_banks[2] = 0x4000 + offset;
-		m_banks[3] = 0x6000 + offset;
 	}
 
 	void VideoTandy::OnEndOfRow()
@@ -348,9 +339,10 @@ namespace video
 
 	bool VideoTandy::IsCursor() const
 	{
+		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		return ((m_banks[0] / 2) == config.cursorAddress) &&
+		return (data.memoryAddress == config.cursorAddress) &&
 			(config.cursor != CRTCConfig::CURSOR_NONE) &&
 			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
@@ -362,12 +354,11 @@ namespace video
 
 		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
 		{
-			ADDRESS& base = m_banks[0];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (data.memoryAddress * 2u)) & 32767);
 
 			bool isCursorChar = IsCursor();
-			BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-			BYTE attr = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-			base &= 0x7FFF;
+			BYTE ch = m_memory->Read8(base);
+			BYTE attr = m_memory->Read8(base + 1);
 
 			BYTE bg = attr >> 4;
 			BYTE fg = attr & 0x0F;
@@ -407,11 +398,11 @@ namespace video
 		// In this mode 1 byte = 2 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (data.memoryAddress * 2u)) & 32767);
 
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+				BYTE ch = m_memory->Read8(base++);
 				for (int x = 0; x < 2; ++x)
 				{
 					BYTE val = ch & 15;
@@ -431,11 +422,11 @@ namespace video
 		// In this mode 1 byte = 4 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (data.memoryAddress * 2u)) & 32767);
 
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+				BYTE ch = m_memory->Read8(base++);
 				for (int x = 0; x < 4; ++x)
 				{
 					BYTE val = ch & 3;
@@ -444,7 +435,6 @@ namespace video
 					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(m_currGraphPalette[val]);
 				}
 			}
-			base &= 0x7FFF;
 		}
 	}
 
@@ -456,13 +446,13 @@ namespace video
 		// In this mode 1 byte = 8 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (data.rowAddress * 0x2000) + (data.memoryAddress * 2u);
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+				BYTE ch = m_memory->Read8(base++);
 
 				for (int x = 0; x < 8; ++x)
 				{
@@ -470,7 +460,6 @@ namespace video
 					m_fb[baseX++] = GetColor(val ? 0xF : 0);
 				}
 			}
-			base &= 0x7FFF;
 		}
 	}
 	void VideoTandy::Draw640x200x4()
@@ -481,12 +470,12 @@ namespace video
 		// In this mode 2 bytes = 8 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (data.rowAddress * 0x2000) + (data.memoryAddress * 2u);
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + data.hPos;
 
-			BYTE chEven = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-			BYTE chOdd = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+			BYTE chEven = m_memory->Read8(base);
+			BYTE chOdd = m_memory->Read8(base + 1);
 
 			for (int x = 0; x < 8; ++x)
 			{

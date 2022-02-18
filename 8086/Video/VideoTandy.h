@@ -151,9 +151,6 @@ namespace video
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
 
-		// Graph mode banks
-		ADDRESS m_banks[4] = { 0, 0, 0, 0 };
-
 		BYTE m_currGraphPalette[4];
 
 		crtc::Device6845 m_crtc;
