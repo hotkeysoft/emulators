@@ -42,12 +42,19 @@ namespace emul
 			ret = CPU::Step();
 		}
 
+		if (m_state == CPUState::HALT)
+		{
+			TICK(1);
+			ret = true;
+		}
+
 		if (m_irqPending != -1)
 		{
 			assert(!inSegOverride);
 			TICK(61);
 			INT(m_irqPending);
 			m_irqPending = -1;
+			m_state = CPUState::RUN;
 		}
 
 		return ret;
@@ -1198,10 +1205,8 @@ namespace emul
 
 	void CPU8086::HLT()
 	{
-		EnableLog(LOG_DEBUG);
-		LogPrintf(LOG_ERROR, "HALT");
-		Dump();
-		m_state = CPUState::STOP;
+		LogPrintf(LOG_DEBUG, "HLT");
+		m_state = CPUState::HALT;
 	}
 	
 	void CPU8086::CALLNear(WORD offset)

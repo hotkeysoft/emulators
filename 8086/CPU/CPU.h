@@ -39,7 +39,7 @@ namespace emul
 		uint32_t GetInstructionTicks() { return m_opTicks; }
 
 	protected:
-		enum class CPUState { STOP, RUN, STEP };
+		enum class CPUState { STOP, RUN, STEP, HALT };
 
 		CPUState m_state;
 		Memory& m_memory;
