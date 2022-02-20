@@ -189,9 +189,18 @@ namespace crtc
 		m_data.hPos += m_charWidth;
 		++m_data.memoryAddress;
 
-		if (m_data.hPos >= m_data.hTotal)
+		if (m_data.hPos == m_data.hSyncMin)
 		{
 			m_events->OnEndOfRow();
+		}
+
+		if (m_data.vPos == m_data.vSyncMin)
+		{
+			m_events->OnNewFrame();
+		}
+
+		if (m_data.hPos >= m_data.hTotal)
+		{
 			m_data.hPos = 0;
 			++m_data.vPos;
 			++m_data.rowAddress;
@@ -219,8 +228,6 @@ namespace crtc
 				UpdateHVTotals();
 				m_events->OnChangeMode();
 			}
-
-			m_events->OnNewFrame();
 
 			if ((m_data.frame % 16) == 0) m_blink16 = !m_blink16;
 			if ((m_data.frame % 32) == 0) m_blink32 = !m_blink32;
