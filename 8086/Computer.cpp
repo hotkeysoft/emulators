@@ -108,7 +108,7 @@ namespace emul
 
 		LogPrintf(LOG_INFO, "Video mode: [%s]", mode.c_str());
 
-		uint32_t border = Config::Instance().GetValueInt32("video", "border", 10);
+		BYTE border = std::min(255, Config::Instance().GetValueInt32("video", "border", 10));
 		LogPrintf(LOG_INFO, "Border: [%d]", border);
 
 		std::string charROM = Config::Instance().GetValueStr("video", "charrom", "data/XT/CGA_CHAR.BIN");
@@ -118,7 +118,8 @@ namespace emul
 
 		LogPrintf(LOG_INFO, "Character ROM: [%s]", charROM.c_str());
 
-		m_video->Init(&m_memory, charROM.c_str(), border);
+		m_video->Init(&m_memory, charROM.c_str());
+		m_video->SetBorder(border);
 		AddDevice(*m_video);
 	}
 

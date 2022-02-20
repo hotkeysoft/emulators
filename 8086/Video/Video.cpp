@@ -12,6 +12,9 @@ using cfg::Config;
 
 namespace video
 {
+	//TODO
+	const int overlayHeight = 64;
+
 	const uint32_t AlphaColorPalette[16] =
 	{
 		0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA,
@@ -43,9 +46,6 @@ namespace video
 
 	void Video::Init(emul::Memory*, const char*, bool forceMono)
 	{
-		//TODO
-		const int overlayHeight = 64;
-
 		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 		{
 			SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -66,7 +66,7 @@ namespace video
 
 		SDL_CreateWindowAndRenderer(
 			(int)(m_sdlWidth),
-			(int)(m_sdlHeight),
+			(int)(m_sdlHeight) + overlayHeight,
 			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_RESIZABLE,
 			&m_sdlWindow,
 			&m_sdlRenderer);
@@ -76,6 +76,8 @@ namespace video
 		int actualW, actualH;
 		SDL_GetWindowSize(m_sdlWindow, &actualW, &actualH);
 		LogPrintf(LOG_INFO, "Window Size: %dx%d", actualW, actualH);
+		m_sdlWidth = actualW;
+		m_sdlHeight = actualH;
 
 		std::string filtering = Config::Instance().GetValueStr("video", "filtering", "0");
 		if (filtering.empty())
@@ -169,7 +171,7 @@ namespace video
 		static size_t frames = 0;
 
 		SDL_Rect srcRect = GetDisplayRect(m_border);
-		SDL_Rect destRect = { 0, 0, m_sdlWidth, m_sdlHeight };
+		SDL_Rect destRect = { 0, 0, m_sdlWidth, m_sdlHeight - overlayHeight };
 
 		if (m_sdlTexture)
 		{

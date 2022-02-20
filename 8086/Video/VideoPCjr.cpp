@@ -5,6 +5,7 @@
 using emul::Memory;
 using emul::MemoryBlock;
 using emul::S2A;
+using emul::GetBit;
 
 using crtc::CRTCConfig;
 using crtc::CRTCData;
@@ -58,6 +59,9 @@ namespace video
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::INFunction>(&VideoPCjr::ReadStatusRegister));
 
 		Video::Init(memory, charROM);
+
+		// Normally max y is 262 but leave some room for custom crtc programming
+		Video::InitFrameBuffer(2048, 300);
 	}
 
 	bool VideoPCjr::ConnectTo(emul::PortAggregator& dest)
@@ -65,6 +69,22 @@ namespace video
 		// Connect sub devices
 		dest.Connect(m_crtc);
 		return PortConnector::ConnectTo(dest);
+	}
+
+	SDL_Rect VideoPCjr::GetDisplayRect(BYTE border) const
+	{
+		uint16_t xMultiplier = (m_mode.graphics && m_mode.graph2Colors) ? 2 : 1;
+
+		const struct CRTCData& data = m_crtc.GetData();
+
+		SDL_Rect rect;
+		rect.x = std::max(0, (data.hTotal - data.hSyncMin - border - 1) * xMultiplier);
+		rect.y = std::max(0, (data.vTotal - data.vSyncMin - border - 1));
+
+		rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)) * xMultiplier);
+		rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
+
+		return rect;
 	}
 
 	void VideoPCjr::WritePageRegister(BYTE value)
@@ -245,8 +265,6 @@ namespace video
 	{
 		m_crtc.SetCharWidth(m_mode.graph16Colors ? 4 : 8);
 
-		uint16_t width = m_crtc.GetData().hTotal;
-
 		//// Select draw function
 		if (!m_mode.graphics)
 		{
@@ -257,7 +275,6 @@ namespace video
 		{
 			LogPrintf(LOG_INFO, "OnChangeMode: Draw640x200x2");
 			m_drawFunc = &VideoPCjr::Draw640x200x2;
-			width *= 2;
 		}
 		else if (m_mode.graph16Colors)
 		{
@@ -274,8 +291,6 @@ namespace video
 			LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200x4");
 			m_drawFunc = &VideoPCjr::Draw320x200x4;
 		}
-
-		InitFrameBuffer(width, m_crtc.GetData().vTotal);
 	}
 
 	void VideoPCjr::OnRenderFrame()
@@ -300,7 +315,7 @@ namespace video
 			}
 		}
 
-		if (m_mode.enableVideo)
+		if (!m_crtc.IsVSync())
 		{
 			(this->*m_drawFunc)();
 		}
@@ -310,22 +325,20 @@ namespace video
 
 	void VideoPCjr::OnNewFrame()
 	{
-		const struct CRTCConfig& config = m_crtc.GetConfig();
+		BeginFrame();
+	}
 
-		unsigned int offset = config.startAddress * 2u;
-
-		//// Pointers for graphics mode
-		m_banks[0] = 0x0000 + offset;
-		m_banks[1] = 0x2000 + offset;
-		m_banks[2] = 0x4000 + offset;
-		m_banks[3] = 0x6000 + offset;
+	void VideoPCjr::OnEndOfRow()
+	{
+		NewLine();
 	}
 
 	bool VideoPCjr::IsCursor() const
 	{
+		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		return ((m_banks[0] / 2) == config.cursorAddress) &&
+		return (data.memoryAddress == config.cursorAddress) &&
 			(config.cursor != CRTCConfig::CURSOR_NONE) &&
 			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
@@ -335,14 +348,13 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		if (m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
 		{
-			ADDRESS& base = m_banks[0];
+			ADDRESS base = m_pageRegister.crtBaseAddress + ((m_crtc.GetMemoryAddress13() * 2u) & 0x7FFF);
 
 			bool isCursorChar = IsCursor();
-			BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-			BYTE attr = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-			base &= 0x7FFF;
+			BYTE ch = m_memory->Read8(base);
+			BYTE attr = m_memory->Read8(base + 1);
 
 			BYTE bg = attr >> 4;
 			BYTE fg = attr & 0x0F;
@@ -356,19 +368,20 @@ namespace video
 			}
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.vPos % data.vCharHeight);
+			BYTE currChar = m_charROMStart[((size_t)ch * 8) + data.rowAddress];
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
-			for (int y = 0; y < data.vCharHeight; ++y)
+
+			bool cursorLine = isCursorChar && (data.rowAddress >= config.cursorStart) && (data.rowAddress <= config.cursorEnd);
+			for (int x = 0; x < 8; ++x)
 			{
-				uint32_t offset = m_fbWidth * (uint32_t)(data.vPos + y) + data.hPos;
-				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
-				for (int x = 0; x < 8; ++x)
-				{
-					bool set = cursorLine || (draw && ((*(currCharPos + y)) & (1 << (7 - x))));
-					m_lastDot = set ? fg : bg;
-					m_fb[offset + x] = GetColor(m_lastDot);
-				}
+				bool set = draw && GetBit(currChar, 7 - x);
+				m_lastDot = set ? fg : bg;
+				DrawPixel(GetIndexedColor((set || cursorLine) ? fg : bg));
 			}
+		}
+		else
+		{
+			DrawBackground(8);
 		}
 	}
 
@@ -378,21 +391,21 @@ namespace video
 
 		// Called every 4 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		if (m_crtc.IsDisplayArea())
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
 		{
-			ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u)) & 0x7FFF);
 
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-				for (int x = 0; x < 2; ++x)
-				{
-					BYTE val = ch & 15;
-					ch >>= 4;
+				BYTE ch = m_memory->Read8(base++);
 
-					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 2) + (1 - x)] = GetColor(val);
-				}
+				DrawPixel(GetIndexedColor((ch & 0b11110000) >> 4));
+				DrawPixel(GetIndexedColor((ch & 0b00001111) >> 0));
 			}
+		}
+		else
+		{
+			DrawBackground(4);
 		}
 	}
 
@@ -402,22 +415,23 @@ namespace video
 
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-		if (m_crtc.IsDisplayArea())
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
 		{
-			ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u)) & 0x7FFF);
 
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-				for (int x = 0; x < 4; ++x)
-				{
-					BYTE val = ch & 3;
-					ch >>= 2;
+				BYTE ch = m_memory->Read8(base++);
 
-					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = GetColor(val);
-				}
-				base &= 0x7FFF;
+				DrawPixel(GetIndexedColor((ch & 0b11000000) >> 6));
+				DrawPixel(GetIndexedColor((ch & 0b00110000) >> 4));
+				DrawPixel(GetIndexedColor((ch & 0b00001100) >> 2));
+				DrawPixel(GetIndexedColor((ch & 0b00000011) >> 0));
 			}
+		}
+		else
+		{
+			DrawBackground(8);
 		}
 	}
 
@@ -428,23 +442,32 @@ namespace video
 		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
 		// In this mode 1 byte = 8 pixels
 
-		if (m_crtc.IsDisplayArea())
+		uint32_t fg = GetIndexedColor(15);
+		uint32_t bg = GetIndexedColor(0);
+
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
 		{
-			ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u)) & 0x7FFF);
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+				BYTE ch = m_memory->Read8(base++);
 
-				for (int x = 0; x < 8; ++x)
-				{
-					bool val = (ch & (1 << (7-x)));
-					m_fb[baseX++] = GetColor(val);
-				}
-				base &= 0x7FFF;
+				DrawPixel((ch & 0b10000000) ? fg : bg);
+				DrawPixel((ch & 0b01000000) ? fg : bg);
+				DrawPixel((ch & 0b00100000) ? fg : bg);
+				DrawPixel((ch & 0b00010000) ? fg : bg);
+				DrawPixel((ch & 0b00001000) ? fg : bg);
+				DrawPixel((ch & 0b00000100) ? fg : bg);
+				DrawPixel((ch & 0b00000010) ? fg : bg);
+				DrawPixel((ch & 0b00000001) ? fg : bg);
 			}
+		}
+		else
+		{
+			DrawBackground(16, bg);
 		}
 	}
 	void VideoPCjr::Draw640x200x4()
@@ -455,21 +478,24 @@ namespace video
 		// In this mode 2 bytes = 8 pixels
 		if (m_crtc.IsDisplayArea())
 		{
-			ADDRESS& base = m_banks[data.rowAddress];
+			ADDRESS base = m_pageRegister.crtBaseAddress + (((data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u)) & 0x7FFF);
 
 			uint32_t baseX = (m_fbWidth * data.vPos) + data.hPos;
 
-			BYTE chEven = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
-			BYTE chOdd = m_memory->Read8(m_pageRegister.crtBaseAddress + base++);
+			BYTE chEven = m_memory->Read8(base);
+			BYTE chOdd = m_memory->Read8(base + 1);
 
 			for (int x = 0; x < 8; ++x)
 			{
-				BYTE val = 
-					((chEven & (1 << (7 - x))) ? 1 : 0) | 
-					((chOdd  & (1 << (7 - x))) ? 2 : 0);
-				m_fb[baseX++] = GetColor(val);
+				BYTE val =
+					((chEven & (1 << (7 - x))) ? 1 : 0) |
+					((chOdd & (1 << (7 - x))) ? 2 : 0);
+				DrawPixel(GetIndexedColor(val));
 			}
-			base &= 0x7FFF;
+		}
+		else
+		{
+			DrawBackground(8);
 		}
 	}
 

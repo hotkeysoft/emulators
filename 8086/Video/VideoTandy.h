@@ -46,6 +46,8 @@ namespace video
 
 		// TODO: GetColor?
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_mode.borderEnable ? m_mode.borderColor : m_color.color]; }
+		uint32_t GetIndexedColor(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
 
 	protected:
 		const WORD m_baseAddress;
@@ -140,8 +142,6 @@ namespace video
 		void WriteVideoArrayData(BYTE value);
 
 		void MapB800Window();
-
-		uint32_t GetColor(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
 
 		typedef void(VideoTandy::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoTandy::DrawTextMode;

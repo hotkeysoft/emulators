@@ -40,9 +40,12 @@ namespace video
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
+		virtual void OnEndOfRow() override;
 
 		// TODO: GetColor?
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_mode.borderColor]; }
+		uint32_t GetIndexedColor(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
 
 	protected:
 		const WORD m_baseAddress;
@@ -111,8 +114,6 @@ namespace video
 
 		void MapB800Window();
 
-		uint32_t GetColor(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
-
 		typedef void(VideoPCjr::* DrawFunc)();
 		DrawFunc m_drawFunc = &VideoPCjr::DrawTextMode;
 		void DrawTextMode();
@@ -123,9 +124,6 @@ namespace video
 
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
-
-		// Graph mode banks
-		ADDRESS m_banks[4] = { 0, 0, 0, 0 };
 
 		// Diagnostics: dot information (status register)
 		// Only works in alpha modes for the moment
