@@ -280,8 +280,7 @@ namespace video
 
 	void VideoPCjr::OnRenderFrame()
 	{
-		uint32_t borderRGB = GetMonitorPalette()[m_mode.borderColor];
-		Video::RenderFrame(borderRGB);
+		Video::RenderFrame();
 	}
 
 	void VideoPCjr::Tick()

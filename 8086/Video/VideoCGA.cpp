@@ -67,6 +67,9 @@ namespace video
 		memory->Allocate(&GetVideoRAM(), emul::S2A(0xBC00));
 
 		Video::Init(memory, charROM);
+
+		// Normally max y is 262 but leave some room for custom crtc programming
+		Video::InitFrameBuffer(2048, 300);
 	}	
 	
 	bool VideoCGA::ConnectTo(emul::PortAggregator& dest)
@@ -74,6 +77,22 @@ namespace video
 		// Connect sub devices
 		dest.Connect(m_crtc);
 		return PortConnector::ConnectTo(dest);
+	}
+
+	SDL_Rect VideoCGA::GetDisplayRect(BYTE border) const
+	{
+		uint16_t xMultiplier = m_mode.hiResolution ? 2 : 1;
+
+		const struct CRTCData& data = m_crtc.GetData();
+
+		SDL_Rect rect;
+		rect.x = std::max(0, (data.hTotal - data.hSyncMin - border - 1) * xMultiplier);
+		rect.y = std::max(0, (data.vTotal - data.vSyncMin - border - 1));
+
+		rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)) * xMultiplier);
+		rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
+
+		return rect;
 	}
 
 	void VideoCGA::OnChangeMode()
@@ -94,16 +113,11 @@ namespace video
 			LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200");
 			m_drawFunc = &VideoCGA::Draw320x200;
 		}
-
-		uint16_t xMultiplier = m_mode.hiResolution ? 2 : 1;
-
-		Video::InitFrameBuffer(m_crtc.GetData().hTotal * xMultiplier, m_crtc.GetData().vTotal);
 	}
 
 	void VideoCGA::OnRenderFrame()
 	{
-		uint32_t borderRGB = GetMonitorPalette()[m_color.color];
-		Video::RenderFrame(borderRGB);
+		Video::RenderFrame();
 	}
 
 	BYTE VideoCGA::ReadStatusRegister()
@@ -181,26 +195,31 @@ namespace video
 			}
 		}
 
-		(this->*m_drawFunc)();
+		if (!m_crtc.IsVSync())
+		{
+			(this->*m_drawFunc)();
+		}
 
 		m_crtc.Tick();
 	}
 
 	void VideoCGA::OnNewFrame()
 	{
+		BeginFrame();
 	}
 	
 	void VideoCGA::OnEndOfRow()
 	{
-		m_currGraphPalette[0] = GetMonitorPalette()[m_color.color];
+		NewLine();
+		m_currGraphPalette[0] = m_color.color;
+
 		for (int i = 1; i < 4; ++i)
 		{
-			m_currGraphPalette[i] = GetMonitorPalette()[
-				(m_color.palIntense << 3) // Intensity
-					| (i << 1)
-					| (m_color.palSelect && !m_mode.monochrome) // Palette shift for non mono modes
-					| (m_mode.monochrome & (i & 1)) // Palette shift for mono modes
-			];
+			m_currGraphPalette[i] =
+				(m_color.palIntense << 3) | // Intensity
+				(i << 1) |
+				(m_color.palSelect && !m_mode.monochrome) | // Palette shift for non mono modes
+				(m_mode.monochrome & (i & 1)); // Palette shift for mono modes
 		}
 	}
 
@@ -219,7 +238,7 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		if (m_crtc.IsDisplayArea())
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
 		{
 			ADDRESS base = m_crtc.GetMemoryAddress13() * 2u;
 			base &= 0x3FFF;
@@ -239,33 +258,30 @@ namespace video
 				SetBit(bg, 3, false);
 			}
 
-			uint32_t fgRGB = GetMonitorPalette()[fg];
-			uint32_t bgRGB = GetMonitorPalette()[bg];
-
 			// Draw character
 			BYTE currChar = m_charROMStart[((size_t)ch * 8) + data.rowAddress];
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
 
-			uint32_t offset = (m_fbWidth * data.vPos) + data.hPos;
 			bool cursorLine = isCursorChar && (data.rowAddress >= config.cursorStart) && (data.rowAddress <= config.cursorEnd);
 			for (int x = 0; x < 8; ++x)
 			{
 				bool set = draw && GetBit(currChar, 7 - x);
-				m_fb[offset + x] = (m_mode.enableVideo && (set || cursorLine)) ? fgRGB : bgRGB;
+				DrawPixel(GetIndexedColor((set || cursorLine) ? fg : bg));
 			}
 		}
 		else
 		{
-			DrawBackground(data.hPos, data.vPos, 8);
+			DrawBackground(8);
 		}
 	}
+
 	void VideoCGA::Draw320x200()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-		if (m_crtc.IsDisplayArea())
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
 		{
 			ADDRESS base = (data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u);
 			base &= 0x3FFF;
@@ -273,18 +289,16 @@ namespace video
 			for (int w = 0; w < 2; ++w)
 			{
 				BYTE ch = m_screenB800.read(base++);
-				for (int x = 0; x < 4; ++x)
-				{
-					BYTE val = m_mode.enableVideo ? (ch & 3) : 0;
-					ch >>= 2;
 
-					m_fb[m_fbWidth * data.vPos + data.hPos + (w * 4) + (3 - x)] = m_currGraphPalette[val];
-				}
+				DrawPixel(GetIndexedColor(m_currGraphPalette[(ch & 0b11000000) >> 6]));
+				DrawPixel(GetIndexedColor(m_currGraphPalette[(ch & 0b00110000) >> 4]));
+				DrawPixel(GetIndexedColor(m_currGraphPalette[(ch & 0b00001100) >> 2]));
+				DrawPixel(GetIndexedColor(m_currGraphPalette[(ch & 0b00000011) >> 0]));
 			}
 		}
 		else
 		{
-			DrawBackground(data.hPos, data.vPos, 8);
+			DrawBackground(8);
 		}
 	}
 
@@ -295,33 +309,31 @@ namespace video
 		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
 		// In this mode 1 byte = 8 pixels
 
-		uint32_t fg = GetMonitorPalette()[m_mode.enableVideo ? m_color.color : 0];
-		uint32_t bg = GetMonitorPalette()[0];
+		uint32_t fg = GetIndexedColor(m_color.color);
+		uint32_t bg = GetIndexedColor(0);
 
-		if (m_crtc.IsDisplayArea())
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
 		{
 			ADDRESS base = (data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u);
 			base &= 0x3FFF;
-
-			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
 
 			for (int w = 0; w < 2; ++w)
 			{
 				BYTE ch = m_screenB800.read(base++);
 
-				m_fb[baseX++] = (ch & 0b10000000) ? fg : bg;
-				m_fb[baseX++] = (ch & 0b01000000) ? fg : bg;
-				m_fb[baseX++] = (ch & 0b00100000) ? fg : bg;
-				m_fb[baseX++] = (ch & 0b00010000) ? fg : bg;
-				m_fb[baseX++] = (ch & 0b00001000) ? fg : bg;
-				m_fb[baseX++] = (ch & 0b00000100) ? fg : bg;
-				m_fb[baseX++] = (ch & 0b00000010) ? fg : bg;
-				m_fb[baseX++] = (ch & 0b00000001) ? fg : bg;
+				DrawPixel((ch & 0b10000000) ? fg : bg);
+				DrawPixel((ch & 0b01000000) ? fg : bg);
+				DrawPixel((ch & 0b00100000) ? fg : bg);
+				DrawPixel((ch & 0b00010000) ? fg : bg);
+				DrawPixel((ch & 0b00001000) ? fg : bg);
+				DrawPixel((ch & 0b00000100) ? fg : bg);
+				DrawPixel((ch & 0b00000010) ? fg : bg);
+				DrawPixel((ch & 0b00000001) ? fg : bg);
 			}
 		}
 		else
 		{
-			DrawBackground(data.hPos * 2, data.vPos, 16, bg);
+			DrawBackground(16, bg);
 		}
 	}
 

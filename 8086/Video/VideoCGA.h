@@ -41,6 +41,8 @@ namespace video
 		virtual void Deserialize(json& from) override;
 
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_color.color]; }
+		uint32_t GetIndexedColor(BYTE index) { return GetMonitorPalette()[index]; }
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
 
 	protected:
 		const WORD m_baseAddress;
@@ -86,7 +88,7 @@ namespace video
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;
 
-		uint32_t m_currGraphPalette[4];
+		BYTE m_currGraphPalette[4];
 
 		crtc::Device6845 m_crtc;
 	};

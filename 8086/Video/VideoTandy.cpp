@@ -286,8 +286,7 @@ namespace video
 
 	void VideoTandy::OnRenderFrame()
 	{
-		uint32_t borderRGB = GetMonitorPalette()[m_mode.borderEnable ? m_mode.borderColor: m_color.color];
-		Video::RenderFrame(borderRGB);
+		Video::RenderFrame();
 	}
 
 	void VideoTandy::Tick()
@@ -390,7 +389,7 @@ namespace video
 		}
 		else
 		{
-			DrawBackground(data.hPos, data.vPos, 8);
+			DrawBackground(8);
 		}
 	}
 
@@ -418,7 +417,7 @@ namespace video
 		}
 		else
 		{
-			DrawBackground(data.hPos, data.vPos, 4);
+			DrawBackground(4);
 		}
 	}
 
@@ -446,7 +445,7 @@ namespace video
 		}
 		else
 		{
-			DrawBackground(data.hPos, data.vPos, 8);
+			DrawBackground(8);
 		}
 	}
 
@@ -477,7 +476,7 @@ namespace video
 		}
 		else
 		{
-			DrawBackground(data.hPos * 2, data.vPos, 16, GetMonitorPalette()[0]);
+			DrawBackground(16, GetMonitorPalette()[0]);
 		}
 	}
 	void VideoTandy::Draw640x200x4()
@@ -505,7 +504,7 @@ namespace video
 		}
 		else
 		{
-			DrawBackground(data.hPos, data.vPos, 8);
+			DrawBackground(8);
 		}
 	}
 

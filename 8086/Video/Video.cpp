@@ -107,7 +107,7 @@ namespace video
 			m_fbWidth = width;
 			m_fbHeight = height;
 			m_fb.resize(width * height);
-			std::fill(m_fb.begin(), m_fb.end(), 0);
+			std::fill(m_fb.begin(), m_fb.end(), GetBackgroundColor());
 
 			m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
 		}
@@ -164,26 +164,11 @@ namespace video
 		}
 	}
 
-	void Video::DrawBackground(WORD x, WORD y, BYTE width)
-	{
-		DrawBackground(x, y, width, GetBackgroundColor());
-	}
-
-	void Video::DrawBackground(WORD x, WORD y, BYTE width, uint32_t color)
-	{
-		if (m_fb.size())
-		{
-			size_t offset = (y * (size_t)m_fbWidth) + x;
-			std::fill_n(m_fb.begin() + offset, width, color);
-		}
-	}
-
-	void Video::RenderFrame(uint32_t borderRGB)
+	void Video::RenderFrame()
 	{
 		static size_t frames = 0;
 
-		// TODO: don't recompute every time
-		SDL_Rect srcRect = { 0, 0, m_fbWidth, m_fbHeight };
+		SDL_Rect srcRect = GetDisplayRect(m_border);
 		SDL_Rect destRect = { 0, 0, m_sdlWidth, m_sdlHeight };
 
 		if (m_sdlTexture)
@@ -204,9 +189,10 @@ namespace video
 
 		SDL_RenderPresent(m_sdlRenderer);
 
-		Uint8 r = Uint8(borderRGB >> 16);
-		Uint8 g = Uint8(borderRGB >> 8);
-		Uint8 b = Uint8(borderRGB);
+		uint32_t bg = GetBackgroundColor();
+		Uint8 r = Uint8(bg >> 16);
+		Uint8 g = Uint8(bg >> 8);
+		Uint8 b = Uint8(bg);
 
 		SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
 		SDL_RenderClear(m_sdlRenderer);
@@ -215,6 +201,32 @@ namespace video
 		{
 			LogPrintf(Logger::LOG_INFO, "60 frames");
 			frames = 0;
+		}
+	}
+
+	void Video::BeginFrame()
+	{
+		m_fbCurrPos = 0;
+		m_fbCurrY = 0;
+	}
+
+	void Video::NewLine()
+	{
+		m_fbCurrY = std::min(m_fbHeight - 1, m_fbCurrY + 1);
+		m_fbCurrPos = m_fbCurrY * m_fbWidth;
+	}
+
+	void Video::DrawBackground(BYTE width)
+	{
+		DrawBackground(width, GetBackgroundColor());
+	}
+
+	void Video::DrawBackground(BYTE width, uint32_t color)
+	{
+		if (m_fb.size())
+		{
+			std::fill_n(m_fb.begin() + m_fbCurrPos, width, color);
+			m_fbCurrPos += width;
 		}
 	}
 }

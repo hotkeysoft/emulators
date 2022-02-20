@@ -9,6 +9,8 @@ using emul::PortConnector;
 using emul::WORD;
 using emul::BYTE;
 
+#include <SDL_rect.h>
+
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
@@ -39,7 +41,7 @@ namespace video
 
 		virtual bool IsMonoAdapter() { return false; }
 
-		void RenderFrame(uint32_t borderRGB = 0xFF000000);
+		void RenderFrame();
 
 		virtual void Serialize(json& to) = 0;
 		virtual void Deserialize(json& from) = 0;
@@ -50,6 +52,9 @@ namespace video
 		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }
 
 		virtual uint32_t GetBackgroundColor() const { return 0; }
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const { return SDL_Rect(); } // TODO: = 0
+
+		void SetBorder(BYTE border) { m_border = border; }
 
 	protected:
 		enum class MonitorType
@@ -69,8 +74,6 @@ namespace video
 		bool IsCompositeMonitor() const { return m_monitor == MonitorType::COMPOSITE; }
 
 		const uint32_t* GetMonitorPalette() const { return m_monitorPalette; }
-		void DrawBackground(WORD x, WORD y, BYTE width);
-		void DrawBackground(WORD x, WORD y, BYTE width, uint32_t color);
 
 		// SDL
 		SDL_Window* m_sdlWindow = nullptr;
@@ -79,7 +82,16 @@ namespace video
 		uint16_t m_sdlWidth = 0;
 		uint16_t m_sdlHeight = 0;
 
+		BYTE m_border = 0;
+
 		const uint32_t* m_monitorPalette = nullptr;
+
+		// Framebuffer
+		void BeginFrame();
+		void NewLine();
+		void DrawPixel(uint32_t color) { m_fb[m_fbCurrPos++] = color; }
+		void DrawBackground(BYTE width);
+		void DrawBackground(BYTE width, uint32_t color);
 
 		// Init frame buffer and associated sdl sdl texture
 		virtual void InitFrameBuffer(WORD width, WORD height);
@@ -88,8 +100,11 @@ namespace video
 		void DestroyFrameBuffer();
 
 		std::vector<uint32_t> m_fb;
-		WORD m_fbWidth = 0;
-		WORD m_fbHeight = 0;
+		uint32_t m_fbCurrPos = 0;
+		uint32_t m_fbCurrY = 0;
+		uint32_t m_fbWidth = 0;
+		uint32_t m_fbHeight = 0;
+
 		SDL_Texture* m_sdlTexture = nullptr;
 
 		std::vector<Renderer*> m_renderers;
