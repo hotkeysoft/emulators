@@ -30,10 +30,11 @@ namespace video
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 
 		virtual void OnChangeMode() override;
-		virtual void OnNewFrame() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
+
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
 
 	protected:
 		// Mode Control Register (Hercules)
@@ -48,8 +49,5 @@ namespace video
 		virtual BYTE ReadStatusRegister() override;
 
 		void Draw720x348();
-
-		// Graph mode banks
-		BYTE* m_banks[4] = { nullptr, nullptr, nullptr, nullptr };
 	};
 }

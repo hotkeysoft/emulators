@@ -4,6 +4,7 @@
 
 using emul::SetBit;
 using emul::GetBit;
+using emul::ADDRESS;
 
 using crtc::CRTCConfig;
 using crtc::CRTCData;
@@ -25,6 +26,22 @@ namespace video
 		// 64KB video memory buffer, repeated from B000 to BFFF
 		m_screenB000.Alloc(65536);
 		memory->Allocate(&GetVideoRAM(), emul::S2A(0xB000));
+	}
+
+	SDL_Rect VideoHGC::GetDisplayRect(BYTE border) const
+	{
+		uint16_t xMultiplier = m_modeHGC.graphics ? 2 : 1;
+
+		const struct CRTCData& data = m_crtc.GetData();
+
+		SDL_Rect rect;
+		rect.x = std::max(0, (data.hTotal - data.hSyncMin - border - 1) * xMultiplier);
+		rect.y = std::max(0, (data.vTotal - data.vSyncMin - border - 1));
+
+		rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)) * xMultiplier);
+		rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
+
+		return rect;
 	}
 
 	BYTE VideoHGC::ReadStatusRegister()
@@ -64,29 +81,10 @@ namespace video
 		{
 			LogPrintf(LOG_INFO, "OnChangeMode: Draw720x348");
 			m_drawFunc = (DrawFunc)&VideoHGC::Draw720x348;
-			Video::InitFrameBuffer(m_crtc.GetData().hTotal * 2, m_crtc.GetData().vTotal);
 		}
 		else
 		{
 			VideoMDA::OnChangeMode();
-		}
-	}
-
-	void VideoHGC::OnNewFrame()
-	{
-		if (m_modeHGC.graphics)
-		{
-			// Pointers for graphics mode
-			WORD page = m_modeHGC.displayPage ? 0x8000 : 0;
-
-			m_banks[0] = m_screenB000.getPtr(page + 0x0000);
-			m_banks[1] = m_screenB000.getPtr(page + 0x2000);
-			m_banks[2] = m_screenB000.getPtr(page + 0x4000);
-			m_banks[3] = m_screenB000.getPtr(page + 0x6000);
-		}
-		else
-		{
-			VideoMDA::OnNewFrame();
 		}
 	}
 
@@ -97,23 +95,31 @@ namespace video
 		// Called every 8 horizontal pixels, but since crtc is 45 cols we have to process 2 characters = 16 pixels
 		// In this mode 1 byte = 8 pixels
 
-		if (m_crtc.IsDisplayArea())
-		{
-			BYTE*& currChar = m_banks[data.rowAddress];
+		uint32_t fg = GetMonitorPalette()[15];
+		uint32_t bg = GetMonitorPalette()[0];
 
-			uint32_t baseX = (m_fbWidth * data.vPos) + (data.hPos * 2);
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
+		{
+			ADDRESS base = (m_modeHGC.displayPage * 0x8000) + (data.rowAddress * 0x2000) + (m_crtc.GetMemoryAddress12() * 2u);
+			base &= 0xFFFF;
 
 			for (int w = 0; w < 2; ++w)
 			{
-				BYTE ch = *currChar;
+				BYTE ch = m_screenB000.read(base++);
 
-				for (int x = 0; x < 8; ++x)
-				{
-					bool val = (ch & (1 << (7 - x)));
-					m_fb[baseX++] = GetMonitorPalette()[val ? 0x0F : 0];
-				}
-				++currChar;
+				DrawPixel((ch & 0b10000000) ? fg : bg);
+				DrawPixel((ch & 0b01000000) ? fg : bg);
+				DrawPixel((ch & 0b00100000) ? fg : bg);
+				DrawPixel((ch & 0b00010000) ? fg : bg);
+				DrawPixel((ch & 0b00001000) ? fg : bg);
+				DrawPixel((ch & 0b00000100) ? fg : bg);
+				DrawPixel((ch & 0b00000010) ? fg : bg);
+				DrawPixel((ch & 0b00000001) ? fg : bg);
 			}
+		}
+		else
+		{
+			DrawBackground(16);
 		}
 	}
 

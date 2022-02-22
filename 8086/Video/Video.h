@@ -52,8 +52,8 @@ namespace video
 		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }
 
 		virtual uint32_t GetBackgroundColor() const { return 0; }
-		uint32_t GetIndexedColor(BYTE index) { return index; } // TODO: = 0
-		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const { return SDL_Rect(); } // TODO: = 0
+		uint32_t GetIndexedColor(BYTE index) { return index; }
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const = 0;
 
 		void SetBorder(BYTE border) { m_border = border; }
 

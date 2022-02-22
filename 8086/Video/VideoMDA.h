@@ -36,9 +36,12 @@ namespace video
 		virtual void OnChangeMode() override;
 		virtual void OnNewFrame() override;
 		virtual void OnRenderFrame() override;
+		virtual void OnEndOfRow() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
+
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
 
 	protected:
 		const WORD m_baseAddress;
@@ -65,10 +68,6 @@ namespace video
 
 		// 4K screen buffer
 		emul::MemoryBlock m_screenB000;
-
-		// Text mode pointers
-		BYTE* m_cursorPos = nullptr;
-		BYTE* m_currChar = nullptr;
 
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart;

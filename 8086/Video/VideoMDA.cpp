@@ -4,6 +4,7 @@
 
 using emul::SetBit;
 using emul::GetBit;
+using emul::ADDRESS;
 
 using crtc::CRTCConfig;
 using crtc::CRTCData;
@@ -58,6 +59,9 @@ namespace video
 		}
 
 		Video::Init(memory, charROM, true);
+
+		// Normally max y is 370 but leave some room for custom crtc programming
+		Video::InitFrameBuffer(2048, 400);
 	}
 
 	bool VideoMDA::ConnectTo(emul::PortAggregator& dest)
@@ -67,13 +71,25 @@ namespace video
 		return PortConnector::ConnectTo(dest);
 	}
 
+	SDL_Rect VideoMDA::GetDisplayRect(BYTE border) const
+	{
+		const struct CRTCData& data = m_crtc.GetData();
+
+		SDL_Rect rect;
+		rect.x = std::max(0, (data.hTotal - data.hSyncMin - border - 1));
+		rect.y = std::max(0, (data.vTotal - data.vSyncMin - border - 1));
+
+		rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)));
+		rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
+
+		return rect;
+	}
+
 	void VideoMDA::OnChangeMode()
 	{
 		// Select draw function
 		LogPrintf(LOG_INFO, "OnChangeMode: DrawTextMode");
 		m_drawFunc = &VideoMDA::DrawTextMode;
-
-		Video::InitFrameBuffer(m_crtc.GetData().hTotal, m_crtc.GetData().vTotal);
 	}
 
 	void VideoMDA::OnRenderFrame()
@@ -131,7 +147,7 @@ namespace video
 			return;
 		}
 
-		if (m_mode.enableVideo)
+		if (!m_crtc.IsVSync())
 		{
 			(this->*m_drawFunc)();
 		}
@@ -141,25 +157,20 @@ namespace video
 
 	void VideoMDA::OnNewFrame()
 	{
-		const struct CRTCConfig& config = m_crtc.GetConfig();
+		BeginFrame();
+	}
 
-		// Pointers for alpha mode
-		m_currChar = m_screenB000.getPtr(config.startAddress * 2u);
-		if (config.cursorAddress * 2u >= m_screenB000.GetSize())
-		{
-			m_cursorPos = nullptr;
-		}
-		else
-		{
-			m_cursorPos = m_screenB000.getPtr(config.cursorAddress * 2u);
-		}
+	void VideoMDA::OnEndOfRow()
+	{
+		NewLine();
 	}
 
 	bool VideoMDA::IsCursor() const
 	{
 		const struct CRTCConfig& config = m_crtc.GetConfig();
+		const struct CRTCData& data = m_crtc.GetData();
 
-		return (m_currChar == m_cursorPos) &&
+		return (data.memoryAddress == config.cursorAddress) &&
 			(config.cursor != CRTCConfig::CURSOR_NONE) &&
 			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
 	}
@@ -169,12 +180,13 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		if (m_currChar && m_crtc.IsDisplayArea() && ((data.vPos % data.vCharHeight) == 0))
+		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
 		{
-			bool isCursorChar = IsCursor();
+			ADDRESS base = m_crtc.GetMemoryAddress13() * 2u;
 
-			BYTE ch = *(m_currChar++);
-			BYTE attr = *(m_currChar++);
+			bool isCursorChar = IsCursor();
+			BYTE ch = m_screenB000.read(base);
+			BYTE attr = m_screenB000.read(base + 1);
 
 			bool blinkBit = GetBit(attr, 7);
 			bool charBlink = m_mode.blink && blinkBit;
@@ -192,34 +204,35 @@ namespace video
 			uint32_t bgRGB = GetMonitorPalette()[bg];
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8);
+			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.rowAddress & 7);
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
-			for (int y = 0; y < data.vCharHeight; ++y)
+
+			// Lower part of character is at A10=1 in ROM
+			if (data.rowAddress >= 8)
 			{
-				// Lower part of character is at A10=1 in ROM
-				if (y == 8)
-				{
-					currCharPos += (1 << 11);
-				}
-				bool underline = draw && (charUnderline & (y == data.vCharHeight - 1));
-
-				uint32_t offset = m_fbWidth * (uint32_t)(data.vPos + y) + data.hPos;
-				bool cursorLine = isCursorChar && (y >= config.cursorStart) && (y <= config.cursorEnd);
-				for (int x = 0; x < 9; ++x)
-				{
-					if (x < 8)
-					{
-						m_lastDot = draw && ((*(currCharPos + (y & 7))) & (1 << (7 - x)));
-					}
-					// Characters C0h - DFh: 9th pixel == 8th pixel, otherwise blank
-					else if ((ch < 0xC0) || (ch > 0xDF))
-					{
-						m_lastDot = 0;
-					}
-
-					m_fb[offset + x] = (m_lastDot || cursorLine || underline) ? fgRGB : bgRGB;
-				}
+				currCharPos += (1 << 11);
 			}
+			bool underline = draw && (charUnderline & (data.rowAddress == config.maxScanlineAddress));
+
+			bool cursorLine = isCursorChar && (data.rowAddress >= config.cursorStart) && (data.rowAddress <= config.cursorEnd);
+			for (int x = 0; x < 9; ++x)
+			{
+				if (x < 8)
+				{
+					m_lastDot = draw && GetBit(*(currCharPos), 7 - x);
+				}
+				// Characters C0h - DFh: 9th pixel == 8th pixel, otherwise blank
+				else if ((ch < 0xC0) || (ch > 0xDF))
+				{
+					m_lastDot = 0;
+				}
+
+				DrawPixel((m_lastDot || cursorLine || underline) ? fgRGB : bgRGB);
+			}
+		}
+		else
+		{
+			DrawBackground(9);
 		}
 	}
 
