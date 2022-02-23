@@ -45,7 +45,7 @@ namespace video
 		// TODO: GetColor?
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_mode.borderColor]; }
 		uint32_t GetIndexedColor(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
-		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 
 	protected:
 		const WORD m_baseAddress;

@@ -71,7 +71,7 @@ namespace video
 		return PortConnector::ConnectTo(dest);
 	}
 
-	SDL_Rect VideoPCjr::GetDisplayRect(BYTE border) const
+	SDL_Rect VideoPCjr::GetDisplayRect(BYTE border, WORD) const
 	{
 		uint16_t xMultiplier = (m_mode.graphics && m_mode.graph2Colors) ? 2 : 1;
 

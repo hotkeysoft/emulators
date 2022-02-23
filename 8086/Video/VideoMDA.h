@@ -3,15 +3,14 @@
 #include "../Common.h"
 #include "../CPU/MemoryBlock.h"
 #include "../CPU/Memory.h"
-#include "Device6845.h"
-#include "Video.h"
+#include "Video6845.h"
 
 using emul::WORD;
 using emul::BYTE;
 
 namespace video
 {
-	class VideoMDA : public Video, public crtc::EventHandler
+	class VideoMDA : public Video6845
 	{
 	public:
 		VideoMDA(WORD baseAddress);
@@ -23,33 +22,18 @@ namespace video
 		VideoMDA& operator=(VideoMDA&&) = delete;
 
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
-		virtual void Reset() override;
-		virtual void Tick() override;
 
 		virtual bool IsMonoAdapter() override { return true; }
-
-		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB000; }
 
 		// crtc::EventHandler
 		virtual void OnChangeMode() override;
-		virtual void OnNewFrame() override;
-		virtual void OnRenderFrame() override;
-		virtual void OnEndOfRow() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
 
-		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
-
 	protected:
-		const WORD m_baseAddress;
-
-		virtual bool ConnectTo(emul::PortAggregator& dest) override;
-
-		bool IsCursor() const;
-
 		// Mode Control Register
 		struct MODEControl
 		{
@@ -59,8 +43,6 @@ namespace video
 		} m_mode;
 		virtual void WriteModeControlRegister(BYTE value);
 
-		typedef void(VideoMDA::* DrawFunc)();
-		DrawFunc m_drawFunc = &VideoMDA::DrawTextMode;
 		void DrawTextMode();
 
 		// Status Register
@@ -70,11 +52,9 @@ namespace video
 		emul::MemoryBlock m_screenB000;
 
 		emul::MemoryBlock m_charROM;
-		BYTE* m_charROMStart;
+		BYTE* m_charROMStart = nullptr;
 
 		// dot information (status register)
 		bool m_lastDot = 0;
-
-		crtc::Device6845 m_crtc;
 	};
 }

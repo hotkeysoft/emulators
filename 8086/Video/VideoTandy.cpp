@@ -79,7 +79,7 @@ namespace video
 		return PortConnector::ConnectTo(dest);
 	}
 
-	SDL_Rect VideoTandy::GetDisplayRect(BYTE border) const
+	SDL_Rect VideoTandy::GetDisplayRect(BYTE border, WORD) const
 	{
 		uint16_t xMultiplier = (m_mode.graphics && m_mode.hiResolution && !m_mode.graph640x200x4) ? 2 : 1;
 

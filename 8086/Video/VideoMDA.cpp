@@ -11,39 +11,23 @@ using crtc::CRTCData;
 
 namespace video
 {
-	const float VSCALE = 1.6f; // TODO
 	const BYTE CHAR_WIDTH = 9;
 	
 	VideoMDA::VideoMDA(WORD baseAddress) :
 		Logger("MDA"),
-		m_baseAddress(baseAddress),
-		m_crtc(baseAddress, CHAR_WIDTH),
+		Video6845(baseAddress, CHAR_WIDTH),
 		m_screenB000("MDA", emul::MemoryType::RAM),
 		m_charROM("CHAR", 8192, emul::MemoryType::ROM)
 	{
 		Reset();
 	}
-
-	void VideoMDA::Reset()
-	{
-		m_crtc.Reset();
-	}
-
-	void VideoMDA::EnableLog(SEVERITY minSev)
-	{
-		m_crtc.EnableLog(minSev);
-		Video::EnableLog(minSev);
-	}
 	
-	void VideoMDA::Init(emul::Memory* memory, const char* charROM, bool)
+	void VideoMDA::Init(emul::Memory* memory, const char* charROM, bool forceMono)
 	{
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadFromFile(charROM);
 		m_charROMStart = m_charROM.getPtr(0);
-
-		m_crtc.Init();
-		m_crtc.SetEventHandler(this);
 
 		// Mode Control Register
 		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoMDA::WriteModeControlRegister));
@@ -58,43 +42,19 @@ namespace video
 			memory->Allocate(&GetVideoRAM(), emul::S2A(0xB000 + (i * 0x100)));
 		}
 
-		Video::Init(memory, charROM, true);
+		Video6845::Init(memory, charROM, forceMono);
 
 		// Normally max y is 370 but leave some room for custom crtc programming
 		Video::InitFrameBuffer(2048, 400);
-	}
 
-	bool VideoMDA::ConnectTo(emul::PortAggregator& dest)
-	{
-		// Connect sub devices
-		dest.Connect(m_crtc);
-		return PortConnector::ConnectTo(dest);
-	}
-
-	SDL_Rect VideoMDA::GetDisplayRect(BYTE border) const
-	{
-		const struct CRTCData& data = m_crtc.GetData();
-
-		SDL_Rect rect;
-		rect.x = std::max(0, (data.hTotal - data.hSyncMin - border - 1));
-		rect.y = std::max(0, (data.vTotal - data.vSyncMin - border - 1));
-
-		rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)));
-		rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
-
-		return rect;
+		SetDrawFunc((DrawFunc)&VideoMDA::DrawTextMode);
 	}
 
 	void VideoMDA::OnChangeMode()
 	{
 		// Select draw function
 		LogPrintf(LOG_INFO, "OnChangeMode: DrawTextMode");
-		m_drawFunc = &VideoMDA::DrawTextMode;
-	}
-
-	void VideoMDA::OnRenderFrame()
-	{
-		Video::RenderFrame();
+		SetDrawFunc((DrawFunc)&VideoMDA::DrawTextMode);
 	}
 
 	BYTE VideoMDA::ReadStatusRegister()
@@ -112,7 +72,7 @@ namespace video
 		bool dot = m_lastDot;
 
 		BYTE status =
-			(m_crtc.IsHSync() << 0) |
+			(GetCRTC().IsHSync() << 0) |
 			(0 << 1) |
 			(0 << 2) |
 			(m_lastDot << 3) |
@@ -140,49 +100,14 @@ namespace video
 			m_mode.hiResolution ? ' ' : '/');
 	}
 
-	void VideoMDA::Tick()
-	{
-		if (!m_crtc.IsInit())
-		{
-			return;
-		}
-
-		if (!m_crtc.IsVSync())
-		{
-			(this->*m_drawFunc)();
-		}
-
-		m_crtc.Tick();
-	}
-
-	void VideoMDA::OnNewFrame()
-	{
-		BeginFrame();
-	}
-
-	void VideoMDA::OnEndOfRow()
-	{
-		NewLine();
-	}
-
-	bool VideoMDA::IsCursor() const
-	{
-		const struct CRTCConfig& config = m_crtc.GetConfig();
-		const struct CRTCData& data = m_crtc.GetData();
-
-		return (data.memoryAddress == config.cursorAddress) &&
-			(config.cursor != CRTCConfig::CURSOR_NONE) &&
-			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
-	}
-
 	void VideoMDA::DrawTextMode()
 	{
-		const struct CRTCData& data = m_crtc.GetData();
-		const struct CRTCConfig& config = m_crtc.GetConfig();
+		const struct CRTCData& data = GetCRTC().GetData();
+		const struct CRTCConfig& config = GetCRTC().GetConfig();
 
-		if (m_crtc.IsDisplayArea() && m_mode.enableVideo)
+		if (GetCRTC().IsDisplayArea() && m_mode.enableVideo)
 		{
-			ADDRESS base = m_crtc.GetMemoryAddress13() * 2u;
+			ADDRESS base = GetCRTC().GetMemoryAddress13() * 2u;
 
 			bool isCursorChar = IsCursor();
 			BYTE ch = m_screenB000.read(base);
@@ -205,7 +130,7 @@ namespace video
 
 			// Draw character
 			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.rowAddress & 7);
-			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
+			bool draw = !charBlink || (charBlink && GetCRTC().IsBlink16());
 
 			// Lower part of character is at A10=1 in ROM
 			if (data.rowAddress >= 8)
@@ -238,6 +163,7 @@ namespace video
 
 	void VideoMDA::Serialize(json& to)
 	{
+		Video6845::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
 		to["id"] = "mda";
 
@@ -248,12 +174,12 @@ namespace video
 		to["mode"] = mode;
 
 		to["lastDot"] = m_lastDot;
-
-		m_crtc.Serialize(to["crtc"]);
 	}
 
 	void VideoMDA::Deserialize(json& from)
 	{
+		Video6845::Deserialize(from);
+
 		if (from["baseAddress"] != m_baseAddress)
 		{
 			throw emul::SerializableException("VideoMDA: Incompatible baseAddress");
@@ -270,8 +196,6 @@ namespace video
 		m_mode.blink = mode["blink"];
 
 		m_lastDot = from["lastDot"];
-
-		m_crtc.Deserialize(from["crtc"]);
 
 		OnChangeMode();
 		OnNewFrame();

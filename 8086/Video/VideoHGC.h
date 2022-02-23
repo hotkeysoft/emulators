@@ -34,7 +34,7 @@ namespace video
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
 
-		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 
 	protected:
 		// Mode Control Register (Hercules)

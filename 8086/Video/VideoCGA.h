@@ -3,16 +3,14 @@
 #include "../Common.h"
 #include "../CPU/MemoryBlock.h"
 #include "../CPU/Memory.h"
-#include "Device6845.h"
-#include "Video.h"
+#include "Video6845.h"
 
 using emul::WORD;
 using emul::BYTE;
-using emul::ADDRESS;
 
 namespace video
 {
-	class VideoCGA : public Video, public crtc::EventHandler
+	class VideoCGA : public Video6845
 	{
 	public:
 		VideoCGA(WORD baseAddress);
@@ -24,33 +22,22 @@ namespace video
 		VideoCGA& operator=(VideoCGA&&) = delete;
 
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
-		virtual void Reset() override;
 		virtual void Tick() override;
-
-		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		emul::MemoryBlock& GetVideoRAM() { return m_screenB800; }
 
 		// crtc::EventHandler
 		virtual void OnChangeMode() override;
-		virtual void OnRenderFrame() override;
-		virtual void OnNewFrame() override;
 		virtual void OnEndOfRow() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
 
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_color.color]; }
-		uint32_t GetIndexedColor(BYTE index) { return GetMonitorPalette()[index]; }
-		virtual SDL_Rect GetDisplayRect(BYTE border = 0) const override;
+		virtual uint32_t GetIndexedColor(BYTE index) const override { return GetMonitorPalette()[index]; }
+		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 
 	protected:
-		const WORD m_baseAddress;
-
-		virtual bool ConnectTo(emul::PortAggregator& dest) override;
-
-		bool IsCursor() const;
-
 		// Mode Control Register
 		struct MODEControl
 		{
@@ -63,8 +50,6 @@ namespace video
 		} m_mode;
 		void WriteModeControlRegister(BYTE value);
 
-		typedef void(VideoCGA::* DrawFunc)();
-		DrawFunc m_drawFunc = &VideoCGA::DrawTextMode;
 		void DrawTextMode();
 		void Draw320x200();
 		void Draw640x200();
@@ -86,10 +71,8 @@ namespace video
 		emul::MemoryBlock m_screenB800;
 
 		emul::MemoryBlock m_charROM;
-		BYTE* m_charROMStart;
+		BYTE* m_charROMStart = nullptr;
 
 		BYTE m_currGraphPalette[4];
-
-		crtc::Device6845 m_crtc;
 	};
 }
