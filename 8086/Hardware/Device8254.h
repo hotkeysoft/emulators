@@ -95,8 +95,6 @@ namespace pit
 		void Init();
 		void Reset();
 
-		virtual bool ConnectTo(emul::PortAggregator& dest) override;
-
 		void Tick();
 
 		Counter& GetCounter(size_t counter);

@@ -25,35 +25,6 @@ namespace emul
 	static const BYTE IRQ_UART = 3;
 	static const BYTE IRQ_VSYNC = 5;
 
-	static class DummyPortPCjr : public PortConnector
-	{
-	public:
-		DummyPortPCjr() : Logger("DUMMY")
-		{
-			//EGA
-			for (WORD w = 0x3C0; w < 0x3D0; ++w)
-			{
-				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteData));
-			}
-
-			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteMfgTest));
-		}
-
-		BYTE ReadData()
-		{
-			return 0xFF;
-		}
-
-		void WriteData(BYTE value)
-		{
-		}
-
-		void WriteMfgTest(BYTE value)
-		{
-			LogPrintf(LOG_ERROR, "MFG TEST: %02Xh", value);
-		}
-	} dummyPortPCjr;
-
 	ComputerPCjr::ComputerPCjr() :
 		Logger("PCjr"),
 		Computer(m_memory, m_map),
@@ -134,11 +105,6 @@ namespace emul
 		InitInputs(PIT_CLK);
 		GetInputs().InitKeyboard(&m_keyboard);
 		GetInputs().InitJoystick(m_joystick);
-
-		AddDevice(m_keyboard);
-		AddDevice(m_uart);
-		AddDevice(m_soundModule);
-		AddDevice(dummyPortPCjr);
 	}
 
 	void ComputerPCjr::InitRAM(emul::WORD baseRAM)

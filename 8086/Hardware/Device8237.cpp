@@ -1,6 +1,5 @@
 #include "../Common.h"
 #include "Device8237.h"
-#include "../CPU/PortAggregator.h"
 
 using emul::GetHByte;
 using emul::GetLByte;
@@ -283,16 +282,6 @@ namespace dma
 			div = 0;
 			m_channel0.Tick();
 		}
-	}
-
-	bool Device8237::ConnectTo(emul::PortAggregator& dest)
-	{
-		// Connect sub devices
-		dest.Connect(m_channel0);
-		dest.Connect(m_channel1);
-		dest.Connect(m_channel2);
-		dest.Connect(m_channel3);
-		return PortConnector::ConnectTo(dest);
 	}
 
 	BYTE Device8237::ReadStatus()

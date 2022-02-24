@@ -213,7 +213,6 @@
     <ClCompile Include="CPU\MemoryBlock.cpp" />
     <ClCompile Include="CPU\MemoryMap.cpp" />
     <ClCompile Include="IO\Monitor.cpp" />
-    <ClCompile Include="CPU\PortAggregator.cpp" />
     <ClCompile Include="CPU\PortConnector.cpp" />
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\Video6845.cpp" />
@@ -268,7 +267,6 @@
     <ClInclude Include="CPU\MemoryBlock.h" />
     <ClInclude Include="CPU\MemoryMap.h" />
     <ClInclude Include="IO\Monitor.h" />
-    <ClInclude Include="CPU\PortAggregator.h" />
     <ClInclude Include="CPU\PortConnector.h" />
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\Video6845.h" />

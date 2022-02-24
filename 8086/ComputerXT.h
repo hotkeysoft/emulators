@@ -8,6 +8,27 @@
 
 namespace emul
 {
+	class DummyPortXT : public PortConnector
+	{
+	public:
+		DummyPortXT() : Logger("DUMMY")
+		{
+			// MPU-401
+			Connect(0x330, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
+			Connect(0x330, static_cast<PortConnector::INFunction>(&DummyPortXT::ReadData));
+			Connect(0x331, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
+			Connect(0x331, static_cast<PortConnector::INFunction>(&DummyPortXT::ReadData));
+		}
+
+		BYTE ReadData()
+		{
+			return 0xFF;
+		}
+		void WriteData(BYTE value)
+		{
+		}
+	};
+
 	class ComputerXT : public Computer
 	{
 	public:
@@ -30,5 +51,7 @@ namespace emul
 
 		sn76489::DeviceSN76489 m_soundModule;
 		kbd::DeviceKeyboardXT m_keyboard;
+
+		DummyPortXT m_dummyPorts;
 	};
 }

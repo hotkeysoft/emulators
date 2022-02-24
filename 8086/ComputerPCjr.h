@@ -11,6 +11,35 @@ using emul::WORD;
 
 namespace emul
 {
+	class DummyPortPCjr : public PortConnector
+	{
+	public:
+		DummyPortPCjr() : Logger("DUMMY")
+		{
+			//EGA
+			for (WORD w = 0x3C0; w < 0x3D0; ++w)
+			{
+				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteData));
+			}
+
+			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteMfgTest));
+		}
+
+		BYTE ReadData()
+		{
+			return 0xFF;
+		}
+
+		void WriteData(BYTE value)
+		{
+		}
+
+		void WriteMfgTest(BYTE value)
+		{
+			LogPrintf(LOG_ERROR, "MFG TEST: %02Xh", value);
+		}
+	};
+
 	class ComputerPCjr : public Computer
 	{
 	public:
@@ -43,5 +72,7 @@ namespace emul
 		kbd::DeviceKeyboardPCjr m_keyboard;
 		uart::Device8250 m_uart;
 		sn76489::DeviceSN76489 m_soundModule;
+
+		DummyPortPCjr m_dummyPorts;
 	};
 }

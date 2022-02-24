@@ -3,7 +3,6 @@
 #include "../Serializable.h"
 #include "CPU.h"
 #include "PortConnector.h"
-#include "PortAggregator.h"
 #include <tuple>
 #include <assert.h>
 
@@ -75,7 +74,7 @@ namespace emul
 
 	typedef std::tuple<WORD, WORD> SegmentOffset;
 
-	class CPU8086 : public CPU, public Serializable
+	class CPU8086 : public CPU, public Serializable, public PortConnector
 	{
 	public:
 		CPU8086(Memory& memory, MemoryMap& mmap);
@@ -87,8 +86,6 @@ namespace emul
 		virtual bool Step() override;
 
 		virtual void Exec(BYTE opcode);
-
-		void AddDevice(PortConnector& ports);
 
 		void Dump();
 		void DumpInterruptTable();
@@ -161,8 +158,6 @@ namespace emul
 
 		BYTE m_lastOp = 0;
 		int m_irqPending = -1;
-
-		PortAggregator m_ports;
 
 		// Pseudo flags
 		// ----------

@@ -755,11 +755,6 @@ namespace emul
 		}
 	}
 
-	void CPU8086::AddDevice(PortConnector& ports)
-	{
-		ports.ConnectTo(m_ports);
-	}
-
 	void CPU8086::Reset()
 	{
 		CPU::Reset();
@@ -1690,25 +1685,25 @@ namespace emul
 	void CPU8086::IN8(WORD port)
 	{
 		LogPrintf(LOG_DEBUG, "IN8 port %04X", port);
-		m_ports.In(port, regA.hl.l);
+		In(port, regA.hl.l);
 	}
 
 	void CPU8086::IN16(WORD port)
 	{
 		LogPrintf(LOG_DEBUG, "IN16 port %04X", port);
-		m_ports.In(port, regA.hl.l);
-		m_ports.In(port+1, regA.hl.h);
+		In(port, regA.hl.l);
+		In(port+1, regA.hl.h);
 	}
 
 	void CPU8086::OUT8(WORD port)
 	{
-		m_ports.Out(port, regA.hl.l);
+		Out(port, regA.hl.l);
 	}
 
 	void CPU8086::OUT16(WORD port)
 	{
-		m_ports.Out(port, regA.hl.l);
-		m_ports.Out(port+1, regA.hl.h);
+		Out(port, regA.hl.l);
+		Out(port+1, regA.hl.h);
 	}
 
 	void CPU8086::LOOP(BYTE offset, bool cond)

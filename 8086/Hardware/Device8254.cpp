@@ -1,5 +1,4 @@
 #include "Device8254.h"
-#include "../CPU/PortAggregator.h"
 
 #include <assert.h>
 
@@ -405,15 +404,6 @@ namespace pit
 		m_counters[2].Init();
 
 		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&Device8254::WriteControl));
-	}
-
-	bool Device8254::ConnectTo(emul::PortAggregator& dest)
-	{
-		// Connect sub devices
-		dest.Connect(m_counters[0]);
-		dest.Connect(m_counters[1]);
-		dest.Connect(m_counters[2]);
-		return PortConnector::ConnectTo(dest);
 	}
 
 	void Device8254::WriteControl(BYTE value)

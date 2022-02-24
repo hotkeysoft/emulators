@@ -31,27 +31,6 @@ namespace emul
 	static const BYTE IRQ_HDD = 5;
 	static const BYTE DMA_HDD = 3;
 
-	static class DummyPortXT : public PortConnector
-	{
-	public:
-		DummyPortXT() : Logger("DUMMY")
-		{
-			// MPU-401
-			Connect(0x330, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
-			Connect(0x330, static_cast<PortConnector::INFunction>(&DummyPortXT::ReadData));
-			Connect(0x331, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
-			Connect(0x331, static_cast<PortConnector::INFunction>(&DummyPortXT::ReadData));
-		}
-
-		BYTE ReadData()
-		{
-			return 0xFF;
-		}
-		void WriteData(BYTE value)
-		{
-		}
-	} dummyPortXT;
-
 	ComputerXT::ComputerXT() :
 		Logger("XT"),
 		Computer(m_memory, m_map),
@@ -81,8 +60,8 @@ namespace emul
 		InitDMA(new dma::Device8237(0x00, m_memory));
 		InitSound();
 
-		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
-		m_soundModule.Init();
+		//m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
+		//m_soundModule.Init();
 
 		InitVideo("cga", { "cga", "mda", "hgc", "ega"});
 
@@ -129,9 +108,6 @@ namespace emul
 			}
 			ppi->SetFloppyCount(floppyCount);
 		}
-
-		//AddDevice(m_soundModule);
-		AddDevice(dummyPortXT);
 	}
 
 	void ComputerXT::InitRAM(emul::WORD baseRAM)

@@ -10,7 +10,35 @@ using emul::WORD;
 
 namespace emul
 {
-	class ComputerTandy : public Computer, public PortConnector
+	class DummyPortTandy : public PortConnector
+	{
+	public:
+		DummyPortTandy() : Logger("DUMMY")
+		{
+			//EGA
+			for (WORD w = 0x3C0; w < 0x3D0; ++w)
+			{
+				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortTandy::WriteData));
+			}
+
+			// MPU-401
+			Connect(0x330, static_cast<PortConnector::OUTFunction>(&DummyPortTandy::WriteData));
+			Connect(0x330, static_cast<PortConnector::INFunction>(&DummyPortTandy::ReadData));
+			Connect(0x331, static_cast<PortConnector::OUTFunction>(&DummyPortTandy::WriteData));
+			Connect(0x331, static_cast<PortConnector::INFunction>(&DummyPortTandy::ReadData));
+		}
+
+		BYTE ReadData()
+		{
+			return 0xFF;
+		}
+
+		void WriteData(BYTE value)
+		{
+		}
+	};
+
+	class ComputerTandy : public Computer
 	{
 	public:
 		ComputerTandy();
@@ -41,6 +69,8 @@ namespace emul
 		kbd::DeviceKeyboardTandy m_keyboard;
 		uart::Device8250 m_uart;
 		sn76489::DeviceSN76489 m_soundModule;
+
+		DummyPortTandy m_dummyPorts;
 
 	private:
 		ADDRESS m_ramBase = 0;

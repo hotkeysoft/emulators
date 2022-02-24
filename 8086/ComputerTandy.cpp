@@ -30,34 +30,6 @@ namespace emul
 
 	static const BYTE IRQ_VSYNC = 5;
 
-	static class DummyPortTandy : public PortConnector
-	{
-	public:
-		DummyPortTandy() : Logger("DUMMY")
-		{
-			//EGA
-			for (WORD w = 0x3C0; w < 0x3D0; ++w)
-			{
-				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortTandy::WriteData));
-			}
-
-			// MPU-401
-			Connect(0x330, static_cast<PortConnector::OUTFunction>(&DummyPortTandy::WriteData));
-			Connect(0x330, static_cast<PortConnector::INFunction>(&DummyPortTandy::ReadData));
-			Connect(0x331, static_cast<PortConnector::OUTFunction>(&DummyPortTandy::WriteData));
-			Connect(0x331, static_cast<PortConnector::INFunction>(&DummyPortTandy::ReadData));
-		}
-
-		BYTE ReadData()
-		{
-			return 0xFF;
-		}
-
-		void WriteData(BYTE value)
-		{
-		}
-	} dummyPortTandy;
-
 	ComputerTandy::ComputerTandy() :
 		Logger("Tandy"),
 		Computer(m_memory, m_map),
@@ -99,8 +71,8 @@ namespace emul
 		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
 		m_keyboard.Init(m_ppi, m_pic);
 
-		m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
-		m_uart.Init();
+		//m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
+		//m_uart.Init();
 
 		InitJoystick(0x201, PIT_CLK);
 
@@ -120,10 +92,6 @@ namespace emul
 			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
 		}
 
-		//AddDevice(m_uart);
-		AddDevice(m_soundModule);
-		AddDevice(dummyPortTandy);
-		AddDevice(*this);
 	}
 
 	void ComputerTandy::InitRAM(emul::WORD baseRAM)

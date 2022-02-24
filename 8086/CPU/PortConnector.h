@@ -7,8 +7,6 @@
 
 namespace emul
 {
-	class PortAggregator;
-
 	class PortConnector : virtual public Logger
 	{
 	public:
@@ -24,16 +22,18 @@ namespace emul
 		bool In(WORD port, BYTE& value);
 		bool Out(WORD port, BYTE value);
 
-		InputPortMap& GetInputPorts() { return m_inputPorts; }
-		OutputPortMap& GetOutputPorts() { return m_outputPorts; }
+		//InputPortMap& GetInputPorts() { return m_inputPorts; }
+		//OutputPortMap& GetOutputPorts() { return m_outputPorts; }
 	
-		virtual bool ConnectTo(PortAggregator& dest);
 	protected:
 		bool Connect(WORD portNb, INFunction inFunc);
 		bool Connect(WORD portNb, OUTFunction outFunc);
 
+		//bool DisconnectInput(WORD portNb);
+		//bool DisconnectOutput(WORD portNb);
+
 	protected:
-		OutputPortMap m_outputPorts;
-		InputPortMap m_inputPorts;
+		static OutputPortMap m_outputPorts;
+		static InputPortMap m_inputPorts;
 	};
 }

@@ -1,21 +1,17 @@
 #include "PortConnector.h"
-#include "PortAggregator.h"
 #include "../Config.h"
 
 namespace emul
 {
+	PortConnector::OutputPortMap PortConnector::m_outputPorts;
+	PortConnector::InputPortMap PortConnector::m_inputPorts;
+
 	PortConnector::PortConnector() : Logger("PORT")
 	{
 	}
 
 	PortConnector::~PortConnector()
 	{
-	}
-
-	bool PortConnector::ConnectTo(PortAggregator& dest)
-	{
-		dest.Connect(*this);
-		return true;
 	}
 
 	bool PortConnector::Connect(WORD portNb, INFunction inFunc)

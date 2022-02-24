@@ -1,5 +1,4 @@
 #include "Video6845.h"
-#include "../CPU/PortAggregator.h"
 #include <assert.h>
 
 using emul::SetBit;
@@ -40,13 +39,6 @@ namespace video
 		Video::Init(memory, charROM, forceMono);
 	}	
 	
-	bool Video6845::ConnectTo(emul::PortAggregator& dest)
-	{
-		// Connect sub devices
-		dest.Connect(m_crtc);
-		return PortConnector::ConnectTo(dest);
-	}
-
 	SDL_Rect Video6845::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
 		const struct CRTCData& data = m_crtc.GetData();

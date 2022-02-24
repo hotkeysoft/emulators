@@ -127,7 +127,6 @@ namespace emul
 
 		m_video->Init(&m_memory, charROM.c_str());
 		m_video->SetBorder(border);
-		AddDevice(*m_video);
 	}
 
 	void Computer::InitSound()
@@ -148,7 +147,6 @@ namespace emul
 		m_pit = pit;
 		m_pit->EnableLog(Config::Instance().GetLogLevel("pit"));
 		m_pit->Init();
-		AddDevice(*m_pit);
 	}
 	void Computer::InitPIC(pic::Device8259* pic)
 	{
@@ -156,7 +154,6 @@ namespace emul
 		m_pic = pic;
 		m_pic->EnableLog(Config::Instance().GetLogLevel("pic"));
 		m_pic->Init();
-		AddDevice(*m_pic);
 	}
 	void Computer::InitPPI(ppi::Device8255* ppi)
 	{
@@ -164,7 +161,6 @@ namespace emul
 		m_ppi = ppi;
 		m_ppi->EnableLog(Config::Instance().GetLogLevel("ppi"));
 		m_ppi->Init();
-		AddDevice(*m_ppi);
 	}
 
 	void Computer::InitDMA(dma::Device8237* dma)
@@ -173,7 +169,6 @@ namespace emul
 		m_dma = dma;
 		m_dma->EnableLog(Config::Instance().GetLogLevel("dma"));
 		m_dma->Init();
-		AddDevice(*m_dma);
 	}
 
 	void Computer::InitJoystick(WORD baseAddress, size_t baseClock)
@@ -183,7 +178,6 @@ namespace emul
 			m_joystick = new joy::DeviceJoystick(baseAddress, baseClock);
 			m_joystick->EnableLog(Config::Instance().GetLogLevel("joystick"));
 			m_joystick->Init();
-			AddDevice(*m_joystick);
 		}
 	}
 
@@ -202,7 +196,6 @@ namespace emul
 
 		m_floppy->EnableLog(Config::Instance().GetLogLevel("floppy"));
 		m_floppy->Init();
-		AddDevice(*m_floppy);
 
 		std::string floppy = Config::Instance().GetValueStr("floppy", "floppy.1");
 		if (floppy.size())
@@ -225,7 +218,6 @@ namespace emul
 
 		m_hardDrive->EnableLog(Config::Instance().GetLogLevel("hdd"));
 		m_hardDrive->Init();
-		AddDevice(*m_hardDrive);
 
 		for (int i = 0; i < 2; i++)
 		{

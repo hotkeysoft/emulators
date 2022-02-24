@@ -5,7 +5,6 @@
 #include "../CPU/Memory.h"
 
 using emul::PortConnector;
-class emul::PortAggregator;
 using emul::BYTE;
 using emul::WORD;
 
@@ -94,8 +93,6 @@ namespace dma
 
 		void DMARequest(BYTE channel, bool state);
 		bool DMAAcknowledged(BYTE channel);
-
-		virtual bool ConnectTo(emul::PortAggregator& dest);
 
 		bool GetByteFlipFlop(bool toggle = false);
 		bool IsDisabled() { return (m_commandReg & CMD_DISABLE); }

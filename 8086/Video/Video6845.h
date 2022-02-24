@@ -45,8 +45,6 @@ namespace video
 	protected:
 		const WORD m_baseAddress;
 
-		virtual bool ConnectTo(emul::PortAggregator& dest) override;
-
 		bool IsCursor() const;
 
 		crtc::Device6845& GetCRTC() { return m_crtc; }
