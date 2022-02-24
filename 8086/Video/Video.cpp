@@ -244,7 +244,7 @@ namespace video
 
 	void Video::UpdateTargetRect()
 	{
-		const float targetRatio = 4 / 3.f;
+		const double targetRatio = 4 / 3.;
 
 		SDL_Rect rect{ 0, 0, m_sdlWidth, m_sdlHeight - overlayHeight };
 
@@ -252,13 +252,13 @@ namespace video
 
 		if (windowRatio > targetRatio)
 		{
-			int adj = rect.w - (rect.h * targetRatio);
+			int adj = rect.w - (int)(rect.h * targetRatio);
 			rect.x += adj / 2;
 			rect.w -= adj;
 		}
 		else if (windowRatio < targetRatio)
 		{
-			int adj = rect.h - (rect.w / targetRatio);
+			int adj = rect.h - (int)(rect.w / targetRatio);
 			rect.y += adj / 2;
 			rect.h -= adj;
 		}
