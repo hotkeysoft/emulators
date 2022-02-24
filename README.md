@@ -2,23 +2,46 @@
 Emulators for 8080- and TMS1000-family CPUs
 
 - 8080: 8080/8085 Emulator (from https://github.com/hotkeysoft/pfe_cpu8085)
+
 - 8086: 8086/8088 Emulator + IBM PC components (work in progress)
-  - Most opcodes implemented
-  - Partial timing implementation / sync 
+  - Most opcodes implemented + some undocumented
+  - Timing / sync between clocked components
+    - No RAM wait states
+    - CPU is not cycle accurate but "good enough"
   - Partial implementation of debugger/monitor in console
-  - Partial config file support (config/config.ini)
+  - Config file support (config/config.ini)
     - architecture, base ram, video mode, monitor, log levels 
   - Terminal window + Display in separate SDL window
+  - Snapshots of CPU+RAM+Most component states
+    - Exception: storage (floppy/hdd) not persisted
+    - Restore snapshot must match arch/video card in config for now
+      - e.g. can not restore Tandy snapshot in XT mode
+  - GUI Overlay
+    - Frame rate indicator
+    - Soft/hard restart (shift for hard)
+    - Load/eject floppies
+    - Swap hard drives (need reboot)
+    - Load/Restore snapshot
+      - Only last snapshot is reloaded for now, wip
+    - Toggle clock speed, warp mode
+    - Joystick trimming/fine adjust
+  - Floppy emulation
+    - Most standard image sizes auto detected (160/180/320/360/720/1.2/1.44)
+    - Partial command set (read/write, no format or more obscure commands)
+  - Hard drive emulation
+    - Two image size supported (20M/33M)
+    - Partial command set (read/write, no format or more obscure commands)
   - IBM PC/XT (5160)
     - Loads original BIOS ROM (passes POST except 301 error)
     - Boots various versions of PC/MS-DOS
-    - Various games load from floppy
+    - Various games load from floppy & hdd
     - Partial emulation of components
       - Keyboard
       - μPD765A Floppy drive controller
+      - WD1002S (or compatible rom) Hard drive controller
       - 8237 DMA controller (for floppy)
-      - 8259 IRQ controller
-      - 8254 Timer (clock, sound)
+      - 8259 IRQ controller, no exotic modes
+      - 8254 Timer (clock, sound. Modes 1-4)
       - 8255 Peripheral Interface
       - CGA graphics
         - 6845 CRT Controller
@@ -29,7 +52,7 @@ Emulators for 8080- and TMS1000-family CPUs
       - PC Speaker sound
   - IBM PCjr
     - Loads original BIOS ROM (passes POST) 
-    - Shares many components w/XT (8254, 8255, 8259, fdc)
+    - Shares many components w/XT (8254, 8255, 8259, fdc, speaker)
     - Some cartridge games work
     - Floppy loads some booter games
     - Many versions of DOS give COMMAND.COM memory error, TODO
@@ -43,24 +66,22 @@ Emulators for 8080- and TMS1000-family CPUs
         - Special modes, indexed colors
   - Tandy 1000
     - Loads original Tandy 1000 (base model) BIOS ROM (passes POST)
-    - Shares components w/XT (8254, 8255, 8259, fdc)
-    - 360Kx2 floppy drives (no DMA)
+    - Shares components w/XT (8254, 8255, 8259, fdc, hdd, speaker)
+    - 360Kx2 floppy drives
     - Loads MS-DOS 2.11 (Tandy version)
-	  - Some issues (loading ANSI.SYS)
 	- Loads and runs Deskmate 1.01
-	- Runs some games
+	- Runs many games from floppy or hard disk
     - Additional Tandy 1000 components
       - Base/video RAM relocation
       - Keyboard (different mapping, busy flag)
       - TGA graphics (mostly compatible with CGA and PCjr)
   - Sound module: SN76489
-    - PCjr, Tandy (and usable in XT)
+    - PCjr, Tandy (usable in XT, but disabled)
     - 3 voices + noise channel
-    - Basics working
+    - Mostly working
   - Joystick support
     - Uses first connected game controller 
     - X-Y analog stick, A-B buttons
-
 
 - TMS1000: TMS1000/1100/1400/1700 Emulator (used in old electronic games)
   - Simple monitor
