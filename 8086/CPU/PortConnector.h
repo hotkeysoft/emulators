@@ -29,8 +29,8 @@ namespace emul
 		bool Connect(WORD portNb, INFunction inFunc);
 		bool Connect(WORD portNb, OUTFunction outFunc);
 
-		//bool DisconnectInput(WORD portNb);
-		//bool DisconnectOutput(WORD portNb);
+		bool DisconnectInput(WORD portNb);
+		bool DisconnectOutput(WORD portNb);
 
 	protected:
 		static OutputPortMap m_outputPorts;
