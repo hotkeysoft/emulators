@@ -1,10 +1,8 @@
 #include "VideoTandy.h"
-#include "../CPU/PortAggregator.h"
 #include <assert.h>
 
 using emul::Memory;
 using emul::MemoryBlock;
-using emul::S2A;
 using emul::GetBit;
 using emul::SetBit;
 

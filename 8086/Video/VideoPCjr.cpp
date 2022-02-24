@@ -1,10 +1,8 @@
 #include "VideoPCjr.h"
-#include "../CPU/PortAggregator.h"
 #include <assert.h>
 
 using emul::Memory;
 using emul::MemoryBlock;
-using emul::S2A;
 using emul::GetBit;
 using emul::SetBit;
 
@@ -13,8 +11,6 @@ using crtc::CRTCData;
 
 namespace video
 {
-	const float VSCALE = 2.4f;
-
 	VideoPCjr::VideoPCjr(WORD baseAddress) :
 		Logger("vidPCjr"),
 		Video6845(baseAddress),

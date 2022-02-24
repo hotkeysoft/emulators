@@ -1,10 +1,8 @@
 #include "VideoHGC.h"
-#include "../CPU/PortAggregator.h"
 #include <assert.h>
 
 using emul::SetBit;
 using emul::GetBit;
-using emul::ADDRESS;
 
 using crtc::CRTCConfig;
 using crtc::CRTCData;

@@ -1,29 +1,14 @@
 #include "VideoCGA.h"
-#include "../CPU/PortAggregator.h"
 #include <assert.h>
 
 using emul::SetBit;
 using emul::GetBit;
-using emul::ADDRESS;
 
 using crtc::CRTCConfig;
 using crtc::CRTCData;
 
 namespace video
 {
-	const float VSCALE = 2.4f;
-
-	const uint32_t Composite640Palette[16] =
-	{
-		0x00000000, 0x00006E31, 0x003109FF, 0x00008AFF, 0x00A70031, 0x00767676, 0x00EC11FF, 0x00BB92FF,
-		0x00315A00, 0x0000DB00, 0x00767676, 0x0045F7BB, 0x00EC6300, 0x00BBE400, 0x00FF7FBB, 0x00FFFFFF
-	};
-
-	const uint32_t TempGray[] =
-	{
-		0xFF000000, 0xFF3F3F3F, 0xFF7F7F7F, 0xFFFFFFFF
-	};
-
 	VideoCGA::VideoCGA(WORD baseAddress) :
 		Logger("CGA"),
 		Video6845(baseAddress),
