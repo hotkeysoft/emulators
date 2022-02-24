@@ -69,6 +69,16 @@ namespace pit
 				LogPrintf(LOG_INFO, "Mode3: Frequency = %0.2fHz", freq);
 				break;
 			}
+			case CounterMode::Mode4:
+			{
+				m_out = true;
+				m_value = m_n;
+				size_t ticks = (size_t)GetMaxValue() + 1;
+				m_periodMicro = (float)ticks * 1000000 / (float)s_clockSpeed;
+				LogPrintf(LOG_INFO, "[%zu] Mode0: Starting Count, interval = %0.2fus", emul::g_ticks, m_periodMicro);
+				// Start counting on next tick
+				break;
+			}
 			}
 		} 
 
@@ -76,8 +86,8 @@ namespace pit
 		if (!m_gate)
 		{
 			m_lastGate = false;
-			// Mode 0 not affected by gate, only pauses count
-			if (m_mode != CounterMode::Mode0)
+			// Mode 0 & 4 not affected by gate, only pauses count
+			if (m_mode != CounterMode::Mode0 && m_mode != CounterMode::Mode4)
 			{
 				// Mode 2 & 3, if gate is low, out goes high.
 				// When back high again, reset counter to n
@@ -137,6 +147,21 @@ namespace pit
 				m_out = !m_out;
 
 				m_value = m_n & (m_out ? ~0 : ~1);
+			}
+			break;
+		case CounterMode::Mode4:
+			--m_value;
+
+			if (m_value == 1)
+			{
+				m_out = false;
+				LogPrintf(LOG_DEBUG, "[%zu] Mode4: LOW", emul::g_ticks);
+			}
+			else if (m_value == 0)
+			{
+				LogPrintf(LOG_DEBUG, "[%zu] Mode4: HI, stop count", emul::g_ticks);
+				m_out = true;
+				m_run = false;
 			}
 			break;
 		default:
@@ -279,8 +304,7 @@ namespace pit
 			break;
 		case CounterMode::Mode4:
 			LogPrintf(LOG_INFO, "SetMode: 4 - SOFTWARE TRIGGERED MODE");
-			LogPrintf(LOG_ERROR, "Mode 4 Not implemented");
-			throw std::exception("SetMode: 4: Not implemented");
+			m_out = true;
 			break;
 		case CounterMode::Mode5:
 			LogPrintf(LOG_INFO, "SetMode: 5 - HARDWARE TRIGGERED STROBE");
