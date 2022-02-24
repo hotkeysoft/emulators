@@ -120,7 +120,8 @@ namespace ui
 		toolbarRect.h = 64;
 		toolbarRect.y = windowSize.h - toolbarRect.h;
 
-		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_NOSCROLL);
+		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_CANRESIZE | WIN_NOSCROLL);
+		m_mainWnd->SetMinSize(64);
 
 		RES().LoadImageMap("toolbar", "./res/toolbar.png", 16, 16);
 
@@ -845,6 +846,14 @@ namespace ui
 					handled = hit.target->HandleEvent(&e);
 				}
 			}
+		}
+		else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED)
+		{
+			int w = e.window.data1;
+			int h = e.window.data2;
+
+			Rect r{ 0, h-64, w, 64 };
+			m_mainWnd->MoveRect(&r);
 		}
 		else // Pass to active window
 		{

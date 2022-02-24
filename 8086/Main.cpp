@@ -189,6 +189,7 @@ int main(int argc, char* args[])
 
 	pc->GetVideo().AddRenderer(&overlay);
 	pc->GetInputs().AddEventHandler(&overlay);
+	pc->GetInputs().AddEventHandler(&(pc->GetVideo())); // Window resize events
 
 	try
 	{

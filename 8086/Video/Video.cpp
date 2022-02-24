@@ -59,14 +59,6 @@ namespace video
 		LogPrintf(LOG_INFO, "Scale factor: %f", scale);
 		LogPrintf(LOG_INFO, "Full screen: %d", fullScreen);
 
-		//TODO: Temporary, while working on rendering
-		//SDL_CreateWindowAndRenderer(
-		//	(int)((m_sdlWidth + (2 * border)) * scale),
-		//	(int)(((m_sdlHeight * m_vScale) + border) * scale + overlayHeight),
-		//	fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0,
-		//	&m_sdlWindow,
-		//	&m_sdlRenderer);
-
 		SDL_CreateWindowAndRenderer(
 			(int)(m_sdlWidth),
 			(int)(m_sdlHeight) + overlayHeight,
@@ -81,6 +73,7 @@ namespace video
 		LogPrintf(LOG_INFO, "Window Size: %dx%d", actualW, actualH);
 		m_sdlWidth = actualW;
 		m_sdlHeight = actualH;
+		UpdateTargetRect();
 
 		std::string filtering = Config::Instance().GetValueStr("video", "filtering", "0");
 		if (filtering.empty())
@@ -89,10 +82,6 @@ namespace video
 		}
 		LogPrintf(LOG_INFO, "Render Scale Quality: %s", filtering.c_str());
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, filtering.c_str());
-
-		//TODO: Temporary, while working on rendering
-		//SDL_RenderSetScale(m_sdlRenderer, scale, scale * m_vScale);
-		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
 
 		InitMonitor(forceMono);
 	}
@@ -174,23 +163,18 @@ namespace video
 		static size_t frames = 0;
 
 		SDL_Rect srcRect = GetDisplayRect(m_border);
-		SDL_Rect destRect = { 0, 0, m_sdlWidth, m_sdlHeight - overlayHeight };
 
 		if (m_sdlTexture)
 		{
 			SDL_UpdateTexture(m_sdlTexture, nullptr, &m_fb[0], m_fbWidth * sizeof(uint32_t));
-			SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &destRect);
+			SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &m_targetRect);
 		}
 
-		float scaleX, scaleY;
-		SDL_RenderGetScale(m_sdlRenderer, &scaleX, &scaleY);
-		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
 		for (auto renderer : m_renderers)
 		{
 			renderer->Render();
 		}
 		SDL_RenderSetClipRect(m_sdlRenderer, nullptr);
-		SDL_RenderSetScale(m_sdlRenderer, scaleX, scaleY);
 
 		SDL_RenderPresent(m_sdlRenderer);
 
@@ -256,5 +240,42 @@ namespace video
 		}
 
 		m_currMode = &(it->second);
+	}
+
+	void Video::UpdateTargetRect()
+	{
+		const float targetRatio = 4 / 3.f;
+
+		SDL_Rect rect{ 0, 0, m_sdlWidth, m_sdlHeight - overlayHeight };
+
+		float windowRatio = rect.w / (float)rect.h;
+
+		if (windowRatio > targetRatio)
+		{
+			int adj = rect.w - (rect.h * targetRatio);
+			rect.x += adj / 2;
+			rect.w -= adj;
+		}
+		else if (windowRatio < targetRatio)
+		{
+			int adj = rect.h - (rect.w / targetRatio);
+			rect.y += adj / 2;
+			rect.h -= adj;
+		}
+
+		m_targetRect = rect;
+	}
+
+	// events::EventHandler
+	bool Video::HandleEvent(SDL_Event& e)
+	{
+		if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED)
+		{
+			LogPrintf(LOG_INFO, "Resize: %d x %d", e.window.data1, e.window.data2);
+			m_sdlWidth = e.window.data1;
+			m_sdlHeight = e.window.data2;
+			UpdateTargetRect();
+		}
+		return false; // Leave it unhandled if others are interested
 	}
 }
