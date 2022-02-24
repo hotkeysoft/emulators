@@ -8,6 +8,7 @@
 #include "Video/VideoHGC.h"
 #include "Video/VideoPCjr.h"
 #include "Video/VideoTandy.h"
+#include "Video/VideoEga.h"
 
 #include <assert.h>
 #include <fstream>
@@ -99,6 +100,11 @@ namespace emul
 		else if (mode == "tga")
 		{
 			m_video = new video::VideoTandy(0x3D0);
+		}
+		else if (mode == "ega")
+		{
+			// TODO: RAM size from config
+			m_video = new video::VideoEGA(video::VideoEGA::EGA_256K, 0x3C0, 0x3B0, 0x3D0);
 		}
 		else
 		{

@@ -36,12 +36,6 @@ namespace emul
 	public:
 		DummyPortXT() : Logger("DUMMY")
 		{
-			//EGA
-			for (WORD w = 0x3C0; w < 0x3D0; ++w)
-			{
-				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
-			}
-
 			// MPU-401
 			Connect(0x330, static_cast<PortConnector::OUTFunction>(&DummyPortXT::WriteData));
 			Connect(0x330, static_cast<PortConnector::INFunction>(&DummyPortXT::ReadData));
@@ -90,7 +84,7 @@ namespace emul
 		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
 
-		InitVideo("cga", { "cga", "mda", "hgc" });
+		InitVideo("cga", { "cga", "mda", "hgc", "ega"});
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));

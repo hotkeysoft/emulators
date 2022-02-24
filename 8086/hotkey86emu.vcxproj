@@ -218,6 +218,7 @@
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\Video6845.cpp" />
     <ClCompile Include="Video\VideoCGA.cpp" />
+    <ClCompile Include="Video\VideoEGA.cpp" />
     <ClCompile Include="Video\VideoHGC.cpp" />
     <ClCompile Include="Video\VideoMDA.cpp" />
     <ClCompile Include="Video\VideoPCjr.cpp" />
@@ -272,6 +273,7 @@
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\Video6845.h" />
     <ClInclude Include="Video\VideoCGA.h" />
+    <ClInclude Include="Video\VideoEGA.h" />
     <ClInclude Include="Video\VideoHGC.h" />
     <ClInclude Include="Video\VideoMDA.h" />
     <ClInclude Include="Video\VideoPCjr.h" />
