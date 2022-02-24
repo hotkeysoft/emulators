@@ -152,7 +152,7 @@ namespace emul
 		}
 
 		// 64KB Base memory
-		m_base64K.Clear(0xA5);
+		m_base64K.Clear();
 		LogPrintf(LOG_INFO, "Allocating base 64KB block");
 		m_memory.Allocate(&m_base64K, 0);
 
@@ -160,7 +160,7 @@ namespace emul
 		if (baseRAM > 64)
 		{
 			m_ext64K.Alloc(0x10000);
-			m_ext64K.Clear(0x5A);
+			m_ext64K.Clear();
 			LogPrintf(LOG_INFO, "Allocating 64KB block extension");
 			m_memory.Allocate(&m_ext64K, 0x10000);
 		}
@@ -182,7 +182,7 @@ namespace emul
 			LogPrintf(LOG_INFO, "Allocating %dKB extra RAM at address 0", extraRAM);
 
 			m_extraRAM.Alloc(extraRAM * 1024);
-			m_extraRAM.Clear(0xA5);
+			m_extraRAM.Clear();
 			m_memory.Allocate(&m_extraRAM, 0x20000);
 		}
 	}

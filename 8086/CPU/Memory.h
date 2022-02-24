@@ -30,6 +30,8 @@ namespace emul
 		WORD Read16(ADDRESS address) const;
 		void Write8(ADDRESS address, BYTE value);
 
+		void Clear(BYTE filler = 0);
+
 		void Dump(ADDRESS start, DWORD len, const char* outFile);
 
 		BYTE* GetPtr8(ADDRESS address) const;

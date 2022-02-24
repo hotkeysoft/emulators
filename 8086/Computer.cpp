@@ -52,8 +52,9 @@ namespace emul
 	{
 		if (hard)
 		{
-			LogPrintf(LOG_WARNING, "HARD Reset");
+			LogPrintf(LOG_WARNING, "HARD Reset");			
 			Reset();
+			m_memory.Clear();
 		}
 		else
 		{

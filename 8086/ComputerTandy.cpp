@@ -137,7 +137,7 @@ namespace emul
 		}
 
 		// 128KB Base memory
-		m_base128K.Clear(0x5A);
+		m_base128K.Clear();
 		LogPrintf(LOG_INFO, "Allocating base 128KB block");
 		// Memory block is moved to the appropriate location via SetRAMPage, no need to allocate it here
 
@@ -153,7 +153,7 @@ namespace emul
 			LogPrintf(LOG_INFO, "Allocating %dKB extra RAM", extraRAM);
 
 			m_ramExtension.Alloc(extraRAM * 1024);
-			m_ramExtension.Clear(0xA5);
+			m_ramExtension.Clear();
 			m_memory.Allocate(&m_ramExtension, 0);
 		}
 	}

@@ -18,7 +18,7 @@ namespace emul
 
 		virtual ~MemoryBlock();
 
-		void Clear(BYTE filler = 0xFF);
+		void Clear(BYTE filler = 0);
 
 		const std::string& GetId() const { return m_id; }
 		DWORD GetSize() const { return m_size; };

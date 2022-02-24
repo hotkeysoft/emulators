@@ -156,7 +156,7 @@ namespace emul
 		}
 
 		m_baseRAM.Alloc(baseRAM * 1024);
-		m_baseRAM.Clear(0xA5);
+		m_baseRAM.Clear();
 		m_memory.Allocate(&m_baseRAM, 0);
 	}
 

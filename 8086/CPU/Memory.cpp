@@ -77,6 +77,18 @@ namespace emul
 		return true;
 	}
 
+	void Memory::Clear(BYTE filler)
+	{
+		for (auto block : m_blocks)
+		{
+			if (block->GetType() == MemoryType::RAM)
+			{
+				block->Clear(filler);
+			}
+		}
+	}
+
+
 	bool Memory::MapWindow(ADDRESS source, ADDRESS window, DWORD len)
 	{
 		LogPrintf(LOG_INFO, "Request to map memory [%X]-[%X] to window [%X]-[%X], window size: %d bytes",
