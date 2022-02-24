@@ -6,6 +6,7 @@
 #include "Video.h"
 
 using emul::WORD;
+using emul::ADDRESS;
 
 namespace video
 {
@@ -38,24 +39,26 @@ namespace video
 
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 
+		virtual bool IsVSync() const { return m_crtc.IsVSync(); }
+		virtual bool IsHSync() const { return m_crtc.IsHSync(); }
+
 	protected:
 		const WORD m_baseAddress;
 
 		virtual bool ConnectTo(emul::PortAggregator& dest) override;
 
-		typedef void(Video6845::* DrawFunc)();
-		void SetDrawFunc(DrawFunc func) { m_drawFunc = func; }
-
 		bool IsCursor() const;
 
-		typedef void(Video6845::* DrawFunc)();
-		
 		crtc::Device6845& GetCRTC() { return m_crtc; }
 		const crtc::Device6845& GetCRTC() const { return m_crtc; }
 
-	private:
-		DrawFunc m_drawFunc = nullptr;
+		// Common drawing functions
+		void Draw320x200x4();
+		void Draw640x200x2();
+		void Draw200x16();
+		void Draw640x200x4();
 
+	private:
 		crtc::Device6845 m_crtc;
 	};
 }

@@ -33,6 +33,8 @@ namespace video
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
 
+		virtual bool IsEnabled() const override { return m_mode.enableVideo; }
+
 	protected:
 		// Mode Control Register
 		struct MODEControl
@@ -42,6 +44,9 @@ namespace video
 			bool blink = false;
 		} m_mode;
 		virtual void WriteModeControlRegister(BYTE value);
+
+		ADDRESS GetBaseAddressText() { return 0xB0000 + ((GetCRTC().GetMemoryAddress13() * 2u) & 0x3FFF); }
+		uint32_t GetIndexedColor(BYTE index) const { return GetMonitorPalette()[index]; }
 
 		void DrawTextMode();
 
@@ -53,8 +58,5 @@ namespace video
 
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart = nullptr;
-
-		// dot information (status register)
-		bool m_lastDot = 0;
 	};
 }

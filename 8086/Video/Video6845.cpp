@@ -75,7 +75,7 @@ namespace video
 
 		if (!m_crtc.IsVSync())
 		{
-			(this->*m_drawFunc)();
+			Draw();
 		}
 
 		m_crtc.Tick();
@@ -99,6 +99,113 @@ namespace video
 		return (data.memoryAddress == config.cursorAddress) &&
 			(config.cursor != CRTCConfig::CURSOR_NONE) &&
 			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16());
+	}
+
+	void Video6845::Draw320x200x4()
+	{
+		const struct CRTCData& data = GetCRTC().GetData();
+
+		// Called every 8 horizontal pixels
+		// In this mode 1 byte = 4 pixels
+		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = m_memory->Read8(base++);
+
+				DrawPixel(GetColor((ch & 0b11000000) >> 6));
+				DrawPixel(GetColor((ch & 0b00110000) >> 4));
+				DrawPixel(GetColor((ch & 0b00001100) >> 2));
+				DrawPixel(GetColor((ch & 0b00000011) >> 0));
+			}
+		}
+		else
+		{
+			DrawBackground(8);
+		}
+	}
+
+	void Video6845::Draw640x200x2()
+	{
+		const struct CRTCData& data = GetCRTC().GetData();
+
+		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
+		// In this mode 1 byte = 8 pixels
+
+		uint32_t fg = GetColor(15);
+		uint32_t bg = GetColor(0);
+
+		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = m_memory->Read8(base++);
+
+				DrawPixel((ch & 0b10000000) ? fg : bg);
+				DrawPixel((ch & 0b01000000) ? fg : bg);
+				DrawPixel((ch & 0b00100000) ? fg : bg);
+				DrawPixel((ch & 0b00010000) ? fg : bg);
+				DrawPixel((ch & 0b00001000) ? fg : bg);
+				DrawPixel((ch & 0b00000100) ? fg : bg);
+				DrawPixel((ch & 0b00000010) ? fg : bg);
+				DrawPixel((ch & 0b00000001) ? fg : bg);
+			}
+		}
+		else
+		{
+			DrawBackground(16, bg);
+		}
+	}
+
+	void Video6845::Draw200x16()
+	{
+		// Called every 4 horizontal pixels
+		// In this mode 1 byte = 2 pixels
+		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = m_memory->Read8(base++);
+
+				DrawPixel(GetColor((ch & 0b11110000) >> 4));
+				DrawPixel(GetColor((ch & 0b00001111) >> 0));
+			}
+		}
+		else
+		{
+			DrawBackground(4);
+		}
+	}
+
+	void Video6845::Draw640x200x4()
+	{
+		// Called every 8 horizontal pixels
+		// In this mode 2 bytes = 8 pixels
+		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+
+			BYTE chEven = m_memory->Read8(base);
+			BYTE chOdd = m_memory->Read8(base + 1);
+
+			for (int x = 0; x < 8; ++x)
+			{
+				BYTE val =
+					((chEven & (1 << (7 - x))) ? 1 : 0) |
+					((chOdd & (1 << (7 - x))) ? 2 : 0);
+				DrawPixel(GetColor(val));
+			}
+		}
+		else
+		{
+			DrawBackground(8);
+		}
 	}
 
 	void Video6845::Serialize(json& to)

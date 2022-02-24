@@ -44,8 +44,11 @@ namespace video
 		DestroyFrameBuffer();
 	}
 
-	void Video::Init(emul::Memory*, const char*, bool forceMono)
+	void Video::Init(emul::Memory* memory, const char*, bool forceMono)
 	{
+		assert(memory);
+		m_memory = memory;
+
 		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 		{
 			SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -225,10 +228,33 @@ namespace video
 
 	void Video::DrawBackground(BYTE width, uint32_t color)
 	{
+		m_lastDot = color;
 		if (m_fb.size())
 		{
 			std::fill_n(m_fb.begin() + m_fbCurrPos, width, color);
 			m_fbCurrPos += width;
 		}
+	}
+
+	void Video::AddMode(const char* id, DrawFunc draw, AddressFunc address, ColorFunc color)
+	{
+		assert(id);
+		assert(draw);
+		assert(address);
+		assert(color);
+		m_modes[id] = { draw, address, color };
+	}
+
+	void Video::SetMode(const char* id)
+	{
+		LogPrintf(LOG_INFO, "Set Mode: %s", id);
+		auto it = m_modes.find(id);
+		if (it == m_modes.end())
+		{
+			LogPrintf(LOG_ERROR, "Unknown mode: %s", id);
+			throw std::exception("Unknown mode");
+		}
+
+		m_currMode = &(it->second);
 	}
 }

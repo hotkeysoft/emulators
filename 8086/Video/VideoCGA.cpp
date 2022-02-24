@@ -56,7 +56,10 @@ namespace video
 		// Normally max y is 262 but leave some room for custom crtc programming
 		InitFrameBuffer(2048, 300);
 
-		SetDrawFunc((DrawFunc)&VideoCGA::DrawTextMode);
+		AddMode("text", (DrawFunc)&VideoCGA::DrawTextMode, (AddressFunc)&VideoCGA::GetBaseAddressText, (ColorFunc)&VideoCGA::GetIndexedColor16);
+		AddMode("320x200x4", (DrawFunc)&VideoCGA::Draw320x200x4, (AddressFunc)&VideoCGA::GetBaseAddressGraph, (ColorFunc)&VideoCGA::GetIndexedColor4);
+		AddMode("640x200x2", (DrawFunc)&VideoCGA::Draw640x200x2, (AddressFunc)&VideoCGA::GetBaseAddressGraph, (ColorFunc)&VideoCGA::GetIndexedColor2);
+		SetMode("text");
 	}	
 
 	SDL_Rect VideoCGA::GetDisplayRect(BYTE border, WORD) const
@@ -68,21 +71,17 @@ namespace video
 
 	void VideoCGA::OnChangeMode()
 	{
-		// Select draw function
 		if (!m_mode.graphics)
 		{
-			LogPrintf(LOG_INFO, "OnChangeMode: DrawTextMode");
-			SetDrawFunc((DrawFunc)&VideoCGA::DrawTextMode);
+			SetMode("text");
 		}
 		else if (m_mode.hiResolution)
 		{
-			LogPrintf(LOG_INFO, "OnChangeMode: Draw640x200");
-			SetDrawFunc((DrawFunc)&VideoCGA::Draw640x200);
+			SetMode("640x200x2");
 		}
 		else
 		{
-			LogPrintf(LOG_INFO, "OnChangeMode: Draw320x200");
-			SetDrawFunc((DrawFunc)&VideoCGA::Draw320x200);
+			SetMode("320x200x4");
 		}
 	}
 
@@ -179,14 +178,13 @@ namespace video
 		const struct CRTCData& data = GetCRTC().GetData();
 		const struct CRTCConfig& config = GetCRTC().GetConfig();
 
-		if (GetCRTC().IsDisplayArea() && m_mode.enableVideo)
+		if (GetCRTC().IsDisplayArea() && IsEnabled())
 		{
-			ADDRESS base = GetCRTC().GetMemoryAddress13() * 2u;
-			base &= 0x3FFF;
+			ADDRESS base = GetAddress();
 
 			bool isCursorChar = IsCursor();
-			BYTE ch = m_screenB800.read(base);
-			BYTE attr = m_screenB800.read(base + 1);
+			BYTE ch = m_memory->Read8(base);
+			BYTE attr = m_memory->Read8(base + 1);
 
 			BYTE bg = attr >> 4;
 			BYTE fg = attr & 0x0F;
@@ -207,74 +205,12 @@ namespace video
 			for (int x = 0; x < 8; ++x)
 			{
 				bool set = draw && GetBit(currChar, 7 - x);
-				DrawPixel(GetIndexedColor((set || cursorLine) ? fg : bg));
+				DrawPixel(GetColor((set || cursorLine) ? fg : bg));
 			}
 		}
 		else
 		{
 			DrawBackground(8);
-		}
-	}
-
-	void VideoCGA::Draw320x200()
-	{
-		const struct CRTCData& data = GetCRTC().GetData();
-
-		// Called every 8 horizontal pixels
-		// In this mode 1 byte = 4 pixels
-		if (GetCRTC().IsDisplayArea() && m_mode.enableVideo)
-		{
-			ADDRESS base = (data.rowAddress * 0x2000) + (GetCRTC().GetMemoryAddress12() * 2u);
-			base &= 0x3FFF;
-
-			for (int w = 0; w < 2; ++w)
-			{
-				BYTE ch = m_screenB800.read(base++);
-
-				DrawPixel(GetIndexedColor(m_currGraphPalette[(ch & 0b11000000) >> 6]));
-				DrawPixel(GetIndexedColor(m_currGraphPalette[(ch & 0b00110000) >> 4]));
-				DrawPixel(GetIndexedColor(m_currGraphPalette[(ch & 0b00001100) >> 2]));
-				DrawPixel(GetIndexedColor(m_currGraphPalette[(ch & 0b00000011) >> 0]));
-			}
-		}
-		else
-		{
-			DrawBackground(8);
-		}
-	}
-
-	void VideoCGA::Draw640x200()
-	{
-		const struct CRTCData& data = GetCRTC().GetData();
-
-		// Called every 8 horizontal pixels, but since crtc is 40 cols we have to process 2 characters = 16 pixels
-		// In this mode 1 byte = 8 pixels
-
-		uint32_t fg = GetIndexedColor(m_color.color);
-		uint32_t bg = GetIndexedColor(0);
-
-		if (GetCRTC().IsDisplayArea() && m_mode.enableVideo)
-		{
-			ADDRESS base = (data.rowAddress * 0x2000) + (GetCRTC().GetMemoryAddress12() * 2u);
-			base &= 0x3FFF;
-
-			for (int w = 0; w < 2; ++w)
-			{
-				BYTE ch = m_screenB800.read(base++);
-
-				DrawPixel((ch & 0b10000000) ? fg : bg);
-				DrawPixel((ch & 0b01000000) ? fg : bg);
-				DrawPixel((ch & 0b00100000) ? fg : bg);
-				DrawPixel((ch & 0b00010000) ? fg : bg);
-				DrawPixel((ch & 0b00001000) ? fg : bg);
-				DrawPixel((ch & 0b00000100) ? fg : bg);
-				DrawPixel((ch & 0b00000010) ? fg : bg);
-				DrawPixel((ch & 0b00000001) ? fg : bg);
-			}
-		}
-		else
-		{
-			DrawBackground(16, bg);
 		}
 	}
 

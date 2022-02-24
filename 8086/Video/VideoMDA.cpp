@@ -47,14 +47,13 @@ namespace video
 		// Normally max y is 370 but leave some room for custom crtc programming
 		Video::InitFrameBuffer(2048, 400);
 
-		SetDrawFunc((DrawFunc)&VideoMDA::DrawTextMode);
+		AddMode("text", (DrawFunc)&VideoMDA::DrawTextMode, (AddressFunc)&VideoMDA::GetBaseAddressText, (ColorFunc)&VideoMDA::GetIndexedColor);
+		SetMode("text");
 	}
 
 	void VideoMDA::OnChangeMode()
 	{
-		// Select draw function
-		LogPrintf(LOG_INFO, "OnChangeMode: DrawTextMode");
-		SetDrawFunc((DrawFunc)&VideoMDA::DrawTextMode);
+		SetMode("text");
 	}
 
 	BYTE VideoMDA::ReadStatusRegister()
@@ -69,13 +68,13 @@ namespace video
 		// Bit4-7: Nothing, always 1
 
 		// register "address" selects the video dot to inspect (0-3: [B,G,R,I])
-		bool dot = m_lastDot;
+		bool dot = GetLastDot();
 
 		BYTE status =
 			(GetCRTC().IsHSync() << 0) |
 			(0 << 1) |
 			(0 << 2) |
-			(m_lastDot << 3) |
+			(dot << 3) |
 			(1 << 4) |
 			(1 << 5) |
 			(1 << 6) |
@@ -105,13 +104,13 @@ namespace video
 		const struct CRTCData& data = GetCRTC().GetData();
 		const struct CRTCConfig& config = GetCRTC().GetConfig();
 
-		if (GetCRTC().IsDisplayArea() && m_mode.enableVideo)
+		if (GetCRTC().IsDisplayArea() && IsEnabled())
 		{
-			ADDRESS base = GetCRTC().GetMemoryAddress13() * 2u;
+			ADDRESS base = GetAddress();
 
 			bool isCursorChar = IsCursor();
-			BYTE ch = m_screenB000.read(base);
-			BYTE attr = m_screenB000.read(base + 1);
+			BYTE ch = m_memory->Read8(base);
+			BYTE attr = m_memory->Read8(base + 1);
 
 			bool blinkBit = GetBit(attr, 7);
 			bool charBlink = m_mode.blink && blinkBit;
@@ -125,8 +124,8 @@ namespace video
 
 			BYTE bg = (charReverse || (!m_mode.blink && blinkBit)) ? 0xF : 0;
 
-			uint32_t fgRGB = GetMonitorPalette()[fg];
-			uint32_t bgRGB = GetMonitorPalette()[bg];
+			uint32_t fgRGB = GetColor(fg);
+			uint32_t bgRGB = GetColor(bg);
 
 			// Draw character
 			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.rowAddress & 7);
@@ -140,19 +139,20 @@ namespace video
 			bool underline = draw && (charUnderline & (data.rowAddress == config.maxScanlineAddress));
 
 			bool cursorLine = isCursorChar && (data.rowAddress >= config.cursorStart) && (data.rowAddress <= config.cursorEnd);
+			bool lastDot = false;
 			for (int x = 0; x < 9; ++x)
 			{
 				if (x < 8)
 				{
-					m_lastDot = draw && GetBit(*(currCharPos), 7 - x);
+					lastDot = draw && GetBit(*(currCharPos), 7 - x);
 				}
 				// Characters C0h - DFh: 9th pixel == 8th pixel, otherwise blank
 				else if ((ch < 0xC0) || (ch > 0xDF))
 				{
-					m_lastDot = 0;
+					lastDot = 0;
 				}
 
-				DrawPixel((m_lastDot || cursorLine || underline) ? fgRGB : bgRGB);
+				DrawPixel((lastDot || cursorLine || underline) ? fgRGB : bgRGB);
 			}
 		}
 		else
@@ -172,8 +172,6 @@ namespace video
 		mode["hiResolution"] = m_mode.hiResolution;
 		mode["blink"] = m_mode.blink;
 		to["mode"] = mode;
-
-		to["lastDot"] = m_lastDot;
 	}
 
 	void VideoMDA::Deserialize(json& from)
@@ -194,8 +192,6 @@ namespace video
 		m_mode.enableVideo = mode["enableVideo"];
 		m_mode.hiResolution = mode["hiResolution"];
 		m_mode.blink = mode["blink"];
-
-		m_lastDot = from["lastDot"];
 
 		OnChangeMode();
 		OnNewFrame();

@@ -3,8 +3,7 @@
 #include "../Common.h"
 #include "../CPU/Memory.h"
 #include "../CPU/PortConnector.h"
-#include "Device6845.h"
-#include "Video.h"
+#include "Video6845.h"
 #include <array>
 
 using emul::PortConnector;
@@ -14,7 +13,7 @@ using emul::ADDRESS;
 
 namespace video
 {
-	class VideoPCjr : public Video, public crtc::EventHandler
+	class VideoPCjr : public Video6845
 	{
 	public:
 		VideoPCjr(WORD baseAddress);
@@ -26,35 +25,20 @@ namespace video
 		VideoPCjr& operator=(VideoPCjr&&) = delete;
 
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
-		virtual void Reset() override;
 		virtual void Tick() override;
-
-		bool IsVSync() const { return m_crtc.IsVSync(); }
-
-		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		// crtc::EventHandler
 		virtual void OnChangeMode() override;
-		virtual void OnRenderFrame() override;
-		virtual void OnNewFrame() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
-		virtual void OnEndOfRow() override;
 
-		// TODO: GetColor?
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_mode.borderColor]; }
-		uint32_t GetIndexedColor(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
+		virtual bool IsEnabled() const override { return m_mode.enableVideo; }
 
 	protected:
 		const WORD m_baseAddress;
-
-		virtual bool ConnectTo(emul::PortAggregator& dest) override;
-
-		emul::Memory* m_memory = nullptr;
-
-		bool IsCursor() const;
 
 		struct PageRegister
 		{
@@ -114,21 +98,14 @@ namespace video
 
 		void MapB800Window();
 
-		typedef void(VideoPCjr::* DrawFunc)();
-		DrawFunc m_drawFunc = &VideoPCjr::DrawTextMode;
+		ADDRESS GetBaseAddressText() { return m_pageRegister.crtBaseAddress + ((GetCRTC().GetMemoryAddress13() * 2u) & 0x7FFF); }
+		ADDRESS GetBaseAddressGraph() { return m_pageRegister.crtBaseAddress + (((GetCRTC().GetData().rowAddress * 0x2000) + (GetCRTC().GetMemoryAddress12() * 2u)) & 0x7FFF); }
+
+		uint32_t GetIndexedColor16(BYTE index) { return GetMonitorPalette()[m_mode.paletteRegister[(index & m_mode.paletteMask)]]; }
+
 		void DrawTextMode();
-		void Draw16();
-		void Draw320x200x4();
-		void Draw640x200x2();
-		void Draw640x200x4();
 
 		emul::MemoryBlock m_charROM;
-		BYTE* m_charROMStart;
-
-		// Diagnostics: dot information (status register)
-		// Only works in alpha modes for the moment
-		BYTE m_lastDot = 0; 
-
-		crtc::Device6845 m_crtc;
+		BYTE* m_charROMStart = nullptr;
 	};
 }

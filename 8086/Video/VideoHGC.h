@@ -48,6 +48,6 @@ namespace video
 		// Status Register
 		virtual BYTE ReadStatusRegister() override;
 
-		void Draw720x348();
+		ADDRESS GetBaseAddressGraph() { return 0xB0000 + (((m_modeHGC.displayPage * 0x8000) + (GetCRTC().GetData().rowAddress * 0x2000) + (GetCRTC().GetMemoryAddress12() * 2u) & 0xFFFF)); }
 	};
 }

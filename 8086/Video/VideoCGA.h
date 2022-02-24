@@ -2,11 +2,11 @@
 
 #include "../Common.h"
 #include "../CPU/MemoryBlock.h"
-#include "../CPU/Memory.h"
 #include "Video6845.h"
 
 using emul::WORD;
 using emul::BYTE;
+using emul::ADDRESS;
 
 namespace video
 {
@@ -34,8 +34,8 @@ namespace video
 		virtual void Deserialize(json& from) override;
 
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_color.color]; }
-		virtual uint32_t GetIndexedColor(BYTE index) const override { return GetMonitorPalette()[index]; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
+		virtual bool IsEnabled() const override { return m_mode.enableVideo; }
 
 	protected:
 		// Mode Control Register
@@ -50,9 +50,14 @@ namespace video
 		} m_mode;
 		void WriteModeControlRegister(BYTE value);
 
+		ADDRESS GetBaseAddressText() { return 0xB8000 + ((GetCRTC().GetMemoryAddress13() * 2u) & 0x3FFF); }
+		ADDRESS GetBaseAddressGraph() { return 0xB8000 + (((GetCRTC().GetData().rowAddress * 0x2000) + (GetCRTC().GetMemoryAddress12() * 2u)) & 0x3FFF); }
+
+		uint32_t GetIndexedColor2(BYTE index) const { return GetMonitorPalette()[index ? 0 : m_color.color]; }
+		uint32_t GetIndexedColor4(BYTE index) const { return GetMonitorPalette()[m_currGraphPalette[index]]; }
+		uint32_t GetIndexedColor16(BYTE index) const { return GetMonitorPalette()[index]; }
+
 		void DrawTextMode();
-		void Draw320x200();
-		void Draw640x200();
 
 		// Color Select Register
 		struct COLORSelect
@@ -73,6 +78,6 @@ namespace video
 		emul::MemoryBlock m_charROM;
 		BYTE* m_charROMStart = nullptr;
 
-		BYTE m_currGraphPalette[4];
+		BYTE m_currGraphPalette[4] = { 0, 0, 0, 0 };
 	};
 }

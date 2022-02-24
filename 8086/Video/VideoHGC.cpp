@@ -26,6 +26,8 @@ namespace video
 		// 64KB video memory buffer, repeated from B000 to BFFF
 		m_screenB000.Alloc(65536);
 		memory->Allocate(&GetVideoRAM(), emul::S2A(0xB000));
+
+		AddMode("720x348x2", (DrawFunc)&VideoHGC::Draw640x200x2, (AddressFunc)&VideoHGC::GetBaseAddressGraph, (ColorFunc)&VideoHGC::GetIndexedColor);
 	}
 
 	SDL_Rect VideoHGC::GetDisplayRect(BYTE border, WORD) const
@@ -33,16 +35,6 @@ namespace video
 		uint16_t xMultiplier = m_modeHGC.graphics ? 2 : 1;
 
 		return VideoMDA::GetDisplayRect(border, xMultiplier);
-		//const struct CRTCData& data = GetCRTC().GetData();
-
-		//SDL_Rect rect;
-		//rect.x = std::max(0, (data.hTotal - data.hSyncMin - border - 1) * xMultiplier);
-		//rect.y = std::max(0, (data.vTotal - data.vSyncMin - border - 1));
-
-		//rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)) * xMultiplier);
-		//rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
-
-		//return rect;
 	}
 
 	BYTE VideoHGC::ReadStatusRegister()
@@ -80,47 +72,11 @@ namespace video
 	{
 		if (m_modeHGC.graphics)
 		{
-			LogPrintf(LOG_INFO, "OnChangeMode: Draw720x348");
-			SetDrawFunc((DrawFunc)&VideoHGC::Draw720x348);
+			SetMode("720x348x2");
 		}
 		else
 		{
-			VideoMDA::OnChangeMode();
-		}
-	}
-
-	void VideoHGC::Draw720x348()
-	{
-		const struct CRTCData& data = GetCRTC().GetData();
-
-		// Called every 8 horizontal pixels, but since crtc is 45 cols we have to process 2 characters = 16 pixels
-		// In this mode 1 byte = 8 pixels
-
-		uint32_t fg = GetMonitorPalette()[15];
-		uint32_t bg = GetMonitorPalette()[0];
-
-		if (GetCRTC().IsDisplayArea() && m_mode.enableVideo)
-		{
-			ADDRESS base = (m_modeHGC.displayPage * 0x8000) + (data.rowAddress * 0x2000) + (GetCRTC().GetMemoryAddress12() * 2u);
-			base &= 0xFFFF;
-
-			for (int w = 0; w < 2; ++w)
-			{
-				BYTE ch = m_screenB000.read(base++);
-
-				DrawPixel((ch & 0b10000000) ? fg : bg);
-				DrawPixel((ch & 0b01000000) ? fg : bg);
-				DrawPixel((ch & 0b00100000) ? fg : bg);
-				DrawPixel((ch & 0b00010000) ? fg : bg);
-				DrawPixel((ch & 0b00001000) ? fg : bg);
-				DrawPixel((ch & 0b00000100) ? fg : bg);
-				DrawPixel((ch & 0b00000010) ? fg : bg);
-				DrawPixel((ch & 0b00000001) ? fg : bg);
-			}
-		}
-		else
-		{
-			DrawBackground(16);
+			SetMode("text");
 		}
 	}
 

@@ -8,6 +8,7 @@
 using emul::PortConnector;
 using emul::WORD;
 using emul::BYTE;
+using emul::ADDRESS;
 
 #include <SDL_rect.h>
 
@@ -52,10 +53,13 @@ namespace video
 		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }
 
 		virtual uint32_t GetBackgroundColor() const { return 0; }
-		virtual uint32_t GetIndexedColor(BYTE index) const { return index; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const = 0;
+		virtual bool IsEnabled() const = 0;
 
 		void SetBorder(BYTE border) { m_border = border; }
+
+		virtual bool IsVSync() const = 0;
+		virtual bool IsHSync() const = 0;
 
 	protected:
 		enum class MonitorType
@@ -87,12 +91,16 @@ namespace video
 
 		const uint32_t* m_monitorPalette = nullptr;
 
+		emul::Memory* m_memory = nullptr;
+
 		// Framebuffer
 		void BeginFrame();
 		void NewLine();
-		void DrawPixel(uint32_t color) { m_fb[m_fbCurrPos++] = color; }
+		void DrawPixel(uint32_t color) { m_lastDot = color; m_fb[m_fbCurrPos++] = color; }
 		void DrawBackground(BYTE width);
 		void DrawBackground(BYTE width, uint32_t color);
+
+		uint32_t GetLastDot() const { return m_lastDot; }
 
 		// Init frame buffer and associated sdl sdl texture
 		virtual void InitFrameBuffer(WORD width, WORD height);
@@ -109,5 +117,29 @@ namespace video
 		SDL_Texture* m_sdlTexture = nullptr;
 
 		std::vector<Renderer*> m_renderers;
+
+		// Modes & drawing functions
+		typedef ADDRESS(Video::* AddressFunc)();
+		typedef void(Video::* DrawFunc)();
+		typedef uint32_t(Video::* ColorFunc)(BYTE);
+
+		void AddMode(const char* id, DrawFunc draw, AddressFunc address, ColorFunc color);
+		void SetMode(const char* id);
+
+		void Draw() { (this->*(m_currMode->drawFunc))(); }
+		ADDRESS GetAddress() { return (this->*(m_currMode->addressFunc))(); }
+		uint32_t GetColor(BYTE index) { return (this->*(m_currMode->colorFunc))(index); }
+
+	private:
+		struct Mode
+		{
+			DrawFunc drawFunc = nullptr;
+			AddressFunc addressFunc = nullptr;
+			ColorFunc colorFunc = nullptr;
+		};
+		std::map<std::string, Mode> m_modes;
+		Mode* m_currMode = nullptr;
+
+		uint32_t m_lastDot = 0;
 	};
 }
