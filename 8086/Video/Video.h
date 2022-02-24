@@ -61,6 +61,7 @@ namespace video
 
 		virtual bool IsVSync() const = 0;
 		virtual bool IsHSync() const = 0;
+		virtual bool IsDisplayArea() const = 0;
 
 		// events::EventHandler
 		virtual bool HandleEvent(SDL_Event& e) override;

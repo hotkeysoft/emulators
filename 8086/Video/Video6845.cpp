@@ -99,7 +99,7 @@ namespace video
 
 		// Called every 8 horizontal pixels
 		// In this mode 1 byte = 4 pixels
-		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = GetAddress();
 
@@ -129,7 +129,7 @@ namespace video
 		uint32_t fg = GetColor(15);
 		uint32_t bg = GetColor(0);
 
-		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = GetAddress();
 
@@ -157,7 +157,7 @@ namespace video
 	{
 		// Called every 4 horizontal pixels
 		// In this mode 1 byte = 2 pixels
-		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = GetAddress();
 
@@ -179,7 +179,7 @@ namespace video
 	{
 		// Called every 8 horizontal pixels
 		// In this mode 2 bytes = 8 pixels
-		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = GetAddress();
 

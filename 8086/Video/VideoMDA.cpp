@@ -102,7 +102,7 @@ namespace video
 		const struct CRTCData& data = GetCRTC().GetData();
 		const struct CRTCConfig& config = GetCRTC().GetConfig();
 
-		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = GetAddress();
 

@@ -41,6 +41,7 @@ namespace video
 
 		virtual bool IsVSync() const { return m_crtc.IsVSync(); }
 		virtual bool IsHSync() const { return m_crtc.IsHSync(); }
+		virtual bool IsDisplayArea() const { return m_crtc.IsDisplayArea(); }
 
 	protected:
 		const WORD m_baseAddress;

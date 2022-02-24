@@ -229,7 +229,7 @@ namespace video
 		// Bit3 1:Vertical retrace active
 
 		BYTE status =
-			(!(GetCRTC().IsDisplayArea()) << 0) |
+			(!(IsDisplayArea()) << 0) |
 			(0 << 1) | // Light Pen Trigger
 			(1 << 2) | // Light Pen switch
 			(GetCRTC().IsVSync() << 3);
@@ -303,7 +303,7 @@ namespace video
 		const struct CRTCData& data = GetCRTC().GetData();
 		const struct CRTCConfig& config = GetCRTC().GetConfig();
 
-		if (GetCRTC().IsDisplayArea() && IsEnabled())
+		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = GetAddress();
 
