@@ -9,6 +9,7 @@
 using emul::PortConnector;
 using emul::WORD;
 using emul::BYTE;
+using emul::GetBit;
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -28,26 +29,49 @@ namespace crtc_ega
 	// CRT Controller
 	enum CRTRegister
 	{
-		CRT_H_TOTAL_CHAR = 0x0, // WRITE
-		CRT_H_DISPLAYED_CHAR = 0x1, // WRITE
-		CRT_H_SYNC_POS_CHAR = 0x2, // WRITE
-		CRT_H_SYNC_WIDTH_CHAR = 0x3, // WRITE
-		CRT_V_TOTAL_ROW = 0x4, // WRITE
-		CRT_V_TOTAL_ADJ_LINES = 0x5, // WRITE
-		CRT_V_DISPLAYED_ROW = 0x6, // WRITE
-		CRT_V_SYNC_POS_ROW = 0x7, // WRITE
-		CRT_INTERLACE_MODE = 0x8, // WRITE
-		CRT_MAX_SCANLINE_ADDR = 0x9, // WRITE
+		CRT_H_TOTAL = 0x0, // WRITE
+		CRT_H_DISPLAYED = 0x1, // WRITE
+
+		CRT_H_BLANK_START = 0x2, // WRITE
+		CRT_H_BLANK_END = 0x3, // WRITE
+
+		CRT_H_SYNC_START = 0x4, // WRITE
+		CRT_H_SYNC_END = 0x5, // WRITE
+
+		CRT_V_TOTAL = 0x6, // WRITE
+
+		CRT_OVERFLOW = 0x7, // WRITE
+
+		CRT_PRESET_ROWSCAN = 0x8, // WRITE
+		CRT_MAX_SCANLINE = 0x9, // WRITE
+
 		CRT_CURSOR_START_LINE = 0xA, // WRITE
 		CRT_CURSOR_END_LINE = 0xB, // WRITE
+
 		CRT_START_ADDR_HI = 0xC, // WRITE
 		CRT_START_ADDR_LO = 0xD, // WRITE
+
 		CRT_CURSOR_ADDR_HI = 0xE, // READ/WRITE
 		CRT_CURSOR_ADDR_LO = 0xF, // READ/WRITE
+
+		CRT_V_SYNC_START = 0x10, // WRITE
+		CRT_V_SYNC_END = 0x11, // WRITE
+
 		CRT_LIGHT_PEN_HI = 0x10,// READ
 		CRT_LIGHT_PEN_LO = 0x11,// READ
 
-		_CRT_MAX_REG = CRT_LIGHT_PEN_LO,
+		CRT_V_DISPLAYED_END = 0x12, // WRITE
+
+		CRT_OFFSET = 0x13, // WRITE
+		CRT_UNDERLINE_LOCATION = 0x14, // WRITE
+
+		CRT_V_BLANK_START = 0x15, // WRITE
+		CRT_V_BLANK_END = 0x16, // WRITE
+
+		CRT_MODE_CONTROL = 0x17, // WRITE
+		CRT_LINE_COMPARE = 0x18, // WRITE
+
+		_CRT_MAX_REG = CRT_LINE_COMPARE,
 		CRT_INVALID_REG = 0xFF
 	};
 
@@ -55,25 +79,54 @@ namespace crtc_ega
 	{
 		CRTRegister currRegister = CRT_INVALID_REG;
 
-		BYTE hTotal = 0;
-		BYTE hDisplayed = 0;
-		BYTE hSyncPos = 0;
-		BYTE hSyncWidth = 0;
+		BYTE hTotal = 0; // Number of chars -2
+		BYTE hDisplayed = 0; // Number of chars -1;
 
-		BYTE vTotal = 0;
-		BYTE vTotalAdjust = 0;
-		BYTE vTotalDisplayed = 0;
-		BYTE vSyncPos = 0;
+		BYTE hBlankStart = 0;
+		BYTE hBlankEnd = 0;
 
-		BYTE interlaceMode = 0;
+		BYTE displayEnableSkew = 0;
 
-		BYTE maxScanlineAddress = 0;
+		BYTE hSyncStart = 0;
+		BYTE hSyncEnd = 0;
+
+		BYTE hSyncDelay = 0;
+		bool startOdd = false;
+
+		WORD vTotal = 0;
+		WORD vDisplayed = 0;
+
+		WORD vBlankStart = 0;
+		BYTE vBlankEnd = 0;
+
+		WORD vSyncStart = 0;
+		BYTE vSyncEnd = 0;
+
+		BYTE presetRowScan = 0;
+		BYTE maxScanlineAddress = 0; // -1
 
 		WORD startAddress = 0;
-
 		WORD cursorAddress = 0;
-		BYTE cursorStart = 0;
+
+		BYTE cursorStart = 0; // -1
 		BYTE cursorEnd = 0;
+		BYTE cursorSkew = 0;
+
+		BYTE offset = 0; // Logical line width (WORD or DWORD address)
+
+		BYTE underlineLocation = 0; // -1
+
+		bool compatibility = false;
+		bool selectRowScanCounter = false;
+		bool vCounterDiv2 = false;
+		bool countByTwo = false;
+		bool disableOutputControl = false;
+		bool addressWrap = false;
+		bool byteAddressMode = false;
+
+		WORD lineCompare = 0;
+
+		bool vSyncInterruptEnable = false;
 
 		enum CURSOR
 		{
@@ -100,15 +153,20 @@ namespace crtc_ega
 		size_t frame = 0;
 
 		// Computed in UpdateHVTotals
+		WORD offset = 0;
+
 		WORD hTotal = 0;
 		WORD hTotalDisp = 0;
+		WORD hBlankMin = 0;
+		WORD hBlankMax = 0;
 		WORD hSyncMin = 0;
 		WORD hSyncMax = 0;
 
 		WORD vTotal = 0;
 		WORD vTotalDisp = 0;
 		WORD vCharHeight = 0;
-
+		WORD vBlankMin = 0;
+		WORD vBlankMax = 0;
 		WORD vSyncMin = 0;
 		WORD vSyncMax = 0;
 	};
@@ -141,8 +199,17 @@ namespace crtc_ega
 		bool IsBlink16() const { return m_blink16; }
 		bool IsBlink32() const { return m_blink32; }
 
-		WORD GetMemoryAddress12() const { return m_data.memoryAddress & 0b111111111111; }
-		WORD GetMemoryAddress13() const { return m_data.memoryAddress & 0b1111111111111; }
+		WORD GetMemoryAddress() const { 
+			if (m_config.byteAddressMode)
+			{
+				return m_data.memoryAddress;
+			}
+			else
+			{
+				WORD ret = GetBit(m_data.memoryAddress, m_config.addressWrap ? 15 : 13);
+				return ret | (m_data.memoryAddress << 1);
+			}
+		}
 
 		const CRTCConfig& GetConfig() const { return m_config; }
 		const CRTCData& GetData() const { return m_data; }

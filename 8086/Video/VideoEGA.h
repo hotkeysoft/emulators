@@ -11,7 +11,7 @@ using emul::ADDRESS;
 
 namespace video
 {
-	class VideoEGA : public Video
+	class VideoEGA : public Video, public crtc_ega::EventHandler
 	{
 	public:
 		enum RAMSIZE { EGA_64K, EGA_128K, EGA_256K };
@@ -28,6 +28,13 @@ namespace video
 
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Tick() override;
+
+		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
+
+		// crtc::EventHandler
+		virtual void OnRenderFrame() override;
+		virtual void OnNewFrame() override;
+		virtual void OnEndOfRow() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
@@ -46,6 +53,8 @@ namespace video
 		WORD m_baseAddressMono;
 		WORD m_baseAddressColor;
 
+		bool IsCursor() const;
+
 		void DisconnectRelocatablePorts(WORD base);
 		void ConnectRelocatablePorts(WORD base);
 
@@ -62,6 +71,7 @@ namespace video
 		void WriteMiscRegister(BYTE value);
 
 		void WriteFeatureControlRegister(BYTE value);
+		BYTE ReadFeatureControlRegister() { return 0xFF; } // Register is write only, just to shut the noise
 		BYTE ReadStatusRegister0();
 		BYTE ReadStatusRegister1();
 
@@ -110,7 +120,7 @@ namespace video
 
 		ADDRESS GetBaseAddress() { return 0; }
 
-		uint32_t GetIndexedColor(BYTE index) const { return index; }
+		uint32_t GetIndexedColor(BYTE index) const { return GetMonitorPalette()[index]; }
 
 		void DrawTextMode();
 

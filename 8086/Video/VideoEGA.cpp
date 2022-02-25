@@ -6,6 +6,8 @@ using emul::GetBit;
 using emul::ADDRESS;
 
 using crtc_ega::DeviceCRTC;
+using crtc_ega::CRTCConfig;
+using crtc_ega::CRTCData;
 
 namespace video
 {
@@ -35,6 +37,9 @@ namespace video
 
 		ConnectRelocatablePorts(m_baseAddressMono);
 
+		m_crtc.Init();
+		m_crtc.SetEventHandler(this);
+
 		Video::Init(memory, charROM, forceMono);
 
 		// Normally max y is nnn but leave some room for custom crtc programming
@@ -42,18 +47,67 @@ namespace video
 
 		AddMode("text", (DrawFunc)&VideoEGA::DrawTextMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		SetMode("text");
-
-		m_crtc.Init();
 	}	
+
+	void VideoEGA::EnableLog(SEVERITY minSev)
+	{
+		m_crtc.EnableLog(minSev);
+		Video::EnableLog(minSev);
+	}
 
 	SDL_Rect VideoEGA::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
-		return SDL_Rect{ 0, 0, 640, 200 };
+		const struct CRTCData& data = m_crtc.GetData();
+
+		SDL_Rect rect;
+		rect.x = std::max(0, (data.hTotal - data.hSyncMin - border - 1) * xMultiplier);
+		rect.y = std::max(0, (data.vTotal - data.vSyncMin - border - 1));
+
+		rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)) * xMultiplier);
+		rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
+
+		return rect;
+	}
+
+	void VideoEGA::OnRenderFrame()
+	{
+		Video::RenderFrame();
 	}
 
 	void VideoEGA::Tick()
 	{
+		if (!m_crtc.IsInit())
+		{
+			return;
+		}
+
+		if (!m_crtc.IsVSync())
+		{
+			Draw();
+		}
+
 		m_crtc.Tick();
+	}
+
+	void VideoEGA::OnNewFrame()
+	{
+		BeginFrame();
+	}
+
+	void VideoEGA::OnEndOfRow()
+	{
+		NewLine();
+	}
+
+	bool VideoEGA::IsCursor() const
+	{
+		const struct CRTCConfig& config = m_crtc.GetConfig();
+		const struct CRTCData& data = m_crtc.GetData();
+
+		//TODO
+		return (data.memoryAddress == config.cursorAddress)/* &&
+			(config.cursor != CRTCConfig::CURSOR_NONE) &&
+			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16())*/;
 	}
 
 	void VideoEGA::DisconnectRelocatablePorts(WORD base)
@@ -69,6 +123,7 @@ namespace video
 		LogPrintf(Logger::LOG_INFO, "ConnectRelocatablePorts, base=%04Xh", base);
 
 		Connect(base + 0xA, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteFeatureControlRegister));
+		Connect(base + 0xA, static_cast<PortConnector::INFunction>(&VideoEGA::ReadFeatureControlRegister));
 
 		// Input Status Register 1
 		Connect(base + 0x2, static_cast<PortConnector::INFunction>(&VideoEGA::ReadStatusRegister1));
@@ -262,7 +317,26 @@ namespace video
 
 	void VideoEGA::DrawTextMode()
 	{
-		LogPrintf(LOG_DEBUG, "DrawTextMode");
+		const struct CRTCData& data = m_crtc.GetData();
+
+		uint32_t fg = GetColor(15);
+		uint32_t bg = GetColor(0);
+		
+		if (IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = m_crtc.GetMemoryAddress(); // TODO temp
+			//LogPrintf(LOG_INFO, "Base=%d, rowScan=%d", base, m_crtc.GetData().rowAddress);
+
+			for (int i = 0; i < 8; ++i)
+			{
+				DrawPixel(IsCursor() ? fg : (0xFF000000 | (base<<4)));
+			}
+		}
+		else
+		{
+			DrawBackground(8, bg);
+		}
+
 	}
 
 	void VideoEGA::Serialize(json& to)
