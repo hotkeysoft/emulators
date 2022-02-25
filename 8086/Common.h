@@ -95,7 +95,43 @@ namespace emul
 		return b & (1 << bit);
 	}
 
+	inline bool GetBit(const WORD b, const BYTE bit)
+	{
+		return b & (1 << bit);
+	}
+
+	inline bool GetBit(const DWORD b, const BYTE bit)
+	{
+		return b & (1 << bit);
+	}
+
 	inline BYTE SetBit(BYTE& out, const BYTE bit, bool state)
+	{
+		if (state)
+		{
+			out |= (1 << bit);
+		}
+		else
+		{
+			out &= ~(1 << bit);
+		}
+		return out;
+	}
+
+	inline WORD SetBit(WORD& out, const BYTE bit, bool state)
+	{
+		if (state)
+		{
+			out |= (1 << bit);
+		}
+		else
+		{
+			out &= ~(1 << bit);
+		}
+		return out;
+	}
+
+	inline DWORD SetBit(DWORD& out, const BYTE bit, bool state)
 	{
 		if (state)
 		{
