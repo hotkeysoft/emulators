@@ -3,6 +3,7 @@
 #include "../Common.h"
 #include "../CPU/MemoryBlock.h"
 #include "Video.h"
+#include "DeviceCRTC_EGA.h"
 
 using emul::WORD;
 using emul::BYTE;
@@ -23,6 +24,8 @@ namespace video
 		VideoEGA(VideoEGA&&) = delete;
 		VideoEGA& operator=(VideoEGA&&) = delete;
 
+		virtual const std::string GetID() const override { return "ega"; }
+
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Tick() override;
 
@@ -33,9 +36,9 @@ namespace video
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 		virtual bool IsEnabled() const override { return true; }
 
-		virtual bool IsHSync() const override { return false; }
-		virtual bool IsVSync() const override { return false; }
-		virtual bool IsDisplayArea() const override { return false; }
+		virtual bool IsHSync() const override { return m_crtc.IsHSync(); }
+		virtual bool IsVSync() const override { return m_crtc.IsVSync(); }
+		virtual bool IsDisplayArea() const override { return m_crtc.IsDisplayArea(); }
 
 	protected:
 		RAMSIZE m_ramSize;
@@ -110,6 +113,8 @@ namespace video
 		uint32_t GetIndexedColor(BYTE index) const { return index; }
 
 		void DrawTextMode();
+
+		crtc_ega::DeviceCRTC m_crtc;
 
 		// TODO
 		// When reading settings from table in manual, use on = true, off = false

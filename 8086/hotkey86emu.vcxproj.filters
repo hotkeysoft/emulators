@@ -216,6 +216,9 @@
     <ClCompile Include="Video\VideoEGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="Video\DeviceCRTC_EGA.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -372,6 +375,9 @@
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="Video\VideoEGA.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\DeviceCRTC_EGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
   </ItemGroup>

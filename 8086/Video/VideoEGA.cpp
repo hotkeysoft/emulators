@@ -5,10 +5,13 @@ using emul::SetBit;
 using emul::GetBit;
 using emul::ADDRESS;
 
+using crtc_ega::DeviceCRTC;
+
 namespace video
 {
 	VideoEGA::VideoEGA(RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor) :
 		Logger("EGA"),
+		m_crtc(baseAddressMono),
 		m_ramSize(ramsize),
 		m_baseAddress(baseAddress),
 		m_baseAddressMono(baseAddressMono),
@@ -39,6 +42,8 @@ namespace video
 
 		AddMode("text", (DrawFunc)&VideoEGA::DrawTextMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		SetMode("text");
+
+		m_crtc.Init();
 	}	
 
 	SDL_Rect VideoEGA::GetDisplayRect(BYTE border, WORD xMultiplier) const
@@ -48,6 +53,7 @@ namespace video
 
 	void VideoEGA::Tick()
 	{
+		m_crtc.Tick();
 	}
 
 	void VideoEGA::DisconnectRelocatablePorts(WORD base)
@@ -111,6 +117,7 @@ namespace video
 		{
 			DisconnectRelocatablePorts(oldColor ? m_baseAddressColor : m_baseAddressMono);
 			ConnectRelocatablePorts(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
+			m_crtc.SetBasePort(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 		}
 	}
 
@@ -260,20 +267,16 @@ namespace video
 
 	void VideoEGA::Serialize(json& to)
 	{
-		to["baseAddress"] = m_baseAddress;
-		to["id"] = "ega";
+		Video::Serialize(to);
+		to["baseAddress"] = m_baseAddress;		
 	}
 
 	void VideoEGA::Deserialize(json& from)
 	{
+		Video::Deserialize(from);
 		if (from["baseAddress"] != m_baseAddress)
 		{
 			throw emul::SerializableException("VideoEGA: Incompatible baseAddress");
-		}
-
-		if (from["id"] != "ega")
-		{
-			throw emul::SerializableException("VideoEGA: Incompatible mode");
 		}
 
 		//OnChangeMode();
