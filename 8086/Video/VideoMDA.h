@@ -21,6 +21,8 @@ namespace video
 		VideoMDA(VideoMDA&&) = delete;
 		VideoMDA& operator=(VideoMDA&&) = delete;
 
+		virtual const std::string GetID() const override { return "mda"; }
+
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 
 		virtual bool IsMonoAdapter() override { return true; }

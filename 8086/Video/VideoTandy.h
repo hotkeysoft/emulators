@@ -24,6 +24,8 @@ namespace video
 		VideoTandy(VideoTandy&&) = delete;
 		VideoTandy& operator=(VideoTandy&&) = delete;
 
+		virtual const std::string GetID() const override { return "tga"; }
+
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Tick() override;
 

@@ -278,4 +278,18 @@ namespace video
 		}
 		return false; // Leave it unhandled if others are interested
 	}
+
+	void Video::Serialize(json& to)
+	{
+		to["id"] = GetID();
+	}
+
+	void Video::Deserialize(json& from)
+	{
+		if (from["id"] != GetID())
+		{
+			throw emul::SerializableException("Video: Incompatible mode");
+		}
+	}
+
 }

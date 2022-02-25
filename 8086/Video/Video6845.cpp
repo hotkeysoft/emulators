@@ -202,11 +202,13 @@ namespace video
 
 	void Video6845::Serialize(json& to)
 	{
+		Video::Serialize(to);
 		m_crtc.Serialize(to["crtc"]);
 	}
 
 	void Video6845::Deserialize(json& from)
 	{
+		Video::Deserialize(from);
 		m_crtc.Deserialize(from["crtc"]);
 	}
 }

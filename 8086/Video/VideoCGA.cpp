@@ -203,7 +203,6 @@ namespace video
 	{
 		Video6845::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
-		to["id"] = "cga";
 
 		json mode;
 		mode["text80Columns"] = m_mode.text80Columns;
@@ -230,11 +229,6 @@ namespace video
 		if (from["baseAddress"] != m_baseAddress)
 		{
 			throw emul::SerializableException("VideoCGA: Incompatible baseAddress");
-		}
-
-		if (from["id"] != "cga")
-		{
-			throw emul::SerializableException("VideoCGA: Incompatible mode");
 		}
 
 		const json& mode = from["mode"];

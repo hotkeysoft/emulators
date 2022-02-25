@@ -24,6 +24,8 @@ namespace video
 		VideoPCjr(VideoPCjr&&) = delete;
 		VideoPCjr& operator=(VideoPCjr&&) = delete;
 
+		virtual const std::string GetID() const override { return "pcjr"; }
+
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Tick() override;
 

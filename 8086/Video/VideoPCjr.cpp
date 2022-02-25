@@ -323,7 +323,6 @@ namespace video
 	{
 		Video6845::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
-		to["id"] = "pcjr";
 
 		json pageReg;
 		pageReg["crtPage"] = m_pageRegister.crtPage;
@@ -357,11 +356,6 @@ namespace video
 		if (from["baseAddress"] != m_baseAddress)
 		{
 			throw emul::SerializableException("VideoPCjr: Incompatible baseAddress");
-		}
-
-		if (from["id"] != "pcjr")
-		{
-			throw emul::SerializableException("VideoPCjr: Incompatible mode");
 		}
 
 		const json& pageReg = from["pageRegister"];

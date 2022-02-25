@@ -353,7 +353,6 @@ namespace video
 	{
 		Video6845::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
-		to["id"] = "tga";
 
 		json pageReg;
 		pageReg["crtPage"] = m_pageRegister.crtPage;
@@ -395,11 +394,6 @@ namespace video
 		if (from["baseAddress"] != m_baseAddress)
 		{
 			throw emul::SerializableException("VideoTandy: Incompatible baseAddress");
-		}
-
-		if (from["id"] != "tga")
-		{
-			throw emul::SerializableException("VideoTandy: Incompatible mode");
 		}
 
 		const json& pageReg = from["pageRegister"];

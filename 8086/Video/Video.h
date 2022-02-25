@@ -36,6 +36,8 @@ namespace video
 		Video(Video&&) = delete;
 		Video& operator=(Video&&) = delete;
 
+		virtual const std::string GetID() const = 0;
+
 		virtual void Reset() {};
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);
 
@@ -45,8 +47,8 @@ namespace video
 
 		void RenderFrame();
 
-		virtual void Serialize(json& to) = 0;
-		virtual void Deserialize(json& from) = 0;
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
 		void AddRenderer(Renderer* r) { m_renderers.push_back(r); }
 

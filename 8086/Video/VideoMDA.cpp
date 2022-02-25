@@ -163,7 +163,6 @@ namespace video
 	{
 		Video6845::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
-		to["id"] = "mda";
 
 		json mode;
 		mode["enableVideo"] = m_mode.enableVideo;
@@ -179,11 +178,6 @@ namespace video
 		if (from["baseAddress"] != m_baseAddress)
 		{
 			throw emul::SerializableException("VideoMDA: Incompatible baseAddress");
-		}
-
-		if (from["id"] != "mda")
-		{
-			throw emul::SerializableException("VideoMDA: Incompatible mode");
 		}
 
 		const json& mode = from["mode"];

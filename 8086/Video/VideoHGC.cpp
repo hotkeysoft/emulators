@@ -81,7 +81,6 @@ namespace video
 	void VideoHGC::Serialize(json& to)
 	{
 		VideoMDA::Serialize(to);
-		to["id.ext"] = "hgc";
 
 		json mode;
 		mode["graphics"] = m_modeHGC.graphics;
@@ -92,11 +91,6 @@ namespace video
 
 	void VideoHGC::Deserialize(json& from)
 	{
-		if (from["id.ext"] != "hgc")
-		{
-			throw emul::SerializableException("VideoHGC: Incompatible mode");
-		}
-
 		const json& mode = from["modeHGC"];
 		m_modeHGC.graphics = mode["graphics"];
 		m_modeHGC.displayPage = mode["displayPage"];
