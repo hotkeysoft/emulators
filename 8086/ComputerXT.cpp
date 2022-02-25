@@ -102,6 +102,10 @@ namespace emul
 			{
 				ppi->SetDisplayConfig(ppi::DISPLAY::MONO_80x25);
 			}
+			else if (m_video->GetID() == "ega")
+			{
+				ppi->SetDisplayConfig(ppi::DISPLAY::NONE);
+			}
 			else
 			{
 				ppi->SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
