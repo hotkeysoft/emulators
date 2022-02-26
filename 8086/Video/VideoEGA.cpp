@@ -18,7 +18,8 @@ namespace video
 		m_baseAddress(baseAddress),
 		m_baseAddressMono(baseAddressMono),
 		m_baseAddressColor(baseAddressColor),
-		m_egaROM("EGABIOS", 16384, emul::MemoryType::ROM)
+		m_egaROM("EGABIOS", 16384, emul::MemoryType::ROM),
+		m_egaRAM("EGARAM", 256*1024, emul::MemoryType::RAM) // TODO
 	{
 	}
 
@@ -35,6 +36,11 @@ namespace video
 		Connect(m_baseAddress + 0x4, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteSequencerAddress));
 		Connect(m_baseAddress + 0x5, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteSequencerValue));
 
+		Connect(m_baseAddress + 0xC, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteGraphics1Position));
+		Connect(m_baseAddress + 0xA, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteGraphics2Position));
+		Connect(m_baseAddress + 0xE, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteGraphicsAddress));
+		Connect(m_baseAddress + 0xF, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteGraphicsValue));
+
 		ConnectRelocatablePorts(m_baseAddressMono);
 
 		m_crtc.Init();
@@ -47,6 +53,8 @@ namespace video
 
 		AddMode("text", (DrawFunc)&VideoEGA::DrawTextMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		SetMode("text");
+
+		MapMemory();
 	}	
 
 	void VideoEGA::EnableLog(SEVERITY minSev)
@@ -313,6 +321,156 @@ namespace video
 			m_memoryMode.alpha ? ' ' : '/',
 			m_memoryMode.extMemory ? ' ' : '/',
 			m_memoryMode.sequential ? ' ' : '/');
+	}
+
+	void VideoEGA::WriteGraphics1Position(BYTE value)
+	{
+		// TODO Not sure how this works
+		LogPrintf(Logger::LOG_INFO, "WriteGraphics1Position, value=%02Xh", value);
+		if ((value & 3) != 0)
+		{
+			LogPrintf(Logger::LOG_WARNING, "WriteGraphics1Position, expected value=0");
+			throw std::exception("WriteGraphics1Position, expected value=0");
+		}
+	}
+	void VideoEGA::WriteGraphics2Position(BYTE value)
+	{
+		// TODO Not sure how this works
+		LogPrintf(Logger::LOG_INFO, "WriteGraphics2Position, value=%02Xh", value);
+		if ((value & 3) != 1)
+		{
+			LogPrintf(Logger::LOG_WARNING, "WriteGraphics2Position, expected value=1");
+			throw std::exception("WriteGraphics2Position, expected value=1");
+		}
+	}
+	void VideoEGA::WriteGraphicsAddress(BYTE value)
+	{
+		LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsAddress, reg=%d", value);
+		value &= 15;
+		m_graphController.currRegister = (value > (int)GraphControllerAddress::_GRAPH_MAX_REG) ? 
+			GraphControllerAddress::GRAPH_INVALID_REG : 
+			(GraphControllerAddress)value;
+	}
+	void VideoEGA::WriteGraphicsValue(BYTE value)
+	{
+		LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, value=%02Xh", value);
+
+		switch (m_graphController.currRegister)
+		{
+		case GraphControllerAddress::GRAPH_SET_RESET:
+			m_graphController.setReset = value & 15;
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Set/Reset %d", m_graphController.setReset);
+			// TODO, write mode 0, enabled by next register	
+			break;
+		case GraphControllerAddress::GRAPH_ENABLE_SET_RESET:
+			m_graphController.enableSetReset = value & 15;
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Enable Set/Reset %d", m_graphController.enableSetReset);
+
+			// TODO, write mode 0
+			if (m_graphController.enableSetReset)
+			{
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Enable Set/Reset");
+			}
+			break;
+		case GraphControllerAddress::GRAPH_COLOR_COMPARE:
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Color Compare %d", value);
+			m_graphController.colorCompare = value & 15;
+			// TODO, read mode = compare
+			if (m_graphController.colorCompare)
+			{
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Data Rotate not implemented");
+			}
+			break;
+		case GraphControllerAddress::GRAPH_DATA_ROTATE:
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Data Rotate %d", value);
+			m_graphController.rotateCount = value & 3;
+			m_graphController.rotateFunction = (RotateFunction)((value >> 3) & 3);
+			// TODO, write mode 0
+			if (m_graphController.rotateCount)
+			{
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Data Rotate not implemented");
+			}
+			if (m_graphController.rotateFunction != RotateFunction::NONE)
+			{
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Data Rotate Function not implemented");
+			}
+			break;
+		case GraphControllerAddress::GRAPH_READ_MAP_SELECT:
+			// TODO
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Read Map Select %d", value);
+			m_graphController.mapSelect = value & 7;
+			if (m_graphController.mapSelect > 3)
+			{
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Invalid Map: ", m_graphController.mapSelect);
+			}
+			break;
+		case GraphControllerAddress::GRAPH_MODE:
+			// TODO
+			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Mode %d", value);
+			m_graphController.writeMode = value % 3;
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, WriteMode[%d]", m_graphController.writeMode);
+			if (m_graphController.writeMode == 3)
+			{
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Illegal Write Mode");
+			}
+			m_graphController.readModeCompare = GetBit(value, 3);
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, ReadMode[%s]", m_graphController.readModeCompare ? "COMPARE" : "NORMAL");
+			m_graphController.oddEven = GetBit(value, 4);
+			// Same as MemoryMode.sequential
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Odd/Even addressing mode[%d]", m_graphController.oddEven);
+			m_graphController.shiftRegister = GetBit(value, 5);
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Shift register mode[%d]", m_graphController.shiftRegister);
+			break;
+		case GraphControllerAddress::GRAPH_MISC:
+			// TODO
+			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Miscellaneous %d", value);
+			m_graphController.graphics = GetBit(value, 0);
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Graphics[%d]", m_graphController.graphics);
+			m_graphController.chainOddEven = GetBit(value, 1);
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Chain Odd/Even[%d]", m_graphController.chainOddEven);
+			m_graphController.memoryMap = (MemoryMap)((value >> 2) & 3);
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Memory Map[%x]", m_graphController.memoryMap);
+			MapMemory();
+			break;
+		case GraphControllerAddress::GRAPH_COLOR_DONT_CARE:
+			// TODO
+			m_graphController.colorDontCare = value & 15;
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Color Don't Care[%x]", value);
+			break;
+		case GraphControllerAddress::GRAPH_BIT_MASK:
+			// TODO
+			m_graphController.bitMask = value;
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Bit Mask[%02x]", m_graphController.bitMask);
+			break;
+		default:
+			// TODO
+			LogPrintf(Logger::LOG_WARNING, "WriteGraphicsValue, Invalid register");
+		}
+	}
+
+	void VideoEGA::MapMemory()
+	{
+		m_memory->Free(&m_egaRAM);
+
+		switch (m_graphController.memoryMap)
+		{
+		case MemoryMap::A000_128K:
+			LogPrintf(Logger::LOG_INFO, "MapMemory: [A000][128K]");
+			m_memory->Allocate(&m_egaRAM, 0xA0000/*, 128 * 1024 * 1024*/);
+			break;
+		case MemoryMap::A000_64K:
+			LogPrintf(Logger::LOG_INFO, "MapMemory: [A000][64K]");
+			m_memory->Allocate(&m_egaRAM, 0xA0000/*, 64 * 1024 * 1024*/);
+			break;
+		case MemoryMap::B000_32K:
+			LogPrintf(Logger::LOG_INFO, "MapMemory: [B000][32K]");
+			m_memory->Allocate(&m_egaRAM, 0xB0000/*, 32 * 1024 * 1024*/);
+			break;
+		case MemoryMap::B800_32K:
+			LogPrintf(Logger::LOG_INFO, "MapMemory: [B800][32K]");
+			m_memory->Allocate(&m_egaRAM, 0xB8000/*, 32 * 1024 * 1024*/);
+			break;
+		}
 	}
 
 	void VideoEGA::DrawTextMode()

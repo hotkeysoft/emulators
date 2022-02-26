@@ -89,7 +89,6 @@ namespace video
 		
 		// Dispatches value to functions below
 		void WriteSequencerValue(BYTE value);
-		//
 		void WriteSequencerReset(BYTE value);
 
 		struct ClockingMode
@@ -116,7 +115,63 @@ namespace video
 		} m_memoryMode;
 		void WriteSequencerMemoryMode(BYTE value);
 
+		enum class GraphControllerAddress
+		{
+			GRAPH_SET_RESET = 0,
+			GRAPH_ENABLE_SET_RESET = 1,
+			GRAPH_COLOR_COMPARE = 2,
+			GRAPH_DATA_ROTATE = 3,
+			GRAPH_READ_MAP_SELECT = 4,
+			GRAPH_MODE = 5,
+			GRAPH_MISC = 6,
+			GRAPH_COLOR_DONT_CARE = 7,
+			GRAPH_BIT_MASK = 8,
+
+			_GRAPH_MAX_REG = GRAPH_BIT_MASK,
+			GRAPH_INVALID_REG = 0xFF
+		};
+
+
+		enum class MemoryMap { A000_128K = 0, A000_64K, B000_32K, B800_32K };
+
+		enum class RotateFunction { NONE = 0, AND, OR, XOR };
+
+		struct GraphControllerRegisters
+		{
+			GraphControllerAddress currRegister = GraphControllerAddress::GRAPH_INVALID_REG;
+
+			BYTE setReset = 0;
+			BYTE enableSetReset = 0;
+			
+			BYTE colorCompare = 0;
+			BYTE colorDontCare = 0;
+
+			BYTE rotateCount = 0;
+			RotateFunction rotateFunction = RotateFunction::NONE;
+
+			BYTE mapSelect;
+
+			BYTE writeMode = 0;
+			bool readModeCompare = false;
+			bool oddEven = false;
+			bool shiftRegister = false;
+
+			bool graphics = false;
+			bool chainOddEven = false;
+			MemoryMap memoryMap = MemoryMap::A000_128K;
+
+			BYTE bitMask = 0;
+
+		} m_graphController;
+		void WriteGraphics1Position(BYTE value);
+		void WriteGraphics2Position(BYTE value);
+		void WriteGraphicsAddress(BYTE value);
+		void WriteGraphicsValue(BYTE value);
+
+		void MapMemory();
+
 		emul::MemoryBlock m_egaROM;
+		emul::MemoryBlock m_egaRAM;
 
 		ADDRESS GetBaseAddress() { return 0; }
 
