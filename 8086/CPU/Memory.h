@@ -21,7 +21,7 @@ namespace emul
 		Memory(size_t addressBits);
 		virtual ~Memory();
 
-		bool Allocate(MemoryBlock* block, ADDRESS base);
+		bool Allocate(MemoryBlock* block, ADDRESS base, DWORD len = (DWORD)-1);
 		bool Free(MemoryBlock* block);
 
 		bool MapWindow(ADDRESS source, ADDRESS window, DWORD len);

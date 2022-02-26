@@ -27,19 +27,32 @@ namespace emul
 
 	}
 
-	bool Memory::Allocate(MemoryBlock* block, ADDRESS base)
+	bool Memory::Allocate(MemoryBlock* block, ADDRESS base, DWORD len)
 	{
+		assert(block);
+
+		if (len == (DWORD)-1)
+		{
+			len = block->GetSize();
+		}
+		
 		LogPrintf(LOG_INFO, "Request to allocate block [%s] at %X, size = %d bytes", block->GetId().c_str(), base, block->GetSize());
 
-		if (!CheckAddressRange(base, m_addressBits) ||
-			!CheckAddressRange(base + (DWORD)block->GetSize() - 1, m_addressBits))
+		if (len % BlockGranularity != 0)
 		{
-			LogPrintf(LOG_ERROR, "Address out of range: block at %X, size = %d bytes", base, block->GetSize());
+			LogPrintf(LOG_ERROR, "Block size [%d] is not a multiple of [%d]", len, BlockGranularity);
+			return false;
+		}
+
+		if (!CheckAddressRange(base, m_addressBits) ||
+			!CheckAddressRange(base + (DWORD)len - 1, m_addressBits))
+		{
+			LogPrintf(LOG_ERROR, "Address out of range: block at %X, size = %d bytes", base, len);
 			LogPrintf(LOG_ERROR, "CPU Max address: %X", GetMaxAddress(m_addressBits));
 			return false;
 		}
 
-		int nbSlots = block->GetSize() / BlockGranularity;
+		int nbSlots = len / BlockGranularity;
 		int minSlot = base / BlockGranularity;
 		LogPrintf(LOG_DEBUG, "Using %d slots, first slot = %02Xh", nbSlots, minSlot);
 
