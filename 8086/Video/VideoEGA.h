@@ -3,7 +3,7 @@
 #include "../Common.h"
 #include "../CPU/MemoryBlock.h"
 #include "Video.h"
-#include "DeviceCRTC_EGA.h"
+#include "CRTControllerEGA.h"
 
 using emul::WORD;
 using emul::BYTE;
@@ -179,7 +179,7 @@ namespace video
 
 		void DrawTextMode();
 
-		crtc_ega::DeviceCRTC m_crtc;
+		crtc_ega::CRTController m_crtc;
 
 		// TODO
 		// When reading settings from table in manual, use on = true, off = false

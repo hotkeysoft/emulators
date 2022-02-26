@@ -1,12 +1,12 @@
-#include "Device6845.h"
+#include "CRTController6845.h"
 #include <assert.h>
 #include <algorithm>
 
-namespace crtc
+namespace crtc_6845
 {
 	static EventHandler s_defaultHandler;
 
-	Device6845::Device6845(WORD baseAddress, BYTE charWidth) :
+	CRTController::CRTController(WORD baseAddress, BYTE charWidth) :
 		Logger("crtc"),
 		m_baseAddress(baseAddress),
 		m_charWidth(charWidth),
@@ -14,46 +14,46 @@ namespace crtc
 	{
 	}
 
-	Device6845::~Device6845()
+	CRTController::~CRTController()
 	{
 	}
 
-	void Device6845::Reset()
+	void CRTController::Reset()
 	{
 		m_data.hPos = 0;
 		m_data.vPos = 0;
 	}
 
-	void Device6845::Init()
+	void CRTController::Init()
 	{
 		Reset();
 
 		// CRTC Register Select
-		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&Device6845::SelectCRTCRegister));
-		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&Device6845::SelectCRTCRegister));
-		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&Device6845::SelectCRTCRegister));
-		Connect(m_baseAddress + 6, static_cast<PortConnector::OUTFunction>(&Device6845::SelectCRTCRegister));
+		Connect(m_baseAddress + 0, static_cast<PortConnector::OUTFunction>(&CRTController::SelectCRTCRegister));
+		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&CRTController::SelectCRTCRegister));
+		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&CRTController::SelectCRTCRegister));
+		Connect(m_baseAddress + 6, static_cast<PortConnector::OUTFunction>(&CRTController::SelectCRTCRegister));
 
 		// CRTC Register Data
-		Connect(m_baseAddress + 1, static_cast<PortConnector::OUTFunction>(&Device6845::WriteCRTCData));
-		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&Device6845::WriteCRTCData));
-		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&Device6845::WriteCRTCData));
-		Connect(m_baseAddress + 7, static_cast<PortConnector::OUTFunction>(&Device6845::WriteCRTCData));
+		Connect(m_baseAddress + 1, static_cast<PortConnector::OUTFunction>(&CRTController::WriteCRTCData));
+		Connect(m_baseAddress + 3, static_cast<PortConnector::OUTFunction>(&CRTController::WriteCRTCData));
+		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&CRTController::WriteCRTCData));
+		Connect(m_baseAddress + 7, static_cast<PortConnector::OUTFunction>(&CRTController::WriteCRTCData));
 
-		Connect(m_baseAddress + 1, static_cast<PortConnector::INFunction>(&Device6845::ReadCRTCData));
-		Connect(m_baseAddress + 3, static_cast<PortConnector::INFunction>(&Device6845::ReadCRTCData));
-		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&Device6845::ReadCRTCData));
-		Connect(m_baseAddress + 7, static_cast<PortConnector::INFunction>(&Device6845::ReadCRTCData));
+		Connect(m_baseAddress + 1, static_cast<PortConnector::INFunction>(&CRTController::ReadCRTCData));
+		Connect(m_baseAddress + 3, static_cast<PortConnector::INFunction>(&CRTController::ReadCRTCData));
+		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&CRTController::ReadCRTCData));
+		Connect(m_baseAddress + 7, static_cast<PortConnector::INFunction>(&CRTController::ReadCRTCData));
 	}
 
-	void Device6845::SelectCRTCRegister(BYTE value)
+	void CRTController::SelectCRTCRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "SelectCRTCRegister, reg=%d", value);
 		value &= 31;
 		m_config.currRegister = (value > _CRT_MAX_REG) ? CRT_INVALID_REG : (CRTRegister)value;
 	}
 
-	BYTE Device6845::ReadCRTCData()
+	BYTE CRTController::ReadCRTCData()
 	{
 		LogPrintf(Logger::LOG_DEBUG, "ReadCRTCData, reg=%d", m_config.currRegister);
 
@@ -70,7 +70,7 @@ namespace crtc
 			return 0xFF;
 		}
 	}
-	void Device6845::WriteCRTCData(BYTE value)
+	void CRTController::WriteCRTCData(BYTE value)
 	{
 		switch (m_config.currRegister)
 		{
@@ -160,13 +160,13 @@ namespace crtc
 		}
 	}
 
-	void Device6845::SetCharWidth(BYTE charWidth)
+	void CRTController::SetCharWidth(BYTE charWidth)
 	{
 		m_charWidth = charWidth;
 		UpdateHVTotals();
 	}
 
-	void Device6845::UpdateHVTotals()
+	void CRTController::UpdateHVTotals()
 	{
 		m_data.hTotalDisp = m_config.hDisplayed * m_charWidth;
 		m_data.hTotal = (m_config.hTotal + 1) * m_charWidth;
@@ -184,7 +184,7 @@ namespace crtc
 		LogPrintf(LOG_INFO, "UpdateHVTotals: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
 	}
 
-	void Device6845::Tick()
+	void CRTController::Tick()
 	{
 		m_data.hPos += m_charWidth;
 		++m_data.memoryAddress;
@@ -234,7 +234,7 @@ namespace crtc
 		}
 	}
 
-	void Device6845::Serialize(json& to)
+	void CRTController::Serialize(json& to)
 	{
 		to["baseAddress"] = m_baseAddress;
 		to["id"] = "6845";
@@ -270,16 +270,16 @@ namespace crtc
 		to["blink32"] = m_blink32;
 	}
 
-	void Device6845::Deserialize(json& from)
+	void CRTController::Deserialize(json& from)
 	{
 		if (from["baseAddress"] != m_baseAddress)
 		{
-			throw emul::SerializableException("Device6845: Incompatible baseAddress");
+			throw emul::SerializableException("CRTController: Incompatible baseAddress");
 		}
 
 		if (from["id"] != "6845")
 		{
-			throw emul::SerializableException("Device6845: Incompatible mode");
+			throw emul::SerializableException("CRTController: Incompatible mode");
 		}
 
 		const json& config = from["config"];

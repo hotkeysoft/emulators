@@ -2,7 +2,7 @@
 
 #include "../Common.h"
 #include "../CPU/Memory.h"
-#include "Device6845.h"
+#include "CRTController6845.h"
 #include "Video.h"
 
 using emul::WORD;
@@ -12,7 +12,7 @@ namespace video
 {
 	// Base class for all 6845-based video cards (CGA, MDA, TGA, PCjr)
 	//
-	class Video6845 : public Video, public crtc::EventHandler
+	class Video6845 : public Video, public crtc_6845::EventHandler
 	{
 	public:
 		Video6845(WORD baseAddress, BYTE charWidth = 8);
@@ -48,8 +48,8 @@ namespace video
 
 		bool IsCursor() const;
 
-		crtc::Device6845& GetCRTC() { return m_crtc; }
-		const crtc::Device6845& GetCRTC() const { return m_crtc; }
+		crtc_6845::CRTController& GetCRTC() { return m_crtc; }
+		const crtc_6845::CRTController& GetCRTC() const { return m_crtc; }
 
 		// Common drawing functions
 		void Draw320x200x4();
@@ -58,6 +58,6 @@ namespace video
 		void Draw640x200x4();
 
 	private:
-		crtc::Device6845 m_crtc;
+		crtc_6845::CRTController m_crtc;
 	};
 }

@@ -1,4 +1,4 @@
-#include "DeviceCRTC_EGA.h"
+#include "CRTControllerEGA.h"
 #include <assert.h>
 #include <algorithm>
 
@@ -11,7 +11,7 @@ namespace crtc_ega
 
 	static EventHandler s_defaultHandler;
 
-	DeviceCRTC::DeviceCRTC(WORD baseAddress, BYTE charWidth) :
+	CRTController::CRTController(WORD baseAddress, BYTE charWidth) :
 		Logger("crtcEGA"),
 		m_baseAddress(baseAddress),
 		m_charWidth(charWidth),
@@ -19,54 +19,54 @@ namespace crtc_ega
 	{
 	}
 
-	DeviceCRTC::~DeviceCRTC()
+	CRTController::~CRTController()
 	{
 	}
 
-	void DeviceCRTC::Reset()
+	void CRTController::Reset()
 	{
 		m_data.hPos = 0;
 		m_data.vPos = 0;
 	}
 
-	void DeviceCRTC::Init()
+	void CRTController::Init()
 	{
 		Reset();
 		ConnectPorts();
 	}
 
-	void DeviceCRTC::SetBasePort(WORD base)
+	void CRTController::SetBasePort(WORD base)
 	{
 		DisconnectPorts();
 		m_baseAddress = base;
 		ConnectPorts();
 	}
 
-	void DeviceCRTC::DisconnectPorts()
+	void CRTController::DisconnectPorts()
 	{
 		DisconnectOutput(m_baseAddress + 4);
 		DisconnectOutput(m_baseAddress + 5);
 		DisconnectInput(m_baseAddress + 5);
 	}
 
-	void DeviceCRTC::ConnectPorts()
+	void CRTController::ConnectPorts()
 	{
 		// CRTC Register Select
-		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&DeviceCRTC::SelectCRTCRegister));
+		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&CRTController::SelectCRTCRegister));
 
 		// CRTC Register Data
-		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&DeviceCRTC::WriteCRTCData));
-		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&DeviceCRTC::ReadCRTCData));
+		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&CRTController::WriteCRTCData));
+		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&CRTController::ReadCRTCData));
 	}
 
-	void DeviceCRTC::SelectCRTCRegister(BYTE value)
+	void CRTController::SelectCRTCRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "SelectCRTCRegister, reg=%d", value);
 		value &= 31;
 		m_config.currRegister = (value > _CRT_MAX_REG) ? CRT_INVALID_REG : (CRTRegister)value;
 	}
 
-	BYTE DeviceCRTC::ReadCRTCData()
+	BYTE CRTController::ReadCRTCData()
 	{
 		LogPrintf(Logger::LOG_DEBUG, "ReadCRTCData, reg=%d", m_config.currRegister);
 
@@ -98,7 +98,7 @@ namespace crtc_ega
 		return startValue | endBits;
 	}
 
-	void DeviceCRTC::WriteCRTCData(BYTE value)
+	void CRTController::WriteCRTCData(BYTE value)
 	{
 		switch (m_config.currRegister)
 		{
@@ -292,13 +292,13 @@ namespace crtc_ega
 		}
 	}
 
-	void DeviceCRTC::SetCharWidth(BYTE charWidth)
+	void CRTController::SetCharWidth(BYTE charWidth)
 	{
 		m_charWidth = charWidth;
 		UpdateHVTotals();
 	}
 
-	void DeviceCRTC::UpdateHVTotals()
+	void CRTController::UpdateHVTotals()
 	{
 		m_data.hTotalDisp = (m_config.hDisplayed + 1) * m_charWidth;
 		m_data.hTotal = (m_config.hTotal + 2) * m_charWidth;
@@ -330,7 +330,7 @@ namespace crtc_ega
 		LogPrintf(LOG_INFO, "UpdateHVTotals: vSync:     [%d - %d]", m_data.vSyncMin, m_data.vSyncMax);
 	}
 
-	void DeviceCRTC::Tick()
+	void CRTController::Tick()
 	{
 		m_data.hPos += m_charWidth;
 		++m_data.memoryAddress;
@@ -381,7 +381,7 @@ namespace crtc_ega
 		}
 	}
 
-	void DeviceCRTC::Serialize(json& to)
+	void CRTController::Serialize(json& to)
 	{
 		to["baseAddress"] = m_baseAddress;
 		to["id"] = "6845";
@@ -412,16 +412,16 @@ namespace crtc_ega
 		to["blink32"] = m_blink32;
 	}
 
-	void DeviceCRTC::Deserialize(json& from)
+	void CRTController::Deserialize(json& from)
 	{
 		if (from["baseAddress"] != m_baseAddress)
 		{
-			throw emul::SerializableException("DeviceCRTC: Incompatible baseAddress");
+			throw emul::SerializableException("CRTController: Incompatible baseAddress");
 		}
 
 		if (from["id"] != "6845")
 		{
-			throw emul::SerializableException("DeviceCRTC: Incompatible mode");
+			throw emul::SerializableException("CRTController: Incompatible mode");
 		}
 
 		const json& config = from["config"];

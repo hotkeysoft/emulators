@@ -14,7 +14,7 @@ struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
 
-namespace crtc
+namespace crtc_6845
 {
 	class EventHandler
 	{
@@ -113,17 +113,17 @@ namespace crtc
 		WORD vSyncMax = 0;
 	};
 
-	class Device6845 : public PortConnector, public emul::Serializable
+	class CRTController : public PortConnector, public emul::Serializable
 	{
 	public:
-		Device6845(WORD baseAddress, BYTE charWidth = 8);
-		~Device6845();
+		CRTController(WORD baseAddress, BYTE charWidth = 8);
+		~CRTController();
 
-		Device6845() = delete;
-		Device6845(const Device6845&) = delete;
-		Device6845& operator=(const Device6845&) = delete;
-		Device6845(Device6845&&) = delete;
-		Device6845& operator=(Device6845&&) = delete;
+		CRTController() = delete;
+		CRTController(const CRTController&) = delete;
+		CRTController& operator=(const CRTController&) = delete;
+		CRTController(CRTController&&) = delete;
+		CRTController& operator=(CRTController&&) = delete;
 
 		virtual void Init();
 		virtual void Reset();

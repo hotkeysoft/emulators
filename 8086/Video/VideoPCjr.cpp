@@ -6,8 +6,8 @@ using emul::MemoryBlock;
 using emul::GetBit;
 using emul::SetBit;
 
-using crtc::CRTCConfig;
-using crtc::CRTCData;
+using crtc_6845::CRTCConfig;
+using crtc_6845::CRTCData;
 
 namespace video
 {

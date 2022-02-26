@@ -201,9 +201,6 @@
     <ClCompile Include="Storage\DeviceHardDrive.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="Video\Device6845.cpp">
-      <Filter>Source Files\Video</Filter>
-    </ClCompile>
     <ClCompile Include="Serializable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -216,7 +213,10 @@
     <ClCompile Include="Video\VideoEGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="Video\DeviceCRTC_EGA.cpp">
+    <ClCompile Include="Video\CRTController6845.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\CRTControllerEGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
   </ItemGroup>
@@ -353,9 +353,6 @@
     <ClInclude Include="Storage\DeviceHardDrive.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="Video\Device6845.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
     <ClInclude Include="IO\DeviceJoystick.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
@@ -377,7 +374,10 @@
     <ClInclude Include="Video\VideoEGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
-    <ClInclude Include="Video\DeviceCRTC_EGA.h">
+    <ClInclude Include="Video\CRTController6845.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\CRTControllerEGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
   </ItemGroup>

@@ -171,17 +171,17 @@ namespace crtc_ega
 		WORD vSyncMax = 0;
 	};
 
-	class DeviceCRTC : public PortConnector, public emul::Serializable
+	class CRTController : public PortConnector, public emul::Serializable
 	{
 	public:
-		DeviceCRTC(WORD baseAddress, BYTE charWidth = 8);
-		~DeviceCRTC();
+		CRTController(WORD baseAddress, BYTE charWidth = 8);
+		~CRTController();
 
-		DeviceCRTC() = delete;
-		DeviceCRTC(const DeviceCRTC&) = delete;
-		DeviceCRTC& operator=(const DeviceCRTC&) = delete;
-		DeviceCRTC(DeviceCRTC&&) = delete;
-		DeviceCRTC& operator=(DeviceCRTC&&) = delete;
+		CRTController() = delete;
+		CRTController(const CRTController&) = delete;
+		CRTController& operator=(const CRTController&) = delete;
+		CRTController(CRTController&&) = delete;
+		CRTController& operator=(CRTController&&) = delete;
 
 		virtual void Init();
 		virtual void Reset();

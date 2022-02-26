@@ -5,7 +5,7 @@ using emul::SetBit;
 using emul::GetBit;
 using emul::ADDRESS;
 
-using crtc_ega::DeviceCRTC;
+using crtc_ega::CRTController;
 using crtc_ega::CRTCConfig;
 using crtc_ega::CRTCData;
 
