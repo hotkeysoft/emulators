@@ -215,6 +215,7 @@
     <ClCompile Include="CPU\PortConnector.cpp" />
     <ClCompile Include="Video\CRTController6845.cpp" />
     <ClCompile Include="Video\CRTControllerEGA.cpp" />
+    <ClCompile Include="Video\MemoryEGA.cpp" />
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\Video6845.cpp" />
     <ClCompile Include="Video\VideoCGA.cpp" />
@@ -270,6 +271,7 @@
     <ClInclude Include="CPU\PortConnector.h" />
     <ClInclude Include="Video\CRTController6845.h" />
     <ClInclude Include="Video\CRTControllerEGA.h" />
+    <ClInclude Include="Video\MemoryEGA.h" />
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\Video6845.h" />
     <ClInclude Include="Video\VideoCGA.h" />

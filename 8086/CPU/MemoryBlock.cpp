@@ -8,7 +8,7 @@ namespace emul
 	const WORD BlockGranularity = 4096;
 
 	MemoryBlock::MemoryBlock(const char* id, MemoryType type) :
-		Logger("MEMBLK"),
+		Logger(id),
 		m_id(id ? id : "?"),
 		m_type(type)
 	{
@@ -89,7 +89,7 @@ namespace emul
 		return m_data+(offset);
 	}
 
-	void MemoryBlock::write(ADDRESS offset, char data)
+	void MemoryBlock::write(ADDRESS offset, BYTE data)
 	{
 		assert(offset < m_size);
 		if (m_type == MemoryType::RAM)

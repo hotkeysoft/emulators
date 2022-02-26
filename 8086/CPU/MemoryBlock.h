@@ -32,7 +32,7 @@ namespace emul
 
 		virtual BYTE read(ADDRESS offset);
 		virtual BYTE* getPtr(ADDRESS offset);
-		virtual void write(ADDRESS offset, char data);
+		virtual void write(ADDRESS offset, BYTE data);
 
 	protected:
 		DWORD RoundBlockSize(DWORD size);

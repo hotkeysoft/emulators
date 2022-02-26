@@ -4,6 +4,7 @@
 #include "../CPU/MemoryBlock.h"
 #include "Video.h"
 #include "CRTControllerEGA.h"
+#include "MemoryEGA.h"
 
 using emul::WORD;
 using emul::BYTE;
@@ -14,9 +15,7 @@ namespace video
 	class VideoEGA : public Video, public crtc_ega::EventHandler
 	{
 	public:
-		enum RAMSIZE { EGA_64K, EGA_128K, EGA_256K };
-
-		VideoEGA(RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor);
+		VideoEGA(memory_ega::RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor);
 
 		VideoEGA() = delete;
 		VideoEGA(const VideoEGA&) = delete;
@@ -48,7 +47,7 @@ namespace video
 		virtual bool IsDisplayArea() const override { return m_crtc.IsDisplayArea(); }
 
 	protected:
-		RAMSIZE m_ramSize;
+		memory_ega::RAMSIZE m_ramSize;
 		WORD m_baseAddress;
 		WORD m_baseAddressMono;
 		WORD m_baseAddressColor;
@@ -171,7 +170,7 @@ namespace video
 		void MapMemory();
 
 		emul::MemoryBlock m_egaROM;
-		emul::MemoryBlock m_egaRAM;
+		memory_ega::MemoryEGA m_egaRAM;
 
 		ADDRESS GetBaseAddress() { return 0; }
 

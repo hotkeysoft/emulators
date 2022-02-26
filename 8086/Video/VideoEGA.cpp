@@ -9,6 +9,9 @@ using crtc_ega::CRTController;
 using crtc_ega::CRTCConfig;
 using crtc_ega::CRTCData;
 
+using memory_ega::RAMSIZE;
+using memory_ega::MemoryEGA;
+
 namespace video
 {
 	VideoEGA::VideoEGA(RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor) :
@@ -19,7 +22,7 @@ namespace video
 		m_baseAddressMono(baseAddressMono),
 		m_baseAddressColor(baseAddressColor),
 		m_egaROM("EGABIOS", 16384, emul::MemoryType::ROM),
-		m_egaRAM("EGARAM", 256*1024, emul::MemoryType::RAM) // TODO
+		m_egaRAM(ramsize)
 	{
 	}
 
@@ -60,6 +63,7 @@ namespace video
 	void VideoEGA::EnableLog(SEVERITY minSev)
 	{
 		m_crtc.EnableLog(minSev);
+		m_egaRAM.EnableLog(LOG_INFO);
 		Video::EnableLog(minSev);
 	}
 
@@ -456,19 +460,19 @@ namespace video
 		{
 		case MemoryMap::A000_128K:
 			LogPrintf(Logger::LOG_INFO, "MapMemory: [A000][128K]");
-			m_memory->Allocate(&m_egaRAM, 0xA0000/*, 128 * 1024 * 1024*/);
+			m_memory->Allocate(&m_egaRAM, 0xA0000, 0x20000);
 			break;
 		case MemoryMap::A000_64K:
 			LogPrintf(Logger::LOG_INFO, "MapMemory: [A000][64K]");
-			m_memory->Allocate(&m_egaRAM, 0xA0000/*, 64 * 1024 * 1024*/);
+			m_memory->Allocate(&m_egaRAM, 0xA0000, 0x10000);
 			break;
 		case MemoryMap::B000_32K:
 			LogPrintf(Logger::LOG_INFO, "MapMemory: [B000][32K]");
-			m_memory->Allocate(&m_egaRAM, 0xB0000/*, 32 * 1024 * 1024*/);
+			m_memory->Allocate(&m_egaRAM, 0xB0000, 0x8000);
 			break;
 		case MemoryMap::B800_32K:
 			LogPrintf(Logger::LOG_INFO, "MapMemory: [B800][32K]");
-			m_memory->Allocate(&m_egaRAM, 0xB8000/*, 32 * 1024 * 1024*/);
+			m_memory->Allocate(&m_egaRAM, 0xB8000, 0x8000);
 			break;
 		}
 	}
