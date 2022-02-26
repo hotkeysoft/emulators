@@ -34,7 +34,7 @@ namespace emul
 
 		void Dump(ADDRESS start, DWORD len, const char* outFile);
 
-		BYTE* GetPtr8(ADDRESS address) const;
+		BytePtr GetPtr8(ADDRESS address) const;
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress);
 

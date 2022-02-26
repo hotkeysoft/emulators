@@ -59,6 +59,6 @@ namespace video
 		emul::MemoryBlock m_screenB000;
 
 		emul::MemoryBlock m_charROM;
-		BYTE* m_charROMStart = nullptr;
+		ADDRESS m_charROMStart = 0;
 	};
 }

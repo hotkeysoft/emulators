@@ -3,32 +3,32 @@
 
 namespace emul
 {
-	WORD rawAdd8(BYTE&, const BYTE&, bool);
-	WORD rawSub8(BYTE&, const BYTE&, bool);
-	WORD rawCmp8(BYTE&, const BYTE&, bool);
-	WORD rawAdc8(BYTE&, const BYTE&, bool c);
-	WORD rawSbb8(BYTE&, const BYTE&, bool b);
+	WORD rawAdd8(BYTE&, const BYTE, bool);
+	WORD rawSub8(BYTE&, const BYTE, bool);
+	WORD rawCmp8(BYTE&, const BYTE, bool);
+	WORD rawAdc8(BYTE&, const BYTE, bool c);
+	WORD rawSbb8(BYTE&, const BYTE, bool b);
 
-	WORD rawAnd8(BYTE&, const BYTE&, bool);
-	WORD rawOr8(BYTE&, const BYTE&, bool);
-	WORD rawXor8(BYTE&, const BYTE&, bool);
-	WORD rawTest8(BYTE&, const BYTE&, bool);
+	WORD rawAnd8(BYTE&, const BYTE, bool);
+	WORD rawOr8(BYTE&, const BYTE, bool);
+	WORD rawXor8(BYTE&, const BYTE, bool);
+	WORD rawTest8(BYTE&, const BYTE, bool);
 
-	DWORD rawAdd16(WORD&, const WORD&, bool);
-	DWORD rawSub16(WORD&, const WORD&, bool);
-	DWORD rawCmp16(WORD&, const WORD&, bool);
-	DWORD rawAdc16(WORD&, const WORD&, bool c);
-	DWORD rawSbb16(WORD&, const WORD&, bool b);
+	DWORD rawAdd16(WORD&, const WORD, bool);
+	DWORD rawSub16(WORD&, const WORD, bool);
+	DWORD rawCmp16(WORD&, const WORD, bool);
+	DWORD rawAdc16(WORD&, const WORD, bool c);
+	DWORD rawSbb16(WORD&, const WORD, bool b);
 
-	DWORD rawAnd16(WORD&, const WORD&, bool);
-	DWORD rawOr16(WORD&, const WORD&, bool);
-	DWORD rawXor16(WORD&, const WORD&, bool);
-	DWORD rawTest16(WORD&, const WORD&, bool);
+	DWORD rawAnd16(WORD&, const WORD, bool);
+	DWORD rawOr16(WORD&, const WORD, bool);
+	DWORD rawXor16(WORD&, const WORD, bool);
+	DWORD rawTest16(WORD&, const WORD, bool);
 
 	// Arithmetic functions internal tests
-	#define ATEST8(F,A,B,R,O,S,Z,C) { flags.x=0; d8=A; s8=B; Arithmetic8(sd8, F); assert(*sd8.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST8(F,A,B,R,O,S,Z,C) { flags.x=0; d8=A; s8=B; Arithmetic8(sd8, F); assert(sd8.dest.Read()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 	#define ATEST16(F,A,B,R,O,S,Z,C) { flags.x=0; d16.x=A; s16.x=B; Arithmetic16(sd16, F); assert(sd16.dest.GetValue()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define ATEST8C(F,A,B,R,O,S,Z,C) { flags.x=FLAG_C; d8=A; s8=B; Arithmetic8(sd8, F); assert(*sd8.dest==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST8C(F,A,B,R,O,S,Z,C) { flags.x=FLAG_C; d8=A; s8=B; Arithmetic8(sd8, F); assert(sd8.dest.Read()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 	#define ATEST16C(F,A,B,R,O,S,Z,C) { flags.x=FLAG_C; d16.x=A; s16.x=B; Arithmetic16(sd16, F); assert(sd16.dest.GetValue()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
 	void CPU8086Test::TestArithmetic()

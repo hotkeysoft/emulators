@@ -2,27 +2,27 @@
 
 namespace emul
 {
-	WORD rawAdd8(BYTE& dest, const BYTE& src, bool) { WORD r = dest + src; dest = (BYTE)r; return r; }
-	WORD rawSub8(BYTE& dest, const BYTE& src, bool) { WORD r = dest - src; dest = (BYTE)r; return r; }
-	WORD rawCmp8(BYTE& dest, const BYTE& src, bool) { return dest - src; }
-	WORD rawAdc8(BYTE& dest, const BYTE& src, bool c) { WORD r = dest + src + (BYTE)c; dest = (BYTE)r; return r; }
-	WORD rawSbb8(BYTE& dest, const BYTE& src, bool b) { WORD r = dest - src - (BYTE)b; dest = (BYTE)r; return r; }
+	WORD rawAdd8(BYTE& dest, const BYTE src, bool) { WORD r = dest + src; dest = (BYTE)r; return r; }
+	WORD rawSub8(BYTE& dest, const BYTE src, bool) { WORD r = dest - src; dest = (BYTE)r; return r; }
+	WORD rawCmp8(BYTE& dest, const BYTE src, bool) { return dest - src; }
+	WORD rawAdc8(BYTE& dest, const BYTE src, bool c) { WORD r = dest + src + (BYTE)c; dest = (BYTE)r; return r; }
+	WORD rawSbb8(BYTE& dest, const BYTE src, bool b) { WORD r = dest - src - (BYTE)b; dest = (BYTE)r; return r; }
 
-	WORD rawAnd8(BYTE& dest, const BYTE& src, bool) { dest &= src; return dest; }
-	WORD rawOr8(BYTE& dest, const BYTE& src, bool) { dest |= src; return dest; }
-	WORD rawXor8(BYTE& dest, const BYTE& src, bool) { dest ^= src; return dest; }
-	WORD rawTest8(BYTE& dest, const BYTE& src, bool) { return dest & src; }
+	WORD rawAnd8(BYTE& dest, const BYTE src, bool) { dest &= src; return dest; }
+	WORD rawOr8(BYTE& dest, const BYTE src, bool) { dest |= src; return dest; }
+	WORD rawXor8(BYTE& dest, const BYTE src, bool) { dest ^= src; return dest; }
+	WORD rawTest8(BYTE& dest, const BYTE src, bool) { return dest & src; }
 
-	DWORD rawAdd16(WORD& dest, const WORD& src, bool) { DWORD r = dest + src; dest = (WORD)r; return r; }
-	DWORD rawSub16(WORD& dest, const WORD& src, bool) { DWORD r = dest - src; dest = (WORD)r; return r; }
-	DWORD rawCmp16(WORD& dest, const WORD& src, bool) { return dest - src; }
-	DWORD rawAdc16(WORD& dest, const WORD& src, bool c) { DWORD r = dest + src + WORD(c); dest = (WORD)r; return r; }
-	DWORD rawSbb16(WORD& dest, const WORD& src, bool b) { DWORD r = dest - src - WORD(b); dest = (WORD)r; return r; }
+	DWORD rawAdd16(WORD& dest, const WORD src, bool) { DWORD r = dest + src; dest = (WORD)r; return r; }
+	DWORD rawSub16(WORD& dest, const WORD src, bool) { DWORD r = dest - src; dest = (WORD)r; return r; }
+	DWORD rawCmp16(WORD& dest, const WORD src, bool) { return dest - src; }
+	DWORD rawAdc16(WORD& dest, const WORD src, bool c) { DWORD r = dest + src + WORD(c); dest = (WORD)r; return r; }
+	DWORD rawSbb16(WORD& dest, const WORD src, bool b) { DWORD r = dest - src - WORD(b); dest = (WORD)r; return r; }
 
-	DWORD rawAnd16(WORD& dest, const WORD& src, bool) { dest &= src; return dest; }
-	DWORD rawOr16(WORD& dest, const WORD& src, bool) { dest |= src; return dest; }
-	DWORD rawXor16(WORD& dest, const WORD& src, bool) { dest ^= src; return dest; }
-	DWORD rawTest16(WORD& dest, const WORD& src, bool) { return dest & src; }
+	DWORD rawAnd16(WORD& dest, const WORD src, bool) { dest &= src; return dest; }
+	DWORD rawOr16(WORD& dest, const WORD src, bool) { dest |= src; return dest; }
+	DWORD rawXor16(WORD& dest, const WORD src, bool) { dest ^= src; return dest; }
+	DWORD rawTest16(WORD& dest, const WORD src, bool) { return dest & src; }
 
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
@@ -863,7 +863,7 @@ namespace emul
 		throw std::exception("not possible");
 	}
 
-	BYTE* CPU8086::GetReg8(BYTE reg)
+	BytePtr CPU8086::GetReg8(BYTE reg)
 	{
 		switch (reg & 7)
 		{
@@ -998,7 +998,7 @@ namespace emul
 		return tmp;
 	}
 
-	BYTE* CPU8086::GetModRM8(BYTE modrm)
+	BytePtr CPU8086::GetModRM8(BYTE modrm)
 	{
 		WORD displacement = 0;
 		bool direct = false;
@@ -1046,8 +1046,8 @@ namespace emul
 		SourceDest8 sd;
 
 		// reg part
-		BYTE* reg = GetReg8(modregrm >> 3);
-		BYTE* modrm = GetModRM8(modregrm);
+		BytePtr reg = GetReg8(modregrm >> 3);
+		BytePtr modrm = GetModRM8(modregrm);
 
 		sd.source = toReg ? modrm : reg;
 		sd.dest = toReg ? reg : modrm;
@@ -1285,50 +1285,50 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "INCDEC8");
 
-		BYTE* dest = GetModRM8(op2);
+		BytePtr dest = GetModRM8(op2);
 
 		switch (op2 & 0x38)
 		{
 		case 0: // INC
-			INC8(*dest);
+			INC8(dest);
 			break;
 		case 8: // DEC
-			DEC8(*dest);
+			DEC8(dest);
 			break;
 		default:
 			throw std::exception("INCDEC8: invalid op2");
 		}
 	}
 
-	void CPU8086::INC8(BYTE& b)
+	void CPU8086::INC8(BytePtr b)
 	{
-		BYTE before = b;
+		BYTE before = b.Read();
+		BYTE after = before + 1;
+		b.Write(after);
 
-		++b;
-
-		SetFlag(FLAG_O, (!GetMSB(before) && GetMSB(b)));
-		AdjustSign(b);
-		AdjustZero(b);
+		SetFlag(FLAG_O, (!GetMSB(before) && GetMSB(after)));
+		AdjustSign(after);
+		AdjustZero(after);
 		SetFlag(FLAG_A, ((before & 0x0F) == 0x0F));
-		AdjustParity(b);
+		AdjustParity(after);
 
-		LogPrintf(LOG_DEBUG, "INC8 %02X->%02X", before, b);
+		LogPrintf(LOG_DEBUG, "INC8 %02X->%02X", before, after);
 	}
 
-	void CPU8086::DEC8(BYTE& b)
+	void CPU8086::DEC8(BytePtr b)
 	{
 		LogPrintf(LOG_DEBUG, "DEC8");
-		BYTE before = b;
+		BYTE before = b.Read();
+		BYTE after = before - 1;
+		b.Write(after);
 
-		--b;
-
-		SetFlag(FLAG_O, (GetMSB(before) && !GetMSB(b)));
-		AdjustSign(b);
-		AdjustZero(b);
+		SetFlag(FLAG_O, (GetMSB(before) && !GetMSB(after)));
+		AdjustSign(after);
+		AdjustZero(after);
 		SetFlag(FLAG_A, ((before & 0x0F) == 0));
-		AdjustParity(b);
+		AdjustParity(after);
 
-		LogPrintf(LOG_DEBUG, "DEC8 %02X->%02X", before, b);
+		LogPrintf(LOG_DEBUG, "DEC8 %02X->%02X", before, after);
 	}
 
 	void CPU8086::INC16(WORD& w)
@@ -1359,17 +1359,17 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "DEC16 %04X->%04X", before, w);
 	}
 
-	void CPU8086::MOV8(BYTE* d, BYTE s)
+	void CPU8086::MOV8(BytePtr d, BYTE s)
 	{
-		*d = s;
+		d.Write(s);
 	}
 	void CPU8086::MOV8(SourceDest8 sd)
 	{
-		*(sd.dest) = *(sd.source);
+		sd.dest.Write(sd.source.Read());
 	}
-	void CPU8086::MOVIMM8(BYTE* dest)
+	void CPU8086::MOVIMM8(BytePtr dest)
 	{
-		*(dest) = FetchByte();
+		dest.Write(FetchByte());
 	}
 
 	void CPU8086::MOV16(Mem16 d, WORD s)
@@ -1420,8 +1420,8 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
 
-		BYTE* b = GetModRM8(op2);
-		BYTE& dest = *b;
+		BytePtr dest = GetModRM8(op2);
+		BYTE work = dest.Read();
 
 		op2 &= 0x38;
 
@@ -1433,69 +1433,69 @@ namespace emul
 		}
 
 		// TODO: Ugly but approximates what i8086 does
-		LogPrintf(LOG_DEBUG, "SHIFTROT8 before=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
+		LogPrintf(LOG_DEBUG, "SHIFTROT8 before=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(work), work);
 		for (BYTE i = 0; i < count; ++i)
 		{
-			BYTE before = dest;
+			BYTE before = work;
 			BYTE sign;
 			bool carry;
 			switch (op2 & 0x38)
 			{
 			case 0x00: // ROL
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
-				SetFlag(FLAG_C, GetMSB(dest));
-				dest = (dest << 1) | (dest >> 7);
+				SetFlag(FLAG_C, GetMSB(work));
+				work = (work << 1) | (work >> 7);
 				break;
 			case 0x08: // ROR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
-				SetFlag(FLAG_C, GetLSB(dest));
-				dest = (dest >> 1) | (dest << 7);
+				SetFlag(FLAG_C, GetLSB(work));
+				work = (work >> 1) | (work << 7);
 				break;
 			case 0x10: // RCL
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
 				carry = GetFlag(FLAG_C);
-				SetFlag(FLAG_C, GetMSB(dest));
-				dest <<= 1;
-				dest |= (carry ? 1 : 0);
+				SetFlag(FLAG_C, GetMSB(work));
+				work <<= 1;
+				work |= (carry ? 1 : 0);
 				break;
 			case 0x18: // RCR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-				carry = GetLSB(dest);
-				dest >>= 1;
-				dest |= (GetFlag(FLAG_C) ? 128 : 0);
+				carry = GetLSB(work);
+				work >>= 1;
+				work |= (GetFlag(FLAG_C) ? 128 : 0);
 				SetFlag(FLAG_C, carry);
 				break;
 			case 0x20: // SHL/SAL
 			case 0x30: // Undocumented 
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
-				SetFlag(FLAG_C, GetMSB(dest));
-				dest <<= 1;
+				SetFlag(FLAG_C, GetMSB(work));
+				work <<= 1;
 				break;
 			case 0x28: // SHR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
-				SetFlag(FLAG_C, GetLSB(dest));
-				dest >>= 1;
+				SetFlag(FLAG_C, GetLSB(work));
+				work >>= 1;
 				break;
 			case 0x38: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
-				SetFlag(FLAG_C, GetLSB(dest));
-				sign = (dest & 128);
-				dest >>= 1;
-				dest |= sign;
+				SetFlag(FLAG_C, GetLSB(work));
+				sign = (work & 128);
+				work >>= 1;
+				work |= sign;
 				break;
 			default:
 				throw(std::exception("not possible"));
 			}
-
-			SetFlag(FLAG_O, GetMSB(before) != GetMSB(dest));
+			SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
 		}
-		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(dest), dest, dest);
+		dest.Write(work);
+		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(work), work);
 
 		if (op2 >= 0x20) // Only shift operation adjusts SZP flags
 		{
-			AdjustSign(dest);
-			AdjustZero(dest);
-			AdjustParity(dest);
+			AdjustSign(work);
+			AdjustZero(work);
+			AdjustParity(work);
 		}
 	}
 
@@ -1515,7 +1515,7 @@ namespace emul
 		}
 
 		// TODO: Ugly but approximates what i8086 does
-		LogPrintf(LOG_DEBUG, "SHIFTROT16 before=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(dest.GetValue()), dest.GetValue());
+		LogPrintf(LOG_DEBUG, "SHIFTROT16 before=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(work), work);
 		for (BYTE i = 0; i < count; ++i)
 		{
 			WORD before = work;
@@ -1584,8 +1584,8 @@ namespace emul
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
 	{
 		// Aliases
-		const BYTE& source = *(sd.source);
-		BYTE& dest = *(sd.dest);
+		const BYTE source = sd.source.Read();
+		BYTE dest = sd.dest.Read();
 
 		// AC Calculation
 		const BYTE source4 = source & 0x0F;
@@ -1596,6 +1596,7 @@ namespace emul
 		BYTE before = dest;
 		WORD after = func(dest, source, GetFlag(FLAG_C));
 		BYTE afterB = (BYTE)after;
+		sd.dest.Write(dest);
 		SetFlag(FLAG_C, after > 0xFF);
 
 		// TODO: improve this
@@ -1637,10 +1638,7 @@ namespace emul
 		WORD before = dest;
 		DWORD after = func(dest, source, GetFlag(FLAG_C));
 		WORD afterW = (WORD)after;
-		if (dest != before)
-		{
-			sd.dest.SetValue(dest);
-		}
+		sd.dest.SetValue(dest);
 		SetFlag(FLAG_C, after > 65535);
 
 		// TODO: improve this
@@ -1797,7 +1795,8 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticMulti8");
 
-		BYTE* modrm = GetModRM8(op2);
+		BytePtr modrm = GetModRM8(op2);
+		BYTE val = modrm.Read();
 
 		switch (op2 & 0x38)
 		{
@@ -1807,7 +1806,7 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "TEST8");
 			TICKRM(4, 17);
 			BYTE imm = FetchByte();
-			BYTE after = (BYTE)rawTest8(*modrm, imm, false);
+			BYTE after = (BYTE)rawTest8(val, imm, false);
 			SetFlag(FLAG_O, false);
 			SetFlag(FLAG_C, false);
 			AdjustSign(after);
@@ -1819,20 +1818,7 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "NOT16");
 			TICKRM(3, 16);
-			*modrm = ~(*modrm);
-			break;
-		}
-		case 0x20: // MUL
-		{
-			TICKRM(72, 80); // Varies
-			WORD result = regA.hl.l * (*modrm);
-			LogPrintf(LOG_DEBUG, "MUL8, %02X * %02X = %04X", regA.hl.l, *modrm, result);
-			regA.x = result;
-			SetFlag(FLAG_O, regA.hl.h != 0);
-			SetFlag(FLAG_C, regA.hl.h != 0);
-			AdjustSign(regA.hl.l);
-			AdjustZero(regA.hl.l);
-			AdjustParity(regA.hl.l);
+			modrm.Write(~val);
 			break;
 		}
 		case 0x18: // NEG
@@ -1843,15 +1829,28 @@ namespace emul
 			sd.dest = &tempDest;
 			sd.source = modrm;
 			Arithmetic8(sd, rawSub8);
-			LogPrintf(LOG_DEBUG, "NEG8, -(%02X) = %02X", *modrm, tempDest);
-			*modrm = tempDest;
+			LogPrintf(LOG_DEBUG, "NEG8, -(%02X) = %02X", val, tempDest);
+			modrm.Write(tempDest);
+			break;
+		}
+		case 0x20: // MUL
+		{
+			TICKRM(72, 80); // Varies
+			WORD result = regA.hl.l * val;
+			LogPrintf(LOG_DEBUG, "MUL8, %02X * %02X = %04X", regA.hl.l, val, result);
+			regA.x = result;
+			SetFlag(FLAG_O, regA.hl.h != 0);
+			SetFlag(FLAG_C, regA.hl.h != 0);
+			AdjustSign(regA.hl.l);
+			AdjustZero(regA.hl.l);
+			AdjustParity(regA.hl.l);
 			break;
 		}
 		case 0x28: // IMUL
 		{
 			TICKRM(82, 90); // Varies
-			int16_t result = (int8_t)regA.hl.l * (int8_t)(*modrm);
-			LogPrintf(LOG_DEBUG, "IMUL8, %d * %d = %d", (int8_t)regA.hl.l, (int8_t)(*modrm), result);
+			int16_t result = (int8_t)regA.hl.l * (int8_t)(val);
+			LogPrintf(LOG_DEBUG, "IMUL8, %d * %d = %d", (int8_t)regA.hl.l, (int8_t)(val), result);
 			regA.x = (WORD)result;
 			WORD tmp = Widen(regA.hl.l);
 			bool ocFlags = (tmp != (WORD)result);
@@ -1866,20 +1865,20 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "DIV8");
 			TICKRM(82, 90); // Varies
-			if ((*modrm) == 0)
+			if (val == 0)
 			{
 				INT(0);
 				return;
 			}
 			WORD dividend = regA.x;
-			WORD quotient = dividend / (*modrm);
+			WORD quotient = dividend / val;
 			if (quotient > 0xFF)
 			{
 				INT(0);
 				return;
 			}
-			BYTE remainder = dividend % (*modrm);
-			LogPrintf(LOG_DEBUG, "DIV8 %04X / %02X = %02X r %02X", dividend, (*modrm), quotient, remainder);
+			BYTE remainder = dividend % val;
+			LogPrintf(LOG_DEBUG, "DIV8 %04X / %02X = %02X r %02X", dividend, val, quotient, remainder);
 			regA.hl.l = (BYTE)quotient;
 			regA.hl.h = remainder;
 			break;
@@ -1888,20 +1887,20 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "IDIV8");
 			TICKRM(104, 110); // Varies
-			if ((*modrm) == 0)
+			if (val == 0)
 			{
 				INT(0);
 				return;
 			}
 			int16_t dividend = (int16_t)regA.x;
-			int16_t quotient = dividend / (int8_t)(*modrm);
+			int16_t quotient = dividend / int8_t(val);
 			if (quotient > 127 || quotient < -127)
 			{
 				INT(0);
 				return;
 			}
-			int8_t remainder = dividend % (int8_t)(*modrm);
-			LogPrintf(LOG_DEBUG, "IDIV8 %04X / %02X = %02X r %02X", dividend, (*modrm), quotient, remainder);
+			int8_t remainder = dividend % int8_t(val);
+			LogPrintf(LOG_DEBUG, "IDIV8 %04X / %02X = %02X r %02X", dividend, val, quotient, remainder);
 			regA.hl.l = (BYTE)quotient;
 			regA.hl.h = (BYTE)remainder;
 			break;
@@ -1985,8 +1984,8 @@ namespace emul
 		}
 		case 0x30:
 		{
-			TICKRM(150, 158); // Varies
 			LogPrintf(LOG_DEBUG, "DIV16");
+			TICKRM(150, 158); // Varies
 			if (val == 0)
 			{
 				INT(0);
@@ -2007,8 +2006,8 @@ namespace emul
 		}
 		case 0x38:
 		{
-			TICKRM(170, 178); // Varies
 			LogPrintf(LOG_DEBUG, "IDIV16");
+			TICKRM(170, 178); // Varies
 			if (val == 0)
 			{
 				INT(0);
@@ -2034,7 +2033,12 @@ namespace emul
 
 	void CPU8086::XCHG8(SourceDest8 sd)
 	{
-		XCHG8(*(sd.source), *(sd.dest));
+		BYTE source = sd.source.Read();
+		BYTE dest = sd.dest.Read();
+
+		XCHG8(source, dest);
+		sd.source.Write(source);
+		sd.dest.Write(dest);
 	}
 
 	void CPU8086::XCHG8(BYTE& b1, BYTE& b2)

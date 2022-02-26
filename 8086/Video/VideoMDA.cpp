@@ -25,7 +25,7 @@ namespace video
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadFromFile(charROM);
-		m_charROMStart = m_charROM.getPtr(0);
+		m_charROMStart = 0;
 
 		// Mode Control Register
 		Connect(m_baseAddress + 8, static_cast<PortConnector::OUTFunction>(&VideoMDA::WriteModeControlRegister));
@@ -126,7 +126,7 @@ namespace video
 			uint32_t bgRGB = GetColor(bg);
 
 			// Draw character
-			BYTE* currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.rowAddress & 7);
+			ADDRESS currCharPos = m_charROMStart + ((size_t)ch * 8) + (data.rowAddress & 7);
 			bool draw = !charBlink || (charBlink && GetCRTC().IsBlink16());
 
 			// Lower part of character is at A10=1 in ROM
@@ -134,6 +134,8 @@ namespace video
 			{
 				currCharPos += (1 << 11);
 			}
+			BYTE currChar = m_charROM.read(currCharPos);
+
 			bool underline = draw && (charUnderline & (data.rowAddress == config.maxScanlineAddress));
 
 			bool cursorLine = isCursorChar && (data.rowAddress >= config.cursorStart) && (data.rowAddress <= config.cursorEnd);
@@ -142,7 +144,7 @@ namespace video
 			{
 				if (x < 8)
 				{
-					lastDot = draw && GetBit(*(currCharPos), 7 - x);
+					lastDot = draw && GetBit(currChar, 7 - x);
 				}
 				// Characters C0h - DFh: 9th pixel == 8th pixel, otherwise blank
 				else if ((ch < 0xC0) || (ch > 0xDF))

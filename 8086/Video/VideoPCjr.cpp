@@ -28,7 +28,7 @@ namespace video
 		assert(charROM);
 		LogPrintf(Logger::LOG_INFO, "Loading char ROM [%s]", charROM);
 		m_charROM.LoadFromFile(charROM);
-		m_charROMStart = m_charROM.getPtr(4096 + 2048);
+		m_charROMStart = 4096 + 2048;
 
 		// Registers
 		// 
@@ -303,7 +303,7 @@ namespace video
 			}
 
 			// Draw character
-			BYTE currChar = m_charROMStart[((size_t)ch * 8) + data.rowAddress];
+			BYTE currChar = m_charROM.read(m_charROMStart + ((size_t)ch * 8) + data.rowAddress);
 			bool draw = !charBlink || (charBlink && GetCRTC().IsBlink16());
 
 			bool cursorLine = isCursorChar && (data.rowAddress >= config.cursorStart) && (data.rowAddress <= config.cursorEnd);

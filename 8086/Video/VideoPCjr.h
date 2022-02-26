@@ -108,6 +108,6 @@ namespace video
 		void DrawTextMode();
 
 		emul::MemoryBlock m_charROM;
-		BYTE* m_charROMStart = nullptr;
+		ADDRESS m_charROMStart = 0;
 	};
 }

@@ -16,7 +16,7 @@ namespace memory_ega
 		void SetReadPlane(BYTE plane) { m_currReadPlane = plane & 3; }
 
 		virtual BYTE read(emul::ADDRESS offset) override;
-		virtual BYTE* getPtr(emul::ADDRESS offset) override;
+		virtual emul::BytePtr getPtr(emul::ADDRESS offset) override;
 		virtual void write(emul::ADDRESS offset, BYTE data) override;
 
 	protected:

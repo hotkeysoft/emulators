@@ -159,7 +159,7 @@ namespace emul
 		return true;
 	}
 	
-	BYTE* Memory::GetPtr8(ADDRESS address) const
+	BytePtr Memory::GetPtr8(ADDRESS address) const
 	{
 		const MemorySlot& slot = m_memory[address / BlockGranularity];
 		MemoryBlock* block = slot.block;
@@ -192,8 +192,8 @@ namespace emul
 
 	BYTE Memory::Read8(ADDRESS address) const
 	{
-		const BYTE* mem = GetPtr8(address);
-		return *mem;
+		BytePtr mem = GetPtr8(address);
+		return mem.Read();
 	}
 
 	WORD Memory::Read16(ADDRESS address) const

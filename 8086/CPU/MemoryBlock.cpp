@@ -83,10 +83,10 @@ namespace emul
 		return m_data[offset];
 	}
 
-	BYTE* MemoryBlock::getPtr(ADDRESS offset)
+	BytePtr MemoryBlock::getPtr(ADDRESS offset)
 	{
 		assert(offset < m_size);
-		return m_data+(offset);
+		return BytePtr(m_data+offset);
 	}
 
 	void MemoryBlock::write(ADDRESS offset, BYTE data)

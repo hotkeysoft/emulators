@@ -8,6 +8,16 @@ namespace emul
 {
 	enum class MemoryType { RAM, ROM };
 
+	class BytePtr
+	{
+	public:
+		BytePtr(BYTE* ptr) : m_ptr(ptr) {}
+		BYTE Read() const { return *m_ptr; }
+		void Write(BYTE val) { *m_ptr = val; }
+	private:
+		BYTE* m_ptr = nullptr;
+	};
+
 	class MemoryBlock : public Logger
 	{
 	public:
@@ -31,7 +41,7 @@ namespace emul
 		bool Dump(ADDRESS offset, DWORD len, const char* outFile) const;
 
 		virtual BYTE read(ADDRESS offset);
-		virtual BYTE* getPtr(ADDRESS offset);
+		virtual BytePtr getPtr(ADDRESS offset);
 		virtual void write(ADDRESS offset, BYTE data);
 
 	protected:

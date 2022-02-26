@@ -24,9 +24,9 @@ namespace emul
 	struct SourceDest8
 	{
 		SourceDest8() {}
-		SourceDest8(BYTE* d, BYTE* s) : dest(d), source(s) {}
-		BYTE* source = nullptr;
-		BYTE* dest = nullptr;
+		SourceDest8(BytePtr d, BytePtr s) : dest(d), source(s) {}
+		BytePtr source = nullptr;
+		BytePtr dest = nullptr;
 	};
 
 	struct Mem32
@@ -54,11 +54,11 @@ namespace emul
 			SetAddress(memory, this->a + 2);
 		}
 
-		WORD GetValue() const { return MakeWord(*h, *l); }
-		void SetValue(WORD value) { *l = GetLByte(value); *h = GetHByte(value); }
+		WORD GetValue() const { return MakeWord(h.Read(), l.Read()); }
+		void SetValue(WORD value) { l.Write(GetLByte(value)); h.Write(GetHByte(value)); }
 
-		BYTE* h = nullptr;
-		BYTE* l = nullptr;
+		BytePtr h = nullptr;
+		BytePtr l = nullptr;
 
 		ADDRESS a = uint32_t(-1);
 	};
@@ -69,8 +69,8 @@ namespace emul
 		Mem16 dest;
 	};
 
-	typedef WORD(*RawOpFunc8)(BYTE& dest, const BYTE& src, bool);
-	typedef DWORD(*RawOpFunc16)(WORD& dest, const WORD& src, bool);
+	typedef WORD(*RawOpFunc8)(BYTE& dest, const BYTE src, bool);
+	typedef DWORD(*RawOpFunc16)(WORD& dest, const WORD src, bool);
 
 	typedef std::tuple<WORD, WORD> SegmentOffset;
 
@@ -189,7 +189,7 @@ namespace emul
 		BYTE FetchByte();
 		WORD FetchWord();
 
-		BYTE* GetModRM8(BYTE modrm);
+		BytePtr GetModRM8(BYTE modrm);
 		Mem16 GetModRM16(BYTE modrm);
 		enum class REGMEM { REG, MEM } m_regMem;
 
@@ -199,7 +199,7 @@ namespace emul
 		SegmentOffset GetEA(BYTE modregrm, bool direct);
 		static const char* GetEAStr(BYTE modregrm, bool direct);
 
-		BYTE* GetReg8(BYTE reg);
+		BytePtr GetReg8(BYTE reg);
 		Mem16 GetReg16(BYTE reg, bool segReg = false);
 
 		// Opcodes
@@ -229,19 +229,19 @@ namespace emul
 		void HLT();
 
 		void INCDEC8(BYTE op2);
-		void INC8(BYTE&);
-		void DEC8(BYTE&);
+		void INC8(BytePtr);
+		void DEC8(BytePtr);
 
 		void INC16(WORD&);
 		void DEC16(WORD&);
 
-		void MOV8(BYTE* d, BYTE s);
+		void MOV8(BytePtr d, BYTE s);
 		void MOV16(Mem16 d, WORD s);
 
 		void MOV8(SourceDest8 sd);
 		void MOV16(SourceDest16 sd);
 
-		void MOVIMM8(BYTE* dest);
+		void MOVIMM8(BytePtr dest);
 		void MOVIMM16(Mem16 dest);
 
 		void SAHF();

@@ -78,7 +78,7 @@ namespace video
 		emul::MemoryBlock m_screenB800;
 
 		emul::MemoryBlock m_charROM;
-		BYTE* m_charROMStart = nullptr;
+		ADDRESS m_charROMStart = 0;
 
 		BYTE m_currGraphPalette[4] = { 0, 0, 0, 0 };
 	};

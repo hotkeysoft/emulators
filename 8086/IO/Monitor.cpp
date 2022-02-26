@@ -274,8 +274,8 @@ namespace emul
 			adjustedOffset -= bytesPerLine; // Show one row before when possible
 		}
 		
-		BYTE* curr = m_memory->GetPtr8(S2A(segment, offset));
-		BYTE* data = m_memory->GetPtr8(S2A(segment, adjustedOffset));
+		ADDRESS curr = S2A(segment, offset);
+		ADDRESS data = S2A(segment, adjustedOffset);
 		for (int y = 0; y < hexPos.h; ++y)
 		{
 			CPUInfo::Coord pos;
@@ -287,11 +287,11 @@ namespace emul
 
 			for (int x = 0; x < bytesPerLine; ++x)
 			{
-				BYTE* currByte = data + (bytesPerLine * y) + x;
+				ADDRESS a = data + (bytesPerLine * y) + x;
+				BYTE ch = m_memory->Read8(a);
 				pos.x = hexPos.x + (3 * x);
-				WriteValueHex(*currByte, pos, (currByte==curr) ? 15 + (1<<4) : 7);
+				WriteValueHex(ch, pos, (a==curr) ? 15 + (1<<4) : 7);
 
-				const BYTE& ch = *currByte;
 				m_console.WriteAt(charPos.x + x, pos.y, ch ? ch : 0xFA, ch ? 7 : 8);
 			}
 		}
@@ -356,21 +356,21 @@ namespace emul
 		decoded.address = address;
 		WORD& segment = std::get<0>(address);
 		WORD& offset = std::get<1>(address);
-		BYTE* data = m_memory->GetPtr8(S2A(segment, offset));
+		BYTE data = m_memory->Read8(S2A(segment, offset));
 
-		decoded.AddRaw(*data);
+		decoded.AddRaw(data);
 
-		CPUInfo::Opcode instr = g_CPUInfo.GetOpcode(*data);
+		CPUInfo::Opcode instr = g_CPUInfo.GetOpcode(data);
 		std::string text = instr.text;
 
 		if (instr.modRegRm != CPUInfo::Opcode::MODREGRM::NONE)
 		{
 			offset++;
-			BYTE* modRegRm = m_memory->GetPtr8(S2A(segment, offset));
-			decoded.AddRaw(*modRegRm);
+			BYTE modRegRm = m_memory->Read8(S2A(segment, offset));
+			decoded.AddRaw(modRegRm);
 
 			const char* regStr = nullptr;
-			BYTE reg = (*modRegRm) >> 3;
+			BYTE reg = modRegRm >> 3;
 			switch (instr.modRegRm)
 			{
 			case CPUInfo::Opcode::MODREGRM::SR:
@@ -387,11 +387,11 @@ namespace emul
 			BYTE disp = 0;
 			if (instr.rm8)
 			{
-				replace(text, "{rm8}", CPU8086::GetModRMStr(*modRegRm, false, disp));
+				replace(text, "{rm8}", CPU8086::GetModRMStr(modRegRm, false, disp));
 			}
 			if (instr.rm16)
 			{
-				replace(text, "{rm16}", CPU8086::GetModRMStr(*modRegRm, true, disp));
+				replace(text, "{rm16}", CPU8086::GetModRMStr(modRegRm, true, disp));
 			}
 
 			// GetModRMStr can insert a {d8} or {d16} displacement, we have to fetch it
@@ -423,10 +423,10 @@ namespace emul
 		case CPUInfo::Opcode::IMM::W8:
 		{
 			++offset;
-			BYTE* imm8 = m_memory->GetPtr8(S2A(segment, offset));
-			decoded.AddRaw(*imm8);
+			BYTE imm8 = m_memory->Read8(S2A(segment, offset));
+			decoded.AddRaw(imm8);
 
-			sprintf(buf, "0%Xh", *imm8);
+			sprintf(buf, "0%Xh", imm8);
 			replace(text, "{i8}", buf);
 			break;
 		}
