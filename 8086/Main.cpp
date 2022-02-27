@@ -95,8 +95,6 @@ void ToggleMode()
 
 int main(int argc, char* args[])
 {
-	//logFile = fopen("./dump/dump.log", "w");
-
 #ifndef NO_CONSOLE
 	console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
 #endif
@@ -106,6 +104,17 @@ int main(int argc, char* args[])
 	if (!Config::Instance().LoadConfigFile("config/config.ini"))
 	{
 		return 1;
+	}
+
+	std::string logFileName = Config::Instance().GetValueStr("debug", "logfile");
+	if (logFileName.size())
+	{
+		fprintf(stdout, "Logging to output file: %s\n", logFileName.c_str());
+		logFile = fopen(logFileName.c_str(), "w");
+		if (!logFile)
+		{
+			fprintf(stderr, "Error opening log file\n");
+		}
 	}
 
 #ifdef CPU_TEST
