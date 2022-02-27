@@ -7,9 +7,10 @@ namespace emul
     {
     public:
         CPU8086Test(Memory& memory, MemoryMap& mmap) : CPU8086(memory, mmap), Logger("CPUtest") {}
-        void Test() { TestShiftRotate(); TestArithmetic(); }
+        void Test() { TestRegisters(); TestShiftRotate(); TestArithmetic(); }
 
     protected:
+        void TestRegisters();
         void TestShiftRotate();
         void TestArithmetic();
     };

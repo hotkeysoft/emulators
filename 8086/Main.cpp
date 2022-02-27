@@ -28,8 +28,7 @@ const short CONSOLE_COLS = 80;
 //#define CPU_TEST
 
 #ifdef CPU_TEST
-#include "CPU8086Test.h"
-#include "Main.h"
+#include "CPU/CPU8086Test.h"
 #endif
 
 namespace fs = std::filesystem;
