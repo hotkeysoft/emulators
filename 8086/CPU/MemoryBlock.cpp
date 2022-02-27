@@ -125,6 +125,11 @@ namespace emul
 
 	bool MemoryBlock::Dump(ADDRESS offset, DWORD len, const char* outFile) const
 	{
+		if (!len)
+		{
+			len = m_size;
+		}
+
 		LogPrintf(LOG_INFO, "Dump: dumping block size=%d to %s", m_size, outFile);
 
 		FILE* f = fopen(outFile, "wb");
