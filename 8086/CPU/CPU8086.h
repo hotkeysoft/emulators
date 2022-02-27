@@ -10,55 +10,126 @@ namespace emul
 {
 	static const size_t CPU8086_ADDRESS_BITS = 20;
 
-	#pragma pack(push, 1)
-	union Register
+	enum class REG16
 	{
-		WORD x = 0;
-		struct {
-			BYTE l;
-			BYTE h;
-		} hl;
+		// Indices in WORD array of memblock
+		INVALID = 0,
+
+		AX = 1,     // Accumulator
+		BX = 2,     // Base
+		CX = 3,     // Count
+		DX = 4,     // Data
+
+		SP = 5,    // Stack Pointer
+		BP = 6,    // Base Pointer
+		SI = 7,    // Source Index
+		DI = 8,    // Destination Index
+
+		// Segment Registers
+		CS = 9,     // Code Segment
+		DS = 10,     // Data Segment
+		SS = 11,     // Stack Segment
+		ES = 12,     // Extra Segment
+
+		IP = 13,      // Instruction Pointer
+
+		FLAGS = 14,   // Flags
+
+		_REP_IP = 15, // IP in REP
+		_SEG_O = 16, // Segment override
+
+		_T0 = 17      // Temp register
 	};
-	#pragma pack(pop)
+
+	enum class REG8
+	{
+		// Indices in BYTE array of memblock (to align, AL must be 2*AX, etc)
+		INVALID = 0,
+
+		AL = (1 * 2), AH, // Accumulator
+		BL = (2 * 2), BH, // Base
+		CL = (3 * 2), CH, // Count
+		DL = (4 * 2), DH, // Data
+
+		_T0 = (17 * 2), // Temp register
+	};
+
+	class Registers : public MemoryBlock
+	{
+	public:
+		Registers() : MemoryBlock("REG", 64) { Clear(0xFF); }
+
+		BYTE& Get8(REG8 r8) { return m_data[(int)r8]; }
+		BYTE Read8(REG8 r8) const { return m_data[(int)r8]; }
+		void Write8(REG8 r8, BYTE value) { m_data[(int)r8] = value; }
+
+		WORD& Get16(REG16 r16) { return ((WORD*)m_data)[(int)r16]; }
+		WORD Read16(REG16 r16) const { return ((WORD*)m_data)[(int)r16]; }
+		void Write16(REG16 r16, WORD value) { ((WORD*)m_data)[(int)r16] = value; }
+
+		BYTE operator[](REG8 r8) const { return Read8(r8); }
+		BYTE& operator[](REG8 r8) { return Get8(r8); }
+
+		WORD operator[](REG16 r8) const { return Read16(r8); }
+		WORD& operator[](REG16 r8) { return Get16(r8); }
+	};
+
+	class Mem8
+	{
+	public:
+		Mem8() {}
+		Mem8(ADDRESS a) : m_address(a) {}
+		Mem8(REG8 r8) : m_reg8(r8) {}
+
+		BYTE Read() const { return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_address); }
+		void Write(BYTE value) { (int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_address, value); }
+
+		static void Init(Memory* m, Registers* r) { m_memory = m; m_registers = r; }
+
+	protected:		
+		static Memory* m_memory;
+		static Registers* m_registers;
+
+		ADDRESS m_address = ADDRESS(-1);
+		REG8 m_reg8 = REG8::INVALID;
+	};
 
 	struct SourceDest8
 	{
-		SourceDest8() {}
-		SourceDest8(BytePtr d, BytePtr s) : dest(d), source(s) {}
-		BytePtr source = nullptr;
-		BytePtr dest = nullptr;
+		Mem8 source;
+		Mem8 dest;
 	};
 
-	struct Mem32
+	class Mem16
 	{
-		WORD GetValue() const { return value; }
-
-		DWORD value;
-	};
-
-	struct Mem16
-	{
+	public:
 		Mem16() {}
-		Mem16(Memory& memory, ADDRESS a) { SetAddress(memory, a); }
-		Mem16(Register& reg) : l(&reg.hl.l), h(&reg.hl.h) {}
+		Mem16(ADDRESS a) { SetAddress(a); }
+		Mem16(REG16 r16) : l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
 
-		void SetAddress(Memory& memory, ADDRESS a)
+		void SetAddress(ADDRESS a)
 		{
 			this->a = a;
-			this->l = memory.GetPtr8(a);
-			this->h = memory.GetPtr8(a + 1);
+			this->l = Mem8(a);
+			this->h = Mem8(a + 1);
 		}
 
 		void Increment(Memory& memory)
 		{
-			SetAddress(memory, this->a + 2);
+			SetAddress(this->a + 2);
 		}
 
-		WORD GetValue() const { return MakeWord(h.Read(), l.Read()); }
-		void SetValue(WORD value) { l.Write(GetLByte(value)); h.Write(GetHByte(value)); }
+		WORD Read() const { return MakeWord(h.Read(), l.Read()); }
+		void Write(WORD value) { l.Write(GetLByte(value)); h.Write(GetHByte(value)); }
 
-		BytePtr h = nullptr;
-		BytePtr l = nullptr;
+		static void Init(Memory* m, Registers* r) { m_memory = m; m_registers = r; }
+
+	protected:
+		static Memory* m_memory;
+		static Registers* m_registers;
+
+		Mem8 h;
+		Mem8 l;
 
 		ADDRESS a = uint32_t(-1);
 	};
@@ -81,7 +152,7 @@ namespace emul
 		virtual ~CPU8086();
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
-		virtual ADDRESS GetCurrentAddress() const { return S2A(regCS.x, regIP.x); }
+		virtual ADDRESS GetCurrentAddress() const { return S2A(m_reg.Read16(REG16::CS), m_reg.Read16(REG16::IP)); }
 
 		virtual bool Step() override;
 
@@ -103,24 +174,7 @@ namespace emul
 			return GetFlag(FLAG::FLAG_I) && (m_lastOp != 0xFB);
 		}
 
-		// General Registers
-		Register regA; // Accumulator
-		Register regB; // Base
-		Register regC; // Count
-		Register regD; // Data
-
-		Register regSP; // Stack Pointer
-		Register regBP; // Base Pointer
-		Register regSI; // Source Index
-		Register regDI; // Destination Index
-
-		// Segment Registers
-		Register regCS; // Code Segment
-		Register regDS; // Data Segment
-		Register regSS; // Stack Segment
-		Register regES; // Extra Segment
-
-		Register regIP; // Instruction Pointer
+		Registers m_reg;
 
 		enum FLAG : WORD
 		{
@@ -143,11 +197,9 @@ namespace emul
 			FLAG_R15 = 0x8000, // Reserved, 0
 		};
 
-		Register flags;
-
 		void ClearFlags();
-		bool GetFlag(FLAG f) { return (flags.x & f) ? true : false; };
-		void SetFlag(FLAG f, bool v) { if (v) flags.x |= f; else flags.x &= ~f; };
+		bool GetFlag(FLAG f) { return (m_reg[REG16::FLAGS] & f) ? true : false; };
+		void SetFlag(FLAG f, bool v) { if (v) m_reg[REG16::FLAGS] |= f; else m_reg[REG16::FLAGS] &= ~f; };
 
 		static const char* GetReg8Str(BYTE reg);
 		static const char* GetReg16Str(BYTE reg, bool segReg = false);
@@ -167,12 +219,10 @@ namespace emul
 
 		// REP flags
 		bool inRep = false;
-		WORD repIP = 0;
 		bool repZ = false;
 
 		// segment Override
 		bool inSegOverride = false;
-		WORD segOverride = 0;
 
 		// Helper functions
 
@@ -189,7 +239,7 @@ namespace emul
 		BYTE FetchByte();
 		WORD FetchWord();
 
-		BytePtr GetModRM8(BYTE modrm);
+		Mem8 GetModRM8(BYTE modrm);
 		Mem16 GetModRM16(BYTE modrm);
 		enum class REGMEM { REG, MEM } m_regMem;
 
@@ -199,7 +249,7 @@ namespace emul
 		SegmentOffset GetEA(BYTE modregrm, bool direct);
 		static const char* GetEAStr(BYTE modregrm, bool direct);
 
-		BytePtr GetReg8(BYTE reg);
+		Mem8 GetReg8(BYTE reg);
 		Mem16 GetReg16(BYTE reg, bool segReg = false);
 
 		// Opcodes
@@ -229,19 +279,19 @@ namespace emul
 		void HLT();
 
 		void INCDEC8(BYTE op2);
-		void INC8(BytePtr);
-		void DEC8(BytePtr);
+		void INC8(Mem8);
+		void DEC8(Mem8);
 
 		void INC16(WORD&);
 		void DEC16(WORD&);
 
-		void MOV8(BytePtr d, BYTE s);
+		void MOV8(Mem8 d, BYTE s);
 		void MOV16(Mem16 d, WORD s);
 
 		void MOV8(SourceDest8 sd);
 		void MOV16(SourceDest16 sd);
 
-		void MOVIMM8(BytePtr dest);
+		void MOVIMM8(Mem8 dest);
 		void MOVIMM16(Mem16 dest);
 
 		void SAHF();
@@ -254,7 +304,7 @@ namespace emul
 
 		void Arithmetic8(SourceDest8 sd, RawOpFunc8 func);
 		void Arithmetic16(SourceDest16 sd, RawOpFunc16 func);
-		void ArithmeticImm8(BYTE& dest, BYTE imm, RawOpFunc8 func);
+		void ArithmeticImm8(Mem8 dest, BYTE imm, RawOpFunc8 func);
 		void ArithmeticImm16(Mem16 dest, WORD imm, RawOpFunc16 func);
 
 		void ArithmeticImm8(BYTE op2);

@@ -1,7 +1,6 @@
 #include "MemoryEGA.h"
 
 using emul::ADDRESS;
-using emul::BytePtr;
 
 namespace memory_ega
 {
@@ -28,11 +27,6 @@ namespace memory_ega
 			LogPrintf(LOG_ERROR, "Read Mode Compare not implemented");
 		}
 		return m_planes[m_currReadPlane].read(offset & m_planeAddressMask);
-	}
-
-	BytePtr MemoryEGA::getPtr(ADDRESS offset)
-	{
-		return m_planes[0].getPtr(offset & m_planeAddressMask);
 	}
 
 	void MemoryEGA::write(ADDRESS offset, BYTE data) 

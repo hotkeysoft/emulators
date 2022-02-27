@@ -24,9 +24,17 @@ namespace emul
 	DWORD rawXor16(WORD& dest, const WORD src, bool) { dest ^= src; return dest; }
 	DWORD rawTest16(WORD& dest, const WORD src, bool) { return dest & src; }
 
+	Memory* Mem8::m_memory = nullptr;
+	Registers* Mem8::m_registers = nullptr;
+
+	Memory* Mem16::m_memory = nullptr;
+	Registers* Mem16::m_registers = nullptr;
+
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
 	{
+		Mem8::Init(&memory, &m_reg);
+		Mem16::Init(&memory, &m_reg);
 	}
 
 	CPU8086::~CPU8086()
@@ -62,7 +70,7 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		//if (regCS.x == 0x0100 && regIP.x == 0x6F8D)
+		//if (m_reg[REG16::CS] == 0x0100 && m_reg[REG16::IP] == 0x6F8D)
 		//{
 		//	__debugbreak();
 		//}
@@ -70,7 +78,7 @@ namespace emul
 
 		bool trap = GetFlag(FLAG_T);
 
-		++regIP.x;
+		++m_reg[REG16::IP];
 
 		// Disable override after next instruction
 		bool clearSegOverride = inSegOverride;
@@ -91,14 +99,14 @@ namespace emul
 		// ADD
 		// --------
 		// AL, IMMED8
-		case 0x04: TICK(4); ArithmeticImm8(regA.hl.l, FetchByte(), rawAdd8); break;
+		case 0x04: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawAdd8); break;
 		// AX, IMMED16
-		case 0x05: TICK(4); ArithmeticImm16(regA, FetchWord(), rawAdd16); break;
+		case 0x05: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawAdd16); break;
 
 		// PUSH ES (1)
-		case 0x06: TICK(10); PUSH(regES); break;
+		case 0x06: TICK(10); PUSH(REG16::ES); break;
 		// POP ES (1)
-		case 0x07: TICK(8); POP(regES); break;
+		case 0x07: TICK(8); POP(REG16::ES); break;
 
 		// OR
 		// ----------
@@ -114,14 +122,14 @@ namespace emul
 		// OR
 		// ----------
 		// AL, IMMED8
-		case 0x0C: TICK(4); ArithmeticImm8(regA.hl.l, FetchByte(), rawOr8); break;
+		case 0x0C: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawOr8); break;
 		// AX, IMMED16
-		case 0x0D: TICK(4); ArithmeticImm16(regA, FetchWord(), rawOr16); break;
+		case 0x0D: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawOr16); break;
 
 		// PUSH CS
-		case 0x0E: TICK(10); PUSH(regCS); break;
+		case 0x0E: TICK(10); PUSH(REG16::CS); break;
 		// POP CS // Undocumented, 8086 only
-		case 0x0F: TICK(8); POP(regCS); break;
+		case 0x0F: TICK(8); POP(REG16::CS); break;
 
 		// ADC
 		// ----------
@@ -138,14 +146,14 @@ namespace emul
 		// ADC
 		// ----------
 		// AL, IMMED8
-		case 0x14: TICK(4); ArithmeticImm8(regA.hl.l, FetchByte(), rawAdc8); break;
+		case 0x14: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawAdc8); break;
 		// AX, IMMED16
-		case 0x15: TICK(4); ArithmeticImm16(regA, FetchWord(), rawAdc16); break;
+		case 0x15: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawAdc16); break;
 
 		// PUSH SS
-		case 0x16: TICK(10); PUSH(regSS); break;
+		case 0x16: TICK(10); PUSH(REG16::SS); break;
 		// POP SS
-		case 0x17: TICK(8); POP(regSS); break;
+		case 0x17: TICK(8); POP(REG16::SS); break;
 
 		// SBB
 		// ----------
@@ -161,14 +169,14 @@ namespace emul
 		// SBB
 		// ----------
 		// AL, IMMED8
-		case 0x1C: TICK(4); ArithmeticImm8(regA.hl.l, FetchByte(), rawSbb8); break;
+		case 0x1C: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawSbb8); break;
 		// AX, IMMED16
-		case 0x1D: TICK(4); ArithmeticImm16(regA, FetchWord(), rawSbb16); break;
+		case 0x1D: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawSbb16); break;
 
 		// PUSH DS (1)
-		case 0x1E: TICK(10); PUSH(regDS); break;
+		case 0x1E: TICK(10); PUSH(REG16::DS); break;
 		// POP DS
-		case 0x1F: TICK(8); POP(regDS); break;
+		case 0x1F: TICK(8); POP(REG16::DS); break;
 
 		// AND
 		// ----------
@@ -184,12 +192,12 @@ namespace emul
 		// AND
 		// ----------
 		// AL, IMMED8
-		case 0x24: TICK(4); ArithmeticImm8(regA.hl.l, FetchByte(), rawAnd8); break;
+		case 0x24: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawAnd8); break;
 		// AX, IMMED16
-		case 0x25: TICK(4); ArithmeticImm16(regA, FetchWord(), rawAnd16); break;
+		case 0x25: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawAnd16); break;
 
 		// ES Segment Override
-		case 0x26: TICK(2); SEGOVERRIDE(regES.x); break;
+		case 0x26: TICK(2); SEGOVERRIDE(m_reg[REG16::ES]); break;
 
 		// DAA
 		case 0x27: TICK(4); DAA(); break;
@@ -208,12 +216,12 @@ namespace emul
 		// SUB
 		// ----------
 		// AL, IMMED8
-		case 0x2C: TICK(4); ArithmeticImm8(regA.hl.l, FetchByte(), rawSub8); break;
+		case 0x2C: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawSub8); break;
 		// AX, IMMED16
-		case 0x2D: TICK(4); ArithmeticImm16(regA, FetchWord(), rawSub16); break;
+		case 0x2D: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawSub16); break;
 
 		// CS Segment Override
-		case 0x2E: TICK(2); SEGOVERRIDE(regCS.x); break;
+		case 0x2E: TICK(2); SEGOVERRIDE(m_reg[REG16::CS]); break;
 
 		// DAS
 		case 0x2F: TICK(4); DAS(); break;
@@ -232,12 +240,12 @@ namespace emul
 		// XOR
 		// ----------
 		// AL, IMMED8
-		case 0x34: TICK(4); ArithmeticImm8(regA.hl.l, FetchByte(), rawXor8); break;
+		case 0x34: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawXor8); break;
 		// AX, IMMED16
-		case 0x35: TICK(4); ArithmeticImm16(regA, FetchWord(), rawXor16); break;
+		case 0x35: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawXor16); break;
 
 		// SS Segment Override
-		case 0x36: TICK(2); SEGOVERRIDE(regSS.x); break;
+		case 0x36: TICK(2); SEGOVERRIDE(m_reg[REG16::SS]); break;
 
 		// AAA
 		case 0x37: TICK(4);  AAA(); break;
@@ -256,12 +264,12 @@ namespace emul
 		// CMP
 		// ----------
 		// AL, IMMED8
-		case 0x3C: TICK(4); ArithmeticImm8(regA.hl.l, FetchByte(), rawCmp8); break;
+		case 0x3C: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawCmp8); break;
 		// AX, IMMED16
-		case 0x3D: TICK(4); ArithmeticImm16(regA, FetchWord(), rawCmp16); break;
+		case 0x3D: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawCmp16); break;
 
 		// DS Segment Override
-		case 0x3E: TICK(2); SEGOVERRIDE(regDS.x); break;
+		case 0x3E: TICK(2); SEGOVERRIDE(m_reg[REG16::DS]); break;
 
 		// AAS
 		case 0x3F: TICK(4); AAS(); break;
@@ -269,78 +277,78 @@ namespace emul
 		// INC
 		// ----------
 		// INC AX
-		case 0x40: TICK(2); INC16(regA.x); break;
+		case 0x40: TICK(2); INC16(m_reg[REG16::AX]); break;
 		// INC CX
-		case 0x41: TICK(2); INC16(regC.x); break;
+		case 0x41: TICK(2); INC16(m_reg[REG16::CX]); break;
 		// INC DX
-		case 0x42: TICK(2); INC16(regD.x); break;
+		case 0x42: TICK(2); INC16(m_reg[REG16::DX]); break;
 		// INC BX
-		case 0x43: TICK(2); INC16(regB.x); break;
+		case 0x43: TICK(2); INC16(m_reg[REG16::BX]); break;
 		// INC SP
-		case 0x44: TICK(2); INC16(regSP.x); break;
+		case 0x44: TICK(2); INC16(m_reg[REG16::SP]); break;
 		// INC BP
-		case 0x45: TICK(2); INC16(regBP.x); break;
+		case 0x45: TICK(2); INC16(m_reg[REG16::BP]); break;
 		// INC SI
-		case 0x46: TICK(2); INC16(regSI.x); break;
+		case 0x46: TICK(2); INC16(m_reg[REG16::SI]); break;
 		// INC DI
-		case 0x47: TICK(2); INC16(regDI.x); break;
+		case 0x47: TICK(2); INC16(m_reg[REG16::DI]); break;
 
 		// DEC
 		// ----------
 		// DEC AX
-		case 0x48: TICK(2); DEC16(regA.x); break;
+		case 0x48: TICK(2); DEC16(m_reg[REG16::AX]); break;
 		// DEC CX
-		case 0x49: TICK(2); DEC16(regC.x); break;
+		case 0x49: TICK(2); DEC16(m_reg[REG16::CX]); break;
 		// DEC DX
-		case 0x4A: TICK(2); DEC16(regD.x); break;
+		case 0x4A: TICK(2); DEC16(m_reg[REG16::DX]); break;
 		// DEC BX
-		case 0x4B: TICK(2); DEC16(regB.x); break;
+		case 0x4B: TICK(2); DEC16(m_reg[REG16::BX]); break;
 		// DEC SP
-		case 0x4C: TICK(2); DEC16(regSP.x); break;
+		case 0x4C: TICK(2); DEC16(m_reg[REG16::SP]); break;
 		// DEC BP
-		case 0x4D: TICK(2); DEC16(regBP.x); break;
+		case 0x4D: TICK(2); DEC16(m_reg[REG16::BP]); break;
 		// DEC SI
-		case 0x4E: TICK(2); DEC16(regSI.x); break;
+		case 0x4E: TICK(2); DEC16(m_reg[REG16::SI]); break;
 		// DEC DI
-		case 0x4F: TICK(2); DEC16(regDI.x); break;
+		case 0x4F: TICK(2); DEC16(m_reg[REG16::DI]); break;
 
 		// PUSH
 		// ----------
 		// PUSH AX
-		case 0x50: TICK(11); PUSH(regA); break;
+		case 0x50: TICK(11); PUSH(REG16::AX); break;
 		// PUSH CX
-		case 0x51: TICK(11); PUSH(regC); break;
+		case 0x51: TICK(11); PUSH(REG16::CX); break;
 		// PUSH DX
-		case 0x52: TICK(11); PUSH(regD); break;
+		case 0x52: TICK(11); PUSH(REG16::DX); break;
 		// PUSH BX
-		case 0x53: TICK(11); PUSH(regB); break;
+		case 0x53: TICK(11); PUSH(REG16::BX); break;
 		// PUSH SP
-		case 0x54: TICK(11); PUSH(regSP.x); break;
+		case 0x54: TICK(11); PUSH(REG16::SP); break;
 		// PUSH BP
-		case 0x55: TICK(11); PUSH(regBP.x); break;
+		case 0x55: TICK(11); PUSH(REG16::BP); break;
 		// PUSH SI
-		case 0x56: TICK(11); PUSH(regSI.x); break;
+		case 0x56: TICK(11); PUSH(REG16::SI); break;
 		// PUSH DI
-		case 0x57: TICK(11); PUSH(regDI.x); break;
+		case 0x57: TICK(11); PUSH(REG16::DI); break;
 
 		// POP
 		// ----------
 		// POP AX
-		case 0x58: TICK(8); POP(regA); break;
+		case 0x58: TICK(8); POP(REG16::AX); break;
 		// POP CX
-		case 0x59: TICK(8); POP(regC); break;
+		case 0x59: TICK(8); POP(REG16::CX); break;
 		// POP DX
-		case 0x5A: TICK(8); POP(regD); break;
+		case 0x5A: TICK(8); POP(REG16::DX); break;
 		// POP BX
-		case 0x5B: TICK(8); POP(regB); break;
+		case 0x5B: TICK(8); POP(REG16::BX); break;
 		// POP SP
-		case 0x5C: TICK(8); POP(regSP); break;
+		case 0x5C: TICK(8); POP(REG16::SP); break;
 		// POP BP
-		case 0x5D: TICK(8); POP(regBP); break;
+		case 0x5D: TICK(8); POP(REG16::BP); break;
 		// POP SI
-		case 0x5E: TICK(8); POP(regSI); break;
+		case 0x5E: TICK(8); POP(REG16::SI); break;
 		// POP DI
-		case 0x5F: TICK(8); POP(regDI); break;
+		case 0x5F: TICK(8); POP(REG16::DI); break;
 
 		// Undocumented: 0x60-0x6F maps to 0x70-0x7F on 8086 only
 		// JO
@@ -455,21 +463,21 @@ namespace emul
 		// XCHG
 		// ----------
 		// XCHG AX, AX (NOP)
-		case 0x90: TICK(3); XCHG16(regA.x, regA.x); break;
+		case 0x90: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::AX]); break;
 		// XCHG AX, CX
-		case 0x91: TICK(3); XCHG16(regA.x, regC.x); break;
+		case 0x91: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::CX]); break;
 		// XCHG AX, DX
-		case 0x92: TICK(3); XCHG16(regA.x, regD.x); break;
+		case 0x92: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::DX]); break;
 		// XCHG AX, BX
-		case 0x93: TICK(3); XCHG16(regA.x, regB.x); break;
+		case 0x93: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::BX]); break;
 		// XCHG AX, SP
-		case 0x94: TICK(3); XCHG16(regA.x, regSP.x); break;
+		case 0x94: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::SP]); break;
 		// XCHG AX, BP
-		case 0x95: TICK(3); XCHG16(regA.x, regBP.x); break;
+		case 0x95: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::BP]); break;
 		// XCHG AX, SI
-		case 0x96: TICK(3); XCHG16(regA.x, regSI.x); break;
+		case 0x96: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::SI]); break;
 		// XCHG AX, DI
-		case 0x97: TICK(3); XCHG16(regA.x, regDI.x); break;
+		case 0x97: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::DI]); break;
 
 		// CBW
 		case 0x98: TICK(2); CBW(); break;
@@ -483,9 +491,9 @@ namespace emul
 		case 0x9B: NotImplemented(opcode); break;
 
 		// PUSHF
-		case 0x9C: TICK(10); PUSH(flags); break;
+		case 0x9C: TICK(10); PUSH(REG16::FLAGS); break;
 		// POPF
-		case 0x9D: TICK(8); POP(flags); flags.x |= FLAG_R1; flags.x &= ~(FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15); break;  // TODO: Clean flags in function
+		case 0x9D: TICK(8); POP(REG16::FLAGS); m_reg[REG16::FLAGS] |= FLAG_R1; m_reg[REG16::FLAGS] &= ~(FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15); break;  // TODO: Clean flags in function
 		// SAHF
 		case 0x9E: TICK(4); SAHF(); break;
 		// LAHF
@@ -494,16 +502,16 @@ namespace emul
 		// MOV
 		// ----------
 		// MOV AL, MEM8
-		case 0xA0: TICK(10); MOV8(&regA.hl.l, m_memory.Read8(S2A(inSegOverride ? segOverride : regDS.x, FetchWord()))); break;
+		case 0xA0: TICK(10); MOV8(REG8::AL, m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); break;
 		// MOV AX, MEM16
-		case 0xA1: TICK(10); MOV16(regA, m_memory.Read16(S2A(inSegOverride ? segOverride : regDS.x, FetchWord()))); break;
+		case 0xA1: TICK(10); MOV16(REG16::AX, m_memory.Read16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); break;
 
 		// MOV
 		// ----------
 		// MOV MEM8, AL
-		case 0xA2: TICK(10); MOV8(m_memory.GetPtr8(S2A(inSegOverride ? segOverride : regDS.x, FetchWord())), regA.hl.l); break;
+		case 0xA2: TICK(10); MOV8(Mem8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG8::AL]); break;
 		// MOV MEM16, AX
-		case 0xA3: TICK(10); MOV16(Mem16(m_memory, S2A(inSegOverride ? segOverride : regDS.x, FetchWord())), regA.x); break;
+		case 0xA3: TICK(10); MOV16(Mem16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG16::AX]); break;
 
 		// MOVS
 		// ----------
@@ -522,9 +530,9 @@ namespace emul
 		// TEST
 		// ----------
 		// TEST AL, IMM8
-		case 0xA8: TICK(5); ArithmeticImm8(regA.hl.l, FetchByte(), rawTest8); break;
+		case 0xA8: TICK(5); ArithmeticImm8(REG8::AL, FetchByte(), rawTest8); break;
 		// TEST AX, IMM16
-		case 0xA9: TICK(5); ArithmeticImm16(regA, FetchWord(), rawTest16); break;
+		case 0xA9: TICK(5); ArithmeticImm16(REG16::AX, FetchWord(), rawTest16); break;
 
 		// STOS
 		// ----------
@@ -550,38 +558,38 @@ namespace emul
 		// MOV
 		// ----------
 		// MOV AL, IMM8
-		case 0xB0: TICK(4); MOV8(&regA.hl.l, FetchByte()); break;
+		case 0xB0: TICK(4); MOV8(REG8::AL, FetchByte()); break;
 		// MOV CL, IMM8
-		case 0xB1: TICK(4); MOV8(&regC.hl.l, FetchByte()); break;
+		case 0xB1: TICK(4); MOV8(REG8::CL, FetchByte()); break;
 		// MOV DL, IMM8
-		case 0xB2: TICK(4); MOV8(&regD.hl.l, FetchByte()); break;
+		case 0xB2: TICK(4); MOV8(REG8::DL, FetchByte()); break;
 		// MOV BL, IMM8
-		case 0xB3: TICK(4); MOV8(&regB.hl.l, FetchByte()); break;
+		case 0xB3: TICK(4); MOV8(REG8::BL, FetchByte()); break;
 		// MOV AH, IMM8
-		case 0xB4: TICK(4); MOV8(&regA.hl.h, FetchByte()); break;
+		case 0xB4: TICK(4); MOV8(REG8::AH, FetchByte()); break;
 		// MOV CH, IMM8
-		case 0xB5: TICK(4); MOV8(&regC.hl.h, FetchByte()); break;
+		case 0xB5: TICK(4); MOV8(REG8::CH, FetchByte()); break;
 		// MOV DH, IMM8
-		case 0xB6: TICK(4); MOV8(&regD.hl.h, FetchByte()); break;
+		case 0xB6: TICK(4); MOV8(REG8::DH, FetchByte()); break;
 		// MOV BH, IMM8
-		case 0xB7: TICK(4); MOV8(&regB.hl.h, FetchByte()); break;
+		case 0xB7: TICK(4); MOV8(REG8::BH, FetchByte()); break;
 
 		// MOV AX, IMM16
-		case 0xB8: TICK(4); MOV16(regA, FetchWord()); break;
+		case 0xB8: TICK(4); MOV16(REG16::AX, FetchWord()); break;
 		// MOV CX, IMM16
-		case 0xB9: TICK(4); MOV16(regC, FetchWord()); break;
+		case 0xB9: TICK(4); MOV16(REG16::CX, FetchWord()); break;
 		// MOV DX, IMM16
-		case 0xBA: TICK(4); MOV16(regD, FetchWord()); break;
+		case 0xBA: TICK(4); MOV16(REG16::DX, FetchWord()); break;
 		// MOV BX, IMM16
-		case 0xBB: TICK(4); MOV16(regB, FetchWord()); break;
+		case 0xBB: TICK(4); MOV16(REG16::BX, FetchWord()); break;
 		// MOV SP, IMM16
-		case 0xBC: TICK(4); MOV16(regSP, FetchWord()); break;
+		case 0xBC: TICK(4); MOV16(REG16::SP, FetchWord()); break;
 		// MOV BP, IMM16
-		case 0xBD: TICK(4); MOV16(regBP, FetchWord()); break;
+		case 0xBD: TICK(4); MOV16(REG16::BP, FetchWord()); break;
 		// MOV SI, IMM16
-		case 0xBE: TICK(4); MOV16(regSI, FetchWord()); break;
+		case 0xBE: TICK(4); MOV16(REG16::SI, FetchWord()); break;
 		// MOV DI, IMM16
-		case 0xBF: TICK(4); MOV16(regDI, FetchWord()); break;
+		case 0xBF: TICK(4); MOV16(REG16::DI, FetchWord()); break;
 
 		// RET SP+IMM16
 		case 0xC0: // Undocumented, 8086 only
@@ -591,9 +599,9 @@ namespace emul
 		case 0xC3: TICK(8); RETNear(); break;
 
 		// LES REG16, MEM16
-		case 0xC4: TICK(16); LoadPTR(regES.x, GetModRegRM16(FetchByte(), true)); break;
+		case 0xC4: TICK(16); LoadPTR(m_reg[REG16::ES], GetModRegRM16(FetchByte(), true)); break;
 		// LDS REG16, MEM16
-		case 0xC5: TICK(16); LoadPTR(regDS.x, GetModRegRM16(FetchByte(), true)); break;
+		case 0xC5: TICK(16); LoadPTR(m_reg[REG16::DS], GetModRegRM16(FetchByte(), true)); break;
 
 		// MOV
 		// ----------
@@ -625,9 +633,9 @@ namespace emul
 		// REG16/MEM16, 1
 		case 0xD1: SHIFTROT16(FetchByte(), 1); TICKRM(5, 15); break;
 		// REG8/MEM8, CL
-		case 0xD2: SHIFTROT8(FetchByte(), regC.hl.l); TICKRM(4 * regC.hl.l + 8, 4 * regC.hl.l + 20); break;
+		case 0xD2: SHIFTROT8(FetchByte(), m_reg[REG8::CL]); TICKRM(4 * m_reg[REG8::CL] + 8, 4 * m_reg[REG8::CL] + 20); break;
 		// REG16/MEM16, CL
-		case 0xD3: SHIFTROT16(FetchByte(), regC.hl.l); TICKRM(4 * regC.hl.l + 8, 4 * regC.hl.l + 20); break;
+		case 0xD3: SHIFTROT16(FetchByte(), m_reg[REG8::CL]); TICKRM(4 * m_reg[REG8::CL] + 8, 4 * m_reg[REG8::CL] + 20); break;
 
 		// AAM
 		case 0xD4: TICK(83); AAM(FetchByte()); break;
@@ -658,7 +666,7 @@ namespace emul
 		// LOOP
 		case 0xE2: LOOP(FetchByte()); break;
 		// JCXZ
-		case 0xE3: TICK(2); JMPif(regC.x == 0); break;
+		case 0xE3: TICK(2); JMPif(m_reg[REG16::CX] == 0); break;
 
 		// IN fixed
 		// --------
@@ -686,16 +694,16 @@ namespace emul
 		// IN variable
 		// --------
 		// IN AL, DX
-		case 0xEC: TICK(8); IN8(regD.x); break;
+		case 0xEC: TICK(8); IN8(m_reg[REG16::DX]); break;
 		// IN AX, DX
-		case 0xED: TICK(8); IN16(regD.x); break;
+		case 0xED: TICK(8); IN16(m_reg[REG16::DX]); break;
 
 		// OUT variable
 		// --------
 		// OUT DX, AL
-		case 0xEE: TICK(8); OUT8(regD.x); break;
+		case 0xEE: TICK(8); OUT8(m_reg[REG16::DX]); break;
 		// OUT DX, AX
-		case 0xEF: TICK(8); OUT16(regD.x); break;
+		case 0xEF: TICK(8); OUT16(m_reg[REG16::DX]); break;
 
 		// LOCK
 		case 0xF0: TICK(2); NotImplemented(opcode); break;
@@ -749,7 +757,7 @@ namespace emul
 		// Check for trap
 		if (trap && GetFlag(FLAG_T))
 		{
-			LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", regCS.x, regIP.x);
+			LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
 			TICK(50);
 			INT(1);
 		}
@@ -759,27 +767,20 @@ namespace emul
 	{
 		CPU::Reset();
 
+		m_reg.Clear();
+		m_reg.Write16(REG16::CS, 0xFFFF);
 		ClearFlags();
-		regIP.x = 0x0000;
-		regCS.x = 0xFFFF;
-		regDS.x = 0x0000;
-		regSS.x = 0x0000;
-		regES.x = 0x0000;
-
 		inRep = false;
-		repIP = 0x0000;
-
 		inSegOverride = false;
-		segOverride = 0x000;
 	}
 
 	void CPU8086::Reset(WORD segment, WORD offset)
 	{
-		CPU8086::Reset();
-		regCS.x = segment;
-		regIP.x = offset;
+		LogPrintf(LOG_DEBUG, "RESET AT CS=%04X, IP=%04X", segment, offset);
 
-		LogPrintf(LOG_DEBUG, "RESET AT CS=%04X, IP=%04X", regCS.x, regIP.x);
+		CPU8086::Reset();
+		m_reg.Write16(REG16::CS, segment);
+		m_reg.Write16(REG16::IP, offset);
 	}
 
 	void CPU8086::Dump()
@@ -799,21 +800,21 @@ namespace emul
 			"FLAGS xxxxODITSZxAxPxC\n"
 			"      " PRINTF_BIN_PATTERN_INT16
 			"\n",
-			regA.hl.h, regA.hl.l,
-			regB.hl.h, regB.hl.l,
-			regC.hl.h, regC.hl.l,
-			regD.hl.h, regD.hl.l,
-			regCS.x, regIP.x,
-			regDS.x, regSI.x,
-			regES.x, regDI.x,
-			regSS.x, regSP.x,
-			regBP.x,
-			PRINTF_BYTE_TO_BIN_INT16(flags.x));
+			m_reg[REG8::AH], m_reg[REG8::AL],
+			m_reg[REG8::BH], m_reg[REG8::BL],
+			m_reg[REG8::CH], m_reg[REG8::CL],
+			m_reg[REG8::DH], m_reg[REG8::DL],
+			m_reg[REG16::CS], m_reg[REG16::IP],
+			m_reg[REG16::DS], m_reg[REG16::SI],
+			m_reg[REG16::ES], m_reg[REG16::DI],
+			m_reg[REG16::SS], m_reg[REG16::SP],
+			m_reg[REG16::BP],
+			PRINTF_BYTE_TO_BIN_INT16(m_reg[REG16::FLAGS]));
 	}
 
 	void CPU8086::DumpInterruptTable()
 	{
-		LogPrintf(LOG_ERROR, "INTERRUPT TABLE @ %04X:%04X", regCS.x, regIP.x);
+		LogPrintf(LOG_ERROR, "INTERRUPT TABLE @ %04X:%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
 		for (BYTE interrupt = 0; interrupt <= 0x1F; ++interrupt)
 		{
 			emul::ADDRESS interruptAddress = interrupt * 4;
@@ -826,24 +827,23 @@ namespace emul
 
 	void CPU8086::ClearFlags()
 	{
-		flags.x = FLAG_R1; //| FLAG_R12 | FLAG_R13;
+		m_reg[REG16::FLAGS] = FLAG_R1; //| FLAG_R12 | FLAG_R13;
 	}
 
 	BYTE CPU8086::FetchByte()
 	{
 		BYTE b = m_memory.Read8(GetCurrentAddress());
-		++regIP.x;
+		++m_reg[REG16::IP];
 		return b;
 	}
 	WORD CPU8086::FetchWord()
 	{
-		Register r;
-		r.hl.l = m_memory.Read8(GetCurrentAddress());
-		++regIP.x;
-		r.hl.h = m_memory.Read8(GetCurrentAddress());
-		++regIP.x;
+		BYTE l = m_memory.Read8(GetCurrentAddress());
+		++m_reg[REG16::IP];
+		BYTE h = m_memory.Read8(GetCurrentAddress());
+		++m_reg[REG16::IP];
 
-		return r.x;
+		return MakeWord(h, l);
 	}
 
 	const char* CPU8086::GetReg8Str(BYTE reg)
@@ -863,19 +863,19 @@ namespace emul
 		throw std::exception("not possible");
 	}
 
-	BytePtr CPU8086::GetReg8(BYTE reg)
+	Mem8 CPU8086::GetReg8(BYTE reg)
 	{
 		switch (reg & 7)
 		{
-		case 0: return &regA.hl.l;
-		case 1: return &regC.hl.l;
-		case 2: return &regD.hl.l;
-		case 3: return &regB.hl.l;
+		case 0: return REG8::AL;
+		case 1: return REG8::CL;
+		case 2: return REG8::DL;
+		case 3: return REG8::BL;
 
-		case 4: return &regA.hl.h;
-		case 5: return &regC.hl.h;
-		case 6: return &regD.hl.h;
-		case 7: return &regB.hl.h;
+		case 4: return REG8::AH;
+		case 5: return REG8::CH;
+		case 6: return REG8::DH;
+		case 7: return REG8::BH;
 		}
 		throw std::exception("not possible");
 	}
@@ -901,15 +901,15 @@ namespace emul
 	{
 		switch (reg & 7)
 		{
-		case 0: return segReg ? regES : regA;
-		case 1: return segReg ? regCS : regC;
-		case 2: return segReg ? regSS : regD;
-		case 3: return segReg ? regDS : regB;
+		case 0: return segReg ? REG16::ES : REG16::AX;
+		case 1: return segReg ? REG16::CS : REG16::CX;
+		case 2: return segReg ? REG16::SS : REG16::DX;
+		case 3: return segReg ? REG16::DS : REG16::BX;
 		// Undocumented: 4-7 segment register same as 0-3 on 808x/8018x
-		case 4: return segReg ? regES : regSP;
-		case 5: return segReg ? regCS : regBP;
-		case 6: return segReg ? regSS : regSI;
-		case 7: return segReg ? regDS : regDI;
+		case 4: return segReg ? REG16::ES : REG16::SP;
+		case 5: return segReg ? REG16::CS : REG16::BP;
+		case 6: return segReg ? REG16::SS : REG16::SI;
+		case 7: return segReg ? REG16::DS : REG16::DI;
 		}
 		throw std::exception("not possible");
 	}
@@ -919,20 +919,20 @@ namespace emul
 		if (direct)
 		{
 			TICK(1);
-			return std::make_tuple(regDS.x, 0);
+			return std::make_tuple(m_reg[REG16::DS], 0);
 		}
 
 		switch (modregrm & 7)
 		{
-		case 0: TICK(1); return std::make_tuple(regDS.x, regB.x + regSI.x);
-		case 1: TICK(2); return std::make_tuple(regDS.x, regB.x + regDI.x);
-		case 2: TICK(2); return std::make_tuple(regSS.x, regBP.x + regSI.x);
-		case 3: TICK(1); return std::make_tuple(regSS.x, regBP.x + regDI.x);
+		case 0: TICK(1); return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::BX] + m_reg[REG16::SI]);
+		case 1: TICK(2); return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::BX] + m_reg[REG16::DI]);
+		case 2: TICK(2); return std::make_tuple(m_reg[REG16::SS], m_reg[REG16::BP] + m_reg[REG16::SI]);
+		case 3: TICK(1); return std::make_tuple(m_reg[REG16::SS], m_reg[REG16::BP] + m_reg[REG16::DI]);
 
-		case 4: return std::make_tuple(regDS.x, regSI.x);
-		case 5: return std::make_tuple(regDS.x, regDI.x);
-		case 6: return std::make_tuple(regSS.x, regBP.x);
-		case 7: return std::make_tuple(regDS.x, regB.x);
+		case 4: return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::SI]);
+		case 5: return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::DI]);
+		case 6: return std::make_tuple(m_reg[REG16::SS], m_reg[REG16::BP]);
+		case 7: return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::BX]);
 		}
 		throw std::exception("not possible");
 	}
@@ -998,7 +998,7 @@ namespace emul
 		return tmp;
 	}
 
-	BytePtr CPU8086::GetModRM8(BYTE modrm)
+	Mem8 CPU8086::GetModRM8(BYTE modrm)
 	{
 		WORD displacement = 0;
 		bool direct = false;
@@ -1034,11 +1034,11 @@ namespace emul
 
 		if (inSegOverride)
 		{
-			segment = segOverride;
+			segment = m_reg[REG16::_SEG_O];
 		}
 
 		offset = (direct ? 0 : offset) + displacement;
-		return m_memory.GetPtr8(S2A(segment, offset));
+		return Mem8(S2A(segment, offset));
 	}
 
 	SourceDest8 CPU8086::GetModRegRM8(BYTE modregrm, bool toReg)
@@ -1046,8 +1046,8 @@ namespace emul
 		SourceDest8 sd;
 
 		// reg part
-		BytePtr reg = GetReg8(modregrm >> 3);
-		BytePtr modrm = GetModRM8(modregrm);
+		Mem8 reg = GetReg8(modregrm >> 3);
+		Mem8 modrm = GetModRM8(modregrm);
 
 		sd.source = toReg ? modrm : reg;
 		sd.dest = toReg ? reg : modrm;
@@ -1092,12 +1092,12 @@ namespace emul
 
 		if (inSegOverride)
 		{
-			segment = segOverride;
+			segment = m_reg[REG16::_SEG_O];
 		}
 
 		offset = (direct ? 0 : offset) + displacement;
 		LogPrintf(LOG_DEBUG, "GetModRM16: MEM %04X:%04X", segment, offset);
-		return Mem16(m_memory, S2A(segment, offset));
+		return Mem16(S2A(segment, offset));
 	}
 
 	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool toReg, bool segReg)
@@ -1189,13 +1189,13 @@ namespace emul
 	void CPU8086::CBW()
 	{
 		LogPrintf(LOG_DEBUG, "CBW");
-		regA.hl.h = GetMSB(regA.hl.l) ? 0xFF : 0;
+		m_reg[REG8::AH] = GetMSB(m_reg[REG8::AL]) ? 0xFF : 0;
 	}
 
 	void CPU8086::CWD()
 	{
 		LogPrintf(LOG_DEBUG, "CWD");
-		regD.x = GetMSB(regA.x) ? 0xFFFF : 0;
+		m_reg[REG16::DX] = GetMSB(m_reg[REG16::AX]) ? 0xFFFF : 0;
 	}
 
 	void CPU8086::HLT()
@@ -1207,15 +1207,15 @@ namespace emul
 	void CPU8086::CALLNear(WORD offset)
 	{
 		LogPrintf(LOG_DEBUG, "CALLNear Byte offset %02X", offset);
-		PUSH(regIP.x);
-		regIP.x += offset;
+		PUSH(REG16::IP);
+		m_reg[REG16::IP] += offset;
 	}
 
 	void CPU8086::CALLIntra(WORD address)
 	{
 		LogPrintf(LOG_DEBUG, "CALLIntra newIP=%04X", address);
-		PUSH(regIP.x);
-		regIP.x = address;
+		PUSH(REG16::IP);
+		m_reg[REG16::IP] = address;
 	}
 
 	void CPU8086::CALLfar()
@@ -1223,21 +1223,21 @@ namespace emul
 		WORD offset = FetchWord();
 		WORD segment = FetchWord();
 		LogPrintf(LOG_DEBUG, "CALLfar %02X|%02X", segment, offset);
-		PUSH(regCS.x);
-		PUSH(regIP.x);
-		regCS.x = segment;
-		regIP.x = offset;
+		PUSH(REG16::CS);
+		PUSH(REG16::IP);
+		m_reg[REG16::CS] = segment;
+		m_reg[REG16::IP] = offset;
 	}
 
 	void CPU8086::CALLInter(Mem16 destPtr)
 	{
-		PUSH(regCS.x);
-		PUSH(regIP.x);
+		PUSH(REG16::CS);
+		PUSH(REG16::IP);
 
-		regIP.x = destPtr.GetValue();
+		m_reg[REG16::IP] = destPtr.Read();
 		destPtr.Increment(m_memory);
-		regCS.x = destPtr.GetValue();
-		LogPrintf(LOG_DEBUG, "CALLInter newCS=%04X, newIP=%04X", regCS.x, regIP.x);
+		m_reg[REG16::CS] = destPtr.Read();
+		LogPrintf(LOG_DEBUG, "CALLInter newCS=%04X, newIP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
 	}
 
 	void CPU8086::JMPfar()
@@ -1245,33 +1245,33 @@ namespace emul
 		WORD offset = FetchWord();
 		WORD segment = FetchWord();
 		LogPrintf(LOG_DEBUG, "JMPfar %02X|%02X", segment, offset);
-		regCS.x = segment;
-		regIP.x = offset;
+		m_reg[REG16::CS] = segment;
+		m_reg[REG16::IP] = offset;
 	}
 
 	void CPU8086::JMPNear(BYTE offset)
 	{
 		LogPrintf(LOG_DEBUG, "JMPNear Byte offset %02X", offset);
-		regIP.x += Widen(offset);
+		m_reg[REG16::IP] += Widen(offset);
 	}
 	void CPU8086::JMPNear(WORD offset)
 	{
 		LogPrintf(LOG_DEBUG, "JMPNear Word offset %04X", offset);
-		regIP.x += offset;
+		m_reg[REG16::IP] += offset;
 	}
 
 	void CPU8086::JMPIntra(WORD address)
 	{
 		LogPrintf(LOG_DEBUG, "JMPIntra newIP=%04X", address);
-		regIP.x = address;
+		m_reg[REG16::IP] = address;
 	}
 
 	void CPU8086::JMPInter(Mem16 destPtr)
 	{
-		regIP.x = destPtr.GetValue();
+		m_reg[REG16::IP] = destPtr.Read();
 		destPtr.Increment(m_memory);
-		regCS.x = destPtr.GetValue();
-		LogPrintf(LOG_DEBUG, "JMPInter newCS=%04X, newIP=%04X", regCS.x, regIP.x);
+		m_reg[REG16::CS] = destPtr.Read();
+		LogPrintf(LOG_DEBUG, "JMPInter newCS=%04X, newIP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
 	}
 
 	void CPU8086::NotImplemented(BYTE op)
@@ -1285,7 +1285,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "INCDEC8");
 
-		BytePtr dest = GetModRM8(op2);
+		Mem8 dest = GetModRM8(op2);
 
 		switch (op2 & 0x38)
 		{
@@ -1300,8 +1300,9 @@ namespace emul
 		}
 	}
 
-	void CPU8086::INC8(BytePtr b)
+	void CPU8086::INC8(Mem8 b)
 	{
+		LogPrintf(LOG_DEBUG, "INC8");
 		BYTE before = b.Read();
 		BYTE after = before + 1;
 		b.Write(after);
@@ -1315,7 +1316,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "INC8 %02X->%02X", before, after);
 	}
 
-	void CPU8086::DEC8(BytePtr b)
+	void CPU8086::DEC8(Mem8 b)
 	{
 		LogPrintf(LOG_DEBUG, "DEC8");
 		BYTE before = b.Read();
@@ -1333,6 +1334,7 @@ namespace emul
 
 	void CPU8086::INC16(WORD& w)
 	{
+		LogPrintf(LOG_DEBUG, "INC16");
 		WORD before = w;
 
 		++w;
@@ -1346,6 +1348,7 @@ namespace emul
 	}
 	void CPU8086::DEC16(WORD& w)
 	{
+		LogPrintf(LOG_DEBUG, "DEC16");
 		WORD before = w;
 
 		--w;
@@ -1359,7 +1362,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "DEC16 %04X->%04X", before, w);
 	}
 
-	void CPU8086::MOV8(BytePtr d, BYTE s)
+	void CPU8086::MOV8(Mem8 d, BYTE s)
 	{
 		d.Write(s);
 	}
@@ -1367,22 +1370,22 @@ namespace emul
 	{
 		sd.dest.Write(sd.source.Read());
 	}
-	void CPU8086::MOVIMM8(BytePtr dest)
+	void CPU8086::MOVIMM8(Mem8 dest)
 	{
 		dest.Write(FetchByte());
 	}
 
 	void CPU8086::MOV16(Mem16 d, WORD s)
 	{
-		d.SetValue(s);
+		d.Write(s);
 	}
 	void CPU8086::MOV16(SourceDest16 sd)
 	{
-		sd.dest.SetValue(sd.source.GetValue());
+		sd.dest.Write(sd.source.Read());
 	}
 	void CPU8086::MOVIMM16(Mem16 dest)
 	{
-		dest.SetValue(FetchWord());
+		dest.Write(FetchWord());
 	}
 
 	void CPU8086::SAHF()
@@ -1391,14 +1394,14 @@ namespace emul
 
 		const WORD mask = FLAG_C | FLAG_P | FLAG_A | FLAG_Z | FLAG_S;
 
-		flags.x &= (~mask);
-		flags.x |= (regA.hl.h & mask);
+		m_reg[REG16::FLAGS] &= (~mask);
+		m_reg[REG16::FLAGS] |= (m_reg[REG8::AH] & mask);
 	}
 	void CPU8086::LAHF()
 	{
 		LogPrintf(LOG_DEBUG, "LAHF");
 
-		regA.hl.h = (flags.x & 0x00FF);
+		m_reg[REG8::AH] = (m_reg[REG16::FLAGS] & 0x00FF);
 	}
 
 	void CPU8086::JMPif(bool cond)
@@ -1409,7 +1412,7 @@ namespace emul
 		if (cond)
 		{
 			TICK(12);
-			regIP.x += Widen(offset);
+			m_reg[REG16::IP] += Widen(offset);
 		}
 	}
 
@@ -1420,7 +1423,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
 
-		BytePtr dest = GetModRM8(op2);
+		Mem8 dest = GetModRM8(op2);
 		BYTE work = dest.Read();
 
 		op2 &= 0x38;
@@ -1504,7 +1507,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
 
 		Mem16 dest = GetModRM16(op2);
-		WORD work = dest.GetValue();
+		WORD work = dest.Read();
 
 		op2 &= 0x38;
 
@@ -1570,7 +1573,7 @@ namespace emul
 			}
 			SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
 		}
-		dest.SetValue(work);
+		dest.Write(work);
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(work), work);
 
 		if (op2 >= 0x20) // Only shift operation adjusts flags
@@ -1626,8 +1629,8 @@ namespace emul
 	void CPU8086::Arithmetic16(SourceDest16 sd, RawOpFunc16 func)
 	{
 		// Aliases
-		const WORD source = sd.source.GetValue();
-		WORD dest = sd.dest.GetValue();
+		const WORD source = sd.source.Read();
+		WORD dest = sd.dest.Read();
 
 		// AC Calculations
 		const WORD source4 = source & 0x0F;
@@ -1638,7 +1641,7 @@ namespace emul
 		WORD before = dest;
 		DWORD after = func(dest, source, GetFlag(FLAG_C));
 		WORD afterW = (WORD)after;
-		sd.dest.SetValue(dest);
+		sd.dest.Write(dest);
 		SetFlag(FLAG_C, after > 65535);
 
 		// TODO: improve this
@@ -1665,17 +1668,21 @@ namespace emul
 		AdjustParity(afterW);
 	}
 
-	void CPU8086::ArithmeticImm8(BYTE& dest, BYTE imm, RawOpFunc8 func)
+	void CPU8086::ArithmeticImm8(Mem8 dest, BYTE imm, RawOpFunc8 func)
 	{
-		SourceDest8 sd(&dest, &imm);
+		m_reg.Write8(REG8::_T0, imm);
+
+		SourceDest8 sd;
+		sd.source = REG8::_T0;
+		sd.dest = dest;
 		Arithmetic8(sd, func);
 	}
 	void CPU8086::ArithmeticImm16(Mem16 dest, WORD imm, RawOpFunc16 func)
 	{
-		Register source;
-		source.x = imm;
+		m_reg.Write16(REG16::_T0, imm);
+
 		SourceDest16 sd;
-		sd.source = source;
+		sd.source = REG16::_T0;
 		sd.dest = dest;
 		Arithmetic16(sd, func);
 	}
@@ -1683,36 +1690,36 @@ namespace emul
 	void CPU8086::IN8(WORD port)
 	{
 		LogPrintf(LOG_DEBUG, "IN8 port %04X", port);
-		In(port, regA.hl.l);
+		In(port, m_reg[REG8::AL]);
 	}
 
 	void CPU8086::IN16(WORD port)
 	{
 		LogPrintf(LOG_DEBUG, "IN16 port %04X", port);
-		In(port, regA.hl.l);
-		In(port+1, regA.hl.h);
+		In(port, m_reg[REG8::AL]);
+		In(port+1, m_reg[REG8::AH]);
 	}
 
 	void CPU8086::OUT8(WORD port)
 	{
-		Out(port, regA.hl.l);
+		Out(port, m_reg[REG8::AL]);
 	}
 
 	void CPU8086::OUT16(WORD port)
 	{
-		Out(port, regA.hl.l);
-		Out(port+1, regA.hl.h);
+		Out(port, m_reg[REG8::AL]);
+		Out(port+1, m_reg[REG8::AH]);
 	}
 
 	void CPU8086::LOOP(BYTE offset, bool cond)
 	{
 		TICK(5);
-		--regC.x;
-		LogPrintf(LOG_DEBUG, "LOOP, CX=%04X", regC.x);
-		if (regC.x && cond)
+		--m_reg[REG16::CX];
+		LogPrintf(LOG_DEBUG, "LOOP, CX=%04X", m_reg[REG16::CX]);
+		if (m_reg[REG16::CX] && cond)
 		{
 			TICK(12);
-			regIP.x += Widen(offset);
+			m_reg[REG16::IP] += Widen(offset);
 		}
 	}
 
@@ -1720,17 +1727,17 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "RETNear [%s][%d]", pop?"Pop":"NoPop", value);
 
-		POP(regIP);
-		regSP.x += value;
+		POP(REG16::IP);
+		m_reg[REG16::SP] += value;
 	}
 
 	void CPU8086::RETFar(bool pop, WORD value)
 	{
 		LogPrintf(LOG_DEBUG, "RETFar [%s][%d]", pop ? "Pop" : "NoPop", value);
 
-		POP(regIP);
-		POP(regCS);
-		regSP.x += value;
+		POP(REG16::IP);
+		POP(REG16::CS);
+		m_reg[REG16::SP] += value;
 	}
 
 	void CPU8086::ArithmeticImm8(BYTE op2)
@@ -1756,8 +1763,8 @@ namespace emul
 		SourceDest8 sd;
 		sd.dest = GetModRM8(op2);
 
-		BYTE imm = FetchByte();
-		sd.source = &imm;
+		m_reg[REG8::_T0] = FetchByte();
+		sd.source = REG8::_T0;
 
 		Arithmetic8(sd, func);
 	}
@@ -1784,9 +1791,8 @@ namespace emul
 		SourceDest16 sd;
 		sd.dest = GetModRM16(op2);
 
-		Register imm;
-		imm.x = signExtend ? Widen(FetchByte()) : FetchWord();
-		sd.source = imm;
+		m_reg[REG16::_T0] = signExtend ? Widen(FetchByte()) : FetchWord();
+		sd.source = REG16::_T0;
 
 		Arithmetic16(sd, func);
 	}
@@ -1795,7 +1801,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticMulti8");
 
-		BytePtr modrm = GetModRM8(op2);
+		Mem8 modrm = GetModRM8(op2);
 		BYTE val = modrm.Read();
 
 		switch (op2 & 0x38)
@@ -1824,41 +1830,41 @@ namespace emul
 		case 0x18: // NEG
 		{
 			TICKRM(3, 16);
-			BYTE tempDest = 0;
 			SourceDest8 sd;
-			sd.dest = &tempDest;
+			m_reg[REG8::_T0] = 0;
+			sd.dest = REG8::_T0;
 			sd.source = modrm;
 			Arithmetic8(sd, rawSub8);
-			LogPrintf(LOG_DEBUG, "NEG8, -(%02X) = %02X", val, tempDest);
-			modrm.Write(tempDest);
+			LogPrintf(LOG_DEBUG, "NEG8, -(%02X) = %02X", val, m_reg[REG8::_T0]);
+			modrm.Write(m_reg[REG8::_T0]);
 			break;
 		}
 		case 0x20: // MUL
 		{
 			TICKRM(72, 80); // Varies
-			WORD result = regA.hl.l * val;
-			LogPrintf(LOG_DEBUG, "MUL8, %02X * %02X = %04X", regA.hl.l, val, result);
-			regA.x = result;
-			SetFlag(FLAG_O, regA.hl.h != 0);
-			SetFlag(FLAG_C, regA.hl.h != 0);
-			AdjustSign(regA.hl.l);
-			AdjustZero(regA.hl.l);
-			AdjustParity(regA.hl.l);
+			WORD result = m_reg[REG8::AL] * val;
+			LogPrintf(LOG_DEBUG, "MUL8, %02X * %02X = %04X", m_reg[REG8::AL], val, result);
+			m_reg[REG16::AX] = result;
+			SetFlag(FLAG_O, m_reg[REG8::AH] != 0);
+			SetFlag(FLAG_C, m_reg[REG8::AH] != 0);
+			AdjustSign(m_reg[REG8::AL]);
+			AdjustZero(m_reg[REG8::AL]);
+			AdjustParity(m_reg[REG8::AL]);
 			break;
 		}
 		case 0x28: // IMUL
 		{
 			TICKRM(82, 90); // Varies
-			int16_t result = (int8_t)regA.hl.l * (int8_t)(val);
-			LogPrintf(LOG_DEBUG, "IMUL8, %d * %d = %d", (int8_t)regA.hl.l, (int8_t)(val), result);
-			regA.x = (WORD)result;
-			WORD tmp = Widen(regA.hl.l);
+			int16_t result = (int8_t)m_reg[REG8::AL] * (int8_t)(val);
+			LogPrintf(LOG_DEBUG, "IMUL8, %d * %d = %d", (int8_t)m_reg[REG8::AL], (int8_t)(val), result);
+			m_reg[REG16::AX] = (WORD)result;
+			WORD tmp = Widen(m_reg[REG8::AL]);
 			bool ocFlags = (tmp != (WORD)result);
 			SetFlag(FLAG_O, ocFlags);
 			SetFlag(FLAG_C, ocFlags);
-			AdjustSign(regA.hl.l);
-			AdjustZero(regA.hl.l);
-			AdjustParity(regA.hl.l);
+			AdjustSign(m_reg[REG8::AL]);
+			AdjustZero(m_reg[REG8::AL]);
+			AdjustParity(m_reg[REG8::AL]);
 			break;
 		}
 		case 0x30:
@@ -1870,7 +1876,7 @@ namespace emul
 				INT(0);
 				return;
 			}
-			WORD dividend = regA.x;
+			WORD dividend = m_reg[REG16::AX];
 			WORD quotient = dividend / val;
 			if (quotient > 0xFF)
 			{
@@ -1879,8 +1885,8 @@ namespace emul
 			}
 			BYTE remainder = dividend % val;
 			LogPrintf(LOG_DEBUG, "DIV8 %04X / %02X = %02X r %02X", dividend, val, quotient, remainder);
-			regA.hl.l = (BYTE)quotient;
-			regA.hl.h = remainder;
+			m_reg[REG8::AL] = (BYTE)quotient;
+			m_reg[REG8::AH] = remainder;
 			break;
 		}
 		case 0x38:
@@ -1892,7 +1898,7 @@ namespace emul
 				INT(0);
 				return;
 			}
-			int16_t dividend = (int16_t)regA.x;
+			int16_t dividend = (int16_t)m_reg[REG16::AX];
 			int16_t quotient = dividend / int8_t(val);
 			if (quotient > 127 || quotient < -127)
 			{
@@ -1901,8 +1907,8 @@ namespace emul
 			}
 			int8_t remainder = dividend % int8_t(val);
 			LogPrintf(LOG_DEBUG, "IDIV8 %04X / %02X = %02X r %02X", dividend, val, quotient, remainder);
-			regA.hl.l = (BYTE)quotient;
-			regA.hl.h = (BYTE)remainder;
+			m_reg[REG8::AL] = (BYTE)quotient;
+			m_reg[REG8::AH] = (BYTE)remainder;
 			break;
 		}
 		default:
@@ -1915,7 +1921,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "ArithmeticMulti16");
 
 		Mem16 modrm = GetModRM16(op2);
-		WORD val = modrm.GetValue();
+		WORD val = modrm.Read();
 
 		switch (op2 & 0x38)
 		{
@@ -1937,49 +1943,49 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "NOT16");
 			TICKRM(3, 16);
-			modrm.SetValue(~val);
+			modrm.Write(~val);
 			break;
 		}
 		case 0x18: // NEG
 		{
 			TICKRM(3, 16);
-			Register tempDest;
 			SourceDest16 sd;
-			sd.dest = tempDest;
+			m_reg[REG16::_T0] = 0;
+			sd.dest = REG16::_T0;
 			sd.source = modrm;
 			Arithmetic16(sd, rawSub16);
-			LogPrintf(LOG_DEBUG, "NEG16, -(%04X) = %04X", val, tempDest.x);
-			modrm.SetValue(tempDest.x);
+			LogPrintf(LOG_DEBUG, "NEG16, -(%04X) = %04X", val, m_reg[REG16::_T0]);
+			modrm.Write(m_reg[REG16::_T0]);
 			break;
 		}
 		case 0x20: // MUL
 		{
 			TICKRM(120, 128); // Varies
-			DWORD result = regA.x * val;
-			LogPrintf(LOG_DEBUG, "MUL16, %04X * %04X = %08X", regA.x, val, result);
-			regD.x = GetHWord(result);
-			regA.x = GetLWord(result);
-			SetFlag(FLAG_O, regD.x != 0);
-			SetFlag(FLAG_C, regD.x != 0);
-			AdjustSign(regA.x);
-			AdjustZero(regA.x);
-			AdjustParity(regA.x);
+			DWORD result = m_reg[REG16::AX] * val;
+			LogPrintf(LOG_DEBUG, "MUL16, %04X * %04X = %08X", m_reg[REG16::AX], val, result);
+			m_reg[REG16::DX] = GetHWord(result);
+			m_reg[REG16::AX] = GetLWord(result);
+			SetFlag(FLAG_O, m_reg[REG16::DX] != 0);
+			SetFlag(FLAG_C, m_reg[REG16::DX] != 0);
+			AdjustSign(m_reg[REG16::AX]);
+			AdjustZero(m_reg[REG16::AX]);
+			AdjustParity(m_reg[REG16::AX]);
 			break;
 		}
 		case 0x28: // IMUL
 		{
 			TICKRM(132, 140); // Varies
-			int32_t result = (int16_t)regA.x * (int16_t)(val);
-			LogPrintf(LOG_DEBUG, "IMUL16, %d * %d = %d", (int16_t)regA.x, (int16_t)(val), result);
-			regD.x = GetHWord(result);
-			regA.x = GetLWord(result);
-			DWORD tmp = Widen(regA.x);
+			int32_t result = (int16_t)m_reg[REG16::AX] * (int16_t)(val);
+			LogPrintf(LOG_DEBUG, "IMUL16, %d * %d = %d", (int16_t)m_reg[REG16::AX], (int16_t)(val), result);
+			m_reg[REG16::DX] = GetHWord(result);
+			m_reg[REG16::AX] = GetLWord(result);
+			DWORD tmp = Widen(m_reg[REG16::AX]);
 			bool ocFlags = (tmp != (DWORD)result);
 			SetFlag(FLAG_O, ocFlags);
 			SetFlag(FLAG_C, ocFlags);
-			AdjustSign(regA.x);
-			AdjustZero(regA.x);
-			AdjustParity(regA.x);
+			AdjustSign(m_reg[REG16::AX]);
+			AdjustZero(m_reg[REG16::AX]);
+			AdjustParity(m_reg[REG16::AX]);
 			break;
 		}
 		case 0x30:
@@ -1991,7 +1997,7 @@ namespace emul
 				INT(0);
 				return;
 			}
-			DWORD dividend = MakeDword(regD.x, regA.x);
+			DWORD dividend = MakeDword(m_reg[REG16::DX], m_reg[REG16::AX]);
 			DWORD quotient = dividend / val;
 			if (quotient > 0xFFFF)
 			{
@@ -2000,8 +2006,8 @@ namespace emul
 			}
 			WORD remainder = dividend % val;
 			LogPrintf(LOG_DEBUG, "DIV16 %08X / %04X = %04X r %04X", dividend, val, quotient, remainder);
-			regA.x = (WORD)quotient;
-			regD.x = remainder;
+			m_reg[REG16::AX] = (WORD)quotient;
+			m_reg[REG16::DX] = remainder;
 			break;
 		}
 		case 0x38:
@@ -2013,7 +2019,7 @@ namespace emul
 				INT(0);
 				return;
 			}
-			int32_t dividend = (int32_t)MakeDword(regD.x, regA.x);
+			int32_t dividend = (int32_t)MakeDword(m_reg[REG16::DX], m_reg[REG16::AX]);
 			int32_t quotient = dividend / int16_t(val);
 			if (quotient > 32767 || quotient < -32767)
 			{
@@ -2022,8 +2028,8 @@ namespace emul
 			}
 			int16_t remainder = dividend % int16_t(val);
 			LogPrintf(LOG_DEBUG, "IDIV16 %08X / %04X = %04X r %04X", dividend, val, quotient, remainder);
-			regA.x = (WORD)quotient;
-			regD.x = (WORD)remainder;
+			m_reg[REG16::AX] = (WORD)quotient;
+			m_reg[REG16::DX] = (WORD)remainder;
 			break;
 		}
 		default:
@@ -2051,12 +2057,12 @@ namespace emul
 
 	void CPU8086::XCHG16(SourceDest16 sd)
 	{
-		WORD source = sd.source.GetValue();
-		WORD dest = sd.dest.GetValue();
+		WORD source = sd.source.Read();
+		WORD dest = sd.dest.Read();
 
 		XCHG16(source, dest);
-		sd.source.SetValue(source);
-		sd.dest.SetValue(dest);
+		sd.source.Write(source);
+		sd.dest.Write(dest);
 	}
 
 	void CPU8086::XCHG16(WORD& w1, WORD& w2)
@@ -2069,221 +2075,222 @@ namespace emul
 
 	void CPU8086::PUSH(Mem16 m)
 	{
-		PUSH(m.GetValue());
+		PUSH(m.Read());
 	}
 
 	void CPU8086::PUSH(WORD w)
 	{
 		LogPrintf(LOG_DEBUG, "PUSH %04X", w);
-		m_memory.Write8(S2A(regSS.x, --regSP.x), GetHByte(w));
-		m_memory.Write8(S2A(regSS.x, --regSP.x), GetLByte(w));
+		m_memory.Write8(S2A(m_reg[REG16::SS], --m_reg[REG16::SP]), GetHByte(w));
+		m_memory.Write8(S2A(m_reg[REG16::SS], --m_reg[REG16::SP]), GetLByte(w));
 	}
 
 	void CPU8086::POP(Mem16 dest)
 	{
-		BYTE lo = m_memory.Read8(S2A(regSS.x, regSP.x++));
-		BYTE hi = m_memory.Read8(S2A(regSS.x, regSP.x++));
+		BYTE lo = m_memory.Read8(S2A(m_reg[REG16::SS], m_reg[REG16::SP]++));
+		BYTE hi = m_memory.Read8(S2A(m_reg[REG16::SS], m_reg[REG16::SP]++));
 		WORD w = MakeWord(hi, lo);
-		dest.SetValue(w);
+		dest.Write(w);
 		LogPrintf(LOG_DEBUG, "POP %04X", w);
 	}
 
 	void CPU8086::LODS8()
 	{
-		LogPrintf(LOG_DEBUG, "LODS8, SI=%04X", regSI.x);
+		LogPrintf(LOG_DEBUG, "LODS8, SI=%04X", m_reg[REG16::SI]);
 		if (inSegOverride)
 		{
-			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
 		}
 
 		if (PreREP())
 		{
-			regA.hl.l = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS.x, regSI.x));
-			IndexIncDec(regSI.x);
+			m_reg[REG8::AL] = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
+			IndexIncDec(m_reg[REG16::SI]);
 		}
 		PostREP(false);
 	}
 
 	void CPU8086::LODS16()
 	{
-		LogPrintf(LOG_DEBUG, "LODS16, SI=%04X", regSI.x);
+		LogPrintf(LOG_DEBUG, "LODS16, SI=%04X", m_reg[REG16::SI]);
 		if (inSegOverride)
 		{
-			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
 		}
 
 		if (PreREP())
 		{
 			SourceDest16 sd;
-			sd.dest = regA;
-			sd.source.SetAddress(m_memory, S2A(inSegOverride ? segOverride : regDS.x, regSI.x));
-			sd.dest.SetValue(sd.source.GetValue());
+			sd.dest = REG16::AX;
+			sd.source = S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
+			sd.dest.Write(sd.source.Read());
 
-			IndexIncDec(regSI.x);
-			IndexIncDec(regSI.x);
+			IndexIncDec(m_reg[REG16::SI]);
+			IndexIncDec(m_reg[REG16::SI]);
 		}
 		PostREP(false);
 	}
 
 	void CPU8086::STOS8()
 	{
-		LogPrintf(LOG_DEBUG, "STOS8, DI=%04X", regDI.x);
+		LogPrintf(LOG_DEBUG, "STOS8, DI=%04X", m_reg[REG16::DI]);
 
 		if (PreREP())
 		{
-			m_memory.Write8(S2A(regES.x, regDI.x), regA.hl.l);
-			IndexIncDec(regDI.x);
+			m_memory.Write8(S2A(m_reg[REG16::ES], m_reg[REG16::DI]), m_reg[REG8::AL]);
+			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(false);
 	}
 	void CPU8086::STOS16()
 	{
-		LogPrintf(LOG_DEBUG, "STOS16, DI=%04X", regDI.x);
+		LogPrintf(LOG_DEBUG, "STOS16, DI=%04X", m_reg[REG16::DI]);
 
 		if (PreREP())
 		{
 			SourceDest16 sd;
-			sd.dest.SetAddress(m_memory, S2A(regES.x, regDI.x));
-			sd.source = regA;
-			sd.dest.SetValue(sd.source.GetValue());
+			sd.dest = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			sd.source = REG16::AX;
+			sd.dest.Write(sd.source.Read());
 
-			IndexIncDec(regDI.x);
-			IndexIncDec(regDI.x);
+			IndexIncDec(m_reg[REG16::DI]);
+			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(false);
 	}
 
 	void CPU8086::SCAS8()
 	{
-		LogPrintf(LOG_DEBUG, "SCAS8, DI=%04X", regDI.x);
+		LogPrintf(LOG_DEBUG, "SCAS8, DI=%04X", m_reg[REG16::DI]);
 
 		if (PreREP())
 		{
 			SourceDest8 sd;
 
-			sd.source = m_memory.GetPtr8(S2A(regES.x, regDI.x));
-			sd.dest = &regA.hl.l;
+			sd.source = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			sd.dest = REG8::AL;
 			Arithmetic8(sd, rawCmp8);
 
-			IndexIncDec(regDI.x);
+			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(true);
 	}
 	void CPU8086::SCAS16()
 	{
-		LogPrintf(LOG_DEBUG, "SCAS16, DI=%04X", regDI.x);
+		LogPrintf(LOG_DEBUG, "SCAS16, DI=%04X", m_reg[REG16::DI]);
 
 		if (PreREP())
 		{
 			SourceDest16 sd;
 
-			sd.source.SetAddress(m_memory, S2A(regES.x, regDI.x));
-			sd.dest = regA;
+			sd.source = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			sd.dest = REG16::AX;
 			Arithmetic16(sd, rawCmp16);
 
-			IndexIncDec(regDI.x);
-			IndexIncDec(regDI.x);
+			IndexIncDec(m_reg[REG16::DI]);
+			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(true);
 	}
 
 	void CPU8086::MOVS8()
 	{
-		LogPrintf(LOG_DEBUG, "MOVS8, SI=%04X, DI=%04X", regSI.x, regDI.x);
+		LogPrintf(LOG_DEBUG, "MOVS8, SI=%04X, DI=%04X", m_reg[REG16::SI], m_reg[REG16::DI]);
 		if (inSegOverride)
 		{
-			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
 		}
 
 		if (PreREP())
 		{
-			BYTE val = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS.x, regSI.x));
-			m_memory.Write8(S2A(regES.x, regDI.x), val);
-			IndexIncDec(regSI.x);
-			IndexIncDec(regDI.x);
+			BYTE val = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
+			m_memory.Write8(S2A(m_reg[REG16::ES], m_reg[REG16::DI]), val);
+
+			IndexIncDec(m_reg[REG16::SI]);
+			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(false);
 	}
 	void CPU8086::MOVS16()
 	{
-		LogPrintf(LOG_DEBUG, "MOVS16, SI=%04X, DI=%04X", regSI.x, regDI.x);
+		LogPrintf(LOG_DEBUG, "MOVS16, SI=%04X, DI=%04X", m_reg[REG16::SI], m_reg[REG16::DI]);
 		if (inSegOverride)
 		{
-			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
 		}
 
 		if (PreREP())
 		{
 			SourceDest16 sd;
-			sd.source.SetAddress(m_memory, S2A(inSegOverride ? segOverride : regDS.x, regSI.x));
-			sd.dest.SetAddress(m_memory, S2A(regES.x, regDI.x));
+			sd.source.SetAddress(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
+			sd.dest.SetAddress(S2A(m_reg[REG16::ES], m_reg[REG16::DI]));
 
-			sd.dest.SetValue(sd.source.GetValue());
+			sd.dest.Write(sd.source.Read());
 
-			IndexIncDec(regSI.x);
-			IndexIncDec(regSI.x);
+			IndexIncDec(m_reg[REG16::SI]);
+			IndexIncDec(m_reg[REG16::SI]);
 
-			IndexIncDec(regDI.x);
-			IndexIncDec(regDI.x);
+			IndexIncDec(m_reg[REG16::DI]);
+			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(false);
 	}
 
 	void CPU8086::CMPS8()
 	{
-		LogPrintf(LOG_DEBUG, "CMPS8, SI=%04X, DI=%04X", regSI.x, regDI.x);
+		LogPrintf(LOG_DEBUG, "CMPS8, SI=%04X, DI=%04X", m_reg[REG16::SI], m_reg[REG16::DI]);
 		if (inSegOverride)
 		{
-			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
 		}
 
 		if (PreREP())
 		{
 			SourceDest8 sd;
-			sd.dest = m_memory.GetPtr8(S2A(inSegOverride ? segOverride : regDS.x, regSI.x));
-			sd.source = m_memory.GetPtr8(S2A(regES.x, regDI.x));
+			sd.dest = S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
+			sd.source = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
 
 			Arithmetic8(sd, rawCmp8);
 
-			IndexIncDec(regSI.x);
+			IndexIncDec(m_reg[REG16::SI]);
 
-			IndexIncDec(regDI.x);
+			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(true);
 	}
 	void CPU8086::CMPS16()
 	{
-		LogPrintf(LOG_DEBUG, "CMPS16, SI=%04X, DI=%04X", regSI.x, regDI.x);
+		LogPrintf(LOG_DEBUG, "CMPS16, SI=%04X, DI=%04X", m_reg[REG16::SI], m_reg[REG16::DI]);
 		if (inSegOverride)
 		{
-			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", segOverride);
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
 		}
 
 		if (PreREP())
 		{
 			SourceDest16 sd;
 			
-			sd.dest.SetAddress(m_memory, S2A(inSegOverride ? segOverride : regDS.x, regSI.x));
-			sd.source.SetAddress(m_memory, S2A(regES.x, regDI.x));
+			sd.dest = S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
+			sd.source = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
 
 			Arithmetic16(sd, rawCmp16);
 
-			IndexIncDec(regSI.x);
-			IndexIncDec(regSI.x);
+			IndexIncDec(m_reg[REG16::SI]);
+			IndexIncDec(m_reg[REG16::SI]);
 
-			IndexIncDec(regDI.x);
-			IndexIncDec(regDI.x);
+			IndexIncDec(m_reg[REG16::DI]);
+			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(true);
 	}
 
 	void CPU8086::REP(bool z)
 	{
-		LogPrintf(LOG_DEBUG, "REP, Z=%d, cx=%04X", z, regC.x);
+		LogPrintf(LOG_DEBUG, "REP, Z=%d, cx=%04X", z, m_reg[REG16::CX]);
 
 		inRep = true;
 		repZ = z;
-		repIP = regIP.x-1;
+		m_reg[REG16::_REP_IP] = m_reg[REG16::IP] - 1;
 	}
 
 	bool CPU8086::PreREP()
@@ -2291,7 +2298,7 @@ namespace emul
 		if (!inRep)
 			return true;
 
-		if (regC.x == 0)
+		if (m_reg[REG16::CX] == 0)
 		{
 			LogPrintf(LOG_DEBUG, "PreRep, end loop");
 			inRep = false;
@@ -2306,11 +2313,11 @@ namespace emul
 			return;
 		}
 
-		--regC.x;
-		LogPrintf(LOG_DEBUG, "PostRep, cx=%04X", regC.x);
+		--m_reg[REG16::CX];
+		LogPrintf(LOG_DEBUG, "PostRep, cx=%04X", m_reg[REG16::CX]);
 		if (!checkZ || (GetFlag(FLAG_Z) == repZ))
 		{ 
-			regIP.x = repIP;
+			m_reg[REG16::IP] = m_reg[REG16::_REP_IP];
 			TICK(9);
 		}
 		else
@@ -2325,7 +2332,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "Segment Override, val=%04X", val);
 
 		inSegOverride = true;
-		segOverride = val;
+		m_reg[REG16::_SEG_O] = val;
 	}
 
 	void CPU8086::INT(BYTE interrupt)
@@ -2340,28 +2347,28 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "VIDEO");
 #if 0
-			char ch = (regA.hl.l < 32) ? '.' : (char)regA.hl.l;
+			char ch = (m_reg[REG8::AL] < 32) ? '.' : (char)m_reg[REG8::AL];
 			
-			switch (regA.hl.h)
+			switch (m_reg[REG8::AH])
 			{
-			case 0x00: LogPrintf(LOG_ERROR, "INT10: 0x00 - Set video mode [%02X]", regA.hl.l); break;
-			case 0x01: LogPrintf(LOG_DEBUG, "INT10: 0x01 - Set text-mode cursor shape [%02X]-[%02X]", regC.hl.h, regC.hl.l); break;
-			case 0x02: LogPrintf(LOG_DEBUG, "INT10: 0x02 - Set cursor position p[%d]:[%02d ,%02d]", regB.hl.h, regD.hl.l, regD.hl.h); break;
-			case 0x03: LogPrintf(LOG_DEBUG, "INT10: 0x03 - Get cursor position p[%d]", regB.hl.h); break;
+			case 0x00: LogPrintf(LOG_ERROR, "INT10: 0x00 - Set video mode [%02X]", m_reg[REG8::AL]); break;
+			case 0x01: LogPrintf(LOG_DEBUG, "INT10: 0x01 - Set text-mode cursor shape [%02X]-[%02X]", m_reg[REG8::CH], m_reg[REG8::CL]); break;
+			case 0x02: LogPrintf(LOG_DEBUG, "INT10: 0x02 - Set cursor position p[%d]:[%02d ,%02d]", m_reg[REG8::BH], m_reg[REG8::DL], m_reg[REG8::DH]); break;
+			case 0x03: LogPrintf(LOG_DEBUG, "INT10: 0x03 - Get cursor position p[%d]", m_reg[REG8::BH]); break;
 			case 0x04: LogPrintf(LOG_DEBUG, "INT10: 0x04 - Read light pen"); break;
-			case 0x05: LogPrintf(LOG_ERROR, "INT10: 0x05 - Select page p[%d]", regA.hl.l); break;
+			case 0x05: LogPrintf(LOG_ERROR, "INT10: 0x05 - Select page p[%d]", m_reg[REG8::AL]); break;
 			case 0x06: LogPrintf(LOG_DEBUG, "INT10: 0x06 - Scroll up"); break;
 			case 0x07: LogPrintf(LOG_DEBUG, "INT10: 0x07 - Scroll down"); break;
 			case 0x08: LogPrintf(LOG_DEBUG, "INT10: 0x08 - Read char & attr at cursor"); break;
-			case 0x09: LogPrintf(LOG_ERROR, "INT10: 0x09 - Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", regA.hl.l, ch, regB.hl.h, regB.hl.l, regC.x); break;
-			case 0x0A: LogPrintf(LOG_ERROR, "INT10: 0x0A - Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", regA.hl.l, ch, regB.hl.h, regC.x); break;
+			case 0x09: LogPrintf(LOG_ERROR, "INT10: 0x09 - Write char & attr at cursor ch=[%02d]['%c'], p=[%d], color=[%02d], times=[%d]", m_reg[REG8::AL], ch, m_reg[REG8::BH], m_reg[REG8::BL], m_reg[REG16::CX]); break;
+			case 0x0A: LogPrintf(LOG_ERROR, "INT10: 0x0A - Write char at cursor ch=[%02d]['%c'], p=[%d], times=[%d]", m_reg[REG8::AL], ch, m_reg[REG8::BH], m_reg[REG16::CX]); break;
 			case 0x0B: LogPrintf(LOG_DEBUG, "INT10: 0x0B - Set background/border color / Set palette"); break;
 			case 0x0C: LogPrintf(LOG_DEBUG, "INT10: 0x0C - Write pixel"); break;
 			case 0x0D: LogPrintf(LOG_DEBUG, "INT10: 0x0D - Read pixel"); break;
-			case 0x0E: LogPrintf(LOG_ERROR, "INT10: 0x0E - Teletype output ch=[%02d]['%c'] p=[%d]", regA.hl.l, ch, regB.hl.h); break;
+			case 0x0E: LogPrintf(LOG_ERROR, "INT10: 0x0E - Teletype output ch=[%02d]['%c'] p=[%d]", m_reg[REG8::AL], ch, m_reg[REG8::BL]); break;
 			case 0x0F: LogPrintf(LOG_DEBUG, "INT10: 0x0F - Get video mode"); break;
 			case 0x11: LogPrintf(LOG_DEBUG, "INT10: 0x11 - Change charset"); break;
-			default: LogPrintf(LOG_DEBUG, "INT10: Other function ah=%02X", regA.hl.h); break;
+			default: LogPrintf(LOG_DEBUG, "INT10: Other function ah=%02X", m_reg[REG8::AH]); break;
 			}
 			//return;
 #endif
@@ -2376,17 +2383,17 @@ namespace emul
 		}
 		else if (interrupt == 0x13)
 		{
-			WORD cyl = regC.hl.h;
-			cyl |= ((regC.hl.l & 0b11000000) << 2);
-			switch (regA.hl.h)
+			WORD cyl = m_reg[REG8::CH];
+			cyl |= ((m_reg[REG8::CL] & 0b11000000) << 2);
+			switch (m_reg[REG8::AH])
 			{
-			case 0x00: LogPrintf(LOG_INFO, "DISK[%02X]: Reset drive", regD.hl.l); break;
-			case 0x01: LogPrintf(LOG_INFO, "DISK[%02X]: Get Status drive", regD.hl.l); break;
-			case 0x02: LogPrintf(LOG_INFO, "DISK[%02X]: Read Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", regD.hl.l, regA.hl.l, cyl, regD.hl.h, regC.hl.l & 63); break;
-			case 0x03: LogPrintf(LOG_INFO, "DISK[%02X]: Write Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", regD.hl.l, regA.hl.l, cyl, regD.hl.h, regC.hl.l & 63); break;
-			case 0x04: LogPrintf(LOG_INFO, "DISK[%02X]: Verify Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", regD.hl.l, regA.hl.l, cyl, regD.hl.h, regC.hl.l & 63); break;
+			case 0x00: LogPrintf(LOG_INFO, "DISK[%02X]: Reset drive", m_reg[REG8::DL]); break;
+			case 0x01: LogPrintf(LOG_INFO, "DISK[%02X]: Get Status drive", m_reg[REG8::DL]); break;
+			case 0x02: LogPrintf(LOG_INFO, "DISK[%02X]: Read Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", m_reg[REG8::DL], m_reg[REG8::AL], cyl, m_reg[REG8::DH], m_reg[REG8::CL] & 63); break;
+			case 0x03: LogPrintf(LOG_INFO, "DISK[%02X]: Write Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", m_reg[REG8::DL], m_reg[REG8::AL], cyl, m_reg[REG8::DH], m_reg[REG8::CL] & 63); break;
+			case 0x04: LogPrintf(LOG_INFO, "DISK[%02X]: Verify Sectors count=[%d], cyl=[%d] head=[%d] sect=[%d]", m_reg[REG8::DL], m_reg[REG8::AL], cyl, m_reg[REG8::DH], m_reg[REG8::CL] & 63); break;
 
-			default: LogPrintf(LOG_INFO, "DISK[%02X], Other function ah=%02X", regD.hl.l, regA.hl.h); break;
+			default: LogPrintf(LOG_INFO, "DISK[%02X], Other function ah=%02X", m_reg[REG8::DL], m_reg[REG8::AH]); break;
 			}
 		}
 		else if (interrupt == 0x21)
@@ -2394,13 +2401,13 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "DOS");
 
 #if 0
-			switch (regA.hl.h)
+			switch (m_reg[REG8::AH])
 			{				
-			case 0x09: LogPrintf(LOG_ERROR, "INT21: 0x09 - Print String @[%04X:%04X]", regDS.x, regD.x); break;
+			case 0x09: LogPrintf(LOG_ERROR, "INT21: 0x09 - Print String @[%04X:%04X]", m_reg[REG16::DS], m_reg[REG16::DX]); break;
 			case 0x0A: LogPrintf(LOG_ERROR, "INT21: 0x0A - Buffered input"); break;
-			case 0x0E: LogPrintf(LOG_ERROR, "INT21: 0x0E - Select Disk dl=%02X", regD.hl.l); break;
-			case 0x2B: LogPrintf(LOG_ERROR, "INT21: 0x2B - Set system date[%04d-%02d-%02d]", regC.x, regD.hl.h, regD.hl.l); break;
-			default: LogPrintf(LOG_ERROR, "INT21: Other function ah=%02X", regA.hl.h); break;
+			case 0x0E: LogPrintf(LOG_ERROR, "INT21: 0x0E - Select Disk dl=%02X", m_reg[REG8::DL]); break;
+			case 0x2B: LogPrintf(LOG_ERROR, "INT21: 0x2B - Set system date[%04d-%02d-%02d]", m_reg[REG16::CX], m_reg[REG8::DH], m_reg[REG8::DL]); break;
+			default: LogPrintf(LOG_ERROR, "INT21: Other function ah=%02X", m_reg[REG8::AH]); break;
 			}
 #endif
 		}
@@ -2410,9 +2417,9 @@ namespace emul
 			LogPrintf(LOG_WARNING, "IRQ(%d)", interrupt - 8);
 		}
 #endif
-		PUSH(flags);
-		PUSH(regCS.x);
-		PUSH(inRep ? repIP : regIP.x);
+		PUSH(m_reg[REG16::FLAGS]);
+		PUSH(m_reg[REG16::CS]);
+		PUSH(m_reg[inRep ? REG16::_REP_IP : REG16::IP]);
 		if (inRep)
 		{
 			inRep = false;
@@ -2422,16 +2429,16 @@ namespace emul
 		CLI();
 		
 		ADDRESS interruptAddress = interrupt * 4;
-		regCS.x = m_memory.Read16(interruptAddress + 2);
-		regIP.x = m_memory.Read16(interruptAddress);
+		m_reg[REG16::CS] = m_memory.Read16(interruptAddress + 2);
+		m_reg[REG16::IP] = m_memory.Read16(interruptAddress);
 	}
 
 	void CPU8086::IRET()
 	{
 		LogPrintf(LOG_DEBUG, "IRET");
-		POP(regIP);
-		POP(regCS);
-		POP(flags);
+		POP(REG16::IP);
+		POP(REG16::CS);
+		POP(REG16::FLAGS);
 	}
 
 	void CPU8086::MultiFunc(BYTE op2)
@@ -2439,13 +2446,13 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "Multifunc, op=%02X", op2);
 
 		Mem16 dest = GetModRM16(op2);
-		WORD val = dest.GetValue();
+		WORD val = dest.Read();
 
 		switch (op2 & 0x38)
 		{
 		// INC/DEC MEM16
-		case 0x00: TICK(15); INC16(val); dest.SetValue(val);  break;
-		case 0x08: TICK(15); DEC16(val); dest.SetValue(val); break;
+		case 0x00: TICK(15); INC16(val); dest.Write(val);  break;
+		case 0x08: TICK(15); DEC16(val); dest.Write(val); break;
 		// CALL RM16(intra) / CALL MEM16(intersegment)
 		case 0x10: TICK(21); CALLIntra(val); break;
 		case 0x18: TICK(37); CALLInter(dest); break;
@@ -2470,13 +2477,13 @@ namespace emul
 		// otherwise we will read data in *this instead of memory
 
 		// Target register -> offset
-		regMem.dest.SetValue(regMem.source.GetValue());
+		regMem.dest.Write(regMem.source.Read());
 		
 		// Read segment
 		regMem.source.Increment(m_memory);
-		destSegment = regMem.source.GetValue();
+		destSegment = regMem.source.Read();
 
-		LogPrintf(LOG_DEBUG, "LoadPtr Loaded [%04X:%04X]", destSegment, regMem.dest.GetValue());
+		LogPrintf(LOG_DEBUG, "LoadPtr Loaded [%04X:%04X]", destSegment, regMem.dest.Read());
 
 	}
 
@@ -2484,18 +2491,18 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "XLAT");
 
-		WORD offset = regB.x + regA.hl.l; // TODO: Wrap around?
-		regA.hl.l = m_memory.Read8(S2A(inSegOverride ? segOverride : regDS.x, offset));
+		WORD offset = m_reg[REG16::BX] + m_reg[REG8::AL]; // TODO: Wrap around?
+		m_reg[REG8::AL] = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], offset));
 	}
 
 	void CPU8086::AAA()
 	{
 		LogPrintf(LOG_DEBUG, "AAA");
 		
-		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
+		if (GetFlag(FLAG_A) || ((m_reg[REG8::AL] & 15) > 9))
 		{
-			++regA.hl.h;
-			regA.hl.l += 6;
+			++m_reg[REG8::AH];
+			m_reg[REG8::AL] += 6;
 			SetFlag(FLAG_A, true);
 			SetFlag(FLAG_C, true);
 		}
@@ -2504,21 +2511,21 @@ namespace emul
 			SetFlag(FLAG_A, false);
 			SetFlag(FLAG_C, false);
 		}
-		regA.hl.l &= 0x0F;
+		m_reg[REG8::AL] &= 0x0F;
 
-		AdjustSign(regA.hl.l);
-		AdjustZero(regA.hl.l);
-		AdjustParity(regA.hl.l);
+		AdjustSign(m_reg[REG8::AL]);
+		AdjustZero(m_reg[REG8::AL]);
+		AdjustParity(m_reg[REG8::AL]);
 	}
 
 	void CPU8086::AAS()
 	{
 		LogPrintf(LOG_DEBUG, "AAS");
 
-		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
+		if (GetFlag(FLAG_A) || ((m_reg[REG8::AL] & 15) > 9))
 		{
-			--regA.hl.h;
-			regA.hl.l -= 6;
+			--m_reg[REG8::AH];
+			m_reg[REG8::AL] -= 6;
 			SetFlag(FLAG_A, true);
 			SetFlag(FLAG_C, true);
 		}
@@ -2527,11 +2534,11 @@ namespace emul
 			SetFlag(FLAG_A, false);
 			SetFlag(FLAG_C, false);
 		}
-		regA.hl.l &= 0x0F;
+		m_reg[REG8::AL] &= 0x0F;
 
-		AdjustSign(regA.hl.l);
-		AdjustZero(regA.hl.l);
-		AdjustParity(regA.hl.l);
+		AdjustSign(m_reg[REG8::AL]);
+		AdjustZero(m_reg[REG8::AL]);
+		AdjustParity(m_reg[REG8::AL]);
 	}
 
 	void CPU8086::AAM(BYTE base)
@@ -2543,54 +2550,54 @@ namespace emul
 			return;
 		}
 
-		regA.hl.h = regA.hl.l / base;
-		regA.hl.l %= base;
+		m_reg[REG8::AH] = m_reg[REG8::AL] / base;
+		m_reg[REG8::AL] %= base;
 
-		AdjustSign(regA.hl.l);
-		AdjustZero(regA.hl.l);
-		AdjustParity(regA.hl.l);
+		AdjustSign(m_reg[REG8::AL]);
+		AdjustZero(m_reg[REG8::AL]);
+		AdjustParity(m_reg[REG8::AL]);
 	}
 
 	void CPU8086::AAD(BYTE base)
 	{
 		LogPrintf(LOG_DEBUG, "AAD base %d", base);
 
-		ArithmeticImm8(regA.hl.l, base * regA.hl.h, rawAdd8);
-		regA.hl.h = 0;
+		ArithmeticImm8(REG8::AL, base * m_reg[REG8::AH], rawAdd8);
+		m_reg[REG8::AH] = 0;
 	}
 
 	void CPU8086::DAA()
 	{
 		LogPrintf(LOG_DEBUG, "DAA");
 
-		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
+		if (GetFlag(FLAG_A) || ((m_reg[REG8::AL] & 15) > 9))
 		{
-			regA.hl.l += 6;
+			m_reg[REG8::AL] += 6;
 			SetFlag(FLAG_A, true);
 		}
 
-		if (GetFlag(FLAG_C) || regA.hl.l > 0x9F)
+		if (GetFlag(FLAG_C) || m_reg[REG8::AL] > 0x9F)
 		{
-			regA.hl.l += 0x60;
+			m_reg[REG8::AL] += 0x60;
 			SetFlag(FLAG_C, true);
 		}
 
-		AdjustSign(regA.hl.l);
-		AdjustZero(regA.hl.l);
-		AdjustParity(regA.hl.l);
+		AdjustSign(m_reg[REG8::AL]);
+		AdjustZero(m_reg[REG8::AL]);
+		AdjustParity(m_reg[REG8::AL]);
 	}
 
 	void CPU8086::DAS()
 	{
 		LogPrintf(LOG_DEBUG, "DAS");
 
-		BYTE oldAL = regA.hl.l;
+		BYTE oldAL = m_reg[REG8::AL];
 		bool oldCF = GetFlag(FLAG_C);
 		SetFlag(FLAG_C, false);
 
-		if (GetFlag(FLAG_A) || ((regA.hl.l & 15) > 9))
+		if (GetFlag(FLAG_A) || ((m_reg[REG8::AL] & 15) > 9))
 		{
-			regA.hl.l -= 6;
+			m_reg[REG8::AL] -= 6;
 			SetFlag(FLAG_C, oldCF || (oldAL < 6));
 			SetFlag(FLAG_A, true);
 		}
@@ -2601,13 +2608,13 @@ namespace emul
 
 		if (oldCF || oldAL > 0x99)
 		{
-			regA.hl.l -= 0x60;
+			m_reg[REG8::AL] -= 0x60;
 			SetFlag(FLAG_C, true);
 		}
 
-		AdjustSign(regA.hl.l);
-		AdjustZero(regA.hl.l);
-		AdjustParity(regA.hl.l);
+		AdjustSign(m_reg[REG8::AL]);
+		AdjustZero(m_reg[REG8::AL]);
+		AdjustParity(m_reg[REG8::AL]);
 	}
 
 	void CPU8086::LEA(BYTE modregrm)
@@ -2656,75 +2663,75 @@ namespace emul
 
 		offset = (direct ? 0 : offset) + displacement;
 
-		dest.SetValue(offset);
+		dest.Write(offset);
 	}
 
 	void CPU8086::SALC()
 	{
 		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
 		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
-		regA.hl.l = GetFlag(FLAG_C) ? 0xFF : 0;
+		m_reg[REG8::AL] = GetFlag(FLAG_C) ? 0xFF : 0;
 	}
 
 	void CPU8086::Serialize(json& to)
 	{
-		to["ax"] = regA.x;
-		to["bx"] = regB.x;
-		to["cx"] = regC.x;
-		to["dx"] = regD.x;
+		to["ax"] = m_reg[REG16::AX];
+		to["bx"] = m_reg[REG16::BX];
+		to["cx"] = m_reg[REG16::CX];
+		to["dx"] = m_reg[REG16::DX];
 
-		to["sp"] = regSP.x;
-		to["bp"] = regBP.x;
-		to["si"] = regSI.x;
-		to["di"] = regDI.x;
+		to["sp"] = m_reg[REG16::SP];
+		to["bp"] = m_reg[REG16::BP];
+		to["si"] = m_reg[REG16::SI];
+		to["di"] = m_reg[REG16::DI];
 
-		to["cs"] = regCS.x;
-		to["ds"] = regDS.x;
-		to["ss"] = regSS.x;
-		to["es"] = regES.x;
+		to["cs"] = m_reg[REG16::CS];
+		to["ds"] = m_reg[REG16::DS];
+		to["ss"] = m_reg[REG16::SS];
+		to["es"] = m_reg[REG16::ES];
 
-		to["ip"] = regIP.x;
-		to["flags"] = flags.x;
+		to["ip"] = m_reg[REG16::IP];
+		to["flags"] = m_reg[REG16::FLAGS];
 
 		to["lastOp"] = m_lastOp;
 		to["irqPending"] = m_irqPending;
 
 		to["inRep"] = inRep;
-		to["repIP"] = repIP;
+		to["repIP"] = m_reg[REG16::_REP_IP];
 		to["repZ"] = repZ;
 
 		to["inSegOverride"] = inSegOverride;
-		to["segOverride"] = segOverride;
+		to["segOverride"] = m_reg[REG16::_SEG_O];
 	}
 
 	void CPU8086::Deserialize(json& from)
 	{
-		regA.x = from["ax"];
-		regB.x = from["bx"];
-		regC.x = from["cx"];
-		regD.x = from["dx"];
+		m_reg[REG16::AX] = from["ax"];
+		m_reg[REG16::BX] = from["bx"];
+		m_reg[REG16::CX] = from["cx"];
+		m_reg[REG16::DX] = from["dx"];
 
-		regSP.x = from["sp"];
-		regBP.x = from["bp"];
-		regSI.x = from["si"];
-		regDI.x = from["di"];
+		m_reg[REG16::SP] = from["sp"];
+		m_reg[REG16::BP] = from["bp"];
+		m_reg[REG16::SI] = from["si"];
+		m_reg[REG16::DI] = from["di"];
 
-		regCS.x = from["cs"];
-		regDS.x = from["ds"];
-		regSS.x = from["ss"];
-		regES.x = from["es"];
+		m_reg[REG16::CS] = from["cs"];
+		m_reg[REG16::DS] = from["ds"];
+		m_reg[REG16::SS] = from["ss"];
+		m_reg[REG16::ES] = from["es"];
 
-		regIP.x = from["ip"];
-		flags.x = from["flags"];
+		m_reg[REG16::IP] = from["ip"];
+		m_reg[REG16::FLAGS] = from["flags"];
 
 		m_lastOp = from["lastOp"];
 		m_irqPending = from["irqPending"];
 
 		inRep = from["inRep"];
-		repIP = from["repIP"];
+		m_reg[REG16::_REP_IP] = from["repIP"];
 		repZ = from["repZ"];
 
 		inSegOverride = from["inSegOverride"];
-		segOverride = from["segOverride"];
+		m_reg[REG16::_SEG_O] = from["segOverride"];
 	}
 }

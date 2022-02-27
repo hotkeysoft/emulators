@@ -158,23 +158,6 @@ namespace emul
 
 		return true;
 	}
-	
-	BytePtr Memory::GetPtr8(ADDRESS address) const
-	{
-		const MemorySlot& slot = m_memory[address / BlockGranularity];
-		MemoryBlock* block = slot.block;
-
-		if (block)
-		{
-			return block->getPtr(address - slot.base);
-		}
-		else
-		{
-			LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
-			s_uninitialized = 0xF00F; // Reset 'initialized' value in case someone wrote in it
-			return (BYTE*)&Memory::s_uninitialized;
-		}
-	}
 
 	bool Memory::LoadBinary(const char* file, ADDRESS baseAddress)
 	{
@@ -192,8 +175,18 @@ namespace emul
 
 	BYTE Memory::Read8(ADDRESS address) const
 	{
-		BytePtr mem = GetPtr8(address);
-		return mem.Read();
+		const MemorySlot& slot = m_memory[address / BlockGranularity];
+		MemoryBlock* block = slot.block;
+
+		if (block)
+		{
+			return block->read(address - slot.base);
+		}
+		else
+		{
+			LogPrintf(LOG_WARNING, "Reading unallocated memory space (%X)", address);
+			return 0x55;
+		}
 	}
 
 	WORD Memory::Read16(ADDRESS address) const

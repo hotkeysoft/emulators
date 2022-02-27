@@ -26,20 +26,19 @@ namespace emul
 	DWORD rawTest16(WORD&, const WORD, bool);
 
 	// Arithmetic functions internal tests
-	#define ATEST8(F,A,B,R,O,S,Z,C) { flags.x=0; d8=A; s8=B; Arithmetic8(sd8, F); assert(sd8.dest.Read()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define ATEST16(F,A,B,R,O,S,Z,C) { flags.x=0; d16.x=A; s16.x=B; Arithmetic16(sd16, F); assert(sd16.dest.GetValue()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define ATEST8C(F,A,B,R,O,S,Z,C) { flags.x=FLAG_C; d8=A; s8=B; Arithmetic8(sd8, F); assert(sd8.dest.Read()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define ATEST16C(F,A,B,R,O,S,Z,C) { flags.x=FLAG_C; d16.x=A; s16.x=B; Arithmetic16(sd16, F); assert(sd16.dest.GetValue()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST8(F,A,B,R,O,S,Z,C) { r[REG16::FLAGS]=0; r[REG8::DL]=A; r[REG8::AL]=B; Arithmetic8(sd8, F); assert(sd8.dest.Read()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST16(F,A,B,R,O,S,Z,C) { r[REG16::FLAGS]=0; r[REG16::DX]=A; r[REG16::AX]=B; Arithmetic16(sd16, F); assert(sd16.dest.Read()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST8C(F,A,B,R,O,S,Z,C) { r[REG16::FLAGS]=FLAG_C; r[REG8::DL]=A; r[REG8::AL]=B; Arithmetic8(sd8, F); assert(sd8.dest.Read()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define ATEST16C(F,A,B,R,O,S,Z,C) { r[REG16::FLAGS]=FLAG_C; r[REG16::DX]=A; r[REG16::AX]=B; Arithmetic16(sd16, F); assert(sd16.dest.Read()==R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
 	void CPU8086Test::TestArithmetic()
 	{
 		// Arithmetic8
 		{
-			BYTE s8;
-			BYTE d8;
+			Registers r;
 			SourceDest8 sd8;
-			sd8.source = &s8;
-			sd8.dest = &d8;
+			sd8.source = REG8::AL;
+			sd8.dest = REG8::DL;
 
 			//     op       A     B     RES   OFLOW  SIGN   ZERO   CARRY
 			ATEST8(rawAdd8, 0x7F, 0x00, 0x7F, false, false, false, false);
@@ -123,11 +122,10 @@ namespace emul
 
 		// Arithmetic16
 		{
-			Register s16;
-			Register d16;
+			Registers r;
 			SourceDest16 sd16;
-			sd16.source = s16;
-			sd16.dest = d16;
+			sd16.source = REG16::AX;
+			sd16.dest = REG16::DX;
 
 			//      op        A       B       RES     OFLOW  SIGN   ZERO   CARRY
 			ATEST16(rawAdd16, 0x7FFF, 0x0000, 0x7FFF, false, false, false, false);
@@ -171,22 +169,23 @@ namespace emul
 		}
 	}
 
-	#define SHIFTROTTEST8(CLR,F,N,R,O,S,Z,C) { flags.x=(CLR?0:flags.x); SHIFTROT8(F, N); assert(regA.hl.l == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define SHIFTROTTEST8noO(CLR,F,N,R,S,Z,C) { flags.x=(CLR?0:flags.x); SHIFTROT8(F, N); assert(regA.hl.l == R); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST8(CLR,F,N,R,O,S,Z,C) { r[REG16::FLAGS]=(CLR?0:r[REG16::FLAGS]); SHIFTROT8(F, N); assert(r[REG8::AL] == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST8noO(CLR,F,N,R,S,Z,C) { r[REG16::FLAGS]=(CLR?0:r[REG16::FLAGS]); SHIFTROT8(F, N); assert(r[REG8::AL] == R); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
-	#define SHIFTROTTEST16(CLR,F,N,R,O,S,Z,C) { flags.x=(CLR?0:flags.x); SHIFTROT16(F, N); assert(regA.x == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST16(CLR,F,N,R,O,S,Z,C) { r[REG16::FLAGS]=(CLR?0:r[REG16::FLAGS]); SHIFTROT16(F, N); assert(r[REG16::AX] == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
 
 	void CPU8086Test::TestShiftRotate()
 	{
 		// SHIFT/ROTATE8
 		{
+			Registers r;
 			const BYTE SHL = 0xE0, SHR = 0xE8, SAR = 0xF8, ROL = 0xC0, ROR = 0xC8, RCL = 0xD0, RCR = 0xD8;
 
 			// N=1
 
 			// SHL
-			regA.hl.l = 0x01;
+			r[REG8::AL] = 0x01;
 			//            clrf  op   n  RES   OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(true, SHL, 1, 0x02, false, false, false, false);
 			SHIFTROTTEST8(true, SHL, 1, 0x04, false, false, false, false);
@@ -199,7 +198,7 @@ namespace emul
 			SHIFTROTTEST8(true, SHL, 1, 0x00, false, false, true, false);
 
 			// SHR
-			regA.hl.l = 0x80;
+			r[REG8::AL] = 0x80;
 			//            clrf  op   n  RES   OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(true, SHR, 1, 0x40, true,  false, false, false);
 			SHIFTROTTEST8(true, SHR, 1, 0x20, false, false, false, false);
@@ -212,7 +211,7 @@ namespace emul
 			SHIFTROTTEST8(true, SHR, 1, 0x00, false, false, true,  false);
 
 			// SAR (negative)
-			regA.hl.l = 0b10000000;
+			r[REG8::AL] = 0b10000000;
 			//            clrf  op   n  RES         OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(true, SAR, 1, 0b11000000, false, true,  false, false);
 			SHIFTROTTEST8(true, SAR, 1, 0b11100000, false, true,  false, false);
@@ -224,7 +223,7 @@ namespace emul
 			SHIFTROTTEST8(true, SAR, 1, 0b11111111, false, true,  false, true);
 
 			// SAR (positive)
-			regA.hl.l = 0b01000000;
+			r[REG8::AL] = 0b01000000;
 			//            clrf  op   n  RES         OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(true, SAR, 1, 0b00100000, false, false, false, false);
 			SHIFTROTTEST8(true, SAR, 1, 0b00010000, false, false, false, false);
@@ -236,7 +235,7 @@ namespace emul
 			SHIFTROTTEST8(true, SAR, 1, 0b00000000, false, false, true,  false);
 
 			// ROL
-			regA.hl.l = 0x01;
+			r[REG8::AL] = 0x01;
 			//            clrf  op   n  RES   OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(true, ROL, 1, 0x02, false, false, false, false);
 			SHIFTROTTEST8(true, ROL, 1, 0x04, false, false, false, false);
@@ -249,7 +248,7 @@ namespace emul
 			SHIFTROTTEST8(true, ROL, 1, 0x02, false, false, false, false);
 
 			// ROR
-			regA.hl.l = 0x80;
+			r[REG8::AL] = 0x80;
 			//            clrf  op   n  RES   OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(true, ROR, 1, 0x40, true,  false, false, false);
 			SHIFTROTTEST8(true, ROR, 1, 0x20, false, false, false, false);
@@ -262,7 +261,7 @@ namespace emul
 			SHIFTROTTEST8(true, ROR, 1, 0x40, true,  false, false, false);
 
 			// RCL
-			regA.hl.l = 0x01; flags.x = 0;
+			r[REG8::AL] = 0x01; r[REG16::FLAGS] = 0;
 			//            clrf   op   n  RES   OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(false, RCL, 1, 0x02, false, false, false, false);
 			SHIFTROTTEST8(false, RCL, 1, 0x04, false, false, false, false);
@@ -276,7 +275,7 @@ namespace emul
 			SHIFTROTTEST8(false, RCL, 1, 0x02, false, false, false, false);
 
 			// RCR
-			regA.hl.l = 0x80; flags.x = 0;
+			r[REG8::AL] = 0x80; r[REG16::FLAGS] = 0;
 			//            clrf   op   n  RES   OFLOW  SIGN   ZERO   CARRY
 			SHIFTROTTEST8(false, RCR, 1, 0x40, true,  false, false, false);
 			SHIFTROTTEST8(false, RCR, 1, 0x20, false, false, false, false);
@@ -294,91 +293,93 @@ namespace emul
 			//                                    clrf  op   n  RES         OFLOW  SIGN   ZERO   CARRY
 
 			// SHL
-			regA.hl.l = 0b10101010; SHIFTROTTEST8(true, SHL, 0, 0b10101010, false, true,  false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8(true, SHL, 0, 0b01010101, false, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8(true, SHL, 0, 0b10101010, false, true,  false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8(true, SHL, 0, 0b01010101, false, false, false, false);
 
 			// SHR
-			regA.hl.l = 0b10101010; SHIFTROTTEST8(true, SHR, 0, 0b10101010, false, true,  false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8(true, SHR, 0, 0b01010101, false, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8(true, SHR, 0, 0b10101010, false, true,  false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8(true, SHR, 0, 0b01010101, false, false, false, false);
 
 			// SAR
-			regA.hl.l = 0b10101010; SHIFTROTTEST8(true, SAR, 0, 0b10101010, false, true,  false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8(true, SAR, 0, 0b01010101, false, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8(true, SAR, 0, 0b10101010, false, true,  false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8(true, SAR, 0, 0b01010101, false, false, false, false);
 
 			// ROL
-			regA.hl.l = 0b10101010; SHIFTROTTEST8(true, ROL, 0, 0b10101010, false, false, false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8(true, ROL, 0, 0b01010101, false, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8(true, ROL, 0, 0b10101010, false, false, false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8(true, ROL, 0, 0b01010101, false, false, false, false);
 
 			// ROR
-			regA.hl.l = 0b10101010; SHIFTROTTEST8(true, ROR, 0, 0b10101010, false, false, false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8(true, ROR, 0, 0b01010101, false, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8(true, ROR, 0, 0b10101010, false, false, false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8(true, ROR, 0, 0b01010101, false, false, false, false);
 
 			// RCL
-			regA.hl.l = 0b10101010; SHIFTROTTEST8(true, RCL, 0, 0b10101010, false, false,  false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8(true, RCL, 0, 0b01010101, false, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8(true, RCL, 0, 0b10101010, false, false,  false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8(true, RCL, 0, 0b01010101, false, false, false, false);
 
 			// RCR
-			regA.hl.l = 0b10101010; SHIFTROTTEST8(true, RCR, 0, 0b10101010, false, false,  false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8(true, RCR, 0, 0b01010101, false, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8(true, RCR, 0, 0b10101010, false, false,  false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8(true, RCR, 0, 0b01010101, false, false, false, false);
 
 			//                                       clrf  op   n  RES         SIGN   ZERO   CARRY
 
 			// N=7 (OF Undefined for n>1)
 			// SHL
-			regA.hl.l = 0b10101010; SHIFTROTTEST8noO(true, SHL, 7, 0b00000000, false, true,  true);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8noO(true, SHL, 7, 0b10000000, true,  false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, SHL, 7, 0b00000000, false, true,  true);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, SHL, 7, 0b10000000, true,  false, false);
 
 			// SHR
-			regA.hl.l = 0b10101010; SHIFTROTTEST8noO(true, SHR, 7, 0b00000001, false, false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8noO(true, SHR, 7, 0b00000000, false, true,  true);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, SHR, 7, 0b00000001, false, false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, SHR, 7, 0b00000000, false, true,  true);
 
 			// SAR
-			regA.hl.l = 0b10101010; SHIFTROTTEST8noO(true, SAR, 7, 0b11111111, true,  false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8noO(true, SAR, 7, 0b00000000, false, true,  true);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, SAR, 7, 0b11111111, true,  false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, SAR, 7, 0b00000000, false, true,  true);
 
 			// ROL
-			regA.hl.l = 0b10101010; SHIFTROTTEST8noO(true, ROL, 7, 0b01010101, false, false, true);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8noO(true, ROL, 7, 0b10101010, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, ROL, 7, 0b01010101, false, false, true);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, ROL, 7, 0b10101010, false, false, false);
 
 			// ROR
-			regA.hl.l = 0b10101010; SHIFTROTTEST8noO(true, ROR, 7, 0b01010101, false, false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8noO(true, ROR, 7, 0b10101010, false, false, true);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, ROR, 7, 0b01010101, false, false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, ROR, 7, 0b10101010, false, false, true);
 
 			// RCL
-			regA.hl.l = 0b10101010; SHIFTROTTEST8noO(true, RCL, 7, 0b00101010, false, false, true);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8noO(true, RCL, 7, 0b10010101, false, false, false);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, RCL, 7, 0b00101010, false, false, true);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, RCL, 7, 0b10010101, false, false, false);
 			
 			// RCR
-			regA.hl.l = 0b10101010; SHIFTROTTEST8noO(true, RCR, 7, 0b10101001, false, false, false);
-			regA.hl.l = 0b01010101; SHIFTROTTEST8noO(true, RCR, 7, 0b01010100, false, false, true);
+			r[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, RCR, 7, 0b10101001, false, false, false);
+			r[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, RCR, 7, 0b01010100, false, false, true);
 
 		}
 
 		// SHIFT/ROTATE16
 		{
+			Registers r;
+
 			const BYTE SHL = 0xE0, SHR = 0xE8, SAR = 0xF8, ROL = 0xC0, ROR = 0xC8, RCL = 0xD0, RCR = 0xD8;
 
 			//                              clrf  op   n    RES     OFLOW  SIGN   ZERO   CARRY
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 0,   0xC8A7, false, false, false, false);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 1,   0x914E, false, false, false, true);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 0,   0xC8A7, false, false, false, false);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 1,   0x914E, false, false, false, true);
 			
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 15,  0xB229, false, false, false, true);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 16,  0x6453, true,  false, false, true);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 15,  0xB229, false, false, false, true);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 16,  0x6453, true,  false, false, true);
 
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 17,  0xC8A7, true,  false, false, false);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 18,  0x914E, false, false, false, true);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 17,  0xC8A7, true,  false, false, false);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 18,  0x914E, false, false, false, true);
 			
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 29,  0x7645, false, false, false, false);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 30,  0xEC8A, true,  false, false, false);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 31,  0xD914, false, false, false, true);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 29,  0x7645, false, false, false, false);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 30,  0xEC8A, true,  false, false, false);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 31,  0xD914, false, false, false, true);
 
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 32,  0xC8A7, false, false, false, false);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 33,  0x914E, false, false, false, true);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 34,  0x229D, true, false, false, true);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 32,  0xC8A7, false, false, false, false);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 33,  0x914E, false, false, false, true);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 34,  0x229D, true, false, false, true);
 
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 253, 0x7645, false, false, false, false);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 254, 0xEC8A, true,  false, false, false);
-			regA.x = 0xC8A7; SHIFTROTTEST16(true, RCL, 255, 0xD914, false, false, false, true);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 253, 0x7645, false, false, false, false);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 254, 0xEC8A, true,  false, false, false);
+			r[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 255, 0xD914, false, false, false, true);
 		}
 	}
 }
