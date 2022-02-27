@@ -271,6 +271,7 @@
     <ClInclude Include="CPU\PortConnector.h" />
     <ClInclude Include="Video\CRTController6845.h" />
     <ClInclude Include="Video\CRTControllerEGA.h" />
+    <ClInclude Include="Video\GraphControllerEGA.h" />
     <ClInclude Include="Video\MemoryEGA.h" />
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\Video6845.h" />

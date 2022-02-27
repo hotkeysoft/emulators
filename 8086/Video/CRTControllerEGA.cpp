@@ -204,11 +204,11 @@ namespace crtc_ega
 			break;
 
 		case CRT_CURSOR_ADDR_HI:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  cursorAddress(HI) = %02Xh", value);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(HI) = %02Xh", value);
 			emul::SetHByte(m_config.cursorAddress, value);
 			break;
 		case CRT_CURSOR_ADDR_LO:
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:  cursorAddress(LO) = %02Xh", value);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:  cursorAddress(LO) = %02Xh", value);
 			emul::SetLByte(m_config.cursorAddress, value);
 			break;
 
@@ -365,7 +365,7 @@ namespace crtc_ega
 			++m_data.frame;
 			m_data.vPos = 0;
 			m_data.vPosChar = 0;
-			m_data.rowAddress = 0;
+			m_data.rowAddress = m_config.presetRowScan;
 			m_data.memoryAddress = m_config.startAddress;
 
 			if (m_configChanged)

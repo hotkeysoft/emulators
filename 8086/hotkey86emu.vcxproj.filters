@@ -386,6 +386,9 @@
     <ClInclude Include="Video\MemoryEGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
+    <ClInclude Include="Video\GraphControllerEGA.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">

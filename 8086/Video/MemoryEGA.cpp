@@ -1,7 +1,10 @@
 #include "MemoryEGA.h"
+#include "GraphControllerEGA.h"
 #include "../Config.h"
 
 using emul::ADDRESS;
+using emul::GetBit;
+using emul::SetBit;
 using cfg::Config;
 
 namespace memory_ega
@@ -51,18 +54,49 @@ namespace memory_ega
 		m_charMapB = m_planes[2].getPtr() + ((size_t)selectB * 16384);
 	}
 
+	bool MemoryEGA::Dump(emul::ADDRESS, emul::DWORD, const char* outFile) const
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			std::ostringstream os;
+			os << outFile << "_" << i << ".bin";
+			m_planes[i].Dump(0, 0, os.str().c_str());
+		}
+		return true;
+	}
+
 	// TODO, odd-even, compare
 	BYTE MemoryEGA::read(ADDRESS offset) 
 	{
 		if (!m_enable)
 			return 0xFF;
 
+		BYTE selectedPlane = m_graphCtrl->readPlaneSelect;
+		// Odd/Even
+		if (m_graphCtrl->oddEven)
+		{
+			SetBit(selectedPlane, 0, GetBit(offset, 0));
+		}
+
+		// Chain Odd/Even
+		if (m_graphCtrl->chainOddEven)
+		{
+			SetBit(offset, 0, GetBit(offset, m_ramSize == RAMSIZE::EGA_64K ? 13 : 15));
+		}
+
 		LogPrintf(LOG_DEBUG, "read[%04x]", offset);
-		if (m_readModeCompare)
+		if (m_graphCtrl->readModeCompare)
 		{
 			LogPrintf(LOG_ERROR, "Read Mode Compare not implemented");
 		}
-		return m_planes[m_currReadPlane].read(offset & m_planeAddressMask);
+		
+		offset &= m_planeAddressMask;
+
+		for (int i = 0; i < 4; ++i)
+		{
+			m_dataLatches[i] = m_planes[i].read(offset);
+		}
+		return m_dataLatches[selectedPlane];
 	}
 
 	void MemoryEGA::write(ADDRESS offset, BYTE data) 
@@ -70,7 +104,80 @@ namespace memory_ega
 		if (!m_enable)
 			return;
 
-		LogPrintf(LOG_DEBUG, "write[%04x]=%02x", offset, data);
-		m_planes[0].write(offset & m_planeAddressMask, data);
+		LogPrintf(LOG_DEBUG, "Write(%d)[%04x] = %02x", m_graphCtrl->writeMode, offset, data);
+
+		// Odd/Even
+		BYTE planeMask = m_planeMask;
+		if (m_graphCtrl->oddEven)
+		{
+			bool even = !GetBit(offset, 0);
+			{
+				SetBit(planeMask, 0 + even, false);
+				SetBit(planeMask, 2 + even, false);
+			}
+			SetBit(offset, 0, false);
+		}
+
+		// Chain Odd/Even
+		if (m_graphCtrl->chainOddEven)
+		{
+			SetBit(offset, 0, GetBit(offset, m_ramSize == RAMSIZE::EGA_64K ? 13 : 15));
+		}
+
+		offset &= m_planeAddressMask;
+
+		switch (m_graphCtrl->writeMode)
+		{
+		case 0:
+			if (m_graphCtrl->rotateCount)
+			{
+				LogPrintf(LOG_WARNING, "Write Mode 0: rotate not implemented");
+			}
+			if (m_graphCtrl->enableSetReset)
+			{
+				LogPrintf(LOG_WARNING, "Write Mode 0: set/reset not implemented");
+			}
+			if (m_graphCtrl->bitMask != 0xFF)
+			{
+				LogPrintf(LOG_WARNING, "Write Mode 0: bit mask not implemented");
+			}
+
+			for (int i = 0; i < 4; ++i)
+			{
+				if (GetBit(planeMask, i))
+				{
+					m_planes[i].write(offset, data);
+				}
+			}
+			break;
+
+		case 1:
+			for (int i = 0; i < 4; ++i)
+			{
+				if (GetBit(planeMask, i))
+				{
+					m_planes[i].write(offset, m_dataLatches[i]);
+				}
+			}
+			break;
+
+		case 2:
+			if (m_graphCtrl->bitMask != 0xFF)
+			{
+				LogPrintf(LOG_WARNING, "Write Mode 2: bit mask not implemented");
+			}
+
+			for (int i = 0; i < 4; ++i)
+			{
+				if (GetBit(planeMask, i))
+				{
+					m_planes[i].write(offset, GetBit(data, i) ? 0xFF : 0);
+				}
+			}
+			break;
+
+		default:
+			LogPrintf(LOG_ERROR, "Invalid Write Mode: %d", m_graphCtrl->writeMode);
+		}
 	}
 }

@@ -12,6 +12,11 @@ using crtc_ega::CRTCData;
 using memory_ega::RAMSIZE;
 using memory_ega::MemoryEGA;
 
+using graph_ega::GraphControllerAddress;
+using graph_ega::GraphController;
+using graph_ega::MemoryMap;
+using graph_ega::RotateFunction;
+
 namespace video
 {
 	VideoEGA::VideoEGA(RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor) :
@@ -56,6 +61,8 @@ namespace video
 
 		AddMode("text", (DrawFunc)&VideoEGA::DrawTextMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		SetMode("text");
+
+		m_egaRAM.SetGraphController(&m_graphController);
 
 		MapMemory();
 	}	
@@ -303,7 +310,15 @@ namespace video
 	void VideoEGA::WriteSequencerMapMask(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerMapMask, value=%02Xh", value);
-		m_mapMask = value & 0x0F;
+		m_planeMask = value & 0x0F;
+		m_egaRAM.SetPlaneMask(m_planeMask);
+
+		LogPrintf(Logger::LOG_INFO, "WriteSequencerMapMask, Enable planes: [%c0][%c1][%c2][%c3]",
+			GetBit(m_planeMask, 0) ? ' ' : '/',
+			GetBit(m_planeMask, 1) ? ' ' : '/',
+			GetBit(m_planeMask, 2) ? ' ' : '/',
+			GetBit(m_planeMask, 3) ? ' ' : '/');
+
 	}
 	void VideoEGA::WriteSequencerCharMapSelect(BYTE value)
 	{
@@ -408,28 +423,25 @@ namespace video
 			break;
 		case GraphControllerAddress::GRAPH_READ_MAP_SELECT:
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Read Map Select %d", value);
-			m_graphController.mapSelect = value & 7;
-			if (m_graphController.mapSelect > 3)
+			m_graphController.readPlaneSelect = value & 7;
+			if (m_graphController.readPlaneSelect > 3)
 			{
-				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Invalid Map: ", m_graphController.mapSelect);
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Invalid Map: ", m_graphController.readPlaneSelect);
 			}
-			m_egaRAM.SetReadPlane(m_graphController.mapSelect);
 			break;
 		case GraphControllerAddress::GRAPH_MODE:
 			// TODO
 			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Mode %d", value);
 
-			m_graphController.writeMode = value % 3;
+			m_graphController.writeMode = value & 3;
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, WriteMode[%d]", m_graphController.writeMode);
 			if (m_graphController.writeMode == 3)
 			{
 				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Illegal Write Mode");
 			}
-			m_egaRAM.SetWriteMode(m_graphController.writeMode);
 
 			m_graphController.readModeCompare = GetBit(value, 3);
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, ReadMode[%s]", m_graphController.readModeCompare ? "COMPARE" : "NORMAL");
-			m_egaRAM.SetReadMode(m_graphController.readModeCompare);
 
 			m_graphController.oddEven = GetBit(value, 4);
 			// Same as MemoryMode.sequential
@@ -493,19 +505,46 @@ namespace video
 	void VideoEGA::DrawTextMode()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
+		const struct CRTCConfig& config = m_crtc.GetConfig();
 
 		uint32_t fg = GetColor(15);
 		uint32_t bg = GetColor(0);
 		
 		if (IsDisplayArea() && IsEnabled())
 		{
-			ADDRESS base = m_crtc.GetMemoryAddress(); // TODO temp
-			BYTE ch = m_egaRAM.read(base);
-			//LogPrintf(LOG_INFO, "Base=%d, rowScan=%d", base, m_crtc.GetData().rowAddress);
-			fg = GetMonitorPalette()[IsCursor() ? 15 : (ch & 15)];
-			for (int i = 0; i < 8; ++i)
+			ADDRESS base = m_crtc.GetMemoryAddress();
+
+			bool isCursorChar = IsCursor();
+			BYTE ch = m_egaRAM.readRaw(0, base);
+			BYTE attr = m_egaRAM.readRaw(1, base);
+
+			BYTE bg = attr >> 4;
+			BYTE fg = attr & 0x0F;
+			bool charBlink = false;
+
+			// Background
+			if (/*m_mode.blink*/true) // Hi bit: intense bg vs blink fg
 			{
-				DrawPixel(fg);
+				charBlink = GetBit(bg, 3);
+				SetBit(bg, 3, false);
+			}
+
+			// Draw character
+			BYTE currChar = m_egaRAM.GetCharMapA()[((size_t)ch * 0x20) + data.rowAddress];
+			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16()); // TODO
+
+			// TODO: This is not the corect behavior
+			bool cursorLine = isCursorChar && (data.rowAddress > config.cursorStart);
+			if (config.cursorEnd && (data.rowAddress > config.cursorEnd))
+			{
+				// TODO: handles (wrongly) cursorEnd == 0
+				cursorLine = false;
+			}
+
+			for (int x = 0; x < 8; ++x)
+			{
+				bool set = draw && GetBit(currChar, 7 - x);
+				DrawPixel(GetColor((set || cursorLine) ? fg : bg));
 			}
 		}
 		else
@@ -518,7 +557,10 @@ namespace video
 	void VideoEGA::Serialize(json& to)
 	{
 		Video::Serialize(to);
-		to["baseAddress"] = m_baseAddress;		
+		to["baseAddress"] = m_baseAddress;
+
+		// Temp
+		m_egaRAM.Dump(0, 0, "dump/egaRAM");
 	}
 
 	void VideoEGA::Deserialize(json& from)
