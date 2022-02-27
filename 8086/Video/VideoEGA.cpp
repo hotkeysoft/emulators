@@ -63,7 +63,6 @@ namespace video
 	void VideoEGA::EnableLog(SEVERITY minSev)
 	{
 		m_crtc.EnableLog(minSev);
-		m_egaRAM.EnableLog(LOG_INFO);
 		Video::EnableLog(minSev);
 	}
 
@@ -173,10 +172,10 @@ namespace video
 			break;
 		}
 
-		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cDISABLE %cPAGEBIT CLK[%s]]",			
+		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cVIDEO %cPAGEBIT CLK[%s]]",			
 			m_misc.color ? ' ' : '/',
 			m_misc.enableRAM ? ' ' : '/',
-			m_misc.disableVideo ? ' ' : '/',
+			!m_misc.disableVideo ? ' ' : '/',
 			m_misc.pageHigh ? ' ' : '/',
 			clockSelStr);
 
@@ -186,6 +185,8 @@ namespace video
 			ConnectRelocatablePorts(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 			m_crtc.SetBasePort(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 		}
+
+		m_egaRAM.Enable(m_misc.enableRAM);
 	}
 
 	void VideoEGA::WriteFeatureControlRegister(BYTE value)
@@ -312,6 +313,8 @@ namespace video
 		m_charMapSelectA = (value >> 2) & 3;
 
 		LogPrintf(Logger::LOG_INFO, "WriteSequencerCharMapSelect, charMapA[%d] charMapB[%d]", m_charMapSelectA, m_charMapSelectB);
+
+		m_egaRAM.SelectCharMaps(m_charMapSelectA, m_charMapSelectB);
 	}
 	void VideoEGA::WriteSequencerMemoryMode(BYTE value)
 	{
@@ -320,6 +323,10 @@ namespace video
 		m_memoryMode.alpha = GetBit(value, 0);
 		m_memoryMode.extMemory = GetBit(value, 1);
 		m_memoryMode.sequential = GetBit(value, 2);
+
+		// TODO: alpha, on changemode
+		// TODO: extMemory: disable/enable bits 14/15
+		// TODO: sequential
 
 		LogPrintf(Logger::LOG_INFO, "WriteSequencerMemoryMode [%cALPHA %cEXTRAM %cSEQ]",
 			m_memoryMode.alpha ? ' ' : '/',
@@ -400,28 +407,34 @@ namespace video
 			}
 			break;
 		case GraphControllerAddress::GRAPH_READ_MAP_SELECT:
-			// TODO
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Read Map Select %d", value);
 			m_graphController.mapSelect = value & 7;
 			if (m_graphController.mapSelect > 3)
 			{
 				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Invalid Map: ", m_graphController.mapSelect);
 			}
+			m_egaRAM.SetReadPlane(m_graphController.mapSelect);
 			break;
 		case GraphControllerAddress::GRAPH_MODE:
 			// TODO
 			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Mode %d", value);
+
 			m_graphController.writeMode = value % 3;
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, WriteMode[%d]", m_graphController.writeMode);
 			if (m_graphController.writeMode == 3)
 			{
 				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Illegal Write Mode");
 			}
+			m_egaRAM.SetWriteMode(m_graphController.writeMode);
+
 			m_graphController.readModeCompare = GetBit(value, 3);
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, ReadMode[%s]", m_graphController.readModeCompare ? "COMPARE" : "NORMAL");
+			m_egaRAM.SetReadMode(m_graphController.readModeCompare);
+
 			m_graphController.oddEven = GetBit(value, 4);
 			// Same as MemoryMode.sequential
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Odd/Even addressing mode[%d]", m_graphController.oddEven);
+
 			m_graphController.shiftRegister = GetBit(value, 5);
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Shift register mode[%d]", m_graphController.shiftRegister);
 			break;
@@ -487,11 +500,12 @@ namespace video
 		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = m_crtc.GetMemoryAddress(); // TODO temp
+			BYTE ch = m_egaRAM.read(base);
 			//LogPrintf(LOG_INFO, "Base=%d, rowScan=%d", base, m_crtc.GetData().rowAddress);
-
+			fg = GetMonitorPalette()[IsCursor() ? 15 : (ch & 15)];
 			for (int i = 0; i < 8; ++i)
 			{
-				DrawPixel(IsCursor() ? fg : (0xFF000000 | (base<<4)));
+				DrawPixel(fg);
 			}
 		}
 		else

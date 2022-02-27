@@ -40,7 +40,7 @@ namespace video
 
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[0]; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
-		virtual bool IsEnabled() const override { return true; }
+		virtual bool IsEnabled() const override { return !m_misc.disableVideo; }
 
 		virtual bool IsHSync() const override { return m_crtc.IsHSync(); }
 		virtual bool IsVSync() const override { return m_crtc.IsVSync(); }
@@ -59,10 +59,10 @@ namespace video
 
 		struct MISCRegister
 		{
-			bool color = false;
-			bool enableRAM = false;
+			bool color = false; // 1(color): maps port 0x3Dx, 0(mono): maps ports 0x3Bx
+			bool enableRAM = false; // 1:enable RAM access from CPU
 			enum class ClockSelect { CLK_14 = 0, CLK_16, CLK_EXT, CLK_UNUSED } clockSel = ClockSelect::CLK_14;
-			bool disableVideo = false;
+			bool disableVideo = false; // 1:disable output, 0:enable output
 			bool pageHigh = false; // Select lo/hi page in odd/even modes
 			bool hSyncPolarity = false; // Unused
 			bool vSyncPolarity = false; // Unused
@@ -130,7 +130,6 @@ namespace video
 			GRAPH_INVALID_REG = 0xFF
 		};
 
-
 		enum class MemoryMap { A000_128K = 0, A000_64K, B000_32K, B800_32K };
 
 		enum class RotateFunction { NONE = 0, AND, OR, XOR };
@@ -139,26 +138,36 @@ namespace video
 		{
 			GraphControllerAddress currRegister = GraphControllerAddress::GRAPH_INVALID_REG;
 
+			// Set/Reset Register (0)
 			BYTE setReset = 0;
+			// Enable Set/Reset Register (1)
 			BYTE enableSetReset = 0;
 			
+			// Color Compare Register (2)
 			BYTE colorCompare = 0;
-			BYTE colorDontCare = 0;
 
+			// Data Rotate Register (3)
 			BYTE rotateCount = 0;
 			RotateFunction rotateFunction = RotateFunction::NONE;
 
+			// Read Map Select Register (4)
 			BYTE mapSelect;
 
+			// Mode Register (5)
 			BYTE writeMode = 0;
 			bool readModeCompare = false;
 			bool oddEven = false;
 			bool shiftRegister = false;
 
+			// Miscellaneous Register (6)
 			bool graphics = false;
 			bool chainOddEven = false;
 			MemoryMap memoryMap = MemoryMap::A000_128K;
 
+			// Color Compare Register (7)
+			BYTE colorDontCare = 0;
+
+			// Bit Mask Register
 			BYTE bitMask = 0;
 
 		} m_graphController;

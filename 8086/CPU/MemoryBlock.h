@@ -33,6 +33,8 @@ namespace emul
 		virtual BYTE read(ADDRESS offset);
 		virtual void write(ADDRESS offset, BYTE data);
 
+		const BYTE* getPtr() const { return m_data; }
+
 	protected:
 		DWORD RoundBlockSize(DWORD size);
 
