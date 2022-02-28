@@ -115,19 +115,34 @@ namespace memory_ega
 			SetBit(offset, 0, GetBit(offset, m_ramSize == RAMSIZE::EGA_64K ? 13 : 15));
 		}
 
-		LogPrintf(LOG_TRACE, "Read[%04x]", offset);
-		if (m_graphCtrl->readModeCompare)
-		{
-			LogPrintf(LOG_ERROR, "Read Mode Compare not implemented");
-		}
-		
 		offset &= m_planeAddressMask;
 
-		for (int i = 0; i < 4; ++i)
+		if (m_graphCtrl->readModeCompare)
 		{
-			m_dataLatches[i] = m_planes[i].read(offset);
+			LogPrintf(LOG_TRACE, "Read[compare][%04x]", offset);
+			BYTE compare = 0xFF;
+			for (int i = 0; i < 4; ++i)
+			{
+				// Skip the don't care planes
+				if (GetBit(m_graphCtrl->colorDontCare, i))
+				{
+					BYTE value = m_planes[i].read(offset);
+					BYTE compareWith = GetBit(m_graphCtrl->colorCompare, i) ? 0xFF : 0;
+					BYTE match = ~(value ^ compareWith);
+					compare &= match;
+				}
+			}
+			return compare;
 		}
-		return m_dataLatches[selectedPlane];
+		else
+		{
+			LogPrintf(LOG_TRACE, "Read[%04x]", offset);
+			for (int i = 0; i < 4; ++i)
+			{
+				m_dataLatches[i] = m_planes[i].read(offset);
+			}
+			return m_dataLatches[selectedPlane];
+		}
 	}
 
 	void MemoryEGA::write(ADDRESS offset, BYTE data) 
@@ -192,11 +207,6 @@ namespace memory_ega
 			break;
 
 		case 2:
-			if (m_graphCtrl->bitMask != 0xFF)
-			{
-//				LogPrintf(LOG_WARNING, "Write Mode 2: bit mask not implemented");
-			}
-
 			for (int i = 0; i < 4; ++i)
 			{
 				if (GetBit(planeMask, i))

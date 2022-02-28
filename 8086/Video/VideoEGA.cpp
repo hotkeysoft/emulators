@@ -505,11 +505,6 @@ namespace video
 		case GraphControllerAddress::GRAPH_COLOR_COMPARE:
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Color Compare %d", value);
 			m_graphController.colorCompare = value & 15;
-			// TODO, read mode = compare
-			if (m_graphController.colorCompare)
-			{
-				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Data Rotate not implemented");
-			}
 			break;
 		case GraphControllerAddress::GRAPH_DATA_ROTATE:
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Data Rotate %d", value);
@@ -566,7 +561,6 @@ namespace video
 			MapMemory();
 			break;
 		case GraphControllerAddress::GRAPH_COLOR_DONT_CARE:
-			// TODO
 			m_graphController.colorDontCare = value & 15;
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Color Don't Care[%x]", value);
 			break;
