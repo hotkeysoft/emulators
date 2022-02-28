@@ -259,9 +259,10 @@ namespace crtc_6845
 
 		json data;
 		data["hPos"] = m_data.hPos;
-		data["hBorder"] = m_data.hBorder;
 		data["vPos"] = m_data.vPos;
-		data["vBorder"] = m_data.vBorder;
+		data["vPosChar"] = m_data.vPosChar;
+		data["rowAddress"] = m_data.rowAddress;
+		data["memoryAddress"] = m_data.memoryAddress;
 		data["frame"] = m_data.frame;
 		to["data"] = data;
 
@@ -301,9 +302,10 @@ namespace crtc_6845
 
 		const json& data = from["data"];
 		m_data.hPos = data["hPos"];
-		m_data.hBorder = data["hBorder"];
 		m_data.vPos = data["vPos"];
-		m_data.vBorder = data["vBorder"];
+		m_data.vPosChar = data["vPosChar"];
+		m_data.rowAddress = data["rowAddress"];
+		m_data.memoryAddress = data["memoryAddress"];
 		m_data.frame = data["frame"];
 
 		m_charWidth = from["charWidth"];
