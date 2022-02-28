@@ -17,8 +17,24 @@ using graph_ega::GraphController;
 using graph_ega::MemoryMap;
 using graph_ega::RotateFunction;
 
+using attr_ega::AttrController;
+using attr_ega::AttrControllerAddress;
+using attr_ega::RegisterMode;
+using attr_ega::PaletteSource;
+
 namespace video
 {
+	BYTE MakeColor8(bool h, bool l)
+	{
+		BYTE b = (h * 2) + l;
+		return b * 85;
+	}
+
+	uint32_t MakeARGB(BYTE a, BYTE r, BYTE g, BYTE b)
+	{
+		return (a << 24) | (r << 16) | (g << 8) | b;
+	}
+
 	VideoEGA::VideoEGA(RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor) :
 		Logger("EGA"),
 		m_crtc(baseAddressMono),
@@ -37,6 +53,8 @@ namespace video
 
 		m_egaROM.LoadFromFile("data/XT/EGA_6277356_C0000.BIN");
 		memory->Allocate(&m_egaROM, 0xC0000);
+
+		Connect(m_baseAddress + 0x0, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteAttributeController));
 
 		Connect(m_baseAddress + 0x2, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteMiscRegister));
 		Connect(m_baseAddress + 0x2, static_cast<PortConnector::INFunction>(&VideoEGA::ReadStatusRegister0));
@@ -69,7 +87,7 @@ namespace video
 
 	void VideoEGA::EnableLog(SEVERITY minSev)
 	{
-		m_crtc.EnableLog(minSev);
+		m_crtc.EnableLog(LOG_INFO);
 		Video::EnableLog(minSev);
 	}
 
@@ -141,7 +159,7 @@ namespace video
 		LogPrintf(Logger::LOG_INFO, "ConnectRelocatablePorts, base=%04Xh", base);
 
 		Connect(base + 0xA, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteFeatureControlRegister));
-		Connect(base + 0xA, static_cast<PortConnector::INFunction>(&VideoEGA::ReadFeatureControlRegister));
+		Connect(base + 0xA, static_cast<PortConnector::INFunction>(&VideoEGA::ResetAttributeControlRegister));
 
 		// Input Status Register 1
 		Connect(base + 0x2, static_cast<PortConnector::INFunction>(&VideoEGA::ReadStatusRegister1));
@@ -502,6 +520,61 @@ namespace video
 		}
 	}
 
+	void VideoEGA::WriteAttributeController(BYTE value)
+	{
+		LogPrintf(Logger::LOG_TRACE, "WriteAttributeController, value=%02x", value);
+		if (m_attr.currMode == RegisterMode::ADDRESS)
+		{
+			//ATTR_PALETTE_MAX
+			value &= 31;
+			m_attr.currRegister = ((AttrControllerAddress)value > AttrControllerAddress::_ATTR_MAX) ? AttrControllerAddress::ATTR_INVALID : (AttrControllerAddress)value;
+
+			m_attr.currMode = RegisterMode::DATA;
+
+			m_attr.paletteSource = GetBit(value, 5) ? PaletteSource::VIDEO : PaletteSource::CPU;
+
+		}
+		else // DATA
+		{
+			if (m_attr.currRegister <= AttrControllerAddress::ATTR_PALETTE_MAX)
+			{
+				if (m_attr.paletteSource == PaletteSource::CPU)
+				{
+					BYTE index = (BYTE)m_attr.currRegister;
+					LogPrintf(LOG_DEBUG, "WriteAttributeController, Palette[%d]=%d", index, value);
+					BYTE r = MakeColor8(GetBit(value, 2), GetBit(value, 5));
+					BYTE g = MakeColor8(GetBit(value, 1), GetBit(value, 4));
+					BYTE b = MakeColor8(GetBit(value, 0), GetBit(value, 3));
+					m_attr.palette[index] = MakeARGB(0xFF, r, g, b);
+				}
+				else
+				{
+					LogPrintf(LOG_WARNING, "WriteAttributeController, Trying to set palette with source=VIDEO");
+				}
+			}
+			else switch (m_attr.currRegister)
+			{
+			case AttrControllerAddress::ATTR_MODE_CONTROL:
+				LogPrintf(LOG_DEBUG, "WriteAttributeController, Mode Control %d", value);
+				break;
+			case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
+				LogPrintf(LOG_DEBUG, "WriteAttributeController, Overscan Color %d", value);
+				break;
+			case AttrControllerAddress::ATTR_COLOR_PLANE_EN:
+				LogPrintf(LOG_DEBUG, "WriteAttributeController, Color Plane Enable %d", value);
+				break;
+			case AttrControllerAddress::ATTR_H_PEL_PANNING:
+				LogPrintf(LOG_DEBUG, "WriteAttributeController, Horizontal Pel Panning %d", value);
+				break;
+
+			default:
+				LogPrintf(LOG_ERROR, "WriteAttributeController, Invalid Address %d", m_attr.currRegister);
+			}
+
+			m_attr.currMode = RegisterMode::ADDRESS;
+		}
+	}
+
 	void VideoEGA::DrawTextMode()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
@@ -559,6 +632,14 @@ namespace video
 		Video::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
 
+		json attr;
+		attr["currMode"] = m_attr.currMode;
+		attr["currRegister"] = m_attr.currRegister;
+		attr["palette"] = m_attr.palette;
+		to["attr"] = attr;
+
+		m_crtc.Serialize(to["crtc"]);
+
 		// Temp
 		m_egaRAM.Dump(0, 0, "dump/egaRAM");
 	}
@@ -570,6 +651,13 @@ namespace video
 		{
 			throw emul::SerializableException("VideoEGA: Incompatible baseAddress");
 		}
+
+		const json& attr = from["attr"];
+		m_attr.currMode = attr["currMode"];
+		m_attr.currRegister = attr["currRegister"];
+		m_attr.palette = attr["palette"];
+
+		m_crtc.Deserialize(from["crtc"]);
 
 		//OnChangeMode();
 		//OnNewFrame();

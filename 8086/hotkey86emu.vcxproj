@@ -269,6 +269,7 @@
     <ClInclude Include="CPU\MemoryMap.h" />
     <ClInclude Include="IO\Monitor.h" />
     <ClInclude Include="CPU\PortConnector.h" />
+    <ClInclude Include="Video\AttributeControllerEGA.h" />
     <ClInclude Include="Video\CRTController6845.h" />
     <ClInclude Include="Video\CRTControllerEGA.h" />
     <ClInclude Include="Video\GraphControllerEGA.h" />

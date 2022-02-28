@@ -5,6 +5,7 @@
 #include "Video.h"
 #include "CRTControllerEGA.h"
 #include "GraphControllerEGA.h"
+#include "AttributeControllerEGA.h"
 #include "MemoryEGA.h"
 
 using emul::WORD;
@@ -71,7 +72,6 @@ namespace video
 		void WriteMiscRegister(BYTE value);
 
 		void WriteFeatureControlRegister(BYTE value);
-		BYTE ReadFeatureControlRegister() { return 0xFF; } // Register is write only, just to shut the noise
 		BYTE ReadStatusRegister0();
 		BYTE ReadStatusRegister1();
 
@@ -115,6 +115,7 @@ namespace video
 		} m_memoryMode;
 		void WriteSequencerMemoryMode(BYTE value);
 
+		// Graphics Controllers
 		graph_ega::GraphController m_graphController;
 		void WriteGraphics1Position(BYTE value);
 		void WriteGraphics2Position(BYTE value);
@@ -123,12 +124,17 @@ namespace video
 
 		void MapMemory();
 
+		// Attribute Controller
+		attr_ega::AttrController m_attr;
+		BYTE ResetAttributeControlRegister() { m_attr.ResetMode(); return 0xFF; }
+		void WriteAttributeController(BYTE value);
+
 		emul::MemoryBlock m_egaROM;
 		memory_ega::MemoryEGA m_egaRAM;
 
 		ADDRESS GetBaseAddress() { return 0; }
 
-		uint32_t GetIndexedColor(BYTE index) const { return GetMonitorPalette()[index]; }
+		uint32_t GetIndexedColor(BYTE index) const { return m_attr.palette[index]; }
 
 		void DrawTextMode();
 
@@ -137,7 +143,9 @@ namespace video
 		// TODO
 		// When reading settings from table in manual, use on = true, off = false
 		// 
-		bool m_dipSwitches[4] = { true, false, false, true }; // EGA = Primary, 40x25; MDA = Secondary
+		//bool m_dipSwitches[4] = { true, false, false, true }; // EGA = Primary, 40x25; MDA = Secondary
+		//bool m_dipSwitches[4] = { false, false, false, true }; // EGA = Primary, 80x25; MDA = Secondary
+		bool m_dipSwitches[4] = { false, true, true, false }; // EGA = Primary enhanced, 40x25; MDA = Secondary
 		//bool m_dipSwitches[4] = { true, false, true, false }; // EGA = Mono; CGA = Secondary 40x25
 	};
 }
