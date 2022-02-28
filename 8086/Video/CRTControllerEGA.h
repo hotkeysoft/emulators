@@ -141,11 +141,9 @@ namespace crtc_ega
 	struct CRTCData
 	{
 		WORD hPos = 0;
-		WORD hBorder = 0;
 
-		WORD vPos = 0; // Pixels, TODO: Clarify
+		WORD vPos = 0;
 		WORD vPosChar = 0;
-		WORD vBorder = 0;
 
 		WORD rowAddress = 0;
 		WORD memoryAddress = 0;

@@ -408,29 +408,54 @@ namespace crtc_ega
 	void CRTController::Serialize(json& to)
 	{
 		to["baseAddress"] = m_baseAddress;
-		to["id"] = "6845";
+		to["id"] = "crtcEGA";
 
 		json config;
-		//TODO : Missing fields
 		config["hTotal"] = m_config.hTotal;
 		config["hDisplayed"] = m_config.hDisplayed;
+		config["hBlankStart"] = m_config.hBlankStart;
+		config["hBlankEnd"] = m_config.hBlankEnd;
+		config["displayEnableSkew"] = m_config.displayEnableSkew;
+		config["hSyncStart"] = m_config.hSyncStart;
+		config["hSyncEnd"] = m_config.hSyncEnd;
+		config["hSyncDelay"] = m_config.hSyncDelay;
+		config["startOdd"] = m_config.startOdd;
 		config["vTotal"] = m_config.vTotal;
+		config["vDisplayed"] = m_config.vDisplayed;
+		config["vBlankStart"] = m_config.vBlankStart;
+		config["vBlankEnd"] = m_config.vBlankEnd;
+		config["vSyncStart"] = m_config.vSyncStart;
+		config["vSyncEnd"] = m_config.vSyncEnd;
+		config["presetRowScan"] = m_config.presetRowScan;
 		config["maxScanlineAddress"] = m_config.maxScanlineAddress;
 		config["startAddress"] = m_config.startAddress;
 		config["cursorAddress"] = m_config.cursorAddress;
 		config["cursorStart"] = m_config.cursorStart;
 		config["cursorEnd"] = m_config.cursorEnd;
-		config["cursor"] = m_config.cursor;
+		config["cursorSkew"] = m_config.cursorSkew;
+		config["offset"] = m_config.offset;
+		config["underlineLocation"] = m_config.underlineLocation;
+		config["compatibility"] = m_config.compatibility;
+		config["selectRowScanCounter"] = m_config.selectRowScanCounter;
+		config["vCounterDiv2"] = m_config.vCounterDiv2;
+		config["countByTwo"] = m_config.countByTwo;
+		config["disableOutputControl"] = m_config.disableOutputControl;
+		config["addressWrap"] = m_config.addressWrap;
+		config["byteAddressMode"] = m_config.byteAddressMode;
+		config["lineCompare"] = m_config.lineCompare;
+		config["vSyncInterruptEnable"] = m_config.vSyncInterruptEnable;
 		to["config"] = config;
 
 		json data;
 		data["hPos"] = m_data.hPos;
-		data["hBorder"] = m_data.hBorder;
 		data["vPos"] = m_data.vPos;
-		data["vBorder"] = m_data.vBorder;
+		data["vPosChar"] = m_data.vPosChar;
+		data["rowAddress"] = m_data.rowAddress;
+		data["memoryAddress"] = m_data.memoryAddress;
 		data["frame"] = m_data.frame;
 		to["data"] = data;
 
+		to["interruptPending"] = m_interruptPending;
 		to["charWidth"] = m_charWidth;
 		to["blink16"] = m_blink16;
 		to["blink32"] = m_blink32;
@@ -443,30 +468,55 @@ namespace crtc_ega
 			throw emul::SerializableException("CRTController: Incompatible baseAddress");
 		}
 
-		if (from["id"] != "6845")
+		if (from["id"] != "crtcEGA")
 		{
 			throw emul::SerializableException("CRTController: Incompatible mode");
 		}
 
 		const json& config = from["config"];
-		//TODO : Missing fields
 		m_config.hTotal = config["hTotal"];
 		m_config.hDisplayed = config["hDisplayed"];
+		m_config.hBlankStart = config["hBlankStart"];
+		m_config.hBlankEnd = config["hBlankEnd"];
+		m_config.displayEnableSkew = config["displayEnableSkew"];
+		m_config.hSyncStart = config["hSyncStart"];
+		m_config.hSyncEnd = config["hSyncEnd"];
+		m_config.hSyncDelay = config["hSyncDelay"];
+		m_config.startOdd = config["startOdd"];
 		m_config.vTotal = config["vTotal"];
+		m_config.vDisplayed = config["vDisplayed"];
+		m_config.vBlankStart = config["vBlankStart"];
+		m_config.vBlankEnd = config["vBlankEnd"];
+		m_config.vSyncStart = config["vSyncStart"];
+		m_config.vSyncEnd = config["vSyncEnd"];
+		m_config.presetRowScan = config["presetRowScan"];
 		m_config.maxScanlineAddress = config["maxScanlineAddress"];
 		m_config.startAddress = config["startAddress"];
 		m_config.cursorAddress = config["cursorAddress"];
 		m_config.cursorStart = config["cursorStart"];
 		m_config.cursorEnd = config["cursorEnd"];
-		m_config.cursor = config["cursor"];
+		m_config.cursorSkew = config["cursorSkew"];
+		m_config.offset = config["offset"];
+		m_config.underlineLocation = config["underlineLocation"];
+		m_config.compatibility = config["compatibility"];
+		m_config.selectRowScanCounter = config["selectRowScanCounter"];
+		m_config.vCounterDiv2 = config["vCounterDiv2"];
+		m_config.countByTwo = config["countByTwo"];
+		m_config.disableOutputControl = config["disableOutputControl"];
+		m_config.addressWrap = config["addressWrap"];
+		m_config.byteAddressMode = config["byteAddressMode"];
+		m_config.lineCompare = config["lineCompare"];
+		m_config.vSyncInterruptEnable = config["vSyncInterruptEnable"];
 
 		const json& data = from["data"];
 		m_data.hPos = data["hPos"];
-		m_data.hBorder = data["hBorder"];
 		m_data.vPos = data["vPos"];
-		m_data.vBorder = data["vBorder"];
+		m_data.vPosChar = data["vPosChar"];
+		m_data.rowAddress = data["rowAddress"];
+		m_data.memoryAddress = data["memoryAddress"];
 		m_data.frame = data["frame"];
 
+		m_interruptPending = from["interruptPending"];
 		m_charWidth = from["charWidth"];
 		m_blink16 = from["blink16"];
 		m_blink32 = from["blink32"];

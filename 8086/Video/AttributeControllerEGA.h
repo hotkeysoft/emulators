@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Common.h"
+#include "../Serializable.h"
 #include <array>
 
 namespace attr_ega
@@ -22,8 +23,9 @@ namespace attr_ega
 		ATTR_INVALID = 0xFF
 	};
 
-	struct AttrController
+	class AttrController : public emul::Serializable
 	{
+	public:
 		PaletteSource paletteSource = PaletteSource::CPU;
 		RegisterMode currMode = RegisterMode::ADDRESS;
 		AttrControllerAddress currRegister = AttrControllerAddress::ATTR_INVALID;
@@ -31,6 +33,23 @@ namespace attr_ega
 		void ResetMode() { currMode = RegisterMode::ADDRESS; }
 
 		std::array<uint32_t, 16> palette = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		uint32_t overscanColor = 0;
 
+		// emul::Serializable
+		virtual void Serialize(json& to) override
+		{
+			to["currMode"] = currMode;
+			to["currRegister"] = currRegister;
+			to["palette"] = palette;
+			to["overscanColor"] = overscanColor;
+		}
+
+		virtual void Deserialize(json& from) override
+		{
+			currMode = from["currMode"];
+			currRegister = from["currRegister"];
+			palette = from["palette"];
+			overscanColor = from["overscanColor"];
+		}
 	};
 }

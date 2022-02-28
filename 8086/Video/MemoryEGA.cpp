@@ -137,16 +137,15 @@ namespace memory_ega
 			{
 				LogPrintf(LOG_WARNING, "Write Mode 0: set/reset not implemented");
 			}
-			if (m_graphCtrl->bitMask != 0xFF)
-			{
-				LogPrintf(LOG_WARNING, "Write Mode 0: bit mask not implemented");
-			}
 
 			for (int i = 0; i < 4; ++i)
 			{
 				if (GetBit(planeMask, i))
 				{
-					m_planes[i].write(offset, data);
+					BYTE toWrite = data;
+					toWrite &= m_graphCtrl->bitMask; // Clear locked bits
+					BYTE locked = m_dataLatches[i] & (~m_graphCtrl->bitMask); // Put latched value in locked bits
+					m_planes[i].write(offset, toWrite | locked);
 				}
 			}
 			break;
@@ -164,14 +163,17 @@ namespace memory_ega
 		case 2:
 			if (m_graphCtrl->bitMask != 0xFF)
 			{
-				LogPrintf(LOG_WARNING, "Write Mode 2: bit mask not implemented");
+//				LogPrintf(LOG_WARNING, "Write Mode 2: bit mask not implemented");
 			}
 
 			for (int i = 0; i < 4; ++i)
 			{
 				if (GetBit(planeMask, i))
 				{
-					m_planes[i].write(offset, GetBit(data, i) ? 0xFF : 0);
+					BYTE toWrite = GetBit(data, i) ? 0xFF : 0;
+					toWrite &= m_graphCtrl->bitMask; // Clear locked bits
+					BYTE locked = m_dataLatches[i] & (~m_graphCtrl->bitMask); // Put latched value in locked bits
+					m_planes[i].write(offset, toWrite | locked);
 				}
 			}
 			break;

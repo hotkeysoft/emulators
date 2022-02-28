@@ -33,14 +33,16 @@ namespace video
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		// crtc::EventHandler
+		virtual void OnChangeMode() override;
 		virtual void OnRenderFrame() override;
 		virtual void OnNewFrame() override;
 		virtual void OnEndOfRow() override;
 
+		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
 
-		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[0]; }
+		virtual uint32_t GetBackgroundColor() const override { return m_attr.overscanColor; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 		virtual bool IsEnabled() const override { return !m_misc.disableVideo; }
 
@@ -132,11 +134,12 @@ namespace video
 		emul::MemoryBlock m_egaROM;
 		memory_ega::MemoryEGA m_egaRAM;
 
-		ADDRESS GetBaseAddress() { return 0; }
+		ADDRESS GetBaseAddress() { return m_crtc.GetMemoryAddress(); }
 
 		uint32_t GetIndexedColor(BYTE index) const { return m_attr.palette[index]; }
 
 		void DrawTextMode();
+		void DrawGraphMode();
 
 		crtc_ega::CRTController m_crtc;
 

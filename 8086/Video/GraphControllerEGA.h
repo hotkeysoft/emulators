@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Common.h"
+#include "../Serializable.h"
 
 namespace graph_ega
 {
@@ -23,8 +24,9 @@ namespace graph_ega
 		GRAPH_INVALID_REG = 0xFF
 	};
 
-	struct GraphController
+	class GraphController : public emul::Serializable
 	{
+	public:
 		GraphControllerAddress currRegister = GraphControllerAddress::GRAPH_INVALID_REG;
 
 		// Set/Reset Register (0)
@@ -58,5 +60,30 @@ namespace graph_ega
 
 		// Bit Mask Register
 		BYTE bitMask = 0;
+
+		// emul::Serializable
+		virtual void Serialize(json& to) override
+		{
+
+		}
+
+		virtual void Deserialize(json& from) override
+		{
+			setReset = from["setReset"];
+			enableSetReset = from["enableSetReset"];
+			colorCompare = from["colorCompare"];
+			rotateCount = from["rotateCount"];
+			rotateFunction = from["rotateFunction"];
+			readPlaneSelect = from["readPlaneSelect"];
+			writeMode = from["writeMode"];
+			readModeCompare = from["readModeCompare"];
+			oddEven = from["oddEven"];
+			shiftRegister = from["shiftRegister"];
+			graphics = from["graphics"];
+			chainOddEven = from["chainOddEven"];
+			memoryMap = from["memoryMap"];
+			colorDontCare = from["colorDontCare"];
+			bitMask = from["bitMask"];
+		}
 	};
 }

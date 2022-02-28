@@ -3,7 +3,7 @@
 
 namespace graph_ega
 {
-	struct GraphController;
+	class GraphController;
 }
 
 namespace memory_ega

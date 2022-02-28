@@ -30,8 +30,13 @@ namespace video
 		return b * 85;
 	}
 
-	uint32_t MakeARGB(BYTE a, BYTE r, BYTE g, BYTE b)
+	uint32_t RGB6toARGB32(BYTE value)
 	{
+		BYTE a = 0xFF;
+		BYTE r = MakeColor8(GetBit(value, 2), GetBit(value, 5));
+		BYTE g = MakeColor8(GetBit(value, 1), GetBit(value, 4));
+		BYTE b = MakeColor8(GetBit(value, 0), GetBit(value, 3));
+
 		return (a << 24) | (r << 16) | (g << 8) | b;
 	}
 
@@ -78,6 +83,7 @@ namespace video
 		InitFrameBuffer(2048, 400);
 
 		AddMode("text", (DrawFunc)&VideoEGA::DrawTextMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
+		AddMode("graph", (DrawFunc)&VideoEGA::DrawGraphMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		SetMode("text");
 
 		m_egaRAM.SetGraphController(&m_graphController);
@@ -103,6 +109,18 @@ namespace video
 		rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
 
 		return rect;
+	}
+
+	void VideoEGA::OnChangeMode()
+	{
+		if (m_memoryMode.alpha)
+		{
+			SetMode("text");
+		}
+		else
+		{
+			SetMode("graph");
+		}
 	}
 
 	void VideoEGA::OnRenderFrame()
@@ -327,11 +345,11 @@ namespace video
 
 	void VideoEGA::WriteSequencerMapMask(BYTE value)
 	{
-		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerMapMask, value=%02Xh", value);
+		LogPrintf(Logger::LOG_TRACE, "WriteSequencerMapMask, value=%02Xh", value);
 		m_planeMask = value & 0x0F;
 		m_egaRAM.SetPlaneMask(m_planeMask);
 
-		LogPrintf(Logger::LOG_INFO, "WriteSequencerMapMask, Enable planes: [%c0][%c1][%c2][%c3]",
+		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerMapMask, Enable planes: [%c0][%c1][%c2][%c3]",
 			GetBit(m_planeMask, 0) ? ' ' : '/',
 			GetBit(m_planeMask, 1) ? ' ' : '/',
 			GetBit(m_planeMask, 2) ? ' ' : '/',
@@ -542,10 +560,7 @@ namespace video
 				{
 					BYTE index = (BYTE)m_attr.currRegister;
 					LogPrintf(LOG_DEBUG, "WriteAttributeController, Palette[%d]=%d", index, value);
-					BYTE r = MakeColor8(GetBit(value, 2), GetBit(value, 5));
-					BYTE g = MakeColor8(GetBit(value, 1), GetBit(value, 4));
-					BYTE b = MakeColor8(GetBit(value, 0), GetBit(value, 3));
-					m_attr.palette[index] = MakeARGB(0xFF, r, g, b);
+					m_attr.palette[index] = RGB6toARGB32(value);
 				}
 				else
 				{
@@ -559,6 +574,7 @@ namespace video
 				break;
 			case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Overscan Color %d", value);
+				m_attr.overscanColor = RGB6toARGB32(value);
 				break;
 			case AttrControllerAddress::ATTR_COLOR_PLANE_EN:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Color Plane Enable %d", value);
@@ -585,7 +601,7 @@ namespace video
 		
 		if (IsDisplayArea() && IsEnabled())
 		{
-			ADDRESS base = m_crtc.GetMemoryAddress();
+			ADDRESS base = GetAddress();
 
 			bool isCursorChar = IsCursor();
 			BYTE ch = m_egaRAM.readRaw(0, base);
@@ -627,17 +643,44 @@ namespace video
 
 	}
 
+	void VideoEGA::DrawGraphMode()
+	{
+		const struct CRTCData& data = m_crtc.GetData();
+
+		// Called every 8 horizontal pixels
+		if (IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+			BYTE pixData[4];
+			for (int i = 0; i < 4; ++i)
+			{
+				pixData[i] = m_egaRAM.readRaw(i, base);
+			}
+
+			for (int i = 7; i >= 0; --i)
+			{
+				BYTE color = 
+					(GetBit(pixData[0], i) << 0) |
+					(GetBit(pixData[1], i) << 1) |
+					(GetBit(pixData[2], i) << 2) |
+					(GetBit(pixData[3], i) << 3);
+
+				DrawPixel(GetColor(color));
+			}
+		}
+		else
+		{
+			DrawBackground(8);
+		}
+	}
+
 	void VideoEGA::Serialize(json& to)
 	{
 		Video::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
 
-		json attr;
-		attr["currMode"] = m_attr.currMode;
-		attr["currRegister"] = m_attr.currRegister;
-		attr["palette"] = m_attr.palette;
-		to["attr"] = attr;
-
+		m_graphController.Serialize(to["graphController"]);
+		m_attr.Serialize(to["attrController"]);
 		m_crtc.Serialize(to["crtc"]);
 
 		// Temp
@@ -652,14 +695,12 @@ namespace video
 			throw emul::SerializableException("VideoEGA: Incompatible baseAddress");
 		}
 
-		const json& attr = from["attr"];
-		m_attr.currMode = attr["currMode"];
-		m_attr.currRegister = attr["currRegister"];
-		m_attr.palette = attr["palette"];
-
+		m_graphController.Deserialize(from["graphController"]);
+		m_attr.Deserialize(from["attrController"]);
 		m_crtc.Deserialize(from["crtc"]);
 
-		//OnChangeMode();
-		//OnNewFrame();
+		MapMemory();
+		OnChangeMode();
+		OnNewFrame();
 	}
 }
