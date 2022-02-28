@@ -28,7 +28,7 @@ namespace video
 		virtual const std::string GetID() const override { return "ega"; }
 
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
-		virtual void Tick() override;
+		virtual void Tick() override;	
 
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
@@ -55,6 +55,8 @@ namespace video
 		WORD m_baseAddress;
 		WORD m_baseAddressMono;
 		WORD m_baseAddressColor;
+
+		void InternalTick();
 
 		bool IsCursor() const;
 

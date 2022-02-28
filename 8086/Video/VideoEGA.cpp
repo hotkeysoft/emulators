@@ -59,7 +59,11 @@ namespace video
 		m_egaROM.LoadFromFile("data/XT/EGA_6277356_C0000.BIN");
 		memory->Allocate(&m_egaROM, 0xC0000);
 
+		// TODO: Check if other ports don't have A0 decoded. 
+		// AttributeController (0x3C0) is confirmed because BIOS POST writes in it
+
 		Connect(m_baseAddress + 0x0, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteAttributeController));
+		Connect(m_baseAddress + 0x1, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteAttributeController));
 
 		Connect(m_baseAddress + 0x2, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteMiscRegister));
 		Connect(m_baseAddress + 0x2, static_cast<PortConnector::INFunction>(&VideoEGA::ReadStatusRegister0));
@@ -94,7 +98,6 @@ namespace video
 	void VideoEGA::EnableLog(SEVERITY minSev)
 	{
 		m_crtc.EnableLog(LOG_INFO);
-		m_egaRAM.EnableLog(LOG_INFO);
 		Video::EnableLog(minSev);
 	}
 
@@ -136,6 +139,24 @@ namespace video
 			return;
 		}
 
+		if (m_misc.clockSel == MISCRegister::ClockSelect::CLK_16)
+		{
+			static uint32_t tick16 = 0;
+			// Add two ticks every 15 ticks to approximate 16 mhz clock
+			// Gives 16.227MHz instead of 16.257Mhz (0.2% off)
+			if (++tick16 == 15)
+			{
+				tick16 = 0;
+				InternalTick();
+				InternalTick();
+			}
+		}
+
+		InternalTick();
+	}
+
+	void VideoEGA::InternalTick()
+	{
 		if (m_clockingMode.halfDotClock)
 		{
 			static bool div2 = false;
@@ -304,7 +325,7 @@ namespace video
 			(diag4 << 4) |
 			(diag5 << 5);
 
-		LogPrintf(Logger::LOG_INFO, "ReadStatusRegister1, value=%02Xh", status);
+		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister1, value=%02Xh", status);
 
 		return status;
 	}
@@ -584,7 +605,7 @@ namespace video
 				if (m_attr.paletteSource == PaletteSource::CPU)
 				{
 					BYTE index = (BYTE)m_attr.currRegister;
-					LogPrintf(LOG_DEBUG, "WriteAttributeController, Palette[%d]=%d", index, value);
+					LogPrintf(LOG_INFO, "WriteAttributeController, Palette[%d]=%d", index, value);
 					m_attr.palette[index] = RGB6toARGB32(value);
 				}
 				else
