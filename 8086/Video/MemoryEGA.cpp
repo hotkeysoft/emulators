@@ -9,6 +9,16 @@ using cfg::Config;
 
 namespace memory_ega
 {
+	std::string PathAppendIndex(const char* inPath, int index)
+	{
+		std::string path(inPath);
+		std::ostringstream os;
+		os << "_" << index;
+		auto pos = path.find_last_of('.');
+		path.insert(pos, os.str());
+		return path;
+	}
+
 	MemoryEGA::MemoryEGA(RAMSIZE ramsize) :
 		MemoryBlock("EGA_RAM"),
 		m_ramSize(ramsize),
@@ -54,13 +64,26 @@ namespace memory_ega
 		m_charMapB = m_planes[2].getPtr() + ((size_t)selectB * 16384);
 	}
 
+	bool MemoryEGA::LoadFromFile(const char* file, WORD offset)
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			std::string planeFile = PathAppendIndex(file, i);
+
+			if (!m_planes[i].LoadFromFile(planeFile.c_str()))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	bool MemoryEGA::Dump(emul::ADDRESS, emul::DWORD, const char* outFile) const
 	{
 		for (int i = 0; i < 4; ++i)
 		{
-			std::ostringstream os;
-			os << outFile << "_" << i << ".bin";
-			m_planes[i].Dump(0, 0, os.str().c_str());
+			std::string planeFile = PathAppendIndex(outFile, i);
+			m_planes[i].Dump(0, 0, planeFile.c_str());
 		}
 		return true;
 	}

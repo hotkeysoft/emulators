@@ -34,6 +34,7 @@ namespace memory_ega
 		const BYTE* GetCharMapB() const { return m_charMapA; }
 		const BYTE* GetCharMapA() const { return m_charMapB; }
 
+		virtual bool LoadFromFile(const char* file, WORD offset = 0) override;
 		virtual bool Dump(emul::ADDRESS offset, emul::DWORD len, const char* outFile) const override;
 
 	protected:
