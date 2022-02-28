@@ -221,9 +221,13 @@ namespace crtc_ega
 		virtual void Serialize(json& to);
 		virtual void Deserialize(json& from);
 
+		bool IsInterruptPending() const { return m_interruptPending; }
+
 	protected:
 		WORD m_baseAddress;
 		BYTE m_charWidth;
+
+		bool m_interruptPending = false;
 
 		void DisconnectPorts();
 		void ConnectPorts();

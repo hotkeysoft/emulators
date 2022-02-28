@@ -223,12 +223,12 @@ namespace crtc_ega
 
 			if (!GetBit(value, 4))
 			{
-				// TODO
-				//ClearVSyncInterrupt();
 				LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         *Clear VSync Interrupt*");
+				m_interruptPending = false;
 			}
 
 			m_config.vSyncInterruptEnable = !GetBit(value, 5);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         vinterrupt = %s", m_config.vSyncInterruptEnable ? "ENABLED" : "DISABLED");
 			m_configChanged = true;
 			break;
 
@@ -374,6 +374,12 @@ namespace crtc_ega
 				++m_data.vPosChar;
 			}
 			m_data.memoryAddress = m_config.startAddress + (m_data.vPosChar * m_data.offset);
+		}
+
+		if (m_config.vSyncInterruptEnable && (m_data.vPos == m_data.vTotalDisp))
+		{
+			LogPrintf(LOG_DEBUG, "Set Interrupt Pending");
+			m_interruptPending = true;
 		}
 
 		if (m_data.vPos >= m_data.vTotal)
