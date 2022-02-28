@@ -622,7 +622,7 @@ namespace video
 			BYTE currChar = m_egaRAM.GetCharMapA()[((size_t)ch * 0x20) + data.rowAddress];
 			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16()); // TODO
 
-			// TODO: This is not the corect behavior
+			// TODO: This is not the correct behavior
 			bool cursorLine = isCursorChar && (data.rowAddress > config.cursorStart);
 			if (config.cursorEnd && (data.rowAddress > config.cursorEnd))
 			{
@@ -678,13 +678,38 @@ namespace video
 	{
 		Video::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
+		// TODO ram size
+		// TODO color mono ports
+
+		json misc;
+		misc["color"] = m_misc.color;
+		misc["enableRAM"] = m_misc.enableRAM;
+		misc["clockSel"] = m_misc.clockSel;
+		misc["disableVideo"] = m_misc.disableVideo;
+		misc["pageHigh"] = m_misc.pageHigh;
+		misc["hSyncPolarity"] = m_misc.hSyncPolarity;
+		misc["vSyncPolarity"] = m_misc.vSyncPolarity;
+		to["misc"] = misc;
+
+		json seq;
+		seq["seqAddress"] = m_seqAddress;
+		seq["clk.charWidth"] = m_clockingMode.charWidth;
+		seq["clk.lowBandwidth"] = m_clockingMode.lowBandwidth;
+		seq["clk.load16"] = m_clockingMode.load16;
+		seq["clk.halfDotClock"] = m_clockingMode.halfDotClock;
+		seq["planeMask"] = m_planeMask;
+		seq["charMapSelectA"] = m_charMapSelectA;
+		seq["charMapSelectB"] = m_charMapSelectB;
+		seq["mem.alpha"] = m_memoryMode.alpha;
+		seq["mem.extMemory"] = m_memoryMode.extMemory;
+		seq["mem.sequential"] = m_memoryMode.sequential;
+		to["seq"] = seq;
 
 		m_graphController.Serialize(to["graphController"]);
 		m_attr.Serialize(to["attrController"]);
 		m_crtc.Serialize(to["crtc"]);
 
-		// Temp
-		m_egaRAM.Dump(0, 0, "dump/egaRAM");
+		// TODO dip switches
 	}
 
 	void VideoEGA::Deserialize(json& from)
@@ -695,9 +720,33 @@ namespace video
 			throw emul::SerializableException("VideoEGA: Incompatible baseAddress");
 		}
 
+		const json& misc = from["misc"];
+		m_misc.color = misc["color"];
+		m_misc.enableRAM = misc["enableRAM"];
+		m_misc.clockSel = misc["clockSel"];
+		m_misc.disableVideo = misc["disableVideo"];
+		m_misc.pageHigh = misc["pageHigh"];
+		m_misc.hSyncPolarity = misc["hSyncPolarity"];
+		m_misc.vSyncPolarity = misc["vSyncPolarity"];
+
+		const json& seq = from["seq"];
+		m_seqAddress = seq["seqAddress"];
+		m_clockingMode.charWidth = seq["clk.charWidth"];
+		m_clockingMode.lowBandwidth = seq["clk.lowBandwidth"];
+		m_clockingMode.load16 = seq["clk.load16"];
+		m_clockingMode.halfDotClock = seq["clk.halfDotClock"];
+		m_planeMask = seq["planeMask"];
+		m_charMapSelectA = seq["charMapSelectA"];
+		m_charMapSelectB = seq["charMapSelectB"];
+		m_memoryMode.alpha = seq["mem.alpha"];
+		m_memoryMode.extMemory = seq["mem.extMemory"];
+		m_memoryMode.sequential = seq["mem.sequential"];
+
 		m_graphController.Deserialize(from["graphController"]);
 		m_attr.Deserialize(from["attrController"]);
 		m_crtc.Deserialize(from["crtc"]);
+
+		m_egaRAM.SelectCharMaps(m_charMapSelectA, m_charMapSelectB);
 
 		MapMemory();
 		OnChangeMode();

@@ -38,6 +38,7 @@ namespace attr_ega
 		// emul::Serializable
 		virtual void Serialize(json& to) override
 		{
+			to["paletteSource"] = paletteSource;
 			to["currMode"] = currMode;
 			to["currRegister"] = currRegister;
 			to["palette"] = palette;
@@ -46,6 +47,7 @@ namespace attr_ega
 
 		virtual void Deserialize(json& from) override
 		{
+			paletteSource = from["paletteSource"];
 			currMode = from["currMode"];
 			currRegister = from["currRegister"];
 			palette = from["palette"];

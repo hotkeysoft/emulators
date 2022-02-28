@@ -64,11 +64,27 @@ namespace graph_ega
 		// emul::Serializable
 		virtual void Serialize(json& to) override
 		{
-
+			to["currRegister"] = currRegister;
+			to["setReset"] = setReset;
+			to["enableSetReset"] = enableSetReset;
+			to["colorCompare"] = colorCompare;
+			to["rotateCount"] = rotateCount;
+			to["rotateFunction"] = rotateFunction;
+			to["readPlaneSelect"] = readPlaneSelect;
+			to["writeMode"] = writeMode;
+			to["readModeCompare"] = readModeCompare;
+			to["oddEven"] = oddEven;
+			to["shiftRegister"] = shiftRegister;
+			to["graphics"] = graphics;
+			to["chainOddEven"] = chainOddEven;
+			to["memoryMap"] = memoryMap;
+			to["colorDontCare"] = colorDontCare;
+			to["bitMask"] = bitMask;
 		}
 
 		virtual void Deserialize(json& from) override
 		{
+			currRegister = from["currRegister"];
 			setReset = from["setReset"];
 			enableSetReset = from["enableSetReset"];
 			colorCompare = from["colorCompare"];

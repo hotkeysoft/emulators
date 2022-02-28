@@ -77,6 +77,7 @@ namespace video
 		BYTE ReadStatusRegister0();
 		BYTE ReadStatusRegister1();
 
+		// TODO: Extract/group sequencer data
 		// Sequencer
 		enum class SequencerAddress {
 			SEQ_RESET = 0,
