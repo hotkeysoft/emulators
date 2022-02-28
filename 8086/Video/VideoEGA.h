@@ -129,7 +129,6 @@ namespace video
 
 		// Attribute Controller
 		attr_ega::AttrController m_attr;
-		BYTE ResetAttributeControlRegister() { m_attr.ResetMode(); return 0xFF; }
 		void WriteAttributeController(BYTE value);
 
 		emul::MemoryBlock m_egaROM;

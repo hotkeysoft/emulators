@@ -94,6 +94,7 @@ namespace video
 	void VideoEGA::EnableLog(SEVERITY minSev)
 	{
 		m_crtc.EnableLog(LOG_INFO);
+		m_egaRAM.EnableLog(LOG_INFO);
 		Video::EnableLog(minSev);
 	}
 
@@ -133,6 +134,16 @@ namespace video
 		if (!m_crtc.IsInit())
 		{
 			return;
+		}
+
+		if (m_clockingMode.halfDotClock)
+		{
+			static bool div2 = false;
+			div2 = !div2;
+			if (div2)
+			{
+				return;
+			}
 		}
 
 		if (!m_crtc.IsVSync())
@@ -177,10 +188,7 @@ namespace video
 		LogPrintf(Logger::LOG_INFO, "ConnectRelocatablePorts, base=%04Xh", base);
 
 		Connect(base + 0xA, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteFeatureControlRegister));
-		Connect(base + 0xA, static_cast<PortConnector::INFunction>(&VideoEGA::ResetAttributeControlRegister));
-
-		// Input Status Register 1
-		Connect(base + 0x2, static_cast<PortConnector::INFunction>(&VideoEGA::ReadStatusRegister1));
+		Connect(base + 0xA, static_cast<PortConnector::INFunction>(&VideoEGA::ReadStatusRegister1));
 	}
 
 	void VideoEGA::WriteMiscRegister(BYTE value)
@@ -257,6 +265,8 @@ namespace video
 
 	BYTE VideoEGA::ReadStatusRegister1() 
 	{
+		m_attr.ResetMode();
+
 		// Bit0: 1:Display cpu access enabled (vsync | hsync)
 		// 
 		// Light pen, not implemented
@@ -267,17 +277,34 @@ namespace video
 		//
 		// Bit4&5:Pixel data, selected by Color Plane Register
 
-		// TODO
-		BYTE diagnostic = 0;
+		bool diag4 = false;
+		bool diag5 = false;
+		uint32_t lasDot = GetLastDot();
+		switch (m_attr.videoStatusMux)
+		{
+		case 0:
+			diag5 = GetBit(lasDot, 23); // REDh
+			diag4 = GetBit(lasDot, 7); // BLUEh
+			break;
+		case 1:
+			diag5 = GetBit(lasDot, 6); // BLUEl
+			diag4 = GetBit(lasDot, 15); // GREENh
+			break;
+		case 2:
+			diag5 = GetBit(lasDot, 22); // REDl
+			diag4 = GetBit(lasDot, 14); // GREENl
+			break;
+		}
 
 		BYTE status =
 			((!IsDisplayArea()) << 0) |
 			(0 << 1) | // Light Pen Trigger
 			(1 << 2) | // Light Pen switch
 			(IsVSync() << 3) |
-			(diagnostic << 4);
+			(diag4 << 4) |
+			(diag5 << 5);
 
-		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister1, value=%02Xh", status);
+		LogPrintf(Logger::LOG_INFO, "ReadStatusRegister1, value=%02Xh", status);
 
 		return status;
 	}
@@ -503,12 +530,10 @@ namespace video
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Color Don't Care[%x]", value);
 			break;
 		case GraphControllerAddress::GRAPH_BIT_MASK:
-			// TODO
 			m_graphController.bitMask = value;
-			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Bit Mask[%02x]", m_graphController.bitMask);
+			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Bit Mask[%02x]", m_graphController.bitMask);
 			break;
 		default:
-			// TODO
 			LogPrintf(Logger::LOG_WARNING, "WriteGraphicsValue, Invalid register");
 		}
 	}
@@ -571,6 +596,7 @@ namespace video
 			{
 			case AttrControllerAddress::ATTR_MODE_CONTROL:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Mode Control %d", value);
+				// TODO
 				break;
 			case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Overscan Color %d", value);
@@ -578,9 +604,17 @@ namespace video
 				break;
 			case AttrControllerAddress::ATTR_COLOR_PLANE_EN:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Color Plane Enable %d", value);
+
+				// TODO
+				m_attr.colorPlaneEnable = value & 15;
+				LogPrintf(LOG_INFO, "WriteAttributeController, Color Plane Enable %02x", m_attr.colorPlaneEnable);
+
+				m_attr.videoStatusMux = (value >> 4) & 3;
+				LogPrintf(LOG_INFO, "WriteAttributeController, Video Status Mux %02x", m_attr.videoStatusMux);
 				break;
 			case AttrControllerAddress::ATTR_H_PEL_PANNING:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Horizontal Pel Panning %d", value);
+				// TODO
 				break;
 
 			default:
