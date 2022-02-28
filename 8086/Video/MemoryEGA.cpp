@@ -96,7 +96,6 @@ namespace memory_ega
 		return true;
 	}
 
-	// TODO, odd-even, compare
 	BYTE MemoryEGA::read(ADDRESS offset) 
 	{
 		if (!m_enable)
@@ -117,6 +116,11 @@ namespace memory_ega
 
 		offset &= m_planeAddressMask;
 
+		for (int i = 0; i < 4; ++i)
+		{
+			m_dataLatches[i] = m_planes[i].read(offset);
+		}
+
 		if (m_graphCtrl->readModeCompare)
 		{
 			LogPrintf(LOG_TRACE, "Read[compare][%04x]", offset);
@@ -126,7 +130,7 @@ namespace memory_ega
 				// Skip the don't care planes
 				if (GetBit(m_graphCtrl->colorDontCare, i))
 				{
-					BYTE value = m_planes[i].read(offset);
+					BYTE value = m_dataLatches[i];
 					BYTE compareWith = GetBit(m_graphCtrl->colorCompare, i) ? 0xFF : 0;
 					BYTE match = ~(value ^ compareWith);
 					compare &= match;
@@ -137,10 +141,6 @@ namespace memory_ega
 		else
 		{
 			LogPrintf(LOG_TRACE, "Read[%04x]", offset);
-			for (int i = 0; i < 4; ++i)
-			{
-				m_dataLatches[i] = m_planes[i].read(offset);
-			}
 			return m_dataLatches[selectedPlane];
 		}
 	}
@@ -179,16 +179,16 @@ namespace memory_ega
 			{
 				LogPrintf(LOG_WARNING, "Write Mode 0: rotate not implemented");
 			}
-			if (m_graphCtrl->enableSetReset)
-			{
-				LogPrintf(LOG_WARNING, "Write Mode 0: set/reset not implemented");
-			}
 
 			for (int i = 0; i < 4; ++i)
 			{
 				if (GetBit(planeMask, i))
 				{
 					BYTE toWrite = data;
+					if (GetBit(m_graphCtrl->enableSetReset, i))
+					{
+						toWrite = GetBit(m_graphCtrl->setReset, i) ? 0xFF : 0;
+					}
 					toWrite &= m_graphCtrl->bitMask; // Clear locked bits
 					BYTE locked = m_dataLatches[i] & (~m_graphCtrl->bitMask); // Put latched value in locked bits
 					m_planes[i].write(offset, toWrite | locked);

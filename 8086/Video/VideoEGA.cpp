@@ -490,26 +490,23 @@ namespace video
 		case GraphControllerAddress::GRAPH_SET_RESET:
 			m_graphController.setReset = value & 15;
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Set/Reset %d", m_graphController.setReset);
-			// TODO, write mode 0, enabled by next register	
 			break;
 		case GraphControllerAddress::GRAPH_ENABLE_SET_RESET:
 			m_graphController.enableSetReset = value & 15;
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Enable Set/Reset %d", m_graphController.enableSetReset);
-
-			// TODO, write mode 0
-			if (m_graphController.enableSetReset)
-			{
-				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Enable Set/Reset");
-			}
 			break;
 		case GraphControllerAddress::GRAPH_COLOR_COMPARE:
-			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Color Compare %d", value);
 			m_graphController.colorCompare = value & 15;
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Color Compare %d", m_graphController.colorCompare);
 			break;
 		case GraphControllerAddress::GRAPH_DATA_ROTATE:
-			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Data Rotate %d", value);
+			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Data Rotate %d", value);
 			m_graphController.rotateCount = value & 3;
 			m_graphController.rotateFunction = (RotateFunction)((value >> 3) & 3);
+			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Data Rotate Count = %d, Function = %s", 
+				m_graphController.rotateCount, 
+				graph_ega::RotateFunctionStr[(int)m_graphController.rotateFunction]);
+
 			// TODO, write mode 0
 			if (m_graphController.rotateCount)
 			{
@@ -529,7 +526,6 @@ namespace video
 			}
 			break;
 		case GraphControllerAddress::GRAPH_MODE:
-			// TODO
 			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Mode %d", value);
 
 			m_graphController.writeMode = value & 3;

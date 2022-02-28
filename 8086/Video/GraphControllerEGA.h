@@ -6,6 +6,8 @@
 namespace graph_ega
 {
 	enum class RotateFunction { NONE = 0, AND, OR, XOR };
+	const char* const RotateFunctionStr[] = { "NONE", "AND", "OR", "XOR" };
+
 	enum class MemoryMap { A000_128K = 0, A000_64K, B000_32K, B800_32K };
 
 	enum class GraphControllerAddress
