@@ -16,6 +16,8 @@ namespace memory_ega
 		MemoryEGA(RAMSIZE ramsize);
 		virtual ~MemoryEGA() {}
 
+		virtual void Clear(BYTE filler = 0) override;
+
 		void SetGraphController(graph_ega::GraphController* ctrl) { m_graphCtrl = ctrl; }
 
 		void Enable(bool enable) { m_enable = enable; }

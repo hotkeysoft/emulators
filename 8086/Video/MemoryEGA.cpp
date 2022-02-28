@@ -37,6 +37,14 @@ namespace memory_ega
 		EnableLog(Config::Instance().GetLogLevel("memory.ega"));
 	}
 
+	void MemoryEGA::Clear(BYTE filler)
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			m_planes[i].Clear();
+		}
+	}
+
 	void MemoryEGA::SelectCharMaps(BYTE selectA, BYTE selectB)
 	{
 		LogPrintf(LOG_DEBUG, "SelectCharMaps, A=[%d], B=[%d]", selectA, selectB);
