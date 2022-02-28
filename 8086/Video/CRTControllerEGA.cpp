@@ -61,7 +61,7 @@ namespace crtc_ega
 
 	void CRTController::SelectCRTCRegister(BYTE value)
 	{
-		LogPrintf(Logger::LOG_DEBUG, "SelectCRTCRegister, reg=%d", value);
+		LogPrintf(Logger::LOG_TRACE, "SelectCRTCRegister, reg=%d", value);
 		value &= 31;
 		m_config.currRegister = (value > _CRT_MAX_REG) ? CRT_INVALID_REG : (CRTRegister)value;
 	}
@@ -100,6 +100,8 @@ namespace crtc_ega
 
 	void CRTController::WriteCRTCData(BYTE value)
 	{
+		LogPrintf(Logger::LOG_TRACE, "WriteCRTCData, reg[%02x]=%02x", m_config.currRegister, value);
+
 		switch (m_config.currRegister)
 		{
 		case CRT_H_TOTAL:
@@ -337,8 +339,8 @@ namespace crtc_ega
 		m_data.vBlankMin = m_config.vBlankStart;
 		m_data.vBlankMax = GetEndValue(m_config.vBlankStart, m_config.vBlankEnd, 0b11111);
 
-		// TODO: Check, might not be the origin of the value doubling
-		m_data.offset = m_config.offset << (m_config.byteAddressMode ? 0 : 1);
+		// TODO: (x2, x4) works in graphics mode, but not in text mode (x1, x2)?
+		m_data.offset = m_config.offset << (m_config.byteAddressMode ? 1 : 2);
 
 		LogPrintf(LOG_INFO, "UpdateHVTotals: Total:     [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d]", m_data.hTotal, m_data.vTotal);
@@ -346,6 +348,7 @@ namespace crtc_ega
 		LogPrintf(LOG_INFO, "UpdateHVTotals: hSync:     [%d - %d]", m_data.hSyncMin, m_data.hSyncMax);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: vBlank:    [%d - %d]", m_data.vBlankMin, m_data.vBlankMax);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: vSync:     [%d - %d]", m_data.vSyncMin, m_data.vSyncMax);
+		LogPrintf(LOG_INFO, "UpdateHVTotals: offset:    [%d]", m_data.offset);
 	}
 
 	void CRTController::Tick()

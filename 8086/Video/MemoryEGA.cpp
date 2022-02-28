@@ -115,7 +115,7 @@ namespace memory_ega
 			SetBit(offset, 0, GetBit(offset, m_ramSize == RAMSIZE::EGA_64K ? 13 : 15));
 		}
 
-		LogPrintf(LOG_DEBUG, "read[%04x]", offset);
+		LogPrintf(LOG_TRACE, "Read[%04x]", offset);
 		if (m_graphCtrl->readModeCompare)
 		{
 			LogPrintf(LOG_ERROR, "Read Mode Compare not implemented");
@@ -135,7 +135,7 @@ namespace memory_ega
 		if (!m_enable)
 			return;
 
-		LogPrintf(LOG_DEBUG, "Write(%d)[%04x] = %02x", m_graphCtrl->writeMode, offset, data);
+		LogPrintf(LOG_TRACE, "Write(%d)[%04x] = %02x", m_graphCtrl->writeMode, offset, data);
 
 		// Odd/Even
 		BYTE planeMask = m_planeMask;
