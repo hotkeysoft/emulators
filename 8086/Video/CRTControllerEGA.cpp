@@ -233,7 +233,7 @@ namespace crtc_ega
 			break;
 
 		case CRT_V_DISPLAYED_END:
-			m_config.vDisplayed = value;
+			emul::SetLByte(m_config.vDisplayed, value);
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:      vDisplayedEnd = %d", m_config.vDisplayed);
 			m_configChanged = true;
 			break;
@@ -250,7 +250,7 @@ namespace crtc_ega
 			break;
 
 		case CRT_V_BLANK_START:
-			m_config.vBlankStart = value;
+			emul::SetLByte(m_config.vBlankStart, value);
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        vBlankStart = %d", m_config.vBlankStart);
 			m_configChanged = true;
 			break;
@@ -270,7 +270,7 @@ namespace crtc_ega
 			m_config.addressWrap = GetBit(value, 5);
 			m_config.byteAddressMode = GetBit(value, 6);
 			//TODO bit 7:hardware reset
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: [%cCOMPAT %cRSCOUNTE %cVDIV2 %cCOUNTBY2 %cDISABLEOUT %cADDRESWRAP ADDRESSMODE[%s]] ", 
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: [%cCOMPAT %cROWSCANCNT %cVDIV2 %cCOUNTBY2 %cDISABLEOUT %cADDRESWRAP ADDRESSMODE[%s]] ", 
 				m_config.compatibility ? ' ' : '/',
 				m_config.selectRowScanCounter ? ' ' : '/',
 				m_config.vCounterDiv2 ? ' ' : '/',
@@ -279,6 +279,24 @@ namespace crtc_ega
 				m_config.addressWrap ? ' ' : '/',
 				m_config.byteAddressMode ? "BYTE" : "WORD");
 			m_configChanged = true;
+
+			//TODO
+			if (m_config.compatibility == false)
+			{
+				LogPrintf(Logger::LOG_WARNING, "compatibility == 0 not implemented");
+			}
+			if (m_config.selectRowScanCounter == false)
+			{
+				LogPrintf(Logger::LOG_WARNING, "selectRowScanCounter == 0 not implemented");
+			}
+			if (m_config.vCounterDiv2 == true)
+			{
+				LogPrintf(Logger::LOG_WARNING, "vCounterDiv2 == 1 not implemented");
+			}
+			if (m_config.countByTwo == true)
+			{
+				LogPrintf(Logger::LOG_WARNING, "countByTwo == 1 not implemented");
+			}
 			break;
 
 		case CRT_LINE_COMPARE:
