@@ -53,7 +53,7 @@ namespace video
 		ADDRESS GetBaseAddressText() { return 0xB8000 + ((GetCRTC().GetMemoryAddress13() * 2u) & 0x3FFF); }
 		ADDRESS GetBaseAddressGraph() { return 0xB8000 + (((GetCRTC().GetData().rowAddress * 0x2000) + (GetCRTC().GetMemoryAddress12() * 2u)) & 0x3FFF); }
 
-		uint32_t GetIndexedColor2(BYTE index) const { return GetMonitorPalette()[index ? 0 : m_color.color]; }
+		uint32_t GetIndexedColor2(BYTE index) const { return GetMonitorPalette()[index ? m_color.color : 0]; }
 		uint32_t GetIndexedColor4(BYTE index) const { return GetMonitorPalette()[m_currGraphPalette[index]]; }
 		uint32_t GetIndexedColor16(BYTE index) const { return GetMonitorPalette()[index]; }
 
