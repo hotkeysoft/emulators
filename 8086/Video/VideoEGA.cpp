@@ -40,6 +40,22 @@ namespace video
 		return (a << 24) | (r << 16) | (g << 8) | b;
 	}
 
+	uint32_t RGB4toARGB32(BYTE value)
+	{
+		// Extend green secondary (=Intensity in 4 bit color mode) to all secondary bits
+		if (value & 0x10)
+		{
+			value |= 0x38;
+		} 
+		else if (value == 6)
+		{
+			// Yellow adjust
+			value = 20;
+		}
+
+		return RGB6toARGB32(value);
+	}
+
 	VideoEGA::VideoEGA(RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor) :
 		Logger("EGA"),
 		m_crtc(baseAddressMono),
@@ -222,6 +238,8 @@ namespace video
 		m_misc.enableRAM = GetBit(value, 1);
 		m_misc.disableVideo = GetBit(value, 4);
 		m_misc.pageHigh = GetBit(value, 5);
+		m_misc.hSyncPolarity = !GetBit(value, 6);
+		m_misc.vSyncPolarity = !GetBit(value, 7);
 
 		const char* clockSelStr = "";
 		switch ((value >> 2) & 3)
@@ -244,11 +262,13 @@ namespace video
 			break;
 		}
 
-		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cVIDEO %cPAGEBIT CLK[%s]]",			
+		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cVIDEO %cPAGEBIT %cHSYNCPOL %cVSYNCPOL CLK[%s]]",			
 			m_misc.color ? ' ' : '/',
 			m_misc.enableRAM ? ' ' : '/',
 			!m_misc.disableVideo ? ' ' : '/',
 			m_misc.pageHigh ? ' ' : '/',
+			m_misc.hSyncPolarity ? '+' : '-',
+			m_misc.vSyncPolarity ? '+' : '-',
 			clockSelStr);
 
 		if (oldColor != m_misc.color)
@@ -606,7 +626,7 @@ namespace video
 				{
 					BYTE index = (BYTE)m_attr.currRegister;
 					LogPrintf(LOG_INFO, "WriteAttributeController, Palette[%d]=%d", index, value);
-					m_attr.palette[index] = RGB6toARGB32(value);
+					m_attr.palette[index] = (GetColorMode() == ColorMode::RGB4) ? RGB4toARGB32(value) : RGB6toARGB32(value);
 				}
 				else
 				{
@@ -621,7 +641,7 @@ namespace video
 				break;
 			case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Overscan Color %d", value);
-				m_attr.overscanColor = RGB6toARGB32(value);
+				m_attr.overscanColor = (GetColorMode() == ColorMode::RGB4) ? RGB4toARGB32(value) : RGB6toARGB32(value);
 				break;
 			case AttrControllerAddress::ATTR_COLOR_PLANE_EN:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Color Plane Enable %d", value);

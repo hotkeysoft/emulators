@@ -63,6 +63,9 @@ namespace video
 		void DisconnectRelocatablePorts(WORD base);
 		void ConnectRelocatablePorts(WORD base);
 
+		enum class ColorMode { RGB4, RGB6 };
+		ColorMode GetColorMode() { return m_misc.vSyncPolarity ? ColorMode::RGB4 : ColorMode::RGB6; }
+
 		struct MISCRegister
 		{
 			bool color = false; // 1(color): maps port 0x3Dx, 0(mono): maps ports 0x3Bx
@@ -70,8 +73,8 @@ namespace video
 			enum class ClockSelect { CLK_14 = 0, CLK_16, CLK_EXT, CLK_UNUSED } clockSel = ClockSelect::CLK_14;
 			bool disableVideo = false; // 1:disable output, 0:enable output
 			bool pageHigh = false; // Select lo/hi page in odd/even modes
-			bool hSyncPolarity = false; // Unused
-			bool vSyncPolarity = false; // Unused
+			bool hSyncPolarity = false;
+			bool vSyncPolarity = false;
 		} m_misc;
 		void WriteMiscRegister(BYTE value);
 
