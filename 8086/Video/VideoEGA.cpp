@@ -671,9 +671,6 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 
-		uint32_t fg = GetColor(15);
-		uint32_t bg = GetColor(0);
-		
 		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = GetAddress();
@@ -713,7 +710,7 @@ namespace video
 		}
 		else
 		{
-			DrawBackground(8, bg);
+			DrawBackground(8);
 		}
 
 	}

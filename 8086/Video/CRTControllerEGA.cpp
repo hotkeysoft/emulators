@@ -339,8 +339,7 @@ namespace crtc_ega
 		m_data.vBlankMin = m_config.vBlankStart;
 		m_data.vBlankMax = GetEndValue(m_config.vBlankStart, m_config.vBlankEnd, 0b11111);
 
-		// TODO: (x2, x4) works in graphics mode, but not in text mode (x1, x2)?
-		m_data.offset = m_config.offset << (m_config.byteAddressMode ? 1 : 2);
+		m_data.offset = m_config.offset << 1;
 
 		LogPrintf(LOG_INFO, "UpdateHVTotals: Total:     [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d]", m_data.hTotal, m_data.vTotal);
