@@ -5,8 +5,8 @@
 
 namespace graph_ega
 {
-	enum class RotateFunction { NONE = 0, AND, OR, XOR };
-	const char* const RotateFunctionStr[] = { "NONE", "AND", "OR", "XOR" };
+	enum class ALUFunction { NONE = 0, AND, OR, XOR };
+	const char* const ALUFunctionStr[] = { "NONE", "AND", "OR", "XOR" };
 
 	enum class MemoryMap { A000_128K = 0, A000_64K, B000_32K, B800_32K };
 
@@ -41,7 +41,7 @@ namespace graph_ega
 
 		// Data Rotate Register (3)
 		BYTE rotateCount = 0;
-		RotateFunction rotateFunction = RotateFunction::NONE;
+		ALUFunction aluFunction = ALUFunction::NONE;
 
 		// Read Map Select Register (4)
 		BYTE readPlaneSelect = 0;
@@ -71,7 +71,7 @@ namespace graph_ega
 			to["enableSetReset"] = enableSetReset;
 			to["colorCompare"] = colorCompare;
 			to["rotateCount"] = rotateCount;
-			to["rotateFunction"] = rotateFunction;
+			to["aluFunction"] = aluFunction;
 			to["readPlaneSelect"] = readPlaneSelect;
 			to["writeMode"] = writeMode;
 			to["readModeCompare"] = readModeCompare;
@@ -91,7 +91,7 @@ namespace graph_ega
 			enableSetReset = from["enableSetReset"];
 			colorCompare = from["colorCompare"];
 			rotateCount = from["rotateCount"];
-			rotateFunction = from["rotateFunction"];
+			aluFunction = from["aluFunction"];
 			readPlaneSelect = from["readPlaneSelect"];
 			writeMode = from["writeMode"];
 			readModeCompare = from["readModeCompare"];

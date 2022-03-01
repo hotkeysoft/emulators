@@ -15,7 +15,7 @@ using memory_ega::MemoryEGA;
 using graph_ega::GraphControllerAddress;
 using graph_ega::GraphController;
 using graph_ega::MemoryMap;
-using graph_ega::RotateFunction;
+using graph_ega::ALUFunction;
 
 using attr_ega::AttrController;
 using attr_ega::AttrControllerAddress;
@@ -502,19 +502,14 @@ namespace video
 		case GraphControllerAddress::GRAPH_DATA_ROTATE:
 			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Data Rotate %d", value);
 			m_graphController.rotateCount = value & 3;
-			m_graphController.rotateFunction = (RotateFunction)((value >> 3) & 3);
+			m_graphController.aluFunction = (ALUFunction)((value >> 3) & 3);
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Data Rotate Count = %d, Function = %s", 
 				m_graphController.rotateCount, 
-				graph_ega::RotateFunctionStr[(int)m_graphController.rotateFunction]);
-
-			// TODO, write mode 0
-			if (m_graphController.rotateCount)
+				graph_ega::ALUFunctionStr[(int)m_graphController.aluFunction]);
+			if (m_graphController.aluFunction != ALUFunction::NONE)
 			{
-				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Data Rotate not implemented");
-			}
-			if (m_graphController.rotateFunction != RotateFunction::NONE)
-			{
-				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Data Rotate Function not implemented");
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Data ALU Function not implemented: %s", 
+					graph_ega::ALUFunctionStr[(int)m_graphController.aluFunction]);
 			}
 			break;
 		case GraphControllerAddress::GRAPH_READ_MAP_SELECT:
@@ -522,7 +517,7 @@ namespace video
 			m_graphController.readPlaneSelect = value & 7;
 			if (m_graphController.readPlaneSelect > 3)
 			{
-				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Invalid Map: ", m_graphController.readPlaneSelect);
+				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Invalid Map: %d", m_graphController.readPlaneSelect);
 			}
 			break;
 		case GraphControllerAddress::GRAPH_MODE:

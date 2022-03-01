@@ -19,6 +19,11 @@ namespace memory_ega
 		return path;
 	}
 
+	BYTE RotateRight(BYTE b, int count)
+	{
+		return (b >> count) | (b << (8 - count));
+	}
+
 	MemoryEGA::MemoryEGA(RAMSIZE ramsize) :
 		MemoryBlock("EGA_RAM"),
 		m_ramSize(ramsize),
@@ -175,16 +180,11 @@ namespace memory_ega
 		switch (m_graphCtrl->writeMode)
 		{
 		case 0:
-			if (m_graphCtrl->rotateCount)
-			{
-				LogPrintf(LOG_WARNING, "Write Mode 0: rotate not implemented");
-			}
-
 			for (int i = 0; i < 4; ++i)
 			{
 				if (GetBit(planeMask, i))
 				{
-					BYTE toWrite = data;
+					BYTE toWrite = RotateRight(data, m_graphCtrl->rotateCount);
 					if (GetBit(m_graphCtrl->enableSetReset, i))
 					{
 						toWrite = GetBit(m_graphCtrl->setReset, i) ? 0xFF : 0;
