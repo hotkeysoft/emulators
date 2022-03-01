@@ -143,9 +143,10 @@ namespace crtc_ega
 		WORD hPos = 0;
 
 		WORD vPos = 0;
-		WORD vPosChar = 0;
+		//WORD vPosChar = 0;
 
 		WORD rowAddress = 0;
+		WORD lineStartAddress = 0;
 		WORD memoryAddress = 0;
 
 		size_t frame = 0;

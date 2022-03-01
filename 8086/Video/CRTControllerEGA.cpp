@@ -121,7 +121,6 @@ namespace crtc_ega
 			m_configChanged = true;
 			break;
 		case CRT_H_BLANK_END:
-			//TODO
 			m_config.hBlankEnd = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          hBlankEnd = %d characters", m_config.hBlankEnd);
 			m_config.displayEnableSkew = (value >> 5) & 3;
@@ -135,7 +134,6 @@ namespace crtc_ega
 			m_configChanged = true;
 			break;
 		case CRT_H_SYNC_END:
-			//TODO
 			m_config.hSyncEnd = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           hSyncEnd = %d characters", m_config.hSyncEnd);
 			m_config.hSyncDelay = (value >> 5) & 3;
@@ -247,6 +245,7 @@ namespace crtc_ega
 			break;
 
 		case CRT_UNDERLINE_LOCATION:
+			//TODO
 			m_config.underlineLocation = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          underline = %d", m_config.underlineLocation);
 			break;
@@ -257,7 +256,6 @@ namespace crtc_ega
 			m_configChanged = true;
 			break;
 		case CRT_V_BLANK_END:
-			//TODO
 			m_config.vBlankEnd = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          vBlankEnd = %d", m_config.vBlankEnd);
 			m_configChanged = true;
@@ -360,11 +358,6 @@ namespace crtc_ega
 			m_events->OnEndOfRow();
 		}
 
-		if (m_data.vPos == m_data.vSyncMin)
-		{
-			m_events->OnNewFrame();
-		}
-
 		if (m_data.hPos >= m_data.hTotal)
 		{
 			m_data.hPos = 0;
@@ -373,37 +366,48 @@ namespace crtc_ega
 			if (m_data.rowAddress > m_config.maxScanlineAddress)
 			{
 				m_data.rowAddress = 0;
-				++m_data.vPosChar;
+				m_data.lineStartAddress += m_data.offset;			
 			}
-			m_data.memoryAddress = m_config.startAddress + (m_data.vPosChar * m_data.offset);
-		}
 
-		if (m_config.vSyncInterruptEnable && (m_data.vPos == m_data.vTotalDisp))
-		{
-			LogPrintf(LOG_DEBUG, "Set Interrupt Pending");
-			m_interruptPending = true;
-		}
-
-		if (m_data.vPos >= m_data.vTotal)
-		{
-			m_events->OnRenderFrame();
-
-			++m_data.frame;
-			m_data.vPos = 0;
-			m_data.vPosChar = 0;
-			m_data.rowAddress = m_config.presetRowScan;
-			m_data.memoryAddress = m_config.startAddress;
-
-			if (m_configChanged)
+			if (m_data.vPos == m_config.lineCompare)
 			{
-				m_configChanged = false;
-				UpdateHVTotals();
-				m_events->OnChangeMode();
+				m_data.lineStartAddress = 0;		
+				m_data.rowAddress = 0;
+			}
+			m_data.memoryAddress = m_data.lineStartAddress;
+
+			if (m_config.vSyncInterruptEnable && (m_data.vPos == m_data.vTotalDisp))
+			{
+				LogPrintf(LOG_DEBUG, "Set Interrupt Pending");
+				m_interruptPending = true;
 			}
 
-			// TODO
-			if ((m_data.frame % 16) == 0) m_blink16 = !m_blink16;
-			if ((m_data.frame % 32) == 0) m_blink32 = !m_blink32;
+			if (m_data.vPos == m_data.vSyncMin)
+			{
+				m_events->OnNewFrame();
+			}
+			
+			if (m_data.vPos >= m_data.vTotal)
+			{
+				m_events->OnRenderFrame();
+
+				++m_data.frame;
+				m_data.vPos = 0;
+				m_data.rowAddress = m_config.presetRowScan;
+				m_data.lineStartAddress = m_config.startAddress;
+				m_data.memoryAddress = m_config.startAddress;
+
+				if (m_configChanged)
+				{
+					m_configChanged = false;
+					UpdateHVTotals();
+					m_events->OnChangeMode();
+				}
+
+				// TODO
+				if ((m_data.frame % 16) == 0) m_blink16 = !m_blink16;
+				if ((m_data.frame % 32) == 0) m_blink32 = !m_blink32;
+			}
 		}
 	}
 
@@ -451,7 +455,7 @@ namespace crtc_ega
 		json data;
 		data["hPos"] = m_data.hPos;
 		data["vPos"] = m_data.vPos;
-		data["vPosChar"] = m_data.vPosChar;
+		//data["vPosChar"] = m_data.vPosChar;
 		data["rowAddress"] = m_data.rowAddress;
 		data["memoryAddress"] = m_data.memoryAddress;
 		data["frame"] = m_data.frame;
@@ -513,7 +517,7 @@ namespace crtc_ega
 		const json& data = from["data"];
 		m_data.hPos = data["hPos"];
 		m_data.vPos = data["vPos"];
-		m_data.vPosChar = data["vPosChar"];
+		//m_data.vPosChar = data["vPosChar"];
 		m_data.rowAddress = data["rowAddress"];
 		m_data.memoryAddress = data["memoryAddress"];
 		m_data.frame = data["frame"];
