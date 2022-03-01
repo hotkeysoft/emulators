@@ -291,13 +291,17 @@ namespace video
 	{
 		BYTE value = 0xFF;
 
+		// Bit4: Dip switch sense. Use clksel to determine switch to read
+		// Bit7: CRT Interrupt. Not clear on 0/1 (docs contradict) but vsync
+		// interrupt is not really used in the real world
+
 		// CLKSEL is used to determine which swich to read;
 		// Need to invert logic, off = opened swich = 5V = logical 1
 		bool switchSense = !m_dipSwitches[(int)m_misc.clockSel];
 
 		value =
 			(switchSense << 4) |
-			(!IsVSync() << 7);
+			(m_crtc.IsInterruptPending() << 7);
 
 		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister0, value=%02Xh", value);
 
@@ -629,22 +633,17 @@ namespace video
 				// TODO
 				m_attr.colorPlaneEnable = value & 15;
 				LogPrintf(LOG_INFO, "WriteAttributeController, Color Plane Enable %02x", m_attr.colorPlaneEnable);
-				if (m_attr.hPelPanning != 0x0F)
+				if (m_attr.colorPlaneEnable != 0x0F)
 				{
-					LogPrintf(LOG_WARNING, "WriteAttributeController, Color Plane Enable not implemented");
+					LogPrintf(LOG_WARNING, "WriteAttributeController, Color Plane Enable not implemented [%02x]", m_attr.colorPlaneEnable);
 				}
 
 				m_attr.videoStatusMux = (value >> 4) & 3;
 				LogPrintf(LOG_INFO, "WriteAttributeController, Video Status Mux %02x", m_attr.videoStatusMux);
 				break;
 			case AttrControllerAddress::ATTR_H_PEL_PANNING:
-				// TODO
 				m_attr.hPelPanning = value & 15;
-				LogPrintf(LOG_DEBUG, "WriteAttributeController, Horizontal Pel Panning %d", m_attr.hPelPanning);
-				if (m_attr.hPelPanning != 0)
-				{
-					LogPrintf(LOG_WARNING, "WriteAttributeController, Horizontal Pel Panning not implemented");
-				}
+				LogPrintf(LOG_INFO, "WriteAttributeController, Horizontal Pel Panning %d", m_attr.hPelPanning);
 				break;
 			default:
 				LogPrintf(LOG_ERROR, "WriteAttributeController, Invalid Address %d", m_attr.currRegister);
@@ -690,9 +689,21 @@ namespace video
 				cursorLine = false;
 			}
 
-			for (int x = 0; x < 8; ++x)
+			// TODO: >8px width
+			int startBit = 7;
+			int endBit = 0;
+			if (data.hPos == 0)
 			{
-				bool set = draw && GetBit(currChar, 7 - x);
+				startBit -= m_attr.hPelPanning;
+			}
+			else if (data.hPos == data.hTotalDisp)
+			{
+				endBit = 8 - m_attr.hPelPanning;
+			}
+
+			for (int i = startBit; i >= endBit; --i)
+			{
+				bool set = draw && GetBit(currChar, i);
 				DrawPixel(GetColor((set || cursorLine) ? fg : bg));
 			}
 		}
@@ -717,7 +728,18 @@ namespace video
 				pixData[i] = m_egaRAM.readRaw(i, base);
 			}
 
-			for (int i = 7; i >= 0; --i)
+			int startBit = 7;
+			int endBit = 0;
+			if (data.hPos == 0)
+			{
+				startBit -= m_attr.hPelPanning;
+			}
+			else if (data.hPos == data.hTotalDisp)
+			{
+				endBit = 8 - m_attr.hPelPanning;
+			}
+
+			for (int i = startBit; i >= endBit; --i)
 			{
 				BYTE color = 
 					(GetBit(pixData[0], i) << 0) |

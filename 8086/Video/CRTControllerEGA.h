@@ -193,7 +193,8 @@ namespace crtc_ega
 		bool IsHSync() const { return (m_data.hPos >= m_data.hSyncMin) && (m_data.hPos <= m_data.hSyncMax); }
 		bool IsVSync() const { return (m_data.vPos >= m_data.vSyncMin) && (m_data.vPos <= m_data.vSyncMax); }
 
-		bool IsDisplayArea() const { return (m_data.vPos < m_data.vTotalDisp) && (m_data.hPos < m_data.hTotalDisp); }
+		// Add one char width for x pixel panning
+		bool IsDisplayArea() const { return (m_data.vPos < m_data.vTotalDisp) && (m_data.hPos < m_data.hTotalDisp + m_charWidth); }
 
 		bool IsBlink16() const { return m_blink16; }
 		bool IsBlink32() const { return m_blink32; }
