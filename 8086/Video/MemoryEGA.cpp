@@ -189,7 +189,7 @@ namespace memory_ega
 				}
 			}
 		}
-		else
+		else // Modes 0 & 2
 		{
 			for (int i = 0; i < 4; ++i)
 			{
@@ -200,17 +200,19 @@ namespace memory_ega
 					{
 						toWrite = GetBit(data, i) ? 0xFF : 0;
 					}
-					else // Mode = 0
+					else // Mode 0
 					{
-						// Rotate
-						toWrite = RotateRight(data, m_graphCtrl->rotateCount);
-					}
-
-					// Set/Reset
-					if (GetBit(m_graphCtrl->enableSetReset, i))
-					{
-						toWrite = GetBit(m_graphCtrl->setReset, i) ? 0xFF : 0;
-					}
+						// Set/Reset
+						if (GetBit(m_graphCtrl->enableSetReset, i))
+						{
+							toWrite = GetBit(m_graphCtrl->setReset, i) ? 0xFF : 0;
+						}
+						else
+						{
+							// Rotate
+							toWrite = RotateRight(data, m_graphCtrl->rotateCount);
+						}
+					}				
 
 					// ALU
 					switch (m_graphCtrl->aluFunction)
