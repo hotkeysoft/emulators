@@ -113,7 +113,7 @@ namespace video
 
 	void VideoEGA::EnableLog(SEVERITY minSev)
 	{
-		m_crtc.EnableLog(LOG_INFO);
+		m_crtc.EnableLog(minSev);
 		Video::EnableLog(minSev);
 	}
 
@@ -639,15 +639,23 @@ namespace video
 				// TODO
 				m_attr.colorPlaneEnable = value & 15;
 				LogPrintf(LOG_INFO, "WriteAttributeController, Color Plane Enable %02x", m_attr.colorPlaneEnable);
+				if (m_attr.hPelPanning != 0x0F)
+				{
+					LogPrintf(LOG_WARNING, "WriteAttributeController, Color Plane Enable not implemented");
+				}
 
 				m_attr.videoStatusMux = (value >> 4) & 3;
 				LogPrintf(LOG_INFO, "WriteAttributeController, Video Status Mux %02x", m_attr.videoStatusMux);
 				break;
 			case AttrControllerAddress::ATTR_H_PEL_PANNING:
-				LogPrintf(LOG_DEBUG, "WriteAttributeController, Horizontal Pel Panning %d", value);
 				// TODO
+				m_attr.hPelPanning = value & 15;
+				LogPrintf(LOG_DEBUG, "WriteAttributeController, Horizontal Pel Panning %d", m_attr.hPelPanning);
+				if (m_attr.hPelPanning != 0)
+				{
+					LogPrintf(LOG_WARNING, "WriteAttributeController, Horizontal Pel Panning not implemented");
+				}
 				break;
-
 			default:
 				LogPrintf(LOG_ERROR, "WriteAttributeController, Invalid Address %d", m_attr.currRegister);
 			}

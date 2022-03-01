@@ -34,11 +34,9 @@ namespace attr_ega
 
 		std::array<uint32_t, 16> palette = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		uint32_t overscanColor = 0;
-
-		//TODO
 		BYTE colorPlaneEnable = 0x0F;
-
 		BYTE videoStatusMux = 0;
+		BYTE hPelPanning = 0;
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override
@@ -50,6 +48,7 @@ namespace attr_ega
 			to["overscanColor"] = overscanColor;
 			to["colorPlaneEnable"] = colorPlaneEnable;
 			to["videoStatusMux"] = videoStatusMux;
+			to["hPelPanning"] = hPelPanning;
 		}
 
 		virtual void Deserialize(json& from) override
@@ -61,6 +60,7 @@ namespace attr_ega
 			overscanColor = from["overscanColor"];
 			colorPlaneEnable = from["colorPlaneEnable"];
 			videoStatusMux = from["videoStatusMux"];
+			hPelPanning = from["hPelPanning"];
 		}
 	};
 }
