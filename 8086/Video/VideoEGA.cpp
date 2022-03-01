@@ -506,11 +506,6 @@ namespace video
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Data Rotate Count = %d, Function = %s", 
 				m_graphController.rotateCount, 
 				graph_ega::ALUFunctionStr[(int)m_graphController.aluFunction]);
-			if (m_graphController.aluFunction != ALUFunction::NONE)
-			{
-				LogPrintf(Logger::LOG_ERROR, "WriteGraphicsValue, Data ALU Function not implemented: %s", 
-					graph_ega::ALUFunctionStr[(int)m_graphController.aluFunction]);
-			}
 			break;
 		case GraphControllerAddress::GRAPH_READ_MAP_SELECT:
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Read Map Select %d", value);

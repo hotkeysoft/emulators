@@ -7,6 +7,8 @@ using emul::GetBit;
 using emul::SetBit;
 using cfg::Config;
 
+using graph_ega::ALUFunction;
+
 namespace memory_ega
 {
 	std::string PathAppendIndex(const char* inPath, int index)
@@ -177,26 +179,8 @@ namespace memory_ega
 
 		offset &= m_planeAddressMask;
 
-		switch (m_graphCtrl->writeMode)
+		if (m_graphCtrl->writeMode == 1)
 		{
-		case 0:
-			for (int i = 0; i < 4; ++i)
-			{
-				if (GetBit(planeMask, i))
-				{
-					BYTE toWrite = RotateRight(data, m_graphCtrl->rotateCount);
-					if (GetBit(m_graphCtrl->enableSetReset, i))
-					{
-						toWrite = GetBit(m_graphCtrl->setReset, i) ? 0xFF : 0;
-					}
-					toWrite &= m_graphCtrl->bitMask; // Clear locked bits
-					BYTE locked = m_dataLatches[i] & (~m_graphCtrl->bitMask); // Put latched value in locked bits
-					m_planes[i].write(offset, toWrite | locked);
-				}
-			}
-			break;
-
-		case 1:
 			for (int i = 0; i < 4; ++i)
 			{
 				if (GetBit(planeMask, i))
@@ -204,23 +188,44 @@ namespace memory_ega
 					m_planes[i].write(offset, m_dataLatches[i]);
 				}
 			}
-			break;
-
-		case 2:
+		}
+		else
+		{
 			for (int i = 0; i < 4; ++i)
 			{
 				if (GetBit(planeMask, i))
 				{
-					BYTE toWrite = GetBit(data, i) ? 0xFF : 0;
+					BYTE toWrite;
+					if (m_graphCtrl->writeMode == 2)
+					{
+						toWrite = GetBit(data, i) ? 0xFF : 0;
+					}
+					else // Mode = 0
+					{
+						// Rotate
+						toWrite = RotateRight(data, m_graphCtrl->rotateCount);
+					}
+
+					// Set/Reset
+					if (GetBit(m_graphCtrl->enableSetReset, i))
+					{
+						toWrite = GetBit(m_graphCtrl->setReset, i) ? 0xFF : 0;
+					}
+
+					// ALU
+					switch (m_graphCtrl->aluFunction)
+					{
+					case ALUFunction::AND: toWrite &= m_dataLatches[i]; break;
+					case ALUFunction::OR:  toWrite |= m_dataLatches[i]; break;
+					case ALUFunction::XOR: toWrite ^= m_dataLatches[i]; break;
+					}
+
+					// Bit Mask
 					toWrite &= m_graphCtrl->bitMask; // Clear locked bits
 					BYTE locked = m_dataLatches[i] & (~m_graphCtrl->bitMask); // Put latched value in locked bits
 					m_planes[i].write(offset, toWrite | locked);
 				}
 			}
-			break;
-
-		default:
-			LogPrintf(LOG_ERROR, "Invalid Write Mode: %d", m_graphCtrl->writeMode);
 		}
 	}
 }
