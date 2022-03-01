@@ -145,6 +145,7 @@ namespace video
 
 		void DrawTextMode();
 		void DrawGraphMode();
+		void DrawGraphModeCGA4();
 
 		crtc_ega::CRTController m_crtc;
 

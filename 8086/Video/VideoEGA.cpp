@@ -104,6 +104,7 @@ namespace video
 
 		AddMode("text", (DrawFunc)&VideoEGA::DrawTextMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		AddMode("graph", (DrawFunc)&VideoEGA::DrawGraphMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
+		AddMode("graphCGA4", (DrawFunc)&VideoEGA::DrawGraphModeCGA4, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		SetMode("text");
 
 		m_egaRAM.SetGraphController(&m_graphController);
@@ -139,7 +140,7 @@ namespace video
 		}
 		else
 		{
-			SetMode("graph");
+			SetMode(m_graphController.shiftRegister ? "graphCGA4" : "graph");
 		}
 	}
 
@@ -630,13 +631,8 @@ namespace video
 			case AttrControllerAddress::ATTR_COLOR_PLANE_EN:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Color Plane Enable %d", value);
 
-				// TODO
 				m_attr.colorPlaneEnable = value & 15;
 				LogPrintf(LOG_INFO, "WriteAttributeController, Color Plane Enable %02x", m_attr.colorPlaneEnable);
-				if (m_attr.colorPlaneEnable != 0x0F)
-				{
-					LogPrintf(LOG_WARNING, "WriteAttributeController, Color Plane Enable not implemented [%02x]", m_attr.colorPlaneEnable);
-				}
 
 				m_attr.videoStatusMux = (value >> 4) & 3;
 				LogPrintf(LOG_INFO, "WriteAttributeController, Video Status Mux %02x", m_attr.videoStatusMux);
@@ -714,6 +710,41 @@ namespace video
 
 	}
 
+	void VideoEGA::DrawGraphModeCGA4()
+	{
+		const struct CRTCData& data = m_crtc.GetData();
+
+		// Called every 8 horizontal pixels
+
+		// TODO: Pel panning is ignored here
+		if (IsDisplayArea() && IsEnabled() && (data.hPos < data.hTotalDisp))
+		{
+			ADDRESS base = GetAddress();
+			BYTE pixData[4];
+			for (int i = 0; i < 4; ++i)
+			{
+				pixData[i] = GetBit(m_attr.colorPlaneEnable, i) ? m_egaRAM.readRaw(i, base) : 0;
+			}
+
+			for (int i = 0; i < 2; ++i)
+			{
+				for (int j = 3; j >= 0; --j)
+				{
+					BYTE color =
+						(GetBit(pixData[i],     (j * 2))     << 0) |
+						(GetBit(pixData[i],     (j * 2) + 1) << 1) |
+						(GetBit(pixData[i + 2], (j * 2))     << 2) |
+						(GetBit(pixData[i + 2], (j * 2) + 1) << 3);
+					DrawPixel(GetColor(color));
+				}
+			}
+		}
+		else
+		{
+			DrawBackground(8);
+		}
+	}
+
 	void VideoEGA::DrawGraphMode()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
@@ -725,7 +756,7 @@ namespace video
 			BYTE pixData[4];
 			for (int i = 0; i < 4; ++i)
 			{
-				pixData[i] = m_egaRAM.readRaw(i, base);
+				pixData[i] = GetBit(m_attr.colorPlaneEnable, i) ?  m_egaRAM.readRaw(i, base) : 0;
 			}
 
 			int startBit = 7;

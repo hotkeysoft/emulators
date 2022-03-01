@@ -10,6 +10,7 @@ using emul::PortConnector;
 using emul::WORD;
 using emul::BYTE;
 using emul::GetBit;
+using emul::SetBit;
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -200,15 +201,25 @@ namespace crtc_ega
 		bool IsBlink32() const { return m_blink32; }
 
 		WORD GetMemoryAddress() const { 
-			if (m_config.byteAddressMode)
+			WORD address = m_data.memoryAddress;
+
+			if (!m_config.byteAddressMode)
 			{
-				return m_data.memoryAddress;
+				// word mode
+				address <<= 1;
+
+				// Address Wrap: set bit 0 to MA13/MA15
+				WORD b0 = GetBit(m_data.memoryAddress, m_config.addressWrap ? 15 : 13);
+				address |= b0;
 			}
-			else
+
+			// In compatibility mode, substitude set MA13 = bit0 of vpos
+			if (m_config.compatibility)
 			{
-				WORD ret = GetBit(m_data.memoryAddress, m_config.addressWrap ? 15 : 13);
-				return ret | (m_data.memoryAddress << 1);
+				SetBit(address, 13, GetBit(m_data.vPos, 0));
 			}
+
+			return address;
 		}
 
 		const CRTCConfig& GetConfig() const { return m_config; }
