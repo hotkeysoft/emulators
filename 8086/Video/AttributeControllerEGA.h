@@ -32,10 +32,23 @@ namespace attr_ega
 
 		void ResetMode() { currMode = RegisterMode::ADDRESS; }
 
+		// Palette registers
 		std::array<uint32_t, 16> palette = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+		// Mode control register
+		bool graphics = false; // 0: alpha, 1: graphics
+		bool monochrome = false; // 1: Use mono display attributes
+		bool extend8to9 = false; // For alpha 9px char width, extend 8th pixel for chars 0xC0-0xDF (mono/MDA emulation)
+		bool blink = false; // 0: ATR3 = hi bg color, 1: blink
+
+		// Overscan control register
 		uint32_t overscanColor = 0;
+
+		// Color plane enable register
 		BYTE colorPlaneEnable = 0x0F;
 		BYTE videoStatusMux = 0;
+
+		// Horizontal Pixel Panning register
 		BYTE hPelPanning = 0;
 
 		// emul::Serializable
@@ -45,6 +58,10 @@ namespace attr_ega
 			to["currMode"] = currMode;
 			to["currRegister"] = currRegister;
 			to["palette"] = palette;
+			to["graphics"] = graphics;
+			to["monochrome"] = monochrome;
+			to["extend8to9"] = extend8to9;
+			to["blink"] = blink;
 			to["overscanColor"] = overscanColor;
 			to["colorPlaneEnable"] = colorPlaneEnable;
 			to["videoStatusMux"] = videoStatusMux;
@@ -57,6 +74,10 @@ namespace attr_ega
 			currMode = from["currMode"];
 			currRegister = from["currRegister"];
 			palette = from["palette"];
+			graphics = from["graphics"];
+			monochrome = from["monochrome"];
+			extend8to9 = from["extend8to9"];
+			blink = from["blink"];
 			overscanColor = from["overscanColor"];
 			colorPlaneEnable = from["colorPlaneEnable"];
 			videoStatusMux = from["videoStatusMux"];

@@ -197,8 +197,8 @@ namespace crtc_ega
 		// Add one char width for x pixel panning
 		bool IsDisplayArea() const { return (m_data.vPos < m_data.vTotalDisp) && (m_data.hPos < m_data.hTotalDisp + m_charWidth); }
 
+		bool IsBlink8() const { return m_blink8; }
 		bool IsBlink16() const { return m_blink16; }
-		bool IsBlink32() const { return m_blink32; }
 
 		WORD GetMemoryAddress() const { 
 			WORD address = m_data.memoryAddress;
@@ -254,8 +254,8 @@ namespace crtc_ega
 		void UpdateHVTotals();
 
 		// Blinky things
+		bool m_blink8 = false;
 		bool m_blink16 = false;
-		bool m_blink32 = false;
 
 		EventHandler* m_events = nullptr;
 

@@ -207,10 +207,7 @@ namespace video
 		const struct CRTCConfig& config = m_crtc.GetConfig();
 		const struct CRTCData& data = m_crtc.GetData();
 
-		//TODO
-		return (data.memoryAddress == config.cursorAddress)/* &&
-			(config.cursor != CRTCConfig::CURSOR_NONE) &&
-			((config.cursor == CRTCConfig::CURSOR_BLINK32 && m_crtc.IsBlink32()) || m_crtc.IsBlink16())*/;
+		return (data.memoryAddress == config.cursorAddress) && m_crtc.IsBlink8();
 	}
 
 	void VideoEGA::DisconnectRelocatablePorts(WORD base)
@@ -393,7 +390,6 @@ namespace video
 		if (!GetBit(value, 0))
 		{
 			LogPrintf(Logger::LOG_INFO, "WriteSequencerReset: ASYNC RESET");
-			// TODO: Clear memory
 		}
 		if (!GetBit(value, 1))
 		{
@@ -448,7 +444,6 @@ namespace video
 		m_memoryMode.extMemory = GetBit(value, 1);
 		m_memoryMode.sequential = GetBit(value, 2);
 
-		// TODO: alpha, on changemode
 		// TODO: extMemory: disable/enable bits 14/15
 		// TODO: sequential
 
@@ -541,7 +536,6 @@ namespace video
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Shift register mode[%d]", m_graphController.shiftRegister);
 			break;
 		case GraphControllerAddress::GRAPH_MISC:
-			// TODO
 			LogPrintf(Logger::LOG_DEBUG, "WriteGraphicsValue, Miscellaneous %d", value);
 			m_graphController.graphics = GetBit(value, 0);
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Graphics[%d]", m_graphController.graphics);
@@ -621,8 +615,19 @@ namespace video
 			else switch (m_attr.currRegister)
 			{
 			case AttrControllerAddress::ATTR_MODE_CONTROL:
-				LogPrintf(LOG_DEBUG, "WriteAttributeController, Mode Control %d", value);
+				LogPrintf(LOG_DEBUG, "WriteAttributeController, Mode Control %d", value);	
+				
 				// TODO
+				m_attr.graphics = GetBit(value, 0);
+				m_attr.monochrome = GetBit(value, 1);
+				m_attr.extend8to9 = GetBit(value, 2);
+				m_attr.blink = GetBit(value, 3);
+
+				LogPrintf(Logger::LOG_INFO, "WriteAttributeController Mode control [%cGRAPH %cMONO %cEXTEND8TO9, %cBLINK]",
+					m_attr.graphics ? ' ' : '/',
+					m_attr.monochrome ? ' ' : '/',
+					m_attr.extend8to9 ? ' ' : '/',
+					m_attr.blink ? ' ' : '/');
 				break;
 			case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
 				LogPrintf(LOG_DEBUG, "WriteAttributeController, Overscan Color %d", value);
@@ -667,7 +672,7 @@ namespace video
 			bool charBlink = false;
 
 			// Background
-			if (/*m_mode.blink*/true) // Hi bit: intense bg vs blink fg
+			if (m_attr.blink) // Hi bit: intense bg vs blink fg
 			{
 				charBlink = GetBit(bg, 3);
 				SetBit(bg, 3, false);
@@ -675,7 +680,7 @@ namespace video
 
 			// Draw character
 			BYTE currChar = m_egaRAM.GetCharMapA()[((size_t)ch * 0x20) + data.rowAddress];
-			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16()); // TODO
+			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
 
 			// TODO: This is not the correct behavior
 			bool cursorLine = isCursorChar && (data.rowAddress > config.cursorStart);
@@ -778,6 +783,11 @@ namespace video
 					(GetBit(pixData[2], i) << 2) |
 					(GetBit(pixData[3], i) << 3);
 
+				// For graphics mode blink, flip ATR3 every 16 frames
+				if (m_attr.blink && m_crtc.IsBlink16())
+				{
+					color ^= 0b1000;
+				}
 				DrawPixel(GetColor(color));
 			}
 		}

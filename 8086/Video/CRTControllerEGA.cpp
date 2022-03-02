@@ -400,9 +400,8 @@ namespace crtc_ega
 					m_events->OnChangeMode();
 				}
 
-				// TODO
+				if ((m_data.frame % 8) == 0) m_blink8 = !m_blink8;
 				if ((m_data.frame % 16) == 0) m_blink16 = !m_blink16;
-				if ((m_data.frame % 32) == 0) m_blink32 = !m_blink32;
 			}
 		}
 	}
@@ -459,8 +458,8 @@ namespace crtc_ega
 
 		to["interruptPending"] = m_interruptPending;
 		to["charWidth"] = m_charWidth;
+		to["blink8"] = m_blink8;
 		to["blink16"] = m_blink16;
-		to["blink32"] = m_blink32;
 	}
 
 	void CRTController::Deserialize(json& from)
@@ -513,15 +512,14 @@ namespace crtc_ega
 		const json& data = from["data"];
 		m_data.hPos = data["hPos"];
 		m_data.vPos = data["vPos"];
-		//m_data.vPosChar = data["vPosChar"];
 		m_data.rowAddress = data["rowAddress"];
 		m_data.memoryAddress = data["memoryAddress"];
 		m_data.frame = data["frame"];
 
 		m_interruptPending = from["interruptPending"];
 		m_charWidth = from["charWidth"];
+		m_blink8 = from["blink8"];
 		m_blink16 = from["blink16"];
-		m_blink32 = from["blink32"];
 
 		UpdateHVTotals();
 	}
