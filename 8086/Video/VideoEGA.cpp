@@ -434,6 +434,11 @@ namespace video
 
 		LogPrintf(Logger::LOG_INFO, "WriteSequencerCharMapSelect, charMapA[%d] charMapB[%d]", m_charMapSelectA, m_charMapSelectB);
 
+		if (m_charMapSelectA != m_charMapSelectB)
+		{
+			LogPrintf(Logger::LOG_WARNING, "WriteSequencerCharMapSelect, Not supported: charMapA[%d] != charMapB[%d]", m_charMapSelectA, m_charMapSelectB);
+		}
+
 		m_egaRAM.SelectCharMaps(m_charMapSelectA, m_charMapSelectB);
 	}
 	void VideoEGA::WriteSequencerMemoryMode(BYTE value)
@@ -831,6 +836,7 @@ namespace video
 		m_graphController.Serialize(to["graphController"]);
 		m_attr.Serialize(to["attrController"]);
 		m_crtc.Serialize(to["crtc"]);
+		m_egaRAM.Serialize(to["egaRAM"]);
 
 		// TODO dip switches
 	}
@@ -868,6 +874,7 @@ namespace video
 		m_graphController.Deserialize(from["graphController"]);
 		m_attr.Deserialize(from["attrController"]);
 		m_crtc.Deserialize(from["crtc"]);
+		m_egaRAM.Deserialize(from["egaRAM"]);
 
 		m_egaRAM.SelectCharMaps(m_charMapSelectA, m_charMapSelectB);
 

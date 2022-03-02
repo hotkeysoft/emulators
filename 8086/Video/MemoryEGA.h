@@ -1,5 +1,8 @@
 #pragma once
 #include "../CPU/MemoryBlock.h"
+#include "../Serializable.h"
+
+#include <array>
 
 namespace graph_ega
 {
@@ -10,7 +13,7 @@ namespace memory_ega
 {
 	enum class RAMSIZE { EGA_64K = 65536, EGA_128K = 131072, EGA_256K = 262144 };
 
-	class MemoryEGA : public emul::MemoryBlock
+	class MemoryEGA : public emul::MemoryBlock, public emul::Serializable
 	{
 	public:
 		MemoryEGA(RAMSIZE ramsize);
@@ -25,7 +28,7 @@ namespace memory_ega
 		virtual BYTE read(emul::ADDRESS offset) override;
 		virtual void write(emul::ADDRESS offset, BYTE data) override;
 
-		// TODO: Temporary direct access to ram for video card drawing
+		// Direct access to ram for video card drawing
 		BYTE readRaw(BYTE plane, emul::ADDRESS offset) { return m_planes[plane].read(offset); }
 
 		// Character Maps
@@ -39,6 +42,10 @@ namespace memory_ega
 		virtual bool LoadFromFile(const char* file, WORD offset = 0) override;
 		virtual bool Dump(emul::ADDRESS offset, emul::DWORD len, const char* outFile) const override;
 
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(json& from) override;
+
 	protected:
 		RAMSIZE m_ramSize;
 		bool m_enable = false;
@@ -49,8 +56,8 @@ namespace memory_ega
 		const emul::ADDRESS m_planeAddressMask;
 		
 		MemoryBlock m_planes[4];
-		BYTE m_planeMask = 0x0F;
-		BYTE m_dataLatches[4] = { 0, 0, 0, 0 };
+		emul::BYTE m_planeMask = 0x0F;
+		std::array<BYTE, 4> m_dataLatches = { 0, 0, 0, 0 };
 
 		const BYTE* m_charMapA = nullptr;
 		const BYTE* m_charMapB = nullptr;

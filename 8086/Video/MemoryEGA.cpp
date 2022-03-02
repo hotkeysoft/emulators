@@ -230,4 +230,28 @@ namespace memory_ega
 			}
 		}
 	}
+
+	void MemoryEGA::Serialize(json& to)
+	{
+		to["ramSize"] = m_ramSize;
+
+		// Plane data will be saved as part of main memory dump.
+		// Char maps are initialized by parent
+
+		to["enable"] = m_enable;
+		to["planeMask"] = m_planeMask;
+		to["dataLatches"] = m_dataLatches;
+	}
+
+	void MemoryEGA::Deserialize(json& from)
+	{
+		if (from["ramSize"] != m_ramSize)
+		{
+			throw emul::SerializableException("MemoryEGA: Incompatible ramsize");
+		}
+
+		m_enable = from["enable"];
+		m_planeMask = from["planeMask"];
+		m_dataLatches = from["dataLatches"];
+	}
 }
