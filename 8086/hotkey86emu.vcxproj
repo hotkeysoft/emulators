@@ -215,6 +215,7 @@
     <ClCompile Include="CPU\PortConnector.cpp" />
     <ClCompile Include="Video\CRTController6845.cpp" />
     <ClCompile Include="Video\CRTControllerEGA.cpp" />
+    <ClCompile Include="video\GraphControllerEGA.cpp" />
     <ClCompile Include="Video\MemoryEGA.cpp" />
     <ClCompile Include="Video\SequencerEGA.cpp" />
     <ClCompile Include="Video\Video.cpp" />

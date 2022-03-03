@@ -6,7 +6,7 @@
 
 namespace graph_ega
 {
-	class GraphController;
+	struct GraphControllerData;
 }
 
 namespace seq_ega
@@ -26,7 +26,7 @@ namespace memory_ega
 
 		virtual void Clear(BYTE filler = 0) override;
 
-		void SetGraphController(const graph_ega::GraphController* ctrl) { m_graphCtrl = ctrl; }
+		void SetGraphController(const graph_ega::GraphControllerData* graph) { m_graphData = graph; }
 		void SetSequencer(const seq_ega::SequencerData* seq) { m_seqData = seq; }
 
 		void Enable(bool enable) { m_enable = enable; }
@@ -54,7 +54,7 @@ namespace memory_ega
 		RAMSIZE m_ramSize;
 		bool m_enable = false;
 
-		const graph_ega::GraphController* m_graphCtrl = nullptr;
+		const graph_ega::GraphControllerData* m_graphData = nullptr;
 		const seq_ega::SequencerData* m_seqData = nullptr;
 
 		const emul::DWORD m_planeSize;

@@ -1,7 +1,13 @@
 #pragma once
-
 #include "../Common.h"
 #include "../Serializable.h"
+#include "../CPU/PortConnector.h"
+
+namespace emul
+{
+	class Memory;
+	class MemoryBlock;
+}
 
 namespace graph_ega
 {
@@ -10,27 +16,8 @@ namespace graph_ega
 
 	enum class MemoryMap { A000_128K = 0, A000_64K, B000_32K, B800_32K };
 
-	enum class GraphControllerAddress
+	struct GraphControllerData
 	{
-		GRAPH_SET_RESET = 0,
-		GRAPH_ENABLE_SET_RESET = 1,
-		GRAPH_COLOR_COMPARE = 2,
-		GRAPH_DATA_ROTATE = 3,
-		GRAPH_READ_MAP_SELECT = 4,
-		GRAPH_MODE = 5,
-		GRAPH_MISC = 6,
-		GRAPH_COLOR_DONT_CARE = 7,
-		GRAPH_BIT_MASK = 8,
-
-		_GRAPH_MAX_REG = GRAPH_BIT_MASK,
-		GRAPH_INVALID_REG = 0xFF
-	};
-
-	class GraphController : public emul::Serializable
-	{
-	public:
-		GraphControllerAddress currRegister = GraphControllerAddress::GRAPH_INVALID_REG;
-
 		// Set/Reset Register (0)
 		BYTE setReset = 0;
 		// Enable Set/Reset Register (1)
@@ -62,46 +49,58 @@ namespace graph_ega
 
 		// Bit Mask Register
 		BYTE bitMask = 0;
+	};
+
+	class GraphController : public emul::PortConnector, public emul::Serializable
+	{
+	public:
+		GraphController(WORD baseAddress);
+
+		GraphController() = delete;
+		GraphController(const GraphController&) = delete;
+		GraphController& operator=(const GraphController&) = delete;
+		GraphController(GraphController&&) = delete;
+		GraphController& operator=(GraphController&&) = delete;
+
+		virtual void Init(emul::Memory* memory, emul::MemoryBlock* egaRAM);
+		virtual void Reset();
+
+		const GraphControllerData& GetData() const { return m_data; }
 
 		// emul::Serializable
-		virtual void Serialize(json& to) override
-		{
-			to["currRegister"] = currRegister;
-			to["setReset"] = setReset;
-			to["enableSetReset"] = enableSetReset;
-			to["colorCompare"] = colorCompare;
-			to["rotateCount"] = rotateCount;
-			to["aluFunction"] = aluFunction;
-			to["readPlaneSelect"] = readPlaneSelect;
-			to["writeMode"] = writeMode;
-			to["readModeCompare"] = readModeCompare;
-			to["oddEven"] = oddEven;
-			to["shiftRegister"] = shiftRegister;
-			to["graphics"] = graphics;
-			to["chainOddEven"] = chainOddEven;
-			to["memoryMap"] = memoryMap;
-			to["colorDontCare"] = colorDontCare;
-			to["bitMask"] = bitMask;
-		}
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
-		virtual void Deserialize(json& from) override
+	protected:
+		const WORD m_baseAddress;
+
+		enum class GraphControllerAddress
 		{
-			currRegister = from["currRegister"];
-			setReset = from["setReset"];
-			enableSetReset = from["enableSetReset"];
-			colorCompare = from["colorCompare"];
-			rotateCount = from["rotateCount"];
-			aluFunction = from["aluFunction"];
-			readPlaneSelect = from["readPlaneSelect"];
-			writeMode = from["writeMode"];
-			readModeCompare = from["readModeCompare"];
-			oddEven = from["oddEven"];
-			shiftRegister = from["shiftRegister"];
-			graphics = from["graphics"];
-			chainOddEven = from["chainOddEven"];
-			memoryMap = from["memoryMap"];
-			colorDontCare = from["colorDontCare"];
-			bitMask = from["bitMask"];
-		}
+			GRAPH_SET_RESET = 0,
+			GRAPH_ENABLE_SET_RESET = 1,
+			GRAPH_COLOR_COMPARE = 2,
+			GRAPH_DATA_ROTATE = 3,
+			GRAPH_READ_MAP_SELECT = 4,
+			GRAPH_MODE = 5,
+			GRAPH_MISC = 6,
+			GRAPH_COLOR_DONT_CARE = 7,
+			GRAPH_BIT_MASK = 8,
+
+			_GRAPH_MAX_REG = GRAPH_BIT_MASK,
+			GRAPH_INVALID_REG = 0xFF
+		} m_currAddress = GraphControllerAddress::GRAPH_INVALID_REG;
+
+		void WritePosition1(BYTE value);
+		void WritePosition2(BYTE value);
+		void WriteAddress(BYTE value);
+		void WriteValue(BYTE value);
+
+		void MapMemory();
+
+		GraphControllerData m_data;
+
+	private:
+		emul::Memory* m_memory = nullptr;
+		emul::MemoryBlock* m_egaRAM = nullptr;
 	};
 }

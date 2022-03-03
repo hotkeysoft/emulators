@@ -115,7 +115,7 @@ namespace memory_ega
 		if (!m_enable)
 			return 0xFF;
 
-		BYTE selectedPlane = m_graphCtrl->readPlaneSelect;
+		BYTE selectedPlane = m_graphData->readPlaneSelect;
 
 		// Odd/Even
 		if (m_seqData->memoryMode.oddEven)
@@ -124,7 +124,7 @@ namespace memory_ega
 		}
 
 		// Chain Odd/Even
-		if (m_graphCtrl->chainOddEven)
+		if (m_graphData->chainOddEven)
 		{
 			SetBit(offset, 0, GetBit(offset, m_ramSize == RAMSIZE::EGA_64K ? 13 : 15));
 		}
@@ -136,17 +136,17 @@ namespace memory_ega
 			m_dataLatches[i] = m_planes[i].read(offset);
 		}
 
-		if (m_graphCtrl->readModeCompare)
+		if (m_graphData->readModeCompare)
 		{
 			LogPrintf(LOG_TRACE, "Read[compare][%04x]", offset);
 			BYTE compare = 0xFF;
 			for (int i = 0; i < 4; ++i)
 			{
 				// Skip the don't care planes
-				if (GetBit(m_graphCtrl->colorDontCare, i))
+				if (GetBit(m_graphData->colorDontCare, i))
 				{
 					BYTE value = m_dataLatches[i];
-					BYTE compareWith = GetBit(m_graphCtrl->colorCompare, i) ? 0xFF : 0;
+					BYTE compareWith = GetBit(m_graphData->colorCompare, i) ? 0xFF : 0;
 					BYTE match = ~(value ^ compareWith);
 					compare &= match;
 				}
@@ -165,7 +165,7 @@ namespace memory_ega
 		if (!m_enable)
 			return;
 
-		LogPrintf(LOG_TRACE, "Write(%d)[%04x] = %02x", m_graphCtrl->writeMode, offset, data);
+		LogPrintf(LOG_TRACE, "Write(%d)[%04x] = %02x", m_graphData->writeMode, offset, data);
 
 		// Odd/Even
 		BYTE planeMask = m_seqData->planeMask;
@@ -180,14 +180,14 @@ namespace memory_ega
 		}
 
 		// Chain Odd/Even
-		if (m_graphCtrl->chainOddEven)
+		if (m_graphData->chainOddEven)
 		{
 			SetBit(offset, 0, GetBit(offset, m_ramSize == RAMSIZE::EGA_64K ? 13 : 15));
 		}
 
 		offset &= m_planeAddressMask;
 
-		if (m_graphCtrl->writeMode == 1)
+		if (m_graphData->writeMode == 1)
 		{
 			for (int i = 0; i < 4; ++i)
 			{
@@ -204,26 +204,26 @@ namespace memory_ega
 				if (GetBit(planeMask, i))
 				{
 					BYTE toWrite;
-					if (m_graphCtrl->writeMode == 2)
+					if (m_graphData->writeMode == 2)
 					{
 						toWrite = GetBit(data, i) ? 0xFF : 0;
 					}
 					else // Mode 0
 					{
 						// Set/Reset
-						if (GetBit(m_graphCtrl->enableSetReset, i))
+						if (GetBit(m_graphData->enableSetReset, i))
 						{
-							toWrite = GetBit(m_graphCtrl->setReset, i) ? 0xFF : 0;
+							toWrite = GetBit(m_graphData->setReset, i) ? 0xFF : 0;
 						}
 						else
 						{
 							// Rotate
-							toWrite = RotateRight(data, m_graphCtrl->rotateCount);
+							toWrite = RotateRight(data, m_graphData->rotateCount);
 						}
 					}				
 
 					// ALU
-					switch (m_graphCtrl->aluFunction)
+					switch (m_graphData->aluFunction)
 					{
 					case ALUFunction::AND: toWrite &= m_dataLatches[i]; break;
 					case ALUFunction::OR:  toWrite |= m_dataLatches[i]; break;
@@ -231,8 +231,8 @@ namespace memory_ega
 					}
 
 					// Bit Mask
-					toWrite &= m_graphCtrl->bitMask; // Clear locked bits
-					BYTE locked = m_dataLatches[i] & (~m_graphCtrl->bitMask); // Put latched value in locked bits
+					toWrite &= m_graphData->bitMask; // Clear locked bits
+					BYTE locked = m_dataLatches[i] & (~m_graphData->bitMask); // Put latched value in locked bits
 					m_planes[i].write(offset, toWrite | locked);
 				}
 			}

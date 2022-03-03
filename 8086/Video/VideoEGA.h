@@ -88,12 +88,6 @@ namespace video
 
 		// Graphics Controllers
 		graph_ega::GraphController m_graphController;
-		void WriteGraphics1Position(BYTE value);
-		void WriteGraphics2Position(BYTE value);
-		void WriteGraphicsAddress(BYTE value);
-		void WriteGraphicsValue(BYTE value);
-
-		void MapMemory();
 
 		// Attribute Controller
 		attr_ega::AttrController m_attr;
