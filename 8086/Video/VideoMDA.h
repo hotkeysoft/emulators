@@ -22,6 +22,7 @@ namespace video
 		VideoMDA& operator=(VideoMDA&&) = delete;
 
 		virtual const std::string GetID() const override { return "mda"; }
+		virtual const std::string GetDisplayName() const override { return "MDA"; }
 
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 

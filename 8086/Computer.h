@@ -63,13 +63,15 @@ namespace emul
 		CPUSpeed GetCPUSpeed() const { return m_cpuSpeed; }
 		void SetCPUSpeed(const CPUSpeed& speed);
 
+		typedef std::set<std::string> VideoModes;
+		const VideoModes& GetVideoModes() const { return m_videoModes; }
+
 		virtual void Serialize(json& to);
 		virtual void Deserialize(json& from);
 
 	protected:
 		Computer(Memory& memory, MemoryMap& mmap);
 
-		typedef std::set<std::string> VideoModes;
 		virtual void InitVideo(const std::string& defaultMode, const VideoModes& supported = VideoModes());
 		virtual void InitSound();
 		virtual void InitPIT(pit::Device8254* pit);
@@ -119,6 +121,8 @@ namespace emul
 		bool m_turbo = false;
 
 	private:
+		VideoModes m_videoModes;
+
 		CPUSpeed m_cpuSpeed;
 		CPUSpeeds m_cpuSpeeds;
 	};

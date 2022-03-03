@@ -28,6 +28,7 @@ namespace video
 		VideoHGC& operator=(VideoHGC&&) = delete;
 
 		virtual const std::string GetID() const override { return "hgc"; }
+		virtual const std::string GetDisplayName() const override { return "Hercules"; }
 
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 

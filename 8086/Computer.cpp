@@ -71,9 +71,11 @@ namespace emul
 		assert(m_video == nullptr);
 		std::string mode = Config::Instance().GetValueStr("video", "mode");
 
+		m_videoModes = supported;
 		if (supported.empty())
 		{
 			mode = defaultMode;
+			m_videoModes.insert(defaultMode);
 		}
 		else if (supported.find(mode) == supported.end())
 		{

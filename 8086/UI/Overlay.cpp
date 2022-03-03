@@ -129,7 +129,7 @@ namespace ui
 		toolbar->SetBackgroundColor(Color::C_MED_GREY);
 
 		m_mainWnd->SetToolbar(toolbar);
-		m_mainWnd->SetText(m_pc->GetName());
+		UpdateTitle();
 
 		m_floppyInactive = RES().FindImage("toolbar", 0);
 		m_floppyActive = RES().FindImage("toolbar", 4);
@@ -431,6 +431,27 @@ namespace ui
 		return true;
 	}
 
+	void Overlay::UpdateTitle(float fps)
+	{
+		static char buf[128];
+		std::ostringstream os;
+		os << m_pc->GetName();
+
+		// Display video mode only if non-trivial (e.g skip pcjr)
+		const auto& videoModes = m_pc->GetVideoModes();
+		if (videoModes.size() > 1)
+		{
+			os << " [" << m_pc->GetVideo().GetDisplayName() << "]";
+		}
+
+		if (fps > 0.)
+		{
+			os << " [" << std::fixed << std::setprecision(1) << fps << " fps]";
+		}
+
+		m_mainWnd->SetText(os.str().c_str());
+	}
+
 	// video::Renderer
 	void Overlay::Render()
 	{
@@ -450,10 +471,7 @@ namespace ui
 
 		if (fps > 0.)
 		{
-			static char buf[128];
-
-			sprintf(buf, "%s [%.1f fps]", m_pc->GetName(), fps);
-			m_mainWnd->SetText(buf);
+			UpdateTitle(fps);
 		}
 
 		WINMGR().Draw();

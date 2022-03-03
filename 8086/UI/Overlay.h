@@ -48,6 +48,7 @@ namespace ui
 		void UpdateHardDisk(BYTE drive, const char* letter);
 		void UpdateTurbo();
 		void UpdateTrim();
+		void UpdateTitle(float fps = 0.);
 
 		void LoadFloppyDiskImage(BYTE drive, const char* str, bool eject = false);
 		void LoadHardDiskImage(BYTE drive, const char* str);

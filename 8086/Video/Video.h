@@ -37,6 +37,7 @@ namespace video
 		Video& operator=(Video&&) = delete;
 
 		virtual const std::string GetID() const = 0;
+		virtual const std::string GetDisplayName() const { return GetID(); }
 
 		virtual void Reset() {};
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);

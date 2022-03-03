@@ -22,6 +22,7 @@ namespace video
 		VideoCGA& operator=(VideoCGA&&) = delete;
 
 		virtual const std::string GetID() const override { return "cga"; }
+		virtual const std::string GetDisplayName() const override { return "CGA"; }
 
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
 		virtual void Tick() override;
