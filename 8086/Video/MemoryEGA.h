@@ -9,6 +9,11 @@ namespace graph_ega
 	class GraphController;
 }
 
+namespace seq_ega
+{
+	struct SequencerData;
+}
+
 namespace memory_ega
 {
 	enum class RAMSIZE { EGA_64K = 65536, EGA_128K = 131072, EGA_256K = 262144 };
@@ -21,7 +26,8 @@ namespace memory_ega
 
 		virtual void Clear(BYTE filler = 0) override;
 
-		void SetGraphController(graph_ega::GraphController* ctrl) { m_graphCtrl = ctrl; }
+		void SetGraphController(const graph_ega::GraphController* ctrl) { m_graphCtrl = ctrl; }
+		void SetSequencer(const seq_ega::SequencerData* seq) { m_seqData = seq; }
 
 		void Enable(bool enable) { m_enable = enable; }
 
@@ -33,8 +39,6 @@ namespace memory_ega
 
 		// Character Maps
 		void SelectCharMaps(BYTE selectA, BYTE selectB);
-
-		void SetPlaneMask(BYTE mask) { m_planeMask = mask & 0x0F; }
 
 		const BYTE* GetCharMapB() const { return m_charMapA; }
 		const BYTE* GetCharMapA() const { return m_charMapB; }
@@ -50,13 +54,13 @@ namespace memory_ega
 		RAMSIZE m_ramSize;
 		bool m_enable = false;
 
-		graph_ega::GraphController* m_graphCtrl = nullptr;
+		const graph_ega::GraphController* m_graphCtrl = nullptr;
+		const seq_ega::SequencerData* m_seqData = nullptr;
 
 		const emul::DWORD m_planeSize;
 		const emul::ADDRESS m_planeAddressMask;
 		
 		MemoryBlock m_planes[4];
-		emul::BYTE m_planeMask = 0x0F;
 		std::array<BYTE, 4> m_dataLatches = { 0, 0, 0, 0 };
 
 		const BYTE* m_charMapA = nullptr;

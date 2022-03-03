@@ -22,6 +22,8 @@ using attr_ega::AttrControllerAddress;
 using attr_ega::RegisterMode;
 using attr_ega::PaletteSource;
 
+using seq_ega::SequencerData;
+
 namespace video
 {
 	BYTE MakeColor8(bool h, bool l)
@@ -59,6 +61,7 @@ namespace video
 	VideoEGA::VideoEGA(RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor) :
 		Logger("EGA"),
 		m_crtc(baseAddressMono),
+		m_sequencer(baseAddress),
 		m_ramSize(ramsize),
 		m_baseAddress(baseAddress),
 		m_baseAddressMono(baseAddressMono),
@@ -84,9 +87,6 @@ namespace video
 		Connect(m_baseAddress + 0x2, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteMiscRegister));
 		Connect(m_baseAddress + 0x2, static_cast<PortConnector::INFunction>(&VideoEGA::ReadStatusRegister0));
 
-		Connect(m_baseAddress + 0x4, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteSequencerAddress));
-		Connect(m_baseAddress + 0x5, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteSequencerValue));
-
 		Connect(m_baseAddress + 0xC, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteGraphics1Position));
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteGraphics2Position));
 		Connect(m_baseAddress + 0xE, static_cast<PortConnector::OUTFunction>(&VideoEGA::WriteGraphicsAddress));
@@ -107,7 +107,10 @@ namespace video
 		AddMode("graphCGA4", (DrawFunc)&VideoEGA::DrawGraphModeCGA4, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		SetMode("text");
 
+		m_sequencer.Init();
+
 		m_egaRAM.SetGraphController(&m_graphController);
+		m_egaRAM.SetSequencer(&m_sequencer.GetData());
 
 		MapMemory();
 	}	
@@ -134,7 +137,7 @@ namespace video
 
 	void VideoEGA::OnChangeMode()
 	{
-		if (m_memoryMode.alpha)
+		if (m_sequencer.GetData().memoryMode.alpha)
 		{
 			SetMode("text");
 		}
@@ -174,7 +177,7 @@ namespace video
 
 	void VideoEGA::InternalTick()
 	{
-		if (m_clockingMode.halfDotClock)
+		if (m_sequencer.GetData().clockingMode.halfDotClock)
 		{
 			static bool div2 = false;
 			div2 = !div2;
@@ -195,6 +198,8 @@ namespace video
 	void VideoEGA::OnNewFrame()
 	{
 		BeginFrame();
+		const struct SequencerData& seq = m_sequencer.GetData();
+		m_egaRAM.SelectCharMaps(seq.charMapSelectA, seq.charMapSelectA);
 	}
 
 	void VideoEGA::OnEndOfRow()
@@ -352,112 +357,6 @@ namespace video
 		return status;
 	}
 
-	void VideoEGA::WriteSequencerAddress(BYTE value)
-	{
-		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerAddress, value=%02Xh", value);
-
-		switch (value & 0b1111)
-		{
-		case 0: m_seqAddress = SequencerAddress::SEQ_RESET; break;
-		case 1: m_seqAddress = SequencerAddress::SEQ_CLOCKING_MODE; break;
-		case 2: m_seqAddress = SequencerAddress::SEQ_MAP_MASK; break;
-		case 3: m_seqAddress = SequencerAddress::SEQ_CHARMAP_SELECT; break;
-		case 4: m_seqAddress = SequencerAddress::SEQ_MEMORY_MODE; break;
-		default:
-			m_seqAddress = SequencerAddress::SEQ_INVALID; 
-			LogPrintf(LOG_WARNING, "Invalid sequencer address %d", value);
-			break;
-		}
-	}
-
-	// Dispatches value to functions below
-	void VideoEGA::WriteSequencerValue(BYTE value)
-	{
-		switch (m_seqAddress)
-		{
-		case SequencerAddress::SEQ_RESET:          WriteSequencerReset(value);         break;
-		case SequencerAddress::SEQ_CLOCKING_MODE:  WriteSequencerClockingMode(value);  break;
-		case SequencerAddress::SEQ_MAP_MASK:       WriteSequencerMapMask(value);       break;
-		case SequencerAddress::SEQ_CHARMAP_SELECT: WriteSequencerCharMapSelect(value); break;
-		case SequencerAddress::SEQ_MEMORY_MODE:    WriteSequencerMemoryMode(value);    break;
-		}
-	}
-	//
-	void VideoEGA::WriteSequencerReset(BYTE value)
-	{
-		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerReset, value=%02Xh", value);
-
-		if (!GetBit(value, 0))
-		{
-			LogPrintf(Logger::LOG_INFO, "WriteSequencerReset: ASYNC RESET");
-		}
-		if (!GetBit(value, 1))
-		{
-			LogPrintf(Logger::LOG_INFO, "WriteSequencerReset: SYNC RESET");
-		}
-	}
-	void VideoEGA::WriteSequencerClockingMode(BYTE value)
-	{
-		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerClockingMode, value=%02Xh", value);
-
-		m_clockingMode.charWidth = GetBit(value, 0) ? 8 : 9;
-		m_clockingMode.lowBandwidth = GetBit(value, 1);
-		m_clockingMode.load16 = GetBit(value, 2);
-		m_clockingMode.halfDotClock = GetBit(value, 3);
-
-		LogPrintf(Logger::LOG_INFO, "WriteSequencerClockingMode [%cLOWBW %cLOAD16 %cHALFDOT CHARWIDTH[%d]]",
-			m_clockingMode.lowBandwidth ? ' ' : '/',
-			m_clockingMode.load16 ? ' ' : '/',
-			m_clockingMode.halfDotClock ? ' ' : '/',
-			m_clockingMode.charWidth);
-	}
-
-	void VideoEGA::WriteSequencerMapMask(BYTE value)
-	{
-		LogPrintf(Logger::LOG_TRACE, "WriteSequencerMapMask, value=%02Xh", value);
-		m_planeMask = value & 0x0F;
-		m_egaRAM.SetPlaneMask(m_planeMask);
-
-		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerMapMask, Enable planes: [%c0][%c1][%c2][%c3]",
-			GetBit(m_planeMask, 0) ? ' ' : '/',
-			GetBit(m_planeMask, 1) ? ' ' : '/',
-			GetBit(m_planeMask, 2) ? ' ' : '/',
-			GetBit(m_planeMask, 3) ? ' ' : '/');
-
-	}
-	void VideoEGA::WriteSequencerCharMapSelect(BYTE value)
-	{
-		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerCharMapSelect, value=%02Xh", value);
-
-		m_charMapSelectB = value & 3;
-		m_charMapSelectA = (value >> 2) & 3;
-
-		LogPrintf(Logger::LOG_INFO, "WriteSequencerCharMapSelect, charMapA[%d] charMapB[%d]", m_charMapSelectA, m_charMapSelectB);
-
-		if (m_charMapSelectA != m_charMapSelectB)
-		{
-			LogPrintf(Logger::LOG_WARNING, "WriteSequencerCharMapSelect, Not supported: charMapA[%d] != charMapB[%d]", m_charMapSelectA, m_charMapSelectB);
-		}
-
-		m_egaRAM.SelectCharMaps(m_charMapSelectA, m_charMapSelectB);
-	}
-	void VideoEGA::WriteSequencerMemoryMode(BYTE value)
-	{
-		LogPrintf(Logger::LOG_DEBUG, "WriteSequencerMemoryMode, value=%02Xh", value);
-
-		m_memoryMode.alpha = GetBit(value, 0);
-		m_memoryMode.extMemory = GetBit(value, 1);
-		m_memoryMode.sequential = GetBit(value, 2);
-
-		// TODO: extMemory: disable/enable bits 14/15
-		// TODO: sequential
-
-		LogPrintf(Logger::LOG_INFO, "WriteSequencerMemoryMode [%cALPHA %cEXTRAM %cSEQ]",
-			m_memoryMode.alpha ? ' ' : '/',
-			m_memoryMode.extMemory ? ' ' : '/',
-			m_memoryMode.sequential ? ' ' : '/');
-	}
-
 	void VideoEGA::WriteGraphics1Position(BYTE value)
 	{
 		// TODO Not sure how this works
@@ -534,7 +433,7 @@ namespace video
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, ReadMode[%s]", m_graphController.readModeCompare ? "COMPARE" : "NORMAL");
 
 			m_graphController.oddEven = GetBit(value, 4);
-			// Same as MemoryMode.sequential
+			// Same as MemoryMode.oddEven
 			LogPrintf(Logger::LOG_INFO, "WriteGraphicsValue, Odd/Even addressing mode[%d]", m_graphController.oddEven);
 
 			m_graphController.shiftRegister = GetBit(value, 5);
@@ -819,20 +718,7 @@ namespace video
 		misc["vSyncPolarity"] = m_misc.vSyncPolarity;
 		to["misc"] = misc;
 
-		json seq;
-		seq["seqAddress"] = m_seqAddress;
-		seq["clk.charWidth"] = m_clockingMode.charWidth;
-		seq["clk.lowBandwidth"] = m_clockingMode.lowBandwidth;
-		seq["clk.load16"] = m_clockingMode.load16;
-		seq["clk.halfDotClock"] = m_clockingMode.halfDotClock;
-		seq["planeMask"] = m_planeMask;
-		seq["charMapSelectA"] = m_charMapSelectA;
-		seq["charMapSelectB"] = m_charMapSelectB;
-		seq["mem.alpha"] = m_memoryMode.alpha;
-		seq["mem.extMemory"] = m_memoryMode.extMemory;
-		seq["mem.sequential"] = m_memoryMode.sequential;
-		to["seq"] = seq;
-
+		m_sequencer.Serialize(to["sequencer"]);
 		m_graphController.Serialize(to["graphController"]);
 		m_attr.Serialize(to["attrController"]);
 		m_crtc.Serialize(to["crtc"]);
@@ -858,25 +744,11 @@ namespace video
 		m_misc.hSyncPolarity = misc["hSyncPolarity"];
 		m_misc.vSyncPolarity = misc["vSyncPolarity"];
 
-		const json& seq = from["seq"];
-		m_seqAddress = seq["seqAddress"];
-		m_clockingMode.charWidth = seq["clk.charWidth"];
-		m_clockingMode.lowBandwidth = seq["clk.lowBandwidth"];
-		m_clockingMode.load16 = seq["clk.load16"];
-		m_clockingMode.halfDotClock = seq["clk.halfDotClock"];
-		m_planeMask = seq["planeMask"];
-		m_charMapSelectA = seq["charMapSelectA"];
-		m_charMapSelectB = seq["charMapSelectB"];
-		m_memoryMode.alpha = seq["mem.alpha"];
-		m_memoryMode.extMemory = seq["mem.extMemory"];
-		m_memoryMode.sequential = seq["mem.sequential"];
-
+		m_sequencer.Deserialize(from["sequencer"]);
 		m_graphController.Deserialize(from["graphController"]);
 		m_attr.Deserialize(from["attrController"]);
 		m_crtc.Deserialize(from["crtc"]);
 		m_egaRAM.Deserialize(from["egaRAM"]);
-
-		m_egaRAM.SelectCharMaps(m_charMapSelectA, m_charMapSelectB);
 
 		MapMemory();
 		OnChangeMode();

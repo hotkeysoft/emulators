@@ -1,5 +1,6 @@
 #include "MemoryEGA.h"
 #include "GraphControllerEGA.h"
+#include "SequencerEGA.h"
 #include "../Config.h"
 
 using emul::ADDRESS;
@@ -74,9 +75,15 @@ namespace memory_ega
 			break;
 		}
 
-		LogPrintf(LOG_INFO, "SelectCharMaps(adjusted for RAM size), A=[%d], B=[%d]", selectA, selectB);
-		m_charMapA = m_planes[2].getPtr() + ((size_t)selectA * 16384);
-		m_charMapB = m_planes[2].getPtr() + ((size_t)selectB * 16384);
+		const BYTE* newA = m_planes[2].getPtr() + ((size_t)selectA * 16384);
+		const BYTE* newB = m_planes[2].getPtr() + ((size_t)selectB * 16384);
+		
+		if (m_charMapA != newA || m_charMapB != newB)
+		{
+			LogPrintf(LOG_INFO, "SelectCharMaps(adjusted for RAM size), A=[%d], B=[%d]", selectA, selectB);
+			m_charMapA = newA;
+			m_charMapB = newB;
+		}
 	}
 
 	bool MemoryEGA::LoadFromFile(const char* file, WORD offset)
@@ -109,8 +116,9 @@ namespace memory_ega
 			return 0xFF;
 
 		BYTE selectedPlane = m_graphCtrl->readPlaneSelect;
+
 		// Odd/Even
-		if (m_graphCtrl->oddEven)
+		if (m_seqData->memoryMode.oddEven)
 		{
 			SetBit(selectedPlane, 0, GetBit(offset, 0));
 		}
@@ -160,8 +168,8 @@ namespace memory_ega
 		LogPrintf(LOG_TRACE, "Write(%d)[%04x] = %02x", m_graphCtrl->writeMode, offset, data);
 
 		// Odd/Even
-		BYTE planeMask = m_planeMask;
-		if (m_graphCtrl->oddEven)
+		BYTE planeMask = m_seqData->planeMask;
+		if (m_seqData->memoryMode.oddEven)
 		{
 			bool even = !GetBit(offset, 0);
 			{
@@ -239,7 +247,6 @@ namespace memory_ega
 		// Char maps are initialized by parent
 
 		to["enable"] = m_enable;
-		to["planeMask"] = m_planeMask;
 		to["dataLatches"] = m_dataLatches;
 	}
 
@@ -251,7 +258,6 @@ namespace memory_ega
 		}
 
 		m_enable = from["enable"];
-		m_planeMask = from["planeMask"];
 		m_dataLatches = from["dataLatches"];
 	}
 }

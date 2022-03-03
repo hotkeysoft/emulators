@@ -6,6 +6,7 @@
 #include "CRTControllerEGA.h"
 #include "GraphControllerEGA.h"
 #include "AttributeControllerEGA.h"
+#include "SequencerEGA.h"
 #include "MemoryEGA.h"
 
 using emul::WORD;
@@ -81,47 +82,9 @@ namespace video
 		void WriteFeatureControlRegister(BYTE value);
 		BYTE ReadStatusRegister0();
 		BYTE ReadStatusRegister1();
-
-		// TODO: Extract/group sequencer data
+	
 		// Sequencer
-		enum class SequencerAddress {
-			SEQ_RESET = 0,
-			SEQ_CLOCKING_MODE,
-			SEQ_MAP_MASK,
-			SEQ_CHARMAP_SELECT,
-			SEQ_MEMORY_MODE,
-
-			SEQ_INVALID
-		} m_seqAddress = SequencerAddress::SEQ_INVALID;
-		void WriteSequencerAddress(BYTE value);
-		
-		// Dispatches value to functions below
-		void WriteSequencerValue(BYTE value);
-		void WriteSequencerReset(BYTE value);
-
-		struct ClockingMode
-		{
-			BYTE charWidth = 8; // 8 or 9
-			bool lowBandwidth = false; // low: 2/5 mem cycles, hi: 4/5
-			bool load16 = false; // 0: serializer load every clock, 1: every 2 clock
-			bool halfDotClock = false; // 0: normal dot clock, 1: half (for 320x200 modes)
-		} m_clockingMode;
-		void WriteSequencerClockingMode(BYTE value);
-
-		BYTE m_planeMask = 0;
-		void WriteSequencerMapMask(BYTE value);
-
-		BYTE m_charMapSelectA = 0;
-		BYTE m_charMapSelectB = 0;
-		void WriteSequencerCharMapSelect(BYTE value);
-
-		struct MemoryMode
-		{
-			bool alpha = false;
-			bool extMemory = false; // 1: allows access to >64k ram
-			bool sequential = false; // 0: Odd/Even access, 1: sequential
-		} m_memoryMode;
-		void WriteSequencerMemoryMode(BYTE value);
+		seq_ega::Sequencer m_sequencer;
 
 		// Graphics Controllers
 		graph_ega::GraphController m_graphController;

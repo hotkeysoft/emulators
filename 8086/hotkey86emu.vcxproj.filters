@@ -222,6 +222,9 @@
     <ClCompile Include="Video\MemoryEGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="Video\SequencerEGA.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -390,6 +393,9 @@
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="Video\AttributeControllerEGA.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\SequencerEGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
   </ItemGroup>

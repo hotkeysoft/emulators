@@ -216,6 +216,7 @@
     <ClCompile Include="Video\CRTController6845.cpp" />
     <ClCompile Include="Video\CRTControllerEGA.cpp" />
     <ClCompile Include="Video\MemoryEGA.cpp" />
+    <ClCompile Include="Video\SequencerEGA.cpp" />
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\Video6845.cpp" />
     <ClCompile Include="Video\VideoCGA.cpp" />
@@ -274,6 +275,7 @@
     <ClInclude Include="Video\CRTControllerEGA.h" />
     <ClInclude Include="Video\GraphControllerEGA.h" />
     <ClInclude Include="Video\MemoryEGA.h" />
+    <ClInclude Include="Video\SequencerEGA.h" />
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\Video6845.h" />
     <ClInclude Include="Video\VideoCGA.h" />
