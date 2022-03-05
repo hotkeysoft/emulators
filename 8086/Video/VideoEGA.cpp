@@ -1,5 +1,8 @@
 #include "VideoEGA.h"
+#include "../Config.h"
 #include <assert.h>
+
+using cfg::Config;
 
 using emul::SetBit;
 using emul::GetBit;
@@ -84,7 +87,13 @@ namespace video
 
 		m_egaRAM.SetGraphController(&m_graphController.GetData());
 		m_egaRAM.SetSequencer(&m_sequencer.GetData());
-	}	
+
+		m_syncPelPanning = Config::Instance().GetValueBool("video.ega", "syncpelpan");
+		if (m_syncPelPanning)
+		{
+			LogPrintf(Logger::LOG_WARNING, "Synchronizing Pel Panning updates to frames");
+		}
+	}
 
 	void VideoEGA::EnableLog(SEVERITY minSev)
 	{
@@ -172,7 +181,8 @@ namespace video
 	{
 		BeginFrame();
 		const struct SequencerData& seq = m_sequencer.GetData();
-		m_egaRAM.SelectCharMaps(seq.charMapSelectA, seq.charMapSelectA);
+		m_egaRAM.SelectCharMaps(seq.charMapSelectA, seq.charMapSelectA);		
+		m_newPelPanning = m_attrController.GetData().hPelPanning;
 	}
 
 	void VideoEGA::OnEndOfRow()
@@ -507,6 +517,8 @@ namespace video
 		const struct CRTCData& crtcData = m_crtc.GetData();
 		const struct AttrControllerData attrData = m_attrController.GetData();
 
+		BYTE pelPanning = m_syncPelPanning ? m_newPelPanning : attrData.hPelPanning;
+
 		// Called every 8 horizontal pixels
 		if (IsDisplayArea() && IsEnabled())
 		{
@@ -521,11 +533,11 @@ namespace video
 			int endBit = 0;
 			if (crtcData.hPos == 0)
 			{
-				startBit -= attrData.hPelPanning;
+				startBit -= pelPanning;
 			}
 			else if (crtcData.hPos == crtcData.hTotalDisp)
 			{
-				endBit = 8 - attrData.hPelPanning;
+				endBit = 8 - pelPanning;
 			}
 
 			for (int i = startBit; i >= endBit; --i)
@@ -545,7 +557,7 @@ namespace video
 			}
 		}
 		else
-		{
+		{		
 			DrawBackground(8);
 		}
 	}
