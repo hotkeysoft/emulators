@@ -118,7 +118,7 @@ namespace ui
 
 		Rect windowSize = WINMGR().GetWindowSize();
 		Rect toolbarRect = windowSize;
-		toolbarRect.h = 64;
+		toolbarRect.h = 62;
 		toolbarRect.y = windowSize.h - toolbarRect.h;
 
 		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_CANRESIZE | WIN_NOSCROLL);
