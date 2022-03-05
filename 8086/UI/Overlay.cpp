@@ -109,6 +109,7 @@ namespace ui
 			return false;
 		}
 
+		SDL_InitSubSystem(SDL_INIT_TIMER);
 		m_renderer = pc->GetVideo().GetRenderer();
 		m_window = pc->GetVideo().GetWindow();
 
@@ -140,7 +141,8 @@ namespace ui
 
 
 		// Toolbar section: Reboot
-		toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
+		ToolbarItemPtr rebootButton = toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
+		rebootButton->SetTooltip("Click for Soft Reboot (CTRL+ATL+DEL)\nShift-Click for Hard Reboot");
 
 		toolbar->AddSeparator();
 
@@ -149,9 +151,11 @@ namespace ui
 		{
 			m_floppyButton[0] = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
 			m_ejectButton[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
+			m_ejectButton[0]->SetTooltip("Eject A:");
 			UpdateFloppy(0, "A:");
 			m_floppyButton[1] = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
 			m_ejectButton[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
+			m_ejectButton[1]->SetTooltip("Eject B:");
 			UpdateFloppy(1, "B:");
 
 			toolbar->AddSeparator();
@@ -171,16 +175,20 @@ namespace ui
 
 		// Toolbar section: Speed
 		m_speedButton = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
+		m_speedButton->SetTooltip("Toggle CPU Speed");
 		UpdateSpeed();
 
 		m_turboButton = toolbar->AddToolbarItem("turbo", m_turboOff);
+		m_turboButton->SetTooltip("Toggle Warp Speed");
 		UpdateTurbo();
 
 		toolbar->AddSeparator();
 
 		// Toolbar section: Snapshots
-		toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
+		ToolbarItemPtr saveSnapshotButton = toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
+		saveSnapshotButton->SetTooltip("Save Computer state to disk");
 		m_loadSnapshotButton = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
+		m_loadSnapshotButton->SetTooltip("Restore last saved state from disk\nShift-click for more options");
 
 		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
 		LogPrintf(LOG_INFO, "Snapshot base directory is [%s]", m_snapshotBaseDirectory.string().c_str());
@@ -196,6 +204,7 @@ namespace ui
 		if (m_pc->GetInputs().GetJoystick())
 		{
 			m_joystickButton = toolbar->AddToolbarItem("joystick", RES().FindImage("toolbar", 2));
+			m_joystickButton->SetTooltip("Joystick Configuration");
 		}
 
 		return true;
@@ -347,38 +356,45 @@ namespace ui
 	{
 		const auto& image = m_pc->GetFloppy()->GetImageInfo(drive);
 
-		std::string label = "[Empty]";
+		std::ostringstream os;
+		os << path;
 		if (image.loaded)
 		{
-			std::ostringstream os(path);
-			os << image.path.stem().string()
-				<< " ["
+			m_floppyButton[drive]->SetTooltip(image.path.stem().string().c_str());
+
+			os << " ["
 				<< image.geometry.name
 				<< "]";
-
-			label = os.str();
+		}
+		else
+		{
+			m_floppyButton[drive]->SetTooltip("Load floppy image");
 		}
 
-		m_floppyButton[drive]->SetText(label.c_str());
+		m_floppyButton[drive]->SetText(os.str().c_str());
 	}
 
 	void Overlay::UpdateHardDisk(BYTE drive, const char* path)
 	{
 		const auto& image = m_pc->GetHardDrive()->GetImageInfo(drive);
 
+		std::ostringstream os;
+		os << path;
 		std::string label = "[Empty]";
 		if (image.loaded)
 		{
-			std::ostringstream os(path);
-			os << image.path.stem().string()
-				<< " ["
+			m_hddButton[drive]->SetTooltip(image.path.stem().string().c_str());
+
+			os << " ["
 				<< std::fixed << std::setprecision(1) << (image.geometry.GetImageSize() / 1048576.0)
 				<< "MB]";
-
-			label = os.str();
+		}
+		else
+		{
+			m_hddButton[drive]->SetTooltip("Load hard disk image");
 		}
 
-		m_hddButton[drive]->SetText(label.c_str());
+		m_hddButton[drive]->SetText(os.str().c_str());
 	}
 
 	void Overlay::UpdateTurbo()
@@ -827,6 +843,8 @@ namespace ui
 	{
 		static Uint32 toolbarEvent = WINMGR().GetEventType(ToolbarItem::EventClassName());
 		static Uint32 buttonEvent = WINMGR().GetEventType(Button::EventClassName());
+		static Uint32 timerEvent = WINMGR().GetEventType(Timer::EventClassName());
+		const static Uint32 timerEventID = WINMGR().GetEventType("timer");
 
 		bool handled = false;
 		bool redraw = false;
@@ -838,6 +856,15 @@ namespace ui
 		else if (e.type == toolbarEvent || e.type == buttonEvent)
 		{
 			OnClick((WidgetRef)e.user.data1);
+		}
+		else if (e.type == timerEvent)
+		{
+			Timer* timer = (Timer*)e.user.data1;
+			Widget* owner = timer->GetWidget();
+			if (owner)
+			{
+				owner->HandleEvent(&e);
+			}
 		}
 		else if (WINMGR().GetCapture() && WINMGR().GetCapture().Target.target->HandleEvent(&e))
 		{
