@@ -44,14 +44,14 @@ namespace ui
 
 		void UpdateSpeed();
 		void UpdateSnapshot();
-		void UpdateFloppy(BYTE drive, const char* letter);
-		void UpdateHardDisk(BYTE drive, const char* letter);
+		void UpdateFloppy(BYTE drive);
+		void UpdateHardDisk(BYTE drive);
 		void UpdateTurbo();
 		void UpdateTrim();
 		void UpdateTitle(float fps = 0.);
 
-		void LoadFloppyDiskImage(BYTE drive, const char* str, bool eject = false);
-		void LoadHardDiskImage(BYTE drive, const char* str);
+		void LoadFloppyDiskImage(BYTE drive, bool eject = false);
+		void LoadHardDiskImage(BYTE drive);
 		void ToggleCPUSpeed();
 		void ToggleTurbo();
 		void SetTrim();

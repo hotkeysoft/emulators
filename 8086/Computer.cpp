@@ -388,6 +388,15 @@ namespace emul
 		m_pit->Serialize(to["pit"]);
 		m_pic->Serialize(to["pic"]);
 		m_video->Serialize(to["video"]);
+
+		if (m_floppy)
+		{
+			m_floppy->Serialize(to["floppy"]);
+		}
+		if (m_hardDrive)
+		{
+			m_hardDrive->Serialize(to["hardDrive"]);
+		}
 	}
 
 	void Computer::Deserialize(json& from)
@@ -397,5 +406,14 @@ namespace emul
 		m_pit->Deserialize(from["pit"]);
 		m_pic->Deserialize(from["pic"]);
 		m_video->Deserialize(from["video"]);
+
+		if (m_floppy)
+		{
+			m_floppy->Deserialize(from["floppy"]);
+		}
+		if (m_hardDrive)
+		{
+			m_hardDrive->Deserialize(from["hardDrive"]);
+		}
 	}
 }

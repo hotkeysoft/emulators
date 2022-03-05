@@ -2,6 +2,7 @@
 
 #include "../Common.h"
 #include "../CPU/PortConnector.h"
+#include "../Serializable.h"
 #include <Logger.h>
 #include <vector>
 #include <deque>
@@ -49,7 +50,7 @@ namespace hdd
 		FILE* data = nullptr;
 	};
 
-	class DeviceHardDrive : public PortConnector
+	class DeviceHardDrive : public PortConnector, public emul::Serializable
 	{
 
 	public:
@@ -93,6 +94,10 @@ namespace hdd
 		bool IsDMAPending() const { return m_dmaEnabled && m_dmaPending; }
 		void DMAAcknowledge();
 		void DMATerminalCount();
+
+		// emul::Serializable
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
 	protected:
 		const WORD m_baseAddress;

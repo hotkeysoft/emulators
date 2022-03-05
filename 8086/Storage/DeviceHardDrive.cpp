@@ -826,4 +826,62 @@ namespace hdd
 
 		return isEOT;
 	}
+
+	class LoadImageInfo : public emul::Serializable
+	{
+	public:
+		// emul::Serializable
+		virtual void Serialize(json& to)
+		{
+			to["type"] = type;
+			to["path"] = path;
+		}
+
+		virtual void Deserialize(json& from)
+		{
+			type = from["type"];
+			path = from["path"];
+		}
+
+		BYTE type = 0;
+		std::string path;
+	};
+
+	void DeviceHardDrive::Serialize(json& to)
+	{
+		json images = json::array();
+		for (int i = 0; i < 2; ++i)
+		{
+			LoadImageInfo info;
+			json imageJson;
+			if (m_images[i].loaded)
+			{
+				info.type = m_images[i].type;
+				info.path = m_images[i].path.string();
+
+				info.Serialize(imageJson);
+			}
+			images.push_back(imageJson);
+		}
+		to["images"] = images;
+	}
+	void DeviceHardDrive::Deserialize(json& from)
+	{
+		json& images = from["images"];
+
+		for (int i = 0; i < images.size(); ++i)
+		{
+			if (images[i].is_null())
+			{
+				m_images[i].Clear();
+			}
+			else
+			{
+				LoadImageInfo info;
+				info.Deserialize(images[i]);
+
+				LoadDiskImage(i, info.type, info.path.c_str());
+			}
+		}
+	}
 }

@@ -2,6 +2,7 @@
 
 #include "../Common.h"
 #include "../CPU/PortConnector.h"
+#include "../Serializable.h"
 #include <Logger.h>
 #include <vector>
 #include <deque>
@@ -40,7 +41,7 @@ namespace fdc
 		std::vector<BYTE> data;
 	};
 
-	class DeviceFloppy : public PortConnector
+	class DeviceFloppy : public PortConnector, public emul::Serializable
 	{
 	protected:
 		DeviceFloppy(WORD baseAddress, size_t clockSpeedHz);
@@ -79,6 +80,10 @@ namespace fdc
 		bool IsDMAPending() const { return m_dmaPending; }
 		void DMAAcknowledge();
 		void DMATerminalCount();
+
+		// emul::Serializable
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
 	protected:
 		const WORD m_baseAddress;

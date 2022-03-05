@@ -152,11 +152,11 @@ namespace ui
 			m_floppyButton[0] = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
 			m_ejectButton[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
 			m_ejectButton[0]->SetTooltip("Eject A:");
-			UpdateFloppy(0, "A:");
+			UpdateFloppy(0);
 			m_floppyButton[1] = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
 			m_ejectButton[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
 			m_ejectButton[1]->SetTooltip("Eject B:");
-			UpdateFloppy(1, "B:");
+			UpdateFloppy(1);
 
 			toolbar->AddSeparator();
 		}
@@ -165,10 +165,10 @@ namespace ui
 		if (m_pc->GetHardDrive())
 		{
 			m_hddButton[0] = toolbar->AddToolbarItem("hdd0", m_hddInactive, "C:");
-			UpdateHardDisk(0, "C:");
+			UpdateHardDisk(0);
 
 			m_hddButton[1] = toolbar->AddToolbarItem("hdd1", m_hddInactive, "D:");
-			UpdateHardDisk(1, "D:");
+			UpdateHardDisk(1);
 
 			toolbar->AddSeparator();
 		}
@@ -214,27 +214,27 @@ namespace ui
 	{
 		if (widget->GetId() == "floppy0")
 		{
-			LoadFloppyDiskImage(0, "A:");
+			LoadFloppyDiskImage(0);
 		}
 		else if (widget->GetId() == "floppy1")
 		{
-			LoadFloppyDiskImage(1, "B:");
+			LoadFloppyDiskImage(1);
 		}
 		if (widget->GetId() == "eject0")
 		{
-			LoadFloppyDiskImage(0, "A:", true);
+			LoadFloppyDiskImage(0, true);
 		}
 		else if (widget->GetId() == "eject1")
 		{
-			LoadFloppyDiskImage(1, "B:", true);
+			LoadFloppyDiskImage(1, true);
 		}
 		if (widget->GetId() == "hdd0")
 		{
-			LoadHardDiskImage(0, "C:");
+			LoadHardDiskImage(0);
 		}
 		else if (widget->GetId() == "hdd1")
 		{
-			LoadHardDiskImage(1, "D:");
+			LoadHardDiskImage(1);
 		}
 		else if (widget->GetId() == "speed")
 		{
@@ -352,12 +352,12 @@ namespace ui
 		}
 	}
 
-	void Overlay::UpdateFloppy(BYTE drive, const char* path)
+	void Overlay::UpdateFloppy(BYTE drive)
 	{
 		const auto& image = m_pc->GetFloppy()->GetImageInfo(drive);
 
 		std::ostringstream os;
-		os << path;
+		os << (char)('A'+drive) << ':';
 		if (image.loaded)
 		{
 			m_floppyButton[drive]->SetTooltip(image.path.stem().string().c_str());
@@ -374,12 +374,12 @@ namespace ui
 		m_floppyButton[drive]->SetText(os.str().c_str());
 	}
 
-	void Overlay::UpdateHardDisk(BYTE drive, const char* path)
+	void Overlay::UpdateHardDisk(BYTE drive)
 	{
 		const auto& image = m_pc->GetHardDrive()->GetImageInfo(drive);
 
 		std::ostringstream os;
-		os << path;
+		os << (char)('C' + drive) << ':';
 		std::string label = "[Empty]";
 		if (image.loaded)
 		{
@@ -493,7 +493,7 @@ namespace ui
 		WINMGR().Draw();
 	}
 
-	void Overlay::LoadFloppyDiskImage(BYTE drive, const char* str, bool eject)
+	void Overlay::LoadFloppyDiskImage(BYTE drive, bool eject)
 	{
 		if (!m_pc->GetFloppy())
 		{
@@ -510,10 +510,10 @@ namespace ui
 		{
 			m_pc->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
 		}
-		UpdateFloppy(drive, str);
+		UpdateFloppy(drive);
 	}
 
-	void Overlay::LoadHardDiskImage(BYTE drive, const char* str)
+	void Overlay::LoadHardDiskImage(BYTE drive)
 	{
 		if (!m_pc->GetHardDrive())
 		{
@@ -529,7 +529,7 @@ namespace ui
 			// Incompatible images will be rejected
 			m_pc->GetHardDrive()->LoadDiskImage(drive, currImageType, diskImage.string().c_str());
 		}
-		UpdateHardDisk(drive, str);
+		UpdateHardDisk(drive);
 	}
 
 	void Overlay::ToggleCPUSpeed()
@@ -627,6 +627,11 @@ namespace ui
 
 		m_pc->SetSerializationDir(snapshotDir);
 		m_pc->Deserialize(j);
+
+		UpdateFloppy(0);
+		UpdateFloppy(1);
+		UpdateHardDisk(0);
+		UpdateHardDisk(1);
 	}
 
 	bool Overlay::GetSnapshotBaseDirectory(fs::path& baseDir)

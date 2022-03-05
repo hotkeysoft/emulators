@@ -1,5 +1,6 @@
 #include "DeviceFloppy.h"
 #include <assert.h>
+#include <array>
 
 using emul::GetBit;
 
@@ -923,5 +924,35 @@ namespace fdc
 		// TODO: In multitrack mode, should continue if eot and head passes from 0 to 1
 		// Does anyone uses this?
 		return isEOT;
+	}
+
+	void DeviceFloppy::Serialize(json& to)
+	{
+		std::array<std::string, 4> images;
+		for (int i=0; i<4; ++i)
+		{
+			if (m_images[i].loaded)
+			{
+				images[i] = m_images[i].path.string();
+			}
+		}
+		to["images"] = images;
+	}
+	void DeviceFloppy::Deserialize(json& from)
+	{
+		std::array<std::string, 4> images;
+		images = from["images"];
+
+		for (int i = 0; i < 4; ++i)
+		{
+			if (images[i].size())
+			{
+				LoadDiskImage(i, images[i].c_str());
+			}
+			else
+			{
+				ClearDiskImage(i);
+			}
+		}
 	}
 }
