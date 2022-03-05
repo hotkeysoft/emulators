@@ -2,9 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <SDLBase>P:\Projects\common-lib\SDL\SDL2-2.0.8\</SDLBase>
+    <SDLBase>P:\Projects\common-lib\SDL\SDL2-2.0.20\</SDLBase>
     <SDLImageBase>P:\Projects\common-lib\SDL\SDL2_image-2.0.3</SDLImageBase>
-    <SDLTTFBase>P:\Projects\common-lib\SDL\SDL2_ttf-2.0.14</SDLTTFBase>
+    <SDLTTFBase>P:\Projects\common-lib\SDL\SDL2_ttf-2.0.18</SDLTTFBase>
     <SDLInclude>$(SDLBase)\include</SDLInclude>
     <SDLLib32>$(SDLBase)\lib\x86</SDLLib32>
     <SDLLib64>$(SDLBase)\lib\x64</SDLLib64>
