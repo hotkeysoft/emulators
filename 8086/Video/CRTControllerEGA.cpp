@@ -335,8 +335,8 @@ namespace crtc_ega
 
 		m_data.offset = m_config.offset << 1;
 
-		LogPrintf(LOG_INFO, "UpdateHVTotals: Total:     [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
-		LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d]", m_data.hTotal, m_data.vTotal);
+		LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
+		LogPrintf(LOG_INFO, "UpdateHVTotals: Total:     [%d x %d]", m_data.hTotal, m_data.vTotal);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: hBlank:    [%d - %d]", m_data.hBlankMin, m_data.hBlankMax);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: hSync:     [%d - %d]", m_data.hSyncMin, m_data.hSyncMax);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: vBlank:    [%d - %d]", m_data.vBlankMin, m_data.vBlankMax);
@@ -349,7 +349,7 @@ namespace crtc_ega
 		m_data.hPos += m_charWidth;
 		++m_data.memoryAddress;
 
-		if (m_data.hPos == m_data.hSyncMin)
+		if (m_data.hPos == m_data.hBlankMax)
 		{
 			m_events->OnEndOfRow();
 		}

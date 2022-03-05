@@ -121,7 +121,7 @@ namespace video
 		const struct CRTCData& data = m_crtc.GetData();
 
 		SDL_Rect rect;
-		rect.x = std::max(0, (data.hTotal - data.hSyncMin - border - 1) * xMultiplier);
+		rect.x = std::max(0, (data.hTotal - data.hBlankMax - border - 1) * xMultiplier);
 		rect.y = std::max(0, (data.vTotal - data.vSyncMin - border - 1));
 
 		rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)) * xMultiplier);
@@ -182,10 +182,7 @@ namespace video
 			}
 		}
 
-		if (!m_crtc.IsVSync())
-		{
-			Draw();
-		}
+		Draw();
 
 		m_crtc.Tick();
 	}
