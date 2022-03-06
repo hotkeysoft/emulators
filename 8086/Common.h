@@ -34,7 +34,7 @@ namespace emul
 
 	inline ADDRESS S2A(const WORD segment, const WORD offset = 0)
 	{
-		return ((segment << 4) + offset)&0xFFFFF;
+		return ((segment << 4) + offset) & 0xFFFFF;
 	}
 
 	inline size_t GetMaxAddress(const size_t addressBits)
@@ -73,21 +73,12 @@ namespace emul
 
 	inline WORD Widen(const BYTE b)
 	{
-		WORD w = b;
-		if (GetMSB(b))
-		{
-			w |= 0xFF00;
-		}
-		return w;
+		return WORD((int16_t)((int8_t)b));
 	}
+
 	inline DWORD Widen(const WORD w)
 	{
-		DWORD dw = w;
-		if (GetMSB(w))
-		{
-			dw |= 0xFFFF0000;
-		}
-		return dw;
+		return DWORD((int32_t)((int16_t)w));
 	}
 
 	inline bool GetBit(const BYTE b, const BYTE bit)
@@ -105,42 +96,18 @@ namespace emul
 		return b & (1 << bit);
 	}
 
-	inline BYTE SetBit(BYTE& out, const BYTE bit, bool state)
+	inline void SetBit(BYTE& out, const BYTE bit, bool state)
 	{
-		if (state)
-		{
-			out |= (1 << bit);
-		}
-		else
-		{
-			out &= ~(1 << bit);
-		}
-		return out;
+		out ^= (-(int8_t)state ^ out) & (1 << bit);
 	}
 
-	inline WORD SetBit(WORD& out, const BYTE bit, bool state)
+	inline void SetBit(WORD& out, const BYTE bit, bool state)
 	{
-		if (state)
-		{
-			out |= (1 << bit);
-		}
-		else
-		{
-			out &= ~(1 << bit);
-		}
-		return out;
+		out ^= (-(int16_t)state ^ out) & (1 << bit);
 	}
 
-	inline DWORD SetBit(DWORD& out, const BYTE bit, bool state)
+	inline void SetBit(DWORD& out, const BYTE bit, bool state)
 	{
-		if (state)
-		{
-			out |= (1 << bit);
-		}
-		else
-		{
-			out &= ~(1 << bit);
-		}
-		return out;
+		out ^= (-(int32_t)state ^ out) & (1 << bit);
 	}
 }
