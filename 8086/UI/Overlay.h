@@ -31,6 +31,7 @@ namespace ui
 		Overlay();
 
 		bool Init(emul::Computer* pc);
+		void Show(bool show = true) { m_show = show; }
 		bool Update();
 
 		// video::Renderer
@@ -40,6 +41,8 @@ namespace ui
 		virtual bool HandleEvent(SDL_Event& e) override;
 
 	protected:
+		bool m_show = true;
+
 		void OnClick(CoreUI::WidgetRef widget);
 
 		void UpdateSpeed();

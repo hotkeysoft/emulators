@@ -448,7 +448,6 @@ namespace ui
 
 	void Overlay::UpdateTitle(float fps)
 	{
-		static char buf[128];
 		std::ostringstream os;
 		os << m_pc->GetName();
 
@@ -486,10 +485,20 @@ namespace ui
 
 		if (fps > 0.)
 		{
-			UpdateTitle(fps);
+			if (m_show)
+			{
+				UpdateTitle(fps);
+			}
+			else
+			{
+				LogPrintf(LOG_INFO, "FPS: %.2f", fps);
+			}
 		}
 
-		WINMGR().Draw();
+		if (m_show)
+		{
+			WINMGR().Draw();
+		}
 	}
 
 	void Overlay::LoadFloppyDiskImage(BYTE drive, bool eject)
@@ -575,7 +584,7 @@ namespace ui
 		std::ofstream outStream(outFile.string());
 		outStream << std::setw(4) << j;
 
-		LogPrintf(LOG_INFO, "SaveSnapshot: Saved to [%s]\n", outFile.string().c_str());
+		LogPrintf(LOG_INFO, "SaveSnapshot: Saved to [%s]", outFile.string().c_str());
 
 		m_lastSnapshotDir = snapshotDir;
 		UpdateSnapshot();
@@ -587,7 +596,7 @@ namespace ui
 		inFile.append("computer.json");
 		std::ifstream inStream(inFile);
 
-		LogPrintf(LOG_INFO, "RestoreSnapshot: Read from [%s]\n", inFile.string().c_str());
+		LogPrintf(LOG_INFO, "RestoreSnapshot: Read from [%s]", inFile.string().c_str());
 
 		if (!inStream)
 		{

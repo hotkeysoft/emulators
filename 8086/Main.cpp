@@ -167,6 +167,7 @@ int main(int argc, char* args[])
 
 	emul::Computer* pc = nullptr;
 	ui::Overlay overlay;
+	bool showOverlay = true;
 
 	std::string arch = Config::Instance().GetValueStr("core", "arch");
 	if (arch == "xt")
@@ -250,7 +251,7 @@ int main(int argc, char* args[])
 				mode = Mode::MONITOR;
 			}
 
-			if (!overlay.Update())
+			if (showOverlay && !overlay.Update())
 			{
 				break;
 			}
@@ -330,6 +331,10 @@ int main(int argc, char* args[])
 						switch (ch = _getch())
 						{
 						case FKEY + 1:
+							showOverlay = !showOverlay;
+							fprintf(stderr, "%s Overlay\n", showOverlay ? "Show" : "Hide");
+							overlay.Show(showOverlay);
+							break;
 						case FKEY + 2:
 						case FKEY + 3:
 						case FKEY + 4:
