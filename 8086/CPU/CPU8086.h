@@ -165,7 +165,7 @@ namespace emul
 		virtual ~CPU8086();
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
-		virtual ADDRESS GetCurrentAddress() const { return S2A(m_reg.Read16(REG16::CS), m_reg.Read16(REG16::IP)); }
+		virtual ADDRESS GetCurrentAddress() const { return S2A(m_reg[REG16::CS], m_reg[REG16::IP]); }
 
 		virtual bool Step() override;
 
@@ -212,7 +212,7 @@ namespace emul
 
 		void ClearFlags();
 		bool GetFlag(FLAG f) { return (m_reg[REG16::FLAGS] & f) ? true : false; };
-		void SetFlag(FLAG f, bool v) { if (v) m_reg[REG16::FLAGS] |= f; else m_reg[REG16::FLAGS] &= ~f; };
+		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg[REG16::FLAGS], f, v); };
 
 		static const char* GetReg8Str(BYTE reg);
 		static const char* GetReg16Str(BYTE reg, bool segReg = false);

@@ -96,6 +96,22 @@ namespace emul
 		return b & (1 << bit);
 	}
 
+	// https://graphics.stanford.edu/~seander/bithacks.html#ConditionalSetOrClearBitsWithoutBranching
+	inline void SetBitMask(BYTE& out, const BYTE mask, bool state)
+	{
+		out ^= (-(int8_t)state ^ out) & mask;
+	}
+
+	inline void SetBitMask(WORD& out, const WORD mask, bool state)
+	{
+		out ^= (-(int16_t)state ^ out) & mask;
+	}
+
+	inline void SetBitMask(DWORD& out, const DWORD mask, bool state)
+	{
+		out ^= (-(int32_t)state ^ out) & mask;
+	}
+
 	inline void SetBit(BYTE& out, const BYTE bit, bool state)
 	{
 		out ^= (-(int8_t)state ^ out) & (1 << bit);
@@ -110,4 +126,14 @@ namespace emul
 	{
 		out ^= (-(int32_t)state ^ out) & (1 << bit);
 	}
+
+	// https://graphics.stanford.edu/~seander/bithacks.html#ParityParallel
+	inline bool IsParityOdd(BYTE b)
+	{
+		b ^= b >> 4;
+		b &= 0xf;
+		return (0x6996 >> b) & 1;
+	}
+	inline bool IsParityEven(BYTE b) { return !IsParityOdd(b); }
+
 }

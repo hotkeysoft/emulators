@@ -53,18 +53,6 @@ namespace emul
 		m_state = CPUState::STOP;
 	}
 
-	bool CPU::IsParityOdd(BYTE b)
-	{
-		BYTE parity = 0;
-		for (size_t i = 0; i < 8; i++)
-		{
-			parity ^= (b & 1);
-			b = b >> 1;
-		}
-
-		return (parity != 0);
-	}
-
 	void CPU::AddWatch(ADDRESS address, CPUCallbackFunc onCall, CPUCallbackFunc onRet)
 	{
 		LogPrintf(LOG_INFO, "Adding watch at address 0x%04X", address);

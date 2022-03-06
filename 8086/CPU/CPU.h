@@ -48,9 +48,6 @@ namespace emul
 		uint32_t m_opTicks = 0;
 		inline void TICK(uint32_t count) { m_opTicks += count; }
 
-		bool IsParityOdd(BYTE b);
-		bool IsParityEven(BYTE b) { return !IsParityOdd(b); };
-
 		void OnCall(ADDRESS caller, ADDRESS target);
 		void OnReturn(ADDRESS address);
 
