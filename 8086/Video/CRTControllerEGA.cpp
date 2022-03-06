@@ -141,6 +141,12 @@ namespace crtc_ega
 			m_config.startOdd = GetBit(value, 7);
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           startOdd = %d characters", m_config.startOdd);
 			m_configChanged = true;
+
+			if (m_config.startOdd)
+			{
+				LogPrintf(LOG_WARNING, "WriteCRTCData: startOdd not implemented");
+			}
+
 			break;
 
 		case CRT_V_TOTAL:
