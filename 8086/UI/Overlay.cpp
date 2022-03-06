@@ -139,7 +139,6 @@ namespace ui
 		m_turboOff = RES().FindImage("toolbar", 10);
 		m_turboOn = RES().FindImage("toolbar", 12);
 
-
 		// Toolbar section: Reboot
 		ToolbarItemPtr rebootButton = toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
 		rebootButton->SetTooltip("Click for Soft Reboot (CTRL+ATL+DEL)\nShift-Click for Hard Reboot");
@@ -335,7 +334,7 @@ namespace ui
 	{
 		static char speedStr[32];
 		emul::CPUSpeed speed = m_pc->GetCPUSpeed();
-		sprintf(speedStr, "%5.2fMHz", speed.GetSpeed() / 1000000.0f);
+		sprintf(speedStr, "%.2fMHz", speed.GetSpeed() / 1000000.0f);
 		m_speedButton->SetText(speedStr);
 	}
 
@@ -632,6 +631,7 @@ namespace ui
 		UpdateFloppy(1);
 		UpdateHardDisk(0);
 		UpdateHardDisk(1);
+		UpdateSpeed();
 	}
 
 	bool Overlay::GetSnapshotBaseDirectory(fs::path& baseDir)

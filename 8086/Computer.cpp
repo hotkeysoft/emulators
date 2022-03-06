@@ -388,6 +388,7 @@ namespace emul
 		m_pit->Serialize(to["pit"]);
 		m_pic->Serialize(to["pic"]);
 		m_video->Serialize(to["video"]);
+		m_cpuSpeed.Serialize(to["speed"]);
 
 		if (m_floppy)
 		{
@@ -406,6 +407,7 @@ namespace emul
 		m_pit->Deserialize(from["pit"]);
 		m_pic->Deserialize(from["pic"]);
 		m_video->Deserialize(from["video"]);
+		m_cpuSpeed.Deserialize(from["speed"]);
 
 		if (m_floppy)
 		{

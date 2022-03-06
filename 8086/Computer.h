@@ -11,6 +11,7 @@
 #include "Sound/DevicePCSpeaker.h"
 #include "IO/DeviceJoystick.h"
 #include "Video/Video.h"
+#include "Serializable.h"
 
 #include <set>
 
@@ -20,7 +21,7 @@ namespace hdd { class DeviceHardDrive; }
 
 namespace emul
 {
-	class CPUSpeed
+	class CPUSpeed : public Serializable
 	{
 	public:
 		CPUSpeed() = default;
@@ -29,6 +30,18 @@ namespace emul
 		int GetRatio() const { return m_ratio; }
 
 		bool operator<(const CPUSpeed& other) const { return this->m_ratio < other.m_ratio; }
+
+		// emul::Serializable
+		virtual void Serialize(json& to)
+		{
+			to["ratio"] = m_ratio;
+			to["speed"] = m_speed;
+		}
+		virtual void Deserialize(json& from)
+		{
+			m_ratio = from["ratio"];
+			m_speed = from["speed"];
+		}
 
 	protected:
 		int m_ratio = 4;
