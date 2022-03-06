@@ -102,6 +102,7 @@ namespace video
 		uint32_t GetIndexedColor(BYTE index) const { return m_attrController.GetData().palette[index]; }
 
 		void DrawTextMode();
+		void DrawTextModeMDA();
 		void DrawGraphMode();
 		void DrawGraphModeCGA4();
 

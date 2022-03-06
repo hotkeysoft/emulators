@@ -61,6 +61,8 @@ namespace attr_ega
 	protected:
 		const WORD m_baseAddress;
 
+		uint32_t GetRGB32Color(BYTE value);
+
 		enum class RegisterMode
 		{ 
 			ADDRESS, 

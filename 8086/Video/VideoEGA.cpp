@@ -73,6 +73,7 @@ namespace video
 		InitFrameBuffer(2048, 600);
 
 		AddMode("text", (DrawFunc)&VideoEGA::DrawTextMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
+		AddMode("textMDA", (DrawFunc)&VideoEGA::DrawTextModeMDA, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		AddMode("graph", (DrawFunc)&VideoEGA::DrawGraphMode, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		AddMode("graphCGA4", (DrawFunc)&VideoEGA::DrawGraphModeCGA4, (AddressFunc)&VideoEGA::GetBaseAddress, (ColorFunc)&VideoEGA::GetIndexedColor);
 		SetMode("text");
@@ -90,6 +91,7 @@ namespace video
 		m_crtc.EnableLog(minSev);
 		m_sequencer.EnableLog(minSev);
 		m_graphController.EnableLog(minSev);
+		m_attrController.EnableLog(minSev);
 		Video::EnableLog(minSev);
 	}
 
@@ -108,10 +110,12 @@ namespace video
 	}
 
 	void VideoEGA::OnChangeMode()
-	{
+	{	
+		m_crtc.SetCharWidth(m_sequencer.GetData().clockingMode.charWidth);
+
 		if (m_sequencer.GetData().memoryMode.alpha)
-		{
-			SetMode("text");
+		{			
+			SetMode(m_attrController.GetData().monochrome ? "textMDA" : "text");
 		}
 		else
 		{			
@@ -366,7 +370,6 @@ namespace video
 				cursorLine = false;
 			}
 
-			// TODO: >8px width
 			int startBit = 7;
 			int endBit = 0;
 			if (crtcData.hPos == 0)
@@ -387,6 +390,79 @@ namespace video
 		else
 		{
 			DrawBackground(8);
+		}
+	}
+
+	void VideoEGA::DrawTextModeMDA()
+	{
+		const struct CRTCData& crtcData = m_crtc.GetData();
+		const struct CRTCConfig& crtcConfig = m_crtc.GetConfig();
+		const struct AttrControllerData attrData = m_attrController.GetData();
+		const struct SequencerData seqData = m_sequencer.GetData();
+
+		if (IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+
+			bool isCursorChar = IsCursor();
+			BYTE ch = m_egaRAM.readRaw(0, base);
+			BYTE attr = m_egaRAM.readRaw(1, base);
+
+			bool blinkBit = GetBit(attr, 7);
+			bool charBlink = attrData.blink && blinkBit;
+			bool charUnderline = ((attr & 0b111) == 1); // Underline when attr[2:0] == b001
+
+			const BYTE bgFgMask = 0b01110111; // fg and bg without intensity and blink bits
+			bool charReverse = ((attr & bgFgMask) == 0b01110000);
+
+			BYTE fg = (attr & bgFgMask) ? (0b111 | (attr & 0b1000)) : 0b000; // Anything that's not black is on
+			fg ^= charReverse ? 0b111 : 0b000; // Flip for reverse video
+
+			BYTE bg = (charReverse || (!attrData.blink && blinkBit)) ? 0xF : 0;
+
+			uint32_t fgRGB = GetColor(fg);
+			uint32_t bgRGB = GetColor(bg);
+
+			// Draw character
+			BYTE currChar = m_egaRAM.GetCharMapA()[((size_t)ch * 0x20) + crtcData.rowAddress];
+			bool draw = !charBlink || (charBlink && m_crtc.IsBlink16());
+
+			bool underline = draw && (charUnderline & (crtcData.rowAddress == crtcConfig.underlineLocation));
+
+			// TODO: This is not the correct behavior
+			bool cursorLine = isCursorChar && (crtcData.rowAddress > crtcConfig.cursorStart);
+			if (crtcConfig.cursorEnd && (crtcData.rowAddress > crtcConfig.cursorEnd))
+			{
+				// TODO: handles (wrongly) cursorEnd == 0
+				cursorLine = false;
+			}
+
+			// TODO: Pel panning
+			if (crtcData.hPos == crtcData.hTotalDisp)
+			{
+				DrawBackground(seqData.clockingMode.charWidth);
+				return;
+			}
+
+			bool lastDot = false;
+			for (int x = 0; x < seqData.clockingMode.charWidth; ++x)
+			{
+				if (x < 8)
+				{
+					lastDot = draw && GetBit(currChar, 7 - x);
+				}
+				// Characters C0h - DFh: 9th pixel == 8th pixel, otherwise blank
+				else if ((ch < 0xC0) || (ch > 0xDF))
+				{
+					lastDot = 0;
+				}
+
+				DrawPixel((lastDot || cursorLine || underline) ? fgRGB : bgRGB);
+			}
+		}
+		else
+		{
+			DrawBackground(seqData.clockingMode.charWidth);
 		}
 	}
 

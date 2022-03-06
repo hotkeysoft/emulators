@@ -36,6 +36,16 @@ namespace attr_ega
 		return RGB6toARGB32(value);
 	}
 
+	uint32_t MONOtoARGB32(BYTE value)
+	{
+		// Bit3 = mono
+		// Bit4 = intensity
+		BYTE a = 0xFF;
+		BYTE m = MakeColor8(GetBit(value, 3), GetBit(value, 4));
+
+		return (a << 24) | (m << 16) | (m << 8) | m;
+	}
+
 	AttrController::AttrController(WORD baseAddress) :
 		Logger("attrEGA"),
 		m_baseAddress(baseAddress)
@@ -52,6 +62,18 @@ namespace attr_ega
 
 		Connect(m_baseAddress + 0x0, static_cast<PortConnector::OUTFunction>(&AttrController::WriteData));
 		Connect(m_baseAddress + 0x1, static_cast<PortConnector::OUTFunction>(&AttrController::WriteData));
+	}
+
+	uint32_t AttrController::GetRGB32Color(BYTE value)
+	{
+		if (m_data.monochrome)
+		{
+			return MONOtoARGB32(value);
+		}
+		else
+		{
+			return (m_colorMode == ColorMode::RGB4) ? RGB4toARGB32(value) : RGB6toARGB32(value);
+		}
 	}
 
 	void AttrController::WriteData(BYTE value)
@@ -76,7 +98,7 @@ namespace attr_ega
 				{
 					BYTE index = (BYTE)m_currRegister;
 					LogPrintf(LOG_INFO, "WriteData, Palette[%d]=%d", index, value);
-					m_data.palette[index] = (m_colorMode == ColorMode::RGB4) ? RGB4toARGB32(value) : RGB6toARGB32(value);
+					m_data.palette[index] = GetRGB32Color(value);
 				}
 				else
 				{
@@ -88,7 +110,6 @@ namespace attr_ega
 			case AttrControllerAddress::ATTR_MODE_CONTROL:
 				LogPrintf(LOG_DEBUG, "WriteData, Mode Control %d", value);
 
-				// TODO
 				m_data.graphics = GetBit(value, 0);
 				m_data.monochrome = GetBit(value, 1);
 				m_data.extend8to9 = GetBit(value, 2);
@@ -102,7 +123,7 @@ namespace attr_ega
 				break;
 			case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
 				LogPrintf(LOG_DEBUG, "WriteData, Overscan Color %d", value);
-				m_data.overscanColor = (m_colorMode == ColorMode::RGB4) ? RGB4toARGB32(value) : RGB6toARGB32(value);
+				m_data.overscanColor = GetRGB32Color(value);
 				break;
 			case AttrControllerAddress::ATTR_COLOR_PLANE_EN:
 				LogPrintf(LOG_DEBUG, "WriteData, Color Plane Enable %d", value);
