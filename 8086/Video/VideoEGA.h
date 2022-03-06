@@ -44,7 +44,7 @@ namespace video
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(json& from) override;
 
-		virtual uint32_t GetBackgroundColor() const override { return m_attr.overscanColor; }
+		virtual uint32_t GetBackgroundColor() const override { return m_attrController.GetData().overscanColor; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 		virtual bool IsEnabled() const override { return !m_misc.disableVideo; }
 
@@ -64,9 +64,6 @@ namespace video
 
 		void DisconnectRelocatablePorts(WORD base);
 		void ConnectRelocatablePorts(WORD base);
-
-		enum class ColorMode { RGB4, RGB6 };
-		ColorMode GetColorMode() { return m_misc.vSyncPolarity ? ColorMode::RGB4 : ColorMode::RGB6; }
 
 		struct MISCRegister
 		{
@@ -91,15 +88,14 @@ namespace video
 		graph_ega::GraphController m_graphController;
 
 		// Attribute Controller
-		attr_ega::AttrController m_attr;
-		void WriteAttributeController(BYTE value);
+		attr_ega::AttrController m_attrController;
 
 		emul::MemoryBlock m_egaROM;
 		memory_ega::MemoryEGA m_egaRAM;
 
 		ADDRESS GetBaseAddress() { return m_crtc.GetMemoryAddress(); }
 
-		uint32_t GetIndexedColor(BYTE index) const { return m_attr.palette[index]; }
+		uint32_t GetIndexedColor(BYTE index) const { return m_attrController.GetData().palette[index]; }
 
 		void DrawTextMode();
 		void DrawGraphMode();

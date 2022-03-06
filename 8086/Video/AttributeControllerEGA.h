@@ -2,35 +2,18 @@
 
 #include "../Common.h"
 #include "../Serializable.h"
+#include "../CPU/PortConnector.h"
+
 #include <array>
 
 namespace attr_ega
 {
-	enum class RegisterMode { ADDRESS, DATA };
 	enum class PaletteSource { CPU, VIDEO };
+	enum class ColorMode { RGB4, RGB6 };
 
-	enum class AttrControllerAddress
+	struct AttrControllerData
 	{
-		ATTR_PALETTE_MIN = 0x00,
-		ATTR_PALETTE_MAX = 0x0F,
-
-		ATTR_MODE_CONTROL = 0x10,
-		ATTR_OVERSCAN_COLOR = 0x11,
-		ATTR_COLOR_PLANE_EN = 0x12,
-		ATTR_H_PEL_PANNING = 0x13,
-
-		_ATTR_MAX = ATTR_H_PEL_PANNING,
-		ATTR_INVALID = 0xFF
-	};
-
-	class AttrController : public emul::Serializable
-	{
-	public:
 		PaletteSource paletteSource = PaletteSource::CPU;
-		RegisterMode currMode = RegisterMode::ADDRESS;
-		AttrControllerAddress currRegister = AttrControllerAddress::ATTR_INVALID;
-
-		void ResetMode() { currMode = RegisterMode::ADDRESS; }
 
 		// Palette registers
 		std::array<uint32_t, 16> palette = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -50,38 +33,58 @@ namespace attr_ega
 
 		// Horizontal Pixel Panning register
 		BYTE hPelPanning = 0;
+	};
+
+	class AttrController : public emul::PortConnector, public emul::Serializable
+	{
+	public:
+		AttrController(WORD baseAddress);
+
+		AttrController() = delete;
+		AttrController(const AttrController&) = delete;
+		AttrController& operator=(const AttrController&) = delete;
+		AttrController(AttrController&&) = delete;
+		AttrController& operator=(AttrController&&) = delete;
+
+		virtual void Init();
+		virtual void Reset();
+
+		const AttrControllerData& GetData() const { return m_data; }
+
+		void ResetMode() { m_currMode = RegisterMode::ADDRESS; }
+		void SetColorMode(ColorMode mode) { m_colorMode = mode; }
 
 		// emul::Serializable
-		virtual void Serialize(json& to) override
-		{
-			to["paletteSource"] = paletteSource;
-			to["currMode"] = currMode;
-			to["currRegister"] = currRegister;
-			to["palette"] = palette;
-			to["graphics"] = graphics;
-			to["monochrome"] = monochrome;
-			to["extend8to9"] = extend8to9;
-			to["blink"] = blink;
-			to["overscanColor"] = overscanColor;
-			to["colorPlaneEnable"] = colorPlaneEnable;
-			to["videoStatusMux"] = videoStatusMux;
-			to["hPelPanning"] = hPelPanning;
-		}
+		virtual void Serialize(json& to);
+		virtual void Deserialize(json& from);
 
-		virtual void Deserialize(json& from) override
+	protected:
+		const WORD m_baseAddress;
+
+		enum class RegisterMode
+		{ 
+			ADDRESS, 
+			DATA 
+		} m_currMode = RegisterMode::ADDRESS;
+
+		enum class AttrControllerAddress
 		{
-			paletteSource = from["paletteSource"];
-			currMode = from["currMode"];
-			currRegister = from["currRegister"];
-			palette = from["palette"];
-			graphics = from["graphics"];
-			monochrome = from["monochrome"];
-			extend8to9 = from["extend8to9"];
-			blink = from["blink"];
-			overscanColor = from["overscanColor"];
-			colorPlaneEnable = from["colorPlaneEnable"];
-			videoStatusMux = from["videoStatusMux"];
-			hPelPanning = from["hPelPanning"];
-		}
+			ATTR_PALETTE_MIN = 0x00,
+			ATTR_PALETTE_MAX = 0x0F,
+
+			ATTR_MODE_CONTROL = 0x10,
+			ATTR_OVERSCAN_COLOR = 0x11,
+			ATTR_COLOR_PLANE_EN = 0x12,
+			ATTR_H_PEL_PANNING = 0x13,
+
+			_ATTR_MAX = ATTR_H_PEL_PANNING,
+			ATTR_INVALID = 0xFF
+		} m_currRegister = AttrControllerAddress::ATTR_INVALID;
+
+		void WriteData(BYTE value);
+
+		ColorMode m_colorMode = ColorMode::RGB4;
+		
+		AttrControllerData m_data;
 	};
 }

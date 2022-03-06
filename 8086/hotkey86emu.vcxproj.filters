@@ -228,6 +228,9 @@
     <ClCompile Include="video\GraphControllerEGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="Video\AttributeControllerEGA.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
