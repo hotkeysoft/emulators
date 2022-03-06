@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <fstream>
 
+using memory_ega::RAMSIZE;
 using cfg::Config;
 
 namespace emul
@@ -105,8 +106,33 @@ namespace emul
 		}
 		else if (mode == "ega")
 		{
-			// TODO: RAM size from config
-			m_video = new video::VideoEGA(memory_ega::RAMSIZE::EGA_256K, 0x3C0, 0x3B0, 0x3D0);
+			std::string ramSizeStr = Config::Instance().GetValueStr("video.ega", "ram", "256");
+			std::string egaMode = Config::Instance().GetValueStr("video.ega", "mode", "ega");
+			if (egaMode.empty())
+			{
+				egaMode = "ega";
+			}
+			
+			RAMSIZE ramSize;
+			if (ramSizeStr == "64")
+			{
+				ramSize = RAMSIZE::EGA_64K;
+			}
+			else if (ramSizeStr == "128")
+			{
+				ramSize = RAMSIZE::EGA_128K;
+			}
+			else if (ramSizeStr == "256")
+			{
+				ramSize = RAMSIZE::EGA_256K;
+			}
+			else
+			{
+				LogPrintf(LOG_WARNING, "Invalid EGA ram size [%s], using 256K", ramSizeStr.c_str());
+				ramSize = RAMSIZE::EGA_256K;
+			}
+
+			m_video = new video::VideoEGA(egaMode.c_str(), ramSize, 0x3C0, 0x3B0, 0x3D0);
 		}
 		else
 		{

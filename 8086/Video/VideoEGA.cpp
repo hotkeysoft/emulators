@@ -22,7 +22,7 @@ using seq_ega::SequencerData;
 
 namespace video
 {
-	VideoEGA::VideoEGA(RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor) :
+	VideoEGA::VideoEGA(const char* mode, RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor) :
 		Logger("EGA"),
 		m_crtc(baseAddressMono),
 		m_sequencer(baseAddress),
@@ -35,6 +35,21 @@ namespace video
 		m_egaROM("EGABIOS", 16384, emul::MemoryType::ROM),
 		m_egaRAM(ramsize)
 	{
+		assert(mode);
+
+		LogPrintf(LOG_INFO, "VideoEGA, RAM Size = [%dK]", (int)ramsize / 1024);
+
+		const auto& it = m_videoModes.find(mode);
+		if (it == m_videoModes.end())
+		{
+			LogPrintf(LOG_ERROR, "VideoEGA, mode not found [%s], fallback to default mode [ega]", mode);
+			m_videoMode = m_videoModes.at("ega");
+		}
+		else
+		{
+			m_videoMode = it->second;
+			LogPrintf(LOG_INFO, "VideoEGA, mode=[%s]: %s", mode, m_videoMode.description);
+		}
 	}
 
 	void VideoEGA::Init(emul::Memory* memory, const char* charROM, bool forceMono)
@@ -255,8 +270,9 @@ namespace video
 		// interrupt is not really used in the real world
 
 		// CLKSEL is used to determine which swich to read;
-		// Need to invert logic, off = opened swich = 5V = logical 1
-		bool switchSense = !m_dipSwitches[(int)m_misc.clockSel];
+		// Need to invert logic, off = opened switch = 5V = logical 1
+		// Neet to reverse switches order
+		bool switchSense = !m_videoMode.dipSwitches[3-(int)m_misc.clockSel];
 
 		value =
 			(switchSense << 4) |

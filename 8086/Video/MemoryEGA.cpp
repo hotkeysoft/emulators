@@ -55,8 +55,6 @@ namespace memory_ega
 
 	void MemoryEGA::SelectCharMaps(BYTE selectA, BYTE selectB)
 	{
-		LogPrintf(LOG_DEBUG, "SelectCharMaps, A=[%d], B=[%d]", selectA, selectB);
-
 		switch (m_ramSize)
 		{
 		case RAMSIZE::EGA_64K:

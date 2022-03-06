@@ -9,6 +9,8 @@
 #include "SequencerEGA.h"
 #include "MemoryEGA.h"
 
+#include <map>
+
 using emul::WORD;
 using emul::BYTE;
 using emul::ADDRESS;
@@ -18,7 +20,9 @@ namespace video
 	class VideoEGA : public Video, public crtc_ega::EventHandler
 	{
 	public:
-		VideoEGA(memory_ega::RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor);
+		const char* GetDefaultVideoMode() const { return "ega"; }
+
+		VideoEGA(const char* mode, memory_ega::RAMSIZE ramsize, WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor);
 
 		VideoEGA() = delete;
 		VideoEGA(const VideoEGA&) = delete;
@@ -103,12 +107,21 @@ namespace video
 
 		crtc_ega::CRTController m_crtc;
 
-		// TODO
-		// When reading settings from table in manual, use on = true, off = false
-		// 
-		//bool m_dipSwitches[4] = { true, false, false, true }; // EGA = Primary, 40x25; MDA = Secondary
-		//bool m_dipSwitches[4] = { false, false, false, true }; // EGA = Primary, 80x25; MDA = Secondary
-		bool m_dipSwitches[4] = { false, true, true, false }; // EGA = Primary enhanced, 40x25; MDA = Secondary
-		//bool m_dipSwitches[4] = { true, false, true, false }; // EGA = Mono; CGA = Secondary 40x25
+		struct VideoMode
+		{
+			const char* description = "default";
+			bool dipSwitches[4] = { false, true,  true,  false };
+		} m_videoMode;
+
+		typedef std::map<std::string, VideoMode> VideoModes;
+
+		// Dual video cards not supported, only allow modes where EGA=primary
+		const VideoModes m_videoModes = {
+			{ "cga40",  { "CGA 40x25",     { true,  false, false, true  } } },
+			{ "cga80",  { "CGA 80x25",     { false, false, false, true  } } },
+			{ "egaemu", { "EGA Emulation", { true,  true,  true,  false } } },
+			{ "ega",    { "EGA Hi-Res",    { false, true,  true,  false } } },
+			{ "mda",    { "MDA",           { true,  false, true,  false } } },
+		};
 	};
 }
