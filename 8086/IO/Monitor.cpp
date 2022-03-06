@@ -2,6 +2,7 @@
 
 #include <string>
 #include <conio.h>
+#include <sstream>
 
 namespace emul
 {
@@ -181,7 +182,13 @@ namespace emul
 		m_console.WriteAttrAt(ramDSSI.x, ramDSSI.y, (m_ramMode == RAMMode::DSSI) ? highlight : regular, ramDSSI.w);
 		m_console.WriteAttrAt(ramESDI.x, ramESDI.y, (m_ramMode == RAMMode::ESDI) ? highlight : regular, ramESDI.w);
 		m_console.WriteAttrAt(ramSTACK.x, ramSTACK.y, (m_ramMode == RAMMode::STACK) ? highlight : regular, ramSTACK.w);
-		m_console.WriteAttrAt(ramCustom.x, ramCustom.y, (m_ramMode == RAMMode::CUSTOM) ? highlight : regular, ramCustom.w);
+		
+		{
+			static char buf[32];
+			sprintf(buf, " CUSTOM:%s", m_customMemView.ToString());
+			m_console.WriteAt(ramCustom.x, ramCustom.y, buf);
+			m_console.WriteAttrAt(ramCustom.x, ramCustom.y, (m_ramMode == RAMMode::CUSTOM) ? highlight : regular, ramCustom.w);
+		}
 
 		UpdateRAM();
 	}
@@ -257,8 +264,8 @@ namespace emul
 			break;
 		case RAMMode::CUSTOM:
 		default:
-			segment = m_customSegment;
-			offset = m_customOffset;
+			segment = m_customMemView.segment;
+			offset = m_customMemView.offset;
 			break;
 		}
 
@@ -297,8 +304,6 @@ namespace emul
 		}
 	}
 
-	typedef std::tuple<WORD, WORD> SegmentOffset;
-
 	void Monitor::PrintInstruction(short y, Instruction& instr)
 	{
 		static CPUInfo::Coord segmentPos = g_CPUInfo.GetCoord("CODE.segment");
@@ -312,9 +317,9 @@ namespace emul
 		pos.y = baseY + y;
 
 		pos.x = segmentPos.x;
-		WriteValueHex(std::get<0>(instr.address), pos);
+		WriteValueHex(instr.address.segment, pos);
 		pos.x = offsetPos.x;
-		WriteValueHex(std::get<1>(instr.address), pos);
+		WriteValueHex(instr.address.offset, pos);
 		pos.x = rawPos.x;
 		m_console.WriteAt(pos.x, pos.y, (const char*)instr.raw, instr.len);
 		for (int i = 0; i < rawPos.w - instr.len; ++i)
@@ -330,7 +335,7 @@ namespace emul
 	{
 		static CPUInfo::Coord codePos = g_CPUInfo.GetCoord("CODE");
 
-		SegmentOffset address = std::make_tuple(m_cpu->m_reg[REG16::CS], m_cpu->m_reg[REG16::IP]);
+		SegmentOffset address{ m_cpu->m_reg[REG16::CS], m_cpu->m_reg[REG16::IP] };
 
 		for (int i = 0; i < 12; ++i)
 		{
@@ -354,9 +359,7 @@ namespace emul
 	SegmentOffset Monitor::Disassemble(SegmentOffset address, Monitor::Instruction& decoded)
 	{
 		decoded.address = address;
-		WORD& segment = std::get<0>(address);
-		WORD& offset = std::get<1>(address);
-		BYTE data = m_memory->Read8(S2A(segment, offset));
+		BYTE data = m_memory->Read8(address.GetAddress());
 
 		decoded.AddRaw(data);
 
@@ -365,8 +368,8 @@ namespace emul
 
 		if (instr.modRegRm != CPUInfo::Opcode::MODREGRM::NONE)
 		{
-			offset++;
-			BYTE modRegRm = m_memory->Read8(S2A(segment, offset));
+			address.offset++;
+			BYTE modRegRm = m_memory->Read8(address.GetAddress());
 			decoded.AddRaw(modRegRm);
 
 			const char* regStr = nullptr;
@@ -398,8 +401,8 @@ namespace emul
 			char buf[32];
 			if (disp == 8)
 			{
-				offset++;
-				BYTE disp8 = m_memory->Read8(S2A(segment, offset));
+				address.offset++;
+				BYTE disp8 = m_memory->Read8(address.GetAddress());
 				decoded.AddRaw(disp8);
 
 				sprintf(buf, "0%Xh", disp8);
@@ -407,9 +410,9 @@ namespace emul
 			}
 			else if (disp == 16)
 			{
-				offset++;
-				WORD disp16 = m_memory->Read16(S2A(segment, offset));
-				offset++;
+				address.offset++;
+				WORD disp16 = m_memory->Read16(address.GetAddress());
+				address.offset++;
 				decoded.AddRaw(disp16);
 
 				sprintf(buf, "0%Xh", disp16);
@@ -422,8 +425,8 @@ namespace emul
 		{
 		case CPUInfo::Opcode::IMM::W8:
 		{
-			++offset;
-			BYTE imm8 = m_memory->Read8(S2A(segment, offset));
+			++address.offset;
+			BYTE imm8 = m_memory->Read8(address.GetAddress());
 			decoded.AddRaw(imm8);
 
 			sprintf(buf, "0%Xh", imm8);
@@ -432,9 +435,9 @@ namespace emul
 		}
 		case CPUInfo::Opcode::IMM::W16:
 		{
-			++offset;
-			WORD imm16 = m_memory->Read16(S2A(segment, offset));
-			offset++;
+			++address.offset;
+			WORD imm16 = m_memory->Read16(address.GetAddress());
+			address.offset++;
 			decoded.AddRaw(imm16);
 
 			sprintf(buf, "0%Xh", imm16);
@@ -443,13 +446,13 @@ namespace emul
 		}
 		case CPUInfo::Opcode::IMM::W32:
 		{
-			++offset;
-			WORD imm16Offset = m_memory->Read16(S2A(segment, offset));
-			offset++;
+			++address.offset;
+			WORD imm16Offset = m_memory->Read16(address.GetAddress());
+			address.offset++;
 			decoded.AddRaw(imm16Offset);
-			offset++;
-			WORD imm16Segment = m_memory->Read16(S2A(segment, offset));
-			offset++;
+			address.offset++;
+			WORD imm16Segment = m_memory->Read16(address.GetAddress());
+			address.offset++;
 			decoded.AddRaw(imm16Segment);
 			sprintf(buf, "0%Xh:0%Xh", imm16Segment, imm16Offset);
 			replace(text, "{i32}", buf);
@@ -462,7 +465,7 @@ namespace emul
 		memset(decoded.text, ' ', 32);
 		memcpy(decoded.text, text.c_str(), text.size());
 
-		++offset;
+		++address.offset;
 
 		return address;
 	}

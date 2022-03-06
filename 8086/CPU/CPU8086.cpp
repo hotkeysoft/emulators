@@ -30,6 +30,7 @@ namespace emul
 	Memory* Mem16::m_memory = nullptr;
 	Registers* Mem16::m_registers = nullptr;
 
+
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
 	{
@@ -919,20 +920,20 @@ namespace emul
 		if (direct)
 		{
 			TICK(1);
-			return std::make_tuple(m_reg[REG16::DS], 0);
+			return SegmentOffset{ m_reg[REG16::DS], 0 };
 		}
 
 		switch (modregrm & 7)
 		{
-		case 0: TICK(1); return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::BX] + m_reg[REG16::SI]);
-		case 1: TICK(2); return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::BX] + m_reg[REG16::DI]);
-		case 2: TICK(2); return std::make_tuple(m_reg[REG16::SS], m_reg[REG16::BP] + m_reg[REG16::SI]);
-		case 3: TICK(1); return std::make_tuple(m_reg[REG16::SS], m_reg[REG16::BP] + m_reg[REG16::DI]);
+		case 0: TICK(1); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::SI]) };
+		case 1: TICK(2); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::DI]) };
+		case 2: TICK(2); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::SI]) };
+		case 3: TICK(1); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::DI]) };
 
-		case 4: return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::SI]);
-		case 5: return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::DI]);
-		case 6: return std::make_tuple(m_reg[REG16::SS], m_reg[REG16::BP]);
-		case 7: return std::make_tuple(m_reg[REG16::DS], m_reg[REG16::BX]);
+		case 4: return SegmentOffset{ m_reg[REG16::DS], m_reg[REG16::SI] };
+		case 5: return SegmentOffset{ m_reg[REG16::DS], m_reg[REG16::DI] };
+		case 6: return SegmentOffset{ m_reg[REG16::SS], m_reg[REG16::BP] };
+		case 7: return SegmentOffset{ m_reg[REG16::DS], m_reg[REG16::BX] };
 		}
 		throw std::exception("not possible");
 	}
@@ -1029,16 +1030,14 @@ namespace emul
 		m_regMem = REGMEM::MEM;
 
 		SegmentOffset segoff = GetEA(modrm, direct);
-		WORD& segment = std::get<0>(segoff);
-		WORD& offset = std::get<1>(segoff);
 
 		if (inSegOverride)
 		{
-			segment = m_reg[REG16::_SEG_O];
+			segoff.segment = m_reg[REG16::_SEG_O];
 		}
 
-		offset = (direct ? 0 : offset) + displacement;
-		return Mem8(S2A(segment, offset));
+		segoff.offset = (direct ? 0 : segoff.offset) + displacement;
+		return Mem8(segoff);
 	}
 
 	SourceDest8 CPU8086::GetModRegRM8(BYTE modregrm, bool toReg)
@@ -1087,17 +1086,15 @@ namespace emul
 		m_regMem = REGMEM::MEM;
 
 		SegmentOffset segoff = GetEA(modrm, direct);
-		WORD& segment = std::get<0>(segoff);
-		WORD& offset = std::get<1>(segoff);
 
 		if (inSegOverride)
 		{
-			segment = m_reg[REG16::_SEG_O];
+			segoff.segment = m_reg[REG16::_SEG_O];
 		}
 
-		offset = (direct ? 0 : offset) + displacement;
-		LogPrintf(LOG_DEBUG, "GetModRM16: MEM %04X:%04X", segment, offset);
-		return Mem16(S2A(segment, offset));
+		segoff.offset = (direct ? 0 : segoff.offset) + displacement;
+		LogPrintf(LOG_DEBUG, "GetModRM16: MEM %04X:%04X", segoff.segment, segoff.offset);
+		return Mem16(segoff);
 	}
 
 	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool toReg, bool segReg)
@@ -2658,12 +2655,10 @@ namespace emul
 		}
 
 		SegmentOffset segoff = GetEA(modregrm, direct);
-		WORD& segment = std::get<0>(segoff);
-		WORD& offset = std::get<1>(segoff);
 
-		offset = (direct ? 0 : offset) + displacement;
+		segoff.offset = (direct ? 0 : segoff.offset) + displacement;
 
-		dest.Write(offset);
+		dest.Write(segoff.offset);
 	}
 
 	void CPU8086::SALC()
@@ -2734,4 +2729,30 @@ namespace emul
 		inSegOverride = from["inSegOverride"];
 		m_reg[REG16::_SEG_O] = from["segOverride"];
 	}
+
+	bool SegmentOffset::FromString(const char* str)
+	{
+		if (!str || !str[0])
+			return false;
+
+		int seg;
+		int off;
+		int ret = sscanf(str, "%04X:%04X", &seg, &off);
+		segment = WORD(seg);
+		offset = WORD(off);
+
+		return ((ret == 2) && 
+			(seg >=0) && 
+			(seg <=0xFFFF) && 
+			(off >=0) && 
+			(off <=0xFFFF));
+	}
+
+	const char* SegmentOffset::ToString() const
+	{
+		static char buf[16];
+		sprintf(buf, "%04X:%04X", segment, offset);
+		return buf;
+	}
+
 }

@@ -24,7 +24,6 @@
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
-#define NO_CONSOLE
 //#define CPU_TEST
 
 #ifdef CPU_TEST
@@ -72,6 +71,17 @@ void LogCallback(const char* str)
 	}
 }
 
+bool consoleInit = false;
+void ShowMonitor()
+{
+	if (!consoleInit)
+	{
+		consoleInit = true;
+		console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
+	}
+	monitor.Show();
+}
+
 void ToggleMode()
 {
 	switch (mode)
@@ -83,7 +93,7 @@ void ToggleMode()
 	switch (mode)
 	{
 	case Mode::MONITOR:
-		monitor.Show();
+		ShowMonitor();
 		break;
 	case Mode::LOG:
 		console.Clear();
@@ -94,10 +104,6 @@ void ToggleMode()
 
 int main(int argc, char* args[])
 {
-#ifndef NO_CONSOLE
-	console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
-#endif
-
 	Logger::RegisterLogCallback(LogCallback);
 
 	if (!Config::Instance().LoadConfigFile("config/config.ini"))
@@ -114,6 +120,37 @@ int main(int argc, char* args[])
 		{
 			fprintf(stderr, "Error opening log file\n");
 		}
+	}
+
+	bool breakpointEnabled = false;
+	emul::SegmentOffset breakpoint;
+	std::string breakpointStr = Config::Instance().GetValueStr("monitor", "breakpoint");
+	if (breakpointStr.size())
+	{
+		if (breakpoint.FromString(breakpointStr.c_str()))
+		{
+			breakpointEnabled = true;
+			fprintf(stderr, "Set Breakpoint to [%s]\n", breakpoint.ToString());
+		}
+		else
+		{
+			fprintf(stderr, "Unable to decode SEGMENT:OFFSET value [%s]\n", breakpointStr.c_str());
+		}		
+	}
+
+	std::string memViewStr = Config::Instance().GetValueStr("monitor", "custommem");
+	if (memViewStr.size())
+	{
+		emul::SegmentOffset memView;
+		if (memView.FromString(memViewStr.c_str()))
+		{
+			monitor.SetCustomMemoryView(memView);
+			fprintf(stderr, "Set Monitor Custom Memory View to [%s]\n", memView.ToString());
+		}
+		else
+		{
+			fprintf(stderr, "Unable to decode SEGMENT:OFFSET value [%s]\n", memViewStr.c_str());
+		}	
 	}
 
 #ifdef CPU_TEST
@@ -183,11 +220,10 @@ int main(int argc, char* args[])
 	monitor.Init(*pc, pc->GetMemory());
 #endif
 
-	//fprintf(stderr, "Press any key to continue\n");
-	//_getch();
-
 	if (mode == Mode::MONITOR)
+	{
 		monitor.Show();
+	}
 
 	time_t startTime, stopTime;
 	time(&startTime);
@@ -207,13 +243,12 @@ int main(int argc, char* args[])
 
 		while (run)
 		{ 
-			//if ((pc.GetCurrentAddress() == emul::S2A(0xF000, 0x0450))/* &&
-			//	(pc.GetCurrentAddress() < emul::S2A(0xF000, 0x0E24F))*/)
-			//{
-			//	monitor.SetCustomMemoryView(0x40, 0x80);
-			//	monitor.Show();
-			//	mode = Mode::MONITOR;
-			//}
+			if (breakpointEnabled &&
+				(pc->GetCurrentAddress() == breakpoint.GetAddress()))
+			{
+				ShowMonitor();
+				mode = Mode::MONITOR;
+			}
 
 			if (!overlay.Update())
 			{

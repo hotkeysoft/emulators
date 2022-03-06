@@ -74,10 +74,24 @@ namespace emul
 		WORD& operator[](REG16 r8) { return Get16(r8); }
 	};
 
+	struct SegmentOffset
+	{
+		WORD segment = 0;
+		WORD offset = 0;
+
+		ADDRESS GetAddress() const { return S2A(segment, offset); }
+
+		// Decodes from "xxxx:yyyy" string
+		bool FromString(const char*);
+
+		const char* ToString() const; // Not thread safe
+	};
+
 	class Mem8
 	{
 	public:
 		Mem8() {}
+		Mem8(const SegmentOffset& segoff) : Mem8(segoff.GetAddress()) {}
 		Mem8(ADDRESS a) : m_address(a) {}
 		Mem8(REG8 r8) : m_reg8(r8) {}
 
@@ -104,6 +118,7 @@ namespace emul
 	{
 	public:
 		Mem16() {}
+		Mem16(const SegmentOffset& segoff) : Mem16(segoff.GetAddress()) {}
 		Mem16(ADDRESS a) { SetAddress(a); }
 		Mem16(REG16 r16) : l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
 
@@ -142,8 +157,6 @@ namespace emul
 
 	typedef WORD(*RawOpFunc8)(BYTE& dest, const BYTE src, bool);
 	typedef DWORD(*RawOpFunc16)(WORD& dest, const WORD src, bool);
-
-	typedef std::tuple<WORD, WORD> SegmentOffset;
 
 	class CPU8086 : public CPU, public Serializable, public PortConnector
 	{
