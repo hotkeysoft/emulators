@@ -229,9 +229,10 @@ namespace memory_ega
 					}
 
 					// Bit Mask
-					toWrite &= m_graphData->bitMask; // Clear locked bits
-					BYTE locked = m_dataLatches[i] & (~m_graphData->bitMask); // Put latched value in locked bits
-					m_planes[i].write(offset, toWrite | locked);
+					const BYTE& latched = m_dataLatches[i];
+					BYTE masked = latched ^ ((toWrite ^ latched) & m_graphData->bitMask);
+
+					m_planes[i].write(offset, masked);
 				}
 			}
 		}
