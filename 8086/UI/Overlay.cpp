@@ -633,8 +633,15 @@ namespace ui
 			return;
 		}
 
-		m_pc->SetSerializationDir(snapshotDir);
-		m_pc->Deserialize(j);
+		try
+		{
+			m_pc->SetSerializationDir(snapshotDir);
+			m_pc->Deserialize(j);
+		}
+		catch (std::exception e)
+		{
+			LogPrintf(LOG_ERROR, "RestoreSnapshot: Error deserializing snapshot: %s\n", e.what());
+		}
 
 		UpdateFloppy(0);
 		UpdateFloppy(1);
@@ -667,7 +674,7 @@ namespace ui
 		}
 
 		char buf[64];
-		sprintf(buf, "snap-%zu", time(nullptr));
+		sprintf(buf, "snap-%llu", time(nullptr));
 		path.append(buf);
 
 		if (!fs::create_directories(path))
@@ -718,7 +725,7 @@ namespace ui
 		std::string name = snapshotDir.filename().string();
 
 		time_t value;
-		if (sscanf(name.c_str(), "snap-%zu", &value) == 1)
+		if (sscanf(name.c_str(), "snap-%llu", &value) == 1)
 		{
 			char buf[128];
 			struct tm* local = localtime(&value);
