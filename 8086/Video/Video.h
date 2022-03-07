@@ -107,7 +107,7 @@ namespace video
 		// Framebuffer
 		void BeginFrame();
 		void NewLine();
-		void DrawPixel(uint32_t color) { m_lastDot = color; m_fb[m_fbCurrPos++] = color; }
+		void DrawPixel(uint32_t color) { ++m_fbCurrX; m_lastDot = color; m_fb[m_fbCurrPos++] = color; }
 		void DrawBackground(BYTE width);
 		void DrawBackground(BYTE width, uint32_t color);
 
@@ -121,9 +121,12 @@ namespace video
 
 		std::vector<uint32_t> m_fb;
 		uint32_t m_fbCurrPos = 0;
+		uint32_t m_fbCurrX = 0;
 		uint32_t m_fbCurrY = 0;
 		uint32_t m_fbWidth = 0;
 		uint32_t m_fbHeight = 0;
+		uint32_t m_fbMaxX = 0;
+		uint32_t m_fbMaxY = 0;
 
 		SDL_Texture* m_sdlTexture = nullptr;
 

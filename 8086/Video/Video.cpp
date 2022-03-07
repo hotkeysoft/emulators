@@ -112,6 +112,11 @@ namespace video
 
 	void Video::DestroyFrameBuffer()
 	{
+		m_fbMaxY = 0;
+		m_fbMaxX = 0;
+		m_fbCurrPos = 0;
+		m_fbCurrY = 0;
+
 		m_fbWidth = 0;
 		m_fbHeight = 0;
 
@@ -161,11 +166,12 @@ namespace video
 	{
 		static size_t frames = 0;
 
+		SDL_Rect fbRect = SDL_Rect{ 0, 0, (int)m_fbMaxX, (int)m_fbMaxY };
 		SDL_Rect srcRect = GetDisplayRect(m_border);
 
 		if (m_sdlTexture)
 		{
-			SDL_UpdateTexture(m_sdlTexture, nullptr, &m_fb[0], m_fbWidth * sizeof(uint32_t));
+			SDL_UpdateTexture(m_sdlTexture, &fbRect, &m_fb[0], m_fbWidth * sizeof(uint32_t));
 			SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &m_targetRect);
 		}
 
@@ -195,12 +201,18 @@ namespace video
 	void Video::BeginFrame()
 	{
 		m_fbCurrPos = 0;
+		m_fbCurrX = 0;
 		m_fbCurrY = 0;
 	}
 
 	void Video::NewLine()
 	{
 		m_fbCurrY = std::min(m_fbHeight - 1, m_fbCurrY + 1);
+
+		m_fbMaxX = std::max(m_fbMaxX, m_fbCurrX);
+		m_fbMaxY = std::max(m_fbCurrY, m_fbMaxY);
+
+		m_fbCurrX = 0;
 		m_fbCurrPos = m_fbCurrY * m_fbWidth;
 	}
 
@@ -215,6 +227,7 @@ namespace video
 		if (m_fb.size())
 		{
 			std::fill_n(m_fb.begin() + m_fbCurrPos, width, color);
+			m_fbCurrX += width;
 			m_fbCurrPos += width;
 		}
 	}
