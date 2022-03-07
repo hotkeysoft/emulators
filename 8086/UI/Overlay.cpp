@@ -252,6 +252,7 @@ namespace ui
 		{
 			if (SDL_GetModState() & KMOD_SHIFT)
 			{
+				m_loadSnapshotButton->SetPushed(true);
 				ShowSnapshotWindow();
 			}
 			else
@@ -322,11 +323,6 @@ namespace ui
 		{
 			m_trim.y = 0;
 			SetTrim();
-		}
-		else if (widget->GetId() == "close")
-		{
-			m_joystickConfigWnd->Show(false);
-			m_joystickButton->SetPushed(false);
 		}
 	}
 
@@ -771,7 +767,7 @@ namespace ui
 		r.w = width;
 		r.h = height;
 
-		m_snapshotWnd = WINMGR().AddWindow("snapshots", r, WIN_CANMOVE);
+		m_snapshotWnd = WINMGR().AddWindow("snapshots", r, WIN_CANMOVE | WIN_CLOSE);
 		m_snapshotWnd->SetText("Snapshots");
 		m_snapshotWnd->SetActive();
 
@@ -817,10 +813,9 @@ namespace ui
 		m_joystickButton->SetPushed(true);
 
 		const int width = 278;
-		const int height = 120;
+		const int height = 90;
 		const int line0y = 4;
 		const int line1y = 28;
-		const int line2y = 56;
 		const int lineh = 24;
 
 		Rect r = WINMGR().GetWindowSize();
@@ -828,7 +823,7 @@ namespace ui
 		r.y = r.h - (GetOverlayHeight() + height);
 		r.w = width;
 		r.h = height;
-		m_joystickConfigWnd = WINMGR().AddWindow("joystick", r, WIN_DIALOG | WIN_CANMOVE | WIN_NOSCROLL);
+		m_joystickConfigWnd = WINMGR().AddWindow("joystick", r, WIN_CLOSE | WIN_DIALOG | WIN_CANMOVE | WIN_NOSCROLL);
 		m_joystickConfigWnd->SetText("Joystick");
 		m_joystickConfigWnd->SetActive();
 
@@ -854,8 +849,6 @@ namespace ui
 		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("resetX", m_renderer, Rect(206, line0y, 60, lineh), "Reset"));
 		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("resetY", m_renderer, Rect(206, line1y, 60, lineh), "Reset"));
 
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("close", m_renderer, Rect(206, line2y, 60, lineh), "Close"));
-
 		UpdateTrim();
 	}
 
@@ -865,6 +858,7 @@ namespace ui
 		static Uint32 toolbarEvent = WINMGR().GetEventType(ToolbarItem::EventClassName());
 		static Uint32 buttonEvent = WINMGR().GetEventType(Button::EventClassName());
 		static Uint32 timerEvent = WINMGR().GetEventType(Timer::EventClassName());
+		static Uint32 windowEvent = WINMGR().GetEventType(Window::EventClassName());
 		const static Uint32 timerEventID = WINMGR().GetEventType("timer");
 
 		bool handled = false;
@@ -873,6 +867,23 @@ namespace ui
 		if (e.type == SDL_QUIT)
 		{
 			// Do nothing
+		}
+		else if (e.type == windowEvent)
+		{
+			if (e.user.code == Window::EVENT_WINDOW_CLOSE)
+			{
+				WindowRef widget = (WindowRef)e.user.data1;
+
+				widget->Show(false);
+				if (widget->GetId() == "joystick")
+				{
+					m_joystickButton->SetPushed(false);
+				}
+				else if (widget->GetId() == "snapshots")
+				{
+					m_loadSnapshotButton->SetPushed(false);
+				}
+			}
 		}
 		else if (e.type == toolbarEvent || e.type == buttonEvent)
 		{
