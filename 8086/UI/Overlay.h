@@ -40,6 +40,9 @@ namespace ui
 		// events::EventHangler
 		virtual bool HandleEvent(SDL_Event& e) override;
 
+		// TODO: Should not be hardcoded
+		static const WORD GetOverlayHeight() { return 62; }
+
 	protected:
 		bool m_show = true;
 

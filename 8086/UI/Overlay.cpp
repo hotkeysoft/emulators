@@ -118,11 +118,11 @@ namespace ui
 
 		Rect windowSize = WINMGR().GetWindowSize();
 		Rect toolbarRect = windowSize;
-		toolbarRect.h = 62;
+		toolbarRect.h = GetOverlayHeight();
 		toolbarRect.y = windowSize.h - toolbarRect.h;
 
 		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_CANRESIZE | WIN_NOSCROLL);
-		m_mainWnd->SetMinSize(64);
+		m_mainWnd->SetMinSize((uint8_t)GetOverlayHeight());
 
 		RES().LoadImageMap("toolbar", "./res/toolbar.png", 16, 16);
 
@@ -760,7 +760,7 @@ namespace ui
 
 		Rect r = WINMGR().GetWindowSize();
 		r.x = (r.w - width) / 2;
-		r.y = r.h - (64 + height);
+		r.y = r.h - (GetOverlayHeight() + height);
 		r.w = width;
 		r.h = height;
 
@@ -818,7 +818,7 @@ namespace ui
 
 		Rect r = WINMGR().GetWindowSize();
 		r.x = r.w - width;
-		r.y = r.h - (64 + height);
+		r.y = r.h - (GetOverlayHeight() + height);
 		r.w = width;
 		r.h = height;
 		m_joystickConfigWnd = WINMGR().AddWindow("joystick", r, WIN_DIALOG | WIN_CANMOVE | WIN_NOSCROLL);
@@ -911,7 +911,7 @@ namespace ui
 			int w = e.window.data1;
 			int h = e.window.data2;
 
-			Rect r{ 0, h-64, w, 64 };
+			Rect r{ 0, h - GetOverlayHeight(), w, GetOverlayHeight() };
 			m_mainWnd->MoveRect(&r);
 		}
 		else // Pass to active window

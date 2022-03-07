@@ -1,5 +1,6 @@
 #include "Video.h"
 #include "../Config.h"
+#include "../UI/Overlay.h"
 
 #include <SDL.h>
 
@@ -9,12 +10,10 @@
 #include <assert.h>
 
 using cfg::Config;
+using ui::Overlay;
 
 namespace video
 {
-	//TODO
-	const int overlayHeight = 64;
-
 	const uint32_t AlphaColorPalette[16] =
 	{
 		0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA,
@@ -61,7 +60,7 @@ namespace video
 
 		SDL_CreateWindowAndRenderer(
 			(int)(m_sdlWidth),
-			(int)(m_sdlHeight) + overlayHeight,
+			(int)(m_sdlHeight) + Overlay::GetOverlayHeight(),
 			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_RESIZABLE,
 			&m_sdlWindow,
 			&m_sdlRenderer);
@@ -246,7 +245,7 @@ namespace video
 	{
 		const double targetRatio = 4 / 3.;
 
-		SDL_Rect rect{ 0, 0, m_sdlWidth, m_sdlHeight - overlayHeight };
+		SDL_Rect rect{ 0, 0, m_sdlWidth, m_sdlHeight - Overlay::GetOverlayHeight() };
 
 		float windowRatio = rect.w / (float)rect.h;
 
