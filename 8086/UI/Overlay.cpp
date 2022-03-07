@@ -880,11 +880,15 @@ namespace ui
 		}
 		else if (e.type == timerEvent)
 		{
-			Timer* timer = (Timer*)e.user.data1;
-			Widget* owner = timer->GetWidget();
-			if (owner)
+			if (WINMGR().IsTimerValid(e.user.code))
 			{
-				owner->HandleEvent(&e);
+				Timer* timer = (Timer*)e.user.data1;
+				Widget* owner = timer->GetWidget();
+				if (owner)
+				{
+					owner->HandleEvent(&e);
+					handled = true;
+				}
 			}
 		}
 		else if (WINMGR().GetCapture() && WINMGR().GetCapture().Target.target->HandleEvent(&e))
