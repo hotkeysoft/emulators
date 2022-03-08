@@ -343,8 +343,7 @@ namespace ui
 			}
 			else
 			{
-				// TODO: Delete snapshot folder
-				LogPrintf(LOG_ERROR, "Delete snapshot, path: %s", path->string().c_str());
+				DeleteSnapshot(*path);
 			}
 		}
 	}
@@ -617,6 +616,55 @@ namespace ui
 
 		m_lastSnapshotDir = snapshotDir;
 		UpdateSnapshot();
+	}
+
+	void Overlay::DeleteSnapshot(const std::filesystem::path& path)
+	{
+		SDL_MessageBoxButtonData buttons[2] = {
+			{ 0, 1, "Yes" },
+			{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT |
+			SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "No" }
+		};
+
+		std::ostringstream os;
+		os << "Do you want to delete the following snapshot?"
+			<< std::endl
+			<< path.stem().string();
+
+		SDL_MessageBoxData message;
+		memset(&message, 0, sizeof(message));
+		message.flags = SDL_MESSAGEBOX_WARNING | SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT;
+		message.title = "Delete Snapshot";
+		message.message = os.str().c_str();
+		message.window = m_window;
+		message.buttons = buttons;
+		message.numbuttons = SDL_arraysize(buttons);
+
+		int buttonId;
+		SDL_ShowMessageBox(&message, &buttonId);
+		
+		if (buttonId == 1)
+		{
+			LogPrintf(LOG_WARNING, "Delete snapshot, path: %s", path.string().c_str());
+			std::error_code code;
+			fs::remove_all(path, code);
+			if (code)
+			{
+				std::ostringstream os;
+				os << "Error deleting snapshot "
+					<< path.stem().string()
+					<< std::endl
+					<< code.message();
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Delete Snapshot", os.str().c_str(), m_window);
+			}
+
+			// In case the most recent was deleted
+			if (!GetLastSnapshotDirectory(m_lastSnapshotDir))
+			{
+				m_lastSnapshotDir.clear();
+			}
+			UpdateSnapshot();
+		}
 	}
 
 	void Overlay::RestoreSnapshot(const fs::path& snapshotDir)

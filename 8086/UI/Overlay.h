@@ -67,6 +67,7 @@ namespace ui
 		bool GetLastSnapshotDirectory(std::filesystem::path& snapshotDir);
 		void SaveSnapshot(const std::filesystem::path& snapshotDir);
 		void RestoreSnapshot(const std::filesystem::path& snapshotDir);
+		void DeleteSnapshot(const std::filesystem::path& snapshotDir);
 		std::string GetSnapshotName(const std::filesystem::path& snapshotDir);
 		void LoadSnapshotList();
 		void LoadLastSnapshot();
