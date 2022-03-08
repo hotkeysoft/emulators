@@ -3,7 +3,7 @@
 #include "../Video/Video.h"
 #include "../IO/InputEvents.h"
 #include "../Computer.h"
-#include <Common.h>
+#include <CoreUI.h>
 
 namespace ui
 {
