@@ -330,15 +330,14 @@ namespace ui
 		}
 		else if (id.rfind("snapshot-", 0) != std::string::npos)
 		{
-			m_snapshotWnd->Show(false);
-			m_loadSnapshotButton->SetPushed(false);
-
 			std::filesystem::path* path = (std::filesystem::path*)widget->GetTag().o;
 			assert(path);
 
 			bool isDelete = (*id.rbegin() == 'x');
 			if (!isDelete)
 			{
+				m_snapshotWnd->Show(false);
+				m_loadSnapshotButton->SetPushed(false);
 				RestoreSnapshot(*path);
 			}
 			else
@@ -468,7 +467,6 @@ namespace ui
 		if (--cooldown == 0)
 		{
 			cooldown = cooldownTime;
-			LogPrintf(LOG_ERROR, "UpdateSnapshot");
 			UpdateSnapshot();
 		}
 		return true;
@@ -630,18 +628,19 @@ namespace ui
 		os << "Do you want to delete the following snapshot?"
 			<< std::endl
 			<< path.stem().string();
+		std::string msg = os.str();
 
-		SDL_MessageBoxData message;
-		memset(&message, 0, sizeof(message));
-		message.flags = SDL_MESSAGEBOX_WARNING | SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT;
-		message.title = "Delete Snapshot";
-		message.message = os.str().c_str();
-		message.window = m_window;
-		message.buttons = buttons;
-		message.numbuttons = SDL_arraysize(buttons);
+		SDL_MessageBoxData data;
+		memset(&data, 0, sizeof(data));
+		data.flags = SDL_MESSAGEBOX_WARNING | SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT;
+		data.title = "Delete Snapshot";
+		data.message = msg.c_str();
+		data.window = m_window;
+		data.buttons = buttons;
+		data.numbuttons = SDL_arraysize(buttons);
 
 		int buttonId;
-		SDL_ShowMessageBox(&message, &buttonId);
+		SDL_ShowMessageBox(&data, &buttonId);
 		
 		if (buttonId == 1)
 		{
@@ -655,7 +654,8 @@ namespace ui
 					<< path.stem().string()
 					<< std::endl
 					<< code.message();
-				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Delete Snapshot", os.str().c_str(), m_window);
+				std::string msg = os.str();
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Delete Snapshot", msg.c_str(), m_window);
 			}
 
 			// In case the most recent was deleted
@@ -663,7 +663,11 @@ namespace ui
 			{
 				m_lastSnapshotDir.clear();
 			}
+			// Updates the current snapshot name in the toolbar
 			UpdateSnapshot();
+			// Reloads the whole list and rebuild the window
+			// TODO: Would be easier to just remove the item
+			ShowSnapshotWindow();
 		}
 	}
 
