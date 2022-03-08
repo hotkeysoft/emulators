@@ -236,11 +236,13 @@ int main(int argc, char* args[])
 	pc->GetInputs().AddEventHandler(&overlay);
 	pc->GetInputs().AddEventHandler(&(pc->GetVideo())); // Window resize events
 
+	const int cooldownFactor = 10000;
+
 	try
 	{
 		std::string snapshotDir;
 		bool run = true;
-		int cooldown = 10000;
+		int cooldown = cooldownFactor;
 
 		while (run)
 		{ 
@@ -249,11 +251,6 @@ int main(int argc, char* args[])
 			{
 				ShowMonitor();
 				mode = Mode::MONITOR;
-			}
-
-			if (showOverlay && !overlay.Update())
-			{
-				break;
 			}
 
 			if (mode == Mode::MONITOR)
@@ -278,15 +275,23 @@ int main(int argc, char* args[])
 				run = pc->Step();
 			}
 
-			// TODO: Keyboard input is now handled in InputEvents.
-			// We can focus here on console-specific commands/hotkeys
-			if (cooldown == 0)
+			// Some things don't need to be updated every cpu tick.
+			// Do them every n steps.
+			if (--cooldown == 0)
 			{
-				cooldown = 10000;
+				cooldown = cooldownFactor;
+
+				// Overlay update
+				// 
+				// For now this only updates the fdd/hdd LEDs.
+				// The actual GUI is refreshed in a callback above
+				if (showOverlay && !overlay.Update())
+				{
+					break;
+				}
 
 				if (mode != Mode::MONITOR && _kbhit())
 				{
-					cooldown = 10000;
 					BYTE keyCode;
 					bool shift = false;
 					bool ctrl = false;
@@ -294,11 +299,7 @@ int main(int argc, char* args[])
 					bool newKeycode = false;
 					int ch = _getch();
 
-					/*if (ch == 27)
-					{
-						run = false;
-					}
-					else */if (ch == 224)
+					if (ch == 224)
 					{
 						switch (ch = _getch())
 						{
@@ -375,7 +376,6 @@ int main(int argc, char* args[])
 					{
 						kbd::DeviceKeyboard& kbd = pc->GetKeyboard();
 
-
 						if (shift) kbd.InputKey(0x2A);
 						if (alt) kbd.InputKey(0x38);
 						if (ctrl) kbd.InputKey(0x1D);
@@ -388,10 +388,6 @@ int main(int argc, char* args[])
 						if (ctrl) kbd.InputKey(0x1D | 0x80);
 					}
 				}
-			}
-			else
-			{
-				--cooldown;
 			}
 		}
 	}
