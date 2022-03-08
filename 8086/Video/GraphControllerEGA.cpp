@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "GraphControllerEGA.h"
 #include "../CPU/MemoryBlock.h"
 #include "../CPU/Memory.h"

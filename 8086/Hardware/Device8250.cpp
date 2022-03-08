@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Device8250.h"
 
 using emul::GetHByte;

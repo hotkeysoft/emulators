@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "stdafx.h"
 #include "Computer.h"
 #include "Config.h"
 #include "IO/DeviceKeyboard.h"

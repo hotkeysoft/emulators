@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "TimeFormatter.h"
-#include <sstream>
 #include <tuple>
 #include <vector>
 

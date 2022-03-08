@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "VideoPCjr.h"
-#include <assert.h>
 
 using emul::Memory;
 using emul::MemoryBlock;

@@ -1,6 +1,6 @@
+#include "stdafx.h"
+
 #include "Config.h"
-#include <fstream>
-#include <assert.h>
 
 namespace cfg
 {

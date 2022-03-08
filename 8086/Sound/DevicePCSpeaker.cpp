@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "DevicePCSpeaker.h"
 #include <thread>
-#include <assert.h>
 #include <algorithm>
 
 #include <SDL.h>

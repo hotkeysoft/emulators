@@ -1,7 +1,6 @@
+#include "stdafx.h"
+
 #include "CPUInfo.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
 
 namespace emul
 {

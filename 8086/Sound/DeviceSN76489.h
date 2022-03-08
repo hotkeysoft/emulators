@@ -1,9 +1,7 @@
 #pragma once
 
-#include "../Common.h"
 #include "../Serializable.h"
 #include "../CPU/PortConnector.h"
-#include <Logger.h>
 
 #include <vector>
 

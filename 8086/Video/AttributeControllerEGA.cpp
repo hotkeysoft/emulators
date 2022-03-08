@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "AttributeControllerEGA.h"
 
 using emul::GetBit;

@@ -1,8 +1,6 @@
-#include "Monitor.h"
+#include "stdafx.h"
 
-#include <string>
-#include <conio.h>
-#include <sstream>
+#include "Monitor.h"
 
 namespace emul
 {

@@ -1,8 +1,5 @@
+#include "stdafx.h"
 #include "Logger.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <exception>
 
 void(*Logger::m_logCallbackFunc)(const char *str);
 char Logger::m_logBuffer[1024];

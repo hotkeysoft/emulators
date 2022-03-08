@@ -11,4 +11,5 @@
 #include <tchar.h>
 #include <Windows.h>
 
-#include "Logger.h"
+#include "../Common/Logger.h"
+#include "../Common/json.hpp"

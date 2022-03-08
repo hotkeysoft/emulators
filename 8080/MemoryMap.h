@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Common.h"
-#include "Logger.h"
 #include <string>
 #include <map>
 

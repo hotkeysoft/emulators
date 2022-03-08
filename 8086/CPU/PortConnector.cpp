@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "PortConnector.h"
 #include "../Config.h"
 

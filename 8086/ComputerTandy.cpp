@@ -1,4 +1,5 @@
-#include "Common.h"
+#include "stdafx.h"
+
 #include "ComputerTandy.h"
 #include "Config.h"
 #include "Hardware/Device8255Tandy.h"

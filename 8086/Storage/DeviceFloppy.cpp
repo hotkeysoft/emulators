@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "DeviceFloppy.h"
-#include <assert.h>
 #include <array>
 
 using emul::GetBit;

@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "CPU/Memory.h"
 #include "CPU/MemoryBlock.h"
 #include "CPU/MemoryMap.h"

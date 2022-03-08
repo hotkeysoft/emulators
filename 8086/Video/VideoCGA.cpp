@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "VideoCGA.h"
-#include <assert.h>
 
 using emul::SetBit;
 using emul::GetBit;

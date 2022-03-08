@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "CRTController6845.h"
-#include <assert.h>
 #include <algorithm>
 
 namespace crtc_6845

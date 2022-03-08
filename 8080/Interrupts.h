@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Common.h"
 #include "InterruptSource.h"
-#include "Logger.h"
 #include <list>
 
 const int MAXINTERRUPT = 16;

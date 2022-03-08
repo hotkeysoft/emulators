@@ -2,8 +2,6 @@
 
 #include "../Serializable.h"
 #include "MemoryBlock.h"
-#include "../Common.h"
-#include <Logger.h>
 #include <vector>
 #include <set>
 

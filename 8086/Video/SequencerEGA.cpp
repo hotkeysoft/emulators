@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "SequencerEGA.h"
 
 using emul::GetBit;

@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Video.h"
 #include "../Config.h"
 #include "../UI/Overlay.h"

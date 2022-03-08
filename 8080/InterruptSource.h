@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Logger.h"
-
 class InterruptSource : virtual public Logger
 {
 public:

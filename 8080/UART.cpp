@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "UART.h"
-#include <conio.h>
-#include <fstream>
 
 UART::UART(BYTE baseAddress, int baseClockSpeed) : Logger("UART"), m_baseAddress(baseAddress), m_baseClockSpeed(baseClockSpeed),
 													m_currChar(0) 

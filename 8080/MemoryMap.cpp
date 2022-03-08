@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "MemoryMap.h"
 
 MemoryMap::MemoryMap() : Logger("MMAP")

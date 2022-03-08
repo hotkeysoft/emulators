@@ -1,8 +1,6 @@
 #pragma once
 
-#include "../Common.h"
 #include "../CPU/PortConnector.h"
-#include <Logger.h>
 #include <deque>
 
 using emul::PortConnector;

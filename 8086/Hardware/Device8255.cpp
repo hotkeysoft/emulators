@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Device8255.h"
 
 namespace ppi

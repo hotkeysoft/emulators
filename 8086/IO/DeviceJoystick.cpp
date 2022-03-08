@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "DeviceKeyboard.h"
 #include "DeviceJoystick.h"
 #include "../Config.h"
-#include <assert.h>
 
 namespace joy
 {

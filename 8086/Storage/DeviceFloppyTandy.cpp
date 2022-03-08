@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "DeviceFloppyTandy.h"
-#include <assert.h>
 
 namespace fdc
 {

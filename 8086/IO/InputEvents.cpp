@@ -1,10 +1,10 @@
+#include "stdafx.h"
+
 #include "InputEvents.h"
 #include "DeviceKeyboard.h"
 #include "DeviceJoystick.h"
 
 #include <SDL.h>
-
-#include <assert.h>
 
 namespace events
 {

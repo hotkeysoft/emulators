@@ -1,11 +1,10 @@
+#include "stdafx.h"
+
 #include "Overlay.h"
 #include "TimeFormatter.h"
 #include "../Config.h"
 #include "../Storage/DeviceFloppy.h"
 #include "../Storage/DeviceHardDrive.h"
-
-#include <fstream>
-#include <filesystem>
 
 #pragma warning(disable:4251)
 

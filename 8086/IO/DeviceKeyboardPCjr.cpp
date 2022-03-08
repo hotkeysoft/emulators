@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "DeviceKeyboardPCjr.h"
 #include "../Hardware/Device8255PCjr.h"
-#include <assert.h>
 
 namespace kbd
 {

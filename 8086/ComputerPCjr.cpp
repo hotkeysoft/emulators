@@ -1,4 +1,5 @@
-#include "Common.h"
+#include "stdafx.h"
+
 #include "ComputerPCjr.h"
 #include "Config.h"
 #include "Hardware/Device8255PCjr.h"

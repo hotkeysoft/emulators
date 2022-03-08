@@ -1,8 +1,5 @@
 #pragma once
 
-#include "../Common.h"
-#include <Logger.h>
-
 #include <SDL.h>
 
 #include <map>

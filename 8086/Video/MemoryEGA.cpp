@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "MemoryEGA.h"
 #include "GraphControllerEGA.h"
 #include "SequencerEGA.h"

@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "CRTControllerEGA.h"
-#include <assert.h>
 #include <algorithm>
 
 namespace crtc_ega

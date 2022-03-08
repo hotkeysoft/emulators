@@ -234,6 +234,9 @@
     <ClCompile Include="UI\TimeFormatter.cpp">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -409,6 +412,9 @@
     </ClInclude>
     <ClInclude Include="UI\TimeFormatter.h">
       <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

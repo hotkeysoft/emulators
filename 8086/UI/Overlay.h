@@ -1,12 +1,9 @@
 #pragma once
 
-#include "../Common/Logger.h"
 #include "../Video/Video.h"
 #include "../IO/InputEvents.h"
 #include "../Computer.h"
 #include <Common.h>
-
-#include <filesystem>
 
 namespace ui
 {

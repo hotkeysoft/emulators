@@ -1,8 +1,5 @@
 #pragma once
 
-#include <Logger.h>
-#include <inipp.h>
-
 namespace cfg
 {
 	class Config : Logger

@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "DeviceKeyboard.h"
-#include <assert.h>
 
 namespace kbd
 {

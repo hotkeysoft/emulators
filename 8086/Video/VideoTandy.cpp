@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "VideoTandy.h"
-#include <assert.h>
 
 using emul::Memory;
 using emul::MemoryBlock;

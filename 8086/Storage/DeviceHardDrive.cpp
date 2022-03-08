@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "DeviceHardDrive.h"
-#include <assert.h>
 
 using emul::GetBit;
 

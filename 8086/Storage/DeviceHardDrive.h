@@ -1,13 +1,9 @@
 #pragma once
 
-#include "../Common.h"
 #include "../CPU/PortConnector.h"
 #include "../Serializable.h"
-#include <Logger.h>
 #include <vector>
 #include <deque>
-#include <filesystem>
-#include <assert.h>
 
 using emul::PortConnector;
 using emul::WORD;

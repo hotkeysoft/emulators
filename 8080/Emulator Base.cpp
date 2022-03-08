@@ -6,13 +6,7 @@
 #include "MemoryMap.h"
 #include "CPU8080.h"
 #include "UART.h"
-#include <conio.h>
 #include <vector>
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <time.h>
 
 #include <Windows.h>
 

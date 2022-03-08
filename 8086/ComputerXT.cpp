@@ -1,4 +1,5 @@
-#include "Common.h"
+#include "stdafx.h"
+
 #include "ComputerXT.h"
 #include "Config.h"
 #include "IO/Console.h"

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Common.h"
-#include <Logger.h>
 #include <vector>
 
 namespace emul

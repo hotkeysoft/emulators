@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "VideoEGA.h"
 #include "../Config.h"
-#include <assert.h>
 
 using cfg::Config;
 

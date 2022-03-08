@@ -1,11 +1,5 @@
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <windows.h>
-
-#include <cstdint>
-
 #define PRINTF_BIN_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
 #define PRINTF_BYTE_TO_BIN_INT8(i)    \
     (((i) & 0x80ll) ? '1' : '0'), \

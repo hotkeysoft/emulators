@@ -1,8 +1,6 @@
 #pragma once
 
 #include "MemoryBlock.h"
-#include "Common.h"
-#include "Logger.h"
 #include <list>
 
 typedef std::list<MemoryBlock *> MemoryListType;

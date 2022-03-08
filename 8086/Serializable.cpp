@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Serializable.h"
 
 namespace emul

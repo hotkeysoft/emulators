@@ -1,6 +1,6 @@
+#include "stdafx.h"
+
 #include "MemoryBlock.h"
-#include <fstream>
-#include <assert.h>
 
 namespace emul
 {

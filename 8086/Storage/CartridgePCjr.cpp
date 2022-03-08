@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "CartridgePCjr.h"
 
 namespace cart

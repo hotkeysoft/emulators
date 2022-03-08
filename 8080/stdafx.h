@@ -7,3 +7,16 @@
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
 #include <stdio.h>
+#include <cstdarg>
+#include <fstream>
+#include <conio.h>
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <time.h>
+
+#include "Common.h"
+#include "../Common/Logger.h"
+
+

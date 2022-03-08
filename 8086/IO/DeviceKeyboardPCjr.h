@@ -1,8 +1,6 @@
 #pragma once
 
-#include "../Common.h"
 #include "DeviceKeyboard.h"
-#include <Logger.h>
 
 #include <deque>
 

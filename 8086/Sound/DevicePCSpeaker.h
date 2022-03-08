@@ -1,8 +1,5 @@
 #pragma once
 
-#include "../Common.h"
-#include <Logger.h>
-
 #include "../Hardware/Device8254.h"
 #include "../Hardware/Device8255.h"
 

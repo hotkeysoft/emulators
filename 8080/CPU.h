@@ -1,8 +1,6 @@
 #pragma once
 #include "Memory.h"
 #include "MemoryMap.h"
-#include "Common.h"
-#include "Logger.h"
 
 class CPU;
 typedef void(*CPUCallbackFunc)(CPU* cpu, WORD addr);

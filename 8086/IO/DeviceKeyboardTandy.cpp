@@ -1,6 +1,7 @@
-#include "DeviceKeyboardTandy.h"
+#include "stdafx.h"
+
 #include "../Hardware/Device8255Tandy.h"
-#include <assert.h>
+#include "DeviceKeyboardTandy.h"
 
 namespace kbd
 {

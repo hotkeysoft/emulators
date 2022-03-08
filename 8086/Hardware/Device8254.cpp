@@ -1,6 +1,6 @@
-#include "Device8254.h"
+#include "stdafx.h"
 
-#include <assert.h>
+#include "Device8254.h"
 
 using emul::GetHByte;
 using emul::GetLByte;

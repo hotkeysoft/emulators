@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Common.h"
 #include "Console.h"
 #include "PortConnector.h"
 #include "InterruptSource.h"

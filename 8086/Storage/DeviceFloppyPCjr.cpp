@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "DeviceFloppyPCjr.h"
-#include <assert.h>
 
 namespace fdc
 {

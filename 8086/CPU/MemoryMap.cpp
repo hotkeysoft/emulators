@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "MemoryMap.h"
 
 namespace emul

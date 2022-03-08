@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "Device8259.h"
-#include <assert.h>
 
 using emul::GetBit;
 using emul::SetBit;

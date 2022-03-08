@@ -2,7 +2,6 @@
 
 #include <filesystem>
 
-#include <json.hpp>
 using json = nlohmann::json;
 
 namespace emul

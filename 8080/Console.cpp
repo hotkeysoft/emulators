@@ -1,7 +1,5 @@
+#include "stdafx.h"
 #include "Console.h"
-#include <stdio.h>
-#include <fstream>
-#include <conio.h>
 
 Console::Console() : m_inControlSequence(false), m_currControlArg(0), m_currAttr(0x07)
 {

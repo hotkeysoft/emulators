@@ -1,8 +1,6 @@
 #pragma once
 
-#include "../Common.h"
 #include "../CPU/MemoryBlock.h"
-#include <Logger.h>
 
 using emul::WORD;
 using emul::BYTE;

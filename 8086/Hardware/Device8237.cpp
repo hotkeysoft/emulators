@@ -1,4 +1,5 @@
-#include "../Common.h"
+#include "stdafx.h"
+
 #include "Device8237.h"
 
 using emul::GetHByte;

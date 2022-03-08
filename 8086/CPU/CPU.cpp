@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "CPU.h"
 
 namespace emul

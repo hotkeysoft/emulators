@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "CPU8086.h"
 
 namespace emul

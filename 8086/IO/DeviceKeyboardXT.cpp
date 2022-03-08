@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "DeviceKeyboardXT.h"
 #include "../Hardware/Device8255XT.h"
-#include <assert.h>
 
 namespace kbd
 {

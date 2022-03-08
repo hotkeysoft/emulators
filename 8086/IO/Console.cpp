@@ -1,7 +1,6 @@
+#include "stdafx.h"
+
 #include "Console.h"
-#include <stdio.h>
-#include <fstream>
-#include <conio.h>
 
 Console::Console()
 {

@@ -1,5 +1,6 @@
+#include "stdafx.h"
+
 #include "CPU8086Test.h"
-#include <assert.h>
 
 namespace emul
 {
