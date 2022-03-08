@@ -202,6 +202,7 @@
     <ClCompile Include="CPU\MemoryMap.cpp" />
     <ClCompile Include="IO\Monitor.cpp" />
     <ClCompile Include="CPU\PortConnector.cpp" />
+    <ClCompile Include="UI\TimeFormatter.cpp" />
     <ClCompile Include="Video\AttributeControllerEGA.cpp" />
     <ClCompile Include="Video\CRTController6845.cpp" />
     <ClCompile Include="Video\CRTControllerEGA.cpp" />
@@ -261,6 +262,7 @@
     <ClInclude Include="CPU\MemoryMap.h" />
     <ClInclude Include="IO\Monitor.h" />
     <ClInclude Include="CPU\PortConnector.h" />
+    <ClInclude Include="UI\TimeFormatter.h" />
     <ClInclude Include="Video\AttributeControllerEGA.h" />
     <ClInclude Include="Video\CRTController6845.h" />
     <ClInclude Include="Video\CRTControllerEGA.h" />

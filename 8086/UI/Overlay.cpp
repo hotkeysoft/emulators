@@ -1,4 +1,5 @@
 #include "Overlay.h"
+#include "TimeFormatter.h"
 #include "../Config.h"
 #include "../Storage/DeviceFloppy.h"
 #include "../Storage/DeviceHardDrive.h"
@@ -72,6 +73,8 @@ namespace ui
 		return true;
 	}
 
+	// TODO: The actual refresh interval is proportional
+	// to the emulated CPU spees
 	void HardDriveLED::Update(bool active)
 	{
 		m_active = active;
@@ -439,6 +442,16 @@ namespace ui
 			}
 		}
 
+		// TODO: The actual refresh interval is proportional
+		// to the emulated CPU spees
+		const int cooldownTime = 1000;
+		static int cooldown = cooldownTime;
+		if (--cooldown == 0)
+		{
+			cooldown = cooldownTime;
+			LogPrintf(LOG_ERROR, "UpdateSnapshot");
+			UpdateSnapshot();
+		}
 		return true;
 	}
 
@@ -723,10 +736,8 @@ namespace ui
 		time_t value;
 		if (sscanf(name.c_str(), "snap-%llu", &value) == 1)
 		{
-			char buf[128];
-			struct tm* local = localtime(&value);
-			strftime(buf, sizeof(buf), "%c", local);
-			name = buf;
+			TimeFormatter format(value);
+			return format.ToString();
 		}
 
 		return name;

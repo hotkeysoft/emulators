@@ -231,6 +231,9 @@
     <ClCompile Include="Video\AttributeControllerEGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="UI\TimeFormatter.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -403,6 +406,9 @@
     </ClInclude>
     <ClInclude Include="Video\SequencerEGA.h">
       <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\TimeFormatter.h">
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
