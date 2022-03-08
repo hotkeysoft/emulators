@@ -214,35 +214,37 @@ namespace ui
 
 	void Overlay::OnClick(WidgetRef widget)
 	{
-		if (widget->GetId() == "floppy0")
+		const std::string& id = widget->GetId();
+
+		if (id == "floppy0")
 		{
 			LoadFloppyDiskImage(0);
 		}
-		else if (widget->GetId() == "floppy1")
+		else if (id == "floppy1")
 		{
 			LoadFloppyDiskImage(1);
 		}
-		if (widget->GetId() == "eject0")
+		if (id == "eject0")
 		{
 			LoadFloppyDiskImage(0, true);
 		}
-		else if (widget->GetId() == "eject1")
+		else if (id == "eject1")
 		{
 			LoadFloppyDiskImage(1, true);
 		}
-		if (widget->GetId() == "hdd0")
+		if (id == "hdd0")
 		{
 			LoadHardDiskImage(0);
 		}
-		else if (widget->GetId() == "hdd1")
+		else if (id == "hdd1")
 		{
 			LoadHardDiskImage(1);
 		}
-		else if (widget->GetId() == "speed")
+		else if (id == "speed")
 		{
 			ToggleCPUSpeed();
 		}
-		else if (widget->GetId() == "saveSnapshot")
+		else if (id == "saveSnapshot")
 		{
 			RemoveSnapshotWindow();
 			fs::path snapshotDir;
@@ -251,7 +253,7 @@ namespace ui
 				SaveSnapshot(snapshotDir);
 			}
 		}
-		else if (widget->GetId() == "loadSnapshot")
+		else if (id == "loadSnapshot")
 		{
 			if (SDL_GetModState() & KMOD_SHIFT)
 			{
@@ -264,68 +266,87 @@ namespace ui
 				LoadLastSnapshot();
 			}
 		}
-		else if (widget->GetId() == "reboot")
+		else if (id == "reboot")
 		{
 			// Shift+click = hard reboot
 			m_pc->Reboot(SDL_GetModState() & KMOD_SHIFT);
 		}
-		else if (widget->GetId() == "turbo")
+		else if (id == "turbo")
 		{
 			ToggleTurbo();
 		}
-		else if (widget->GetId() == "joystick")
+		else if (id == "joystick")
 		{
 			JoystickConfig();
 		}
-		else if (widget->GetId() == "trimX-")
+		else if (id == "trimX-")
 		{
 			--m_trim.x;
 			SetTrim();
 		}
-		else if (widget->GetId() == "trimX--")
+		else if (id == "trimX--")
 		{
 			m_trim.x -= 5;
 			SetTrim();
 		}
-		else if (widget->GetId() == "trimX+")
+		else if (id == "trimX+")
 		{
 			++m_trim.x;
 			SetTrim();
 		}
-		else if (widget->GetId() == "trimX++")
+		else if (id == "trimX++")
 		{
 			m_trim.x += 5;
 			SetTrim();
 		}
-		else if (widget->GetId() == "trimY-")
+		else if (id == "trimY-")
 		{
 			--m_trim.y;
 			SetTrim();
 		}
-		else if (widget->GetId() == "trimY--")
+		else if (id == "trimY--")
 		{
 			m_trim.y -= 5;
 			SetTrim();
 		}
-		else if (widget->GetId() == "trimY+")
+		else if (id == "trimY+")
 		{
 			++m_trim.y;
 			SetTrim();
 		}
-		else if (widget->GetId() == "trimY++")
+		else if (id == "trimY++")
 		{
 			m_trim.y += 5;
 			SetTrim();
 		}
-		else if (widget->GetId() == "resetX")
+		else if (id == "resetX")
 		{
 			m_trim.x = 0;
 			SetTrim();
 		}
-		else if (widget->GetId() == "resetY")
+		else if (id == "resetY")
 		{
 			m_trim.y = 0;
 			SetTrim();
+		}
+		else if (id.rfind("snapshot-", 0) != std::string::npos)
+		{
+			m_snapshotWnd->Show(false);
+			m_loadSnapshotButton->SetPushed(false);
+
+			std::filesystem::path* path = (std::filesystem::path*)widget->GetTag().o;
+			assert(path);
+
+			bool isDelete = (*id.rbegin() == 'x');
+			if (!isDelete)
+			{
+				RestoreSnapshot(*path);
+			}
+			else
+			{
+				// TODO: Delete snapshot folder
+				LogPrintf(LOG_ERROR, "Delete snapshot, path: %s", path->string().c_str());
+			}
 		}
 	}
 
@@ -698,6 +719,8 @@ namespace ui
 
 	void Overlay::LoadSnapshotList()
 	{
+		m_snapshots.clear();
+
 		fs::path path = m_snapshotBaseDirectory;
 		if (path.empty())
 		{
@@ -786,7 +809,7 @@ namespace ui
 
 		int index = 0;
 		size_t count = m_snapshots.size();
-		for (fs::path snapshot : m_snapshots)
+		for (const fs::path& snapshot : m_snapshots)
 		{
 			AddSnapshotItem(snapshot, index++, width - ((count <= nbItems) ? 8 : 26), hItem);
 		}
@@ -795,18 +818,22 @@ namespace ui
 		m_snapshotWnd->GetScrollBars()->ScrollTo(&Point(0, hItem * index));
 	}
 
-	void Overlay::AddSnapshotItem(const std::filesystem::path& path, int index, int w, int h)
+	void Overlay::AddSnapshotItem(const fs::path& path, int index, int w, int h)
 	{
 		std::string name = GetSnapshotName(path);
 		Rect pos(0, index * h, w-24, h);
 		Rect posDelete(w-24, index * h, 24, h);
 
 		char id[64];
-		sprintf(id, "snapshot%d", index);
-
-		m_snapshotWnd->AddControl(CoreUI::Button::Create(id, m_renderer, pos, name.c_str()));
+		sprintf(id, "snapshot-%d", index);
+		ButtonPtr loadButton = CoreUI::Button::Create(id, m_renderer, pos, name.c_str());
+		loadButton->SetTag((void*)&path);
+		m_snapshotWnd->AddControl(loadButton);
+		
 		strcat(id, "x");
-		m_snapshotWnd->AddControl(CoreUI::Button::Create(id, m_renderer, posDelete, "X"));
+		ButtonPtr deleteButton = CoreUI::Button::Create(id, m_renderer, posDelete, "X");
+		deleteButton->SetTag((void*)&path);
+		m_snapshotWnd->AddControl(deleteButton);
 	}
 
 	void Overlay::JoystickConfig()
