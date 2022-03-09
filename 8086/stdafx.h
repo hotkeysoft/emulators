@@ -26,6 +26,7 @@
 #include "../Common/json.hpp"
 #include "../Common/inipp.h"
 #include "../Common/Logger.h"
+#include "../Common/StringUtil.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
