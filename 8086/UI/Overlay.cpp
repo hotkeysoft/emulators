@@ -2,6 +2,7 @@
 
 #include "Overlay.h"
 #include "TimeFormatter.h"
+#include "SnapshotInfo.h"
 #include "../Config.h"
 #include "../Storage/DeviceFloppy.h"
 #include "../Storage/DeviceHardDrive.h"
@@ -595,7 +596,7 @@ namespace ui
 		UpdateTurbo();
 	}
 
-	void Overlay::SaveSnapshot(const fs::path& snapshotDir)
+	void Overlay::SaveComputerData(const std::filesystem::path& snapshotDir)
 	{
 		json j;
 		j["core"]["arch"] = Config::Instance().GetValueStr("core", "arch");
@@ -610,7 +611,27 @@ namespace ui
 		std::ofstream outStream(outFile.string());
 		outStream << std::setw(4) << j;
 
-		LogPrintf(LOG_INFO, "SaveSnapshot: Saved to [%s]", outFile.string().c_str());
+		LogPrintf(LOG_INFO, "SaveComputerData: Saved state to [%s]", outFile.string().c_str());
+	}
+
+	void Overlay::SaveSnapshotInfo(const std::filesystem::path& snapshotDir)
+	{
+		fs::path outFile = snapshotDir;
+		outFile.append("snapshot.json");
+
+		SnapshotInfo info(snapshotDir);
+		info.FromPC(m_pc);
+
+		if (!info.ToDisk())
+		{
+			LogPrintf(LOG_INFO, "SaveSnapshotInfo: Error saving snapshot info");
+		}
+	}
+
+	void Overlay::SaveSnapshot(const fs::path& snapshotDir)
+	{
+		SaveSnapshotInfo(snapshotDir);
+		SaveComputerData(snapshotDir);
 
 		m_lastSnapshotDir = snapshotDir;
 		UpdateSnapshot();
@@ -871,13 +892,26 @@ namespace ui
 
 	void Overlay::AddSnapshotItem(const fs::path& path, int index, int w, int h)
 	{
-		std::string name = GetSnapshotName(path);
+		SnapshotInfo info(path);
+		info.FromDisk();
+
+		std::ostringstream os;
+		os << GetSnapshotName(path) << ": ";
+		if (info.IsLoaded())
+		{
+			os << info.ToString();
+		}
+		else
+		{
+			os << "[No data]";
+		}
+
 		Rect pos(0, index * h, w-24, h);
 		Rect posDelete(w-24, index * h, 24, h);
 
 		char id[64];
 		sprintf(id, "snapshot-%d", index);
-		ButtonPtr loadButton = CoreUI::Button::Create(id, m_renderer, pos, name.c_str());
+		ButtonPtr loadButton = CoreUI::Button::Create(id, m_renderer, pos, os.str().c_str());
 		loadButton->SetTag((void*)&path);
 		m_snapshotWnd->AddControl(loadButton);
 		
