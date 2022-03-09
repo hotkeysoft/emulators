@@ -128,7 +128,7 @@ namespace ui
 		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_CANRESIZE | WIN_NOSCROLL);
 		m_mainWnd->SetMinSize((uint8_t)GetOverlayHeight());
 
-		RES().LoadImageMap("toolbar", "./res/toolbar.png", 16, 16);
+		RES().LoadImageMap("overlay16", "./res/overlay16.png", 16, 16);
 
 		ToolbarPtr toolbar = Toolbar::CreateAutoSize(m_renderer, "toolbar");
 		toolbar->SetBackgroundColor(Color::C_MED_GREY);
@@ -136,15 +136,15 @@ namespace ui
 		m_mainWnd->SetToolbar(toolbar);
 		UpdateTitle();
 
-		m_floppyInactive = RES().FindImage("toolbar", 0);
-		m_floppyActive = RES().FindImage("toolbar", 4);
-		m_hddInactive = RES().FindImage("toolbar", 1);
-		m_hddActive = RES().FindImage("toolbar", 5);
-		m_turboOff = RES().FindImage("toolbar", 10);
-		m_turboOn = RES().FindImage("toolbar", 12);
+		m_floppyInactive = RES().FindImage("overlay16", 0);
+		m_floppyActive = RES().FindImage("overlay16", 4);
+		m_hddInactive = RES().FindImage("overlay16", 1);
+		m_hddActive = RES().FindImage("overlay16", 5);
+		m_turboOff = RES().FindImage("overlay16", 10);
+		m_turboOn = RES().FindImage("overlay16", 12);
 
 		// Toolbar section: Reboot
-		ToolbarItemPtr rebootButton = toolbar->AddToolbarItem("reboot", RES().FindImage("toolbar", 11));
+		ToolbarItemPtr rebootButton = toolbar->AddToolbarItem("reboot", RES().FindImage("overlay16", 11));
 		rebootButton->SetTooltip("Click for Soft Reboot (CTRL+ATL+DEL)\nShift-Click for Hard Reboot");
 
 		toolbar->AddSeparator();
@@ -153,11 +153,11 @@ namespace ui
 		if (m_pc->GetFloppy())
 		{
 			m_floppyButton[0] = toolbar->AddToolbarItem("floppy0", m_floppyInactive, "A:");
-			m_ejectButton[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("toolbar", 7));
+			m_ejectButton[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("overlay16", 7));
 			m_ejectButton[0]->SetTooltip("Eject A:");
 			UpdateFloppy(0);
 			m_floppyButton[1] = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
-			m_ejectButton[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("toolbar", 7));
+			m_ejectButton[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("overlay16", 7));
 			m_ejectButton[1]->SetTooltip("Eject B:");
 			UpdateFloppy(1);
 
@@ -177,7 +177,7 @@ namespace ui
 		}
 
 		// Toolbar section: Speed
-		m_speedButton = toolbar->AddToolbarItem("speed", RES().FindImage("toolbar", 6), " 0.00 MHz");
+		m_speedButton = toolbar->AddToolbarItem("speed", RES().FindImage("overlay16", 6), " 0.00 MHz");
 		m_speedButton->SetTooltip("Toggle CPU Speed");
 		UpdateSpeed();
 
@@ -188,9 +188,9 @@ namespace ui
 		toolbar->AddSeparator();
 
 		// Toolbar section: Snapshots
-		ToolbarItemPtr saveSnapshotButton = toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("toolbar", 8));
+		ToolbarItemPtr saveSnapshotButton = toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("overlay16", 8));
 		saveSnapshotButton->SetTooltip("Save Computer state to disk");
-		m_loadSnapshotButton = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("toolbar", 9));
+		m_loadSnapshotButton = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("overlay16", 9));
 		m_loadSnapshotButton->SetTooltip("Restore last saved state from disk\nShift-click for more options");
 
 		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
@@ -206,7 +206,7 @@ namespace ui
 		// Toolbar section: Joystick
 		if (m_pc->GetInputs().GetJoystick())
 		{
-			m_joystickButton = toolbar->AddToolbarItem("joystick", RES().FindImage("toolbar", 2));
+			m_joystickButton = toolbar->AddToolbarItem("joystick", RES().FindImage("overlay16", 2));
 			m_joystickButton->SetTooltip("Joystick Configuration");
 		}
 
@@ -921,7 +921,7 @@ namespace ui
 		sprintf(id, "snapshot-%d", index);
 
 		SnapshotWidgetPtr widget = SnapshotWidget::Create(id, m_renderer, pos);
-		widget->Init({ RES().FindImage("toolbar", 0), RES().FindImage("toolbar", 1), RES().FindImage("toolbar", 2) });
+		widget->Init({ RES().FindImage("overlay16", 0), RES().FindImage("overlay16", 1), RES().FindImage("overlay16", 2) });
 		widget->SetText(os.str().c_str());
 		widget->SetTag((void*)&path);
 
