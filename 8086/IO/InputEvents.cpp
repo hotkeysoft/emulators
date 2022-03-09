@@ -360,12 +360,18 @@ namespace events
 		SDL_Event e;
 		while (!m_quit && SDL_PollEvent(&e))
 		{
+			bool handled = false;
 			for (auto handler : m_handlers)
 			{
 				if (handler->HandleEvent(e))
 				{
-					continue;
+					handled = true;
+					break;
 				}
+			}
+			if (handled)
+			{
+				continue;
 			}
 
 			switch (e.type)
