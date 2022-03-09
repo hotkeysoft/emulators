@@ -3,6 +3,7 @@
 #include "Overlay.h"
 #include "TimeFormatter.h"
 #include "SnapshotInfo.h"
+#include "SnapshotWidget.h"
 #include "../Config.h"
 #include "../Storage/DeviceFloppy.h"
 #include "../Storage/DeviceHardDrive.h"
@@ -329,22 +330,30 @@ namespace ui
 			m_trim.y = 0;
 			SetTrim();
 		}
-		else if (id.rfind("snapshot-", 0) != std::string::npos)
+		else if (StringUtil::StartsWith(id, "snapshot-"))
 		{
-			std::filesystem::path* path = (std::filesystem::path*)widget->GetTag().o;
+			// Edit/Load/Delete buttons are children of Snapshotwidget, so
+			// the tag is in the parent
+			std::filesystem::path* path = (std::filesystem::path*)widget->GetParent()->GetTag().o;
 			assert(path);
-
-			bool isDelete = (*id.rbegin() == 'x');
-			if (!isDelete)
+			if (StringUtil::EndsWith(id, "load"))
 			{
 				m_snapshotWnd->Show(false);
 				m_loadSnapshotButton->SetPushed(false);
 				RestoreSnapshot(*path);
 			}
-			else
+			else if (StringUtil::EndsWith(id, "edit"))
+			{
+
+			}
+			else if (StringUtil::EndsWith(id, "delete"))
 			{
 				DeleteSnapshot(*path);
 			}
+		}
+		else
+		{
+			LogPrintf(LOG_WARNING, "OnClick: Unknown button id [%s]", id.c_str());
 		}
 	}
 
@@ -906,19 +915,17 @@ namespace ui
 			os << "[No data]";
 		}
 
-		Rect pos(0, index * h, w-24, h);
-		Rect posDelete(w-24, index * h, 24, h);
+		Rect pos(0, index * h, w, h);
 
 		char id[64];
 		sprintf(id, "snapshot-%d", index);
-		ButtonPtr loadButton = CoreUI::Button::Create(id, m_renderer, pos, os.str().c_str());
-		loadButton->SetTag((void*)&path);
-		m_snapshotWnd->AddControl(loadButton);
-		
-		strcat(id, "x");
-		ButtonPtr deleteButton = CoreUI::Button::Create(id, m_renderer, posDelete, "X");
-		deleteButton->SetTag((void*)&path);
-		m_snapshotWnd->AddControl(deleteButton);
+
+		SnapshotWidgetPtr widget = SnapshotWidget::Create(id, m_renderer, pos);
+		widget->Init({ RES().FindImage("toolbar", 0), RES().FindImage("toolbar", 1), RES().FindImage("toolbar", 2) });
+		widget->SetText(os.str().c_str());
+		widget->SetTag((void*)&path);
+
+		m_snapshotWnd->AddControl(widget);
 	}
 
 	void Overlay::JoystickConfig()

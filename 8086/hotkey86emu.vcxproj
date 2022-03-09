@@ -213,6 +213,7 @@
     <ClCompile Include="IO\Monitor.cpp" />
     <ClCompile Include="CPU\PortConnector.cpp" />
     <ClCompile Include="UI\SnapshotInfo.cpp" />
+    <ClCompile Include="UI\SnapshotWidget.cpp" />
     <ClCompile Include="UI\TimeFormatter.cpp" />
     <ClCompile Include="Video\AttributeControllerEGA.cpp" />
     <ClCompile Include="Video\CRTController6845.cpp" />
@@ -233,6 +234,7 @@
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
+    <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UI\Overlay.h" />
     <ClInclude Include="Serializable.h" />
@@ -275,6 +277,7 @@
     <ClInclude Include="IO\Monitor.h" />
     <ClInclude Include="CPU\PortConnector.h" />
     <ClInclude Include="UI\SnapshotInfo.h" />
+    <ClInclude Include="UI\SnapshotWidget.h" />
     <ClInclude Include="UI\TimeFormatter.h" />
     <ClInclude Include="Video\AttributeControllerEGA.h" />
     <ClInclude Include="Video\CRTController6845.h" />
