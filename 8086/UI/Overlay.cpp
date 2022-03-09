@@ -921,7 +921,7 @@ namespace ui
 		sprintf(id, "snapshot-%d", index);
 
 		SnapshotWidgetPtr widget = SnapshotWidget::Create(id, m_renderer, pos);
-		widget->Init({ RES().FindImage("overlay16", 0), RES().FindImage("overlay16", 1), RES().FindImage("overlay16", 2) });
+		widget->Init({ RES().FindImage("overlay16", 13), RES().FindImage("overlay16", 14), RES().FindImage("overlay16", 15) });
 		widget->SetText(os.str().c_str());
 		widget->SetTag((void*)&path);
 
