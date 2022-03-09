@@ -1,6 +1,8 @@
 #pragma once
 #include <Core/Widget.h>
 #include <Widgets/Label.h>
+#include <Widgets/TextBox.h>
+#include "SnapshotInfo.h"
 
 namespace ui
 {
@@ -22,8 +24,9 @@ namespace ui
 		SnapshotWidget(SnapshotWidget&&) = delete;
 		SnapshotWidget& operator=(SnapshotWidget&&) = delete;
 
-		// Images for the buttons (in order): [Load, Edit, Delete]
-		void Init(ButtonImages buttonImages);
+		// buttonImages: images for the buttons (in order): [Load, Edit, Delete]
+		void Init(const SnapshotInfo& info, ButtonImages buttonImages);
+		const SnapshotInfo& GetInfo() const { return m_info; }
 
 		static SnapshotWidgetPtr Create(const char* id, CoreUI::RendererRef renderer, CoreUI::Rect rect, CoreUI::CreationFlags flags = 0);
 
@@ -32,19 +35,33 @@ namespace ui
 
 		void Draw() override;
 
-		std::string GetText() const { return m_label->GetText(); }
-		void SetText(const char* text) override { m_label->SetText(text); }
+		void SetText(const char* text) override { m_text = text ? text : ""; UpdateLabel(); }
+
+		// Shows the text box and allow editing the snapshot's description
+		void BeginEdit();
+		static void EndEdit();
 
 	protected:
 		SnapshotWidget(const char* id, CoreUI::RendererRef renderer, CoreUI::Rect rect, CoreUI::CreationFlags flags = 0);
 
+		SnapshotInfo m_info;
+
 		CoreUI::LabelPtr m_label;
 		void CreateLabel();
+		void UpdateLabel();
+
+		CoreUI::TextBoxPtr m_textBox;
+		void CreateTextBox();
 
 		CoreUI::ButtonPtr m_loadButton;
 		CoreUI::ButtonPtr m_editButton;
 		CoreUI::ButtonPtr m_deleteButton;
 		void CreateButtons(ButtonImages buttonImages);
+
+		// Widget currently editing
+		bool IsEditing() const { return m_editingWidget == this; }
+		static SnapshotWidgetRef m_editingWidget;
+		void InternalEndEdit();
 
 		struct shared_enabler;
 	};

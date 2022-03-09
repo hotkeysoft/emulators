@@ -11,6 +11,7 @@ namespace ui
 	class SnapshotInfo
 	{
 	public:
+		SnapshotInfo() = default;
 		SnapshotInfo(const std::filesystem::path& snapshotDir);
 
 		bool IsLoaded() const { return m_isLoaded; }

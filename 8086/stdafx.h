@@ -31,6 +31,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#undef LoadCursor
 
 #pragma warning( disable:4251 )
 #pragma warning ( disable:26429 )

@@ -120,6 +120,10 @@ namespace ui
 		RES().Init(m_renderer);
 		WINMGR().Init(m_window, m_renderer);
 
+		RES().LoadCursor("edit.ibeam", SDL_SYSTEM_CURSOR_IBEAM);
+		CursorRef normalCursor = RES().LoadCursor("default", SDL_SYSTEM_CURSOR_ARROW);
+		SDL_SetCursor(normalCursor);
+
 		Rect windowSize = WINMGR().GetWindowSize();
 		Rect toolbarRect = windowSize;
 		toolbarRect.h = GetOverlayHeight();
@@ -256,6 +260,8 @@ namespace ui
 		}
 		else if (id == "loadSnapshot")
 		{
+			// Abort if we're currently editing one of the snapshots
+			SnapshotWidget::EndEdit();
 			if (SDL_GetModState() & KMOD_SHIFT)
 			{
 				m_loadSnapshotButton->SetPushed(true);
@@ -332,6 +338,9 @@ namespace ui
 		}
 		else if (StringUtil::StartsWith(id, "snapshot-"))
 		{
+			// Abort if we're currently editing one of the snapshots
+			SnapshotWidget::EndEdit();
+
 			// Edit/Load/Delete buttons are children of Snapshotwidget, so
 			// the tag is in the parent
 			std::filesystem::path* path = (std::filesystem::path*)widget->GetParent()->GetTag().o;
@@ -344,7 +353,8 @@ namespace ui
 			}
 			else if (StringUtil::EndsWith(id, "edit"))
 			{
-
+				SnapshotWidgetRef snapshotWidget = (SnapshotWidgetRef)widget->GetParent();
+				snapshotWidget->BeginEdit();
 			}
 			else if (StringUtil::EndsWith(id, "delete"))
 			{
@@ -903,17 +913,7 @@ namespace ui
 	{
 		SnapshotInfo info(path);
 		info.FromDisk();
-
-		std::ostringstream os;
-		os << GetSnapshotName(path) << ": ";
-		if (info.IsLoaded())
-		{
-			os << info.ToString();
-		}
-		else
-		{
-			os << "[No data]";
-		}
+		info.SetDescription("TEST");
 
 		Rect pos(0, index * h, w, h);
 
@@ -921,8 +921,12 @@ namespace ui
 		sprintf(id, "snapshot-%d", index);
 
 		SnapshotWidgetPtr widget = SnapshotWidget::Create(id, m_renderer, pos);
-		widget->Init({ RES().FindImage("overlay16", 13), RES().FindImage("overlay16", 14), RES().FindImage("overlay16", 15) });
-		widget->SetText(os.str().c_str());
+		widget->Init(info, { 
+			RES().FindImage("overlay16", 13), 
+			RES().FindImage("overlay16", 14), 
+			RES().FindImage("overlay16", 15) 
+		});
+		widget->SetText(GetSnapshotName(path).c_str());
 		widget->SetTag((void*)&path);
 
 		m_snapshotWnd->AddControl(widget);
@@ -1011,6 +1015,8 @@ namespace ui
 				}
 				else if (widget->GetId() == "snapshots")
 				{
+					// Abort if we're currently editing one of the snapshots
+					SnapshotWidget::EndEdit();
 					m_loadSnapshotButton->SetPushed(false);
 				}
 			}
@@ -1029,6 +1035,10 @@ namespace ui
 				{
 					owner->HandleEvent(&e);
 					handled = true;
+				}
+				else
+				{
+					handled = WINMGR().GetActive()->HandleEvent(&e);
 				}
 			}
 		}
