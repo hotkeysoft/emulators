@@ -83,16 +83,33 @@ namespace ui
 		return true;
 	}
 
+	TimeFormatter SnapshotInfo::GetTimestamp() const
+	{
+		std::string name = m_snapshotDir.filename().string();
+
+		time_t value = 0;
+		if (sscanf(name.c_str(), "snap-%llu", &value) != 1)
+		{
+			value = 0;
+		}
+		return TimeFormatter(value);
+	}
+
 	std::string SnapshotInfo::ToString() const
 	{
-		std::ostringstream os;
-		if (m_isLoaded)
+		std::ostringstream os;	
+		os << m_description;
+		if (m_description.size())
 		{
-			os << m_pc << " [" << m_video << ']';
-			if (m_description.size())
-			{
-				os << " - " << m_description;
-			}
+			os << ' ';
+		}
+		if (m_isLoaded && m_pc.size())
+		{
+			os << '[' << m_pc << "][" << m_video << "]";
+		}
+		else
+		{
+			os << "[Unknown]";
 		}
 
 		return os.str();

@@ -32,14 +32,24 @@ namespace ui
 
 	std::string TimeFormatter::FormatAbsolute() const
 	{
+		if (m_time == 0)
+		{
+			return "(Invalid date)";
+		}
+
 		char buf[128];
 		struct tm* local = localtime(&m_time);
 		strftime(buf, sizeof(buf), "%c", local);
-		return  buf;
+		return buf;
 	}
 
 	std::string TimeFormatter::FormatRelative() const
 	{
+		if (m_time == 0)
+		{
+			return "(Invalid date)";
+		}
+
 		std::ostringstream os;
 
 		time_t now = time(nullptr);

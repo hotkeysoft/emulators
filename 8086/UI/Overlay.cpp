@@ -663,11 +663,17 @@ namespace ui
 			{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT |
 			SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "No" }
 		};
+		
+		SnapshotInfo info(path);
+		info.FromDisk();
 
 		std::ostringstream os;
 		os << "Do you want to delete the following snapshot?"
-			<< std::endl
-			<< path.stem().string();
+			<< std::endl << std::endl
+			<< "- " << info.ToString()
+			<< std::endl << std::endl
+			<< "Saved: " << info.GetTimestamp().ToString(TimeFormat::TF_ABSOLUTE);
+
 		std::string msg = os.str();
 
 		SDL_MessageBoxData data;
@@ -913,7 +919,6 @@ namespace ui
 	{
 		SnapshotInfo info(path);
 		info.FromDisk();
-		info.SetDescription("TEST");
 
 		Rect pos(0, index * h, w, h);
 
@@ -1019,6 +1024,7 @@ namespace ui
 					SnapshotWidget::EndEdit();
 					m_loadSnapshotButton->SetPushed(false);
 				}
+				handled = true;
 			}
 		}
 		else if (e.type == toolbarEvent || e.type == buttonEvent)

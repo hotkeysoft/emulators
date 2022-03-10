@@ -1,5 +1,6 @@
 #pragma once
 #include "Serializable.h"
+#include "TimeFormatter.h"
 
 namespace emul
 {
@@ -29,6 +30,8 @@ namespace ui
 		bool ToDisk() const;
 
 		std::string ToString() const;
+
+		TimeFormatter GetTimestamp() const;
 
 	protected:
 		bool m_isLoaded = false;

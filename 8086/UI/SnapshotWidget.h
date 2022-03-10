@@ -41,6 +41,8 @@ namespace ui
 		void BeginEdit();
 		static void EndEdit();
 
+		void ClearFocus() override;
+
 	protected:
 		SnapshotWidget(const char* id, CoreUI::RendererRef renderer, CoreUI::Rect rect, CoreUI::CreationFlags flags = 0);
 

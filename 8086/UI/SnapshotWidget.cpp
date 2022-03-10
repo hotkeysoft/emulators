@@ -107,7 +107,7 @@ namespace ui
 		CreateTextBox();
 		m_editButton->SetPushed(true);
 		m_textBox->SetActive();
-		m_textBox->SetFocus(nullptr);
+		m_textBox->SetFocus();
 	}
 
 	void SnapshotWidget::EndEdit()
@@ -121,26 +121,28 @@ namespace ui
 
 	void SnapshotWidget::InternalEndEdit()
 	{
-		// TODO: Save info
-
 		m_textBox = nullptr;
 		m_editButton->SetPushed(false);
+	}
+
+	void SnapshotWidget::ClearFocus()
+	{
+		// Clear for all sub widgets
+		Widget::ClearFocus();
+		if (m_textBox)
+		{
+			m_textBox->ClearFocus();
+		}
+		m_label->ClearFocus();
+		m_loadButton->ClearFocus();
+		m_editButton->ClearFocus();
+		m_deleteButton->ClearFocus();
 	}
 
 	void SnapshotWidget::UpdateLabel()
 	{
 		std::ostringstream os;
-		os << m_text << ": ";
-		if (m_info.IsLoaded())
-		{
-			os << m_info.GetPC()
-				<< " (" << m_info.GetVideo() << ") "
-				<< m_info.GetDescription();
-		}
-		else
-		{
-			os << "Unknown";
-		}
+		os << m_text << ": " << m_info.ToString();
 		m_label->SetText(os.str().c_str());
 	}
 
@@ -185,8 +187,27 @@ namespace ui
 
 	bool SnapshotWidget::HandleEvent(SDL_Event* e)
 	{
+		static Uint32 textBoxEvent = WINMGR().GetEventType(TextBox::EventClassName());
+
 		Point pt(e->button.x, e->button.y);
-		if (m_loadButton->HitTest(&pt))
+
+		if (e->type == textBoxEvent)
+		{
+			TextBoxRef widget = (TextBoxRef)e->user.data1;
+			if ((m_textBox.get() == widget) && (e->user.code == TextBox::EVENT_TEXTBOX_END_EDIT))
+			{
+				bool save = ((size_t)e->user.data2 == 1);
+				if (save)
+				{
+					m_info.SetDescription(m_textBox->GetText().c_str());
+					m_info.ToDisk();
+					UpdateLabel();
+				}
+				EndEdit();
+				return true;
+			}
+		}
+		else if (m_loadButton->HitTest(&pt))
 		{
 			return m_loadButton->HandleEvent(e);
 		}
