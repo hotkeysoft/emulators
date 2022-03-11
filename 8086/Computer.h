@@ -53,7 +53,8 @@ namespace emul
 	public:
 		virtual ~Computer();
 
-		virtual const char* GetName() const = 0;
+		virtual std::string_view GetName() const = 0;
+		virtual std::string_view GetID() const = 0;
 
 		virtual void Init(WORD baseRAM) = 0;
 

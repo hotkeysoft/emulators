@@ -45,7 +45,8 @@ namespace emul
 	public:
 		ComputerPCjr();
 
-		virtual const char* GetName() const override { return "IBM PCjr"; };
+		virtual std::string_view GetName() const override { return "IBM PCjr"; };
+		virtual std::string_view GetID() const override { return "pcjr"; };
 
 		virtual void Init(WORD baseRAM) override;
 

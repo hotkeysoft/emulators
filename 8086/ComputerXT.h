@@ -34,7 +34,8 @@ namespace emul
 	public:
 		ComputerXT();
 
-		virtual const char* GetName() const override { return "IBM XT"; };
+		virtual std::string_view GetName() const override { return "IBM XT"; };
+		virtual std::string_view GetID() const override { return "xt"; };
 
 		virtual void Init(WORD baseRAM) override;
 
