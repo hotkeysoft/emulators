@@ -1095,6 +1095,7 @@ namespace ui
 				{
 					// Abort if we're currently editing one of the snapshots
 					SnapshotWidget::EndEdit();
+					RemoveSnapshotWindow();
 					m_loadSnapshotButton->SetPushed(false);
 				}
 				handled = true;
