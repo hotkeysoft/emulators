@@ -2,6 +2,7 @@
 
 #include "Video.h"
 #include "../Config.h"
+#include "../UI/MainWindow.h"
 #include "../UI/Overlay.h"
 
 #include <SDL.h>
@@ -12,6 +13,8 @@
 #include <assert.h>
 
 using cfg::Config;
+using ui::MAINWND;
+using ui::WindowSize;
 using ui::Overlay;
 
 namespace video
@@ -34,9 +37,7 @@ namespace video
 		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
 	};
 
-	Video::Video() :
-		m_sdlWidth(800),
-		m_sdlHeight(600)
+	Video::Video()
 	{
 	}
 
@@ -50,40 +51,7 @@ namespace video
 		assert(memory);
 		m_memory = memory;
 
-		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
-		{
-			SDL_InitSubSystem(SDL_INIT_VIDEO);
-		}
-
-		float scale = std::max(1.0f, Config::Instance().GetValueFloat("video", "scale", 1.0f));
-		bool fullScreen = Config::Instance().GetValueBool("video", "fullscreen");
-		LogPrintf(LOG_INFO, "Scale factor: %f", scale);
-		LogPrintf(LOG_INFO, "Full screen: %d", fullScreen);
-
-		SDL_CreateWindowAndRenderer(
-			(int)(m_sdlWidth),
-			(int)(m_sdlHeight) + Overlay::GetOverlayHeight(),
-			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_RESIZABLE,
-			&m_sdlWindow,
-			&m_sdlRenderer);
-
-		SDL_SetWindowTitle(m_sdlWindow, "hotkey86");
-
-		int actualW, actualH;
-		SDL_GetWindowSize(m_sdlWindow, &actualW, &actualH);
-		LogPrintf(LOG_INFO, "Window Size: %dx%d", actualW, actualH);
-		m_sdlWidth = actualW;
-		m_sdlHeight = actualH;
 		UpdateTargetRect();
-
-		std::string filtering = Config::Instance().GetValueStr("video", "filtering", "0");
-		if (filtering.empty())
-		{
-			filtering = "0";
-		}
-		LogPrintf(LOG_INFO, "Render Scale Quality: %s", filtering.c_str());
-		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, filtering.c_str());
-
 		InitMonitor(forceMono);
 	}
 
@@ -104,7 +72,7 @@ namespace video
 			m_fb.resize(width * height);
 			std::fill(m_fb.begin(), m_fb.end(), GetBackgroundColor());
 
-			m_sdlTexture = SDL_CreateTexture(m_sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+			m_sdlTexture = SDL_CreateTexture(MAINWND().GetRenderer(), SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
 		}
 		else
 		{
@@ -174,24 +142,24 @@ namespace video
 		if (m_sdlTexture)
 		{
 			SDL_UpdateTexture(m_sdlTexture, &fbRect, &m_fb[0], m_fbWidth * sizeof(uint32_t));
-			SDL_RenderCopy(m_sdlRenderer, m_sdlTexture, &srcRect, &m_targetRect);
+			SDL_RenderCopy(MAINWND().GetRenderer(), m_sdlTexture, &srcRect, &m_targetRect);
 		}
 
 		for (auto renderer : m_renderers)
 		{
 			renderer->Render();
 		}
-		SDL_RenderSetClipRect(m_sdlRenderer, nullptr);
+		SDL_RenderSetClipRect(MAINWND().GetRenderer(), nullptr);
 
-		SDL_RenderPresent(m_sdlRenderer);
+		SDL_RenderPresent(MAINWND().GetRenderer());
 
 		uint32_t bg = GetBackgroundColor();
 		Uint8 r = Uint8(bg >> 16);
 		Uint8 g = Uint8(bg >> 8);
 		Uint8 b = Uint8(bg);
 
-		SDL_SetRenderDrawColor(m_sdlRenderer, r, g, b, 255);
-		SDL_RenderClear(m_sdlRenderer);
+		SDL_SetRenderDrawColor(MAINWND().GetRenderer(), r, g, b, 255);
+		SDL_RenderClear(MAINWND().GetRenderer());
 
 		if (++frames == 60)
 		{
@@ -260,7 +228,8 @@ namespace video
 	{
 		const double targetRatio = 4 / 3.;
 
-		SDL_Rect rect{ 0, 0, m_sdlWidth, m_sdlHeight - Overlay::GetOverlayHeight() };
+		const auto& size = MAINWND().GetSize();
+		SDL_Rect rect{ 0, 0, size.w, size.h - Overlay::GetOverlayHeight() };
 
 		float windowRatio = rect.w / (float)rect.h;
 
@@ -286,8 +255,8 @@ namespace video
 		if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED)
 		{
 			LogPrintf(LOG_INFO, "Resize: %d x %d", e.window.data1, e.window.data2);
-			m_sdlWidth = e.window.data1;
-			m_sdlHeight = e.window.data2;
+			
+			MAINWND().SetSize({ e.window.data1, e.window.data2 });
 			UpdateTargetRect();
 		}
 		return false; // Leave it unhandled if others are interested

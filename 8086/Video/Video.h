@@ -53,9 +53,6 @@ namespace video
 
 		void AddRenderer(Renderer* r) { m_renderers.push_back(r); }
 
-		SDL_Window* GetWindow() const { return m_sdlWindow; }
-		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }
-
 		virtual uint32_t GetBackgroundColor() const { return 0; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const = 0;
 		virtual bool IsEnabled() const = 0;
@@ -88,15 +85,8 @@ namespace video
 
 		const uint32_t* GetMonitorPalette() const { return m_monitorPalette; }
 
-		// SDL
-		SDL_Window* m_sdlWindow = nullptr;
-		SDL_Renderer* m_sdlRenderer = nullptr;
-
-		uint16_t m_sdlWidth = 0;
-		uint16_t m_sdlHeight = 0;
-
 		void UpdateTargetRect();
-		SDL_Rect m_targetRect;
+		SDL_Rect m_targetRect = { 0, 0, 0, 0 };
 
 		BYTE m_border = 0;
 

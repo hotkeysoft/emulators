@@ -6,6 +6,7 @@
 #include "IO/Console.h"
 #include "IO/Monitor.h"
 
+#include "UI/MainWindow.h"
 #include "UI/Overlay.h"
 
 #include "ComputerXT.h"
@@ -176,6 +177,8 @@ int main(int argc, char* args[])
 		_getch();
 		return 0;}
 #endif
+
+	ui::MAINWND().Init();
 
 	emul::Computer* pc = nullptr;
 	ui::Overlay overlay;

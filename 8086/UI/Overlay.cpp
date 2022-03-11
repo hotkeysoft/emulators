@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "MainWindow.h"
 #include "Overlay.h"
 #include "TimeFormatter.h"
 #include "SnapshotInfo.h"
@@ -35,11 +36,11 @@ using namespace CoreUI;
 
 namespace ui
 {
-	HWND GetHWND(SDL_Window* sdlWindow)
+	HWND GetHWND()
 	{
 		SDL_SysWMinfo wmInfo;
 		SDL_VERSION(&wmInfo.version);
-		SDL_GetWindowWMInfo(sdlWindow, &wmInfo);
+		SDL_GetWindowWMInfo(MAINWND().GetWindow(), &wmInfo);
 		return wmInfo.info.win.window;
 	}
 
@@ -114,11 +115,11 @@ namespace ui
 		}
 
 		SDL_InitSubSystem(SDL_INIT_TIMER);
-		m_renderer = pc->GetVideo().GetRenderer();
-		m_window = pc->GetVideo().GetWindow();
+		SDL_Renderer* ren = MAINWND().GetRenderer();
+		SDL_Window* wnd = MAINWND().GetWindow();
 
-		RES().Init(m_renderer);
-		WINMGR().Init(m_window, m_renderer);
+		RES().Init(ren);
+		WINMGR().Init(wnd, ren);
 
 		RES().LoadCursor("edit.ibeam", SDL_SYSTEM_CURSOR_IBEAM);
 		CursorRef normalCursor = RES().LoadCursor("default", SDL_SYSTEM_CURSOR_ARROW);
@@ -134,7 +135,7 @@ namespace ui
 
 		RES().LoadImageMap("overlay16", "./res/overlay16.png", 16, 16);
 
-		ToolbarPtr toolbar = Toolbar::CreateAutoSize(m_renderer, "toolbar");
+		ToolbarPtr toolbar = Toolbar::CreateAutoSize(ren, "toolbar");
 		toolbar->SetBackgroundColor(Color::C_MED_GREY);
 
 		m_mainWnd->SetToolbar(toolbar);
@@ -560,7 +561,7 @@ namespace ui
 		{
 			m_pc->GetFloppy()->ClearDiskImage(drive);
 		}
-		else if (SelectFile(diskImage, GetHWND(m_window)))
+		else if (SelectFile(diskImage, GetHWND()))
 		{
 			m_pc->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
 		}
@@ -575,7 +576,7 @@ namespace ui
 		}
 
 		fs::path diskImage;
-		if (SelectFile(diskImage, GetHWND(m_window)))
+		if (SelectFile(diskImage, GetHWND()))
 		{
 			BYTE currImageType = m_pc->GetHardDrive()->GetImageInfo(drive).type;
 
@@ -681,7 +682,7 @@ namespace ui
 		data.flags = SDL_MESSAGEBOX_WARNING | SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT;
 		data.title = "Delete Snapshot";
 		data.message = msg.c_str();
-		data.window = m_window;
+		data.window = MAINWND().GetWindow();
 		data.buttons = buttons;
 		data.numbuttons = SDL_arraysize(buttons);
 
@@ -701,7 +702,7 @@ namespace ui
 					<< std::endl
 					<< code.message();
 				std::string msg = os.str();
-				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Delete Snapshot", msg.c_str(), m_window);
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Delete Snapshot", msg.c_str(), MAINWND().GetWindow());
 			}
 
 			// In case the most recent was deleted
@@ -925,7 +926,7 @@ namespace ui
 		char id[64];
 		sprintf(id, "snapshot-%d", index);
 
-		SnapshotWidgetPtr widget = SnapshotWidget::Create(id, m_renderer, pos);
+		SnapshotWidgetPtr widget = SnapshotWidget::Create(id, MAINWND().GetRenderer(), pos);
 		widget->Init(info, { 
 			RES().FindImage("overlay16", 13), 
 			RES().FindImage("overlay16", 14), 
@@ -957,6 +958,8 @@ namespace ui
 		const int line1y = 28;
 		const int lineh = 24;
 
+		SDL_Renderer* ren = MAINWND().GetRenderer();
+
 		Rect r = WINMGR().GetWindowSize();
 		r.x = r.w - width;
 		r.y = r.h - (GetOverlayHeight() + height);
@@ -966,27 +969,27 @@ namespace ui
 		m_joystickConfigWnd->SetText("Joystick");
 		m_joystickConfigWnd->SetActive();
 
-		m_joystickConfigWnd->AddControl(CoreUI::Label::CreateSingle("lx", m_renderer, Rect(0, line0y, 50, lineh), "Trim X"));
-		m_joystickConfigWnd->AddControl(CoreUI::Label::CreateSingle("ly", m_renderer, Rect(0, line1y, 50, lineh), "Trim Y"));
+		m_joystickConfigWnd->AddControl(CoreUI::Label::CreateSingle("lx", ren, Rect(0, line0y, 50, lineh), "Trim X"));
+		m_joystickConfigWnd->AddControl(CoreUI::Label::CreateSingle("ly", ren, Rect(0, line1y, 50, lineh), "Trim Y"));
 
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX--", m_renderer, Rect(50, line0y, 28, lineh), "<<"));
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY--", m_renderer, Rect(50, line1y, 28, lineh), "<<"));
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX-", m_renderer, Rect(76, line0y, 24, lineh), "<"));
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY-", m_renderer, Rect(76, line1y, 24, lineh), "<"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX--", ren, Rect(50, line0y, 28, lineh), "<<"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY--", ren, Rect(50, line1y, 28, lineh), "<<"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX-", ren, Rect(76, line0y, 24, lineh), "<"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY-", ren, Rect(76, line1y, 24, lineh), "<"));
 
-		m_trimX = CoreUI::Label::CreateSingle("trimX", m_renderer, Rect(110, line0y, 28, lineh), "0", nullptr, CoreUI::Label::TEXT_H_CENTER);
+		m_trimX = CoreUI::Label::CreateSingle("trimX", ren, Rect(110, line0y, 28, lineh), "0", nullptr, CoreUI::Label::TEXT_H_CENTER);
 		m_joystickConfigWnd->AddControl(m_trimX);
 
-		m_trimY = CoreUI::Label::CreateSingle("trimY", m_renderer, Rect(110, line1y, 28, lineh), "0", nullptr, CoreUI::Label::TEXT_H_CENTER);
+		m_trimY = CoreUI::Label::CreateSingle("trimY", ren, Rect(110, line1y, 28, lineh), "0", nullptr, CoreUI::Label::TEXT_H_CENTER);
 		m_joystickConfigWnd->AddControl(m_trimY);
 
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX+", m_renderer, Rect(146, line0y, 24, lineh), ">"));
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY+", m_renderer, Rect(146, line1y, 24, lineh), ">"));
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX++", m_renderer, Rect(170, line0y, 28, lineh), ">>"));
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY++", m_renderer, Rect(170, line1y, 28, lineh), ">>"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX+", ren, Rect(146, line0y, 24, lineh), ">"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY+", ren, Rect(146, line1y, 24, lineh), ">"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimX++", ren, Rect(170, line0y, 28, lineh), ">>"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("trimY++", ren, Rect(170, line1y, 28, lineh), ">>"));
 
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("resetX", m_renderer, Rect(206, line0y, 60, lineh), "Reset"));
-		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("resetY", m_renderer, Rect(206, line1y, 60, lineh), "Reset"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("resetX", ren, Rect(206, line0y, 60, lineh), "Reset"));
+		m_joystickConfigWnd->AddControl(CoreUI::Button::Create("resetY", ren, Rect(206, line1y, 60, lineh), "Reset"));
 
 		UpdateTrim();
 	}

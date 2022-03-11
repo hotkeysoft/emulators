@@ -92,9 +92,6 @@ namespace ui
 		CoreUI::WindowPtr m_joystickConfigWnd;
 		CoreUI::WindowPtr m_snapshotWnd;
 
-		CoreUI::RendererRef m_renderer = nullptr;
-		CoreUI::MainWindowRef m_window = nullptr;
-
 		CoreUI::ToolbarItemPtr m_floppyButton[2];
 		CoreUI::ToolbarItemPtr m_ejectButton[2];
 		CoreUI::ToolbarItemPtr m_hddButton[2];
