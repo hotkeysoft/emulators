@@ -126,6 +126,38 @@ void InitSound()
 	}
 }
 
+Computer* CreateComputer(std::string arch)
+{
+	if (arch == "xt")
+	{
+		return new emul::ComputerXT();
+	}
+	else if (arch == "pcjr")
+	{
+		return new emul::ComputerPCjr();
+
+	}
+	else if (arch == "tandy")
+	{
+		return new emul::ComputerTandy();
+	}
+	return nullptr;
+}
+
+void SetCPUSpeed(Computer* pc)
+{
+	Computer::CPUSpeeds speedList = pc->GetCPUSpeeds();
+	bool turbo = Config::Instance().GetValueBool("core", "turbo");
+
+	Computer::CPUSpeeds::const_iterator currSpeed = speedList.begin();
+	if (turbo)
+	{
+		currSpeed = --speedList.end();
+	}
+
+	pc->SetCPUSpeed(*currSpeed);
+}
+
 void InitLeakCheck()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -199,32 +231,18 @@ int main(int argc, char* args[])
 #endif
 
 	MAINWND().Init();
-
-	Computer* pc = nullptr;
+	InitSound();
+	
 	Overlay overlay;
 	bool showOverlay = true;
 
 	std::string arch = Config::Instance().GetValueStr("core", "arch");
-	if (arch == "xt")
-	{
-		pc = new emul::ComputerXT();
-	}
-	else if (arch == "pcjr")
-	{
-		pc = new emul::ComputerPCjr();
-		
-	}
-	else if (arch == "tandy")
-	{
-		pc = new emul::ComputerTandy();
-	}
-	else
+	Computer* pc = CreateComputer(arch);
+	if (!pc)
 	{
 		fprintf(stderr, "Unknown architecture: [core].arch=[%s]", arch.c_str());
 		return 2;
 	}
-
-	InitSound();
 
 	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
 
@@ -232,16 +250,7 @@ int main(int argc, char* args[])
 	pc->Init(baseRAM);
 	pc->Reset();
 
-	Computer::CPUSpeeds speedList = pc->GetCPUSpeeds();
-	bool turbo = Config::Instance().GetValueBool("core", "turbo");
-
-	Computer::CPUSpeeds::const_iterator currSpeed = speedList.begin();
-	if (turbo)
-	{
-		currSpeed = --speedList.end();
-	}
-
-	pc->SetCPUSpeed(*currSpeed);
+	SetCPUSpeed(pc);
 
 #if 0
 	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
