@@ -28,6 +28,7 @@ namespace emul
 
 	Computer::~Computer()
 	{
+		delete m_inputs;
 		delete m_floppy;
 		delete m_hardDrive;
 		delete m_joystick;
