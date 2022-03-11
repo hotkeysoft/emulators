@@ -101,12 +101,9 @@ namespace ui
 	{
 	}
 
-	bool Overlay::Init(emul::Computer* pc)
+	bool Overlay::Init()
 	{
 		LogPrintf(LOG_TRACE, "Overlay::Init");
-
-		assert(pc);
-		m_pc = pc;
 
 		if (TTF_Init() == -1)
 		{
@@ -125,21 +122,7 @@ namespace ui
 		CursorRef normalCursor = RES().LoadCursor("default", SDL_SYSTEM_CURSOR_ARROW);
 		SDL_SetCursor(normalCursor);
 
-		Rect windowSize = WINMGR().GetWindowSize();
-		Rect toolbarRect = windowSize;
-		toolbarRect.h = GetOverlayHeight();
-		toolbarRect.y = windowSize.h - toolbarRect.h;
-
-		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_CANRESIZE | WIN_NOSCROLL);
-		m_mainWnd->SetMinSize((uint8_t)GetOverlayHeight());
-
 		RES().LoadImageMap("overlay16", "./res/overlay16.png", 16, 16);
-
-		ToolbarPtr toolbar = Toolbar::CreateAutoSize(ren, "toolbar");
-		toolbar->SetBackgroundColor(Color::C_MED_GREY);
-
-		m_mainWnd->SetToolbar(toolbar);
-		UpdateTitle();
 
 		m_floppyInactive = RES().FindImage("overlay16", 0);
 		m_floppyActive = RES().FindImage("overlay16", 4);
@@ -147,6 +130,35 @@ namespace ui
 		m_hddActive = RES().FindImage("overlay16", 5);
 		m_turboOff = RES().FindImage("overlay16", 10);
 		m_turboOn = RES().FindImage("overlay16", 12);
+		return true;
+	}
+
+	void Overlay::SetPC(emul::Computer* pc)
+	{
+		assert(pc);
+		m_pc = pc;
+
+		SDL_Renderer* ren = MAINWND().GetRenderer();
+
+		Rect windowSize = WINMGR().GetWindowSize();
+		Rect toolbarRect = windowSize;
+		toolbarRect.h = GetOverlayHeight();
+		toolbarRect.y = windowSize.h - toolbarRect.h;
+
+		if (m_mainWnd)
+		{
+			WINMGR().RemoveWindow("status");
+			m_mainWnd = nullptr;
+		}
+
+		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_CANRESIZE | WIN_NOSCROLL);
+		m_mainWnd->SetMinSize((uint8_t)GetOverlayHeight());
+
+		ToolbarPtr toolbar = Toolbar::CreateAutoSize(ren, "toolbar");
+		toolbar->SetBackgroundColor(Color::C_MED_GREY);
+
+		m_mainWnd->SetToolbar(toolbar);
+		UpdateTitle();
 
 		// Toolbar section: Reboot
 		ToolbarItemPtr rebootButton = toolbar->AddToolbarItem("reboot", RES().FindImage("overlay16", 11));
@@ -161,12 +173,20 @@ namespace ui
 			m_ejectButton[0] = toolbar->AddToolbarItem("eject0", RES().FindImage("overlay16", 7));
 			m_ejectButton[0]->SetTooltip("Eject A:");
 			UpdateFloppy(0);
+
 			m_floppyButton[1] = toolbar->AddToolbarItem("floppy1", m_floppyInactive, "B:");
 			m_ejectButton[1] = toolbar->AddToolbarItem("eject1", RES().FindImage("overlay16", 7));
 			m_ejectButton[1]->SetTooltip("Eject B:");
 			UpdateFloppy(1);
 
 			toolbar->AddSeparator();
+		}
+		else
+		{
+			m_floppyButton[0] = nullptr;
+			m_floppyButton[1] = nullptr;
+			m_ejectButton[0] = nullptr;
+			m_ejectButton[1] = nullptr;
 		}
 
 		// Toolbar section: Hard disks
@@ -179,6 +199,11 @@ namespace ui
 			UpdateHardDisk(1);
 
 			toolbar->AddSeparator();
+		}
+		else
+		{
+			m_hddButton[0] = nullptr;
+			m_hddButton[1] = nullptr;
 		}
 
 		// Toolbar section: Speed
@@ -214,8 +239,10 @@ namespace ui
 			m_joystickButton = toolbar->AddToolbarItem("joystick", RES().FindImage("overlay16", 2));
 			m_joystickButton->SetTooltip("Joystick Configuration");
 		}
-
-		return true;
+		else
+		{
+			m_joystickButton = nullptr;
+		}
 	}
 
 	void Overlay::OnClick(WidgetRef widget)

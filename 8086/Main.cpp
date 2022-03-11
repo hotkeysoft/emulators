@@ -260,8 +260,8 @@ int main(int argc, char* args[])
 		monitor.Show();
 	}
 
-	// TODO: sdl window is created in Video class, not ideal
-	overlay.Init(pc);
+	overlay.Init();
+	overlay.SetPC(pc);
 
 	pc->GetVideo().AddRenderer(&overlay);
 	pc->GetInputs().AddEventHandler(&overlay);

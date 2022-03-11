@@ -27,7 +27,8 @@ namespace ui
 	public:
 		Overlay();
 
-		bool Init(emul::Computer* pc);
+		bool Init();
+		void SetPC(emul::Computer* pc);
 		void Show(bool show = true) { m_show = show; }
 		bool Update();
 
