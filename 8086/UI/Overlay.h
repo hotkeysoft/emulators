@@ -22,6 +22,8 @@ namespace ui
 		int m_cooldown = CooldownTime;
 	};
 
+	using NewComputerCallback = void (*)(std::filesystem::path, json& data);
+
 	class Overlay : public Logger, public video::Renderer, public events::EventHandler
 	{
 	public:
@@ -31,6 +33,13 @@ namespace ui
 		void SetPC(emul::Computer* pc);
 		void Show(bool show = true) { m_show = show; }
 		bool Update();
+
+		// When a snapshot is not compatible with the current pc
+		// we need to rip it out and create the correct one.
+		// This needs to be done in the main main loop at the right time.
+		// (The restore snapshot event is called from an event handler deep in the 
+		// Computer object, so it can't delete itself)
+		void SetNewComputerCallback(NewComputerCallback callback) { m_callback = callback; }
 
 		// video::Renderer
 		virtual void Render() override;
@@ -116,6 +125,7 @@ namespace ui
 		joy::AxisTrim m_trim;
 
 		std::set<std::filesystem::path> m_snapshots;
+		NewComputerCallback m_callback = nullptr;
 	};
 
 }

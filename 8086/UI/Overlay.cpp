@@ -34,6 +34,9 @@ namespace fs = std::filesystem;
 using namespace cfg;
 using namespace CoreUI;
 
+using emul::SerializableException;
+using emul::SerializationError;
+
 namespace ui
 {
 	HWND GetHWND()
@@ -813,39 +816,63 @@ namespace ui
 			return;
 		}
 
+		bool compatible = true;
+
 		std::string archConfig = Config::Instance().GetValueStr("core", "arch");
 		std::string archSnapshot = j["core"]["arch"];
 		if (archConfig != archSnapshot)
 		{
-			LogPrintf(LOG_ERROR, "RestoreSnapshot: Snapshot architecture[%s] different from config[%s]\n",
+			LogPrintf(LOG_WARNING, "RestoreSnapshot: Snapshot architecture[%s] different from config[%s]\n",
 				archSnapshot.c_str(), archConfig.c_str());
-			return;
+			compatible = false;
 		}
 
 		int baseRAMConfig = Config::Instance().GetValueInt32("core", "baseram", 640);
 		int baseRAMSnapshot = j["core"]["baseram"];
 		if (baseRAMConfig != baseRAMSnapshot)
 		{
-			LogPrintf(LOG_ERROR, "RestoreSnapshot: Snapshot base RAM[%d] different from config[%d]\n",
+			LogPrintf(LOG_WARNING, "RestoreSnapshot: Snapshot base RAM[%d] different from config[%d]\n",
 				baseRAMSnapshot, baseRAMConfig);
-			return;
+			compatible = false;
 		}
 
+		bool error = false;
 		try
 		{
 			m_pc->SetSerializationDir(snapshotDir);
 			m_pc->Deserialize(j);
+
+			UpdateFloppy(0);
+			UpdateFloppy(1);
+			UpdateHardDisk(0);
+			UpdateHardDisk(1);
+			UpdateSpeed();
+		}
+		catch (SerializableException e)
+		{
+			// Could be thrown if different video card, etc.
+			// Something that could be fixed if we create a new PC from scratch.
+			if (e.GetError() == SerializationError::COMPAT)
+			{
+				compatible = false;
+			}
+			else
+			{
+				LogPrintf(LOG_ERROR, "RestoreSnapshot: Fatal Error deserializing snapshot: %s\n", e.what());
+				return;
+			}
 		}
 		catch (std::exception e)
 		{
-			LogPrintf(LOG_ERROR, "RestoreSnapshot: Error deserializing snapshot: %s\n", e.what());
+			LogPrintf(LOG_ERROR, "RestoreSnapshot: Fatal Error deserializing snapshot: %s\n", e.what());
+			return;
 		}
 
-		UpdateFloppy(0);
-		UpdateFloppy(1);
-		UpdateHardDisk(0);
-		UpdateHardDisk(1);
-		UpdateSpeed();
+		// Snapshot is not compatible with currently loaded PC. Notify someone to take care of it.
+		if (!compatible && m_callback)
+		{
+			(*m_callback)(snapshotDir, j);
+		}
 	}
 
 	bool Overlay::GetSnapshotBaseDirectory(fs::path& baseDir)
