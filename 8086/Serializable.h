@@ -6,10 +6,24 @@ using json = nlohmann::json;
 
 namespace emul
 {
-	class SerializableException : public std::exception
+	enum class SerializationError
+	{
+		FATAL, // Something we can't recover from
+		COMPAT, // Data is ok but not compatible with current architecture
+	};
+	class SerializableException : public std::runtime_error
 	{
 	public:
-		SerializableException(const char* const what) : std::exception(what) {}
+		SerializableException(const char* const what, SerializationError error = SerializationError::FATAL) : 
+			std::runtime_error(what),
+			m_error(error)
+		{
+		}
+
+		SerializationError GetError() const { return m_error; }
+
+	protected:
+		SerializationError m_error = SerializationError::FATAL;
 	};
 
 	class Serializable

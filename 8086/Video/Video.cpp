@@ -271,7 +271,7 @@ namespace video
 	{
 		if (from["id"] != GetID())
 		{
-			throw emul::SerializableException("Video: Incompatible mode");
+			throw emul::SerializableException("Video: Incompatible mode", emul::SerializationError::COMPAT);
 		}
 	}
 

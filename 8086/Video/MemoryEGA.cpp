@@ -255,7 +255,7 @@ namespace memory_ega
 	{
 		if (from["ramSize"] != m_ramSize)
 		{
-			throw emul::SerializableException("MemoryEGA: Incompatible ramsize");
+			throw emul::SerializableException("MemoryEGA: Incompatible ramsize", emul::SerializationError::COMPAT);
 		}
 
 		m_enable = from["enable"];
