@@ -111,7 +111,6 @@ namespace ui
 			return false;
 		}
 
-		SDL_InitSubSystem(SDL_INIT_TIMER);
 		SDL_Renderer* ren = MAINWND().GetRenderer();
 		SDL_Window* wnd = MAINWND().GetWindow();
 
@@ -135,8 +134,17 @@ namespace ui
 
 	void Overlay::SetPC(emul::Computer* pc)
 	{
-		assert(pc);
+		if (!pc)
+		{
+			LogPrintf(LOG_ERROR, "PC Not set");
+			return;
+		}
 		m_pc = pc;
+
+		if (SDL_WasInit(SDL_INIT_TIMER) == 0)
+		{
+			SDL_InitSubSystem(SDL_INIT_TIMER);
+		}
 
 		SDL_Renderer* ren = MAINWND().GetRenderer();
 
@@ -247,6 +255,11 @@ namespace ui
 
 	void Overlay::OnClick(WidgetRef widget)
 	{
+		if (!m_pc)
+		{
+			return;
+		}
+
 		const std::string& id = widget->GetId();
 
 		if (id == "floppy0")
@@ -397,6 +410,11 @@ namespace ui
 
 	void Overlay::UpdateSpeed()
 	{
+		if (!m_pc)
+		{
+			return;
+		}
+
 		static char speedStr[32];
 		emul::CPUSpeed speed = m_pc->GetCPUSpeed();
 		sprintf(speedStr, "%.2fMHz", speed.GetSpeed() / 1000000.0f);
@@ -491,6 +509,11 @@ namespace ui
 
 	bool Overlay::Update()
 	{
+		if (!m_pc)
+		{
+			return false;
+		}
+
 		if (m_pc->GetFloppy())
 		{
 			for (int i = 0; i < 2; ++i)
@@ -522,6 +545,11 @@ namespace ui
 
 	void Overlay::UpdateTitle(float fps)
 	{
+		if (!m_pc)
+		{
+			return;
+		}
+
 		std::ostringstream os;
 		os << m_pc->GetName();
 
@@ -577,7 +605,7 @@ namespace ui
 
 	void Overlay::LoadFloppyDiskImage(BYTE drive, bool eject)
 	{
-		if (!m_pc->GetFloppy())
+		if (!m_pc || !m_pc->GetFloppy())
 		{
 			return;
 		}
@@ -597,7 +625,7 @@ namespace ui
 
 	void Overlay::LoadHardDiskImage(BYTE drive)
 	{
-		if (!m_pc->GetHardDrive())
+		if (!m_pc || !m_pc->GetHardDrive())
 		{
 			return;
 		}
@@ -645,6 +673,11 @@ namespace ui
 
 	void Overlay::SaveComputerData(const std::filesystem::path& snapshotDir)
 	{
+		if (!m_pc)
+		{
+			return;
+		}
+
 		json j;
 		j["core"]["arch"] = Config::Instance().GetValueStr("core", "arch");
 		j["core"]["baseram"] = Config::Instance().GetValueInt32("core", "baseram", 640);
@@ -663,6 +696,11 @@ namespace ui
 
 	void Overlay::SaveSnapshotInfo(const std::filesystem::path& snapshotDir)
 	{
+		if (!m_pc)
+		{
+			return;
+		}
+
 		fs::path outFile = snapshotDir;
 		outFile.append("snapshot.json");
 
@@ -747,6 +785,11 @@ namespace ui
 
 	void Overlay::RestoreSnapshot(const fs::path& snapshotDir)
 	{
+		if (!m_pc)
+		{
+			return;
+		}
+
 		fs::path inFile = snapshotDir;
 		inFile.append("computer.json");
 		std::ifstream inStream(inFile);
