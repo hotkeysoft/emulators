@@ -382,9 +382,34 @@ int main(int argc, char* args[])
 						case FKEY + 2:
 						case FKEY + 3:
 						case FKEY + 4:
+							break;
 						case FKEY + 5:
+							if (pc->GetID() != "xt")
+							{
+								fprintf(stderr, "Creating XT computer\n");
+								delete pc;
+								pc = CreateComputer("xt");
+								InitPC(pc, overlay);
+							}
+							break;
 						case FKEY + 6:
+							if (pc->GetID() != "tandy")
+							{
+								fprintf(stderr, "Creating TANDY computer\n");
+								delete pc;
+								pc = CreateComputer("tandy");
+								InitPC(pc, overlay);
+							}
+							break;
 						case FKEY + 7:
+							if (pc->GetID() != "pcjr")
+							{
+								fprintf(stderr, "Creating PCjr computer\n");
+								delete pc;
+								pc = CreateComputer("pcjr");
+								InitPC(pc, overlay);
+							}
+							break;
 						case FKEY + 8:
 						case FKEY + 9:
 						case FKEY + 10:
