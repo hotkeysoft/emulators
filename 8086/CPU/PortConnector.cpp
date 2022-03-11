@@ -16,6 +16,12 @@ namespace emul
 	{
 	}
 
+	void PortConnector::Clear()
+	{
+		m_inputPorts.clear();
+		m_outputPorts.clear();
+	}
+
 	bool PortConnector::Connect(WORD portNb, INFunction inFunc)
 	{
 		LogPrintf(LOG_INFO, "Connect input port 0x%04X", portNb);

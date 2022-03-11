@@ -11,6 +11,8 @@ namespace emul
 		PortConnector();
 		virtual ~PortConnector();
 
+		static void Clear();
+
 		typedef void (PortConnector::* OUTFunction)(BYTE);
 		typedef BYTE(PortConnector::* INFunction)();
 
@@ -19,9 +21,6 @@ namespace emul
 
 		bool In(WORD port, BYTE& value);
 		bool Out(WORD port, BYTE value);
-
-		//InputPortMap& GetInputPorts() { return m_inputPorts; }
-		//OutputPortMap& GetOutputPorts() { return m_outputPorts; }
 	
 	protected:
 		bool Connect(WORD portNb, INFunction inFunc);

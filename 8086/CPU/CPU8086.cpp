@@ -36,6 +36,7 @@ namespace emul
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
 	{
+		PortConnector::Clear();
 		Mem8::Init(&memory, &m_reg);
 		Mem16::Init(&memory, &m_reg);
 	}
