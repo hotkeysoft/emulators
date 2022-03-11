@@ -158,6 +158,23 @@ void SetCPUSpeed(Computer* pc)
 	pc->SetCPUSpeed(*currSpeed);
 }
 
+void InitPC(Computer* pc, Overlay& overlay)
+{
+	pc->EnableLog(Config::Instance().GetLogLevel("pc"));
+
+	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
+	pc->Init(baseRAM);
+	pc->Reset();
+
+	SetCPUSpeed(pc);
+
+	overlay.SetPC(pc);
+
+	pc->GetVideo().AddRenderer(&overlay);
+	pc->GetInputs().AddEventHandler(&overlay);
+	pc->GetInputs().AddEventHandler(&(pc->GetVideo())); // Window resize events
+}
+
 void InitLeakCheck()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -234,6 +251,7 @@ int main(int argc, char* args[])
 	InitSound();
 	
 	Overlay overlay;
+	overlay.Init();
 	bool showOverlay = true;
 
 	std::string arch = Config::Instance().GetValueStr("core", "arch");
@@ -244,13 +262,7 @@ int main(int argc, char* args[])
 		return 2;
 	}
 
-	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
-
-	pc->EnableLog(Config::Instance().GetLogLevel("pc"));
-	pc->Init(baseRAM);
-	pc->Reset();
-
-	SetCPUSpeed(pc);
+	InitPC(pc, overlay);
 
 #if 0
 	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
@@ -260,21 +272,12 @@ int main(int argc, char* args[])
 	pc->Reset(0xF000, 0);
 #endif
 
-#ifndef NO_CONSOLE
 	monitor.Init(*pc, pc->GetMemory());
-#endif
 
 	if (mode == Mode::MONITOR)
 	{
 		monitor.Show();
 	}
-
-	overlay.Init();
-	overlay.SetPC(pc);
-
-	pc->GetVideo().AddRenderer(&overlay);
-	pc->GetInputs().AddEventHandler(&overlay);
-	pc->GetInputs().AddEventHandler(&(pc->GetVideo())); // Window resize events
 
 	const int cooldownFactor = 10000;
 
