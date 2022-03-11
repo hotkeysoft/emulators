@@ -159,14 +159,8 @@ namespace emul
 
 	void Computer::InitSound()
 	{
-		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound"));
+		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound.pc"));
 		m_pcSpeaker.Init(m_ppi, m_pit);
-		m_pcSpeaker.SetMute(Config::Instance().GetValueBool("sound", "mute"));
-		std::string audioStream = Config::Instance().GetValueStr("sound", "raw");
-		if (audioStream.size())
-		{
-			m_pcSpeaker.StreamToFile(true, audioStream.c_str());
-		}
 	}
 
 	void Computer::InitPIT(pit::Device8254* pit)

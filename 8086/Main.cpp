@@ -14,6 +14,7 @@
 #include "ComputerTandy.h"
 
 #include "Config.h"
+#include "Sound/Sound.h"
 
 #include <conio.h>
 #include <vector>
@@ -35,7 +36,12 @@ const short CONSOLE_COLS = 80;
 #endif
 
 namespace fs = std::filesystem;
+
 using cfg::Config;
+using emul::Computer;
+using sound::SOUND;
+using ui::MAINWND;
+using ui::Overlay;
 
 size_t emul::g_ticks = 0;
 
@@ -103,6 +109,20 @@ void ToggleMode()
 		console.Clear();
 		DumpBackLog(24);
 		break;
+	}
+}
+
+void InitSound()
+{
+	SOUND().Init();
+	SOUND().EnableLog(Config::Instance().GetLogLevel("sound"));
+	SOUND().SetMute(Config::Instance().GetValueBool("sound", "mute"));
+	SOUND().SetMasterVolume(Config::Instance().GetValueInt32("sound", "volume", 128));
+
+	std::string audioStream = Config::Instance().GetValueStr("sound", "raw");
+	if (audioStream.size())
+	{
+		SOUND().StreamToFile(true, audioStream.c_str());
 	}
 }
 
@@ -178,10 +198,10 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	ui::MAINWND().Init();
+	MAINWND().Init();
 
-	emul::Computer* pc = nullptr;
-	ui::Overlay overlay;
+	Computer* pc = nullptr;
+	Overlay overlay;
 	bool showOverlay = true;
 
 	std::string arch = Config::Instance().GetValueStr("core", "arch");
@@ -204,8 +224,7 @@ int main(int argc, char* args[])
 		return 2;
 	}
 
-	int masterVolume = Config::Instance().GetValueInt32("sound", "volume", 128);
-	pc->GetSound().SetMasterVolume(masterVolume);
+	InitSound();
 
 	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
 
@@ -213,10 +232,10 @@ int main(int argc, char* args[])
 	pc->Init(baseRAM);
 	pc->Reset();
 
-	emul::Computer::CPUSpeeds speedList = pc->GetCPUSpeeds();
+	Computer::CPUSpeeds speedList = pc->GetCPUSpeeds();
 	bool turbo = Config::Instance().GetValueBool("core", "turbo");
 
-	emul::Computer::CPUSpeeds::const_iterator currSpeed = speedList.begin();
+	Computer::CPUSpeeds::const_iterator currSpeed = speedList.begin();
 	if (turbo)
 	{
 		currSpeed = --speedList.end();
@@ -367,10 +386,10 @@ int main(int argc, char* args[])
 						switch (ch)
 						{
 						case '-':
-							pc->GetSound().SetMasterVolume(pc->GetSound().GetMasterVolume() - 1);
+							SOUND().SetMasterVolume(SOUND().GetMasterVolume() - 1);
 							break;
 						case '+':
-							pc->GetSound().SetMasterVolume(pc->GetSound().GetMasterVolume() + 1);
+							SOUND().SetMasterVolume(SOUND().GetMasterVolume() + 1);
 							break;
 						default:
 							{

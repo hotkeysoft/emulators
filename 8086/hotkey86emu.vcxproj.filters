@@ -246,6 +246,9 @@
     <ClCompile Include="UI\MainWindow.cpp">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
+    <ClCompile Include="Sound\Sound.cpp">
+      <Filter>Source Files\Sound</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -436,6 +439,9 @@
     </ClInclude>
     <ClInclude Include="UI\MainWindow.h">
       <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound\Sound.h">
+      <Filter>Header Files\Sound</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
