@@ -274,6 +274,14 @@ namespace events
 		}
 	}
 
+	void InputEvents::Init()
+	{
+		if (SDL_WasInit(SDL_INIT_VIDEO) == 0) 
+		{
+			SDL_InitSubSystem(SDL_INIT_EVENTS);
+		}
+	}
+
 	void InputEvents::InitKeyboard(kbd::DeviceKeyboard* kbd, KBDMapping mapping)
 	{
 		assert(kbd);
@@ -299,7 +307,7 @@ namespace events
 			return;
 		}
 		
-		if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) != 1)
+		if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) == 0)
 		{
 			SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
 		}

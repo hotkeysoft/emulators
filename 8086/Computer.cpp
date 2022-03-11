@@ -206,6 +206,7 @@ namespace emul
 	void Computer::InitInputs(size_t clockSpeedHz)
 	{
 		m_inputs = new events::InputEvents(clockSpeedHz);
+		m_inputs->Init();
 		m_inputs->EnableLog(Config::Instance().GetLogLevel("inputs"));
 	}
 

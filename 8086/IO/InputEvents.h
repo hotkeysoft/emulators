@@ -75,6 +75,7 @@ namespace events
 		InputEvents(InputEvents&&) = delete;
 		InputEvents& operator=(InputEvents&&) = delete;
 
+		void Init();
 		void InitKeyboard(kbd::DeviceKeyboard* kbd, KBDMapping mapping = KBDMapping::XT);
 		void InitJoystick(joy::DeviceJoystick* joy);
 
