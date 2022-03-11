@@ -30,6 +30,7 @@ const short CONSOLE_COLS = 80;
 
 #ifdef CPU_TEST
 #include "CPU/CPU8086Test.h"
+#include "Main.h"
 #endif
 
 namespace fs = std::filesystem;
@@ -104,8 +105,17 @@ void ToggleMode()
 	}
 }
 
+void InitLeakCheck()
+{
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+	_CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+}
+
 int main(int argc, char* args[])
 {
+	InitLeakCheck();
+
 	Logger::RegisterLogCallback(LogCallback);
 
 	if (!Config::Instance().LoadConfigFile("config/config.ini"))
@@ -227,9 +237,6 @@ int main(int argc, char* args[])
 	{
 		monitor.Show();
 	}
-
-	time_t startTime, stopTime;
-	time(&startTime);
 
 	// TODO: sdl window is created in Video class, not ideal
 	overlay.Init(pc);
@@ -398,15 +405,6 @@ int main(int argc, char* args[])
 		fprintf(stderr, "Error while running cpu [%s]\n", e.what());
 	}
 
-	time(&stopTime);
-
-	pc->Dump();
-
-	pc->GetMemory().Dump(0, 65536, "dump/memdump.bin");
-	//pc->GetFloppy().SaveDiskImage(0, "dump/floppy0.img");
-
-	//DumpBackLog();
-
 	delete pc;
 	pc = nullptr;
 
@@ -414,8 +412,6 @@ int main(int argc, char* args[])
 	{
 		fclose(logFile);
 	}
-
-	fprintf(stderr, "Time elapsed: %I64u\n", stopTime-startTime);
 
 	return 0;
 }
