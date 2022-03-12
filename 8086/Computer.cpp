@@ -68,6 +68,12 @@ namespace emul
 		}
 	}
 
+	void Computer::Init(WORD baseram)
+	{
+		m_baseRAM = baseram;
+		PortConnector::Clear();
+	}
+
 	void Computer::InitVideo(const std::string& defaultMode, const VideoModes& supported)
 	{
 		assert(m_video == nullptr);
@@ -137,7 +143,7 @@ namespace emul
 		}
 		else
 		{
-			throw std::exception("Invalid video mode mode");
+			throw std::exception("Invalid video mode");
 		}
 		assert(m_video);
 		m_video->EnableLog(Config::Instance().GetLogLevel("video"));
@@ -405,6 +411,12 @@ namespace emul
 
 	void Computer::Serialize(json& to)
 	{
+		json computer;
+
+		computer["id"] = GetID();
+		computer["baseram"] = m_baseRAM;
+		to["computer"] = computer;
+
 		CPU8086::Serialize(to["cpu"]);
 		m_memory.Serialize(to["memory"]);
 		m_pit->Serialize(to["pit"]);
@@ -424,6 +436,16 @@ namespace emul
 
 	void Computer::Deserialize(json& from)
 	{
+		const json& computer = from["computer"];
+		if ((std::string)computer["id"] != GetID())
+		{
+			throw SerializableException("Computer: Architecture is not compatible", SerializationError::COMPAT);
+		}
+		if (computer["baseram"] != m_baseRAM)
+		{
+			throw SerializableException("Computer: Base RAM is not compatible", SerializationError::COMPAT);
+		}
+
 		CPU8086::Deserialize(from["cpu"]);
 		m_memory.Deserialize(from["memory"]);
 		m_pit->Deserialize(from["pit"]);

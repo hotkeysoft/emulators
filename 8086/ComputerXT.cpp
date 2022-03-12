@@ -44,6 +44,8 @@ namespace emul
 
 	void ComputerXT::Init(WORD baseRAM)
 	{
+		Computer::Init(baseRAM);
+
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 8));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 12));

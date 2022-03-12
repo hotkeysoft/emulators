@@ -42,6 +42,8 @@ namespace emul
 
 	void ComputerPCjr::Init(WORD baseRAM)
 	{
+		Computer::Init(baseRAM);
+
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 3));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
 

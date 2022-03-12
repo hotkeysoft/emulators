@@ -56,7 +56,7 @@ namespace emul
 		virtual std::string_view GetName() const = 0;
 		virtual std::string_view GetID() const = 0;
 
-		virtual void Init(WORD baseRAM) = 0;
+		virtual void Init(WORD baseRAM);
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
 		
@@ -111,6 +111,7 @@ namespace emul
 		virtual void TickFloppy();
 		virtual void TickHardDrive();
 
+		WORD m_baseRAM = 640;
 		Memory m_memory;
 		MemoryMap m_map;
 
