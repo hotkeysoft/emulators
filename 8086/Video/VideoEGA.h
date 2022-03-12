@@ -46,7 +46,7 @@ namespace video
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 		virtual uint32_t GetBackgroundColor() const override { return m_attrController.GetData().overscanColor; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;

@@ -174,7 +174,7 @@ namespace video
 		to["mode"] = mode;
 	}
 
-	void VideoMDA::Deserialize(json& from)
+	void VideoMDA::Deserialize(const json& from)
 	{
 		Video6845::Deserialize(from);
 

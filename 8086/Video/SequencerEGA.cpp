@@ -145,7 +145,7 @@ namespace seq_ega
 		to["mem.oddEven"] = m_data.memoryMode.oddEven;
 	}
 
-	void Sequencer::Deserialize(json& from)
+	void Sequencer::Deserialize(const json& from)
 	{
 		m_currAddress = from["currAddress"];
 

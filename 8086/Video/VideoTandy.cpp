@@ -388,7 +388,7 @@ namespace video
 		to["videoArrayRegisterAddress"] = m_videoArrayRegisterAddress;
 	}
 
-	void VideoTandy::Deserialize(json& from)
+	void VideoTandy::Deserialize(const json& from)
 	{
 		Video6845::Deserialize(from);
 

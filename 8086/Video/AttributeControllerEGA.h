@@ -56,7 +56,7 @@ namespace attr_ega
 
 		// emul::Serializable
 		virtual void Serialize(json& to);
-		virtual void Deserialize(json& from);
+		virtual void Deserialize(const json& from);
 
 	protected:
 		const WORD m_baseAddress;

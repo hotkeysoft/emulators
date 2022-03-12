@@ -55,7 +55,7 @@ namespace emul
 
 	protected:
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 		void SetRAMPage(BYTE value);
 		void InitRAM(WORD baseRAM);

@@ -165,7 +165,7 @@ namespace attr_ega
 		to["hPelPanning"] = m_data.hPelPanning;
 	}
 
-	void AttrController::Deserialize(json& from)
+	void AttrController::Deserialize(const json& from)
 	{
 		m_currMode = from["currMode"];
 		m_currRegister = from["currRegister"];

@@ -469,7 +469,7 @@ namespace crtc_ega
 		to["blink16"] = m_blink16;
 	}
 
-	void CRTController::Deserialize(json& from)
+	void CRTController::Deserialize(const json& from)
 	{
 		if (from["baseAddress"] != m_baseAddress)
 		{

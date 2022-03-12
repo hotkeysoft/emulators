@@ -434,7 +434,7 @@ namespace emul
 		}
 	}
 
-	void Computer::Deserialize(json& from)
+	void Computer::Deserialize(const json& from)
 	{
 		const json& computer = from["computer"];
 		if ((std::string)computer["id"] != GetID())

@@ -838,7 +838,7 @@ namespace hdd
 			to["path"] = path;
 		}
 
-		virtual void Deserialize(json& from)
+		virtual void Deserialize(const json& from)
 		{
 			type = from["type"];
 			path = from["path"];
@@ -866,9 +866,9 @@ namespace hdd
 		}
 		to["images"] = images;
 	}
-	void DeviceHardDrive::Deserialize(json& from)
+	void DeviceHardDrive::Deserialize(const json& from)
 	{
-		json& images = from["images"];
+		const json& images = from["images"];
 
 		for (int i = 0; i < images.size(); ++i)
 		{

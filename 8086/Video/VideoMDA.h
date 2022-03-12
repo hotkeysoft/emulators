@@ -34,7 +34,7 @@ namespace video
 		virtual void OnChangeMode() override;
 
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 		virtual bool IsEnabled() const override { return m_mode.enableVideo; }
 

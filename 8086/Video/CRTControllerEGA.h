@@ -231,7 +231,7 @@ namespace crtc_ega
 		void SetCharWidth(BYTE charWidth);
 
 		virtual void Serialize(json& to);
-		virtual void Deserialize(json& from);
+		virtual void Deserialize(const json& from);
 
 		bool IsInterruptPending() const { return m_interruptPending; }
 

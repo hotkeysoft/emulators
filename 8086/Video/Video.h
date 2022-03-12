@@ -49,7 +49,7 @@ namespace video
 		void RenderFrame();
 
 		virtual void Serialize(json& to);
-		virtual void Deserialize(json& from);
+		virtual void Deserialize(const json& from);
 
 		void AddRenderer(Renderer* r) { m_renderers.push_back(r); }
 

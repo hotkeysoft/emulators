@@ -35,7 +35,7 @@ namespace video
 		virtual void OnChangeMode() override;
 
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 

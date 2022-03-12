@@ -2701,7 +2701,7 @@ namespace emul
 		to["segOverride"] = m_reg[REG16::_SEG_O];
 	}
 
-	void CPU8086::Deserialize(json& from)
+	void CPU8086::Deserialize(const json& from)
 	{
 		m_reg[REG16::AX] = from["ax"];
 		m_reg[REG16::BX] = from["bx"];

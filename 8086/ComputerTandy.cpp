@@ -265,7 +265,7 @@ namespace emul
 		Computer::Serialize(to);
 	}
 
-	void ComputerTandy::Deserialize(json& from)
+	void ComputerTandy::Deserialize(const json& from)
 	{
 		Computer::Deserialize(from);
 		m_soundModule.Deserialize(from["tandy"]["sn76489"]);

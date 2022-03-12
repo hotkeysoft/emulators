@@ -345,7 +345,7 @@ namespace pit
 
 		to["periodMicro"] = m_periodMicro;
 	}
-	void Counter::Deserialize(json& from)
+	void Counter::Deserialize(const json& from)
 	{
 		m_rwMode = from["rwMode"];
 		m_mode = from["mode"];
@@ -484,7 +484,7 @@ namespace pit
 		m_counters[2].Serialize(to["timer2"]);
 	}
 
-	void Device8254::Deserialize(json& from)
+	void Device8254::Deserialize(const json& from)
 	{
 		WORD baseAddress = from["baseAddress"];
 		if (baseAddress != m_baseAddress)

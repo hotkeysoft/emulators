@@ -24,7 +24,7 @@ namespace sn76489
 		to["out"] = m_out;
 	}
 
-	void Voice::Deserialize(json& from)
+	void Voice::Deserialize(const json& from)
 	{
 		m_n = from["n"];
 		m_counter = from["counter"];
@@ -162,7 +162,7 @@ namespace sn76489
 		to["internalOutput"] = m_internalOutput;
 		to["shiftRegister"] = m_shiftRegister;
 	}
-	void VoiceNoise::Deserialize(json& from)
+	void VoiceNoise::Deserialize(const json& from)
 	{
 		Voice::Deserialize(from);
 
@@ -303,7 +303,7 @@ namespace sn76489
 		m_voices[3]->Serialize(to["noise"]);
 	}
 
-	void DeviceSN76489::Deserialize(json& from)
+	void DeviceSN76489::Deserialize(const json& from)
 	{
 		WORD baseAddress = from["baseAddress"];
 		if (baseAddress != m_baseAddress)

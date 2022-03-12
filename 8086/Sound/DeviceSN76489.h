@@ -37,7 +37,7 @@ namespace sn76489
 		virtual void SetData(BYTE value, bool highLow) = 0;
 
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 		void ToggleOutput() { m_out = !m_out; }
@@ -83,7 +83,7 @@ namespace sn76489
 		virtual void SetData(BYTE value, bool) override;
 
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 		Voice* m_trigger = nullptr;
@@ -124,7 +124,7 @@ namespace sn76489
 		bool IsReady() const { return m_ready == 0; }
 
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 		const BYTE m_tickDivider = 16;

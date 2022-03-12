@@ -939,7 +939,7 @@ namespace fdc
 		}
 		to["images"] = images;
 	}
-	void DeviceFloppy::Deserialize(json& from)
+	void DeviceFloppy::Deserialize(const json& from)
 	{
 		std::array<std::string, 4> images;
 		images = from["images"];

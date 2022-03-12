@@ -30,7 +30,7 @@ namespace emul
 	{
 	public:
 		virtual void Serialize(json& to) = 0;
-		virtual void Deserialize(json& from) = 0;
+		virtual void Deserialize(const json& from) = 0;
 
 		static std::filesystem::path GetSerializationDir() { return m_serializationDir; }
 		static void SetSerializationDir(std::filesystem::path dir) { m_serializationDir = dir; }

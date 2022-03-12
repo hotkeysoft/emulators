@@ -187,7 +187,7 @@ namespace graph_ega
 		to["bitMask"] = m_data.bitMask;
 	}
 
-	void GraphController::Deserialize(json& from)
+	void GraphController::Deserialize(const json& from)
 	{
 		m_currAddress = from["currAddress"];
 

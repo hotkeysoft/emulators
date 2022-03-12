@@ -272,7 +272,7 @@ namespace crtc_6845
 		to["blink32"] = m_blink32;
 	}
 
-	void CRTController::Deserialize(json& from)
+	void CRTController::Deserialize(const json& from)
 	{
 		if (from["baseAddress"] != m_baseAddress)
 		{

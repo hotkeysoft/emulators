@@ -44,7 +44,7 @@ namespace pit
 		void SetBCD(bool bcd);
 
 		virtual void Serialize(json& to);
-		virtual void Deserialize(json& from);
+		virtual void Deserialize(const json& from);
 
 	protected:
 		Device8254* m_parent = nullptr;
@@ -100,7 +100,7 @@ namespace pit
 		WORD GetBaseAdress() const { return m_baseAddress; }
 
 		virtual void Serialize(json& to);
-		virtual void Deserialize(json& from);
+		virtual void Deserialize(const json& from);
 
 	protected:
 		enum CTRL {

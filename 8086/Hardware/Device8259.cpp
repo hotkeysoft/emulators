@@ -333,7 +333,7 @@ namespace pic
 		to["imr"] = m_interruptMaskRegister;
 		to["reg0"] = (m_reg0 == &m_inServiceRegister) ? "isr" : "irr";
 	}
-	void Device8259::Deserialize(json& from)
+	void Device8259::Deserialize(const json& from)
 	{
 		WORD baseAddress = from["baseAddress"];
 		if (baseAddress != m_baseAddress)

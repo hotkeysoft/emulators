@@ -251,7 +251,7 @@ namespace memory_ega
 		to["dataLatches"] = m_dataLatches;
 	}
 
-	void MemoryEGA::Deserialize(json& from)
+	void MemoryEGA::Deserialize(const json& from)
 	{
 		if (from["ramSize"] != m_ramSize)
 		{

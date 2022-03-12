@@ -207,7 +207,7 @@ namespace video
 		m_crtc.Serialize(to["crtc"]);
 	}
 
-	void Video6845::Deserialize(json& from)
+	void Video6845::Deserialize(const json& from)
 	{
 		Video::Deserialize(from);
 		m_crtc.Deserialize(from["crtc"]);

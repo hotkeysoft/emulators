@@ -350,7 +350,7 @@ namespace video
 		to["mode"] = mode;
 	}
 
-	void VideoPCjr::Deserialize(json& from)
+	void VideoPCjr::Deserialize(const json& from)
 	{
 		Video6845::Deserialize(from);
 

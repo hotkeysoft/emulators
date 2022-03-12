@@ -90,7 +90,7 @@ namespace video
 		to["modeHGC"] = mode;
 	}
 
-	void VideoHGC::Deserialize(json& from)
+	void VideoHGC::Deserialize(const json& from)
 	{
 		const json& mode = from["modeHGC"];
 		m_modeHGC.graphics = mode["graphics"];

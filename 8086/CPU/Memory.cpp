@@ -260,7 +260,7 @@ namespace emul
 		to["blocks"] = blocks;
 	}
 
-	void Memory::Deserialize(json& from)
+	void Memory::Deserialize(const json& from)
 	{
 		json blocks = from["blocks"];
 		for (auto& block : blocks.items())

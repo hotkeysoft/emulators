@@ -48,7 +48,7 @@ namespace memory_ega
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 		RAMSIZE m_ramSize;

@@ -37,7 +37,7 @@ namespace emul
 			to["ratio"] = m_ratio;
 			to["speed"] = m_speed;
 		}
-		virtual void Deserialize(json& from)
+		virtual void Deserialize(const json& from)
 		{
 			m_ratio = from["ratio"];
 			m_speed = from["speed"];
@@ -81,7 +81,7 @@ namespace emul
 		const VideoModes& GetVideoModes() const { return m_videoModes; }
 
 		virtual void Serialize(json& to);
-		virtual void Deserialize(json& from);
+		virtual void Deserialize(const json& from);
 
 	protected:
 		Computer(Memory& memory, MemoryMap& mmap);

@@ -223,7 +223,7 @@ namespace video
 		GetCRTC().Serialize(to["crtc"]);
 	}
 
-	void VideoCGA::Deserialize(json& from)
+	void VideoCGA::Deserialize(const json& from)
 	{
 		Video6845::Deserialize(from);
 

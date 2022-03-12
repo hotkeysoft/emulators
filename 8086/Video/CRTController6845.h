@@ -146,7 +146,7 @@ namespace crtc_6845
 		void SetCharWidth(BYTE charWidth);
 
 		virtual void Serialize(json& to);
-		virtual void Deserialize(json& from);
+		virtual void Deserialize(const json& from);
 
 	protected:
 		const WORD m_baseAddress;

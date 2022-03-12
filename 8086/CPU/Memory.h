@@ -35,7 +35,7 @@ namespace emul
 		bool LoadBinary(const char* file, ADDRESS baseAddress);
 
 		virtual void Serialize(json& to);
-		virtual void Deserialize(json& from);
+		virtual void Deserialize(const json& from);
 
 	protected:
 		MemoryBlock* FindBlock(const char* id) const;

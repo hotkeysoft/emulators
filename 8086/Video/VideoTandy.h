@@ -36,7 +36,7 @@ namespace video
 		virtual void OnEndOfRow() override;
 
 		virtual void Serialize(json& to) override;
-		virtual void Deserialize(json& from) override;
+		virtual void Deserialize(const json& from) override;
 
 		virtual uint32_t GetBackgroundColor() const override { return GetMonitorPalette()[m_mode.borderEnable ? m_mode.borderColor : m_color.color]; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;

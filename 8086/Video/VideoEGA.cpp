@@ -589,7 +589,7 @@ namespace video
 		// TODO dip switches
 	}
 
-	void VideoEGA::Deserialize(json& from)
+	void VideoEGA::Deserialize(const json& from)
 	{
 		Video::Deserialize(from);
 		if (from["baseAddress"] != m_baseAddress)

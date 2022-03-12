@@ -267,7 +267,7 @@ namespace video
 		to["id"] = GetID();
 	}
 
-	void Video::Deserialize(json& from)
+	void Video::Deserialize(const json& from)
 	{
 		if (from["id"] != GetID())
 		{
