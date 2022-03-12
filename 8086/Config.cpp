@@ -34,6 +34,34 @@ namespace cfg
 		return true;
 	}
 
+	bool Config::SaveConfigFile(const char* path)
+	{
+		if (!path || !path[0])
+		{
+			LogPrintf(LOG_ERROR, "Empty path");
+			return false;
+		}
+
+		std::ofstream os(path);
+		if (!os)
+		{
+			LogPrintf(LOG_ERROR, "Error opening config file [%s]", path);
+			return false;
+		}
+
+		try
+		{
+			m_config.generate(os);
+		}
+		catch (std::exception e)
+		{
+			LogPrintf(LOG_ERROR, "Error saving config file: ", e.what());
+			return false;
+		}
+
+		return true;
+	}
+
 	std::string Config::GetValueStr(const char* section, const char* key, const char* defaultValue)
 	{
 		assert(defaultValue);
@@ -103,5 +131,4 @@ namespace cfg
 			return Logger::SEVERITY::LOG_INFO;
 		}
 	}
-
 }

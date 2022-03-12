@@ -77,6 +77,7 @@ namespace ui
 		bool GetLastSnapshotDirectory(std::filesystem::path& snapshotDir);
 		void SaveComputerData(const std::filesystem::path& snapshotDir);
 		void SaveSnapshotInfo(const std::filesystem::path& snapshotDir);
+		void SaveConfigFile(const std::filesystem::path& snapshotDir);
 		void SaveSnapshot(const std::filesystem::path& snapshotDir);
 		void RestoreSnapshot(const std::filesystem::path& snapshotDir);
 		void DeleteSnapshot(const std::filesystem::path& snapshotDir);

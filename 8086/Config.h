@@ -2,10 +2,9 @@
 
 namespace cfg
 {
-	class Config : Logger
+	class Config : public Logger
 	{
 	public:
-
 		static Config& Get()
 		{
 			static Config instance;
@@ -18,6 +17,7 @@ namespace cfg
 		Config& operator=(Config&&) = delete;
 
 		bool LoadConfigFile(const char* path);
+		bool SaveConfigFile(const char* path);
 
 		std::string GetValueStr(const char* section, const char* key, const char* defaultValue = "");
 		int32_t GetValueInt32(const char* section, const char* key, int32_t defaultValue = 0);

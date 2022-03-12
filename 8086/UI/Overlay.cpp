@@ -695,13 +695,8 @@ namespace ui
 		LogPrintf(LOG_INFO, "SaveComputerData: Saved state to [%s]", outFile.string().c_str());
 	}
 
-	void Overlay::SaveSnapshotInfo(const std::filesystem::path& snapshotDir)
+	void Overlay::SaveSnapshotInfo(const fs::path& snapshotDir)
 	{
-		if (!m_pc)
-		{
-			return;
-		}
-
 		fs::path outFile = snapshotDir;
 		outFile.append("snapshot.json");
 
@@ -710,13 +705,30 @@ namespace ui
 
 		if (!info.ToDisk())
 		{
-			LogPrintf(LOG_INFO, "SaveSnapshotInfo: Error saving snapshot info");
+			LogPrintf(LOG_ERROR, "SaveSnapshotInfo: Error saving snapshot info");
+		}
+	}
+
+	void Overlay::SaveConfigFile(const fs::path& snapshotDir)
+	{
+		fs::path outFile = snapshotDir;
+		outFile.append("config.ini");
+
+		if (!CONFIG().SaveConfigFile(outFile.string().c_str()))
+		{
+			LogPrintf(LOG_ERROR, "SaveConfigFile: Error saving config file: %s", outFile.string().c_str());
 		}
 	}
 
 	void Overlay::SaveSnapshot(const fs::path& snapshotDir)
 	{
+		if (!m_pc)
+		{
+			return;
+		}
+
 		SaveSnapshotInfo(snapshotDir);
+		SaveConfigFile(snapshotDir);
 		SaveComputerData(snapshotDir);
 
 		m_lastSnapshotDir = snapshotDir;
@@ -791,6 +803,12 @@ namespace ui
 			return;
 		}
 
+		// We don't need to read back the config.ini for trivial cases
+		// (e.g when the configuration is compatible with the current one)
+		// If the deserialization fails with a compatibility error, the
+		// full restore will be done in the main loop, including
+		// reading back the configuration
+
 		fs::path inFile = snapshotDir;
 		inFile.append("computer.json");
 		std::ifstream inStream(inFile);
@@ -824,8 +842,10 @@ namespace ui
 		}
 		catch (SerializableException e)
 		{
-			// Could be thrown if different video card, etc.
-			// Something that could be fixed if we create a new PC from scratch.
+			// Thrown when hardware configuration is not compatible 
+			// (different video card, etc.)
+			// In that case we need to build a whole new PC with the correct
+			// config, but not in here.
 			if (e.GetError() == SerializationError::COMPAT)
 			{
 				compatible = false;
