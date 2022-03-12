@@ -158,13 +158,13 @@ void SetCPUSpeed(Computer* pc)
 	pc->SetCPUSpeed(*currSpeed);
 }
 
-void InitPC(Computer* pc, Overlay& overlay)
+void InitPC(Computer* pc, Overlay& overlay, bool reset = true)
 {
 	pc->EnableLog(Config::Instance().GetLogLevel("pc"));
-
-	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
-	pc->Init(baseRAM);
-	pc->Reset();
+	if (reset)
+	{
+		pc->Reset();
+	}
 
 	SetCPUSpeed(pc);
 
@@ -180,6 +180,86 @@ void InitLeakCheck()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+}
+
+bool restoreSnapshot = false;
+json snapshotData;
+fs::path snapshotDir;
+
+// Here we only save some info to be retreived in the main loop.
+// We cannot restore the actual pc here becore we're deep in the 
+// computer message handlers. So we set a flag
+// and to the actual restore and new pc creation from the main loop.
+void NewComputerCallback(fs::path dir, json& j)
+{
+	if (restoreSnapshot)
+	{
+		fprintf(stderr, "Loaded snapshot already pending, bailing out\n");
+		return;
+	}
+
+	restoreSnapshot = true;
+	snapshotData = j;
+	snapshotDir = dir;
+}
+
+// Restoring a snapshot with a new computer architecture is a bit tricky
+// 
+// To deserialize a pc from json data, you need to have it created 
+// and initialized. 
+// 
+// However as soon as you create a new Computer object,
+// you reset some internal static things to point to the new computer object.
+// 
+// Same things happens with port connections, which are global and reset
+// when you initialize the new Computer. 
+// 
+// This means that as soon as you call CreateComputer(), you can *not* use the 
+// old Computer object anymore for anything.
+// 
+// This also means that if the deseriaization fails with the new Computer, you can 
+// not fall back to the previous one. You have to carry on with the new Computer.
+Computer* RestoreNewComputerFromSnapshot()
+{
+	Computer* newPC = nullptr;
+	try
+	{
+		std::string arch = snapshotData["computer"]["id"];
+		int baseRAM = snapshotData["computer"]["baseram"];
+		fprintf(stderr, "NewComputerCallback: Create new %s, baseRAM = [%dk]\n", arch.c_str(), baseRAM);
+
+		newPC = CreateComputer(arch);
+		if (newPC)
+		{
+			newPC->Init(baseRAM);
+
+			newPC->SetSerializationDir(snapshotDir);
+			newPC->Deserialize(snapshotData);
+		}
+		else
+		{
+			fprintf(stderr, "Unknown architecture\n");
+		}
+	}
+	catch (std::exception e)
+	{
+		fprintf(stderr, "Unable to restore PC: %s\n", e.what());
+	}
+
+	restoreSnapshot = false;
+	snapshotData.clear();
+	snapshotDir.clear();
+
+	if (!newPC)
+	{
+		// Bail out for now
+		// TODO: Before restoring a snapshot, we should save state.
+		// If restore fails, re create the original pc and restore the saved snapshot
+		fprintf(stderr, "Unrecoverable error while restoring snapshot\n");
+		exit(3);
+	}
+
+	return newPC;
 }
 
 int main(int argc, char* args[])
@@ -252,6 +332,7 @@ int main(int argc, char* args[])
 	
 	Overlay overlay;
 	overlay.Init();
+	overlay.SetNewComputerCallback(NewComputerCallback);
 	bool showOverlay = true;
 
 	std::string arch = Config::Instance().GetValueStr("core", "arch");
@@ -262,6 +343,8 @@ int main(int argc, char* args[])
 		return 2;
 	}
 
+	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
+	pc->Init(baseRAM);
 	InitPC(pc, overlay);
 
 #if 0
@@ -389,6 +472,7 @@ int main(int argc, char* args[])
 								fprintf(stderr, "Creating XT computer\n");
 								delete pc;
 								pc = CreateComputer("xt");
+								pc->Init(640); //TODO
 								InitPC(pc, overlay);
 							}
 							break;
@@ -398,6 +482,7 @@ int main(int argc, char* args[])
 								fprintf(stderr, "Creating TANDY computer\n");
 								delete pc;
 								pc = CreateComputer("tandy");
+								pc->Init(640); //TODO
 								InitPC(pc, overlay);
 							}
 							break;
@@ -407,6 +492,7 @@ int main(int argc, char* args[])
 								fprintf(stderr, "Creating PCjr computer\n");
 								delete pc;
 								pc = CreateComputer("pcjr");
+								pc->Init(640); //TODO
 								InitPC(pc, overlay);
 							}
 							break;
@@ -455,6 +541,13 @@ int main(int argc, char* args[])
 						if (alt) kbd.InputKey(0x38 | 0x80);
 						if (ctrl) kbd.InputKey(0x1D | 0x80);
 					}
+				}
+
+				if (restoreSnapshot)
+				{
+					delete pc;
+					pc = RestoreNewComputerFromSnapshot();
+					InitPC(pc, overlay, false);
 				}
 			}
 		}
