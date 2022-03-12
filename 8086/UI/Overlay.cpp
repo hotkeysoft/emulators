@@ -148,6 +148,7 @@ namespace ui
 		{
 			SDL_InitSubSystem(SDL_INIT_TIMER);
 		}
+		WINMGR().DeleteAllTimers();
 
 		SDL_Renderer* ren = MAINWND().GetRenderer();
 
@@ -682,9 +683,6 @@ namespace ui
 		}
 
 		json j;
-		j["core"]["arch"] = Config::Instance().GetValueStr("core", "arch");
-		j["core"]["baseram"] = Config::Instance().GetValueInt32("core", "baseram", 640);
-
 		m_pc->SetSerializationDir(snapshotDir);
 		m_pc->Serialize(j);
 
@@ -817,36 +815,12 @@ namespace ui
 		}
 
 		bool compatible = true;
-
-		std::string archConfig = Config::Instance().GetValueStr("core", "arch");
-		std::string archSnapshot = j["core"]["arch"];
-		if (archConfig != archSnapshot)
-		{
-			LogPrintf(LOG_WARNING, "RestoreSnapshot: Snapshot architecture[%s] different from config[%s]\n",
-				archSnapshot.c_str(), archConfig.c_str());
-			compatible = false;
-		}
-
-		int baseRAMConfig = Config::Instance().GetValueInt32("core", "baseram", 640);
-		int baseRAMSnapshot = j["core"]["baseram"];
-		if (baseRAMConfig != baseRAMSnapshot)
-		{
-			LogPrintf(LOG_WARNING, "RestoreSnapshot: Snapshot base RAM[%d] different from config[%d]\n",
-				baseRAMSnapshot, baseRAMConfig);
-			compatible = false;
-		}
-
-		bool error = false;
 		try
 		{
 			m_pc->SetSerializationDir(snapshotDir);
 			m_pc->Deserialize(j);
 
-			UpdateFloppy(0);
-			UpdateFloppy(1);
-			UpdateHardDisk(0);
-			UpdateHardDisk(1);
-			UpdateSpeed();
+			SetPC(m_pc);
 		}
 		catch (SerializableException e)
 		{
