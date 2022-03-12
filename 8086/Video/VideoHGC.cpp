@@ -8,6 +8,9 @@ using emul::GetBit;
 using crtc_6845::CRTCConfig;
 using crtc_6845::CRTCData;
 
+using emul::SerializableException;
+using emul::SerializationError;
+
 namespace video
 {
 	VideoHGC::VideoHGC(WORD baseAddress) :
@@ -92,6 +95,11 @@ namespace video
 
 	void VideoHGC::Deserialize(const json& from)
 	{
+		if (!from.contains("modeHGC"))
+		{
+			throw SerializableException("VideoHGC: Incompatible mode", SerializationError::COMPAT);
+		}
+
 		const json& mode = from["modeHGC"];
 		m_modeHGC.graphics = mode["graphics"];
 		m_modeHGC.displayPage = mode["displayPage"];

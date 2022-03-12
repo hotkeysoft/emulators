@@ -453,10 +453,23 @@ namespace emul
 		m_video->Deserialize(from["video"]);
 		m_cpuSpeed.Deserialize(from["speed"]);
 
+		if ((from.contains("floppy") && !m_floppy) ||
+			(!from.contains("floppy") && m_floppy))
+		{
+			throw SerializableException("Computer: Floppy configuration is not compatible", SerializationError::COMPAT);
+		}
+
 		if (m_floppy)
 		{
 			m_floppy->Deserialize(from["floppy"]);
 		}
+
+		if ((from.contains("hardDrive") && !m_hardDrive) ||
+			(!from.contains("hardDrive") && m_hardDrive))
+		{
+			throw SerializableException("Computer: Hard drive configuration is not compatible", SerializationError::COMPAT);
+		}
+
 		if (m_hardDrive)
 		{
 			m_hardDrive->Deserialize(from["hardDrive"]);
