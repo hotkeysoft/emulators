@@ -597,6 +597,8 @@ namespace video
 			throw emul::SerializableException("VideoEGA: Incompatible baseAddress");
 		}
 
+		bool oldColor = m_misc.color;
+
 		const json& misc = from["misc"];
 		m_misc.color = misc["color"];
 		m_misc.enableRAM = misc["enableRAM"];
@@ -609,8 +611,15 @@ namespace video
 		m_sequencer.Deserialize(from["sequencer"]);
 		m_graphController.Deserialize(from["graphController"]);
 		m_attrController.Deserialize(from["attrController"]);
-		m_crtc.Deserialize(from["crtc"]);
 		m_egaRAM.Deserialize(from["egaRAM"]);
+
+		if (oldColor != m_misc.color)
+		{
+			DisconnectRelocatablePorts(oldColor ? m_baseAddressColor : m_baseAddressMono);
+			ConnectRelocatablePorts(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
+			m_crtc.SetBasePort(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
+		}
+		m_crtc.Deserialize(from["crtc"]);
 
 		OnChangeMode();
 		OnNewFrame();
