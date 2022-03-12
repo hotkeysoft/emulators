@@ -3,7 +3,7 @@
 #include "VideoEGA.h"
 #include "../Config.h"
 
-using cfg::Config;
+using cfg::CONFIG;
 
 using emul::SetBit;
 using emul::GetBit;
@@ -89,7 +89,7 @@ namespace video
 		m_egaRAM.SetGraphController(&m_graphController.GetData());
 		m_egaRAM.SetSequencer(&m_sequencer.GetData());
 
-		m_syncPelPanning = Config::Instance().GetValueBool("video.ega", "syncpelpan");
+		m_syncPelPanning = CONFIG().GetValueBool("video.ega", "syncpelpan");
 		if (m_syncPelPanning)
 		{
 			LogPrintf(Logger::LOG_WARNING, "Synchronizing Pel Panning updates to frames");

@@ -31,7 +31,7 @@
 
 namespace fs = std::filesystem;
 
-using namespace cfg;
+using cfg::CONFIG;
 using namespace CoreUI;
 
 using emul::SerializableException;
@@ -852,7 +852,7 @@ namespace ui
 	bool Overlay::GetSnapshotBaseDirectory(fs::path& baseDir)
 	{
 		baseDir.clear();
-		fs::path path = Config::Instance().GetValueStr("dirs", "snapshot", "./snapshots");
+		fs::path path = CONFIG().GetValueStr("dirs", "snapshot", "./snapshots");
 
 		if (!fs::is_directory(fs::status(path)))
 		{

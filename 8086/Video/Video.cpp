@@ -12,7 +12,7 @@
 
 #include <assert.h>
 
-using cfg::Config;
+using cfg::CONFIG;
 using ui::MAINWND;
 using ui::WindowSize;
 using ui::Overlay;
@@ -101,7 +101,7 @@ namespace video
 	{
 		m_monitorPalette = forceMono ? AlphaMonoGreyPalette : AlphaColorPalette;
 
-		std::string monit = Config::Instance().GetValueStr("video", "monitor", "rgb");
+		std::string monit = CONFIG().GetValueStr("video", "monitor", "rgb");
 		if (monit == "mono" || monit == "monowhite")
 		{
 			m_monitor = MonitorType::MONO_WHITE;

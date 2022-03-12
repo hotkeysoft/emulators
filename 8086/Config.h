@@ -6,7 +6,7 @@ namespace cfg
 	{
 	public:
 
-		static Config& Instance()
+		static Config& Get()
 		{
 			static Config instance;
 			return instance;
@@ -33,4 +33,6 @@ namespace cfg
 	private:
 		Config();
 	};
+
+	constexpr auto CONFIG = &Config::Get;
 }

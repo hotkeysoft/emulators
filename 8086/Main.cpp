@@ -37,7 +37,7 @@ const short CONSOLE_COLS = 80;
 
 namespace fs = std::filesystem;
 
-using cfg::Config;
+using cfg::CONFIG;
 using emul::Computer;
 using sound::SOUND;
 using ui::MAINWND;
@@ -115,11 +115,11 @@ void ToggleMode()
 void InitSound()
 {
 	SOUND().Init();
-	SOUND().EnableLog(Config::Instance().GetLogLevel("sound"));
-	SOUND().SetMute(Config::Instance().GetValueBool("sound", "mute"));
-	SOUND().SetMasterVolume(Config::Instance().GetValueInt32("sound", "volume", 128));
+	SOUND().EnableLog(CONFIG().GetLogLevel("sound"));
+	SOUND().SetMute(CONFIG().GetValueBool("sound", "mute"));
+	SOUND().SetMasterVolume(CONFIG().GetValueInt32("sound", "volume", 128));
 
-	std::string audioStream = Config::Instance().GetValueStr("sound", "raw");
+	std::string audioStream = CONFIG().GetValueStr("sound", "raw");
 	if (audioStream.size())
 	{
 		SOUND().StreamToFile(true, audioStream.c_str());
@@ -147,7 +147,7 @@ Computer* CreateComputer(std::string arch)
 void SetCPUSpeed(Computer* pc)
 {
 	Computer::CPUSpeeds speedList = pc->GetCPUSpeeds();
-	bool turbo = Config::Instance().GetValueBool("core", "turbo");
+	bool turbo = CONFIG().GetValueBool("core", "turbo");
 
 	Computer::CPUSpeeds::const_iterator currSpeed = speedList.begin();
 	if (turbo)
@@ -160,7 +160,7 @@ void SetCPUSpeed(Computer* pc)
 
 void InitPC(Computer* pc, Overlay& overlay, bool reset = true)
 {
-	pc->EnableLog(Config::Instance().GetLogLevel("pc"));
+	pc->EnableLog(CONFIG().GetLogLevel("pc"));
 	if (reset)
 	{
 		pc->Reset();
@@ -268,12 +268,12 @@ int main(int argc, char* args[])
 
 	Logger::RegisterLogCallback(LogCallback);
 
-	if (!Config::Instance().LoadConfigFile("config/config.ini"))
+	if (!CONFIG().LoadConfigFile("config/config.ini"))
 	{
 		return 1;
 	}
 
-	std::string logFileName = Config::Instance().GetValueStr("debug", "logfile");
+	std::string logFileName = CONFIG().GetValueStr("debug", "logfile");
 	if (logFileName.size())
 	{
 		fprintf(stdout, "Logging to output file: %s\n", logFileName.c_str());
@@ -286,7 +286,7 @@ int main(int argc, char* args[])
 
 	bool breakpointEnabled = false;
 	emul::SegmentOffset breakpoint;
-	std::string breakpointStr = Config::Instance().GetValueStr("monitor", "breakpoint");
+	std::string breakpointStr = CONFIG().GetValueStr("monitor", "breakpoint");
 	if (breakpointStr.size())
 	{
 		if (breakpoint.FromString(breakpointStr.c_str()))
@@ -300,7 +300,7 @@ int main(int argc, char* args[])
 		}		
 	}
 
-	std::string memViewStr = Config::Instance().GetValueStr("monitor", "custommem");
+	std::string memViewStr = CONFIG().GetValueStr("monitor", "custommem");
 	if (memViewStr.size())
 	{
 		emul::SegmentOffset memView;
@@ -335,7 +335,7 @@ int main(int argc, char* args[])
 	overlay.SetNewComputerCallback(NewComputerCallback);
 	bool showOverlay = true;
 
-	std::string arch = Config::Instance().GetValueStr("core", "arch");
+	std::string arch = CONFIG().GetValueStr("core", "arch");
 	Computer* pc = CreateComputer(arch);
 	if (!pc)
 	{
@@ -343,7 +343,7 @@ int main(int argc, char* args[])
 		return 2;
 	}
 
-	int32_t baseRAM = Config::Instance().GetValueInt32("core", "baseram", 640);
+	int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 640);
 	pc->Init(baseRAM);
 	InitPC(pc, overlay);
 

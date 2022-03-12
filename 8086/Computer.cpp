@@ -14,7 +14,7 @@
 #include <fstream>
 
 using memory_ega::RAMSIZE;
-using cfg::Config;
+using cfg::CONFIG;
 
 namespace emul
 {
@@ -77,7 +77,7 @@ namespace emul
 	void Computer::InitVideo(const std::string& defaultMode, const VideoModes& supported)
 	{
 		assert(m_video == nullptr);
-		std::string mode = Config::Instance().GetValueStr("video", "mode");
+		std::string mode = CONFIG().GetValueStr("video", "mode");
 
 		m_videoModes = supported;
 		if (supported.empty())
@@ -113,8 +113,8 @@ namespace emul
 		}
 		else if (mode == "ega")
 		{
-			std::string ramSizeStr = Config::Instance().GetValueStr("video.ega", "ram", "256");
-			std::string egaMode = Config::Instance().GetValueStr("video.ega", "mode", "ega");
+			std::string ramSizeStr = CONFIG().GetValueStr("video.ega", "ram", "256");
+			std::string egaMode = CONFIG().GetValueStr("video.ega", "mode", "ega");
 			if (egaMode.empty())
 			{
 				egaMode = "ega";
@@ -146,17 +146,17 @@ namespace emul
 			throw std::exception("Invalid video mode");
 		}
 		assert(m_video);
-		m_video->EnableLog(Config::Instance().GetLogLevel("video"));
+		m_video->EnableLog(CONFIG().GetLogLevel("video"));
 
 		LogPrintf(LOG_INFO, "Video mode: [%s]", mode.c_str());
 
-		BYTE border = std::min(255, Config::Instance().GetValueInt32("video", "border", 10));
+		BYTE border = std::min(255, CONFIG().GetValueInt32("video", "border", 10));
 		LogPrintf(LOG_INFO, "Border: [%d]", border);
 
-		std::string charROM = Config::Instance().GetValueStr("video", "charrom", "data/XT/CGA_CHAR.BIN");
+		std::string charROM = CONFIG().GetValueStr("video", "charrom", "data/XT/CGA_CHAR.BIN");
 		// Check for override
 		std::string overrideKey = "charrom." + mode;
-		charROM = Config::Instance().GetValueStr("video", overrideKey.c_str(), charROM.c_str());
+		charROM = CONFIG().GetValueStr("video", overrideKey.c_str(), charROM.c_str());
 
 		LogPrintf(LOG_INFO, "Character ROM: [%s]", charROM.c_str());
 
@@ -166,7 +166,7 @@ namespace emul
 
 	void Computer::InitSound()
 	{
-		m_pcSpeaker.EnableLog(Config::Instance().GetLogLevel("sound.pc"));
+		m_pcSpeaker.EnableLog(CONFIG().GetLogLevel("sound.pc"));
 		m_pcSpeaker.Init(m_ppi, m_pit);
 	}
 
@@ -174,21 +174,21 @@ namespace emul
 	{
 		assert(pit);
 		m_pit = pit;
-		m_pit->EnableLog(Config::Instance().GetLogLevel("pit"));
+		m_pit->EnableLog(CONFIG().GetLogLevel("pit"));
 		m_pit->Init();
 	}
 	void Computer::InitPIC(pic::Device8259* pic)
 	{
 		assert(pic);
 		m_pic = pic;
-		m_pic->EnableLog(Config::Instance().GetLogLevel("pic"));
+		m_pic->EnableLog(CONFIG().GetLogLevel("pic"));
 		m_pic->Init();
 	}
 	void Computer::InitPPI(ppi::Device8255* ppi)
 	{
 		assert(ppi);
 		m_ppi = ppi;
-		m_ppi->EnableLog(Config::Instance().GetLogLevel("ppi"));
+		m_ppi->EnableLog(CONFIG().GetLogLevel("ppi"));
 		m_ppi->Init();
 	}
 
@@ -196,16 +196,16 @@ namespace emul
 	{
 		assert(dma);
 		m_dma = dma;
-		m_dma->EnableLog(Config::Instance().GetLogLevel("dma"));
+		m_dma->EnableLog(CONFIG().GetLogLevel("dma"));
 		m_dma->Init();
 	}
 
 	void Computer::InitJoystick(WORD baseAddress, size_t baseClock)
 	{
-		if (Config::Instance().GetValueBool("joystick", "enable"))
+		if (CONFIG().GetValueBool("joystick", "enable"))
 		{
 			m_joystick = new joy::DeviceJoystick(baseAddress, baseClock);
-			m_joystick->EnableLog(Config::Instance().GetLogLevel("joystick"));
+			m_joystick->EnableLog(CONFIG().GetLogLevel("joystick"));
 			m_joystick->Init();
 		}
 	}
@@ -214,7 +214,7 @@ namespace emul
 	{
 		m_inputs = new events::InputEvents(clockSpeedHz);
 		m_inputs->Init();
-		m_inputs->EnableLog(Config::Instance().GetLogLevel("inputs"));
+		m_inputs->EnableLog(CONFIG().GetLogLevel("inputs"));
 	}
 
 	void Computer::InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq, BYTE dma)
@@ -224,16 +224,16 @@ namespace emul
 		m_floppyIRQ = irq;
 		m_floppyDMA = dma;
 
-		m_floppy->EnableLog(Config::Instance().GetLogLevel("floppy"));
+		m_floppy->EnableLog(CONFIG().GetLogLevel("floppy"));
 		m_floppy->Init();
 
-		std::string floppy = Config::Instance().GetValueStr("floppy", "floppy.1");
+		std::string floppy = CONFIG().GetValueStr("floppy", "floppy.1");
 		if (floppy.size())
 		{
 			m_floppy->LoadDiskImage(0, floppy.c_str());
 		}
 
-		floppy = Config::Instance().GetValueStr("floppy", "floppy.2");
+		floppy = CONFIG().GetValueStr("floppy", "floppy.2");
 		if (floppy.size())
 		{
 			m_floppy->LoadDiskImage(1, floppy.c_str());
@@ -246,7 +246,7 @@ namespace emul
 		m_hddIRQ = irq;
 		m_hddDMA = dma;
 
-		m_hardDrive->EnableLog(Config::Instance().GetLogLevel("hdd"));
+		m_hardDrive->EnableLog(CONFIG().GetLogLevel("hdd"));
 		m_hardDrive->Init();
 
 		for (int i = 0; i < 2; i++)
@@ -258,7 +258,7 @@ namespace emul
 			}
 		}
 
-		std::string romFile = Config::Instance().GetValueStr("hdd", "rom");
+		std::string romFile = CONFIG().GetValueStr("hdd", "rom");
 		if (romFile.empty())
 		{
 			romFile = "data/hdd/WD1002S-WX2_62-000042-11.bin";
@@ -272,7 +272,7 @@ namespace emul
 		char key[16];
 		sprintf(key, "hdd.%d", id);
 
-		std::string imageStr = Config::Instance().GetValueStr("hdd", key);
+		std::string imageStr = CONFIG().GetValueStr("hdd", key);
 		HardDriveImageInfo info;
 		if (imageStr.size())
 		{

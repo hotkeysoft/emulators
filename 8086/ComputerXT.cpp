@@ -9,7 +9,7 @@
 
 #include <thread>
 
-using cfg::Config;
+using cfg::CONFIG;
 
 namespace emul
 {
@@ -53,8 +53,8 @@ namespace emul
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
-		m_memory.EnableLog(Config::Instance().GetLogLevel("memory"));
-		m_mmap.EnableLog(Config::Instance().GetLogLevel("mmap"));
+		m_memory.EnableLog(CONFIG().GetLogLevel("memory"));
+		m_mmap.EnableLog(CONFIG().GetLogLevel("mmap"));
 
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
@@ -63,7 +63,7 @@ namespace emul
 		InitDMA(new dma::Device8237(0x00, m_memory));
 		InitSound();
 
-		//m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
+		//m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.76489"));
 		//m_soundModule.Init();
 
 		InitVideo("cga", { "cga", "mda", "hgc", "ega"});
@@ -74,7 +74,7 @@ namespace emul
 		m_biosF800.LoadFromFile("data/XT/BIOS_5160_V3_F800.BIN");
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
-		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
+		m_keyboard.EnableLog(CONFIG().GetLogLevel("keyboard"));
 		m_keyboard.Init(m_ppi, m_pic);
 
 		InitJoystick(0x201, PIT_CLK);
@@ -84,13 +84,13 @@ namespace emul
 		GetInputs().InitJoystick(m_joystick);
 
 		int floppyCount = 0;
-		if (Config::Instance().GetValueBool("floppy", "enable"))
+		if (CONFIG().GetValueBool("floppy", "enable"))
 		{
 			InitFloppy(new fdc::DeviceFloppyXT(0x03F0, PIT_CLK), IRQ_FLOPPY, DMA_FLOPPY);
 			floppyCount = 2;
 		}
 
-		if (Config::Instance().GetValueBool("hdd", "enable"))
+		if (CONFIG().GetValueBool("hdd", "enable"))
 		{
 			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
 		}

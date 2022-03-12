@@ -4,6 +4,8 @@
 #include "DeviceJoystick.h"
 #include "../Config.h"
 
+using cfg::CONFIG;
+
 namespace joy
 {
 	DeviceJoystick::DeviceJoystick(WORD baseAddress, size_t baseClock) :
@@ -22,8 +24,8 @@ namespace joy
 		}
 
 		AxisTrim trim;
-		trim.x = cfg::Config::Instance().GetValueInt32("joystick", "trim.x");
-		trim.y = cfg::Config::Instance().GetValueInt32("joystick", "trim.y");
+		trim.x = CONFIG().GetValueInt32("joystick", "trim.x");
+		trim.y = CONFIG().GetValueInt32("joystick", "trim.y");
 		SetAxisTrim(trim);
 	}
 

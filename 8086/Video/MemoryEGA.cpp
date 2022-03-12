@@ -8,7 +8,7 @@
 using emul::ADDRESS;
 using emul::GetBit;
 using emul::SetBit;
-using cfg::Config;
+using cfg::CONFIG;
 
 using graph_ega::ALUFunction;
 
@@ -44,7 +44,7 @@ namespace memory_ega
 		m_size = (DWORD)ramsize;
 		SelectCharMaps(0, 0);
 
-		EnableLog(Config::Instance().GetLogLevel("memory.ega"));
+		EnableLog(CONFIG().GetLogLevel("memory.ega"));
 	}
 
 	void MemoryEGA::Clear(BYTE filler)

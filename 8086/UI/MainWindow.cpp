@@ -5,7 +5,7 @@
 
 #include <SDL.h>
 
-using cfg::Config;
+using cfg::CONFIG;
 
 namespace ui
 {
@@ -22,7 +22,7 @@ namespace ui
 
 	bool MainWindow::Init()
 	{
-		EnableLog(Config::Instance().GetLogLevel("mainwindow"));
+		EnableLog(CONFIG().GetLogLevel("mainwindow"));
 
 		// TODO
 		m_size.w = 800;
@@ -33,7 +33,7 @@ namespace ui
 			SDL_InitSubSystem(SDL_INIT_VIDEO);
 		}
 
-		bool fullScreen = Config::Instance().GetValueBool("video", "fullscreen");
+		bool fullScreen = CONFIG().GetValueBool("video", "fullscreen");
 		LogPrintf(LOG_INFO, "Full screen: %d", fullScreen);
 
 		SDL_CreateWindowAndRenderer(
@@ -48,7 +48,7 @@ namespace ui
 		SDL_GetWindowSize(m_sdlWindow, &m_size.w, &m_size.h);
 		LogPrintf(LOG_INFO, "Window Size: %dx%d", m_size.w, m_size.h);
 
-		std::string filtering = Config::Instance().GetValueStr("video", "filtering", "0");
+		std::string filtering = CONFIG().GetValueStr("video", "filtering", "0");
 		if (filtering.empty())
 		{
 			filtering = "0";

@@ -8,7 +8,7 @@
 
 #include <thread>
 
-using cfg::Config;
+using cfg::CONFIG;
 
 namespace emul
 {
@@ -50,8 +50,8 @@ namespace emul
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
-		m_memory.EnableLog(Config::Instance().GetLogLevel("memory"));
-		m_mmap.EnableLog(Config::Instance().GetLogLevel("mmap"));
+		m_memory.EnableLog(CONFIG().GetLogLevel("memory"));
+		m_mmap.EnableLog(CONFIG().GetLogLevel("mmap"));
 
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
@@ -68,7 +68,7 @@ namespace emul
 
 		InitSound();
 
-		m_soundModule.EnableLog(Config::Instance().GetLogLevel("sound.76489"));
+		m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.76489"));
 		m_soundModule.Init();
 
 		InitVideo("pcjr");
@@ -79,7 +79,7 @@ namespace emul
 		m_biosF800.LoadFromFile("data/PCjr/BIOS_4860_1504037_F800.BIN");
 		m_memory.Allocate(&m_biosF800, emul::S2A(0xF800));
 
-		m_keyboard.EnableLog(Config::Instance().GetLogLevel("keyboard"));
+		m_keyboard.EnableLog(CONFIG().GetLogLevel("keyboard"));
 		m_keyboard.Init(m_ppi, m_pic);
 
 		// TODO: Make this dynamic
@@ -95,12 +95,12 @@ namespace emul
 		//	m_memory.Allocate(&m_cart2, m_cart2.GetBaseAddress());
 		//}
 
-		if (Config::Instance().GetValueBool("floppy", "enable"))
+		if (CONFIG().GetValueBool("floppy", "enable"))
 		{
 			InitFloppy(new fdc::DeviceFloppyPCjr(0xF0, PIT_CLK));
 		}
 		
-		m_uart.EnableLog(Config::Instance().GetLogLevel("uart"));
+		m_uart.EnableLog(CONFIG().GetLogLevel("uart"));
 		m_uart.Init();
 
 		InitJoystick(0x201, PIT_CLK);
