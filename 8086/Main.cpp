@@ -221,16 +221,33 @@ void NewComputerCallback(fs::path dir, json& j)
 // not fall back to the previous one. You have to carry on with the new Computer.
 Computer* RestoreNewComputerFromSnapshot()
 {
+	fprintf(stderr, "Restore new computer from snapshot\n");
 	Computer* newPC = nullptr;
+
+	// Until we have created the new pc object, we can bail out and 
+	// continue with the old PC.
+	bool failureIsFatal = false;
+
+	// First, load the config file so we have the proper hardware
+	fs::path config = snapshotDir;
+	config.append("config.ini");
+	if (!CONFIG().LoadConfigFile(config.string().c_str()))
+	{
+		fprintf(stderr, "Unable to read config file %s, aborting\n", config.string().c_str());
+	}
+
+	std::string arch = CONFIG().GetValueStr("core", "arch");
+	fprintf(stderr, "NewComputerCallback: Create new PC [%s]\n", arch.c_str());
+
 	try
 	{
-		std::string arch = snapshotData["computer"]["id"];
-		int baseRAM = snapshotData["computer"]["baseram"];
-		fprintf(stderr, "NewComputerCallback: Create new %s, baseRAM = [%dk]\n", arch.c_str(), baseRAM);
-
 		newPC = CreateComputer(arch);
 		if (newPC)
 		{
+			// Starting here, anything failing is non-recoverable
+			failureIsFatal = true;
+
+			int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 640);
 			newPC->Init(baseRAM);
 
 			newPC->SetSerializationDir(snapshotDir);
@@ -244,17 +261,18 @@ Computer* RestoreNewComputerFromSnapshot()
 	catch (std::exception e)
 	{
 		fprintf(stderr, "Unable to restore PC: %s\n", e.what());
+		delete newPC;
 	}
 
 	restoreSnapshot = false;
 	snapshotData.clear();
 	snapshotDir.clear();
 
-	if (!newPC)
+	if (!newPC && failureIsFatal)
 	{
 		// Bail out for now
 		// TODO: Before restoring a snapshot, we should save state.
-		// If restore fails, re create the original pc and restore the saved snapshot
+		// If restore fails, re-create the original pc and restore the saved snapshot
 		fprintf(stderr, "Unrecoverable error while restoring snapshot\n");
 		exit(3);
 	}
@@ -545,9 +563,13 @@ int main(int argc, char* args[])
 
 				if (restoreSnapshot)
 				{
-					delete pc;
-					pc = RestoreNewComputerFromSnapshot();
-					InitPC(pc, overlay, false);
+					Computer* newPC = RestoreNewComputerFromSnapshot();
+					if (newPC)
+					{
+						delete pc;
+						pc = newPC;
+						InitPC(pc, overlay, false);
+					}
 				}
 			}
 		}
