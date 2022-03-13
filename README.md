@@ -14,15 +14,16 @@ Emulators for 8080- and TMS1000-family CPUs
   - Terminal window + Display in separate SDL window
   - Snapshots of CPU+RAM+Most component states
     - Exception: storage (floppy/hdd) not persisted
-    - Restore snapshot must match arch/video card in config for now
-      - e.g. can not restore Tandy snapshot in XT mode
+    - Restore snapshots with different hardware configuration **(NEW)**
+      - Minimally tested
   - GUI Overlay
     - Frame rate indicator
     - Soft/hard restart (shift for hard)
     - Load/eject floppies
     - Swap hard drives (need reboot)
     - Load/Restore snapshot
-      - Only last snapshot is reloaded for now, wip
+      - Can browse all snapshots (shift-click restore button) **(NEW)**
+      - Edit snapshot: Add description, delete **(NEW)**
     - Toggle clock speed, warp mode
     - Joystick trimming/fine adjust
   - Floppy emulation
@@ -30,6 +31,8 @@ Emulators for 8080- and TMS1000-family CPUs
     - Partial command set (read/write, no format or more obscure commands)
   - Hard drive emulation
     - Two image size supported (20M/33M)
+      - Recommend that two images are always loaded, otherwise boot takes ages while looking for second drive... (see if this can be fixed)
+      - If not using hard disks, disable controller in config file for faster boot
     - Partial command set (read/write, no format or more obscure commands)
   - IBM PC/XT (5160)
     - Loads original BIOS ROM (passes POST except 301 error)
@@ -49,6 +52,13 @@ Emulators for 8080- and TMS1000-family CPUs
         - CGA graphic modes (except 16 color composite)
       - MDA graphics (Monochrome display adapter)
       - HGC graphics (Hercules, 720x348 monochrome)
+      - EGA graphics **(NEW)**
+        - Runs original IBM EGA BIOS
+        - EGA native modes: 320x200x16, 640x350x16
+        - Emulated modes (CGA/MDA) can be set in config file
+        - Mostly complete, need more extensive tests. Some issues:
+          - Glitchy scrolling in some games
+          - Bugs in write operations (Moonbase)
       - PC Speaker sound
   - IBM PCjr
     - Loads original BIOS ROM (passes POST) 

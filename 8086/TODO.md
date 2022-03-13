@@ -4,7 +4,6 @@
 
 - Dynamic connections between components
 - Sync is based on audio only at the moment
-- Dynamic hardware selection
 
 ### Floppy controller
 - Write
@@ -34,14 +33,7 @@
 ### CGA
 - Composite mode
 
-### EGA
-- Everything
-
 ## Sound
-
-### PC Speaker
-- Mostly done, need tests
-- Samples work in World Class Leader Board golf and Gauntlet 2
 
 ### SN76496 (PCjr/Tandy)
 - Switches in the 8255
