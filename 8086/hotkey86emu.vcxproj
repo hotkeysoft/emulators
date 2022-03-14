@@ -218,11 +218,16 @@
     <ClCompile Include="UI\SnapshotWidget.cpp" />
     <ClCompile Include="UI\TimeFormatter.cpp" />
     <ClCompile Include="Video\AttributeControllerEGA.cpp" />
+    <ClCompile Include="Video\AttributeControllerVGA.cpp" />
     <ClCompile Include="Video\CRTController6845.cpp" />
     <ClCompile Include="Video\CRTControllerEGA.cpp" />
+    <ClCompile Include="Video\CRTControllerVGA.cpp" />
     <ClCompile Include="video\GraphControllerEGA.cpp" />
+    <ClCompile Include="Video\GraphControllerVGA.cpp" />
     <ClCompile Include="Video\MemoryEGA.cpp" />
+    <ClCompile Include="Video\MemoryVGA.cpp" />
     <ClCompile Include="Video\SequencerEGA.cpp" />
+    <ClCompile Include="Video\SequencerVGA.cpp" />
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\Video6845.cpp" />
     <ClCompile Include="Video\VideoCGA.cpp" />
@@ -231,6 +236,7 @@
     <ClCompile Include="Video\VideoMDA.cpp" />
     <ClCompile Include="Video\VideoPCjr.cpp" />
     <ClCompile Include="Video\VideoTandy.cpp" />
+    <ClCompile Include="Video\VideoVGA.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\inipp.h" />
@@ -284,11 +290,16 @@
     <ClInclude Include="UI\SnapshotWidget.h" />
     <ClInclude Include="UI\TimeFormatter.h" />
     <ClInclude Include="Video\AttributeControllerEGA.h" />
+    <ClInclude Include="Video\AttributeControllerVGA.h" />
     <ClInclude Include="Video\CRTController6845.h" />
     <ClInclude Include="Video\CRTControllerEGA.h" />
+    <ClInclude Include="Video\CRTControllerVGA.h" />
     <ClInclude Include="Video\GraphControllerEGA.h" />
+    <ClInclude Include="Video\GraphControllerVGA.h" />
     <ClInclude Include="Video\MemoryEGA.h" />
+    <ClInclude Include="Video\MemoryVGA.h" />
     <ClInclude Include="Video\SequencerEGA.h" />
+    <ClInclude Include="Video\SequencerVGA.h" />
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\Video6845.h" />
     <ClInclude Include="Video\VideoCGA.h" />
@@ -297,6 +308,7 @@
     <ClInclude Include="Video\VideoMDA.h" />
     <ClInclude Include="Video\VideoPCjr.h" />
     <ClInclude Include="Video\VideoTandy.h" />
+    <ClInclude Include="Video\VideoVGA.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">

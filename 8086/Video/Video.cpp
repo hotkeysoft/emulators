@@ -177,7 +177,7 @@ namespace video
 
 	void Video::NewLine()
 	{
-		m_fbCurrY = std::min(m_fbHeight - 1, m_fbCurrY + 1);
+		m_fbCurrY = std::min(m_fbHeight - 2, m_fbCurrY + 1);
 
 		m_fbMaxX = std::max(m_fbMaxX, m_fbCurrX);
 		m_fbMaxY = std::max(m_fbCurrY, m_fbMaxY);

@@ -9,6 +9,7 @@
 #include "Video/VideoPCjr.h"
 #include "Video/VideoTandy.h"
 #include "Video/VideoEga.h"
+#include "Video/VideoVga.h"
 
 #include <assert.h>
 #include <fstream>
@@ -58,6 +59,9 @@ namespace emul
 			LogPrintf(LOG_WARNING, "HARD Reset");			
 			Reset();
 			m_memory.Clear();
+
+			// TODO: Reset all components
+			m_video->Reset();
 		}
 		else
 		{
@@ -140,6 +144,10 @@ namespace emul
 			}
 
 			m_video = new video::VideoEGA(egaMode.c_str(), ramSize, 0x3C0, 0x3B0, 0x3D0);
+		}
+		else if (mode == "vga")
+		{
+			m_video = new video::VideoVGA(0x3C0, 0x3B0, 0x3D0);
 		}
 		else
 		{

@@ -66,7 +66,7 @@ namespace emul
 		//m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.76489"));
 		//m_soundModule.Init();
 
-		InitVideo("cga", { "cga", "mda", "hgc", "ega"});
+		InitVideo("cga", { "cga", "mda", "hgc", "ega", "vga"});
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
@@ -105,8 +105,9 @@ namespace emul
 			{
 				ppi->SetDisplayConfig(ppi::DISPLAY::MONO_80x25);
 			}
-			else if (m_video->GetID() == "ega")
+			else if ((m_video->GetID() == "ega") || (m_video->GetID() == "vga"))
 			{
+				// TODO: Put flag in video card
 				ppi->SetDisplayConfig(ppi::DISPLAY::NONE);
 			}
 			else
