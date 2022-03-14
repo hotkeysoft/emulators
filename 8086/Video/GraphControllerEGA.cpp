@@ -84,7 +84,7 @@ namespace graph_ega
 			break;
 		case GraphControllerAddress::GRAPH_DATA_ROTATE:
 			LogPrintf(Logger::LOG_DEBUG, "WriteValue, Data Rotate %d", value);
-			m_data.rotateCount = value & 3;
+			m_data.rotateCount = value & 7;
 			m_data.aluFunction = (ALUFunction)((value >> 3) & 3);
 			LogPrintf(Logger::LOG_INFO, "WriteValue, Data Rotate Count = %d, Function = %s",
 				m_data.rotateCount,
