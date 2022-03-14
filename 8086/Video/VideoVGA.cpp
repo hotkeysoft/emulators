@@ -88,6 +88,7 @@ namespace video
 	{
 		// Misc Register
 		DisconnectOutput(m_baseAddress + 0x2);
+		DisconnectInput(m_baseAddress + 0xC);
 
 		// Status Register
 		DisconnectInput(m_baseAddress + 0x2);
@@ -109,6 +110,7 @@ namespace video
 
 			// Misc Register
 			Connect(m_baseAddress + 0x2, static_cast<PortConnector::OUTFunction>(&VideoVGA::WriteMiscRegister));
+			Connect(m_baseAddress + 0xC, static_cast<PortConnector::INFunction>(&VideoVGA::ReadMiscRegister));
 
 			// Status Register
 			Connect(m_baseAddress + 0x2, static_cast<PortConnector::INFunction>(&VideoVGA::ReadStatusRegister0));
@@ -172,8 +174,8 @@ namespace video
 	void VideoVGA::OnChangeMode()
 	{
 		m_crtc.SetCharWidth(m_sequencer.GetData().clockingMode.charWidth);
-
-		if (m_sequencer.GetData().memoryMode.alpha)
+				
+		if (!m_attrController.GetData().graphics)
 		{
 			SetMode(m_attrController.GetData().monochrome ? "textMDA" : "text");
 		}
@@ -195,17 +197,29 @@ namespace video
 			return;
 		}
 
-		if (m_misc.clockSel == MISCRegister::ClockSelect::CLK_16)
+		if (m_misc.clockSel == MISCRegister::ClockSelect::CLK_25)
 		{
-			static uint32_t tick16 = 0;
-			// Add two ticks every 15 ticks to approximate 16 mhz clock
-			// Gives 16.227MHz instead of 16.257Mhz (0.2% off)
-			if (++tick16 == 15)
+			// 25.175MHz clock
+			// Double ticks, skip one out of four
+			// Gives 25.056MHz (0.5% off)
+			// TODO: Improve this
+			static uint32_t tick4 = 0;
+			if (++tick4 == 4)
 			{
-				tick16 = 0;
-				InternalTick();
+				tick4 = 0;
+			}
+			else
+			{
 				InternalTick();
 			}
+		}
+		else if (m_misc.clockSel == MISCRegister::ClockSelect::CLK_28)
+		{
+			// 28.322MHz clock
+			// Double ticks
+			// Gives 28.636MHz (1% off)
+			// TODO: Improve this
+			InternalTick();
 		}
 
 		InternalTick();
@@ -289,6 +303,21 @@ namespace video
 		}
 	}
 
+	BYTE VideoVGA::ReadMiscRegister()
+	{
+		BYTE value =
+			(m_misc.color << 0) |
+			(m_misc.enableRAM << 1) |
+			((BYTE)(m_misc.clockSel) << 2) |
+			(m_misc.disableVideo << 4) |
+			(m_misc.pageHigh << 5) |
+			(m_misc.hSyncPolarity << 6) |
+			(m_misc.vSyncPolarity << 7);
+
+		LogPrintf(Logger::LOG_DEBUG, "ReadMiscRegister, value=%02Xh", value);
+		return value;
+	}
+
 	void VideoVGA::WriteMiscRegister(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteMiscRegister, value=%02Xh", value);
@@ -308,12 +337,12 @@ namespace video
 		switch ((value >> 2) & 3)
 		{
 		case 0:
-			m_misc.clockSel = MISCRegister::ClockSelect::CLK_14;
-			clockSelStr = "14MHz";
+			m_misc.clockSel = MISCRegister::ClockSelect::CLK_25;
+			clockSelStr = "25MHz";
 			break;
 		case 1:
-			m_misc.clockSel = MISCRegister::ClockSelect::CLK_16;
-			clockSelStr = "16MHz";
+			m_misc.clockSel = MISCRegister::ClockSelect::CLK_28;
+			clockSelStr = "28MHz";
 			break;
 		case 2:
 			m_misc.clockSel = MISCRegister::ClockSelect::CLK_EXT;

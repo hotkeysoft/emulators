@@ -82,7 +82,6 @@ namespace video
 			bool setupMode = false; // VGA Setup Mode
 		} m_setup;
 		void WriteSetupRegister(BYTE value);
-		void SetupMode(bool setup);
 
 		// Global Enable Register (port 0x102)
 		bool m_globalEnable = false; // 1: vga awake, 0: vga sleep
@@ -92,12 +91,16 @@ namespace video
 		{
 			bool color = false; // 1(color): maps port 0x3Dx, 0(mono): maps ports 0x3Bx
 			bool enableRAM = false; // 1:enable RAM access from CPU
-			enum class ClockSelect { CLK_14 = 0, CLK_16, CLK_EXT, CLK_UNUSED } clockSel = ClockSelect::CLK_14;
+			enum class ClockSelect { CLK_25 = 0, CLK_28, CLK_EXT, CLK_UNUSED } clockSel = ClockSelect::CLK_25;
+
+			// TODO: Undefined in IBM doc
 			bool disableVideo = false; // 1:disable output, 0:enable output
 			bool pageHigh = false; // Select lo/hi page in odd/even modes
+
 			bool hSyncPolarity = false;
 			bool vSyncPolarity = false;
 		} m_misc;
+		BYTE ReadMiscRegister();
 		void WriteMiscRegister(BYTE value);
 
 		void WriteFeatureControlRegister(BYTE value);
