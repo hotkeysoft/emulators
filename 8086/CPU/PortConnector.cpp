@@ -56,28 +56,30 @@ namespace emul
 
 	bool PortConnector::DisconnectInput(WORD portNb)
 	{
-		LogPrintf(LOG_INFO, "Disconnect input port 0x%04X", portNb);
-
-		if (!m_inputPorts.erase(portNb))
+		if (m_inputPorts.erase(portNb))
 		{
-			LogPrintf(LOG_WARNING, "Port not connected");
+			LogPrintf(LOG_INFO, "Disconnect input port 0x%04X", portNb);
+			return true;
+		}
+		else
+		{
+			LogPrintf(LOG_DEBUG, "Disconnect input port 0x%04X (not connected)", portNb);
 			return false;
 		}
-
-		return true;
 	}
 
 	bool PortConnector::DisconnectOutput(WORD portNb)
 	{
-		LogPrintf(LOG_INFO, "Disconnect output port 0x%04X", portNb);
-
-		if (!m_outputPorts.erase(portNb))
+		if (m_outputPorts.erase(portNb))
 		{
-			LogPrintf(LOG_WARNING, "Port not connected");
+			LogPrintf(LOG_INFO, "Disconnect output port 0x%04X", portNb);
+			return true;
+		}
+		else
+		{
+			LogPrintf(LOG_DEBUG, "Disconnect output port 0x%04X (not connected)", portNb);
 			return false;
 		}
-
-		return true;
 	}
 
 	bool PortConnector::In(WORD port, BYTE& value)
