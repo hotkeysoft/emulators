@@ -35,14 +35,22 @@ namespace graph_vga
 	{
 		Connect(m_baseAddress + 0xC, static_cast<PortConnector::OUTFunction>(&GraphController::WritePosition1));
 		Connect(m_baseAddress + 0xA, static_cast<PortConnector::OUTFunction>(&GraphController::WritePosition2));
+
+		Connect(m_baseAddress + 0xE, static_cast<PortConnector::INFunction>(&GraphController::ReadAddress));
 		Connect(m_baseAddress + 0xE, static_cast<PortConnector::OUTFunction>(&GraphController::WriteAddress));
+
+		Connect(m_baseAddress + 0xF, static_cast<PortConnector::INFunction>(&GraphController::ReadValue));
 		Connect(m_baseAddress + 0xF, static_cast<PortConnector::OUTFunction>(&GraphController::WriteValue));
 	}
 	void GraphController::DisconnectPorts()
 	{
 		DisconnectOutput(m_baseAddress + 0xC);
 		DisconnectOutput(m_baseAddress + 0xA);
+
+		DisconnectInput(m_baseAddress + 0xE);
 		DisconnectOutput(m_baseAddress + 0xE);
+
+		DisconnectInput(m_baseAddress + 0xF);
 		DisconnectOutput(m_baseAddress + 0xF);
 	}
 
@@ -66,6 +74,13 @@ namespace graph_vga
 			throw std::exception("WritePosition2, expected value=1");
 		}
 	}
+
+	BYTE GraphController::ReadAddress()
+	{
+		LogPrintf(Logger::LOG_DEBUG, "ReadAddress, value=%d", m_currAddress);
+		return (BYTE)m_currAddress;
+	}
+
 	void GraphController::WriteAddress(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteAddress, reg=%d", value);
@@ -74,6 +89,42 @@ namespace graph_vga
 			GraphControllerAddress::GRAPH_INVALID_REG :
 			(GraphControllerAddress)value;
 	}
+
+	BYTE GraphController::ReadValue()
+	{
+		LogPrintf(Logger::LOG_DEBUG, "ReadValue, reg=%d", m_currAddress);
+		switch (m_currAddress)
+		{
+		case GraphControllerAddress::GRAPH_SET_RESET:
+			return m_data.setReset;
+		case GraphControllerAddress::GRAPH_ENABLE_SET_RESET:
+			return m_data.enableSetReset;
+		case GraphControllerAddress::GRAPH_COLOR_COMPARE:
+			return m_data.colorCompare;
+		case GraphControllerAddress::GRAPH_DATA_ROTATE:
+			return m_data.rotateCount | (((BYTE)m_data.aluFunction) << 3);
+		case GraphControllerAddress::GRAPH_READ_MAP_SELECT:
+			return m_data.readPlaneSelect;
+		case GraphControllerAddress::GRAPH_MODE:
+			return (m_data.writeMode << 0) |
+				(m_data.readModeCompare << 3) |
+				(m_data.oddEven << 4) |
+				(m_data.shiftRegister << 5) |
+				(m_data.color256 << 6);
+		case GraphControllerAddress::GRAPH_MISC:
+			return (m_data.graphics << 0) |
+				(m_data.chainOddEven << 1) |
+				(((BYTE)m_data.memoryMap) << 2);
+		case GraphControllerAddress::GRAPH_COLOR_DONT_CARE:
+			return m_data.colorDontCare;
+		case GraphControllerAddress::GRAPH_BIT_MASK:
+			return m_data.bitMask;
+		default:
+			LogPrintf(Logger::LOG_WARNING, "WriteValue, Invalid register");
+			return 0xFF;
+		}
+	}
+
 	void GraphController::WriteValue(BYTE value)
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteValue, value=%02Xh", value);
@@ -102,21 +153,13 @@ namespace graph_vga
 			break;
 		case GraphControllerAddress::GRAPH_READ_MAP_SELECT:
 			LogPrintf(Logger::LOG_INFO, "WriteValue, Read Map Select %d", value);
-			m_data.readPlaneSelect = value & 7;
-			if (m_data.readPlaneSelect > 3)
-			{
-				LogPrintf(Logger::LOG_ERROR, "WriteValue, Invalid Map: %d", m_data.readPlaneSelect);
-			}
+			m_data.readPlaneSelect = value & 3;
 			break;
 		case GraphControllerAddress::GRAPH_MODE:
 			LogPrintf(Logger::LOG_DEBUG, "WriteValue, Mode %d", value);
 
 			m_data.writeMode = value & 3;
 			LogPrintf(Logger::LOG_INFO, "WriteValue, WriteMode[%d]", m_data.writeMode);
-			if (m_data.writeMode == 3)
-			{
-				LogPrintf(Logger::LOG_ERROR, "WriteValue, Illegal Write Mode");
-			}
 
 			m_data.readModeCompare = GetBit(value, 3);
 			LogPrintf(Logger::LOG_INFO, "WriteValue, ReadMode[%s]", m_data.readModeCompare ? "COMPARE" : "NORMAL");
@@ -127,6 +170,9 @@ namespace graph_vga
 
 			m_data.shiftRegister = GetBit(value, 5);
 			LogPrintf(Logger::LOG_INFO, "WriteValue, Shift register mode[%d]", m_data.shiftRegister);
+
+			m_data.color256 = GetBit(value, 6);
+			LogPrintf(Logger::LOG_INFO, "WriteValue, 256 color mode [%d]", m_data.color256);
 			break;
 		case GraphControllerAddress::GRAPH_MISC:
 			LogPrintf(Logger::LOG_DEBUG, "WriteValue, Miscellaneous %d", value);
@@ -190,6 +236,7 @@ namespace graph_vga
 		to["readModeCompare"] = m_data.readModeCompare;
 		to["oddEven"] = m_data.oddEven;
 		to["shiftRegister"] = m_data.shiftRegister;
+		to["color256"] = m_data.color256;		
 		to["graphics"] = m_data.graphics;
 		to["chainOddEven"] = m_data.chainOddEven;
 		to["memoryMap"] = m_data.memoryMap;
@@ -211,6 +258,7 @@ namespace graph_vga
 		m_data.readModeCompare = from["readModeCompare"];
 		m_data.oddEven = from["oddEven"];
 		m_data.shiftRegister = from["shiftRegister"];
+		m_data.color256 = from["color256"];
 		m_data.graphics = from["graphics"];
 		m_data.chainOddEven = from["chainOddEven"];
 		m_data.memoryMap = from["memoryMap"];

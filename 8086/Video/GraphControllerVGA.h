@@ -38,6 +38,7 @@ namespace graph_vga
 		bool readModeCompare = false;
 		bool oddEven = false;
 		bool shiftRegister = false;
+		bool color256 = false;
 
 		// Miscellaneous Register (6)
 		bool graphics = false;
@@ -95,7 +96,11 @@ namespace graph_vga
 
 		void WritePosition1(BYTE value);
 		void WritePosition2(BYTE value);
+
+		BYTE ReadAddress();
 		void WriteAddress(BYTE value);
+
+		BYTE ReadValue();
 		void WriteValue(BYTE value);
 
 		void MapMemory();
