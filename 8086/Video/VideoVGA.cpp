@@ -20,7 +20,6 @@ using graph_vga::GraphControllerData;
 using graph_vga::ALUFunction;
 
 using attr_vga::AttrControllerData;
-using attr_vga::ColorMode;
 
 using seq_vga::SequencerData;
 
@@ -331,7 +330,8 @@ namespace video
 		m_misc.hSyncPolarity = !GetBit(value, 6);
 		m_misc.vSyncPolarity = !GetBit(value, 7);
 
-		m_attrController.SetColorMode(m_misc.vSyncPolarity ? ColorMode::RGB4 : ColorMode::RGB6);
+		// TODO: Still needed in VGA?
+		// m_attrController.SetColorMode(m_misc.vSyncPolarity ? ColorMode::RGB4 : ColorMode::RGB6);
 
 		const char* clockSelStr = "";
 		switch ((value >> 2) & 3)

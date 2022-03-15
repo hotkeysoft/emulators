@@ -6,48 +6,6 @@ using emul::GetBit;
 
 namespace attr_vga
 {
-	BYTE MakeColor8(bool h, bool l)
-	{
-		BYTE b = (h * 2) + l;
-		return b * 85;
-	}
-
-	uint32_t RGB6toARGB32(BYTE value)
-	{
-		BYTE a = 0xFF;
-		BYTE r = MakeColor8(GetBit(value, 2), GetBit(value, 5));
-		BYTE g = MakeColor8(GetBit(value, 1), GetBit(value, 4));
-		BYTE b = MakeColor8(GetBit(value, 0), GetBit(value, 3));
-
-		return (a << 24) | (r << 16) | (g << 8) | b;
-	}
-
-	uint32_t RGB4toARGB32(BYTE value)
-	{
-		// Extend green secondary (=Intensity in 4 bit color mode) to all secondary bits
-		if (value & 0x10)
-		{
-			value |= 0x38;
-		}
-		else if (value == 6)
-		{
-			// Yellow adjust
-			value = 20;
-		}
-
-		return RGB6toARGB32(value);
-	}
-
-	uint32_t MONOtoARGB32(BYTE value)
-	{
-		// Bit3 = mono
-		// Bit4 = intensity
-		BYTE a = 0xFF;
-		BYTE m = MakeColor8(GetBit(value, 3), GetBit(value, 4));
-
-		return (a << 24) | (m << 16) | (m << 8) | m;
-	}
-
 	AttrController::AttrController(WORD baseAddress) :
 		Logger("attrVGA"),
 		m_baseAddress(baseAddress)
@@ -65,26 +23,59 @@ namespace attr_vga
 
 	void AttrController::ConnectPorts()
 	{
+		Connect(m_baseAddress + 0x0, static_cast<PortConnector::INFunction>(&AttrController::ReadAddress));
+		Connect(m_baseAddress + 0x1, static_cast<PortConnector::INFunction>(&AttrController::ReadData));
+
+		// For write, A0 doesn't care
 		Connect(m_baseAddress + 0x0, static_cast<PortConnector::OUTFunction>(&AttrController::WriteData));
 		Connect(m_baseAddress + 0x1, static_cast<PortConnector::OUTFunction>(&AttrController::WriteData));
 	}
 
 	void AttrController::DisconnectPorts()
 	{
+		DisconnectInput(m_baseAddress + 0x0);
+		DisconnectInput(m_baseAddress + 0x1);
+
 		DisconnectOutput(m_baseAddress + 0x0);
 		DisconnectOutput(m_baseAddress + 0x1);
 	}
 
-	uint32_t AttrController::GetRGB32Color(BYTE value)
+	BYTE AttrController::ReadAddress()
 	{
-		if (m_data.monochrome)
+		return (BYTE)m_currRegister;
+	}
+
+	BYTE AttrController::ReadData()
+	{
+		LogPrintf(Logger::LOG_TRACE, "ReadData, address=%02x", m_currRegister);
+		if (m_currRegister <= AttrControllerAddress::ATTR_PALETTE_MAX)
 		{
-			return MONOtoARGB32(value);
+			BYTE index = (BYTE)m_currRegister;
+			return m_data.palette[index];
 		}
-		else
+		else switch (m_currRegister)
 		{
-			return (m_colorMode == ColorMode::RGB4) ? RGB4toARGB32(value) : RGB6toARGB32(value);
+		case AttrControllerAddress::ATTR_MODE_CONTROL:
+			return (m_data.graphics << 0) |
+				(m_data.monochrome << 1) |
+				(m_data.extend8to9 << 2) |
+				(m_data.blink << 3) |
+				(m_data.pelPanCompatibility << 5) |
+				(m_data.pelWidth << 6) |
+				(m_data.p4p5Select << 7);
+		case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
+			return m_data.overscanColor;
+		case AttrControllerAddress::ATTR_COLOR_PLANE_EN:
+			return m_data.colorPlaneEnable;
+		case AttrControllerAddress::ATTR_H_PEL_PANNING:
+			return m_data.hPelPanning;
+		case AttrControllerAddress::ATTR_COLOR_SELECT:
+			return m_data.colorSelect;
+		default:
+			LogPrintf(LOG_ERROR, "WriteData, Invalid Address %d", m_currRegister);
+			return 0xFF;
 		}
+
 	}
 
 	void AttrController::WriteData(BYTE value)
@@ -109,7 +100,8 @@ namespace attr_vga
 				{
 					BYTE index = (BYTE)m_currRegister;
 					LogPrintf(LOG_INFO, "WriteData, Palette[%d]=%d", index, value);
-					m_data.palette[index] = GetRGB32Color(value);
+					value &= 63;
+					m_data.palette[index] = value;
 				}
 				else
 				{
@@ -125,16 +117,35 @@ namespace attr_vga
 				m_data.monochrome = GetBit(value, 1);
 				m_data.extend8to9 = GetBit(value, 2);
 				m_data.blink = GetBit(value, 3);
+				m_data.pelPanCompatibility = GetBit(value, 5);
+				m_data.pelWidth = GetBit(value, 6);
+				m_data.p4p5Select = GetBit(value, 7);
 
-				LogPrintf(Logger::LOG_INFO, "WriteData Mode control [%cGRAPH %cMONO %cEXTEND8TO9, %cBLINK]",
+				LogPrintf(Logger::LOG_INFO, "WriteData, Mode control [%cGRAPH %cMONO %cEXTEND8TO9 %cBLINK %cPELCOMPAT %cPELWIDE %cP4P5SEL]",
 					m_data.graphics ? ' ' : '/',
 					m_data.monochrome ? ' ' : '/',
 					m_data.extend8to9 ? ' ' : '/',
-					m_data.blink ? ' ' : '/');
+					m_data.blink ? ' ' : '/',
+					m_data.pelPanCompatibility ? ' ' : '/',
+					m_data.pelWidth ? ' ' : '/',
+					m_data.p4p5Select ? ' ' : '/');
+
+				if (m_data.pelPanCompatibility)
+				{
+					LogPrintf(LOG_WARNING, "WriteData, Pel Pan Compatibility not implemented");
+				}
+				if (m_data.pelWidth)
+				{
+					LogPrintf(LOG_WARNING, "WriteData, Pel Width not implemented");
+				}
+				if (m_data.p4p5Select)
+				{
+					LogPrintf(LOG_WARNING, "WriteData, P5, P4 Select not implemented");
+				}
 				break;
 			case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
 				LogPrintf(LOG_DEBUG, "WriteData, Overscan Color %d", value);
-				m_data.overscanColor = GetRGB32Color(value);
+				m_data.overscanColor = value;
 				break;
 			case AttrControllerAddress::ATTR_COLOR_PLANE_EN:
 				LogPrintf(LOG_DEBUG, "WriteData, Color Plane Enable %d", value);
@@ -148,6 +159,10 @@ namespace attr_vga
 			case AttrControllerAddress::ATTR_H_PEL_PANNING:
 				m_data.hPelPanning = value & 15;
 				LogPrintf(LOG_INFO, "WriteData, Horizontal Pel Panning %d", m_data.hPelPanning);
+				break;
+			case AttrControllerAddress::ATTR_COLOR_SELECT:
+				m_data.colorSelect = value & 15;
+				LogPrintf(LOG_INFO, "WriteData, Color Select %d", m_data.colorSelect);
 				break;
 			default:
 				LogPrintf(LOG_ERROR, "WriteData, Invalid Address %d", m_currRegister);
@@ -168,10 +183,14 @@ namespace attr_vga
 		to["monochrome"] = m_data.monochrome;
 		to["extend8to9"] = m_data.extend8to9;
 		to["blink"] = m_data.blink;
+		to["pelPanCompatibility"] = m_data.pelPanCompatibility;
+		to["pelWidth"] = m_data.pelWidth;
+		to["p4p5Select"] = m_data.p4p5Select;
 		to["overscanColor"] = m_data.overscanColor;
 		to["colorPlaneEnable"] = m_data.colorPlaneEnable;
 		to["videoStatusMux"] = m_data.videoStatusMux;
 		to["hPelPanning"] = m_data.hPelPanning;
+		to["colorSelect"] = m_data.colorSelect;
 	}
 
 	void AttrController::Deserialize(const json& from)
@@ -185,10 +204,14 @@ namespace attr_vga
 		m_data.monochrome = from["monochrome"];
 		m_data.extend8to9 = from["extend8to9"];
 		m_data.blink = from["blink"];
+		m_data.pelPanCompatibility = from["pelPanCompatibility"];
+		m_data.pelWidth = from["pelWidth"];
+		m_data.p4p5Select = from["p4p5Select"];
 		m_data.overscanColor = from["overscanColor"];
 		m_data.colorPlaneEnable = from["colorPlaneEnable"];
 		m_data.videoStatusMux = from["videoStatusMux"];
 		m_data.hPelPanning = from["hPelPanning"];
+		m_data.colorSelect = from["colorSelect"];
 	}
 
 
