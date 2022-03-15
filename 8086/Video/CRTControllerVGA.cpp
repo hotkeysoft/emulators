@@ -44,24 +44,32 @@ namespace crtc_vga
 
 	void CRTController::DisconnectPorts()
 	{
+		DisconnectInput(m_baseAddress + 4);
 		DisconnectOutput(m_baseAddress + 4);
-		DisconnectOutput(m_baseAddress + 5);
+
 		DisconnectInput(m_baseAddress + 5);
+		DisconnectOutput(m_baseAddress + 5);
 	}
 
 	void CRTController::ConnectPorts()
 	{
 		// CRTC Register Select
-		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&CRTController::SelectCRTCRegister));
+		Connect(m_baseAddress + 4, static_cast<PortConnector::INFunction>(&CRTController::ReadCRTCRegister));
+		Connect(m_baseAddress + 4, static_cast<PortConnector::OUTFunction>(&CRTController::WriteCRTCRegister));
 
 		// CRTC Register Data
 		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&CRTController::WriteCRTCData));
 		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&CRTController::ReadCRTCData));
 	}
 
-	void CRTController::SelectCRTCRegister(BYTE value)
+	BYTE CRTController::ReadCRTCRegister()
 	{
-		LogPrintf(Logger::LOG_TRACE, "SelectCRTCRegister, reg=%d", value);
+		return m_config.currRegister;
+	}
+
+	void CRTController::WriteCRTCRegister(BYTE value)
+	{
+		LogPrintf(Logger::LOG_TRACE, "WriteCRTCRegister, reg=%d", value);
 		value &= 31;
 		m_config.currRegister = (value > _CRT_MAX_REG) ? CRT_INVALID_REG : (CRTRegister)value;
 	}
@@ -69,17 +77,13 @@ namespace crtc_vga
 	BYTE CRTController::ReadCRTCData()
 	{
 		LogPrintf(Logger::LOG_DEBUG, "ReadCRTCData, reg=%d", m_config.currRegister);
-
-		switch (m_config.currRegister)
+		if (m_config.currRegister <= _CRT_MAX_REG)
 		{
-		case CRT_CURSOR_ADDR_HI:
-			return (m_config.cursorAddress >> 8);
-		case CRT_CURSOR_ADDR_LO:
-			return (BYTE)m_config.cursorAddress;
-
-		case CRT_LIGHT_PEN_HI:
-		case CRT_LIGHT_PEN_LO:
-		default:
+			return m_rawData[m_config.currRegister];
+		}
+		else
+		{
+			LogPrintf(LOG_WARNING, "ReadCRTCData, Invalid register %d", m_config.currRegister);
 			return 0xFF;
 		}
 	}
@@ -101,6 +105,8 @@ namespace crtc_vga
 	void CRTController::WriteCRTCData(BYTE value)
 	{
 		LogPrintf(Logger::LOG_TRACE, "WriteCRTCData, reg[%02x]=%02x", m_config.currRegister, value);
+
+		m_rawData[m_config.currRegister] = value;
 
 		switch (m_config.currRegister)
 		{
@@ -138,15 +144,8 @@ namespace crtc_vga
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           hSyncEnd = %d characters", m_config.hSyncEnd);
 			m_config.hSyncDelay = (value >> 5) & 3;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         hSyncDelay = %d characters", m_config.hSyncDelay);
-			m_config.startOdd = GetBit(value, 7);
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           startOdd = %d characters", m_config.startOdd);
+			SetBit(m_config.hBlankEnd, 5, GetBit(value, 7));
 			m_configChanged = true;
-
-			if (m_config.startOdd)
-			{
-				LogPrintf(LOG_WARNING, "WriteCRTCData: startOdd not implemented");
-			}
-
 			break;
 
 		case CRT_V_TOTAL:
@@ -159,19 +158,24 @@ namespace crtc_vga
 			// Sets the 9th bit for some parameters
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:               *overflow*");
 
-			SetHByte(m_config.vTotal, GetBit(value, 0));
+			SetHByte(m_config.vTotal, 0);
+			SetBit(m_config.vTotal, 8, GetBit(value, 0));
+			SetBit(m_config.vTotal, 9, GetBit(value, 5));
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:            *vTotal = %d", m_config.vTotal);
 
-			SetHByte(m_config.vDisplayed, GetBit(value, 1));
+			SetHByte(m_config.vDisplayed, 0);
+			SetBit(m_config.vDisplayed, 8, GetBit(value, 1));
+			SetBit(m_config.vDisplayed, 9, GetBit(value, 6));
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        *vDisplayed = %d", m_config.vDisplayed);
 
-			SetHByte(m_config.vSyncStart, GetBit(value, 2));
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        *vSyncStart = %d", m_config.vSyncStart);
+			SetHByte(m_config.vSyncStart, 0);
+			SetBit(m_config.vSyncStart, 8, GetBit(value, 2));
+			SetBit(m_config.vSyncStart, 9, GetBit(value, 7));
 
-			SetHByte(m_config.vBlankStart, GetBit(value, 3));
+			SetBit(m_config.vBlankStart, 8, GetBit(value, 3));
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       *vBlankStart = %d", m_config.vBlankStart);
 
-			SetHByte(m_config.lineCompare, GetBit(value, 4));
+			SetBit(m_config.lineCompare, 8, GetBit(value, 4));
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       *lineCompare = %d", m_config.lineCompare);
 
 			m_configChanged = true;
@@ -180,18 +184,48 @@ namespace crtc_vga
 		case CRT_PRESET_ROWSCAN:
 			m_config.presetRowScan = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:      presetRowScan = %d", m_config.presetRowScan);
+			m_config.bytePanning = (value >> 5) & 3;
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       byte panning = %d", m_config.bytePanning);
+		
+			if (m_config.bytePanning > 0)
+			{
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: byte panning > 0 not implemented");
+			}
 			m_configChanged = true;
 			break;
 
 		case CRT_MAX_SCANLINE:
 			m_config.maxScanlineAddress = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        maxScanline = %d scanlines", m_config.maxScanlineAddress);
+
+			SetBit(m_config.vBlankStart, 9, GetBit(value, 5));
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       *vBlankStart = %d", m_config.vBlankStart);
+
+			SetBit(m_config.lineCompare, 9, GetBit(value, 6));
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       *lineCompare = %d", m_config.lineCompare);
+
+			m_config.doubleScan = GetBit(value, 7);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        double scan = %d", m_config.doubleScan);
+
+			if (m_config.doubleScan)
+			{
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: double scan not implemented");
+			}
+
 			m_configChanged = true;
 			break;
 
 		case CRT_CURSOR_START_LINE:
 			m_config.cursorStart = (value & 31);
 			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:        cursorStart = %d scanline", m_config.cursorStart);
+
+			m_config.cursorOff = GetBit(value, 5);
+			LogPrintf(Logger::LOG_DEBUG, "WriteCRTCData:          cursorOff = %d", m_config.cursorOff);
+
+			if (m_config.cursorOff)
+			{
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: cursor off not implemented");
+			}
 			break;
 		case CRT_CURSOR_END_LINE:
 			m_config.cursorEnd = value & 31;
@@ -233,8 +267,22 @@ namespace crtc_vga
 				m_interruptPending = false;
 			}
 
-			m_config.vSyncInterruptEnable = !GetBit(value, 5);
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         vinterrupt = %s", m_config.vSyncInterruptEnable ? "ENABLED" : "DISABLED");
+			m_config.enableVerticalInterrupt = !GetBit(value, 5);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         vinterrupt = %s", m_config.enableVerticalInterrupt ? "ENABLED" : "DISABLED");
+
+			m_config.select5RefreshCycles = GetBit(value, 6);
+			if (m_config.select5RefreshCycles)
+			{
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: Select 5 Refresh Cycles not implemented");
+			}
+
+			m_config.protectRegisters0to7 = GetBit(value, 7);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         protect0-7 = %s", m_config.protectRegisters0to7 ? "ENABLED" : "DISABLED");
+
+			if (m_config.protectRegisters0to7)
+			{
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: protect0-7 registers not implemented");
+			}
 			m_configChanged = true;
 			break;
 
@@ -254,6 +302,20 @@ namespace crtc_vga
 			//TODO
 			m_config.underlineLocation = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          underline = %d", m_config.underlineLocation);
+
+			m_config.countByFour = GetBit(value, 5);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:           countBy4 = %d", m_config.countByFour);
+			if (m_config.countByFour)
+			{
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: Count By 4 not implemented");
+			}
+
+			m_config.doubleWordAddressMode = GetBit(value, 6);
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         doubleWord = %d", m_config.doubleWordAddressMode);
+			if (m_config.doubleWordAddressMode)
+			{
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: DWORD Mode not implemented");
+			}
 			break;
 
 		case CRT_V_BLANK_START:
@@ -272,16 +334,18 @@ namespace crtc_vga
 			m_config.selectRowScanCounter = GetBit(value, 1);
 			m_config.vCounterDiv2 = GetBit(value, 2);
 			m_config.countByTwo = GetBit(value, 3);
-			m_config.disableOutputControl = GetBit(value, 4);
+			
 			m_config.addressWrap = GetBit(value, 5);
 			m_config.byteAddressMode = GetBit(value, 6);
-			//TODO bit 7:hardware reset
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: [%cCOMPAT %cROWSCANCNT %cVDIV2 %cCOUNTBY2 %cDISABLEOUT %cADDRESWRAP ADDRESSMODE[%s]] ", 
+
+			// TODO
+			m_config.reset = GetBit(value, 7);
+
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: [%cCOMPAT %cROWSCANCNT %cVDIV2 %cCOUNTBY2 %cADDRESWRAP ADDRESSMODE[%s]] ", 
 				m_config.compatibility ? ' ' : '/',
 				m_config.selectRowScanCounter ? ' ' : '/',
 				m_config.vCounterDiv2 ? ' ' : '/',
 				m_config.countByTwo ? ' ' : '/',
-				m_config.disableOutputControl ? ' ' : '/',
 				m_config.addressWrap ? ' ' : '/',
 				m_config.byteAddressMode ? "BYTE" : "WORD");
 			m_configChanged = true;
@@ -289,15 +353,15 @@ namespace crtc_vga
 			//TODO
 			if (m_config.selectRowScanCounter == false)
 			{
-				LogPrintf(Logger::LOG_WARNING, "selectRowScanCounter == 0 not implemented");
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: selectRowScanCounter == 0 not implemented");
 			}
 			if (m_config.vCounterDiv2 == true)
 			{
-				LogPrintf(Logger::LOG_WARNING, "vCounterDiv2 == 1 not implemented");
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: vCounterDiv2 == 1 not implemented");
 			}
 			if (m_config.countByTwo == true)
 			{
-				LogPrintf(Logger::LOG_WARNING, "countByTwo == 1 not implemented");
+				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: countByTwo == 1 not implemented");
 			}
 			break;
 
@@ -310,6 +374,11 @@ namespace crtc_vga
 		default:
 			LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: Invalid Register, reg=%d", m_config.currRegister);
 		}
+
+		if (m_configChanged)
+		{
+			UpdateHVTotals();
+		}
 	}
 
 	void CRTController::SetCharWidth(BYTE charWidth)
@@ -318,36 +387,39 @@ namespace crtc_vga
 		UpdateHVTotals();
 	}
 
-	void CRTController::UpdateHVTotals()
+	void CRTController::UpdateHVTotals(bool log)
 	{
 		m_data.hTotalDisp = (m_config.hDisplayed + 1) * m_charWidth;
-		m_data.hTotal = (m_config.hTotal + 2) * m_charWidth;
+		m_data.hTotal = (m_config.hTotal + 5) * m_charWidth;
+
+		m_data.hBlankMin = m_config.hBlankStart * m_charWidth;
+		m_data.hBlankMax = (BYTE)GetEndValue(m_config.hBlankStart, m_config.hBlankEnd, 0b111111) * m_charWidth;
 
 		m_data.hSyncMin = m_config.hSyncStart * m_charWidth;
 		m_data.hSyncMax = (BYTE)GetEndValue(m_config.hSyncStart, m_config.hSyncEnd, 0b11111) * m_charWidth;
 
 		m_data.vCharHeight = m_config.maxScanlineAddress + 1;
 		m_data.vTotalDisp = m_config.vDisplayed + 1;
-		m_data.vTotal = m_config.vTotal;
+		m_data.vTotal = m_config.vTotal + 2;
 
 		m_data.vSyncMin = m_config.vSyncStart;
 		m_data.vSyncMax = GetEndValue(m_config.vSyncStart, m_config.vSyncEnd, 0b1111);
-
-		m_data.hBlankMin = m_config.hBlankStart * m_charWidth;
-		m_data.hBlankMax =(BYTE)GetEndValue(m_config.hBlankStart, m_config.hBlankEnd, 0b11111) * m_charWidth;
 
 		m_data.vBlankMin = m_config.vBlankStart;
 		m_data.vBlankMax = GetEndValue(m_config.vBlankStart, m_config.vBlankEnd, 0b11111);
 
 		m_data.offset = m_config.offset << 1;
 
-		LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
-		LogPrintf(LOG_INFO, "UpdateHVTotals: Total:     [%d x %d]", m_data.hTotal, m_data.vTotal);
-		LogPrintf(LOG_INFO, "UpdateHVTotals: hBlank:    [%d - %d]", m_data.hBlankMin, m_data.hBlankMax);
-		LogPrintf(LOG_INFO, "UpdateHVTotals: hSync:     [%d - %d]", m_data.hSyncMin, m_data.hSyncMax);
-		LogPrintf(LOG_INFO, "UpdateHVTotals: vBlank:    [%d - %d]", m_data.vBlankMin, m_data.vBlankMax);
-		LogPrintf(LOG_INFO, "UpdateHVTotals: vSync:     [%d - %d]", m_data.vSyncMin, m_data.vSyncMax);
-		LogPrintf(LOG_INFO, "UpdateHVTotals: offset:    [%d]", m_data.offset);
+		if (log)
+		{
+			LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
+			LogPrintf(LOG_INFO, "UpdateHVTotals: Total:     [%d x %d]", m_data.hTotal, m_data.vTotal);
+			LogPrintf(LOG_INFO, "UpdateHVTotals: hBlank:    [%d - %d]", m_data.hBlankMin, m_data.hBlankMax);
+			LogPrintf(LOG_INFO, "UpdateHVTotals: hSync:     [%d - %d]", m_data.hSyncMin, m_data.hSyncMax);
+			LogPrintf(LOG_INFO, "UpdateHVTotals: vBlank:    [%d - %d]", m_data.vBlankMin, m_data.vBlankMax);
+			LogPrintf(LOG_INFO, "UpdateHVTotals: vSync:     [%d - %d]", m_data.vSyncMin, m_data.vSyncMax);
+			LogPrintf(LOG_INFO, "UpdateHVTotals: offset:    [%d]", m_data.offset);
+		}
 	}
 
 	void CRTController::Tick()
@@ -378,7 +450,7 @@ namespace crtc_vga
 			}
 			m_data.memoryAddress = m_data.lineStartAddress;
 
-			if (m_config.vSyncInterruptEnable && (m_data.vPos == m_data.vTotalDisp))
+			if (m_config.enableVerticalInterrupt && (m_data.vPos == m_data.vTotalDisp))
 			{
 				LogPrintf(LOG_DEBUG, "Set Interrupt Pending");
 				m_interruptPending = true;
@@ -402,7 +474,7 @@ namespace crtc_vga
 				if (m_configChanged)
 				{
 					m_configChanged = false;
-					UpdateHVTotals();
+					UpdateHVTotals(true);
 					m_events->OnChangeMode();
 				}
 
@@ -426,7 +498,6 @@ namespace crtc_vga
 		config["hSyncStart"] = m_config.hSyncStart;
 		config["hSyncEnd"] = m_config.hSyncEnd;
 		config["hSyncDelay"] = m_config.hSyncDelay;
-		config["startOdd"] = m_config.startOdd;
 		config["vTotal"] = m_config.vTotal;
 		config["vDisplayed"] = m_config.vDisplayed;
 		config["vBlankStart"] = m_config.vBlankStart;
@@ -434,33 +505,41 @@ namespace crtc_vga
 		config["vSyncStart"] = m_config.vSyncStart;
 		config["vSyncEnd"] = m_config.vSyncEnd;
 		config["presetRowScan"] = m_config.presetRowScan;
+		config["bytePanning"] = m_config.bytePanning;
 		config["maxScanlineAddress"] = m_config.maxScanlineAddress;
-		config["startAddress"] = m_config.startAddress;
-		config["cursorAddress"] = m_config.cursorAddress;
-		config["cursorStart"] = m_config.cursorStart;
+		config["doubleScan"] = m_config.doubleScan;
+		config["cursorStart"] = m_config.cursorStart;		
+		config["cursorOff"] = m_config.cursorOff;
 		config["cursorEnd"] = m_config.cursorEnd;
 		config["cursorSkew"] = m_config.cursorSkew;
+		config["startAddress"] = m_config.startAddress;
+		config["cursorAddress"] = m_config.cursorAddress;
+		config["enableVerticalInterrupt"] = m_config.enableVerticalInterrupt;
+		config["select5RefreshCycles"] = m_config.select5RefreshCycles;
+		config["protectRegisters0to7"] = m_config.protectRegisters0to7;
 		config["offset"] = m_config.offset;
 		config["underlineLocation"] = m_config.underlineLocation;
+		config["countByFour"] = m_config.countByFour;
+		config["doubleWordAddressMode"] = m_config.doubleWordAddressMode;
 		config["compatibility"] = m_config.compatibility;
 		config["selectRowScanCounter"] = m_config.selectRowScanCounter;
 		config["vCounterDiv2"] = m_config.vCounterDiv2;
 		config["countByTwo"] = m_config.countByTwo;
-		config["disableOutputControl"] = m_config.disableOutputControl;
 		config["addressWrap"] = m_config.addressWrap;
 		config["byteAddressMode"] = m_config.byteAddressMode;
+		config["reset"] = m_config.reset;
 		config["lineCompare"] = m_config.lineCompare;
-		config["vSyncInterruptEnable"] = m_config.vSyncInterruptEnable;
 		to["config"] = config;
 
 		json data;
 		data["hPos"] = m_data.hPos;
 		data["vPos"] = m_data.vPos;
-		//data["vPosChar"] = m_data.vPosChar;
 		data["rowAddress"] = m_data.rowAddress;
 		data["memoryAddress"] = m_data.memoryAddress;
 		data["frame"] = m_data.frame;
 		to["data"] = data;
+
+		to["raw"] = m_rawData;
 
 		to["interruptPending"] = m_interruptPending;
 		to["charWidth"] = m_charWidth;
@@ -489,7 +568,6 @@ namespace crtc_vga
 		m_config.hSyncStart = config["hSyncStart"];
 		m_config.hSyncEnd = config["hSyncEnd"];
 		m_config.hSyncDelay = config["hSyncDelay"];
-		m_config.startOdd = config["startOdd"];
 		m_config.vTotal = config["vTotal"];
 		m_config.vDisplayed = config["vDisplayed"];
 		m_config.vBlankStart = config["vBlankStart"];
@@ -497,23 +575,30 @@ namespace crtc_vga
 		m_config.vSyncStart = config["vSyncStart"];
 		m_config.vSyncEnd = config["vSyncEnd"];
 		m_config.presetRowScan = config["presetRowScan"];
+		m_config.bytePanning = config["bytePanning"];
 		m_config.maxScanlineAddress = config["maxScanlineAddress"];
-		m_config.startAddress = config["startAddress"];
-		m_config.cursorAddress = config["cursorAddress"];
+		m_config.doubleScan = config["doubleScan"];
 		m_config.cursorStart = config["cursorStart"];
+		m_config.cursorOff = config["cursorOff"];
 		m_config.cursorEnd = config["cursorEnd"];
 		m_config.cursorSkew = config["cursorSkew"];
+		m_config.startAddress = config["startAddress"];
+		m_config.cursorAddress = config["cursorAddress"];
+		m_config.enableVerticalInterrupt = config["enableVerticalInterrupt"];
+		m_config.select5RefreshCycles = config["select5RefreshCycles"];
+		m_config.protectRegisters0to7 = config["protectRegisters0to7"];
 		m_config.offset = config["offset"];
 		m_config.underlineLocation = config["underlineLocation"];
+		m_config.countByFour = config["countByFour"];
+		m_config.doubleWordAddressMode = config["doubleWordAddressMode"];
 		m_config.compatibility = config["compatibility"];
 		m_config.selectRowScanCounter = config["selectRowScanCounter"];
 		m_config.vCounterDiv2 = config["vCounterDiv2"];
 		m_config.countByTwo = config["countByTwo"];
-		m_config.disableOutputControl = config["disableOutputControl"];
 		m_config.addressWrap = config["addressWrap"];
 		m_config.byteAddressMode = config["byteAddressMode"];
+		m_config.reset = config["reset"];
 		m_config.lineCompare = config["lineCompare"];
-		m_config.vSyncInterruptEnable = config["vSyncInterruptEnable"];
 
 		const json& data = from["data"];
 		m_data.hPos = data["hPos"];
@@ -521,6 +606,8 @@ namespace crtc_vga
 		m_data.rowAddress = data["rowAddress"];
 		m_data.memoryAddress = data["memoryAddress"];
 		m_data.frame = data["frame"];
+
+		m_rawData = from["raw"];
 
 		m_interruptPending = from["interruptPending"];
 		m_charWidth = from["charWidth"];

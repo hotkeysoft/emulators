@@ -56,9 +56,6 @@ namespace crtc_vga
 		CRT_V_SYNC_START = 0x10, // WRITE
 		CRT_V_SYNC_END = 0x11, // WRITE
 
-		CRT_LIGHT_PEN_HI = 0x10,// READ
-		CRT_LIGHT_PEN_LO = 0x11,// READ
-
 		CRT_V_DISPLAYED_END = 0x12, // WRITE
 
 		CRT_OFFSET = 0x13, // WRITE
@@ -78,63 +75,64 @@ namespace crtc_vga
 	{
 		CRTRegister currRegister = CRT_INVALID_REG;
 
-		BYTE hTotal = 0; // Number of chars -2
+		BYTE hTotal = 0; // Number of chars -5
 		BYTE hDisplayed = 0; // Number of chars -1;
 
-		BYTE hBlankStart = 0;
-		BYTE hBlankEnd = 0;
+		BYTE hBlankStart = 0; // 0-255
+		BYTE hBlankEnd = 0; // 0-63, (bit 5 in hSyncEnd bit 7)
 
-		BYTE displayEnableSkew = 0;
+		BYTE displayEnableSkew = 0; // 0-3
 
-		BYTE hSyncStart = 0;
-		BYTE hSyncEnd = 0;
+		BYTE hSyncStart = 0; // 0-255
+		BYTE hSyncEnd = 0; // 0-31
 
-		BYTE hSyncDelay = 0;
-		bool startOdd = false;
+		BYTE hSyncDelay = 0; // 0-3
 
-		WORD vTotal = 0;
-		WORD vDisplayed = 0;
+		WORD vTotal = 0; // 0-1023, Number of lines - 2
+		WORD vDisplayed = 0; // 0-1023, number of lines -1
 
-		WORD vBlankStart = 0;
-		BYTE vBlankEnd = 0;
+		WORD vBlankStart = 0; // 0-1023, number of lines -1
+		BYTE vBlankEnd = 0; // 0-255
 
-		WORD vSyncStart = 0;
-		BYTE vSyncEnd = 0;
+		WORD vSyncStart = 0; // 0-1023
+		BYTE vSyncEnd = 0; // 0-15
 
-		BYTE presetRowScan = 0;
-		BYTE maxScanlineAddress = 0; // -1
+		BYTE presetRowScan = 0; // 0-31
+		BYTE bytePanning = 0; // 0-3
+
+		BYTE maxScanlineAddress = 0; // 0..31, Number of scanlines -1
+		bool doubleScan = false;
+
+		BYTE cursorStart = 0; // 0-31, Scanlines -1
+		bool cursorOff = false;
+
+		BYTE cursorEnd = 0; // 0-31
+		BYTE cursorSkew = 0; // 0-3
 
 		WORD startAddress = 0;
 		WORD cursorAddress = 0;
 
-		BYTE cursorStart = 0; // -1
-		BYTE cursorEnd = 0;
-		BYTE cursorSkew = 0;
+		bool enableVerticalInterrupt = false;
+
+		bool select5RefreshCycles = false;
+		bool protectRegisters0to7 = false;
 
 		BYTE offset = 0; // Logical line width (WORD or DWORD address)
 
-		BYTE underlineLocation = 0; // -1
+		BYTE underlineLocation = 0; // 0-31, scanline -1
+		bool countByFour = false;
+		bool doubleWordAddressMode = false;
 
 		bool compatibility = false;
 		bool selectRowScanCounter = false;
 		bool vCounterDiv2 = false;
 		bool countByTwo = false;
-		bool disableOutputControl = false;
+		
 		bool addressWrap = false;
 		bool byteAddressMode = false;
+		bool reset = false;
 
 		WORD lineCompare = 0;
-
-		bool vSyncInterruptEnable = false;
-
-		enum CURSOR
-		{
-			CURSOR_NOBLINK = 0,
-			CURSOR_NONE = 1,
-			CURSOR_BLINK16 = 2,
-			CURSOR_BLINK32 = 3
-		} cursor;
-
 	};
 
 	struct CRTCData
@@ -207,14 +205,21 @@ namespace crtc_vga
 		WORD GetMemoryAddress() const { 
 			WORD address = m_data.memoryAddress;
 
-			if (!m_config.byteAddressMode)
+			if (m_config.doubleWordAddressMode)
+			{
+				// double word mode
+				address <<= 2;
+
+				SetBit(address, 0, GetBit(m_data.memoryAddress, 12));
+				SetBit(address, 1, GetBit(m_data.memoryAddress, 13));
+			}
+			else if (!m_config.byteAddressMode)
 			{
 				// word mode
 				address <<= 1;
 
 				// Address Wrap: set bit 0 to MA13/MA15
-				WORD b0 = GetBit(m_data.memoryAddress, m_config.addressWrap ? 15 : 13);
-				address |= b0;
+				SetBit(address, 0, GetBit(m_data.memoryAddress, m_config.addressWrap ? 15 : 13));
 			}
 
 			// In compatibility mode, substitude set MA13 = bit0 of vpos
@@ -246,13 +251,16 @@ namespace crtc_vga
 
 		CRTCConfig m_config;
 
-		void SelectCRTCRegister(BYTE value);
+		BYTE ReadCRTCRegister();
+		void WriteCRTCRegister(BYTE value);
+
 		BYTE ReadCRTCData();
 		void WriteCRTCData(BYTE value);
 
 		CRTCData m_data;
+		std::array<BYTE, (_CRT_MAX_REG + 1)> m_rawData;
 
-		void UpdateHVTotals();
+		void UpdateHVTotals(bool log = false);
 
 		// Blinky things
 		bool m_blink8 = false;
