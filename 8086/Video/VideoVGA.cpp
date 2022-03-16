@@ -390,7 +390,7 @@ namespace video
 		// Sense looks at the output of the DAC
 		// Allows detection of mono/color monitor
 		// For now, false if any channel is larger than a threshold
-		bool sense = !(GetLastDot() & 0x00E0E0E0);
+		bool sense = !(GetLastDot() & 0x00808080);
 
 		value =
 			(sense << 4) |
