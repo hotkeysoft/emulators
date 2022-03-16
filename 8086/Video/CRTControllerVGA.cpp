@@ -452,7 +452,7 @@ namespace crtc_vga
 
 			if (m_config.enableVerticalInterrupt && (m_data.vPos == m_data.vTotalDisp))
 			{
-				LogPrintf(LOG_DEBUG, "Set Interrupt Pending");
+				LogPrintf(LOG_TRACE, "Set Interrupt Pending");
 				m_interruptPending = true;
 			}
 
