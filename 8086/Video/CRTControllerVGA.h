@@ -148,6 +148,8 @@ namespace crtc_vga
 
 		size_t frame = 0;
 
+		bool doubledLine = false;
+
 		// Computed in UpdateHVTotals
 		WORD offset = 0;
 

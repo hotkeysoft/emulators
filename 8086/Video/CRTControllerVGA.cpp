@@ -207,11 +207,6 @@ namespace crtc_vga
 			m_config.doubleScan = GetBit(value, 7);
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        double scan = %d", m_config.doubleScan);
 
-			if (m_config.doubleScan)
-			{
-				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: double scan not implemented");
-			}
-
 			m_configChanged = true;
 			break;
 
@@ -423,7 +418,7 @@ namespace crtc_vga
 	}
 
 	void CRTController::Tick()
-	{
+	{	
 		m_data.hPos += m_charWidth;
 		++m_data.memoryAddress;
 
@@ -435,6 +430,16 @@ namespace crtc_vga
 		if (m_data.hPos >= m_data.hTotal)
 		{
 			m_data.hPos = 0;
+
+			if (m_config.doubleScan && !m_data.doubledLine)
+			{
+				// Do this line one more time
+				m_data.doubledLine = !m_data.doubledLine;
+				m_data.memoryAddress = m_data.lineStartAddress;
+				return;
+			}
+
+			m_data.doubledLine = false;
 			++m_data.vPos;
 			++m_data.rowAddress;
 			if (m_data.rowAddress > m_config.maxScanlineAddress)
@@ -466,6 +471,7 @@ namespace crtc_vga
 				m_events->OnRenderFrame();
 
 				++m_data.frame;
+				m_data.doubledLine = false;
 				m_data.vPos = 0;
 				m_data.rowAddress = m_config.presetRowScan;
 				m_data.lineStartAddress = m_config.startAddress;
@@ -537,6 +543,7 @@ namespace crtc_vga
 		data["rowAddress"] = m_data.rowAddress;
 		data["memoryAddress"] = m_data.memoryAddress;
 		data["frame"] = m_data.frame;
+		data["doubledLine"] = m_data.doubledLine;
 		to["data"] = data;
 
 		to["raw"] = m_rawData;
@@ -606,6 +613,7 @@ namespace crtc_vga
 		m_data.rowAddress = data["rowAddress"];
 		m_data.memoryAddress = data["memoryAddress"];
 		m_data.frame = data["frame"];
+		m_data.doubledLine = data["doubledLine"];
 
 		m_rawData = from["raw"];
 
