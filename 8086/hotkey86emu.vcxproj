@@ -222,6 +222,7 @@
     <ClCompile Include="Video\CRTController6845.cpp" />
     <ClCompile Include="Video\CRTControllerEGA.cpp" />
     <ClCompile Include="Video\CRTControllerVGA.cpp" />
+    <ClCompile Include="Video\DigitalToAnalogConverterVGA.cpp" />
     <ClCompile Include="video\GraphControllerEGA.cpp" />
     <ClCompile Include="Video\GraphControllerVGA.cpp" />
     <ClCompile Include="Video\MemoryEGA.cpp" />
@@ -294,6 +295,7 @@
     <ClInclude Include="Video\CRTController6845.h" />
     <ClInclude Include="Video\CRTControllerEGA.h" />
     <ClInclude Include="Video\CRTControllerVGA.h" />
+    <ClInclude Include="Video\DigitalToAnalogConverterVGA.h" />
     <ClInclude Include="Video\GraphControllerEGA.h" />
     <ClInclude Include="Video\GraphControllerVGA.h" />
     <ClInclude Include="Video\MemoryEGA.h" />

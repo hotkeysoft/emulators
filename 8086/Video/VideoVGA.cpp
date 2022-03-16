@@ -31,6 +31,7 @@ namespace video
 		m_sequencer(baseAddress),
 		m_graphController(baseAddress),
 		m_attrController(baseAddress),
+		m_dac(baseAddress),
 		m_baseAddress(baseAddress),
 		m_baseAddressMono(baseAddressMono),
 		m_baseAddressColor(baseAddressColor),
@@ -99,6 +100,7 @@ namespace video
 		m_sequencer.DisconnectPorts();
 		m_graphController.DisconnectPorts();
 		m_attrController.DisconnectPorts();
+		m_dac.DisconnectPorts();
 	}
 
 	void VideoVGA::ConnectPorts()
@@ -120,6 +122,7 @@ namespace video
 			m_sequencer.ConnectPorts();
 			m_graphController.ConnectPorts();
 			m_attrController.ConnectPorts();
+			m_dac.ConnectPorts();
 		}
 	}
 
@@ -153,6 +156,7 @@ namespace video
 		m_sequencer.EnableLog(minSev);
 		m_graphController.EnableLog(minSev);
 		m_attrController.EnableLog(minSev);
+		m_dac.EnableLog(minSev);
 		Video::EnableLog(minSev);
 	}
 
@@ -383,10 +387,15 @@ namespace video
 	{
 		BYTE value = 0xFF;
 
-		bool switchSense = false;
+		// Sense looks at the output of the DAC
+		// Allows detection of mono/color monitor
+		// For now, false if any channel is larger than a threshold
+		bool sense = !(GetLastDot() & 0x00E0E0E0);
 
 		value =
-			(switchSense << 4) |
+			(sense << 4) |
+			(1 << 5) | 
+			(1 << 6) |
 			(m_crtc.IsInterruptPending() << 7);
 
 		LogPrintf(Logger::LOG_DEBUG, "ReadStatusRegister0, value=%02Xh", value);

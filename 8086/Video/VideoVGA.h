@@ -6,6 +6,7 @@
 #include "CRTControllerVGA.h"
 #include "GraphControllerVGA.h"
 #include "AttributeControllerVGA.h"
+#include "DigitalToAnalogConverterVGA.h"
 #include "SequencerVGA.h"
 #include "MemoryVGA.h"
 
@@ -116,12 +117,15 @@ namespace video
 		// Attribute Controller
 		attr_vga::AttrController m_attrController;
 
+		// Digital to Analog Converter
+		dac_vga::DigitalToAnalogConverter m_dac;
+
 		emul::MemoryBlock m_vgaROM;
 		memory_vga::MemoryVGA m_vgaRAM;
 
 		ADDRESS GetBaseAddress() { return m_crtc.GetMemoryAddress(); }
 
-		uint32_t GetIndexedColor(BYTE index) const { return m_attrController.GetData().palette[index]; }
+		uint32_t GetIndexedColor(BYTE index) const { return m_dac.GetColor(m_attrController.GetData().palette[index]); }
 
 		void DrawTextMode();
 		void DrawTextModeMDA();

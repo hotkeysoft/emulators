@@ -267,6 +267,9 @@
     <ClCompile Include="Video\SequencerVGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="Video\DigitalToAnalogConverterVGA.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -477,6 +480,9 @@
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="Video\SequencerVGA.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\DigitalToAnalogConverterVGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
   </ItemGroup>
