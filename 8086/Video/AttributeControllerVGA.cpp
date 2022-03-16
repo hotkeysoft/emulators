@@ -176,6 +176,7 @@ namespace attr_vga
 	{
 		to["currMode"] = m_currMode;
 		to["currRegister"] = m_currRegister;
+		to["lastDot"] = m_lastDot;
 
 		to["paletteSource"] = m_data.paletteSource;
 		to["palette"] = m_data.palette;
@@ -197,6 +198,7 @@ namespace attr_vga
 	{
 		m_currMode = from["currMode"];
 		m_currRegister = from["currRegister"];
+		m_lastDot = from["lastDot"];
 
 		m_data.paletteSource = from["paletteSource"];
 		m_data.palette = from["palette"];

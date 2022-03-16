@@ -61,12 +61,17 @@ namespace attr_vga
 
 		void ResetMode() { m_currMode = RegisterMode::ADDRESS; }
 
+		BYTE GetColor(BYTE index) const { return m_lastDot = m_data.palette[index & 15]; }
+		BYTE GetLastDot() const { return m_lastDot; }
+
 		// emul::Serializable
 		virtual void Serialize(json& to);
 		virtual void Deserialize(const json& from);
 
 	protected:
 		const WORD m_baseAddress;
+
+		mutable BYTE m_lastDot = 0;
 
 		uint32_t GetRGB32Color(BYTE value);
 

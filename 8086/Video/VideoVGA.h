@@ -125,7 +125,7 @@ namespace video
 
 		ADDRESS GetBaseAddress() { return m_crtc.GetMemoryAddress(); }
 
-		uint32_t GetIndexedColor(BYTE index) const { return m_dac.GetColor(m_attrController.GetData().palette[index]); }
+		uint32_t GetIndexedColor(BYTE index) const { return m_dac.GetColor(m_attrController.GetColor(index)); }
 
 		void DrawTextMode();
 		void DrawTextModeMDA();

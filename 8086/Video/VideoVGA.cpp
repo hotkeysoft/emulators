@@ -415,24 +415,29 @@ namespace video
 		//
 		// Bit3 1:Vertical retrace active
 		//
-		// Bit4&5:Pixel data, selected by Color Plane Register
+		// Bit4&5:Attribute controller pixel data, selected by Color Plane Register
 
 		bool diag4 = false;
 		bool diag5 = false;
-		uint32_t lasDot = GetLastDot();
+
+		BYTE lastAttribute = m_attrController.GetLastDot();
 		switch (m_attrController.GetData().videoStatusMux)
 		{
 		case 0:
-			diag5 = GetBit(lasDot, 23); // REDh
-			diag4 = GetBit(lasDot, 7); // BLUEh
+			diag5 = GetBit(lastAttribute, 2);
+			diag4 = GetBit(lastAttribute, 0);
 			break;
 		case 1:
-			diag5 = GetBit(lasDot, 6); // BLUEl
-			diag4 = GetBit(lasDot, 15); // GREENh
+			diag5 = GetBit(lastAttribute, 5);
+			diag4 = GetBit(lastAttribute, 4);
 			break;
 		case 2:
-			diag5 = GetBit(lasDot, 22); // REDl
-			diag4 = GetBit(lasDot, 14); // GREENl
+			diag5 = GetBit(lastAttribute, 3);
+			diag4 = GetBit(lastAttribute, 1);
+			break;
+		case 3:
+			diag5 = GetBit(lastAttribute, 7);
+			diag4 = GetBit(lastAttribute, 6);
 			break;
 		}
 
