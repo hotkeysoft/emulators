@@ -159,6 +159,11 @@ namespace attr_vga
 			case AttrControllerAddress::ATTR_H_PEL_PANNING:
 				m_data.hPelPanning = value & 15;
 				LogPrintf(LOG_INFO, "WriteData, Horizontal Pel Panning %d", m_data.hPelPanning);
+				if (m_data.hPelPanning > 7)
+				{
+					m_data.hPelPanning = 0;
+					LogPrintf(LOG_WARNING, "Pel Panning > 7 not implemented");
+				}
 				break;
 			case AttrControllerAddress::ATTR_COLOR_SELECT:
 				m_data.colorSelect = value & 15;

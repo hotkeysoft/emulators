@@ -172,7 +172,11 @@ namespace memory_vga
 
 		offset &= m_planeAddressMask;
 
-		if (m_graphData->writeMode == 1)
+		if (m_graphData->writeMode == 3)
+		{
+			LogPrintf(LOG_WARNING, "Mode 3: Not implemented");
+		}
+		else if (m_graphData->writeMode == 1)
 		{
 			for (int i = 0; i < 4; ++i)
 			{
