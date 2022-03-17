@@ -60,6 +60,7 @@ namespace video
 		AddMode("textMDA", (DrawFunc)&VideoVGA::DrawTextModeMDA, (AddressFunc)&VideoVGA::GetBaseAddress, (ColorFunc)&VideoVGA::GetIndexedColor);
 		AddMode("graph", (DrawFunc)&VideoVGA::DrawGraphMode, (AddressFunc)&VideoVGA::GetBaseAddress, (ColorFunc)&VideoVGA::GetIndexedColor);
 		AddMode("graphCGA4", (DrawFunc)&VideoVGA::DrawGraphModeCGA4, (AddressFunc)&VideoVGA::GetBaseAddress, (ColorFunc)&VideoVGA::GetIndexedColor);
+		AddMode("graph256", (DrawFunc)&VideoVGA::DrawGraphMode256, (AddressFunc)&VideoVGA::GetBaseAddress, (ColorFunc)&VideoVGA::GetColor256);
 		SetMode("text");
 
 		m_sequencer.Init();
@@ -155,8 +156,8 @@ namespace video
 		m_crtc.EnableLog(minSev);
 		m_sequencer.EnableLog(minSev);
 		m_graphController.EnableLog(minSev);
-		m_attrController.EnableLog(minSev);
-		m_dac.EnableLog(minSev);
+		m_attrController.EnableLog(LOG_WARNING);
+		m_dac.EnableLog(LOG_WARNING);
 		Video::EnableLog(minSev);
 	}
 
@@ -182,8 +183,14 @@ namespace video
 		{
 			SetMode(m_attrController.GetData().monochrome ? "textMDA" : "text");
 		}
+		else if (m_graphController.GetData().color256)
+		{
+			SetMode("graph256");
+			m_crtc.SetCharWidth(4);
+		}
 		else
 		{
+			
 			SetMode(m_graphController.GetData().shiftRegister ? "graphCGA4" : "graph");
 		}
 	}
@@ -230,7 +237,7 @@ namespace video
 
 	void VideoVGA::InternalTick()
 	{
-		if (m_sequencer.GetData().clockingMode.halfDotClock)
+		if (false/*m_sequencer.GetData().clockingMode.halfDotClock*/)
 		{
 			static bool div2 = false;
 			div2 = !div2;
@@ -673,12 +680,32 @@ namespace video
 		}
 	}
 
+	void VideoVGA::DrawGraphMode256()
+	{
+		const struct CRTCData& crtcData = m_crtc.GetData();
+		const struct AttrControllerData attrData = m_attrController.GetData();
+
+		//BYTE pelPanning = m_syncPelPanning ? m_newPelPanning : attrData.hPelPanning;
+
+		// Called every 4 horizontal pixel
+		if (IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+			DrawPixel(GetColor(m_vgaRAM.readRaw(0, base)));
+			DrawPixel(GetColor(m_vgaRAM.readRaw(1, base)));
+			DrawPixel(GetColor(m_vgaRAM.readRaw(2, base)));
+			DrawPixel(GetColor(m_vgaRAM.readRaw(3, base)));
+		}
+		else
+		{
+			DrawBackground(4);
+		}
+	}
+
 	void VideoVGA::Serialize(json& to)
 	{
 		Video::Serialize(to);
 		to["baseAddress"] = m_baseAddress;
-		// TODO ram size
-		// TODO color mono ports
 
 		json misc;
 		misc["color"] = m_misc.color;
@@ -694,9 +721,8 @@ namespace video
 		m_graphController.Serialize(to["graphController"]);
 		m_attrController.Serialize(to["attrController"]);
 		m_crtc.Serialize(to["crtc"]);
+		m_dac.Serialize(to["digitalAnalogConverter"]);
 		m_vgaRAM.Serialize(to["vgaRAM"]);
-
-		// TODO dip switches
 	}
 
 	void VideoVGA::Deserialize(const json& from)
@@ -721,6 +747,7 @@ namespace video
 		m_sequencer.Deserialize(from["sequencer"]);
 		m_graphController.Deserialize(from["graphController"]);
 		m_attrController.Deserialize(from["attrController"]);
+		m_dac.Deserialize(from["digitalAnalogConverter"]);
 		m_vgaRAM.Deserialize(from["vgaRAM"]);
 
 		if (oldColor != m_misc.color)

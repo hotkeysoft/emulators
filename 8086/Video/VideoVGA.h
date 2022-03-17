@@ -126,11 +126,13 @@ namespace video
 		ADDRESS GetBaseAddress() { return m_crtc.GetMemoryAddress(); }
 
 		uint32_t GetIndexedColor(BYTE index) const { return m_dac.GetColor(m_attrController.GetColor(index)); }
+		uint32_t GetColor256(BYTE index) const { return m_dac.GetColor(index); }
 
 		void DrawTextMode();
 		void DrawTextModeMDA();
 		void DrawGraphMode();
 		void DrawGraphModeCGA4();
+		void DrawGraphMode256();
 
 		crtc_vga::CRTController m_crtc;
 	};
