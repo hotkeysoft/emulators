@@ -307,10 +307,6 @@ namespace crtc_vga
 
 			m_config.doubleWordAddressMode = GetBit(value, 6);
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         doubleWord = %d", m_config.doubleWordAddressMode);
-			if (m_config.doubleWordAddressMode)
-			{
-				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: DWORD Mode not implemented");
-			}
 			break;
 
 		case CRT_V_BLANK_START:
@@ -379,7 +375,7 @@ namespace crtc_vga
 	void CRTController::SetCharWidth(BYTE charWidth)
 	{
 		m_charWidth = charWidth;
-		UpdateHVTotals();
+		UpdateHVTotals(true);
 	}
 
 	void CRTController::UpdateHVTotals(bool log)

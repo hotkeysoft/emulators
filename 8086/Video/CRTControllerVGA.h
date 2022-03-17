@@ -224,7 +224,7 @@ namespace crtc_vga
 				SetBit(address, 0, GetBit(m_data.memoryAddress, m_config.addressWrap ? 15 : 13));
 			}
 
-			// In compatibility mode, substitude set MA13 = bit0 of vpos
+			// In compatibility mode, set MA13 = bit0 of vpos
 			if (m_config.compatibility)
 			{
 				SetBit(address, 13, GetBit(m_data.vPos, 0));
