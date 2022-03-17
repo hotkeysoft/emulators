@@ -224,10 +224,16 @@ namespace crtc_vga
 				SetBit(address, 0, GetBit(m_data.memoryAddress, m_config.addressWrap ? 15 : 13));
 			}
 
-			// In compatibility mode, set MA13 = bit0 of vpos
+			// In compatibility mode, set MA13 = bit 0 of rowAddress counter
 			if (m_config.compatibility)
 			{
-				SetBit(address, 13, GetBit(m_data.vPos, 0));
+				SetBit(address, 13, GetBit(m_data.rowAddress, 0));
+			}
+
+			// In row scan counter mode, set MA14 = bit 1 of rowAddress counter
+			if (m_config.selectRowScanCounter)
+			{
+				SetBit(address, 14, GetBit(m_data.rowAddress, 1));
 			}
 
 			return address;

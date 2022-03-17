@@ -322,7 +322,7 @@ namespace crtc_vga
 
 		case CRT_MODE_CONTROL:
 			m_config.compatibility = !GetBit(value, 0);
-			m_config.selectRowScanCounter = GetBit(value, 1);
+			m_config.selectRowScanCounter = !GetBit(value, 1);
 			m_config.vCounterDiv2 = GetBit(value, 2);
 			m_config.countByTwo = GetBit(value, 3);
 			
@@ -342,10 +342,6 @@ namespace crtc_vga
 			m_configChanged = true;
 
 			//TODO
-			if (m_config.selectRowScanCounter == false)
-			{
-				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: selectRowScanCounter == 0 not implemented");
-			}
 			if (m_config.vCounterDiv2 == true)
 			{
 				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: vCounterDiv2 == 1 not implemented");

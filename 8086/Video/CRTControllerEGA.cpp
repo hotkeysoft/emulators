@@ -270,7 +270,7 @@ namespace crtc_ega
 
 		case CRT_MODE_CONTROL:
 			m_config.compatibility = !GetBit(value, 0);
-			m_config.selectRowScanCounter = GetBit(value, 1);
+			m_config.selectRowScanCounter = !GetBit(value, 1);
 			m_config.vCounterDiv2 = GetBit(value, 2);
 			m_config.countByTwo = GetBit(value, 3);
 			m_config.disableOutputControl = GetBit(value, 4);
@@ -288,10 +288,6 @@ namespace crtc_ega
 			m_configChanged = true;
 
 			//TODO
-			if (m_config.selectRowScanCounter == false)
-			{
-				LogPrintf(Logger::LOG_WARNING, "selectRowScanCounter == 0 not implemented");
-			}
 			if (m_config.vCounterDiv2 == true)
 			{
 				LogPrintf(Logger::LOG_WARNING, "vCounterDiv2 == 1 not implemented");
