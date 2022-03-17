@@ -101,9 +101,12 @@ namespace memory_vga
 			return 0xFF;
 
 		BYTE selectedPlane = m_graphData->readPlaneSelect;
-
-		// Odd/Even
-		if (m_seqData->memoryMode.oddEven)
+		if (m_seqData->memoryMode.chain4)
+		{
+			selectedPlane = offset & 3;
+			offset &= (~3);
+		}
+		else if (m_seqData->memoryMode.oddEven)
 		{
 			SetBit(selectedPlane, 0, GetBit(offset, 0));
 		}
@@ -152,16 +155,20 @@ namespace memory_vga
 
 		LogPrintf(LOG_TRACE, "Write(%d)[%04x] = %02x", m_graphData->writeMode, offset, data);
 
-		// Odd/Even
 		BYTE planeMask = m_seqData->planeMask;
-		if (m_seqData->memoryMode.oddEven)
+		if (m_seqData->memoryMode.chain4)
+		{
+			BYTE plane = 0;
+			SetBit(plane, offset & 3, true);
+			planeMask &= plane;
+			offset &= (~3);
+		}
+		else if (m_seqData->memoryMode.oddEven)
 		{
 			bool even = !GetBit(offset, 0);
-			{
-				SetBit(planeMask, 0 + even, false);
-				SetBit(planeMask, 2 + even, false);
-			}
-			SetBit(offset, 0, false);
+			SetBit(planeMask, 0 + even, false);
+			SetBit(planeMask, 2 + even, false);
+			SetBit(offset, 0, 0);
 		}
 
 		// Chain Odd/Even
