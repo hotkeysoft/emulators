@@ -274,7 +274,7 @@ namespace ui
 		{
 			LoadFloppyDiskImage(1);
 		}
-		if (id == "eject0")
+		else if (id == "eject0")
 		{
 			LoadFloppyDiskImage(0, true);
 		}
@@ -282,7 +282,7 @@ namespace ui
 		{
 			LoadFloppyDiskImage(1, true);
 		}
-		if (id == "hdd0")
+		else if (id == "hdd0")
 		{
 			LoadHardDiskImage(0);
 		}
