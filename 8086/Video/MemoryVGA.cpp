@@ -104,7 +104,9 @@ namespace memory_vga
 		if (m_seqData->memoryMode.chain4)
 		{
 			selectedPlane = offset & 3;
-			offset &= (~3);
+
+			SetBit(offset, 0, GetBit(offset, 14));
+			SetBit(offset, 1, GetBit(offset, 15));
 		}
 		else if (m_seqData->memoryMode.oddEven)
 		{
@@ -161,14 +163,16 @@ namespace memory_vga
 			BYTE plane = 0;
 			SetBit(plane, offset & 3, true);
 			planeMask &= plane;
-			offset &= (~3);
+
+			SetBit(offset, 0, GetBit(offset, 14));
+			SetBit(offset, 1, GetBit(offset, 15));
 		}
 		else if (m_seqData->memoryMode.oddEven)
 		{
 			bool even = !GetBit(offset, 0);
 			SetBit(planeMask, 0 + even, false);
 			SetBit(planeMask, 2 + even, false);
-			SetBit(offset, 0, 0);
+			SetBit(offset, 0, false);
 		}
 
 		// Chain Odd/Even
