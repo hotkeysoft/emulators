@@ -539,7 +539,6 @@ namespace crtc_vga
 		to["raw"] = m_rawData;
 
 		to["interruptPending"] = m_interruptPending;
-		to["charWidth"] = m_data.charWidth;
 		to["blink8"] = m_blink8;
 		to["blink16"] = m_blink16;
 	}

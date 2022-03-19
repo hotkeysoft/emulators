@@ -490,6 +490,7 @@ namespace video
 		const struct CRTCData& crtcData = m_crtc.GetData();
 		const struct CRTCConfig& crtcConfig = m_crtc.GetConfig();
 		const struct AttrControllerData attrData = m_attrController.GetData();
+		const int charWidth = crtcData.charWidth;
 
 		if (IsDisplayArea() && IsEnabled())
 		{
@@ -522,26 +523,38 @@ namespace video
 				cursorLine = false;
 			}
 
-			int startBit = 7;
+			int startBit = charWidth - 1;
 			int endBit = 0;
+			const int extraBits = charWidth - 8;
 			if (crtcData.hPos == 0)
 			{
 				startBit -= m_framePelPanning;
 			}
 			else if (crtcData.hPos == crtcData.hTotalDisp)
 			{
-				endBit = 8 - m_framePelPanning;
+				endBit = charWidth - m_framePelPanning;
 			}
 
-			for (int i = startBit; i >= endBit; --i)
+			bool lastDot = false;
+			for (int x = startBit; x >= endBit; --x)
 			{
-				bool set = draw && GetBit(currChar, i);
-				DrawPixel(GetColor((set || cursorLine) ? fg : bg));
+				const int currBit = x - extraBits;
+				if (currBit >= 0)
+				{
+					lastDot = draw && GetBit(currChar, currBit);
+				}
+				// Characters C0h - DFh: 9th pixel == 8th pixel, otherwise blank
+				else if ((ch < 0xC0) || (ch > 0xDF))
+				{
+					lastDot = 0;
+				}
+
+				DrawPixel(GetColor((lastDot || cursorLine) ? fg : bg));
 			}
 		}
 		else
 		{
-			DrawBackground(8);
+			DrawBackground(charWidth);
 		}
 	}
 
