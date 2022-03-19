@@ -10,14 +10,11 @@ namespace crtc_vga
 	using emul::SetLByte;
 	using emul::SetHByte;
 
-	static EventHandler s_defaultHandler;
-
 	CRTController::CRTController(WORD baseAddress, BYTE charWidth) :
 		Logger("crtcVGA"),
-		m_baseAddress(baseAddress),
-		m_charWidth(charWidth),
-		m_events(&s_defaultHandler)
+		m_baseAddress(baseAddress)
 	{
+		m_data.charWidth = charWidth;
 	}
 
 	CRTController::~CRTController()
@@ -370,20 +367,20 @@ namespace crtc_vga
 
 	void CRTController::SetCharWidth(BYTE charWidth)
 	{
-		m_charWidth = charWidth;
+		m_data.charWidth = charWidth;
 		UpdateHVTotals(true);
 	}
 
 	void CRTController::UpdateHVTotals(bool log)
 	{
-		m_data.hTotalDisp = (m_config.hDisplayed + 1) * m_charWidth;
-		m_data.hTotal = (m_config.hTotal + 5) * m_charWidth;
+		m_data.hTotalDisp = (m_config.hDisplayed + 1) * m_data.charWidth;
+		m_data.hTotal = (m_config.hTotal + 5) * m_data.charWidth;
 
-		m_data.hBlankMin = m_config.hBlankStart * m_charWidth;
-		m_data.hBlankMax = (BYTE)GetEndValue(m_config.hBlankStart, m_config.hBlankEnd, 0b111111) * m_charWidth;
+		m_data.hBlankMin = m_config.hBlankStart * m_data.charWidth;
+		m_data.hBlankMax = (BYTE)GetEndValue(m_config.hBlankStart, m_config.hBlankEnd, 0b111111) * m_data.charWidth;
 
-		m_data.hSyncMin = m_config.hSyncStart * m_charWidth;
-		m_data.hSyncMax = (BYTE)GetEndValue(m_config.hSyncStart, m_config.hSyncEnd, 0b11111) * m_charWidth;
+		m_data.hSyncMin = m_config.hSyncStart * m_data.charWidth;
+		m_data.hSyncMax = (BYTE)GetEndValue(m_config.hSyncStart, m_config.hSyncEnd, 0b11111) * m_data.charWidth;
 
 		m_data.vCharHeight = m_config.maxScanlineAddress + 1;
 		m_data.vTotalDisp = m_config.vDisplayed + 1;
@@ -399,7 +396,7 @@ namespace crtc_vga
 
 		if (log)
 		{
-			LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
+			LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_data.charWidth);
 			LogPrintf(LOG_INFO, "UpdateHVTotals: Total:     [%d x %d]", m_data.hTotal, m_data.vTotal);
 			LogPrintf(LOG_INFO, "UpdateHVTotals: hBlank:    [%d - %d]", m_data.hBlankMin, m_data.hBlankMax);
 			LogPrintf(LOG_INFO, "UpdateHVTotals: hSync:     [%d - %d]", m_data.hSyncMin, m_data.hSyncMax);
@@ -411,12 +408,12 @@ namespace crtc_vga
 
 	void CRTController::Tick()
 	{	
-		m_data.hPos += m_charWidth;
+		m_data.hPos += m_data.charWidth;
 		++m_data.memoryAddress;
 
 		if (m_data.hPos == m_data.hBlankMax)
 		{
-			m_events->OnEndOfRow();
+			FireEndOfRow();
 		}
 
 		if (m_data.hPos >= m_data.hTotal)
@@ -455,12 +452,12 @@ namespace crtc_vga
 
 			if (m_data.vPos == m_data.vSyncMin)
 			{
-				m_events->OnNewFrame();
+				FireNewFrame();
 			}
 			
 			if (m_data.vPos >= m_data.vTotal)
 			{
-				m_events->OnRenderFrame();
+				FireRenderFrame();
 
 				++m_data.frame;
 				m_data.doubledLine = false;
@@ -473,7 +470,7 @@ namespace crtc_vga
 				{
 					m_configChanged = false;
 					UpdateHVTotals(true);
-					m_events->OnChangeMode();
+					FireChangeMode();
 				}
 
 				if ((m_data.frame % 8) == 0) m_blink8 = !m_blink8;
@@ -530,6 +527,7 @@ namespace crtc_vga
 		to["config"] = config;
 
 		json data;
+		data["charWidth"] = m_data.charWidth;
 		data["hPos"] = m_data.hPos;
 		data["vPos"] = m_data.vPos;
 		data["rowAddress"] = m_data.rowAddress;
@@ -541,7 +539,7 @@ namespace crtc_vga
 		to["raw"] = m_rawData;
 
 		to["interruptPending"] = m_interruptPending;
-		to["charWidth"] = m_charWidth;
+		to["charWidth"] = m_data.charWidth;
 		to["blink8"] = m_blink8;
 		to["blink16"] = m_blink16;
 	}
@@ -600,6 +598,7 @@ namespace crtc_vga
 		m_config.lineCompare = config["lineCompare"];
 
 		const json& data = from["data"];
+		m_data.charWidth = data["charWidth"];
 		m_data.hPos = data["hPos"];
 		m_data.vPos = data["vPos"];
 		m_data.rowAddress = data["rowAddress"];
@@ -610,7 +609,6 @@ namespace crtc_vga
 		m_rawData = from["raw"];
 
 		m_interruptPending = from["interruptPending"];
-		m_charWidth = from["charWidth"];
 		m_blink8 = from["blink8"];
 		m_blink16 = from["blink16"];
 

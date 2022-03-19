@@ -8,6 +8,7 @@
 #include "AttributeControllerEGA.h"
 #include "SequencerEGA.h"
 #include "MemoryEGA.h"
+#include "VideoEvents.h"
 
 #include <map>
 
@@ -17,7 +18,7 @@ using emul::ADDRESS;
 
 namespace video
 {
-	class VideoEGA : public Video, public crtc_ega::EventHandler
+	class VideoEGA : public Video, public vid_events::EventHandler
 	{
 	public:
 		const char* GetDefaultVideoMode() const { return "ega"; }

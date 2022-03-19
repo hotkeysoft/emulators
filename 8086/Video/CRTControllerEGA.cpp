@@ -10,14 +10,11 @@ namespace crtc_ega
 	using emul::SetLByte;
 	using emul::SetHByte;
 
-	static EventHandler s_defaultHandler;
-
 	CRTController::CRTController(WORD baseAddress, BYTE charWidth) :
 		Logger("crtcEGA"),
-		m_baseAddress(baseAddress),
-		m_charWidth(charWidth),
-		m_events(&s_defaultHandler)
+		m_baseAddress(baseAddress)
 	{
+		m_data.charWidth = charWidth;
 	}
 
 	CRTController::~CRTController()
@@ -311,17 +308,17 @@ namespace crtc_ega
 
 	void CRTController::SetCharWidth(BYTE charWidth)
 	{
-		m_charWidth = charWidth;
+		m_data.charWidth = charWidth;
 		UpdateHVTotals();
 	}
 
 	void CRTController::UpdateHVTotals()
 	{
-		m_data.hTotalDisp = (m_config.hDisplayed + 1) * m_charWidth;
-		m_data.hTotal = (m_config.hTotal + 2) * m_charWidth;
+		m_data.hTotalDisp = (m_config.hDisplayed + 1) * m_data.charWidth;
+		m_data.hTotal = (m_config.hTotal + 2) * m_data.charWidth;
 
-		m_data.hSyncMin = m_config.hSyncStart * m_charWidth;
-		m_data.hSyncMax = (BYTE)GetEndValue(m_config.hSyncStart, m_config.hSyncEnd, 0b11111) * m_charWidth;
+		m_data.hSyncMin = m_config.hSyncStart * m_data.charWidth;
+		m_data.hSyncMax = (BYTE)GetEndValue(m_config.hSyncStart, m_config.hSyncEnd, 0b11111) * m_data.charWidth;
 
 		m_data.vCharHeight = m_config.maxScanlineAddress + 1;
 		m_data.vTotalDisp = m_config.vDisplayed + 1;
@@ -330,15 +327,15 @@ namespace crtc_ega
 		m_data.vSyncMin = m_config.vSyncStart;
 		m_data.vSyncMax = GetEndValue(m_config.vSyncStart, m_config.vSyncEnd, 0b1111);
 
-		m_data.hBlankMin = m_config.hBlankStart * m_charWidth;
-		m_data.hBlankMax =(BYTE)GetEndValue(m_config.hBlankStart, m_config.hBlankEnd, 0b11111) * m_charWidth;
+		m_data.hBlankMin = m_config.hBlankStart * m_data.charWidth;
+		m_data.hBlankMax =(BYTE)GetEndValue(m_config.hBlankStart, m_config.hBlankEnd, 0b11111) * m_data.charWidth;
 
 		m_data.vBlankMin = m_config.vBlankStart;
 		m_data.vBlankMax = GetEndValue(m_config.vBlankStart, m_config.vBlankEnd, 0b11111);
 
 		m_data.offset = m_config.offset << 1;
 
-		LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_charWidth);
+		LogPrintf(LOG_INFO, "UpdateHVTotals: Displayed: [%d x %d], char width: %d", m_data.hTotalDisp, m_data.vTotalDisp, m_data.charWidth);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: Total:     [%d x %d]", m_data.hTotal, m_data.vTotal);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: hBlank:    [%d - %d]", m_data.hBlankMin, m_data.hBlankMax);
 		LogPrintf(LOG_INFO, "UpdateHVTotals: hSync:     [%d - %d]", m_data.hSyncMin, m_data.hSyncMax);
@@ -349,12 +346,12 @@ namespace crtc_ega
 
 	void CRTController::Tick()
 	{
-		m_data.hPos += m_charWidth;
+		m_data.hPos += m_data.charWidth;
 		++m_data.memoryAddress;
 
 		if (m_data.hPos == m_data.hBlankMax)
 		{
-			m_events->OnEndOfRow();
+			FireEndOfRow();
 		}
 
 		if (m_data.hPos >= m_data.hTotal)
@@ -383,12 +380,12 @@ namespace crtc_ega
 
 			if (m_data.vPos == m_data.vSyncMin)
 			{
-				m_events->OnNewFrame();
+				FireNewFrame();
 			}
 			
 			if (m_data.vPos >= m_data.vTotal)
 			{
-				m_events->OnRenderFrame();
+				FireRenderFrame();
 
 				++m_data.frame;
 				m_data.vPos = 0;
@@ -400,7 +397,7 @@ namespace crtc_ega
 				{
 					m_configChanged = false;
 					UpdateHVTotals();
-					m_events->OnChangeMode();
+					FireChangeMode();
 				}
 
 				if ((m_data.frame % 8) == 0) m_blink8 = !m_blink8;
@@ -451,16 +448,15 @@ namespace crtc_ega
 		to["config"] = config;
 
 		json data;
+		data["charWidth"] = m_data.charWidth;
 		data["hPos"] = m_data.hPos;
 		data["vPos"] = m_data.vPos;
-		//data["vPosChar"] = m_data.vPosChar;
 		data["rowAddress"] = m_data.rowAddress;
 		data["memoryAddress"] = m_data.memoryAddress;
 		data["frame"] = m_data.frame;
 		to["data"] = data;
 
 		to["interruptPending"] = m_interruptPending;
-		to["charWidth"] = m_charWidth;
 		to["blink8"] = m_blink8;
 		to["blink16"] = m_blink16;
 	}
@@ -513,6 +509,7 @@ namespace crtc_ega
 		m_config.vSyncInterruptEnable = config["vSyncInterruptEnable"];
 
 		const json& data = from["data"];
+		m_data.charWidth = data["charWidth"];
 		m_data.hPos = data["hPos"];
 		m_data.vPos = data["vPos"];
 		m_data.rowAddress = data["rowAddress"];
@@ -520,7 +517,6 @@ namespace crtc_ega
 		m_data.frame = data["frame"];
 
 		m_interruptPending = from["interruptPending"];
-		m_charWidth = from["charWidth"];
 		m_blink8 = from["blink8"];
 		m_blink16 = from["blink16"];
 

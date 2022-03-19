@@ -161,6 +161,8 @@ namespace seq_vga
 		{
 			LogPrintf(LOG_WARNING, "WriteClockingMode: screenOff not implemented");
 		}
+
+		FireChangeMode();
 	}
 
 	BYTE Sequencer::ReadMapMask()

@@ -83,6 +83,8 @@ namespace seq_ega
 			m_data.clockingMode.load16 ? ' ' : '/',
 			m_data.clockingMode.halfDotClock ? ' ' : '/',
 			m_data.clockingMode.charWidth);
+
+		FireChangeMode();
 	}
 
 	void Sequencer::WriteMapMask(BYTE value)

@@ -129,6 +129,8 @@ namespace graph_vga
 	{
 		LogPrintf(Logger::LOG_DEBUG, "WriteValue, value=%02Xh", value);
 
+		bool oldVal;
+
 		switch (m_currAddress)
 		{
 		case GraphControllerAddress::GRAPH_SET_RESET:
@@ -171,8 +173,13 @@ namespace graph_vga
 			m_data.shiftRegister = GetBit(value, 5);
 			LogPrintf(Logger::LOG_INFO, "WriteValue, Shift register mode[%d]", m_data.shiftRegister);
 
+			oldVal = m_data.color256;
 			m_data.color256 = GetBit(value, 6);
 			LogPrintf(Logger::LOG_INFO, "WriteValue, 256 color mode [%d]", m_data.color256);
+			if (oldVal != m_data.color256)
+			{
+				FireChangeMode();
+			}
 			break;
 		case GraphControllerAddress::GRAPH_MISC:
 			LogPrintf(Logger::LOG_DEBUG, "WriteValue, Miscellaneous %d", value);
@@ -183,6 +190,7 @@ namespace graph_vga
 			m_data.memoryMap = (MemoryMap)((value >> 2) & 3);
 			LogPrintf(Logger::LOG_INFO, "WriteValue, Memory Map[%x]", m_data.memoryMap);
 			MapMemory();
+			FireChangeMode();
 			break;
 		case GraphControllerAddress::GRAPH_COLOR_DONT_CARE:
 			m_data.colorDontCare = value & 15;

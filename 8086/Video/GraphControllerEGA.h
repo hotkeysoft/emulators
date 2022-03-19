@@ -2,6 +2,7 @@
 #include "../Common.h"
 #include "../Serializable.h"
 #include "../CPU/PortConnector.h"
+#include "VideoEvents.h"
 
 namespace emul
 {
@@ -51,7 +52,7 @@ namespace graph_ega
 		BYTE bitMask = 0;
 	};
 
-	class GraphController : public emul::PortConnector, public emul::Serializable
+	class GraphController : public emul::PortConnector, public emul::Serializable, public vid_events::EventSource
 	{
 	public:
 		GraphController(WORD baseAddress);

@@ -2,6 +2,7 @@
 #include "../Common.h"
 #include "../Serializable.h"
 #include "../CPU/PortConnector.h"
+#include "VideoEvents.h"
 
 namespace seq_ega
 {
@@ -27,7 +28,7 @@ namespace seq_ega
 		} memoryMode;
 	};
 
-	class Sequencer : public emul::PortConnector, public emul::Serializable
+	class Sequencer : public emul::PortConnector, public emul::Serializable, public vid_events::EventSource
 	{
 	public:
 		Sequencer(WORD baseAddress);

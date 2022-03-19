@@ -485,6 +485,9 @@
     <ClInclude Include="Video\DigitalToAnalogConverterVGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
+    <ClInclude Include="Video\VideoEvents.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">

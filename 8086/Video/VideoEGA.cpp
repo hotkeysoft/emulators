@@ -69,7 +69,7 @@ namespace video
 		ConnectRelocatablePorts(m_baseAddressMono);
 
 		m_crtc.Init();
-		m_crtc.SetEventHandler(this);
+		m_crtc.SetVidEventHandler(this);
 
 		Video::Init(memory, charROM, forceMono);
 
@@ -83,7 +83,11 @@ namespace video
 		SetMode("text");
 
 		m_sequencer.Init();
+		m_sequencer.SetVidEventHandler(this);
+
 		m_graphController.Init(memory, &m_egaRAM);
+		m_graphController.SetVidEventHandler(this);
+
 		m_attrController.Init();
 
 		m_egaRAM.SetGraphController(&m_graphController.GetData());

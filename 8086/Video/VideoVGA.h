@@ -9,6 +9,7 @@
 #include "DigitalToAnalogConverterVGA.h"
 #include "SequencerVGA.h"
 #include "MemoryVGA.h"
+#include "VideoEvents.h"
 
 #include <map>
 
@@ -18,7 +19,7 @@ using emul::ADDRESS;
 
 namespace video
 {
-	class VideoVGA : public Video, public crtc_vga::EventHandler
+	class VideoVGA : public Video, public vid_events::EventHandler
 	{
 	public:
 		VideoVGA(WORD baseAddress, WORD baseAddressMono, WORD baseAddressColor);

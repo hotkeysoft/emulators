@@ -49,7 +49,7 @@ namespace video
 		memory->Allocate(&m_vgaROM, 0xC0000);
 
 		m_crtc.Init();
-		m_crtc.SetEventHandler(this);
+		m_crtc.SetVidEventHandler(this);
 
 		Video::Init(memory, charROM, forceMono);
 
@@ -62,9 +62,13 @@ namespace video
 		AddMode("graphCGA4", (DrawFunc)&VideoVGA::DrawGraphModeCGA4, (AddressFunc)&VideoVGA::GetBaseAddress, (ColorFunc)&VideoVGA::GetIndexedColor);
 		AddMode("graph256", (DrawFunc)&VideoVGA::DrawGraphMode256, (AddressFunc)&VideoVGA::GetBaseAddress, (ColorFunc)&VideoVGA::GetColor256);
 		SetMode("text");
-
+	
 		m_sequencer.Init();
+		m_sequencer.SetVidEventHandler(this);
+
 		m_graphController.Init(memory, &m_vgaRAM);
+		m_graphController.SetVidEventHandler(this);
+
 		m_attrController.Init();
 
 		m_vgaRAM.SetGraphController(&m_graphController.GetData());

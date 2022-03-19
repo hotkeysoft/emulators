@@ -127,6 +127,7 @@ namespace graph_ega
 			m_data.memoryMap = (MemoryMap)((value >> 2) & 3);
 			LogPrintf(Logger::LOG_INFO, "WriteValue, Memory Map[%x]", m_data.memoryMap);
 			MapMemory();
+			FireChangeMode();
 			break;
 		case GraphControllerAddress::GRAPH_COLOR_DONT_CARE:
 			m_data.colorDontCare = value & 15;

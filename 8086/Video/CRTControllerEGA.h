@@ -3,6 +3,7 @@
 #include "../Serializable.h"
 #include "../CPU/PortConnector.h"
 #include "../CPU/MemoryBlock.h"
+#include "VideoEvents.h"
 
 using emul::PortConnector;
 using emul::WORD;
@@ -16,15 +17,6 @@ struct SDL_Texture;
 
 namespace crtc_ega
 {
-	class EventHandler
-	{
-	public:
-		virtual void OnRenderFrame() {}
-		virtual void OnNewFrame() {}
-		virtual void OnEndOfRow() {}
-		virtual void OnChangeMode() {}
-	};
-
 	// CRT Controller
 	enum CRTRegister
 	{
@@ -139,10 +131,10 @@ namespace crtc_ega
 
 	struct CRTCData
 	{
-		WORD hPos = 0;
+		BYTE charWidth = 8;
 
+		WORD hPos = 0;
 		WORD vPos = 0;
-		//WORD vPosChar = 0;
 
 		WORD rowAddress = 0;
 		WORD lineStartAddress = 0;
@@ -169,7 +161,7 @@ namespace crtc_ega
 		WORD vSyncMax = 0;
 	};
 
-	class CRTController : public PortConnector, public emul::Serializable
+	class CRTController : public PortConnector, public emul::Serializable, public vid_events::EventSource
 	{
 	public:
 		CRTController(WORD baseAddress, BYTE charWidth = 8);
@@ -196,7 +188,7 @@ namespace crtc_ega
 		bool IsVBlank() const { return (m_data.vPos >= m_data.vBlankMin) && (m_data.vPos <= m_data.vBlankMax); }
 
 		// Add one char width for x pixel panning
-		bool IsDisplayArea() const { return (m_data.vPos < m_data.vTotalDisp) && (m_data.hPos < m_data.hTotalDisp + m_charWidth); }
+		bool IsDisplayArea() const { return (m_data.vPos < m_data.vTotalDisp) && (m_data.hPos < m_data.hTotalDisp + m_data.charWidth); }
 
 		bool IsBlink8() const { return m_blink8; }
 		bool IsBlink16() const { return m_blink16; }
@@ -232,8 +224,6 @@ namespace crtc_ega
 		const CRTCConfig& GetConfig() const { return m_config; }
 		const CRTCData& GetData() const { return m_data; }
 
-		void SetEventHandler(EventHandler* handler) { m_events = handler; }
-
 		void SetCharWidth(BYTE charWidth);
 
 		virtual void Serialize(json& to);
@@ -243,7 +233,6 @@ namespace crtc_ega
 
 	protected:
 		WORD m_baseAddress;
-		BYTE m_charWidth;
 
 		bool m_interruptPending = false;
 
@@ -263,8 +252,6 @@ namespace crtc_ega
 		// Blinky things
 		bool m_blink8 = false;
 		bool m_blink16 = false;
-
-		EventHandler* m_events = nullptr;
 
 		bool m_configChanged = false;
 	};
