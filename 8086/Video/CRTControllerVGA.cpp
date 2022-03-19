@@ -535,6 +535,24 @@ namespace crtc_vga
 		data["doubledLine"] = m_data.doubledLine;
 		to["data"] = data;
 
+		// For debugging, we don't reload these values
+		json debug;
+		debug["hTotalDisp"] = m_data.hTotalDisp;
+		debug["hTotal"] = m_data.hTotal;
+		debug["hBlankMin"] = m_data.hBlankMin;
+		debug["hBlankMax"] = m_data.hBlankMax;
+		debug["hSyncMin"] = m_data.hSyncMin;
+		debug["hSyncMax"] = m_data.hSyncMax;
+		debug["vCharHeight"] = m_data.vCharHeight;
+		debug["vTotalDisp"] = m_data.vTotalDisp;
+		debug["vTotal"] = m_data.vTotal;
+		debug["vSyncMin"] = m_data.vSyncMin;
+		debug["vSyncMax"] = m_data.vSyncMax;
+		debug["vBlankMin"] = m_data.vBlankMin;
+		debug["vBlankMax"] = m_data.vBlankMax;
+		debug["offset"] = m_data.offset;
+		to["debug"] = debug;
+
 		to["raw"] = m_rawData;
 
 		to["interruptPending"] = m_interruptPending;
