@@ -190,6 +190,7 @@ namespace crtc_vga
 
 		bool IsHBlank() const { return (m_data.hPos >= m_data.hBlankMin) && (m_data.hPos <= m_data.hBlankMax); }
 		bool IsVBlank() const { return (m_data.vPos >= m_data.vBlankMin) && (m_data.vPos <= m_data.vBlankMax); }
+		bool IsBlank() const { return IsVBlank() || IsHBlank(); }
 
 		// Add one char width for x pixel panning
 		bool IsDisplayArea() const { return (m_data.vPos < m_data.vTotalDisp) && (m_data.hPos < m_data.hTotalDisp + m_data.charWidth); }

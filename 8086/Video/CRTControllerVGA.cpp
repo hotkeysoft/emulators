@@ -291,7 +291,6 @@ namespace crtc_vga
 			break;
 
 		case CRT_UNDERLINE_LOCATION:
-			//TODO
 			m_config.underlineLocation = value & 31;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          underline = %d", m_config.underlineLocation);
 
@@ -312,7 +311,7 @@ namespace crtc_vga
 			m_configChanged = true;
 			break;
 		case CRT_V_BLANK_END:
-			m_config.vBlankEnd = value & 31;
+			m_config.vBlankEnd = value;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:          vBlankEnd = %d", m_config.vBlankEnd);
 			m_configChanged = true;
 			break;
@@ -389,8 +388,8 @@ namespace crtc_vga
 		m_data.vSyncMin = m_config.vSyncStart;
 		m_data.vSyncMax = GetEndValue(m_config.vSyncStart, m_config.vSyncEnd, 0b1111);
 
-		m_data.vBlankMin = m_config.vBlankStart;
-		m_data.vBlankMax = GetEndValue(m_config.vBlankStart, m_config.vBlankEnd, 0b11111);
+		m_data.vBlankMin = m_config.vBlankStart + 1;
+		m_data.vBlankMax = GetEndValue(m_config.vBlankStart, m_config.vBlankEnd, 0b11111111);
 
 		m_data.offset = m_config.offset << 1;
 

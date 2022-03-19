@@ -673,7 +673,7 @@ namespace video
 		const struct AttrControllerData attrData = m_attrController.GetData();
 
 		// Called every 8 horizontal pixels
-		if (IsDisplayArea() && IsEnabled())
+		if (IsEnabled() && IsDisplayArea() && !m_crtc.IsBlank())
 		{
 			ADDRESS base = GetAddress();
 			BYTE pixData[4];
@@ -720,7 +720,7 @@ namespace video
 		const struct CRTCData& crtcData = m_crtc.GetData();
 
 		// Called every 4 horizontal pixel
-		if (IsDisplayArea() && IsEnabled())
+		if (IsEnabled() && IsDisplayArea() && !m_crtc.IsBlank())
 		{
 			ADDRESS base = GetAddress();
 
