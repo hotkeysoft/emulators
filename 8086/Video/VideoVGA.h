@@ -62,8 +62,9 @@ namespace video
 		WORD m_baseAddressMono;
 		WORD m_baseAddressColor;
 
-		bool m_syncPelPanning = false;
-		BYTE m_newPelPanning = 0;
+		BYTE m_framePelPanning = 0;
+
+		BYTE AdjustPelPanning(BYTE pelPan) const;
 
 		void InternalTick();
 

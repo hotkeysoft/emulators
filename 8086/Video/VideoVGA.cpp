@@ -257,12 +257,32 @@ namespace video
 		BeginFrame();
 		const struct SequencerData& seq = m_sequencer.GetData();
 		m_vgaRAM.SelectCharMaps(seq.charMapSelectA, seq.charMapSelectA);
-		m_newPelPanning = m_attrController.GetData().hPelPanning;
+
+		m_framePelPanning = AdjustPelPanning(m_attrController.GetData().hPelPanning);
 	}
 
 	void VideoVGA::OnEndOfRow()
 	{
 		NewLine();
+	}
+
+	BYTE VideoVGA::AdjustPelPanning(BYTE pelPan) const
+	{
+		const auto& graphData = m_graphController.GetData();
+		const auto& seqClocking = m_sequencer.GetData().clockingMode;
+
+		if (graphData.color256)
+		{
+			return  (pelPan & 7) / 2; // 0..3
+		}
+		else if (!graphData.graphics && seqClocking.charWidth == 9)
+		{
+			return (pelPan >= 8) ? 0 : pelPan + 1;
+		}
+		else
+		{
+			return pelPan & 7;
+		}
 	}
 
 	bool VideoVGA::IsCursor() const
@@ -502,11 +522,11 @@ namespace video
 			int endBit = 0;
 			if (crtcData.hPos == 0)
 			{
-				startBit -= attrData.hPelPanning;
+				startBit -= m_framePelPanning;
 			}
 			else if (crtcData.hPos == crtcData.hTotalDisp)
 			{
-				endBit = 8 - attrData.hPelPanning;
+				endBit = 8 - m_framePelPanning;
 			}
 
 			for (int i = startBit; i >= endBit; --i)
@@ -635,8 +655,6 @@ namespace video
 		const struct CRTCData& crtcData = m_crtc.GetData();
 		const struct AttrControllerData attrData = m_attrController.GetData();
 
-		BYTE pelPanning = m_syncPelPanning ? m_newPelPanning : attrData.hPelPanning;
-
 		// Called every 8 horizontal pixels
 		if (IsDisplayArea() && IsEnabled())
 		{
@@ -651,11 +669,11 @@ namespace video
 			int endBit = 0;
 			if (crtcData.hPos == 0)
 			{
-				startBit -= pelPanning;
+				startBit -= m_framePelPanning;
 			}
 			else if (crtcData.hPos == crtcData.hTotalDisp)
 			{
-				endBit = 8 - pelPanning;
+				endBit = 8 - m_framePelPanning;
 			}
 
 			for (int i = startBit; i >= endBit; --i)
@@ -683,18 +701,27 @@ namespace video
 	void VideoVGA::DrawGraphMode256()
 	{
 		const struct CRTCData& crtcData = m_crtc.GetData();
-		const struct AttrControllerData attrData = m_attrController.GetData();
-
-		//BYTE pelPanning = m_syncPelPanning ? m_newPelPanning : attrData.hPelPanning;
 
 		// Called every 4 horizontal pixel
 		if (IsDisplayArea() && IsEnabled())
 		{
 			ADDRESS base = GetAddress();
-			DrawPixel(GetColor(m_vgaRAM.readRaw(0, base)));
-			DrawPixel(GetColor(m_vgaRAM.readRaw(1, base)));
-			DrawPixel(GetColor(m_vgaRAM.readRaw(2, base)));
-			DrawPixel(GetColor(m_vgaRAM.readRaw(3, base)));
+
+			int startBit = 3;
+			int endBit = 0;
+			if (crtcData.hPos == 0)
+			{
+				startBit -= m_framePelPanning;
+			}
+			else if (crtcData.hPos == crtcData.hTotalDisp)
+			{
+				endBit = 4 - m_framePelPanning;
+			}
+
+			for (int i = startBit; i >= endBit; --i)
+			{
+				DrawPixel(GetColor(m_vgaRAM.readRaw(3-i, base)));
+			}
 		}
 		else
 		{
