@@ -61,7 +61,15 @@ namespace attr_vga
 
 		void ResetMode() { m_currMode = RegisterMode::ADDRESS; }
 
-		BYTE GetColor(BYTE index) const { return m_lastDot = m_data.palette[index & 15]; }
+		BYTE GetColor(BYTE index) const { 
+			m_lastDot = (m_data.palette[index & 15] | GetColor67());
+			if (m_data.p4p5Select)
+			{
+				m_lastDot &= 0b11001111;
+				m_lastDot |= GetColor45();
+			}
+			return m_lastDot;
+		}
 		BYTE GetLastDot() const { return m_lastDot; }
 
 		// emul::Serializable
@@ -74,6 +82,9 @@ namespace attr_vga
 		mutable BYTE m_lastDot = 0;
 
 		uint32_t GetRGB32Color(BYTE value);
+
+		BYTE GetColor67() const { return (m_data.colorSelect << 4) & 0b11000000; }
+		BYTE GetColor45() const { return (m_data.colorSelect << 4) & 0b00110000; }
 
 		enum class RegisterMode
 		{ 

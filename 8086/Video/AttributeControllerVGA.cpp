@@ -134,14 +134,6 @@ namespace attr_vga
 				{
 					LogPrintf(LOG_WARNING, "WriteData, Pel Pan Compatibility not implemented");
 				}
-				if (m_data.pelWidth)
-				{
-					LogPrintf(LOG_WARNING, "WriteData, Pel Width not implemented");
-				}
-				if (m_data.p4p5Select)
-				{
-					LogPrintf(LOG_WARNING, "WriteData, P5, P4 Select not implemented");
-				}
 				break;
 			case AttrControllerAddress::ATTR_OVERSCAN_COLOR:
 				LogPrintf(LOG_DEBUG, "WriteData, Overscan Color %d", value);
