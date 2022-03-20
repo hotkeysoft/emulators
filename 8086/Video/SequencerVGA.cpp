@@ -121,12 +121,13 @@ namespace seq_vga
 	BYTE Sequencer::ReadClockingMode()
 	{
 		BYTE value =
-			(m_data.clockingMode.charWidth << 0) |
+			((m_data.clockingMode.charWidth == 8) << 0) |
 			(m_data.clockingMode.lowBandwidth << 1) |
 			(m_data.clockingMode.load16 << 2) |
 			(m_data.clockingMode.halfDotClock << 3) |
 			(m_data.clockingMode.load32 << 4) |
 			(m_data.clockingMode.screenOff << 5);
+		LogPrintf(Logger::LOG_DEBUG, "ReadClockingMode, value=%02Xh", value);
 		return value;
 	}
 

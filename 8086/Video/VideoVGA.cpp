@@ -241,7 +241,7 @@ namespace video
 
 	void VideoVGA::InternalTick()
 	{
-		if (false/*m_sequencer.GetData().clockingMode.halfDotClock*/)
+		if (m_sequencer.GetData().clockingMode.halfDotClock)
 		{
 			static bool div2 = false;
 			div2 = !div2;
