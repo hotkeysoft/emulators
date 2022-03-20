@@ -419,17 +419,25 @@ namespace crtc_vga
 		{
 			m_data.hPos = 0;
 
+			++m_data.vPos;
+
+			// This is a bit confusing, most detailed info found 
+			// in the Chips 82C451 VGA Controller doc:
+			// "The vertical parameters in the CRT Controller
+			// (even for a split screen) are not affected, 
+			// only the CRTC row scan counter and display
+			// memory addressing screen refresh are affected."
 			if (m_config.doubleScan && !m_data.doubledLine)
 			{
 				// Do this line one more time
 				m_data.doubledLine = !m_data.doubledLine;
-				m_data.memoryAddress = m_data.lineStartAddress;
-				return;
+			}
+			else
+			{
+				m_data.doubledLine = false;
+				++m_data.rowAddress;
 			}
 
-			m_data.doubledLine = false;
-			++m_data.vPos;
-			++m_data.rowAddress;
 			if (m_data.rowAddress > m_config.maxScanlineAddress)
 			{
 				m_data.rowAddress = 0;
