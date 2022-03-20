@@ -183,11 +183,7 @@ namespace memory_vga
 
 		offset &= m_planeAddressMask;
 
-		if (m_graphData->writeMode == 3)
-		{
-			LogPrintf(LOG_WARNING, "Mode 3: Not implemented");
-		}
-		else if (m_graphData->writeMode == 1)
+		if (m_graphData->writeMode == 1)
 		{
 			for (int i = 0; i < 4; ++i)
 			{
@@ -197,8 +193,14 @@ namespace memory_vga
 				}
 			}
 		}
-		else // Modes 0 & 2
+		else // Modes 0,2,3
 		{
+			BYTE mask = m_graphData->bitMask;
+			if (m_graphData->writeMode == 3)
+			{
+				mask &= RotateRight(data, m_graphData->rotateCount);
+			}
+
 			for (int i = 0; i < 4; ++i)
 			{
 				if (GetBit(planeMask, i))
@@ -208,10 +210,10 @@ namespace memory_vga
 					{
 						toWrite = GetBit(data, i) ? 0xFF : 0;
 					}
-					else // Mode 0
+					else // Mode 0, 3
 					{
 						// Set/Reset
-						if (GetBit(m_graphData->enableSetReset, i))
+						if ((m_graphData->writeMode == 3) || GetBit(m_graphData->enableSetReset, i))
 						{
 							toWrite = GetBit(m_graphData->setReset, i) ? 0xFF : 0;
 						}
@@ -232,7 +234,7 @@ namespace memory_vga
 
 					// Bit Mask
 					const BYTE& latched = m_dataLatches[i];
-					BYTE masked = latched ^ ((toWrite ^ latched) & m_graphData->bitMask);
+					BYTE masked = latched ^ ((toWrite ^ latched) & mask);
 
 					m_planes[i].write(offset, masked);
 				}
