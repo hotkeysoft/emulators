@@ -158,10 +158,6 @@ namespace seq_vga
 		{
 			LogPrintf(LOG_WARNING, "WriteClockingMode: load32 not implemented");
 		}
-		if (m_data.clockingMode.screenOff)
-		{
-			LogPrintf(LOG_WARNING, "WriteClockingMode: screenOff not implemented");
-		}
 
 		FireChangeMode();
 	}

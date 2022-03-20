@@ -343,7 +343,6 @@ namespace video
 			(m_misc.color << 0) |
 			(m_misc.enableRAM << 1) |
 			((BYTE)(m_misc.clockSel) << 2) |
-			(m_misc.disableVideo << 4) |
 			(m_misc.pageHigh << 5) |
 			(m_misc.hSyncPolarity << 6) |
 			(m_misc.vSyncPolarity << 7);
@@ -360,7 +359,6 @@ namespace video
 
 		m_misc.color = GetBit(value, 0);
 		m_misc.enableRAM = GetBit(value, 1);
-		m_misc.disableVideo = GetBit(value, 4);
 		m_misc.pageHigh = GetBit(value, 5);
 		m_misc.hSyncPolarity = !GetBit(value, 6);
 		m_misc.vSyncPolarity = !GetBit(value, 7);
@@ -389,10 +387,9 @@ namespace video
 			break;
 		}
 
-		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cVIDEO %cPAGEBIT %cHSYNCPOL %cVSYNCPOL CLK[%s]]",			
+		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cPAGEBIT %cHSYNCPOL %cVSYNCPOL CLK[%s]]",			
 			m_misc.color ? ' ' : '/',
 			m_misc.enableRAM ? ' ' : '/',
-			!m_misc.disableVideo ? ' ' : '/',
 			m_misc.pageHigh ? ' ' : '/',
 			m_misc.hSyncPolarity ? '+' : '-',
 			m_misc.vSyncPolarity ? '+' : '-',
@@ -755,7 +752,6 @@ namespace video
 		misc["color"] = m_misc.color;
 		misc["enableRAM"] = m_misc.enableRAM;
 		misc["clockSel"] = m_misc.clockSel;
-		misc["disableVideo"] = m_misc.disableVideo;
 		misc["pageHigh"] = m_misc.pageHigh;
 		misc["hSyncPolarity"] = m_misc.hSyncPolarity;
 		misc["vSyncPolarity"] = m_misc.vSyncPolarity;
@@ -783,7 +779,6 @@ namespace video
 		m_misc.color = misc["color"];
 		m_misc.enableRAM = misc["enableRAM"];
 		m_misc.clockSel = misc["clockSel"];
-		m_misc.disableVideo = misc["disableVideo"];
 		m_misc.pageHigh = misc["pageHigh"];
 		m_misc.hSyncPolarity = misc["hSyncPolarity"];
 		m_misc.vSyncPolarity = misc["vSyncPolarity"];

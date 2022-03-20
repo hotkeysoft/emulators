@@ -51,7 +51,7 @@ namespace video
 
 		virtual uint32_t GetBackgroundColor() const override { return m_attrController.GetData().overscanColor; }
 		virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
-		virtual bool IsEnabled() const override { return !m_misc.disableVideo; }
+		virtual bool IsEnabled() const override { return !m_sequencer.GetData().clockingMode.screenOff; }
 
 		virtual bool IsHSync() const override { return m_crtc.IsHSync(); }
 		virtual bool IsVSync() const override { return m_crtc.IsVSync(); }
@@ -96,8 +96,6 @@ namespace video
 			bool enableRAM = false; // 1:enable RAM access from CPU
 			enum class ClockSelect { CLK_25 = 0, CLK_28, CLK_EXT, CLK_UNUSED } clockSel = ClockSelect::CLK_25;
 
-			// TODO: Undefined in IBM doc
-			bool disableVideo = false; // 1:disable output, 0:enable output
 			bool pageHigh = false; // Select lo/hi page in odd/even modes
 
 			bool hSyncPolarity = false;
