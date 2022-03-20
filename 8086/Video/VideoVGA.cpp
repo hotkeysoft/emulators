@@ -157,10 +157,10 @@ namespace video
 
 	void VideoVGA::EnableLog(SEVERITY minSev)
 	{
-		m_crtc.EnableLog(minSev);
-		m_sequencer.EnableLog(minSev);
-		m_graphController.EnableLog(minSev);
-		m_attrController.EnableLog(LOG_WARNING);
+		m_crtc.EnableLog(LOG_WARNING);
+		m_sequencer.EnableLog(LOG_WARNING);
+		m_graphController.EnableLog(LOG_WARNING);
+		m_attrController.EnableLog(minSev);
 		m_dac.EnableLog(LOG_WARNING);
 		Video::EnableLog(minSev);
 	}
@@ -670,27 +670,27 @@ namespace video
 		const struct AttrControllerData attrData = m_attrController.GetData();
 
 		// Called every 8 horizontal pixels
-		if (IsEnabled() && IsDisplayArea() && !m_crtc.IsBlank())
+		if (IsEnabled() && IsDisplayArea() && !m_crtc.IsVBlank())
 		{
 			ADDRESS base = GetAddress();
 			BYTE pixData[4];
 			for (int i = 0; i < 4; ++i)
 			{
 				pixData[i] = GetBit(attrData.colorPlaneEnable, i) ?  m_vgaRAM.readRaw(i, base) : 0;
+
+				if (crtcData.hPos == crtcData.hTotalDisp)
+				{
+					pixData[i] &= (0xFF << (8 - m_framePelPanning));
+				}
 			}
 
 			int startBit = 7;
-			int endBit = 0;
 			if (crtcData.hPos == 0)
 			{
 				startBit -= m_framePelPanning;
 			}
-			else if (crtcData.hPos == crtcData.hTotalDisp)
-			{
-				endBit = 8 - m_framePelPanning;
-			}
 
-			for (int i = startBit; i >= endBit; --i)
+			for (int i = startBit; i >= 0; --i)
 			{
 				BYTE color = 
 					(GetBit(pixData[0], i) << 0) |
@@ -721,6 +721,7 @@ namespace video
 		{
 			ADDRESS base = GetAddress();
 
+			bool blankRight = false;
 			int startBit = 3;
 			int endBit = 0;
 			if (crtcData.hPos == 0)
@@ -730,11 +731,16 @@ namespace video
 			else if (crtcData.hPos == crtcData.hTotalDisp)
 			{
 				endBit = 4 - m_framePelPanning;
+				blankRight = true;
 			}
 
 			for (int i = startBit; i >= endBit; --i)
 			{
-				DrawPixel(GetColor(m_vgaRAM.readRaw(3-i, base)));
+				DrawPixel(GetColor(m_vgaRAM.readRaw(3 - i, base)));
+			}
+			if (blankRight)
+			{
+				DrawBackground(endBit);
 			}
 		}
 		else
