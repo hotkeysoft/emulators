@@ -236,7 +236,7 @@ namespace ui
 		m_loadSnapshotButton->SetTooltip("Restore last saved state from disk\nShift-click for more options");
 
 		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
-		LogPrintf(LOG_INFO, "Snapshot base directory is [%s]", m_snapshotBaseDirectory.string().c_str());
+		LogPrintf(LOG_DEBUG, "Snapshot base directory is [%s]", m_snapshotBaseDirectory.string().c_str());
 		if (!GetLastSnapshotDirectory(m_lastSnapshotDir))
 		{
 			m_lastSnapshotDir.clear();
@@ -871,16 +871,22 @@ namespace ui
 
 	bool Overlay::GetSnapshotBaseDirectory(fs::path& baseDir)
 	{
-		baseDir.clear();
-		fs::path path = CONFIG().GetValueStr("dirs", "snapshot", "./snapshots");
+		static fs::path absoluteBaseDir;
 
-		if (!fs::is_directory(fs::status(path)))
+		if (absoluteBaseDir.empty())
 		{
-			LogPrintf(LOG_ERROR, "GetSnapshotBaseDirectory: [%s] is not a directory", path.string().c_str());
-			return false;
+			fs::path path = CONFIG().GetValueStr("dirs", "snapshot", "./snapshots");
+
+			if (!fs::is_directory(fs::status(path)))
+			{
+				LogPrintf(LOG_ERROR, "GetSnapshotBaseDirectory: [%s] is not a directory", path.string().c_str());
+				return false;
+			}
+			absoluteBaseDir = fs::absolute(path);
 		}
 
-		baseDir = fs::absolute(path);
+		baseDir = absoluteBaseDir;
+
 		return true;
 	}
 
@@ -890,6 +896,7 @@ namespace ui
 		if (path.empty())
 		{
 			LogPrintf(LOG_ERROR, "MakeSnapshotDirectory: Base directory not set");
+			return false;
 		}
 
 		char buf[64];
@@ -914,6 +921,7 @@ namespace ui
 		if (path.empty())
 		{
 			LogPrintf(LOG_ERROR, "GetLastSnapshotDirectory: Base directory not set");
+			return;
 		}
 	
 		for (auto const& entry : std::filesystem::directory_iterator(path))
