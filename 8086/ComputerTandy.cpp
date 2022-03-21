@@ -37,7 +37,6 @@ namespace emul
 		m_base128K("SYSRAM", 0x20000, emul::MemoryType::RAM),
 		m_ramExtension("EXTRAM", emul::MemoryType::RAM),
 		m_biosFC00("BIOS", 0x4000, emul::MemoryType::ROM),
-		m_uart(0x2F8, UART_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
 	{
 	}
@@ -241,15 +240,6 @@ namespace emul
 			}
 			video->Tick();
 			m_pic->InterruptRequest(IRQ_VSYNC, (video->IsVSync()));
-
-
-			//m_uart.Tick();
-			//// UART clock is 1.5x base clock
-			//if (syncTicks & 1)
-			//{
-			//	m_uart.Tick();
-			//}
-			//m_pic.InterruptRequest(3, m_uart.IsInterrupt());
 
 			++syncTicks;
 		}

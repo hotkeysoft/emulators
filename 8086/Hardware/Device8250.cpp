@@ -10,9 +10,10 @@ using emul::GetBit;
 
 namespace uart
 {
-	Device8250::Device8250(WORD baseAddress, size_t clockSpeedHz) : 
+	Device8250::Device8250(WORD baseAddress, BYTE irq, size_t clockSpeedHz) : 
 		Logger("UART8250"), 
-		m_baseAddress(baseAddress)
+		m_baseAddress(baseAddress),
+		m_irq(irq)
 	{
 		Reset();
 		s_clockSpeed = clockSpeedHz;

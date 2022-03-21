@@ -3,6 +3,7 @@
 #include "InputEvents.h"
 #include "DeviceKeyboard.h"
 #include "DeviceJoystick.h"
+#include "DeviceSerialMouse.h"
 
 #include <SDL.h>
 
@@ -356,6 +357,27 @@ namespace events
 		LogPrintf(LOG_INFO, "Polling rate: [%zu] ticks", m_pollRate);
 	}
 
+	void InputEvents::InitMouse(mouse::DeviceSerialMouse* mouse)
+	{
+		m_mouse = mouse;
+	}
+
+	void InputEvents::CaptureMouse(bool capture)
+	{
+		if (!m_mouse)
+		{
+			m_mouseCaptured = false;
+		}
+		else
+		{
+			m_mouseCaptured = capture;
+		}
+
+		LogPrintf(LOG_INFO, "Capture mouse %s", m_mouseCaptured ? "ON" : "OFF");
+
+		SDL_SetRelativeMouseMode(m_mouseCaptured ? SDL_TRUE : SDL_FALSE);
+	}
+
 	void InputEvents::Tick()
 	{
 		if (--m_cooldown)
@@ -405,6 +427,19 @@ namespace events
 				if ((e.cbutton.which == m_controllerID) && (e.caxis.axis <= 1))
 				{
 					InputControllerAxis(e.caxis.axis, e.caxis.value);
+				}
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+			case SDL_MOUSEBUTTONUP:
+				if (m_mouseCaptured)
+				{
+					InputMouseButton(e.button.button, e.button.state);
+				}
+				break;
+			case SDL_MOUSEMOTION:
+				if (m_mouseCaptured)
+				{
+					InputMouseMotion(e.motion.xrel, e.motion.yrel);
 				}
 				break;
 			default:
@@ -465,6 +500,31 @@ namespace events
 			adjValue += 128;
 			m_joystick->SetAxisState(0, axis, (uint8_t)adjValue);
 		}
+	}
+
+	void InputEvents::InputMouseButton(uint8_t button, uint8_t state)
+	{
+		LogPrintf(LOG_DEBUG, "InputControllerAxis: button[%d] state[%d]", button, state);
+		BYTE mappedButton = 0;
+		switch (button)
+		{
+		case SDL_BUTTON_LEFT: mappedButton = 0; break;
+		case SDL_BUTTON_RIGHT: mappedButton = 1; break;
+		default:
+			LogPrintf(LOG_WARNING, "Button not mapped: %d", button);
+			return;
+		}
+
+		m_mouse->Click(mappedButton, state == SDL_PRESSED ? true : false);
+	}
+	void InputEvents::InputMouseMotion(int32_t dx, int32_t dy)
+	{
+		LogPrintf(LOG_DEBUG, "InputControllerAxis: dx[%d] dy[%d]", dx, dy);
+
+		dx /= 2;
+		dy /= 2;
+
+		m_mouse->Move(std::clamp(dx, -254, 255), std::clamp(dy, -254, 255));
 	}
 
 }

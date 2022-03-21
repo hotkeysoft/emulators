@@ -8,6 +8,7 @@
 using emul::BYTE;
 namespace kbd { class DeviceKeyboard; }
 namespace joy { class DeviceJoystick; }
+namespace mouse { class DeviceSerialMouse; }
 
 namespace events
 {
@@ -78,11 +79,15 @@ namespace events
 		void Init();
 		void InitKeyboard(kbd::DeviceKeyboard* kbd, KBDMapping mapping = KBDMapping::XT);
 		void InitJoystick(joy::DeviceJoystick* joy);
+		void InitMouse(mouse::DeviceSerialMouse* mouse);
 
 		void AddEventHandler(EventHandler* handler) { m_handlers.push_back(handler); }
 
 		kbd::DeviceKeyboard* GetKeyboard() const { return m_keyboard; }
 		joy::DeviceJoystick* GetJoystick() const { return m_joystick; }
+		mouse::DeviceSerialMouse* GetMouse() const { return m_mouse; }
+
+		void CaptureMouse(bool capture);
 
 		void Tick();
 
@@ -95,7 +100,8 @@ namespace events
 		void InputKey(SDL_KeyboardEvent& evt);
 		void InputControllerButton(uint8_t button, uint8_t state);
 		void InputControllerAxis(uint8_t axis, int16_t value);
-
+		void InputMouseButton(uint8_t button, uint8_t state);
+		void InputMouseMotion(int32_t dx, int32_t dy);
 		bool m_quit = false;
 
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
@@ -105,6 +111,9 @@ namespace events
 		SDL_JoystickID m_controllerID = -1;
 
 		joy::DeviceJoystick* m_joystick = nullptr;
+
+		bool m_mouseCaptured = false;
+		mouse::DeviceSerialMouse* m_mouse = nullptr;
 
 		std::vector<EventHandler*> m_handlers;
 	};

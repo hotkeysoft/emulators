@@ -5,8 +5,45 @@ using uart::Device8250;
 
 namespace mouse
 {
-	DeviceSerialMouse::DeviceSerialMouse(WORD baseAddress, size_t clockSpeedHz) :
-		Device8250(baseAddress, clockSpeedHz),
+	bool DeviceSerialMouse::MouseState::left = false;
+	bool DeviceSerialMouse::MouseState::right = false;
+
+	bool DeviceSerialMouse::MouseDataPacket::Merge(MouseState mergeWith)
+	{
+		if (!IsLocked())
+		{
+			int dx = state.dx + mergeWith.dx;
+			int dy = state.dy + mergeWith.dy;
+			state.dx = std::clamp(dx, -254, 255);
+			state.dy = std::clamp(dy, -254, 255);
+			return true;
+		}
+		return false;
+	}
+
+	BYTE DeviceSerialMouse::MouseDataPacket::GetNextByte()
+	{
+		switch (sentBytes++)
+		{
+		case 0: return
+			(state.right << 4) |
+			(state.left << 5) |
+			((state.dy & 0b11000000) >> 4) |
+			((state.dx & 0b11000000) >> 6) |
+			(1 << 6);
+		case 1: return (state.dx & 0b111111);
+		case 2: return (state.dy & 0b111111);
+		default: throw std::exception("Invalid index");
+		}
+	}
+
+	// 1200 bauds 7N1, 3 bytes/message,
+	// can send about 40 messsages/s max, so set 
+	// refresh rate to 120Hz
+	DeviceSerialMouse::DeviceSerialMouse(WORD baseAddress, BYTE irq, size_t clockSpeedHz) :
+		Device8250(baseAddress, irq, clockSpeedHz),
+		m_pollRate(clockSpeedHz / 120),
+		m_cooldown(m_pollRate),
 		Logger("serial.mouse")
 	{
 
@@ -46,51 +83,60 @@ namespace mouse
 		switch (button)
 		{
 		case 0:
-			m_state.left = clicked;
+			MouseState::left = clicked;
 			break;
 		case 1:
-			m_state.right = clicked;
+			MouseState::right = clicked;
 			break;
 		default:
 			LogPrintf(LOG_ERROR, "Invalid button id");
 		}
-		SendMouseState();
+		SendMouseState(MouseState());
 	}
 
 	void DeviceSerialMouse::Move(int8_t dx, int8_t dy)
 	{
-		m_state.dx = dx;
-		m_state.dy = dy;
-		SendMouseState();
+		SendMouseState(MouseState(dx, dy));
 	}
 
-	void DeviceSerialMouse::SendMouseState()
+	void DeviceSerialMouse::SendMouseState(MouseState state)
 	{
-		// TODO
+		MouseDataPacket packet(state);
+		bool addToQueue = true;
+		if (!m_queue.empty())
+		{
+			MouseDataPacket& lastPacket = m_queue.back();
+			if (lastPacket.Merge(state))
+			{
+				LogPrintf(LOG_DEBUG, "Merged mouse packet");
+				addToQueue = false;
+			}
+		}
 
-		BYTE b1 =
-			(m_state.right << 4) |
-			(m_state.left << 5) |
-			((m_state.dy & 0b11000000) >> 4) |
-			((m_state.dx & 0b11000000) >> 6) |
-			(1 << 6);
-
-		m_queue.push_back(b1);
-		m_queue.push_back(m_state.dx & 0b111111);
-		m_queue.push_back(m_state.dy & 0b111111);
+		if (addToQueue)
+		{
+			LogPrintf(LOG_DEBUG, "Add packet to queue");
+			m_queue.push_back(packet);
+		}
 	}
 
 	void DeviceSerialMouse::Tick()
 	{
-		static int cooldown = 10000;
 		Device8250::Tick();
-		if (m_queue.size() && (--cooldown == 0))
+		if (m_queue.size() && (--m_cooldown == 0))
 		{
-			BYTE value = m_queue.front();
+			MouseDataPacket& packet = m_queue.front();
+
+			BYTE value = packet.GetNextByte();
 			LogPrintf(LOG_DEBUG, "Send mouse data: [%02x]", value);
 			InputData(value);
-			m_queue.pop_front();
-			cooldown = 50000;
+			if (!packet.HasNextByte())
+			{
+				// Done with this packet
+				m_queue.pop_front();
+			}
+
+			m_cooldown = m_pollRate;
 		}
 	}
 }

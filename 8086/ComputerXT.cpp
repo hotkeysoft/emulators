@@ -32,16 +32,6 @@ namespace emul
 	static const BYTE IRQ_HDD = 5;
 	static const BYTE DMA_HDD = 3;
 
-	static const BYTE IRQ_COM1 = 4;
-	static const BYTE IRQ_COM2 = 3;
-	static const BYTE IRQ_COM3 = 4;
-	static const BYTE IRQ_COM4 = 3;
-
-	static const WORD PORT_COM1 = 0x3F8;
-	static const WORD PORT_COM2 = 0x2F8;
-	static const WORD PORT_COM3 = 0x3E8;
-	static const WORD PORT_COM4 = 0x2E8;
-
 	ComputerXT::ComputerXT() :
 		Logger("XT"),
 		Computer(m_memory, m_map),
@@ -88,10 +78,12 @@ namespace emul
 		m_keyboard.Init(m_ppi, m_pic);
 
 		InitJoystick(0x201, PIT_CLK);
+		InitMouse(UART_CLK);
 
 		InitInputs(PIT_CLK);
 		GetInputs().InitKeyboard(&m_keyboard);
 		GetInputs().InitJoystick(m_joystick);
+		GetInputs().InitMouse(m_mouse);
 
 		int floppyCount = 0;
 		if (CONFIG().GetValueBool("floppy", "enable"))
@@ -104,10 +96,6 @@ namespace emul
 		{
 			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
 		}
-
-		m_mouse = new mouse::DeviceSerialMouse(PORT_COM1, UART_CLK);
-		m_mouse->EnableLog(CONFIG().GetLogLevel("mouse"));
-		m_mouse->Init();
 
 		// Configuration switches
 		{
@@ -236,7 +224,7 @@ namespace emul
 			{
 				m_mouse->Tick();
 			}
-			m_pic->InterruptRequest(IRQ_COM1, m_mouse->IsInterrupt());
+			m_pic->InterruptRequest(m_mouse->GetIRQ(), m_mouse->IsInterrupt());
 
 			++syncTicks;
 		}

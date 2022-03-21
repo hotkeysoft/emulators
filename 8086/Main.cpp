@@ -517,12 +517,12 @@ int main(int argc, char* args[])
 						case FKEY + 8:
 							break;
 						case FKEY + 9:
-							fprintf(stderr, "Click ON 0\n");
-							pc->GetMouse()->Click(0, true);
+							fprintf(stderr, "Capture mouse ON\n");
+							pc->GetInputs().CaptureMouse(true);
 							break;
 						case FKEY + 10:
-							fprintf(stderr, "Move 0\n");
-							pc->GetMouse()->Move(1, 1);
+							fprintf(stderr, "Capture mouse OFF\n");
+							pc->GetInputs().CaptureMouse(false);
 							break;
 						default:
 							fprintf(stderr, "Unknown extended keycode: [0][%d]\n", ch);

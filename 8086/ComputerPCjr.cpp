@@ -35,7 +35,7 @@ namespace emul
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_keyboard(0xA0),
-		m_uart(0x2F8, UART_CLK),
+		m_uart(0x2F8, IRQ_UART, UART_CLK),
 		m_soundModule(0xC0, SOUND_CLK)
 	{
 	}
@@ -258,7 +258,7 @@ namespace emul
 			{
 				m_uart.Tick();
 			}
-			m_pic->InterruptRequest(IRQ_UART, m_uart.IsInterrupt());
+			m_pic->InterruptRequest(m_uart.GetIRQ(), m_uart.IsInterrupt());
 
 			++syncTicks;
 		}

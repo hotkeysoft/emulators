@@ -226,6 +226,42 @@ namespace emul
 		m_inputs->EnableLog(CONFIG().GetLogLevel("inputs"));
 	}
 
+	void Computer::InitMouse(size_t baseClock)
+	{
+		if (CONFIG().GetValueBool("joystick", "enable"))
+		{
+			BYTE comPort = CONFIG().GetValueInt32("mouse", "com", 1);
+			if (comPort < 1 || comPort > 4)
+			{
+				comPort = 1;
+				LogPrintf(LOG_WARNING, "InitMouse: Invalid COM port, using default (COM1)");
+			}
+			WORD port = COM_PORT[comPort];
+			BYTE irq = COM_IRQ[comPort];
+
+			WORD overridePort = CONFIG().GetValueInt32("mouse", "port");
+			BYTE overrideIRQ = CONFIG().GetValueInt32("mouse", "irq");
+
+			if (overridePort)
+			{
+				LogPrintf(LOG_INFO, "InitMouse: Using override port [%04x]", overridePort);
+				port = overridePort;
+			}
+
+			if (overrideIRQ && overrideIRQ < 8)
+			{
+				LogPrintf(LOG_INFO, "InitMouse: Using override IRQ [%d]", overrideIRQ);
+				irq = overrideIRQ;
+			}
+
+			LogPrintf(LOG_INFO, "InitMouse: Initializing mouse on port[%04x], irq[%d]", port, irq);
+
+			m_mouse = new mouse::DeviceSerialMouse(port, irq);
+			m_mouse->EnableLog(CONFIG().GetLogLevel("mouse"));
+			m_mouse->Init();
+		}
+	}
+
 	void Computer::InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq, BYTE dma)
 	{
 		assert(fdd);

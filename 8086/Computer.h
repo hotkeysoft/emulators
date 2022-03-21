@@ -22,6 +22,9 @@ namespace hdd { class DeviceHardDrive; }
 
 namespace emul
 {
+	static const BYTE COM_IRQ[5] = { 0, 4, 3, 4, 3 };
+	static const WORD COM_PORT[5] = { 0, 0x3F8, 0x2F8, 0x3E8, 0x2E8 };
+
 	class CPUSpeed : public Serializable
 	{
 	public:
@@ -98,6 +101,7 @@ namespace emul
 		virtual void InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq=0, BYTE dma=0);
 		virtual void InitHardDrive(hdd::DeviceHardDrive* hdd, BYTE irq = 0, BYTE dma = 0);
 		virtual void InitInputs(size_t clockSpeedHz);
+		virtual void InitMouse(size_t baseClock);
 
 		void AddCPUSpeed(const CPUSpeed& speed);
 		int GetCPUSpeedRatio() const { return m_cpuSpeed.GetRatio(); }

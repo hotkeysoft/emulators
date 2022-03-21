@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Computer.h"
-#include "Hardware/Device8250.h"
 #include "Sound/DeviceSN76489.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardTandy.h"
@@ -68,7 +67,6 @@ namespace emul
 		emul::MemoryBlock m_biosFC00;
 
 		kbd::DeviceKeyboardTandy m_keyboard;
-		uart::Device8250 m_uart;
 		sn76489::DeviceSN76489 m_soundModule;
 
 		DummyPortTandy m_dummyPorts;

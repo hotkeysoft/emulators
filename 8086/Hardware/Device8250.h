@@ -28,7 +28,7 @@ namespace uart
 	class Device8250 : public PortConnector
 	{
 	public:
-		Device8250(WORD baseAddress, size_t clockSpeedHz = 1000000);
+		Device8250(WORD baseAddress, BYTE irq, size_t clockSpeedHz);
 		virtual ~Device8250() {}
 
 		Device8250() = delete;
@@ -37,14 +37,12 @@ namespace uart
 		Device8250(Device8250&&) = delete;
 		Device8250& operator=(Device8250&&) = delete;
 
+		virtual BYTE GetIRQ() const { return m_irq; }
+
 		virtual void Init();
 		virtual void Reset();
 
 		virtual void Tick();
-
-		// Serial in/out
-		//bool GetSerialOut() const { return m_modemControl.loopback ? true : m_serialOut; }
-		//void SetSerialIn(BYTE value) { /* TODO, nop in loopback */ }
 
 		// Interrupts
 		bool IsInterrupt() const;
@@ -78,6 +76,7 @@ namespace uart
 		virtual void InputData(BYTE value);
 
 		const WORD m_baseAddress;
+		const BYTE m_irq = 0;
 
 		BYTE Read0();
 		void Write0(BYTE value);

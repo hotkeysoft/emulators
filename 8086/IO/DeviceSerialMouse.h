@@ -6,7 +6,7 @@ namespace mouse
 	class DeviceSerialMouse : public uart::Device8250
 	{
 	public:
-		DeviceSerialMouse(WORD baseAddress, size_t clockSpeedHz = 1000000);
+		DeviceSerialMouse(WORD baseAddress, BYTE irq, size_t clockSpeedHz = 1000000);
 
 		virtual void Init() override;
 
@@ -16,22 +16,43 @@ namespace mouse
 		virtual void Tick() override;
 
 	protected:
+
+		const size_t m_pollRate;
+		size_t m_cooldown = m_pollRate;
+
 		virtual void OnRTS(bool state) override;
 		virtual void OnDTR(bool state) override;
 
 		bool m_lastRTS = false;
 
-		void SendMouseState();
-
 		struct MouseState
 		{
-			bool left = false;
-			bool right = false;
+			MouseState() {}
+			MouseState(int8_t dx, int8_t dy) : dx(dx), dy(dy) {}
+
+			static bool left;
+			static bool right;
 			int8_t dx = 0;
 			int8_t dy = 0;
-		} m_state;
+		};
+		void SendMouseState(MouseState state);
 
-		std::list<BYTE> m_queue;
+		class MouseDataPacket
+		{
+		public:
+			MouseDataPacket(MouseState state) : state(state) {}
+			bool IsLocked() const { return sentBytes != 0; }
+			bool HasNextByte() const { return sentBytes < 3; }
+
+			bool Merge(MouseState state);
+			BYTE GetNextByte();
+
+		protected:
+			MouseState state;
+			int sentBytes = 0;
+		};
+
+		std::list<MouseDataPacket> m_queue;
 	};
 }
 
