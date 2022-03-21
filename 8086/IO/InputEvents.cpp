@@ -390,18 +390,21 @@ namespace events
 		SDL_Event e;
 		while (!m_quit && SDL_PollEvent(&e))
 		{
-			bool handled = false;
-			for (auto handler : m_handlers)
+			if (!m_mouseCaptured || (e.type < SDL_MOUSEMOTION && e.type >= SDL_JOYAXISMOTION))
 			{
-				if (handler->HandleEvent(e))
+				bool handled = false;
+				for (auto handler : m_handlers)
 				{
-					handled = true;
-					break;
+					if (handler->HandleEvent(e))
+					{
+						handled = true;
+						break;
+					}
 				}
-			}
-			if (handled)
-			{
-				continue;
+				if (handled)
+				{
+					continue;
+				}
 			}
 
 			switch (e.type)
