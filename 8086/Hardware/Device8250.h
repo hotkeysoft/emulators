@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../CPU/PortConnector.h"
-#include <deque>
 
 using emul::PortConnector;
 using emul::WORD;
@@ -30,6 +29,7 @@ namespace uart
 	{
 	public:
 		Device8250(WORD baseAddress, size_t clockSpeedHz = 1000000);
+		virtual ~Device8250() {}
 
 		Device8250() = delete;
 		Device8250(const Device8250&) = delete;
@@ -37,14 +37,14 @@ namespace uart
 		Device8250(Device8250&&) = delete;
 		Device8250& operator=(Device8250&&) = delete;
 
-		void Init();
-		void Reset();
+		virtual void Init();
+		virtual void Reset();
 
-		void Tick();
+		virtual void Tick();
 
 		// Serial in/out
-		bool GetSerialOut() const { return m_modemControl.loopback ? true : m_serialOut; }
-		void SetSerialIn(BYTE value) { /* TODO, nop in loopback */ }
+		//bool GetSerialOut() const { return m_modemControl.loopback ? true : m_serialOut; }
+		//void SetSerialIn(BYTE value) { /* TODO, nop in loopback */ }
 
 		// Interrupts
 		bool IsInterrupt() const;
@@ -61,16 +61,22 @@ namespace uart
 		void SetDCD(bool set);
 		void SetRI(bool set);
 
-		// Transmit clock (/BAUDOUT) is 'hardwired' internally to RCLK
-		bool GetBaudOut() const { return false; }
-
-		WORD GetBaudRate() const { return (WORD)(s_clockSpeed / ((size_t)m_divisorLatch * 16)); }
+		WORD GetBaudRate() const { return m_divisorLatch ? (WORD)(s_clockSpeed / ((size_t)m_divisorLatch * 16)) : 0; }
 
 		BYTE GetDataLength() const { return m_dataConfig.dataLength; }
 		Parity GetParity() const { return m_dataConfig.parity; }
 		StopBits GetStopBits() const { return m_dataConfig.stopBits; }
 
 	protected:
+		// Called when state of the pin changes, override in client
+		virtual void OnRTS(bool state) {}
+		virtual void OnDTR(bool state) {}
+		virtual void OnOUT1(bool state) {}
+		virtual void OnOUT2(bool state) {}
+		virtual void OnDataTransmit(BYTE value) {}
+
+		virtual void InputData(BYTE value);
+
 		const WORD m_baseAddress;
 
 		BYTE Read0();
@@ -182,8 +188,8 @@ namespace uart
 
 		BYTE m_rxBufferRegister;
 		BYTE m_txHoldingRegister;
-		std::deque<bool> m_txFIFO;
-		std::deque<bool> m_rxFIFO;
+
+		BOOL m_transmitDelay = 0;
 
 		bool m_serialOut = true;
 	};

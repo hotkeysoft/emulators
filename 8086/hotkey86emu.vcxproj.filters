@@ -270,6 +270,9 @@
     <ClCompile Include="Video\DigitalToAnalogConverterVGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="IO\DeviceSerialMouse.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -487,6 +490,9 @@
     </ClInclude>
     <ClInclude Include="Video\VideoEvents.h">
       <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\DeviceSerialMouse.h">
+      <Filter>Header Files\IO</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

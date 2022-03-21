@@ -10,6 +10,7 @@
 #include "Hardware/Device8237.h"
 #include "Sound/DevicePCSpeaker.h"
 #include "IO/DeviceJoystick.h"
+#include "IO/DeviceSerialMouse.h"
 #include "Video/Video.h"
 #include "Serializable.h"
 
@@ -67,6 +68,7 @@ namespace emul
 		virtual kbd::DeviceKeyboard& GetKeyboard() = 0;
 		video::Video& GetVideo() { return *m_video; }
 		events::InputEvents& GetInputs() { return *m_inputs; }
+		mouse::DeviceSerialMouse* GetMouse() { return m_mouse; }
 		
 
 		virtual void Reboot(bool hard = false);
@@ -127,6 +129,7 @@ namespace emul
 		hdd::DeviceHardDrive* m_hardDrive = nullptr;
 		fdc::DeviceFloppy* m_floppy = nullptr;
 		events::InputEvents* m_inputs = nullptr;
+		mouse::DeviceSerialMouse* m_mouse = nullptr;
 
 		BYTE m_floppyIRQ = 0;
 		BYTE m_floppyDMA = 0;

@@ -515,8 +515,14 @@ int main(int argc, char* args[])
 							}
 							break;
 						case FKEY + 8:
+							break;
 						case FKEY + 9:
+							fprintf(stderr, "Click ON 0\n");
+							pc->GetMouse()->Click(0, true);
+							break;
 						case FKEY + 10:
+							fprintf(stderr, "Move 0\n");
+							pc->GetMouse()->Move(1, 1);
 							break;
 						default:
 							fprintf(stderr, "Unknown extended keycode: [0][%d]\n", ch);

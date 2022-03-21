@@ -38,6 +38,7 @@ namespace emul
 		delete m_pic;
 		delete m_ppi;
 		delete m_dma;
+		delete m_mouse;
 	}
 
 	void Computer::AddCPUSpeed(const CPUSpeed& speed)

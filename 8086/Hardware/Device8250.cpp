@@ -6,6 +6,7 @@ using emul::GetHByte;
 using emul::GetLByte;
 using emul::SetHByte;
 using emul::SetLByte;
+using emul::GetBit;
 
 namespace uart
 {
@@ -66,9 +67,6 @@ namespace uart
 		m_intr.rxDataAvailable = false;
 		m_intr.txHoldingRegisterEmpty = false;
 		m_intr.modemStatus = false;
-
-		m_txFIFO.clear();
-		m_rxFIFO.clear();
 
 		UpdateDataConfig();
 	}
@@ -143,7 +141,7 @@ namespace uart
 		m_intr.rxDataAvailable = false;
 		m_lineStatus.dataReady = false;
 
-		LogPrintf(LOG_INFO, "ReadReceiver, value=%02x", m_rxBufferRegister);
+		LogPrintf(LOG_TRACE, "ReadReceiver, value=%02x", m_rxBufferRegister);
 		return m_rxBufferRegister;
 	}
 	void Device8250::WriteTransmitter(BYTE value)
@@ -152,7 +150,9 @@ namespace uart
 		m_lineStatus.txHoldingRegisterEmpty = false;
 		m_txHoldingRegister = value;
 
-		LogPrintf(LOG_INFO, "WriteTransmitter, value=%02x", value);
+		LogPrintf(LOG_TRACE, "WriteTransmitter, value=%02x", value);
+
+		m_transmitDelay = 100000;
 	}
 
 	BYTE Device8250::ReadInterruptEnable()
@@ -163,17 +163,17 @@ namespace uart
 			(m_interruptEnable.txEmpty << 1) |
 			(m_interruptEnable.dataAvailableInterrupt << 0);
 
-		LogPrintf(LOG_DEBUG, "ReadInterruptEnable, value=%02x", ret);
+		LogPrintf(LOG_TRACE, "ReadInterruptEnable, value=%02x", ret);
 		return ret;
 	}
 	void Device8250::WriteInterruptEnable(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteInterruptEnable, value=%02x", value);
+		LogPrintf(LOG_TRACE, "WriteInterruptEnable, value=%02x", value);
 
-		m_interruptEnable.statusChange = value & 0x08;
-		m_interruptEnable.errorOrBreak = value & 0x04;
-		m_interruptEnable.txEmpty = value & 0x02;
-		m_interruptEnable.dataAvailableInterrupt = value & 0x01;
+		m_interruptEnable.statusChange = GetBit(value, 3);
+		m_interruptEnable.errorOrBreak = GetBit(value, 2);
+		m_interruptEnable.txEmpty = GetBit(value, 1);
+		m_interruptEnable.dataAvailableInterrupt = GetBit(value, 0);
 
 		LogPrintf(LOG_INFO, "WriteInterruptEnable: [%cSTATUS_CHNG %cERR_BRK %cTXR_EMPTY %cDATA_AVAIL]",
 			m_interruptEnable.statusChange ? ' ' : '/',
@@ -188,12 +188,12 @@ namespace uart
 		// In priority order
 		if (m_intr.rxLineStatus)
 		{
-			LogPrintf(LOG_INFO, "ReadInterruptIdentification: Receiver Error");
+			LogPrintf(LOG_TRACE, "ReadInterruptIdentification: Receiver Error");
 			ret = 0b110;
 		} 
 		else if (m_intr.rxDataAvailable)
 		{
-			LogPrintf(LOG_INFO, "ReadInterruptIdentification: Receiver Data Available");
+			LogPrintf(LOG_TRACE, "ReadInterruptIdentification: Receiver Data Available");
 			ret = 0b100;
 		}
 		else if (m_intr.txHoldingRegisterEmpty)
@@ -201,17 +201,17 @@ namespace uart
 			// Reset interrupt 
 			m_intr.txHoldingRegisterEmpty = false;
 
-			LogPrintf(LOG_INFO, "ReadInterruptIdentification: Transmitter Holding Register Empty");
+			LogPrintf(LOG_TRACE, "ReadInterruptIdentification: Transmitter Holding Register Empty");
 			ret = 0b010;
 		}
 		else if (m_intr.modemStatus)
 		{
-			LogPrintf(LOG_INFO, "ReadInterruptIdentification: MODEM status (CTS | DSR | RI | DCD)");
+			LogPrintf(LOG_TRACE, "ReadInterruptIdentification: MODEM status (CTS | DSR | RI | DCD)");
 			ret = 0b000;
 		}
 		else // no interrupt
 		{
-			//LogPrintf(LOG_DEBUG, "ReadInterruptIdentification: None");
+			//LogPrintf(LOG_TRACE, "ReadInterruptIdentification: None");
 			ret = 0b001;
 		}
 		return ret;
@@ -234,18 +234,18 @@ namespace uart
 	}
 	void Device8250::WriteLineControl(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteLineControl, value=%02x", value);
+		LogPrintf(LOG_TRACE, "WriteLineControl, value=%02x", value);
 
-		m_lineControl.divisorLatchAccess = value & 0x80;
-		m_lineControl.setBreak = value & 0x40;
-		LogPrintf(LOG_INFO, "WriteLineControl: [%cDLAB %cBREAK]",
+		m_lineControl.divisorLatchAccess = GetBit(value, 7);
+		m_lineControl.setBreak = GetBit(value, 6);
+		LogPrintf(LOG_DEBUG, "WriteLineControl: [%cDLAB %cBREAK]",
 			m_lineControl.divisorLatchAccess ? ' ' : '/',
 			m_lineControl.setBreak ? ' ' : '/');
 
-		m_lineControl.parityStick = value & 0x20;
-		m_lineControl.parityEven = value & 0x10;
-		m_lineControl.parityEnable = value & 0x08;
-		m_lineControl.stopBits = value & 0x04;
+		m_lineControl.parityStick = GetBit(value, 5);
+		m_lineControl.parityEven = GetBit(value, 4);
+		m_lineControl.parityEnable = GetBit(value, 3);
+		m_lineControl.stopBits = GetBit(value, 2);
 		m_lineControl.wordLengthSelect = value & 0x03;
 		UpdateDataConfig();
 	}
@@ -259,25 +259,32 @@ namespace uart
 			(m_modemControl.rts << 1) |
 			(m_modemControl.dtr << 0);
 
-		LogPrintf(LOG_DEBUG, "ReadModemControl, value=%02x", ret);
+		LogPrintf(LOG_TRACE, "ReadModemControl, value=%02x", ret);
 		return ret;
 	}
 	void Device8250::WriteModemControl(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteModemControl, value=%02x", value);
+		LogPrintf(LOG_TRACE, "WriteModemControl, value=%02x", value);
 
-		m_modemControl.loopback = value & 0x10;
-		m_modemControl.out2 = value & 0x08;
-		m_modemControl.out1 = value & 0x04;
-		m_modemControl.rts = value & 0x02;
-		m_modemControl.dtr = value & 0x01;
+		ModemControlRegister m_old = m_modemControl;
 
-		LogPrintf(LOG_INFO, "WriteModemControl: [%cLOOPBACK %cOUT2 %cOUT1 %cRTS %cDTR]",
+		m_modemControl.loopback = GetBit(value, 4);
+		m_modemControl.out2 = GetBit(value, 3);
+		m_modemControl.out1 = GetBit(value, 2);
+		m_modemControl.rts = GetBit(value, 1);
+		m_modemControl.dtr = GetBit(value, 0);
+
+		LogPrintf(LOG_DEBUG, "WriteModemControl: [%cLOOPBACK %cOUT2 %cOUT1 %cRTS %cDTR]",
 			m_modemControl.loopback ? ' ' : '/',
 			m_modemControl.out2 ? ' ' : '/',
 			m_modemControl.out1 ? ' ' : '/',
 			m_modemControl.rts ? ' ' : '/',
 			m_modemControl.dtr ? ' ' : '/');
+
+		if (m_old.out2 != m_modemControl.out2) { OnOUT2(m_modemControl.out2); }
+		if (m_old.out1 != m_modemControl.out1) { OnOUT1(m_modemControl.out1); }
+		if (m_old.rts != m_modemControl.rts) { OnRTS(m_modemControl.rts); }
+		if (m_old.dtr != m_modemControl.dtr) { OnDTR(m_modemControl.dtr); }
 	}
 
 	BYTE Device8250::ReadLineStatus()
@@ -294,9 +301,9 @@ namespace uart
 			(m_lineStatus.overrunError << 1) |
 			(m_lineStatus.dataReady << 0);
 
-		LogPrintf(LOG_DEBUG, "ReadLineStatus, value=%02x", ret);
+		LogPrintf(LOG_TRACE, "ReadLineStatus, value=%02x", ret);
 
-		LogPrintf(LOG_INFO, "ReadLineStatus: [%cTSRE %cTHRE %cBI %cFE %cPE %cOE %cDR]",
+		LogPrintf(LOG_DEBUG, "ReadLineStatus: [%cTSRE %cTHRE %cBI %cFE %cPE %cOE %cDR]",
 			m_lineStatus.txShiftRegisterEmpty ? ' ' : '/',
 			m_lineStatus.txHoldingRegisterEmpty ? ' ' : '/',
 			m_lineStatus.breakInterrupt ? ' ' : '/',
@@ -321,12 +328,12 @@ namespace uart
 	{
 		LogPrintf(LOG_DEBUG, "WriteLineStatus, value=%02x", value);
 
-		m_lineStatus.txHoldingRegisterEmpty = value & 0x20;
-		m_lineStatus.breakInterrupt = value & 0x10;
-		m_lineStatus.framingError = value & 0x08;
-		m_lineStatus.parityError = value & 0x04;
-		m_lineStatus.overrunError = value & 0x02;
-		m_lineStatus.dataReady = value & 0x01;
+		m_lineStatus.txHoldingRegisterEmpty = GetBit(value, 6);
+		m_lineStatus.breakInterrupt = GetBit(value, 5);
+		m_lineStatus.framingError = GetBit(value, 4);
+		m_lineStatus.parityError = GetBit(value, 3);
+		m_lineStatus.overrunError = GetBit(value, 1);
+		m_lineStatus.dataReady = GetBit(value, 0);
 
 		LogPrintf(LOG_DEBUG, "WriteLineStatus: [%cTSRE %cTHRE %cBI %cFE %cPE %cOE %cDR]",
 			m_lineStatus.txShiftRegisterEmpty ? ' ' : '/',
@@ -365,7 +372,7 @@ namespace uart
 			(m_modemStatusDelta.dsr << 1) |
 			(m_modemStatusDelta.cts << 0);
 
-		LogPrintf(LOG_DEBUG, "ReadModemStatus, value=%02x", ret);
+		LogPrintf(LOG_TRACE, "ReadModemStatus, value=%02x", ret);
 
 		LogPrintf(LOG_DEBUG, "ReadModemStatus: [%cDCD %cRI %cDSR %cCTS | %cDDCD %cTERI %cDDSR %cDCTS]",
 			dcd ? ' ' : '/',
@@ -398,12 +405,12 @@ namespace uart
 	// Bits 4-7 are read-only
 	void Device8250::WriteModemStatus(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WriteModemStatus, value=%02x", value);
+		LogPrintf(LOG_TRACE, "WriteModemStatus, value=%02x", value);
 
-		m_modemStatusDelta.dcd = value & 0x08;
-		m_modemStatusDelta.ri  = value & 0x04;
-		m_modemStatusDelta.dsr = value & 0x02;
-		m_modemStatusDelta.cts = value & 0x01;
+		m_modemStatusDelta.dcd = GetBit(value, 3);
+		m_modemStatusDelta.ri  = GetBit(value, 2);
+		m_modemStatusDelta.dsr = GetBit(value, 1);
+		m_modemStatusDelta.cts = GetBit(value, 0);
 
 		LogPrintf(LOG_DEBUG, "WriteModemStatus: [%cDCD %cRI %cDSR %cCTS | %cDDCD %cTERI %cDDSR %cDCTS]",
 			m_modemStatus.dcd ? ' ' : '/',
@@ -450,7 +457,7 @@ namespace uart
 
 	void Device8250::SetCTS(bool set)
 	{
-		LogPrintf(LOG_INFO, "SetCTS, value=%d", set);
+		LogPrintf(LOG_DEBUG, "SetCTS, value=%d", set);
 
 		if (!m_modemControl.loopback)
 		{
@@ -459,7 +466,7 @@ namespace uart
 	}
 	void Device8250::SetDSR(bool set)
 	{
-		LogPrintf(LOG_INFO, "SetDSR, value=%d", set);
+		LogPrintf(LOG_DEBUG, "SetDSR, value=%d", set);
 
 		if (!m_modemControl.loopback)
 		{
@@ -468,7 +475,7 @@ namespace uart
 	}
 	void Device8250::SetDCD(bool set)
 	{
-		LogPrintf(LOG_INFO, "SetDCD, value=%d", set);
+		LogPrintf(LOG_DEBUG, "SetDCD, value=%d", set);
 
 		if (!m_modemControl.loopback)
 		{
@@ -477,7 +484,7 @@ namespace uart
 	}
 	void Device8250::SetRI(bool set)
 	{
-		LogPrintf(LOG_INFO, "SetRI, value=%d", set);
+		LogPrintf(LOG_DEBUG, "SetRI, value=%d", set);
 
 		if (!m_modemControl.loopback)
 		{
@@ -491,6 +498,13 @@ namespace uart
 			(m_intr.rxDataAvailable && m_interruptEnable.dataAvailableInterrupt) ||
 			(m_intr.rxLineStatus && m_interruptEnable.errorOrBreak) ||
 			(m_intr.txHoldingRegisterEmpty && m_interruptEnable.txEmpty);
+	}
+
+	void Device8250::InputData(BYTE value)
+	{
+		m_rxBufferRegister = value;
+		m_intr.rxDataAvailable = true;
+		m_lineStatus.dataReady = true;
 	}
 
 	void Device8250::Tick()
@@ -514,15 +528,28 @@ namespace uart
 			m_intr.modemStatus = true;
 		}
 
-		// Shortcut: connect tx and rx in loopback mode
-		if (m_modemControl.loopback && !m_lineStatus.txHoldingRegisterEmpty)
+		if (!m_lineStatus.txHoldingRegisterEmpty)
 		{
-			m_rxBufferRegister = m_txHoldingRegister;
-			m_lineStatus.dataReady = true;
-			m_intr.rxDataAvailable = true;
+			// Shortcut: connect tx and rx in loopback mode
+			if (m_modemControl.loopback)
+			{
+				m_rxBufferRegister = m_txHoldingRegister;
+				m_lineStatus.dataReady = true;
+				m_intr.rxDataAvailable = true;
 
-			m_lineStatus.txHoldingRegisterEmpty = true;
-			m_intr.txHoldingRegisterEmpty = true;
+				m_lineStatus.txHoldingRegisterEmpty = true;
+				m_intr.txHoldingRegisterEmpty = true;
+			}
+			else
+			{
+				// Data transmission delay
+				if (--m_transmitDelay == 0)
+				{
+					m_lineStatus.txHoldingRegisterEmpty = true;
+					m_intr.txHoldingRegisterEmpty = true;
+					OnDataTransmit(m_txHoldingRegister);
+				}
+			}
 		}
 	}
 }
