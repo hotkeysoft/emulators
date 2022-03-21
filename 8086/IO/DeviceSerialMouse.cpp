@@ -2,6 +2,7 @@
 #include "DeviceSerialMouse.h"
 
 using uart::Device8250;
+using emul::SerializationError;
 
 namespace mouse
 {
@@ -137,6 +138,64 @@ namespace mouse
 			}
 
 			m_cooldown = m_pollRate;
+		}
+	}
+
+	void DeviceSerialMouse::MouseDataPacket::Serialize(json& to)
+	{
+		to["state.dx"] = state.dx;
+		to["state.dy"] = state.dy;
+		to["sentBytes"] = sentBytes;
+	}
+	void DeviceSerialMouse::Serialize(json& to)
+	{
+		Device8250::Serialize(to["uart"]);
+
+		to["pollRate"] = m_pollRate;
+		to["cooldown"] = m_cooldown;
+		to["lastRTS"] = m_lastRTS;
+
+		to["mouseState.left"] = MouseState::left;
+		to["mouseState.right"] = MouseState::right;
+
+		json queue = json::array();
+		for (auto& item : m_queue)
+		{
+			json itemJson;
+			item.Serialize(itemJson);
+			queue.push_back(itemJson);
+		}
+		to["queue"] = queue;
+	}
+
+	void DeviceSerialMouse::MouseDataPacket::Deserialize(const json& from)
+	{
+		state.dx = from["state.dx"];
+		state.dy = from["state.dy"];
+		sentBytes = from["sentBytes"];
+	}
+	void DeviceSerialMouse::Deserialize(const json& from)
+	{
+		Device8250::Deserialize(from["uart"]);
+
+		size_t pollRate = from["pollRate"];
+		if (pollRate != m_pollRate)
+		{
+			throw emul::SerializableException("Device8250: Incompatible pollRate", SerializationError::COMPAT);
+		}
+
+		m_cooldown = from["cooldown"];
+		m_lastRTS = from["lastRTS"];
+
+		MouseState::left = from["mouseState.left"];
+		MouseState::right = from["mouseState.right"];
+
+		const json& queue = from["queue"];
+		for (int i = 0; i < queue.size(); ++i)
+		{
+			MouseDataPacket packet;
+			packet.Deserialize(queue[i]);
+			m_queue.push_back(packet);
 		}
 	}
 }

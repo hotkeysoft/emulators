@@ -15,8 +15,11 @@ namespace mouse
 
 		virtual void Tick() override;
 
-	protected:
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
 
+	protected:
 		const size_t m_pollRate;
 		size_t m_cooldown = m_pollRate;
 
@@ -37,15 +40,20 @@ namespace mouse
 		};
 		void SendMouseState(MouseState state);
 
-		class MouseDataPacket
+		class MouseDataPacket : emul::Serializable
 		{
 		public:
+			MouseDataPacket() {}
 			MouseDataPacket(MouseState state) : state(state) {}
 			bool IsLocked() const { return sentBytes != 0; }
 			bool HasNextByte() const { return sentBytes < 3; }
 
 			bool Merge(MouseState state);
 			BYTE GetNextByte();
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 
 		protected:
 			MouseState state;

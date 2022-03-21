@@ -8,6 +8,9 @@ using emul::SetHByte;
 using emul::SetLByte;
 using emul::GetBit;
 
+using emul::SerializableException;
+using emul::SerializationError;
+
 namespace uart
 {
 	Device8250::Device8250(WORD baseAddress, BYTE irq, size_t clockSpeedHz) : 
@@ -553,4 +556,176 @@ namespace uart
 			}
 		}
 	}
+
+	void Device8250::DataConfig::Serialize(json& to)
+	{
+		to["dataLength"] = dataLength;
+		to["parity"] = parity;
+		to["stopBits"] = stopBits;
+	}
+	void Device8250::InterruptEnableRegister::Serialize(json& to)
+	{
+		to["dataAvailableInterrupt"] = dataAvailableInterrupt;
+		to["txEmpty"] = txEmpty;
+		to["errorOrBreak"] = errorOrBreak;
+		to["statusChange"] = statusChange;
+	}
+	void Device8250::LineControlRegister::Serialize(json& to)
+	{
+		to["wordLengthSelect"] = wordLengthSelect;
+		to["stopBits"] = stopBits;
+		to["parityEnable"] = parityEnable;
+		to["parityEven"] = parityEven;
+		to["parityStick"] = parityStick;
+		to["setBreak"] = setBreak;
+		to["divisorLatchAccess"] = divisorLatchAccess;
+	}
+	void Device8250::ModemControlRegister::Serialize(json& to)
+	{
+		to["dtr"] = dtr;
+		to["rts"] = rts;
+		to["out1"] = out1;
+		to["out2"] = out2;
+		to["loopback"] = loopback;
+	}
+	void Device8250::LineStatusRegister::Serialize(json& to)
+	{
+		to["dataReady"] = dataReady;
+		to["overrunError"] = overrunError;
+		to["parityError"] = parityError;
+		to["framingError"] = framingError;
+		to["breakInterrupt"] = breakInterrupt;
+		to["txHoldingRegisterEmpty"] = txHoldingRegisterEmpty;
+		to["txShiftRegisterEmpty"] = txShiftRegisterEmpty;
+	}
+	void Device8250::ModemStatusRegister::Serialize(json& to)
+	{
+		to["cts"] = cts;
+		to["dsr"] = dsr;
+		to["ri"] = ri;
+		to["dcd"] = dcd;
+	}
+	void Device8250::INTR::Serialize(json& to)
+	{
+		to["rxLineStatus"] = rxLineStatus;
+		to["rxDataAvailable"] = rxDataAvailable;
+		to["txHoldingRegisterEmpty"] = txHoldingRegisterEmpty;
+		to["modemStatus"] = modemStatus;
+	}
+	void Device8250::Serialize(json& to)
+	{
+		to["clockSpeed"] = s_clockSpeed;
+
+		to["baseAddress"] = m_baseAddress;
+		to["irq"] = m_irq;
+
+		m_dataConfig.Serialize(to["dataConfig"]);
+		m_interruptEnable.Serialize(to["interruptEnable"]);
+		m_lineControl.Serialize(to["lineControl"]);
+		m_modemControl.Serialize(to["modemControl"]);
+		m_lineStatus.Serialize(to["lineStatus"]);
+		m_modemStatus.Serialize(to["modemStatus"]);
+		m_lastModemStatus.Serialize(to["lastModemStatus"]);
+		m_modemStatusDelta.Serialize(to["modemStatusDelta"]);
+		m_intr.Serialize(to["intr"]);
+
+		to["divisorLatch"] = m_divisorLatch;
+		to["rxBufferRegister"] = m_rxBufferRegister;
+		to["txHoldingRegister"] = m_txHoldingRegister;
+		to["transmitDelay"] = m_transmitDelay;
+		to["m_serialOut"] = m_serialOut;
+	}
+
+	void Device8250::DataConfig::Deserialize(const json& from)
+	{
+		dataLength = from["dataLength"];
+		parity = from["parity"];
+		stopBits = from["stopBits"];
+	}
+	void Device8250::InterruptEnableRegister::Deserialize(const json& from)
+	{
+		dataAvailableInterrupt = from["dataAvailableInterrupt"];
+		txEmpty = from["txEmpty"];
+		errorOrBreak = from["errorOrBreak"];
+		statusChange = from["statusChange"];
+	}
+	void Device8250::LineControlRegister::Deserialize(const json& from)
+	{
+		wordLengthSelect = from["wordLengthSelect"];
+		stopBits = from["stopBits"];
+		parityEnable = from["parityEnable"];
+		parityEven = from["parityEven"];
+		parityStick = from["parityStick"];
+		setBreak = from["setBreak"];
+		divisorLatchAccess = from["divisorLatchAccess"];
+	}
+	void Device8250::ModemControlRegister::Deserialize(const json& from)
+	{
+		dtr = from["dtr"];
+		rts = from["rts"];
+		out1 = from["out1"];
+		out2 = from["out2"];
+		loopback = from["loopback"];
+	}
+	void Device8250::LineStatusRegister::Deserialize(const json& from)
+	{
+		dataReady = from["dataReady"];
+		overrunError = from["overrunError"];
+		parityError = from["parityError"];
+		framingError = from["framingError"];
+		breakInterrupt = from["breakInterrupt"];
+		txHoldingRegisterEmpty = from["txHoldingRegisterEmpty"];
+		txShiftRegisterEmpty = from["txShiftRegisterEmpty"];
+	}
+	void Device8250::ModemStatusRegister::Deserialize(const json& from)
+	{
+		cts = from["cts"];
+		dsr = from["dsr"];
+		ri = from["ri"];
+		dcd = from["dcd"];
+	}
+	void Device8250::INTR::Deserialize(const json& from)
+	{
+		rxLineStatus = from["rxLineStatus"];
+		rxDataAvailable = from["rxDataAvailable"];
+		txHoldingRegisterEmpty = from["txHoldingRegisterEmpty"];
+		modemStatus = from["modemStatus"];
+	}
+	void Device8250::Deserialize(const json& from)
+	{
+		size_t clockSpeed = from["clockSpeed"];
+		if (clockSpeed != s_clockSpeed)
+		{
+			throw emul::SerializableException("Device8250: Incompatible clockSpeed", SerializationError::COMPAT);
+		}
+
+		WORD baseAddress = from["baseAddress"];
+		if (baseAddress != m_baseAddress)
+		{
+			throw emul::SerializableException("Device8250: Incompatible baseAddress", SerializationError::COMPAT);
+		}
+
+		BYTE irq = from["irq"];
+		if (irq != m_irq)
+		{
+			throw emul::SerializableException("Device8250: Incompatible IRQ", SerializationError::COMPAT);
+		}
+
+		m_dataConfig.Deserialize(from["dataConfig"]);
+		m_interruptEnable.Deserialize(from["interruptEnable"]);
+		m_lineControl.Deserialize(from["lineControl"]);
+		m_modemControl.Deserialize(from["modemControl"]);
+		m_lineStatus.Deserialize(from["lineStatus"]);
+		m_modemStatus.Deserialize(from["modemStatus"]);
+		m_lastModemStatus.Deserialize(from["lastModemStatus"]);
+		m_modemStatusDelta.Deserialize(from["modemStatusDelta"]);
+		m_intr.Deserialize(from["intr"]);
+
+		m_divisorLatch = from["divisorLatch"];
+		m_rxBufferRegister = from["rxBufferRegister"];
+		m_txHoldingRegister = from["txHoldingRegister"];
+		m_transmitDelay = from["transmitDelay"];
+		m_serialOut = from["m_serialOut"];
+	}
+
 }

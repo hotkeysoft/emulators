@@ -473,9 +473,15 @@ namespace emul
 		{
 			m_floppy->Serialize(to["floppy"]);
 		}
+
 		if (m_hardDrive)
 		{
 			m_hardDrive->Serialize(to["hardDrive"]);
+		}
+
+		if (m_mouse)
+		{
+			m_mouse->Serialize(to["mouse"]);
 		}
 	}
 
@@ -518,6 +524,21 @@ namespace emul
 		if (m_hardDrive)
 		{
 			m_hardDrive->Deserialize(from["hardDrive"]);
+		}
+
+		if (!from.contains("mouse") && m_mouse)
+		{
+			LogPrintf(LOG_WARNING, "Snapshot doesn't contain mouse data");
+		}
+
+		if (from.contains("mouse") && !m_mouse)
+		{
+			throw SerializableException("Computer: Mouse configuration is not compatible", SerializationError::COMPAT);
+		}
+
+		if (m_mouse && from.contains("mouse"))
+		{
+			m_mouse->Deserialize(from["mouse"]);
 		}
 	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../CPU/PortConnector.h"
+#include "../Serializable.h"
 
 using emul::PortConnector;
 using emul::WORD;
@@ -25,7 +26,7 @@ namespace uart
 		SPACE = 'S' // 0
 	};
 
-	class Device8250 : public PortConnector
+	class Device8250 : public PortConnector, public emul::Serializable
 	{
 	public:
 		Device8250(WORD baseAddress, BYTE irq, size_t clockSpeedHz);
@@ -64,6 +65,10 @@ namespace uart
 		BYTE GetDataLength() const { return m_dataConfig.dataLength; }
 		Parity GetParity() const { return m_dataConfig.parity; }
 		StopBits GetStopBits() const { return m_dataConfig.stopBits; }
+
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 		// Called when state of the pin changes, override in client
@@ -119,23 +124,31 @@ namespace uart
 		BYTE ReadModemStatus();
 		void WriteModemStatus(BYTE value);
 
-		struct DataConfig
+		struct DataConfig : public emul::Serializable
 		{
 			BYTE dataLength = 5;
 			Parity parity = Parity::NONE;
 			StopBits stopBits = StopBits::ONE;
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 		} m_dataConfig;
 		void UpdateDataConfig();
 
-		struct InterruptEnableRegister
+		struct InterruptEnableRegister : public emul::Serializable
 		{
 			bool dataAvailableInterrupt = false;
 			bool txEmpty = false;
 			bool errorOrBreak = false;
 			bool statusChange = false;
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 		} m_interruptEnable;
 
-		struct LineControlRegister
+		struct LineControlRegister : public emul::Serializable
 		{
 			BYTE wordLengthSelect = 0;       // Bit0+1 (0-3 -> 5-8)
 			bool stopBits = false;           // Bit2
@@ -145,18 +158,25 @@ namespace uart
 			bool setBreak = false;           // Bit6
 			bool divisorLatchAccess = false; // Bit7
 
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 		} m_lineControl;
 
-		struct ModemControlRegister
+		struct ModemControlRegister : public emul::Serializable
 		{
 			bool dtr = false;      // Bit 0
 			bool rts = false;      // Bit 1
 			bool out1 = false;     // Bit 2
 			bool out2 = false;     // Bit 3
 			bool loopback = false; // Bit 4
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 		} m_modemControl;
 
-		struct LineStatusRegister
+		struct LineStatusRegister : public emul::Serializable
 		{
 			bool dataReady = false;             // Bit 0
 			bool overrunError = false;          // Bit 1
@@ -165,22 +185,34 @@ namespace uart
 			bool breakInterrupt = false;        // Bit 4
 			bool txHoldingRegisterEmpty = true; // Bit 5
 			bool txShiftRegisterEmpty = true;   // Bit 6
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 		} m_lineStatus;
 
-		struct ModemStatusRegister
+		struct ModemStatusRegister : public emul::Serializable
 		{
 			bool cts = false; // Bit 4 (delta: Bit 0)
 			bool dsr = false; // Bit 5 (delta: Bit 1)
 			bool ri = false;  // Bit 6 (delta: Bit 2)
 			bool dcd = false; // Bit 7 (delta: Bit 3)
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 		} m_modemStatus, m_lastModemStatus, m_modemStatusDelta;
 
-		struct INTR
+		struct INTR : public emul::Serializable
 		{
 			bool rxLineStatus = false;
 			bool rxDataAvailable = false;
 			bool txHoldingRegisterEmpty = false;
 			bool modemStatus = false;
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 		} m_intr;
 
 		WORD m_divisorLatch = 0;
