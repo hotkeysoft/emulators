@@ -88,6 +88,8 @@ namespace events
 		mouse::DeviceSerialMouse* GetMouse() const { return m_mouse; }
 
 		void CaptureMouse(bool capture);
+		void ToggleMouseCapture() { CaptureMouse(!m_mouseCaptured); };
+		bool IsMouseCaptured() const { return m_mouseCaptured; }
 
 		void Tick();
 

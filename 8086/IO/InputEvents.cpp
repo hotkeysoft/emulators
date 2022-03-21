@@ -364,6 +364,7 @@ namespace events
 
 	void InputEvents::CaptureMouse(bool capture)
 	{
+		bool oldState = m_mouseCaptured;
 		if (!m_mouse)
 		{
 			m_mouseCaptured = false;
@@ -373,7 +374,10 @@ namespace events
 			m_mouseCaptured = capture;
 		}
 
-		LogPrintf(LOG_INFO, "Capture mouse %s", m_mouseCaptured ? "ON" : "OFF");
+		if (oldState != m_mouseCaptured)
+		{
+			LogPrintf(LOG_WARNING, "Capture mouse [%s]", m_mouseCaptured ? "ON" : "OFF");
+		}
 
 		SDL_SetRelativeMouseMode(m_mouseCaptured ? SDL_TRUE : SDL_FALSE);
 	}
@@ -452,6 +456,11 @@ namespace events
 	}
 	void InputEvents::InputKey(SDL_KeyboardEvent& evt)
 	{
+		if (evt.state == SDL_PRESSED && evt.keysym.scancode == SDL_SCANCODE_SCROLLLOCK)
+		{
+			ToggleMouseCapture();
+		}
+
 		LogPrintf(LOG_DEBUG, "InputKey: [%s] key: %d, repeat: %d", evt.state == SDL_PRESSED ? "DOWN" : "UP", evt.keysym.scancode, evt.repeat);
 		KeyMap::iterator it = m_keyMap->find(evt.keysym.scancode);
 		if (it != m_keyMap->end())
