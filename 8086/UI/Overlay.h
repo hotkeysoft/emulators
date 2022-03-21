@@ -97,6 +97,7 @@ namespace ui
 		HardDriveLED m_hardDriveLEDs[2];
 
 		bool m_turbo = false;
+		bool m_mouseCaptured = false;
 
 		// UI Elements
 		CoreUI::WindowPtr m_mainWnd;
@@ -110,6 +111,7 @@ namespace ui
 		CoreUI::ToolbarItemPtr m_turboButton;
 		CoreUI::ToolbarItemPtr m_loadSnapshotButton;
 		CoreUI::ToolbarItemPtr m_joystickButton;
+		CoreUI::ToolbarItemPtr m_mouseButton;
 
 		CoreUI::ImageRef m_floppyInactive = nullptr;
 		CoreUI::ImageRef m_floppyActive = nullptr;
@@ -119,6 +121,9 @@ namespace ui
 
 		CoreUI::ImageRef m_turboOff = nullptr;
 		CoreUI::ImageRef m_turboOn = nullptr;
+
+		CoreUI::ImageRef m_mouseCaptureOff = nullptr;
+		CoreUI::ImageRef m_mouseCaptureOn = nullptr;
 
 		CoreUI::LabelPtr m_trimX = nullptr;
 		CoreUI::LabelPtr m_trimY = nullptr;

@@ -16,6 +16,7 @@
 #include <Core/WindowManager.h>
 #include <Core/ResourceManager.h>
 #include <Core/Widget.h>
+#include <Core/Tooltip.h>
 #include <Widgets/Toolbar.h>
 #include <Widgets/ToolbarItem.h>
 #include <Widgets/Button.h>
@@ -132,6 +133,8 @@ namespace ui
 		m_hddActive = RES().FindImage("overlay16", 5);
 		m_turboOff = RES().FindImage("overlay16", 10);
 		m_turboOn = RES().FindImage("overlay16", 12);
+		m_mouseCaptureOff = RES().FindImage("overlay16", 16);
+		m_mouseCaptureOn = RES().FindImage("overlay16", 17);
 		return true;
 	}
 
@@ -243,11 +246,11 @@ namespace ui
 		}
 		UpdateSnapshot();
 
-		toolbar->AddSeparator();
-
 		// Toolbar section: Joystick
 		if (m_pc->GetInputs().GetJoystick())
 		{
+			toolbar->AddSeparator();
+
 			m_joystickButton = toolbar->AddToolbarItem("joystick", RES().FindImage("overlay16", 2));
 			m_joystickButton->SetTooltip("Joystick Configuration");
 		}
@@ -255,10 +258,24 @@ namespace ui
 		{
 			m_joystickButton = nullptr;
 		}
+
+		if (m_pc->GetInputs().GetMouse())
+		{
+			toolbar->AddSeparator();
+
+			m_mouseButton = toolbar->AddToolbarItem("mouse", m_mouseCaptureOff);
+			m_mouseButton->SetTooltip("Toggle Mouse Capture\nKeyboard: [Scroll Lock] key");
+		}
+		else
+		{
+			m_mouseButton = nullptr;
+		}
 	}
 
 	void Overlay::OnClick(WidgetRef widget)
 	{
+		CoreUI::TOOLTIP().Hide();
+
 		if (!m_pc)
 		{
 			return;
@@ -330,6 +347,13 @@ namespace ui
 		else if (id == "joystick")
 		{
 			JoystickConfig();
+		}
+		else if (id == "mouse")
+		{
+			if (m_pc)
+			{
+				m_pc->GetInputs().CaptureMouse(true);
+			}
 		}
 		else if (id == "trimX-")
 		{
@@ -533,6 +557,14 @@ namespace ui
 				m_hardDriveLEDs[i].Update(m_pc->GetHardDrive()->IsActive(i));
 				m_hddButton[i]->SetImage(m_hardDriveLEDs[i].GetStatus() ? m_hddActive : m_hddInactive);
 			}
+		}
+
+		bool captured = m_pc->GetInputs().IsMouseCaptured();
+		if (m_mouseCaptured != captured)
+		{
+			m_mouseButton->SetImage(captured ? m_mouseCaptureOn : m_mouseCaptureOff);
+			m_mouseButton->SetPushed(captured);
+			m_mouseCaptured = captured;
 		}
 
 		// TODO: The actual refresh interval is proportional
