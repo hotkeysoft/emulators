@@ -59,6 +59,7 @@ namespace sound
 
 		if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
 		{
+			LogPrintf(LOG_INFO, "SDL Init Subsystem [Audio]");
 			if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
 			{
 				LogPrintf(LOG_ERROR, "Error initializing sound audio subsystem: %s", SDL_GetError());

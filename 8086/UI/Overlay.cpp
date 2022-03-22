@@ -149,7 +149,11 @@ namespace ui
 
 		if (SDL_WasInit(SDL_INIT_TIMER) == 0)
 		{
-			SDL_InitSubSystem(SDL_INIT_TIMER);
+			LogPrintf(LOG_WARNING, "SDL Init Subsystem [Timers]");
+			if (SDL_InitSubSystem(SDL_INIT_TIMER) != 0)
+			{
+				LogPrintf(LOG_ERROR, "Error initializing timers subsystem: %s", SDL_GetError());
+			}
 		}
 		WINMGR().DeleteAllTimers();
 

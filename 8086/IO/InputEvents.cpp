@@ -277,9 +277,13 @@ namespace events
 
 	void InputEvents::Init()
 	{
-		if (SDL_WasInit(SDL_INIT_VIDEO) == 0) 
+		if (SDL_WasInit(SDL_INIT_EVENTS) == 0)
 		{
-			SDL_InitSubSystem(SDL_INIT_EVENTS);
+			LogPrintf(LOG_WARNING, "SDL Init Subsystem [Events]");
+			if (SDL_InitSubSystem(SDL_INIT_EVENTS) != 0)
+			{
+				LogPrintf(LOG_ERROR, "Error initializing events subsystem: %s", SDL_GetError());
+			}
 		}
 	}
 
@@ -310,7 +314,11 @@ namespace events
 		
 		if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) == 0)
 		{
-			SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+			LogPrintf(LOG_WARNING, "SDL Init Subsystem [Game Controller]");
+			if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) != 0)
+			{
+				LogPrintf(LOG_ERROR, "Error initializing game controller subsystem: %s", SDL_GetError());
+			}
 		}
 
 		int nbJoystick = SDL_NumJoysticks();
