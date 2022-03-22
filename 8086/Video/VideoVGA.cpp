@@ -38,7 +38,7 @@ namespace video
 		m_vgaROM("VGABIOS", 0x8000, emul::MemoryType::ROM),
 		m_vgaRAM()
 	{
-		Reset();
+		EnableLog(LOG_INFO);
 	}
 
 	void VideoVGA::Init(emul::Memory* memory, const char* charROM, bool forceMono)
@@ -149,19 +149,38 @@ namespace video
 
 	void VideoVGA::Reset()
 	{
+		Video::Reset();
+
+		m_framePelPanning = 0;
 		m_setup.enable = false;
 		m_setup.setupMode = false;
 		m_globalEnable = false;
+
+		m_misc.color = false;
+		m_misc.enableRAM = false;
+		m_misc.clockSel = MISCRegister::ClockSelect::CLK_25;
+		m_misc.pageHigh = false;
+		m_misc.hSyncPolarity = false;
+		m_misc.vSyncPolarity = false;
+
+		m_crtc.Reset();
+		m_crtc.SetBasePort(m_baseAddressMono);
+		m_sequencer.Reset();
+		m_graphController.Reset();
+		m_attrController.Reset();
+		m_dac.Reset();
+
 		DisconnectPorts();
+		SetMode("text");
 	}
 
 	void VideoVGA::EnableLog(SEVERITY minSev)
 	{
-		m_crtc.EnableLog(LOG_WARNING);
-		m_sequencer.EnableLog(LOG_WARNING);
-		m_graphController.EnableLog(LOG_WARNING);
+		m_crtc.EnableLog(minSev);
+		m_sequencer.EnableLog(minSev);
+		m_graphController.EnableLog(minSev);
 		m_attrController.EnableLog(minSev);
-		m_dac.EnableLog(LOG_WARNING);
+		m_dac.EnableLog(minSev);
 		Video::EnableLog(minSev);
 	}
 
@@ -400,6 +419,7 @@ namespace video
 			DisconnectRelocatablePorts(oldColor ? m_baseAddressColor : m_baseAddressMono);
 			ConnectRelocatablePorts(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 			m_crtc.SetBasePort(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
+			m_crtc.ConnectPorts();
 		}
 
 		m_vgaRAM.Enable(m_misc.enableRAM);
@@ -800,6 +820,7 @@ namespace video
 			DisconnectRelocatablePorts(oldColor ? m_baseAddressColor : m_baseAddressMono);
 			ConnectRelocatablePorts(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 			m_crtc.SetBasePort(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
+			m_crtc.ConnectPorts();
 		}
 		m_crtc.Deserialize(from["crtc"]);
 

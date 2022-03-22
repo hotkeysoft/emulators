@@ -13,8 +13,17 @@ namespace seq_vga
 	{
 	}
 
+	void SequencerData::Reset()
+	{
+		memset(this, 0, sizeof(SequencerData));
+		clockingMode.charWidth = 8;
+	}
+
 	void Sequencer::Reset()
 	{
+		m_data.Reset();
+		m_currAddress = SequencerAddress::SEQ_INVALID;
+		DisconnectPorts();
 	}
 
 	void Sequencer::Init()

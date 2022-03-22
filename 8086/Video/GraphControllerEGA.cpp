@@ -14,8 +14,16 @@ namespace graph_ega
 	{
 	}
 
+	void GraphControllerData::Reset()
+	{
+		memset(this, 0, sizeof(GraphControllerData));
+	}
+
 	void GraphController::Reset()
 	{
+		m_data.Reset();
+		m_currAddress = GraphControllerAddress::GRAPH_INVALID_REG;
+		MapMemory();
 	}
 
 	void GraphController::Init(emul::Memory* memory, emul::MemoryBlock* egaRAM)
@@ -144,6 +152,9 @@ namespace graph_ega
 
 	void GraphController::MapMemory()
 	{
+		if (!m_egaRAM)
+			return;
+
 		m_memory->Free(m_egaRAM);
 
 		switch (m_data.memoryMap)

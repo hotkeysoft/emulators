@@ -38,6 +38,8 @@ namespace attr_vga
 
 		// Color Select Register
 		BYTE colorSelect = 0;
+
+		void Reset();
 	};
 
 	class AttrController : public emul::PortConnector, public emul::Serializable

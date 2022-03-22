@@ -51,6 +51,8 @@ namespace graph_vga
 
 		// Bit Mask Register
 		BYTE bitMask = 0;
+
+		void Reset();
 	};
 
 	class GraphController : public emul::PortConnector, public emul::Serializable, public vid_events::EventSource

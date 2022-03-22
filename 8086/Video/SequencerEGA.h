@@ -26,6 +26,8 @@ namespace seq_ega
 			bool extMemory = false; // 1: allows access to >64k ram
 			bool oddEven = false; // 1: Odd/Even access, 0: sequential
 		} memoryMode;
+
+		void Reset();
 	};
 
 	class Sequencer : public emul::PortConnector, public emul::Serializable, public vid_events::EventSource

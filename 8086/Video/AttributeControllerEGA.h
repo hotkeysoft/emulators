@@ -33,6 +33,8 @@ namespace attr_ega
 
 		// Horizontal Pixel Panning register
 		BYTE hPelPanning = 0;
+
+		void Reset();
 	};
 
 	class AttrController : public emul::PortConnector, public emul::Serializable

@@ -39,6 +39,7 @@ namespace video
 		m_egaROM("EGABIOS", 16384, emul::MemoryType::ROM),
 		m_egaRAM(ramsize)
 	{
+		EnableLog(LOG_INFO);
 		assert(mode);
 
 		LogPrintf(LOG_INFO, "VideoEGA, RAM Size = [%dK]", (int)ramsize / 1024);
@@ -98,6 +99,28 @@ namespace video
 		{
 			LogPrintf(Logger::LOG_WARNING, "Synchronizing Pel Panning updates to frames");
 		}
+	}
+
+	void VideoEGA::Reset()
+	{
+		Video::Reset();
+
+		m_newPelPanning = 0;
+
+		m_misc.color = false;
+		m_misc.enableRAM = false;
+		m_misc.clockSel = MISCRegister::ClockSelect::CLK_14;
+		m_misc.disableVideo = false;
+		m_misc.pageHigh = false;
+		m_misc.hSyncPolarity = false;
+		m_misc.vSyncPolarity = false;
+
+		m_crtc.Reset();
+		m_crtc.SetBasePort(m_baseAddressMono);
+		m_sequencer.Reset();
+		m_graphController.Reset();
+		m_attrController.Reset();
+		SetMode("text");
 	}
 
 	void VideoEGA::EnableLog(SEVERITY minSev)
@@ -269,6 +292,7 @@ namespace video
 			DisconnectRelocatablePorts(oldColor ? m_baseAddressColor : m_baseAddressMono);
 			ConnectRelocatablePorts(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 			m_crtc.SetBasePort(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
+			m_crtc.ConnectPorts();
 		}
 
 		m_egaRAM.Enable(m_misc.enableRAM);
@@ -622,6 +646,7 @@ namespace video
 			DisconnectRelocatablePorts(oldColor ? m_baseAddressColor : m_baseAddressMono);
 			ConnectRelocatablePorts(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 			m_crtc.SetBasePort(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
+			m_crtc.ConnectPorts();
 		}
 		m_crtc.Deserialize(from["crtc"]);
 

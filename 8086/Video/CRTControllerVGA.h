@@ -17,8 +17,6 @@ struct SDL_Texture;
 
 namespace crtc_vga
 {
-
-	// CRT Controller
 	enum CRTRegister
 	{
 		CRT_H_TOTAL = 0x0, // WRITE
@@ -126,6 +124,8 @@ namespace crtc_vga
 		bool reset = false;
 
 		WORD lineCompare = 0;
+
+		void Reset();
 	};
 
 	struct CRTCData
@@ -160,6 +160,8 @@ namespace crtc_vga
 		WORD vBlankMax = 0;
 		WORD vSyncMin = 0;
 		WORD vSyncMax = 0;
+
+		void Reset();
 	};
 
 	class CRTController : public PortConnector, public emul::Serializable, public vid_events::EventSource

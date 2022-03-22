@@ -14,8 +14,17 @@ namespace graph_vga
 	{
 	}
 
+	void GraphControllerData::Reset()
+	{
+		memset(this, 0, sizeof(GraphControllerData));
+	}
+
 	void GraphController::Reset()
 	{
+		m_data.Reset();
+		m_currAddress = GraphControllerAddress::GRAPH_INVALID_REG;
+		DisconnectPorts();
+		MapMemory();
 	}
 
 	void GraphController::Init(emul::Memory* memory, emul::MemoryBlock* vgaRAM)
@@ -27,7 +36,6 @@ namespace graph_vga
 		m_vgaRAM = vgaRAM;
 
 		Reset();
-
 		MapMemory();
 	}
 
@@ -207,6 +215,9 @@ namespace graph_vga
 
 	void GraphController::MapMemory()
 	{
+		if (!m_vgaRAM)
+			return;
+
 		m_memory->Free(m_vgaRAM);
 
 		switch (m_data.memoryMap)

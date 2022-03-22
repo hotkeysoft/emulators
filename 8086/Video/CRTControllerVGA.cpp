@@ -21,10 +21,29 @@ namespace crtc_vga
 	{
 	}
 
+	void CRTCConfig::Reset()
+	{
+		memset(this, 0, sizeof(CRTCConfig));
+		currRegister = CRT_INVALID_REG;
+	}
+
+	void CRTCData::Reset()
+	{
+		memset(this, 0, sizeof(CRTCData));
+		charWidth = 8;
+	}
+
 	void CRTController::Reset()
 	{
-		m_data.hPos = 0;
-		m_data.vPos = 0;
+		m_interruptPending = false;
+		m_rawData.fill(0);
+		m_blink8 = false;
+		m_blink16 = false;
+		m_configChanged = false;
+
+		m_config.Reset();
+		m_data.Reset();
+		DisconnectPorts();
 	}
 
 	void CRTController::Init()
@@ -36,7 +55,6 @@ namespace crtc_vga
 	{
 		DisconnectPorts();
 		m_baseAddress = base;
-		ConnectPorts();
 	}
 
 	void CRTController::DisconnectPorts()

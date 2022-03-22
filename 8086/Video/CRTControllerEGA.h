@@ -119,14 +119,7 @@ namespace crtc_ega
 
 		bool vSyncInterruptEnable = false;
 
-		enum CURSOR
-		{
-			CURSOR_NOBLINK = 0,
-			CURSOR_NONE = 1,
-			CURSOR_BLINK16 = 2,
-			CURSOR_BLINK32 = 3
-		} cursor;
-
+		void Reset();
 	};
 
 	struct CRTCData
@@ -159,6 +152,8 @@ namespace crtc_ega
 		WORD vBlankMax = 0;
 		WORD vSyncMin = 0;
 		WORD vSyncMax = 0;
+
+		void Reset();
 	};
 
 	class CRTController : public PortConnector, public emul::Serializable, public vid_events::EventSource
@@ -176,6 +171,9 @@ namespace crtc_ega
 		virtual void Init();
 		virtual void Reset();
 		virtual void SetBasePort(WORD base);
+
+		void DisconnectPorts();
+		void ConnectPorts();
 
 		virtual void Tick();
 
@@ -235,9 +233,6 @@ namespace crtc_ega
 		WORD m_baseAddress;
 
 		bool m_interruptPending = false;
-
-		void DisconnectPorts();
-		void ConnectPorts();
 
 		CRTCConfig m_config;
 

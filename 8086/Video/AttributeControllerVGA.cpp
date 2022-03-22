@@ -12,8 +12,19 @@ namespace attr_vga
 	{
 	}
 
+	void AttrControllerData::Reset()
+	{
+		memset(this, 0, sizeof(AttrControllerData));
+		paletteSource = PaletteSource::CPU;
+		colorPlaneEnable = 0x0F;
+	}
+
 	void AttrController::Reset()
 	{
+		m_data.Reset();
+		m_currMode = RegisterMode::ADDRESS;
+		m_currRegister = AttrControllerAddress::ATTR_INVALID;
+		DisconnectPorts();
 	}
 
 	void AttrController::Init()
@@ -207,6 +218,4 @@ namespace attr_vga
 		m_data.hPelPanning = from["hPelPanning"];
 		m_data.colorSelect = from["colorSelect"];
 	}
-
-
 }

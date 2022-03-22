@@ -34,6 +34,8 @@ namespace seq_vga
 			bool oddEven = false; // 1: Odd/Even access, 0: sequential
 			bool chain4 = false;  // 1: A1A0 selects plane, 0: sequential
 		} memoryMode;
+
+		void Reset();
 	};
 
 	class Sequencer : public emul::PortConnector, public emul::Serializable, public vid_events::EventSource
