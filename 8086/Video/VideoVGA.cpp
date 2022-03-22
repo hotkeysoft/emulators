@@ -121,8 +121,9 @@ namespace video
 			// Status Register
 			Connect(m_baseAddress + 0x2, static_cast<PortConnector::INFunction>(&VideoVGA::ReadStatusRegister0));
 
-			ConnectRelocatablePorts(m_baseAddressMono);
+			ConnectRelocatablePorts(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 
+			m_crtc.SetBasePort(m_misc.color ? m_baseAddressColor : m_baseAddressMono);
 			m_crtc.ConnectPorts();
 			m_sequencer.ConnectPorts();
 			m_graphController.ConnectPorts();
