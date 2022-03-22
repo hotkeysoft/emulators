@@ -43,6 +43,7 @@ namespace rtc
 
 	void Device8167::UpdateCurrentTime()
 	{
+		LogPrintf(LOG_INFO, "Update Current Time");
 		time_t now = time(nullptr);
 		m_now = *localtime(&now);
 	}
@@ -60,53 +61,53 @@ namespace rtc
 
 	BYTE Device8167::ReadCounterMilliSeconds()
 	{
-		LogPrintf(LOG_WARNING, "ReadCounterMilliSeconds");
+		LogPrintf(LOG_DEBUG, "ReadCounterMilliSeconds");
 		return 0;
 	}
 	BYTE Device8167::ReadCounterDeciCentiSeconds()
 	{
-		LogPrintf(LOG_WARNING, "ReadCounterDeciCentiSeconds");
+		LogPrintf(LOG_DEBUG, "ReadCounterDeciCentiSeconds");
 		UpdateCurrentTime();
 		return 0;
 	}
 	BYTE Device8167::ReadCounterSeconds()
 	{
-		LogPrintf(LOG_WARNING, "ReadCounterSeconds");
+		LogPrintf(LOG_DEBUG, "ReadCounterSeconds");
 		return Dec2BCD(m_now.tm_sec);
 	}
 	BYTE Device8167::ReadCounterMinutes()
 	{
-		LogPrintf(LOG_WARNING, "ReadCounterMinutes");
+		LogPrintf(LOG_DEBUG, "ReadCounterMinutes");
 		return Dec2BCD(m_now.tm_min);
 	}
 	BYTE Device8167::ReadCounterHours()
 	{
-		LogPrintf(LOG_WARNING, "ReadCounterHours");
+		LogPrintf(LOG_DEBUG, "ReadCounterHours");
 		return Dec2BCD(m_now.tm_hour);
 	}
 	BYTE Device8167::ReadCounterDayOfWeek()
 	{
-		LogPrintf(LOG_WARNING, "ReadCounterDayOfWeek");
+		LogPrintf(LOG_DEBUG, "ReadCounterDayOfWeek");
 		return m_now.tm_wday + 1;
 	}
 	BYTE Device8167::ReadCounterDayOfMonth()
 	{
-		LogPrintf(LOG_WARNING, "ReadCounterDayOfMonth");
+		LogPrintf(LOG_DEBUG, "ReadCounterDayOfMonth");
 		return Dec2BCD(m_now.tm_mday);
 	}
 	BYTE Device8167::ReadCounterMonth()
 	{
-		LogPrintf(LOG_WARNING, "ReadCounterMonth");
+		LogPrintf(LOG_DEBUG, "ReadCounterMonth");
 		return Dec2BCD(m_now.tm_mon + 1);
 	}
 	BYTE Device8167::ReadRAM0()
 	{
-		LogPrintf(LOG_WARNING, "ReadRAM0");
+		LogPrintf(LOG_DEBUG, "ReadRAM0");
 		return 0;
 	}
 	BYTE Device8167::ReadRAM1()
 	{
-		LogPrintf(LOG_WARNING, "ReadRAM1");
+		LogPrintf(LOG_DEBUG, "ReadRAM1");
 
 		// Time machine users, please don't run ths before the year 2000.
 		// It's not 19xx compliant
