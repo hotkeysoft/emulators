@@ -8,6 +8,7 @@
 #include "Hardware/Device8255.h"
 #include "Hardware/Device8259.h"
 #include "Hardware/Device8237.h"
+#include "Hardware/Device8167.h"
 #include "Sound/DevicePCSpeaker.h"
 #include "IO/DeviceJoystick.h"
 #include "IO/DeviceSerialMouse.h"
@@ -102,6 +103,7 @@ namespace emul
 		virtual void InitHardDrive(hdd::DeviceHardDrive* hdd, BYTE irq = 0, BYTE dma = 0);
 		virtual void InitInputs(size_t clockSpeedHz);
 		virtual void InitMouse(size_t baseClock);
+		virtual void InitRTC();
 
 		void AddCPUSpeed(const CPUSpeed& speed);
 		int GetCPUSpeedRatio() const { return m_cpuSpeed.GetRatio(); }
@@ -134,6 +136,7 @@ namespace emul
 		fdc::DeviceFloppy* m_floppy = nullptr;
 		events::InputEvents* m_inputs = nullptr;
 		mouse::DeviceSerialMouse* m_mouse = nullptr;
+		rtc::Device8167* m_rtc = nullptr;
 
 		BYTE m_floppyIRQ = 0;
 		BYTE m_floppyDMA = 0;

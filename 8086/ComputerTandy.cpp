@@ -61,6 +61,7 @@ namespace emul
 		InitPPI(new ppi::Device8255Tandy(0x60));
 		InitDMA(new dma::Device8237(0x00, m_memory));
 		InitSound();
+		InitRTC();
 
 		m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.76489"));
 		m_soundModule.Init();

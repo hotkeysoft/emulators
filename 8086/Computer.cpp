@@ -39,6 +39,7 @@ namespace emul
 		delete m_ppi;
 		delete m_dma;
 		delete m_mouse;
+		delete m_rtc;
 	}
 
 	void Computer::AddCPUSpeed(const CPUSpeed& speed)
@@ -259,6 +260,23 @@ namespace emul
 			m_mouse = new mouse::DeviceSerialMouse(port, irq);
 			m_mouse->EnableLog(CONFIG().GetLogLevel("mouse"));
 			m_mouse->Init();
+		}
+	}
+
+	void Computer::InitRTC()
+	{
+		if (CONFIG().GetValueBool("rtc", "enable"))
+		{
+			const WORD defaultPort = 0x240;
+			WORD port = CONFIG().GetValueInt32("rtc", "port", 0x240);
+			if (port == 0)
+			{
+				port = defaultPort;
+			}
+
+			m_rtc = new rtc::Device8167(port);
+			m_rtc->EnableLog(CONFIG().GetLogLevel("rtc"));
+			m_rtc->Init();
 		}
 	}
 

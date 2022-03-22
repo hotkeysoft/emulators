@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Logger.cpp" />
+    <ClCompile Include="Hardware\Device8167.cpp" />
     <ClCompile Include="IO\DeviceSerialMouse.cpp" />
     <ClCompile Include="Sound\Sound.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -245,6 +246,7 @@
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
+    <ClInclude Include="Hardware\Device8167.h" />
     <ClInclude Include="IO\DeviceSerialMouse.h" />
     <ClInclude Include="Sound\Sound.h" />
     <ClInclude Include="stdafx.h" />

@@ -273,6 +273,9 @@
     <ClCompile Include="IO\DeviceSerialMouse.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
+    <ClCompile Include="Hardware\Device8167.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -493,6 +496,9 @@
     </ClInclude>
     <ClInclude Include="IO\DeviceSerialMouse.h">
       <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device8167.h">
+      <Filter>Header Files\Hardware</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
