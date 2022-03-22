@@ -326,7 +326,8 @@ namespace emul
 		// PUSH BX
 		case 0x53: TICK(11); PUSH(REG16::BX); break;
 		// PUSH SP
-		case 0x54: TICK(11); PUSH(REG16::SP); break;
+		// "Bug" on 8086/80186 where push sp pushes an already-decremented value
+		case 0x54: TICK(11); PUSH(m_reg[REG16::SP] - 2); break;
 		// PUSH BP
 		case 0x55: TICK(11); PUSH(REG16::BP); break;
 		// PUSH SI
@@ -494,9 +495,9 @@ namespace emul
 		case 0x9B: NotImplemented(opcode); break;
 
 		// PUSHF
-		case 0x9C: TICK(10); PUSH(REG16::FLAGS); break;
+		case 0x9C: TICK(10); PUSHF(); break;
 		// POPF
-		case 0x9D: TICK(8); POP(REG16::FLAGS); m_reg[REG16::FLAGS] |= FLAG_R1; m_reg[REG16::FLAGS] &= ~(FLAG_R3 | FLAG_R5 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15); break;  // TODO: Clean flags in function
+		case 0x9D: TICK(8); POPF(); break;
 		// SAHF
 		case 0x9E: TICK(4); SAHF(); break;
 		// LAHF
@@ -830,7 +831,7 @@ namespace emul
 
 	void CPU8086::ClearFlags()
 	{
-		m_reg[REG16::FLAGS] = FLAG_R1; //| FLAG_R12 | FLAG_R13;
+		m_reg[REG16::FLAGS] = FLAG_RESERVED_ON;
 	}
 
 	BYTE CPU8086::FetchByte()
@@ -1427,8 +1428,6 @@ namespace emul
 
 		op2 &= 0x38;
 
-		count &= 0b11111; // Technically done on 186 and above
-
 		if (count == 0)
 		{
 			return;
@@ -1510,7 +1509,6 @@ namespace emul
 
 		op2 &= 0x38;
 
-		count &= 0b11111; // Technically done on 186 and above
 		if (count == 0)
 		{
 			return;
@@ -2093,6 +2091,18 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "POP %04X", w);
 	}
 
+	void CPU8086::PUSHF()
+	{
+		PUSH(REG16::FLAGS);
+	}
+
+	void CPU8086::POPF()
+	{
+		POP(REG16::FLAGS); 
+		SetBitMask(m_reg[REG16::FLAGS], FLAG_RESERVED_OFF, false); 
+		SetBitMask(m_reg[REG16::FLAGS], FLAG_RESERVED_ON, true);
+	}
+
 	void CPU8086::LODS8()
 	{
 		LogPrintf(LOG_DEBUG, "LODS8, SI=%04X", m_reg[REG16::SI]);
@@ -2416,7 +2426,7 @@ namespace emul
 			LogPrintf(LOG_WARNING, "IRQ(%d)", interrupt - 8);
 		}
 #endif
-		PUSH(m_reg[REG16::FLAGS]);
+		PUSHF();
 		PUSH(m_reg[REG16::CS]);
 		PUSH(m_reg[inRep ? REG16::_REP_IP : REG16::IP]);
 		if (inRep)
@@ -2437,7 +2447,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "IRET");
 		POP(REG16::IP);
 		POP(REG16::CS);
-		POP(REG16::FLAGS);
+		POPF();
 	}
 
 	void CPU8086::MultiFunc(BYTE op2)

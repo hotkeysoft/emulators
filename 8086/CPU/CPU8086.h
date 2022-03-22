@@ -204,10 +204,13 @@ namespace emul
 			FLAG_R1 = 0x0002,  // Reserved, 1
 			FLAG_R3 = 0x0008,  // Reserved, 0
 			FLAG_R5 = 0x0020,  // Reserved, 0
-			FLAG_R12 = 0x1000, // Reserved, 0
-			FLAG_R13 = 0x2000, // Reserved, 0
-			FLAG_R14 = 0x4000, // Reserved, 0
-			FLAG_R15 = 0x8000, // Reserved, 0
+			FLAG_R12 = 0x1000, // Reserved, 1
+			FLAG_R13 = 0x2000, // Reserved, 1
+			FLAG_R14 = 0x4000, // Reserved, 1
+			FLAG_R15 = 0x8000, // Reserved, 1
+
+			FLAG_RESERVED_OFF = FLAG_R3 | FLAG_R5,
+			FLAG_RESERVED_ON = FLAG_R1 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15
 		};
 
 		void ClearFlags();
@@ -345,6 +348,8 @@ namespace emul
 		void PUSH(WORD w);
 		void PUSH(Mem16 w);
 		void POP(Mem16 w);
+		void PUSHF();
+		void POPF();
 
 		void LODS8();
 		void LODS16();
