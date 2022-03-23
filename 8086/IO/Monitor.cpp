@@ -364,11 +364,33 @@ namespace emul
 		CPUInfo::Opcode instr = g_CPUInfo.GetOpcode(data);
 		std::string text = instr.text;
 
-		if (instr.modRegRm != CPUInfo::Opcode::MODREGRM::NONE)
+		if (instr.modRegRm != CPUInfo::Opcode::MODREGRM::NONE ||
+			instr.multi != CPUInfo::Opcode::MULTI::NONE)
 		{
 			address.offset++;
 			BYTE modRegRm = m_memory->Read8(address.GetAddress());
 			decoded.AddRaw(modRegRm);
+
+			BYTE op2 = (modRegRm >> 3) & 7;
+			const std::string op2Str = g_CPUInfo.GetSubOpcode(instr, op2);
+
+			char grpLabel[16] = "";
+			if (instr.multi != CPUInfo::Opcode::MULTI::NONE)
+			{
+				sprintf(grpLabel, "{grp%d}", (int)instr.multi + 1);
+			}
+
+			switch (instr.multi)
+			{
+			case CPUInfo::Opcode::MULTI::GRP1:
+			case CPUInfo::Opcode::MULTI::GRP2:
+			case CPUInfo::Opcode::MULTI::GRP3:
+			case CPUInfo::Opcode::MULTI::GRP4:
+			case CPUInfo::Opcode::MULTI::GRP5:
+				replace(text, grpLabel, op2Str); break;
+			default:
+				break;
+			}
 
 			const char* regStr = nullptr;
 			BYTE reg = modRegRm >> 3;
