@@ -1,6 +1,10 @@
 #include "stdafx.h"
 
 #include "CPU8086.h"
+#include "CPUInfo.h"
+
+using cpuInfo::g_CPUInfo;
+using cpuInfo::Opcode;
 
 namespace emul
 {
@@ -56,14 +60,14 @@ namespace emul
 
 		if (m_state == CPUState::HALT)
 		{
-			TICK(1);
+			CPU::TICK(1);
 			ret = true;
 		}
 
 		if (m_irqPending != -1)
 		{
 			assert(!inSegOverride);
-			TICK(61);
+			CPU::TICK(61);
 			INT(m_irqPending);
 			m_irqPending = -1;
 			m_state = CPUState::RUN;
@@ -83,273 +87,275 @@ namespace emul
 		// Disable override after next instruction
 		bool clearSegOverride = inSegOverride;
 
+		m_currTiming = &g_CPUInfo.GetOpcodeTiming(opcode);
+
 		switch(opcode)
 		{
 		// ADD
 		// --------
 		// REG8/MEM8, REG8
-		case 0x00: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdd8); TICKRM(3, 16); break;
+		case 0x00: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdd8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x01: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdd16); TICKRM(3, 16); break;
+		case 0x01: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdd16); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x02: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdd8); TICKRM(3, 9); break;
+		case 0x02: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdd8); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x03: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdd16); TICKRM(3, 9); break;
+		case 0x03: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdd16); TICKRM(); break;
 
 		// ADD
 		// --------
 		// AL, IMMED8
-		case 0x04: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawAdd8); break;
+		case 0x04: ArithmeticImm8(REG8::AL, FetchByte(), rawAdd8); TICK(); break;
 		// AX, IMMED16
-		case 0x05: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawAdd16); break;
+		case 0x05: ArithmeticImm16(REG16::AX, FetchWord(), rawAdd16); TICK(); break;
 
 		// PUSH ES (1)
-		case 0x06: TICK(10); PUSH(REG16::ES); break;
+		case 0x06: PUSH(REG16::ES); TICK(); break;
 		// POP ES (1)
-		case 0x07: TICK(8); POP(REG16::ES); break;
+		case 0x07: POP(REG16::ES); TICK(); break;
 
 		// OR
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x08: Arithmetic8(GetModRegRM8(FetchByte(), false), rawOr8); TICKRM(3, 16); break;
+		case 0x08: Arithmetic8(GetModRegRM8(FetchByte(), false), rawOr8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x09: Arithmetic16(GetModRegRM16(FetchByte(), false), rawOr16); TICKRM(3, 16); break;
+		case 0x09: Arithmetic16(GetModRegRM16(FetchByte(), false), rawOr16); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x0A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawOr8); TICKRM(3, 9); break;
+		case 0x0A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawOr8); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x0B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawOr16); TICKRM(3, 9); break;
+		case 0x0B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawOr16); TICKRM(); break;
 
 		// OR
 		// ----------
 		// AL, IMMED8
-		case 0x0C: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawOr8); break;
+		case 0x0C: ArithmeticImm8(REG8::AL, FetchByte(), rawOr8); TICK(); break;
 		// AX, IMMED16
-		case 0x0D: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawOr16); break;
+		case 0x0D: ArithmeticImm16(REG16::AX, FetchWord(), rawOr16); TICK(); break;
 
 		// PUSH CS
-		case 0x0E: TICK(10); PUSH(REG16::CS); break;
+		case 0x0E: PUSH(REG16::CS); TICK(); break;
 		// POP CS // Undocumented, 8086 only
-		case 0x0F: TICK(8); POP(REG16::CS); break;
+		case 0x0F: POP(REG16::CS); TICK(); break;
 
 		// ADC
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x10: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdc8); TICKRM(3, 16); break;
+		case 0x10: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdc8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x11: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdc16); TICKRM(3, 16); break;
+		case 0x11: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdc16); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x12: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdc8); TICKRM(3, 9); break;
+		case 0x12: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdc8); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x13: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdc16); TICKRM(3, 9); break;
+		case 0x13: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdc16); TICKRM(); break;
 
 
 		// ADC
 		// ----------
 		// AL, IMMED8
-		case 0x14: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawAdc8); break;
+		case 0x14: ArithmeticImm8(REG8::AL, FetchByte(), rawAdc8); TICK(); break;
 		// AX, IMMED16
-		case 0x15: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawAdc16); break;
+		case 0x15: ArithmeticImm16(REG16::AX, FetchWord(), rawAdc16); TICK(); break;
 
 		// PUSH SS
-		case 0x16: TICK(10); PUSH(REG16::SS); break;
+		case 0x16: PUSH(REG16::SS); TICK(); break;
 		// POP SS
-		case 0x17: TICK(8); POP(REG16::SS); break;
+		case 0x17: POP(REG16::SS); TICK(); break;
 
 		// SBB
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x18: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSbb8); TICKRM(3, 16); break;
+		case 0x18: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSbb8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x19: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSbb16); TICKRM(3, 16); break;
+		case 0x19: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSbb16); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x1A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSbb8); TICKRM(3, 9); break;
+		case 0x1A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSbb8); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x1B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSbb16); TICKRM(3, 9); break;
+		case 0x1B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSbb16); TICKRM(); break;
 
 		// SBB
 		// ----------
 		// AL, IMMED8
-		case 0x1C: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawSbb8); break;
+		case 0x1C: ArithmeticImm8(REG8::AL, FetchByte(), rawSbb8); TICK(); break;
 		// AX, IMMED16
-		case 0x1D: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawSbb16); break;
+		case 0x1D: ArithmeticImm16(REG16::AX, FetchWord(), rawSbb16); TICK(); break;
 
 		// PUSH DS (1)
-		case 0x1E: TICK(10); PUSH(REG16::DS); break;
+		case 0x1E: PUSH(REG16::DS); TICK(); break;
 		// POP DS
-		case 0x1F: TICK(8); POP(REG16::DS); break;
+		case 0x1F: POP(REG16::DS); TICK(); break;
 
 		// AND
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x20: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAnd8); TICKRM(3, 16); break;
+		case 0x20: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAnd8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x21: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAnd16); TICKRM(3, 16); break;
+		case 0x21: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAnd16); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x22: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAnd8); TICKRM(3, 9); break;
+		case 0x22: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAnd8); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x23: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAnd16); TICKRM(3, 9); break;
+		case 0x23: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAnd16); TICKRM(); break;
 
 		// AND
 		// ----------
 		// AL, IMMED8
-		case 0x24: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawAnd8); break;
+		case 0x24: ArithmeticImm8(REG8::AL, FetchByte(), rawAnd8); TICK(); break;
 		// AX, IMMED16
-		case 0x25: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawAnd16); break;
+		case 0x25: ArithmeticImm16(REG16::AX, FetchWord(), rawAnd16); TICK(); break;
 
 		// ES Segment Override
-		case 0x26: TICK(2); SEGOVERRIDE(m_reg[REG16::ES]); break;
+		case 0x26: SEGOVERRIDE(m_reg[REG16::ES]); TICK(); break;
 
 		// DAA
-		case 0x27: TICK(4); DAA(); break;
+		case 0x27: DAA(); TICK(); break;
 
 		// SUB
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x28: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSub8); TICKRM(3, 16); break;
+		case 0x28: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSub8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x29: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSub16); TICKRM(3, 16); break;
+		case 0x29: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSub16); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x2A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSub8); TICKRM(3, 9); break;
+		case 0x2A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSub8); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x2B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSub16); TICKRM(3, 9); break;
+		case 0x2B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSub16); TICKRM(); break;
 
 		// SUB
 		// ----------
 		// AL, IMMED8
-		case 0x2C: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawSub8); break;
+		case 0x2C: ArithmeticImm8(REG8::AL, FetchByte(), rawSub8); TICK(); break;
 		// AX, IMMED16
-		case 0x2D: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawSub16); break;
+		case 0x2D: ArithmeticImm16(REG16::AX, FetchWord(), rawSub16); TICK(); break;
 
 		// CS Segment Override
-		case 0x2E: TICK(2); SEGOVERRIDE(m_reg[REG16::CS]); break;
+		case 0x2E: SEGOVERRIDE(m_reg[REG16::CS]); TICK(); break;
 
 		// DAS
-		case 0x2F: TICK(4); DAS(); break;
+		case 0x2F: DAS(); TICK(); break;
 
 		// XOR
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x30: Arithmetic8(GetModRegRM8(FetchByte(), false), rawXor8); TICKRM(3, 16); break;
+		case 0x30: Arithmetic8(GetModRegRM8(FetchByte(), false), rawXor8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x31: Arithmetic16(GetModRegRM16(FetchByte(), false), rawXor16); TICKRM(3, 16); break;
+		case 0x31: Arithmetic16(GetModRegRM16(FetchByte(), false), rawXor16); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x32: Arithmetic8(GetModRegRM8(FetchByte(), true), rawXor8); TICKRM(3, 9); break;
+		case 0x32: Arithmetic8(GetModRegRM8(FetchByte(), true), rawXor8); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x33: Arithmetic16(GetModRegRM16(FetchByte(), true), rawXor16); TICKRM(3, 9); break;
+		case 0x33: Arithmetic16(GetModRegRM16(FetchByte(), true), rawXor16); TICKRM(); break;
 
 		// XOR
 		// ----------
 		// AL, IMMED8
-		case 0x34: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawXor8); break;
+		case 0x34: ArithmeticImm8(REG8::AL, FetchByte(), rawXor8); TICK(); break;
 		// AX, IMMED16
-		case 0x35: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawXor16); break;
+		case 0x35: ArithmeticImm16(REG16::AX, FetchWord(), rawXor16); TICK(); break;
 
 		// SS Segment Override
-		case 0x36: TICK(2); SEGOVERRIDE(m_reg[REG16::SS]); break;
+		case 0x36: SEGOVERRIDE(m_reg[REG16::SS]); TICK(); break;
 
 		// AAA
-		case 0x37: TICK(4);  AAA(); break;
+		case 0x37: AAA(); TICK(); break;
 
 		// CMP
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x38: Arithmetic8(GetModRegRM8(FetchByte(), false), rawCmp8); TICKRM(3, 9); break;
+		case 0x38: Arithmetic8(GetModRegRM8(FetchByte(), false), rawCmp8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x39: Arithmetic16(GetModRegRM16(FetchByte(), false), rawCmp16); TICKRM(3, 9); break;
+		case 0x39: Arithmetic16(GetModRegRM16(FetchByte(), false), rawCmp16); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x3A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawCmp8); TICKRM(3, 9); break;
+		case 0x3A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawCmp8); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x3B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawCmp16); TICKRM(3, 9); break;
+		case 0x3B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawCmp16); TICKRM(); break;
 
 		// CMP
 		// ----------
 		// AL, IMMED8
-		case 0x3C: TICK(4); ArithmeticImm8(REG8::AL, FetchByte(), rawCmp8); break;
+		case 0x3C: ArithmeticImm8(REG8::AL, FetchByte(), rawCmp8); TICK(); break;
 		// AX, IMMED16
-		case 0x3D: TICK(4); ArithmeticImm16(REG16::AX, FetchWord(), rawCmp16); break;
+		case 0x3D: ArithmeticImm16(REG16::AX, FetchWord(), rawCmp16); TICK(); break;
 
 		// DS Segment Override
-		case 0x3E: TICK(2); SEGOVERRIDE(m_reg[REG16::DS]); break;
+		case 0x3E: SEGOVERRIDE(m_reg[REG16::DS]); TICK(); break;
 
 		// AAS
-		case 0x3F: TICK(4); AAS(); break;
+		case 0x3F: AAS(); TICK(); break;
 
 		// INC
 		// ----------
 		// INC AX
-		case 0x40: TICK(2); INC16(m_reg[REG16::AX]); break;
+		case 0x40: INC16(m_reg[REG16::AX]); TICK(); break;
 		// INC CX
-		case 0x41: TICK(2); INC16(m_reg[REG16::CX]); break;
+		case 0x41: INC16(m_reg[REG16::CX]); TICK(); break;
 		// INC DX
-		case 0x42: TICK(2); INC16(m_reg[REG16::DX]); break;
+		case 0x42: INC16(m_reg[REG16::DX]); TICK(); break;
 		// INC BX
-		case 0x43: TICK(2); INC16(m_reg[REG16::BX]); break;
+		case 0x43: INC16(m_reg[REG16::BX]); TICK(); break;
 		// INC SP
-		case 0x44: TICK(2); INC16(m_reg[REG16::SP]); break;
+		case 0x44: INC16(m_reg[REG16::SP]); TICK(); break;
 		// INC BP
-		case 0x45: TICK(2); INC16(m_reg[REG16::BP]); break;
+		case 0x45: INC16(m_reg[REG16::BP]); TICK(); break;
 		// INC SI
-		case 0x46: TICK(2); INC16(m_reg[REG16::SI]); break;
+		case 0x46: INC16(m_reg[REG16::SI]); TICK(); break;
 		// INC DI
-		case 0x47: TICK(2); INC16(m_reg[REG16::DI]); break;
+		case 0x47: INC16(m_reg[REG16::DI]); TICK(); break;
 
 		// DEC
 		// ----------
 		// DEC AX
-		case 0x48: TICK(2); DEC16(m_reg[REG16::AX]); break;
+		case 0x48: DEC16(m_reg[REG16::AX]); TICK(); break;
 		// DEC CX
-		case 0x49: TICK(2); DEC16(m_reg[REG16::CX]); break;
+		case 0x49: DEC16(m_reg[REG16::CX]); TICK(); break;
 		// DEC DX
-		case 0x4A: TICK(2); DEC16(m_reg[REG16::DX]); break;
+		case 0x4A: DEC16(m_reg[REG16::DX]); TICK(); break;
 		// DEC BX
-		case 0x4B: TICK(2); DEC16(m_reg[REG16::BX]); break;
+		case 0x4B: DEC16(m_reg[REG16::BX]); TICK(); break;
 		// DEC SP
-		case 0x4C: TICK(2); DEC16(m_reg[REG16::SP]); break;
+		case 0x4C: DEC16(m_reg[REG16::SP]); TICK(); break;
 		// DEC BP
-		case 0x4D: TICK(2); DEC16(m_reg[REG16::BP]); break;
+		case 0x4D: DEC16(m_reg[REG16::BP]); TICK(); break;
 		// DEC SI
-		case 0x4E: TICK(2); DEC16(m_reg[REG16::SI]); break;
+		case 0x4E: DEC16(m_reg[REG16::SI]); TICK(); break;
 		// DEC DI
-		case 0x4F: TICK(2); DEC16(m_reg[REG16::DI]); break;
+		case 0x4F: DEC16(m_reg[REG16::DI]); TICK(); break;
 
 		// PUSH
 		// ----------
 		// PUSH AX
-		case 0x50: TICK(11); PUSH(REG16::AX); break;
+		case 0x50: PUSH(REG16::AX); TICK(); break;
 		// PUSH CX
-		case 0x51: TICK(11); PUSH(REG16::CX); break;
+		case 0x51: PUSH(REG16::CX); TICK(); break;
 		// PUSH DX
-		case 0x52: TICK(11); PUSH(REG16::DX); break;
+		case 0x52: PUSH(REG16::DX); TICK(); break;
 		// PUSH BX
-		case 0x53: TICK(11); PUSH(REG16::BX); break;
+		case 0x53: PUSH(REG16::BX); TICK(); break;
 		// PUSH SP
 		// "Bug" on 8086/80186 where push sp pushes an already-decremented value
-		case 0x54: TICK(11); PUSH(m_reg[REG16::SP] - 2); break;
+		case 0x54: PUSH(m_reg[REG16::SP] - 2); TICK(); break;
 		// PUSH BP
-		case 0x55: TICK(11); PUSH(REG16::BP); break;
+		case 0x55: PUSH(REG16::BP); TICK(); break;
 		// PUSH SI
-		case 0x56: TICK(11); PUSH(REG16::SI); break;
+		case 0x56: PUSH(REG16::SI); TICK(); break;
 		// PUSH DI
-		case 0x57: TICK(11); PUSH(REG16::DI); break;
+		case 0x57: PUSH(REG16::DI); TICK(); break;
 
 		// POP
 		// ----------
 		// POP AX
-		case 0x58: TICK(8); POP(REG16::AX); break;
+		case 0x58: POP(REG16::AX); TICK(); break;
 		// POP CX
-		case 0x59: TICK(8); POP(REG16::CX); break;
+		case 0x59: POP(REG16::CX); TICK(); break;
 		// POP DX
-		case 0x5A: TICK(8); POP(REG16::DX); break;
+		case 0x5A: POP(REG16::DX); TICK(); break;
 		// POP BX
-		case 0x5B: TICK(8); POP(REG16::BX); break;
+		case 0x5B: POP(REG16::BX); TICK(); break;
 		// POP SP
-		case 0x5C: TICK(8); POP(REG16::SP); break;
+		case 0x5C: POP(REG16::SP); TICK(); break;
 		// POP BP
-		case 0x5D: TICK(8); POP(REG16::BP); break;
+		case 0x5D: POP(REG16::BP); TICK(); break;
 		// POP SI
-		case 0x5E: TICK(8); POP(REG16::SI); break;
+		case 0x5E: POP(REG16::SI); TICK(); break;
 		// POP DI
-		case 0x5F: TICK(8); POP(REG16::DI); break;
+		case 0x5F: POP(REG16::DI); TICK(); break;
 
 		// Undocumented: 0x60-0x6F maps to 0x70-0x7F on 8086 only
 		// JO
@@ -405,250 +411,250 @@ namespace emul
 		// ADD/OR/ADC/SBB/AND/SUB/XOR/CMP
 		// ----------
 		// REG8/MEM8, IMM8
-		case 0x80: ArithmeticImm8(FetchByte()); TICKRM(4, 17); break; // TODO: CMP is 10
+		case 0x80: ArithmeticImm8(FetchByte()); TICKRM(); break; // TODO: CMP is 10
 		// REG16/MEM16, IMM16
-		case 0x81: ArithmeticImm16(FetchByte(), false); TICKRM(4, 17); break; // imm data = word
+		case 0x81: ArithmeticImm16(FetchByte(), false); TICKRM(); break; // imm data = word
 
 		// ADD/--/ADC/SBB/---/SUB/---/CMP w/sign Extension
 		// ----------
 		// REG8/MEM8, IMM8 (same as 0x80)
-		case 0x82: ArithmeticImm8(FetchByte()); TICKRM(4, 17); break; // TODO: CMP is 10
+		case 0x82: ArithmeticImm8(FetchByte()); TICKRM(); break; // TODO: CMP is 10
 		// REG16/MEM16, IMM8 (sign-extend to 16)
-		case 0x83: ArithmeticImm16(FetchByte(), true); TICKRM(4, 17); break; // imm data = sign-extended byte
+		case 0x83: ArithmeticImm16(FetchByte(), true); TICKRM(); break; // imm data = sign-extended byte
 
 		// TEST
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x84: Arithmetic8(GetModRegRM8(FetchByte(), true), rawTest8); TICKRM(3, 9); break;
+		case 0x84: Arithmetic8(GetModRegRM8(FetchByte(), true), rawTest8); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x85: Arithmetic16(GetModRegRM16(FetchByte(), true), rawTest16); TICKRM(3, 9); break;
+		case 0x85: Arithmetic16(GetModRegRM16(FetchByte(), true), rawTest16); TICKRM(); break;
 
 		// XCHG
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x86: XCHG8(GetModRegRM8(FetchByte())); TICKRM(4, 17); break;
+		case 0x86: XCHG8(GetModRegRM8(FetchByte())); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x87: XCHG16(GetModRegRM16(FetchByte())); TICKRM(4, 17); break;
+		case 0x87: XCHG16(GetModRegRM16(FetchByte())); TICKRM(); break;
 
 		// MOV
 		// ----------
 		// REG8/MEM8, REG8
-		case 0x88: MOV8(GetModRegRM8(FetchByte(), false)); TICKRM(2, 9); break;
+		case 0x88: MOV8(GetModRegRM8(FetchByte(), false)); TICKRM(); break;
 		// REG16/MEM16, REG16
-		case 0x89: MOV16(GetModRegRM16(FetchByte(), false)); TICKRM(2, 9); break;
+		case 0x89: MOV16(GetModRegRM16(FetchByte(), false)); TICKRM(); break;
 		// REG8, REG8/MEM8
-		case 0x8A: MOV8(GetModRegRM8(FetchByte(), true)); TICKRM(2, 8); break;
+		case 0x8A: MOV8(GetModRegRM8(FetchByte(), true)); TICKRM(); break;
 		// REG16, REG16/MEM16
-		case 0x8B: MOV16(GetModRegRM16(FetchByte(), true)); TICKRM(2, 8); break;
+		case 0x8B: MOV16(GetModRegRM16(FetchByte(), true)); TICKRM(); break;
 
 		// MOV
 		// ----------
 		// MOV REG16/MEM16, SEGREG
-		case 0x8C: MOV16(GetModRegRM16(FetchByte(), false, true)); TICKRM(2, 9); break;
+		case 0x8C: MOV16(GetModRegRM16(FetchByte(), false, true)); TICKRM(); break;
 
 		// LEA
 		// ----------
 		// REG16, MEM16
-		case 0x8D: TICK(2); LEA(FetchByte()); break;
+		case 0x8D: LEA(FetchByte()); TICK(); break;
 
 		// MOV
 		// ----------
 		// MOV SEGREG, REG16/MEM16
-		case 0x8E: MOV16(GetModRegRM16(FetchByte(), true, true)); TICKRM(2, 8); break;
+		case 0x8E: MOV16(GetModRegRM16(FetchByte(), true, true)); TICKRM(); break;
 
 		// POP
 		// ----------
 		// POP REG16/MEM16
-		case 0x8F: POP(GetModRM16(FetchByte())); TICKRM(8, 17); break;
+		case 0x8F: POP(GetModRM16(FetchByte())); TICKRM(); break;
 
 		// XCHG
 		// ----------
 		// XCHG AX, AX (NOP)
-		case 0x90: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::AX]); break;
+		case 0x90: XCHG16(m_reg[REG16::AX], m_reg[REG16::AX]); TICK(); break;
 		// XCHG AX, CX
-		case 0x91: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::CX]); break;
+		case 0x91: XCHG16(m_reg[REG16::AX], m_reg[REG16::CX]); TICK(); break;
 		// XCHG AX, DX
-		case 0x92: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::DX]); break;
+		case 0x92: XCHG16(m_reg[REG16::AX], m_reg[REG16::DX]); TICK(); break;
 		// XCHG AX, BX
-		case 0x93: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::BX]); break;
+		case 0x93: XCHG16(m_reg[REG16::AX], m_reg[REG16::BX]); TICK(); break;
 		// XCHG AX, SP
-		case 0x94: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::SP]); break;
+		case 0x94: XCHG16(m_reg[REG16::AX], m_reg[REG16::SP]); TICK(); break;
 		// XCHG AX, BP
-		case 0x95: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::BP]); break;
+		case 0x95: XCHG16(m_reg[REG16::AX], m_reg[REG16::BP]); TICK(); break;
 		// XCHG AX, SI
-		case 0x96: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::SI]); break;
+		case 0x96: XCHG16(m_reg[REG16::AX], m_reg[REG16::SI]); TICK(); break;
 		// XCHG AX, DI
-		case 0x97: TICK(3); XCHG16(m_reg[REG16::AX], m_reg[REG16::DI]); break;
+		case 0x97: XCHG16(m_reg[REG16::AX], m_reg[REG16::DI]); TICK(); break;
 
 		// CBW
-		case 0x98: TICK(2); CBW(); break;
+		case 0x98: CBW(); TICK(); break;
 		// CWD
-		case 0x99: TICK(5); CWD(); break;
+		case 0x99: CWD(); TICK(); break;
 
 		// CALL Far
-		case 0x9A: TICK(28); CALLfar(); break;
+		case 0x9A: CALLfar(); TICK(); break;
 
 		// WAIT
-		case 0x9B: NotImplemented(opcode); break;
+		case 0x9B: NotImplemented(opcode); TICK(); break;
 
 		// PUSHF
-		case 0x9C: TICK(10); PUSHF(); break;
+		case 0x9C: PUSHF(); TICK(); break;
 		// POPF
-		case 0x9D: TICK(8); POPF(); break;
+		case 0x9D: POPF(); TICK(); break;
 		// SAHF
-		case 0x9E: TICK(4); SAHF(); break;
+		case 0x9E: SAHF(); TICK(); break;
 		// LAHF
-		case 0x9F: TICK(4); LAHF(); break;
+		case 0x9F: LAHF(); TICK(); break;
 
 		// MOV
 		// ----------
 		// MOV AL, MEM8
-		case 0xA0: TICK(10); MOV8(REG8::AL, m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); break;
+		case 0xA0: MOV8(REG8::AL, m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); TICK(); break;
 		// MOV AX, MEM16
-		case 0xA1: TICK(10); MOV16(REG16::AX, m_memory.Read16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); break;
+		case 0xA1: MOV16(REG16::AX, m_memory.Read16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); TICK(); break;
 
 		// MOV
 		// ----------
 		// MOV MEM8, AL
-		case 0xA2: TICK(10); MOV8(Mem8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG8::AL]); break;
+		case 0xA2: MOV8(Mem8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG8::AL]); TICK(); break;
 		// MOV MEM16, AX
-		case 0xA3: TICK(10); MOV16(Mem16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG16::AX]); break;
+		case 0xA3: MOV16(Mem16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG16::AX]); TICK(); break;
 
 		// MOVS
 		// ----------
 		// MOVS DEST-STR8, SRC-STR8
-		case 0xA4: TICK(17); MOVS8(); break;
+		case 0xA4: MOVS8(); TICK(); break;
 		// MOVS DEST-STR16, SRC-STR16
-		case 0xA5: TICK(17); MOVS16(); break;
+		case 0xA5: MOVS16(); TICK(); break;
 
 		// CMPS
 		// ----------
 		// CMPS DEST-STR8, SRC-STR8
-		case 0xA6: TICK(22); CMPS8(); break;
+		case 0xA6: CMPS8(); TICK(); break;
 		// CMPS DEST-STR16, SRC-STR16
-		case 0xA7: TICK(22); CMPS16(); break;
+		case 0xA7: CMPS16(); TICK(); break;
 
 		// TEST
 		// ----------
 		// TEST AL, IMM8
-		case 0xA8: TICK(5); ArithmeticImm8(REG8::AL, FetchByte(), rawTest8); break;
+		case 0xA8: ArithmeticImm8(REG8::AL, FetchByte(), rawTest8); TICK(); break;
 		// TEST AX, IMM16
-		case 0xA9: TICK(5); ArithmeticImm16(REG16::AX, FetchWord(), rawTest16); break;
+		case 0xA9: ArithmeticImm16(REG16::AX, FetchWord(), rawTest16); TICK(); break;
 
 		// STOS
 		// ----------
 		// STOS DEST-STR8
-		case 0xAA: TICK(10); STOS8(); break;
+		case 0xAA: STOS8(); TICK(); break;
 		// STOS DEST-STR16
-		case 0xAB: TICK(10); STOS16(); break;
+		case 0xAB: STOS16(); TICK(); break;
 
 		// LODS
 		// ----------
 		// LODS SRC-STR8
-		case 0xAC: TICK(12); LODS8(); break;
+		case 0xAC: LODS8(); TICK(); break;
 		// LODS SRC-STR16
-		case 0xAD: TICK(12); LODS16(); break;
+		case 0xAD: LODS16(); TICK(); break;
 
 		// SCAS
 		// ----------
 		// SCAS DEST-STR8
-		case 0xAE: TICK(15); SCAS8(); break;
+		case 0xAE: SCAS8(); TICK(); break;
 		// SCAS DEST-STR16
-		case 0xAF: TICK(15); SCAS16(); break;
+		case 0xAF: SCAS16(); TICK(); break;
 
 		// MOV
 		// ----------
 		// MOV AL, IMM8
-		case 0xB0: TICK(4); MOV8(REG8::AL, FetchByte()); break;
+		case 0xB0: MOV8(REG8::AL, FetchByte()); TICK(); break;
 		// MOV CL, IMM8
-		case 0xB1: TICK(4); MOV8(REG8::CL, FetchByte()); break;
+		case 0xB1: MOV8(REG8::CL, FetchByte()); TICK(); break;
 		// MOV DL, IMM8
-		case 0xB2: TICK(4); MOV8(REG8::DL, FetchByte()); break;
+		case 0xB2: MOV8(REG8::DL, FetchByte()); TICK(); break;
 		// MOV BL, IMM8
-		case 0xB3: TICK(4); MOV8(REG8::BL, FetchByte()); break;
+		case 0xB3: MOV8(REG8::BL, FetchByte()); TICK(); break;
 		// MOV AH, IMM8
-		case 0xB4: TICK(4); MOV8(REG8::AH, FetchByte()); break;
+		case 0xB4: MOV8(REG8::AH, FetchByte()); TICK(); break;
 		// MOV CH, IMM8
-		case 0xB5: TICK(4); MOV8(REG8::CH, FetchByte()); break;
+		case 0xB5: MOV8(REG8::CH, FetchByte()); TICK(); break;
 		// MOV DH, IMM8
-		case 0xB6: TICK(4); MOV8(REG8::DH, FetchByte()); break;
+		case 0xB6: MOV8(REG8::DH, FetchByte()); TICK(); break;
 		// MOV BH, IMM8
-		case 0xB7: TICK(4); MOV8(REG8::BH, FetchByte()); break;
+		case 0xB7: MOV8(REG8::BH, FetchByte()); TICK(); break;
 
 		// MOV AX, IMM16
-		case 0xB8: TICK(4); MOV16(REG16::AX, FetchWord()); break;
+		case 0xB8: MOV16(REG16::AX, FetchWord()); TICK(); break;
 		// MOV CX, IMM16
-		case 0xB9: TICK(4); MOV16(REG16::CX, FetchWord()); break;
+		case 0xB9: MOV16(REG16::CX, FetchWord()); TICK(); break;
 		// MOV DX, IMM16
-		case 0xBA: TICK(4); MOV16(REG16::DX, FetchWord()); break;
+		case 0xBA: MOV16(REG16::DX, FetchWord()); TICK(); break;
 		// MOV BX, IMM16
-		case 0xBB: TICK(4); MOV16(REG16::BX, FetchWord()); break;
+		case 0xBB: MOV16(REG16::BX, FetchWord()); TICK(); break;
 		// MOV SP, IMM16
-		case 0xBC: TICK(4); MOV16(REG16::SP, FetchWord()); break;
+		case 0xBC: MOV16(REG16::SP, FetchWord()); TICK(); break;
 		// MOV BP, IMM16
-		case 0xBD: TICK(4); MOV16(REG16::BP, FetchWord()); break;
+		case 0xBD: MOV16(REG16::BP, FetchWord()); TICK(); break;
 		// MOV SI, IMM16
-		case 0xBE: TICK(4); MOV16(REG16::SI, FetchWord()); break;
+		case 0xBE: MOV16(REG16::SI, FetchWord()); TICK(); break;
 		// MOV DI, IMM16
-		case 0xBF: TICK(4); MOV16(REG16::DI, FetchWord()); break;
+		case 0xBF: MOV16(REG16::DI, FetchWord()); TICK(); break;
 
 		// RET SP+IMM16
 		case 0xC0: // Undocumented, 8086 only
-		case 0xC2: TICK(12); RETNear(true, FetchWord()); break;
+		case 0xC2: RETNear(true, FetchWord()); TICK(); break;
 		// RET Near
 		case 0xC1: // Undocumented, 8086 only
-		case 0xC3: TICK(8); RETNear(); break;
+		case 0xC3: RETNear(); TICK(); break;
 
 		// LES REG16, MEM16
-		case 0xC4: TICK(16); LoadPTR(m_reg[REG16::ES], GetModRegRM16(FetchByte(), true)); break;
+		case 0xC4: LoadPTR(m_reg[REG16::ES], GetModRegRM16(FetchByte(), true)); TICK(); break;
 		// LDS REG16, MEM16
-		case 0xC5: TICK(16); LoadPTR(m_reg[REG16::DS], GetModRegRM16(FetchByte(), true)); break;
+		case 0xC5: LoadPTR(m_reg[REG16::DS], GetModRegRM16(FetchByte(), true)); TICK(); break;
 
 		// MOV
 		// ----------
 		// MOV MEM8, IMM8
-		case 0xC6: TICK(10); MOVIMM8(GetModRM8(FetchByte())); break;
+		case 0xC6: MOVIMM8(GetModRM8(FetchByte())); TICK(); break;
 		// MOV MEM16, IMM16
-		case 0xC7: TICK(10); MOVIMM16(GetModRM16(FetchByte())); break;
+		case 0xC7: MOVIMM16(GetModRM16(FetchByte())); TICK(); break;
 
 		// RET Far SP+IMM16
 		case 0xC8: //Undocumented, 8086 only
-		case 0xCA: TICK(18); RETFar(true, FetchWord()); break;
+		case 0xCA: RETFar(true, FetchWord()); TICK(); break;
 		// RET Far
 		case 0xC9: //Undocumented, 8086 only
-		case 0xCB: TICK(17); RETFar(); break;
+		case 0xCB: RETFar(); TICK(); break;
 
 		// INT3
-		case 0xCC: TICK(52); INT(3); break;
+		case 0xCC: INT(3); TICK(); break;
 		// INT IMM8
-		case 0xCD: TICK(51); INT(FetchByte()); break;
+		case 0xCD: INT(FetchByte()); TICK(); break;
 		// INTO
-		case 0xCE: TICK(4);  if (GetFlag(FLAG_O)) { TICK(49); INT(4); } break;
+		case 0xCE: TICK(); if (GetFlag(FLAG_O)) { INT(4); CPU::TICK(m_currTiming->t3); } break;
 		// IRET
-		case 0xCF: TICK(24); IRET(); break;
+		case 0xCF: IRET(); TICK(); break;
 
 		// ROL/ROR/RCL/RCR/SAL|SHL/SHR/---/SAR
 		// ----------
 		// REG8/MEM8, 1
-		case 0xD0: SHIFTROT8(FetchByte(), 1); TICKRM(5, 15); break;
+		case 0xD0: SHIFTROT8One(FetchByte()); TICKRM(); break;
 		// REG16/MEM16, 1
-		case 0xD1: SHIFTROT16(FetchByte(), 1); TICKRM(5, 15); break;
+		case 0xD1: SHIFTROT16One(FetchByte()); TICKRM(); break;
 		// REG8/MEM8, CL
-		case 0xD2: SHIFTROT8(FetchByte(), m_reg[REG8::CL]); TICKRM(4 * m_reg[REG8::CL] + 8, 4 * m_reg[REG8::CL] + 20); break;
+		case 0xD2: SHIFTROT8Multi(FetchByte()); TICKRM(); break;
 		// REG16/MEM16, CL
-		case 0xD3: SHIFTROT16(FetchByte(), m_reg[REG8::CL]); TICKRM(4 * m_reg[REG8::CL] + 8, 4 * m_reg[REG8::CL] + 20); break;
+		case 0xD3: SHIFTROT16Multi(FetchByte()); TICKRM(); break;
 
 		// AAM
-		case 0xD4: TICK(83); AAM(FetchByte()); break;
+		case 0xD4: AAM(FetchByte()); TICK(); break;
 		// AAD
-		case 0xD5: TICK(60); AAD(FetchByte()); break;
+		case 0xD5: AAD(FetchByte()); TICK(); break;
 
 		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
 		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
-		case 0xD6: TICK(3); SALC(); break;
+		case 0xD6: SALC(); TICK(); break;
 
 		// XLAT
-		case 0xD7: TICK(11); XLAT(); break;
+		case 0xD7: XLAT(); TICK(); break;
 
 		// ESC
 		case 0xD8: 
@@ -658,66 +664,66 @@ namespace emul
 		case 0xDC: 
 		case 0xDD: 
 		case 0xDE: 
-		case 0xDF: GetModRegRM16(FetchByte()); break;
+		case 0xDF: GetModRegRM16(FetchByte()); TICK(); break;
 
 		// LOOPNZ/LOOPNE
-		case 0xE0: TICK(1); LOOP(FetchByte(), GetFlag(FLAG_Z) == false); break;
+		case 0xE0: LOOP(FetchByte(), GetFlag(FLAG_Z) == false); break;
 		// LOOPZ/LOOPE
-		case 0xE1: TICK(1); LOOP(FetchByte(), GetFlag(FLAG_Z) == true); break;
+		case 0xE1: LOOP(FetchByte(), GetFlag(FLAG_Z) == true); break;
 		// LOOP
 		case 0xE2: LOOP(FetchByte()); break;
 		// JCXZ
-		case 0xE3: TICK(2); JMPif(m_reg[REG16::CX] == 0); break;
+		case 0xE3: JMPif(m_reg[REG16::CX] == 0); break;
 
 		// IN fixed
 		// --------
 		// IN AL, IMM8
-		case 0xE4: TICK(10); IN8(FetchByte()); break;
+		case 0xE4: IN8(FetchByte()); TICK(); break;
 		// IN AX, IMM16
-		case 0xE5: TICK(10); IN16(FetchByte()); break;
+		case 0xE5: IN16(FetchByte()); TICK(); break;
 
 		// OUT fixed
 		// --------
 		// OUT PORT8, AL
-		case 0xE6: TICK(10); OUT8(FetchByte()); break;
+		case 0xE6: OUT8(FetchByte()); TICK(); break;
 		// OUT PORT8, AX
-		case 0xE7: TICK(10); OUT16(FetchByte()); break;
+		case 0xE7: OUT16(FetchByte()); TICK(); break;
 
 		// CALL Near
-		case 0xE8: TICK(19); CALLNear(FetchWord()); break;
+		case 0xE8: CALLNear(FetchWord()); TICK(); break;
 		// JUMP Near
-		case 0xE9: TICK(15); JMPNear(FetchWord()); break;
+		case 0xE9: JMPNear(FetchWord()); TICK(); break;
 		// JUMP Far
-		case 0xEA: TICK(15); JMPfar(); break;
+		case 0xEA: JMPfar(); TICK(); break;
 		// JUMP Near Short
-		case 0xEB: TICK(15); JMPNear(FetchByte()); break;
+		case 0xEB: JMPNear(FetchByte()); TICK(); break;
 
 		// IN variable
 		// --------
 		// IN AL, DX
-		case 0xEC: TICK(8); IN8(m_reg[REG16::DX]); break;
+		case 0xEC: IN8(m_reg[REG16::DX]); TICK(); break;
 		// IN AX, DX
-		case 0xED: TICK(8); IN16(m_reg[REG16::DX]); break;
+		case 0xED: IN16(m_reg[REG16::DX]); TICK(); break;
 
 		// OUT variable
 		// --------
 		// OUT DX, AL
-		case 0xEE: TICK(8); OUT8(m_reg[REG16::DX]); break;
+		case 0xEE: OUT8(m_reg[REG16::DX]); TICK(); break;
 		// OUT DX, AX
-		case 0xEF: TICK(8); OUT16(m_reg[REG16::DX]); break;
+		case 0xEF: OUT16(m_reg[REG16::DX]); TICK(); break;
 
 		// LOCK
-		case 0xF0: TICK(2); NotImplemented(opcode); break;
+		case 0xF0: NotImplemented(opcode); TICK(); break;
 
 		// REPNZ/REPNE
-		case 0xF2: TICK(2); REP(false); break;
+		case 0xF2: REP(false); TICK(); break;
 		// REPZ/REPE
-		case 0xF3: TICK(2); REP(true); break;
+		case 0xF3: REP(true); TICK(); break;
 
 		// HLT
-		case 0xF4: HLT(); break;
+		case 0xF4: HLT(); TICK(); break;
 		// CMC
-		case 0xF5: TICK(2); CMC(); break;
+		case 0xF5: CMC(); TICK(); break;
 
 		// TEST/---/NOT/NEG/MUL/IMUL/DIV/IDIV
 		// --------
@@ -726,22 +732,22 @@ namespace emul
 		// REG16/MEM16 (, IMM16 {TEST})
 		case 0xF7: ArithmeticMulti16(FetchByte()); break;
 
-		case 0xF8: TICK(2); CLC(); break;
+		case 0xF8: CLC(); TICK(); break;
 		// STC (1)
-		case 0xF9: TICK(2); STC(); break;
+		case 0xF9: STC(); TICK(); break;
 		// CLI (1)
-		case 0xFA: TICK(2); CLI(); break;
+		case 0xFA: CLI(); TICK(); break;
 		// STI (1)
-		case 0xFB: TICK(2); STI(); break;
+		case 0xFB: STI(); TICK(); break;
 		// CLD (1)
-		case 0xFC: TICK(2); CLD(); break;
+		case 0xFC: CLD(); TICK(); break;
 		// STD (1)
-		case 0xFD: TICK(2); STD(); break;
+		case 0xFD: STD(); TICK(); break;
 
 		// INC/DEC/---/---/---/---/---/---
 		// --------
 		// REG8/MEM8
-		case 0xFE: TICK(3); INCDEC8(FetchByte()); break;
+		case 0xFE: INCDEC8(FetchByte()); TICK(); break;
 
 		// INC/DEC/CALL/CALL/JMP/JMP/PUSH/---
 		case 0xFF: MultiFunc(FetchByte()); break;
@@ -759,7 +765,7 @@ namespace emul
 		if (trap && GetFlag(FLAG_T))
 		{
 			LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
-			TICK(50);
+			CPU::TICK(50);
 			INT(1);
 		}
 	}
@@ -919,16 +925,16 @@ namespace emul
 	{
 		if (direct)
 		{
-			TICK(1);
+			CPU::TICK(1);
 			return SegmentOffset{ m_reg[REG16::DS], 0 };
 		}
 
 		switch (modregrm & 7)
 		{
-		case 0: TICK(1); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::SI]) };
-		case 1: TICK(2); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::DI]) };
-		case 2: TICK(2); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::SI]) };
-		case 3: TICK(1); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::DI]) };
+		case 0: CPU::TICK(1); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::SI]) };
+		case 1: CPU::TICK(2); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::DI]) };
+		case 2: CPU::TICK(2); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::SI]) };
+		case 3: CPU::TICK(1); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::DI]) };
 
 		case 4: return SegmentOffset{ m_reg[REG16::DS], m_reg[REG16::SI] };
 		case 5: return SegmentOffset{ m_reg[REG16::DS], m_reg[REG16::DI] };
@@ -1003,7 +1009,7 @@ namespace emul
 	{
 		WORD displacement = 0;
 		bool direct = false;
-		TICK(5);
+		CPU::TICK(5);
 		switch (modrm & 0xC0)
 		{
 		case 0xC0: // REG
@@ -1018,11 +1024,11 @@ namespace emul
 			break;
 		case 0x40:
 			displacement = Widen(FetchByte());
-			TICK(4);
+			CPU::TICK(4);
 			break;
 		case 0x80:
 			displacement = FetchWord();
-			TICK(4);
+			CPU::TICK(4);
 			break;
 		default:
 			throw std::exception("GetModRM8: not implemented");
@@ -1058,7 +1064,7 @@ namespace emul
 	{
 		WORD displacement = 0;
 		bool direct = false;
-		TICK(5);
+		CPU::TICK(5);
 		switch (modrm & 0xC0)
 		{
 		case 0xC0: // REG
@@ -1074,11 +1080,11 @@ namespace emul
 			break;
 		case 0x40:
 			displacement = Widen(FetchByte());
-			TICK(4);
+			CPU::TICK(4);
 			break;
 		case 0x80:
 			displacement = FetchWord();
-			TICK(4);
+			CPU::TICK(4);
 			break;
 		default:
 			throw std::exception("GetModRM16: not implemented");
@@ -1403,12 +1409,12 @@ namespace emul
 
 	void CPU8086::JMPif(bool cond)
 	{
-		TICK(4);
+		TICK();
 		LogPrintf(LOG_DEBUG, "JMPif %d", cond);
 		BYTE offset = FetchByte();
 		if (cond)
 		{
-			TICK(12);
+			CPU::TICK(m_currTiming->t3); // Penalty for jump
 			m_reg[REG16::IP] += Widen(offset);
 		}
 	}
@@ -1416,76 +1422,66 @@ namespace emul
 	// Rotate left: n = (n << d)|(n >> (BITS - d))
 	// Rotate right: n = (n >> d)|(n << (BITS - d))
 
-	void CPU8086::SHIFTROT8(BYTE op2, BYTE count)
+	void CPU8086::SHIFTROT8One(BYTE op2)
 	{
-		LogPrintf(LOG_DEBUG, "SHIFTROT8 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
+		LogPrintf(LOG_DEBUG, "SHIFTROT8One");
 
 		Mem8 dest = GetModRM8(op2);
 		BYTE work = dest.Read();
 
-		if (count == 0)
+		BYTE before = work;
+		BYTE sign;
+		bool carry;
+		switch (GetOP2(op2))
 		{
-			return;
+		case 0: // ROL
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
+			SetFlag(FLAG_C, GetMSB(work));
+			work = (work << 1) | (work >> 7);
+			break;
+		case 1: // ROR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
+			SetFlag(FLAG_C, GetLSB(work));
+			work = (work >> 1) | (work << 7);
+			break;
+		case 2: // RCL
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
+			carry = GetFlag(FLAG_C);
+			SetFlag(FLAG_C, GetMSB(work));
+			work <<= 1;
+			work |= (carry ? 1 : 0);
+			break;
+		case 3: // RCR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
+			carry = GetLSB(work);
+			work >>= 1;
+			work |= (GetFlag(FLAG_C) ? 128 : 0);
+			SetFlag(FLAG_C, carry);
+			break;
+		case 4: // SHL/SAL
+		case 6: // Undocumented 
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
+			SetFlag(FLAG_C, GetMSB(work));
+			work <<= 1;
+			break;
+		case 5: // SHR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
+			SetFlag(FLAG_C, GetLSB(work));
+			work >>= 1;
+			break;
+		case 7: // SAR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
+			SetFlag(FLAG_C, GetLSB(work));
+			sign = (work & 128);
+			work >>= 1;
+			work |= sign;
+			break;
+		default:
+			throw(std::exception("not possible"));
 		}
+		SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
 
-		// TODO: Ugly but approximates what i8086 does
-		LogPrintf(LOG_DEBUG, "SHIFTROT8 before=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(work), work);
-		for (BYTE i = 0; i < count; ++i)
-		{
-			BYTE before = work;
-			BYTE sign;
-			bool carry;
-			switch (GetOP2(op2))
-			{
-			case 0: // ROL
-				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
-				SetFlag(FLAG_C, GetMSB(work));
-				work = (work << 1) | (work >> 7);
-				break;
-			case 1: // ROR
-				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
-				SetFlag(FLAG_C, GetLSB(work));
-				work = (work >> 1) | (work << 7);
-				break;
-			case 2: // RCL
-				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
-				carry = GetFlag(FLAG_C);
-				SetFlag(FLAG_C, GetMSB(work));
-				work <<= 1;
-				work |= (carry ? 1 : 0);
-				break;
-			case 3: // RCR
-				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-				carry = GetLSB(work);
-				work >>= 1;
-				work |= (GetFlag(FLAG_C) ? 128 : 0);
-				SetFlag(FLAG_C, carry);
-				break;
-			case 4: // SHL/SAL
-			case 6: // Undocumented 
-				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
-				SetFlag(FLAG_C, GetMSB(work));
-				work <<= 1;
-				break;
-			case 5: // SHR
-				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
-				SetFlag(FLAG_C, GetLSB(work));
-				work >>= 1;
-				break;
-			case 7: // SAR
-				LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
-				SetFlag(FLAG_C, GetLSB(work));
-				sign = (work & 128);
-				work >>= 1;
-				work |= sign;
-				break;
-			default:
-				throw(std::exception("not possible"));
-			}
-			SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
-		}
 		dest.Write(work);
-		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(work), work);
 
 		if (GetOP2(op2) >= 4) // Only shift operation adjusts SZP flags
 		{
@@ -1495,76 +1491,79 @@ namespace emul
 		}
 	}
 
-	void CPU8086::SHIFTROT16(BYTE op2, BYTE count)
+	void CPU8086::SHIFTROT8Multi(BYTE op2)
 	{
-		LogPrintf(LOG_DEBUG, "SHIFTROT16 op2=" PRINTF_BIN_PATTERN_INT8 ", count=%d", PRINTF_BYTE_TO_BIN_INT8(op2), count);
+		LogPrintf(LOG_DEBUG, "SHIFTROT8Multi");
+
+		BYTE count = m_reg[REG8::CL];
+
+		for (BYTE i = 0; i < count; ++i)
+		{
+			SHIFTROT8One(op2);
+		}	
+		CPU::TICK(m_currTiming->t3 * count);
+	}
+
+	void CPU8086::SHIFTROT16One(BYTE op2)
+	{
+		LogPrintf(LOG_DEBUG, "SHIFTROT16One");
 
 		Mem16 dest = GetModRM16(op2);
 		WORD work = dest.Read();
 
-		if (count == 0)
+		WORD before = work;
+		WORD sign;
+		bool carry;
+		switch (GetOP2(op2))
 		{
-			return;
+		case 0: // ROL
+			LogPrintf(LOG_DEBUG, "SHIFTROT16 ROL");
+			SetFlag(FLAG_C, GetMSB(work));
+			work = (work << 1) | (work >> 15);
+			break;
+		case 1: // ROR
+			LogPrintf(LOG_DEBUG, "SHIFTROT16 ROR");
+			SetFlag(FLAG_C, GetLSB(work));
+			work = (work >> 1) | (work << 15);
+			break;
+		case 2: // RCL
+			LogPrintf(LOG_DEBUG, "SHIFTROT16 RCL");
+			carry = GetFlag(FLAG_C);
+			SetFlag(FLAG_C, GetMSB(work));
+			work <<= 1;
+			work |= (carry ? 1 : 0);
+			break;
+		case 3: // RCR
+			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
+			carry = GetLSB(work);
+			work >>= 1;
+			work |= (GetFlag(FLAG_C) ? 32768 : 0);
+			SetFlag(FLAG_C, carry);
+			break;
+		case 4: // SHL/SAL
+		case 6: // Undocumented 
+			LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
+			SetFlag(FLAG_C, GetMSB(work));
+			work <<= 1;
+			break;
+		case 5: // SHR
+			LogPrintf(LOG_DEBUG, "SHIFTROT16 SHR");
+			SetFlag(FLAG_C, GetLSB(work));
+			work >>= 1;
+			break;
+		case 7: // SAR
+			LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
+			SetFlag(FLAG_C, GetLSB(work));
+			sign = (work & 32768);
+			work >>= 1;
+			work |= sign;
+			break;
+		default:
+			throw(std::exception("not possible"));
 		}
+		SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
 
-		// TODO: Ugly but approximates what i8086 does
-		LogPrintf(LOG_DEBUG, "SHIFTROT16 before=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(work), work);
-		for (BYTE i = 0; i < count; ++i)
-		{
-			WORD before = work;
-			WORD sign;
-			bool carry;
-			switch (GetOP2(op2))
-			{
-			case 0: // ROL
-				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROL");
-				SetFlag(FLAG_C, GetMSB(work));
-				work = (work << 1) | (work >> 15);
-				break;
-			case 1: // ROR
-				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROR");
-				SetFlag(FLAG_C, GetLSB(work));
-				work = (work >> 1) | (work << 15);
-				break;
-			case 2: // RCL
-				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCL");
-				carry = GetFlag(FLAG_C);
-				SetFlag(FLAG_C, GetMSB(work));
-				work <<= 1;
-				work |= (carry ? 1 : 0);
-				break;
-			case 3: // RCR
-				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-				carry = GetLSB(work);
-				work >>= 1;
-				work |= (GetFlag(FLAG_C) ? 32768 : 0);
-				SetFlag(FLAG_C, carry);
-				break;
-			case 4: // SHL/SAL
-			case 6: // Undocumented 
-				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
-				SetFlag(FLAG_C, GetMSB(work));
-				work <<= 1;
-				break;
-			case 5: // SHR
-				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHR");
-				SetFlag(FLAG_C, GetLSB(work));
-				work >>= 1;
-				break;
-			case 7: // SAR
-				LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
-				SetFlag(FLAG_C, GetLSB(work));
-				sign = (work & 32768);
-				work >>= 1;
-				work |= sign;
-				break;
-			default:
-				throw(std::exception("not possible"));
-			}
-			SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
-		}
 		dest.Write(work);
-		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(work), work);
 
 		if (GetOP2(op2) >= 4) // Only shift operation adjusts flags
 		{
@@ -1572,6 +1571,18 @@ namespace emul
 			AdjustZero(work);
 			AdjustParity(work);
 		}
+	}
+
+	void CPU8086::SHIFTROT16Multi(BYTE op2)
+	{
+		LogPrintf(LOG_DEBUG, "SHIFTROT16Multi");
+
+		BYTE count = m_reg[REG8::CL];
+		for (BYTE i = 0; i < count; ++i)
+		{
+			SHIFTROT16One(op2);		
+		}
+		CPU::TICK(m_currTiming->t3 * count);
 	}
 
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
@@ -1703,12 +1714,12 @@ namespace emul
 
 	void CPU8086::LOOP(BYTE offset, bool cond)
 	{
-		TICK(5);
+		TICK();
 		--m_reg[REG16::CX];
 		LogPrintf(LOG_DEBUG, "LOOP, CX=%04X", m_reg[REG16::CX]);
 		if (m_reg[REG16::CX] && cond)
 		{
-			TICK(12);
+			CPU::TICK(m_currTiming->t3); // Penalty for loop
 			m_reg[REG16::IP] += Widen(offset);
 		}
 	}
@@ -1792,13 +1803,15 @@ namespace emul
 		Mem8 modrm = GetModRM8(op2);
 		BYTE val = modrm.Read();
 
+		const cpuInfo::OpcodeTiming& timing = g_CPUInfo.GetSubOpcodeTiming(Opcode::MULTI::GRP3, GetOP2(op2));
+		TICKRM();
+
 		switch (GetOP2(op2))
 		{
 		case 0: // TEST
 		case 1: // Undocumented
 		{
 			LogPrintf(LOG_DEBUG, "TEST8");
-			TICKRM(4, 17);
 			BYTE imm = FetchByte();
 			BYTE after = (BYTE)rawTest8(val, imm, false);
 			SetFlag(FLAG_O, false);
@@ -1811,13 +1824,11 @@ namespace emul
 		case 2: // NOT
 		{
 			LogPrintf(LOG_DEBUG, "NOT16");
-			TICKRM(3, 16);
 			modrm.Write(~val);
 			break;
 		}
 		case 3: // NEG
 		{
-			TICKRM(3, 16);
 			SourceDest8 sd;
 			m_reg[REG8::_T0] = 0;
 			sd.dest = REG8::_T0;
@@ -1829,7 +1840,6 @@ namespace emul
 		}
 		case 4: // MUL
 		{
-			TICKRM(72, 80); // Varies
 			WORD result = m_reg[REG8::AL] * val;
 			LogPrintf(LOG_DEBUG, "MUL8, %02X * %02X = %04X", m_reg[REG8::AL], val, result);
 			m_reg[REG16::AX] = result;
@@ -1842,7 +1852,6 @@ namespace emul
 		}
 		case 5: // IMUL
 		{
-			TICKRM(82, 90); // Varies
 			int16_t result = (int8_t)m_reg[REG8::AL] * (int8_t)(val);
 			LogPrintf(LOG_DEBUG, "IMUL8, %d * %d = %d", (int8_t)m_reg[REG8::AL], (int8_t)(val), result);
 			m_reg[REG16::AX] = (WORD)result;
@@ -1858,7 +1867,6 @@ namespace emul
 		case 6:
 		{
 			LogPrintf(LOG_DEBUG, "DIV8");
-			TICKRM(82, 90); // Varies
 			if (val == 0)
 			{
 				INT(0);
@@ -1880,7 +1888,6 @@ namespace emul
 		case 7:
 		{
 			LogPrintf(LOG_DEBUG, "IDIV8");
-			TICKRM(104, 110); // Varies
 			if (val == 0)
 			{
 				INT(0);
@@ -1910,13 +1917,16 @@ namespace emul
 		Mem16 modrm = GetModRM16(op2);
 		WORD val = modrm.Read();
 
+		const cpuInfo::OpcodeTiming& timing = g_CPUInfo.GetSubOpcodeTiming(Opcode::MULTI::GRP3, GetOP2(op2));
+		TICKRM();
+		CPU::TICK(timing.t3); // Add 16-bit operation overhead
+
 		switch (GetOP2(op2))
 		{
 		case 0: // TEST
 		case 1:
 		{
 			LogPrintf(LOG_DEBUG, "TEST16");
-			TICKRM(5, 11); // Varies
 			WORD imm = FetchWord();
 			WORD after = rawTest16(val, imm, false);
 			SetFlag(FLAG_O, false);
@@ -1929,13 +1939,11 @@ namespace emul
 		case 2: // NOT
 		{
 			LogPrintf(LOG_DEBUG, "NOT16");
-			TICKRM(3, 16);
 			modrm.Write(~val);
 			break;
 		}
 		case 3: // NEG
 		{
-			TICKRM(3, 16);
 			SourceDest16 sd;
 			m_reg[REG16::_T0] = 0;
 			sd.dest = REG16::_T0;
@@ -1947,7 +1955,6 @@ namespace emul
 		}
 		case 4: // MUL
 		{
-			TICKRM(120, 128); // Varies
 			DWORD result = m_reg[REG16::AX] * val;
 			LogPrintf(LOG_DEBUG, "MUL16, %04X * %04X = %08X", m_reg[REG16::AX], val, result);
 			m_reg[REG16::DX] = GetHWord(result);
@@ -1961,7 +1968,6 @@ namespace emul
 		}
 		case 5: // IMUL
 		{
-			TICKRM(132, 140); // Varies
 			int32_t result = (int16_t)m_reg[REG16::AX] * (int16_t)(val);
 			LogPrintf(LOG_DEBUG, "IMUL16, %d * %d = %d", (int16_t)m_reg[REG16::AX], (int16_t)(val), result);
 			m_reg[REG16::DX] = GetHWord(result);
@@ -1978,7 +1984,6 @@ namespace emul
 		case 6:
 		{
 			LogPrintf(LOG_DEBUG, "DIV16");
-			TICKRM(150, 158); // Varies
 			if (val == 0)
 			{
 				INT(0);
@@ -2000,7 +2005,6 @@ namespace emul
 		case 7:
 		{
 			LogPrintf(LOG_DEBUG, "IDIV16");
-			TICKRM(170, 178); // Varies
 			if (val == 0)
 			{
 				INT(0);
@@ -2316,7 +2320,7 @@ namespace emul
 		if (!checkZ || (GetFlag(FLAG_Z) == repZ))
 		{ 
 			m_reg[REG16::IP] = m_reg[REG16::_REP_IP];
-			TICK(9);
+			CPU::TICK(m_currTiming->t3); // Penalty for REP
 		}
 		else
 		{
@@ -2446,19 +2450,22 @@ namespace emul
 		Mem16 dest = GetModRM16(op2);
 		WORD val = dest.Read();
 
+		const cpuInfo::OpcodeTiming& timing = g_CPUInfo.GetSubOpcodeTiming(Opcode::MULTI::GRP5, GetOP2(op2));
+		TICK();
+
 		switch (GetOP2(op2))
 		{
 		// INC/DEC MEM16
-		case 0: TICK(15); INC16(val); dest.Write(val);  break;
-		case 1: TICK(15); DEC16(val); dest.Write(val); break;
+		case 0: INC16(val); dest.Write(val);  break;
+		case 1: DEC16(val); dest.Write(val); break;
 		// CALL RM16(intra) / CALL MEM16(intersegment)
-		case 2: TICK(21); CALLIntra(val); break;
-		case 3: TICK(37); CALLInter(dest); break;
+		case 2: CALLIntra(val); break;
+		case 3: CALLInter(dest); break;
 		// JMP RM16(intra) // JMP MEM16(intersegment)
-		case 4: TICK(18); JMPIntra(val); break;
-		case 5: TICK(24); JMPInter(dest); break;
+		case 4: JMPIntra(val); break;
+		case 5: JMPInter(dest); break;
 		// PUSH MEM16
-		case 6: TICK(16); PUSH(dest); break;
+		case 6: PUSH(dest); break;
 		// not used
 		case 7: LogPrintf(LOG_WARNING, "Multifunc(7): not used"); break;
 		default: throw std::exception("not possible");

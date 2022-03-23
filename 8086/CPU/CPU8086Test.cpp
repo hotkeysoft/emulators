@@ -269,10 +269,10 @@ namespace emul
 		}
 	}
 
-	#define SHIFTROTTEST8(CLR,F,N,R,O,S,Z,C) { m_reg[REG16::FLAGS]=(CLR?0:m_reg[REG16::FLAGS]); SHIFTROT8(F, N); assert(m_reg[REG8::AL] == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
-	#define SHIFTROTTEST8noO(CLR,F,N,R,S,Z,C) { m_reg[REG16::FLAGS]=(CLR?0:m_reg[REG16::FLAGS]); SHIFTROT8(F, N); assert(m_reg[REG8::AL] == R); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST8(CLR,F,N,R,O,S,Z,C) { m_reg[REG16::FLAGS]=(CLR?0:m_reg[REG16::FLAGS]); m_reg[REG8::CL]=N; SHIFTROT8Multi(F); assert(m_reg[REG8::AL] == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST8noO(CLR,F,N,R,S,Z,C) { m_reg[REG16::FLAGS]=(CLR?0:m_reg[REG16::FLAGS]); m_reg[REG8::CL]=N; SHIFTROT8Multi(F); assert(m_reg[REG8::AL] == R); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
-	#define SHIFTROTTEST16(CLR,F,N,R,O,S,Z,C) { m_reg[REG16::FLAGS]=(CLR?0:m_reg[REG16::FLAGS]); SHIFTROT16(F, N); assert(m_reg[REG16::AX] == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
+	#define SHIFTROTTEST16(CLR,F,N,R,O,S,Z,C) { m_reg[REG16::FLAGS]=(CLR?0:m_reg[REG16::FLAGS]); m_reg[REG8::CL]=N; SHIFTROT16Multi(F); assert(m_reg[REG16::AX] == R); assert(GetFlag(FLAG_O) == O); assert(GetFlag(FLAG_S) == S); assert(GetFlag(FLAG_Z) == Z); assert(GetFlag(FLAG_C) == C); }
 
 
 	void CPU8086Test::TestShiftRotate()

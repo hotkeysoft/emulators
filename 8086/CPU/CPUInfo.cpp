@@ -51,7 +51,8 @@ namespace cpuInfo
 	{
 		for (int i = 0; i < 256; ++i)
 		{
-			m_opcodes[i] = BuildOpcode(opcodes, i);
+			m_opcodes[i] = BuildOpcode(opcodes[i]);
+			m_timing[i] = BuildTiming(opcodes[i]);
 		}
 	}
 
@@ -60,13 +61,37 @@ namespace cpuInfo
 		for (int i = 0; i < 8; ++i)
 		{
 			m_subOpcodes[index][i] = opcodes[i]["name"];
+			m_subTiming[index][i] = BuildTiming(opcodes[i]);
 		}
 	}
 
-	Opcode CPUInfo::BuildOpcode(const json& opcodes, BYTE op)
+	OpcodeTiming CPUInfo::BuildTiming(const json& opcode)
+	{
+		OpcodeTiming timing;
+		if (!opcode.contains("timing"))
+		{
+			return timing;
+		}
+
+		const json& jsonTiming = opcode["timing"];
+		if (!jsonTiming.is_array() || jsonTiming.size() < 1 || jsonTiming.size() > 4)
+		{
+			throw std::exception("invalid timing array");
+		}
+
+		BYTE* timingArray = (BYTE*)&timing;
+		for (int i = 0; i < jsonTiming.size(); ++i)
+		{
+			timingArray[i] = jsonTiming[i];
+		}
+
+		return timing;
+	}
+
+	Opcode CPUInfo::BuildOpcode(const json& opcode)
 	{
 		Opcode ret;
-		const std::string text = opcodes[op]["name"];
+		const std::string text = opcode["name"];
 		ret.text = text;
 
 		ret.rm8 = text.find("{rm8}") != std::string::npos;

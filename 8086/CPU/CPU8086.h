@@ -2,6 +2,7 @@
 
 #include "../Serializable.h"
 #include "CPU.h"
+#include "CPUInfo.h"
 #include "PortConnector.h"
 #include <tuple>
 #include <assert.h>
@@ -222,8 +223,10 @@ namespace emul
 		static std::string GetModRMStr(BYTE modrm, bool wide, BYTE& disp);
 
 	protected:
-		inline void TICKRM(uint32_t r, uint32_t m) { m_opTicks += (m_regMem == REGMEM::REG) ? r : m; };
+		inline void TICKRM() { m_opTicks += (m_regMem == REGMEM::REG) ? m_currTiming->base : m_currTiming->mem; };
+		inline void TICK() { CPU::TICK(m_currTiming->base); }
 
+		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_lastOp = 0;
 		int m_irqPending = -1;
 
@@ -315,8 +318,11 @@ namespace emul
 
 		void JMPif(bool cond);
 
-		void SHIFTROT8(BYTE op2, BYTE count);
-		void SHIFTROT16(BYTE op2, BYTE count);
+		void SHIFTROT8One(BYTE op2);
+		void SHIFTROT16One(BYTE op2);
+
+		void SHIFTROT8Multi(BYTE op2);
+		void SHIFTROT16Multi(BYTE op2);
 
 		void Arithmetic8(SourceDest8 sd, RawOpFunc8 func);
 		void Arithmetic16(SourceDest16 sd, RawOpFunc16 func);
