@@ -2,6 +2,10 @@
 
 #include "Monitor.h"
 
+using cpuInfo::g_CPUInfo;
+using cpuInfo::Opcode;
+using cpuInfo::Coord;
+
 namespace emul
 {
 	static const char hexDigits[] = "0123456789ABCDEF";
@@ -108,7 +112,7 @@ namespace emul
 		UpdateRAMMode();
 	}
 
-	void Monitor::WriteValueHex(BYTE value, const CPUInfo::Coord& coord, WORD attr)
+	void Monitor::WriteValueHex(BYTE value, const Coord& coord, WORD attr)
 	{
 		static char hex[2];
 		hex[0] = hexDigits[value >> 4];
@@ -117,7 +121,7 @@ namespace emul
 		m_console.WriteAt(coord.x, coord.y, hex, 2, attr);
 	}
 
-	void Monitor::WriteValueHex(WORD value, const CPUInfo::Coord& coord, WORD attr)
+	void Monitor::WriteValueHex(WORD value, const Coord& coord, WORD attr)
 	{
 		static char hex[4];
 		hex[0] = hexDigits[(value >> 12) & 0x0F];
@@ -148,8 +152,8 @@ namespace emul
 	{
 		const WORD highlight = (3 << 4) | 14;
 		const WORD regular = (1 << 4) | 14;
-		static CPUInfo::Coord run = g_CPUInfo.GetCoord("status.RUN");
-		static CPUInfo::Coord stop = g_CPUInfo.GetCoord("status.STOP");
+		static Coord run = g_CPUInfo.GetCoord("status.RUN");
+		static Coord stop = g_CPUInfo.GetCoord("status.STOP");
 
 		m_console.WriteAttrAt(run.x, run.y, (m_runMode == RUNMode::RUN) ? highlight : regular, run.w);
 		m_console.WriteAttrAt(stop.x, stop.y, (m_runMode == RUNMode::STEP) ? highlight : regular, stop.w);
@@ -172,10 +176,10 @@ namespace emul
 	{
 		const WORD highlight = (3 << 4) | 14;
 		const WORD regular = (0 << 4) | 8;
-		static CPUInfo::Coord ramDSSI = g_CPUInfo.GetCoord("ram.DSSI");
-		static CPUInfo::Coord ramESDI = g_CPUInfo.GetCoord("ram.ESDI");
-		static CPUInfo::Coord ramSTACK = g_CPUInfo.GetCoord("ram.STACK");
-		static CPUInfo::Coord ramCustom = g_CPUInfo.GetCoord("ram.CUSTOM");
+		static Coord ramDSSI = g_CPUInfo.GetCoord("ram.DSSI");
+		static Coord ramESDI = g_CPUInfo.GetCoord("ram.ESDI");
+		static Coord ramSTACK = g_CPUInfo.GetCoord("ram.STACK");
+		static Coord ramCustom = g_CPUInfo.GetCoord("ram.CUSTOM");
 
 		m_console.WriteAttrAt(ramDSSI.x, ramDSSI.y, (m_ramMode == RAMMode::DSSI) ? highlight : regular, ramDSSI.w);
 		m_console.WriteAttrAt(ramESDI.x, ramESDI.y, (m_ramMode == RAMMode::ESDI) ? highlight : regular, ramESDI.w);
@@ -229,16 +233,16 @@ namespace emul
 			attr[11-i] = (m_cpu->m_reg[REG16::FLAGS] & (1 << i)) ? 15 : 8;
 		}
 
-		static CPUInfo::Coord coord = g_CPUInfo.GetCoord("FLAGS");
+		static Coord coord = g_CPUInfo.GetCoord("FLAGS");
 
 		m_console.WriteAttrAt(coord.x, coord.y, attr, 12);
 	}
 
 	void Monitor::UpdateRAM()
 	{
-		static CPUInfo::Coord addrPos = g_CPUInfo.GetCoord("ram.ADDR");
-		static CPUInfo::Coord hexPos = g_CPUInfo.GetCoord("ram.HEX");
-		static CPUInfo::Coord charPos = g_CPUInfo.GetCoord("ram.CHAR");
+		static Coord addrPos = g_CPUInfo.GetCoord("ram.ADDR");
+		static Coord hexPos = g_CPUInfo.GetCoord("ram.HEX");
+		static Coord charPos = g_CPUInfo.GetCoord("ram.CHAR");
 		static int bytesPerLine = charPos.w;
 		static int bytesTotal = charPos.w * charPos.h;
 
@@ -283,7 +287,7 @@ namespace emul
 		ADDRESS data = S2A(segment, adjustedOffset);
 		for (int y = 0; y < hexPos.h; ++y)
 		{
-			CPUInfo::Coord pos;
+			Coord pos;
 			pos.x = addrPos.x;
 			pos.y = addrPos.y + y;
 			WriteValueHex(segment, pos);
@@ -304,14 +308,14 @@ namespace emul
 
 	void Monitor::PrintInstruction(short y, Instruction& instr)
 	{
-		static CPUInfo::Coord segmentPos = g_CPUInfo.GetCoord("CODE.segment");
-		static CPUInfo::Coord offsetPos = g_CPUInfo.GetCoord("CODE.offset");
-		static CPUInfo::Coord rawPos = g_CPUInfo.GetCoord("CODE.raw");
-		static CPUInfo::Coord textPos = g_CPUInfo.GetCoord("CODE.text");
+		static Coord segmentPos = g_CPUInfo.GetCoord("CODE.segment");
+		static Coord offsetPos = g_CPUInfo.GetCoord("CODE.offset");
+		static Coord rawPos = g_CPUInfo.GetCoord("CODE.raw");
+		static Coord textPos = g_CPUInfo.GetCoord("CODE.text");
 		static short baseY = segmentPos.y;
 
 		// TODO: Horribly inefficient
-		CPUInfo::Coord pos;
+		Coord pos;
 		pos.y = baseY + y;
 
 		pos.x = segmentPos.x;
@@ -331,7 +335,7 @@ namespace emul
 
 	void Monitor::UpdateCode()
 	{
-		static CPUInfo::Coord codePos = g_CPUInfo.GetCoord("CODE");
+		static Coord codePos = g_CPUInfo.GetCoord("CODE");
 
 		SegmentOffset address{ m_cpu->m_reg[REG16::CS], m_cpu->m_reg[REG16::IP] };
 
@@ -361,11 +365,11 @@ namespace emul
 
 		decoded.AddRaw(data);
 
-		CPUInfo::Opcode instr = g_CPUInfo.GetOpcode(data);
+		Opcode instr = g_CPUInfo.GetOpcode(data);
 		std::string text = instr.text;
 
-		if (instr.modRegRm != CPUInfo::Opcode::MODREGRM::NONE ||
-			instr.multi != CPUInfo::Opcode::MULTI::NONE)
+		if (instr.modRegRm != Opcode::MODREGRM::NONE ||
+			instr.multi != Opcode::MULTI::NONE)
 		{
 			address.offset++;
 			BYTE modRegRm = m_memory->Read8(address.GetAddress());
@@ -375,18 +379,18 @@ namespace emul
 			const std::string op2Str = g_CPUInfo.GetSubOpcode(instr, op2);
 
 			char grpLabel[16] = "";
-			if (instr.multi != CPUInfo::Opcode::MULTI::NONE)
+			if (instr.multi != Opcode::MULTI::NONE)
 			{
 				sprintf(grpLabel, "{grp%d}", (int)instr.multi + 1);
 			}
 
 			switch (instr.multi)
 			{
-			case CPUInfo::Opcode::MULTI::GRP1:
-			case CPUInfo::Opcode::MULTI::GRP2:
-			case CPUInfo::Opcode::MULTI::GRP3:
-			case CPUInfo::Opcode::MULTI::GRP4:
-			case CPUInfo::Opcode::MULTI::GRP5:
+			case Opcode::MULTI::GRP1:
+			case Opcode::MULTI::GRP2:
+			case Opcode::MULTI::GRP3:
+			case Opcode::MULTI::GRP4:
+			case Opcode::MULTI::GRP5:
 				replace(text, grpLabel, op2Str); break;
 			default:
 				break;
@@ -396,13 +400,13 @@ namespace emul
 			BYTE reg = modRegRm >> 3;
 			switch (instr.modRegRm)
 			{
-			case CPUInfo::Opcode::MODREGRM::SR:
+			case Opcode::MODREGRM::SR:
 				if (instr.sr) replace(text, "{sr}", CPU8086::GetReg16Str(reg, true));
 				break;
-			case CPUInfo::Opcode::MODREGRM::W8:
+			case Opcode::MODREGRM::W8:
 				if (instr.r8) replace(text, "{r8}", CPU8086::GetReg8Str(reg));
 				break;
-			case CPUInfo::Opcode::MODREGRM::W16:
+			case Opcode::MODREGRM::W16:
 				if (instr.r16) replace(text, "{r16}", CPU8086::GetReg16Str(reg, false));
 				break;
 			}
@@ -443,7 +447,7 @@ namespace emul
 		char buf[32];
 		switch (instr.imm)
 		{
-		case CPUInfo::Opcode::IMM::W8:
+		case Opcode::IMM::W8:
 		{
 			++address.offset;
 			BYTE imm8 = m_memory->Read8(address.GetAddress());
@@ -453,7 +457,7 @@ namespace emul
 			replace(text, "{i8}", buf);
 			break;
 		}
-		case CPUInfo::Opcode::IMM::W16:
+		case Opcode::IMM::W16:
 		{
 			++address.offset;
 			WORD imm16 = m_memory->Read16(address.GetAddress());
@@ -464,7 +468,7 @@ namespace emul
 			replace(text, "{i16}", buf);
 			break;
 		}
-		case CPUInfo::Opcode::IMM::W32:
+		case Opcode::IMM::W32:
 		{
 			++address.offset;
 			WORD imm16Offset = m_memory->Read16(address.GetAddress());
@@ -504,6 +508,4 @@ namespace emul
 		this->raw[this->len++] = hexDigits[(w >> 12) & 0x0F];
 		this->raw[this->len++] = hexDigits[(w >> 8) & 0x0F];
 	}
-
-
 }

@@ -49,8 +49,8 @@ namespace emul
 		void ToggleRAMMode();
 		void UpdateRAMMode();
 
-		void WriteValueHex(BYTE value, const CPUInfo::Coord& coord, WORD attr = 15);
-		void WriteValueHex(WORD value, const CPUInfo::Coord& coord, WORD attr = 15);
+		void WriteValueHex(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
+		void WriteValueHex(WORD value, const cpuInfo::Coord& coord, WORD attr = 15);
 
 		void UpdateRegisters();
 		void UpdateFlags();

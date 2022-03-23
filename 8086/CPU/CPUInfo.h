@@ -5,37 +5,37 @@
 
 using json = nlohmann::json;
 
-namespace emul
+namespace cpuInfo
 {
+	struct Opcode
+	{
+		std::string text;
+
+		bool rm8 = false;
+		bool rm16 = false;
+		bool r8 = false;
+		bool r16 = false;
+		bool sr = false;
+		bool i8 = false;
+		bool i16 = false;
+		bool i32 = false;
+
+		enum class MODREGRM { NONE, W8, W16, SR } modRegRm = MODREGRM::NONE;
+		enum class IMM { NONE, W8, W16, W32 } imm = IMM::NONE;
+		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5 } multi = MULTI::NONE;
+	};
+
+	struct Coord
+	{
+		bool IsSet() const { return w != 0 && h != 0; }
+		short x; short y; short w; short h;
+	};
+
 	enum class CPUType { i8086 };
 
 	class CPUInfo
 	{
 	public:
-		struct Opcode
-		{
-			std::string text;
-
-			bool rm8 = false;
-			bool rm16 = false;
-			bool r8 = false;
-			bool r16 = false;
-			bool sr = false;
-			bool i8 = false;
-			bool i16 = false;
-			bool i32 = false;
-
-			enum class MODREGRM { NONE, W8, W16, SR } modRegRm = MODREGRM::NONE;
-			enum class IMM { NONE, W8, W16, W32 } imm = IMM::NONE;
-			enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5 } multi = MULTI::NONE;
-		};
-
-		struct Coord
-		{
-			bool IsSet() const { return w != 0 && h != 0; }
-			short x; short y; short w; short h;
-		};
-
 		CPUInfo();
 		CPUInfo(CPUType model, const char* name, const char* configFileName);
 

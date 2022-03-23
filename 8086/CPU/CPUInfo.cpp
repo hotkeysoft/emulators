@@ -2,7 +2,7 @@
 
 #include "CPUInfo.h"
 
-namespace emul
+namespace cpuInfo
 {
 	CPUInfo g_CPUInfo(CPUType::i8086, "8086", "8086.json");
 
@@ -59,14 +59,14 @@ namespace emul
 	{
 		for (int i = 0; i < 8; ++i)
 		{
-			m_subOpcodes[index][i] = opcodes[i].get<std::string>();
+			m_subOpcodes[index][i] = opcodes[i]["name"];
 		}
 	}
 
-	CPUInfo::Opcode CPUInfo::BuildOpcode(const json& opcodes, BYTE op)
+	Opcode CPUInfo::BuildOpcode(const json& opcodes, BYTE op)
 	{
 		Opcode ret;
-		const std::string text = opcodes[op].get<std::string>();
+		const std::string text = opcodes[op]["name"];
 		ret.text = text;
 
 		ret.rm8 = text.find("{rm8}") != std::string::npos;
@@ -136,7 +136,7 @@ namespace emul
 		}
 	}
 
-	CPUInfo::Coord CPUInfo::GetCoord(const char* label) const
+	Coord CPUInfo::GetCoord(const char* label) const
 	{
 		static json coords = m_config["monitor"]["coords"];
 
