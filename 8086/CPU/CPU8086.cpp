@@ -32,6 +32,7 @@ namespace emul
 	Memory* Mem16::m_memory = nullptr;
 	Registers* Mem16::m_registers = nullptr;
 
+	BYTE GetOP2(BYTE op2) { return (op2 >> 3) & 7; }
 
 	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
 		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
@@ -73,10 +74,6 @@ namespace emul
 
 	void CPU8086::Exec(BYTE opcode)
 	{
-		//if (m_reg[REG16::CS] == 0x0100 && m_reg[REG16::IP] == 0x6F8D)
-		//{
-		//	__debugbreak();
-		//}
 		m_lastOp = opcode;
 
 		bool trap = GetFlag(FLAG_T);
@@ -1287,12 +1284,12 @@ namespace emul
 
 		Mem8 dest = GetModRM8(op2);
 
-		switch (op2 & 0x38)
+		switch (GetOP2(op2))
 		{
 		case 0: // INC
 			INC8(dest);
 			break;
-		case 8: // DEC
+		case 1: // DEC
 			DEC8(dest);
 			break;
 		default:
@@ -1426,8 +1423,6 @@ namespace emul
 		Mem8 dest = GetModRM8(op2);
 		BYTE work = dest.Read();
 
-		op2 &= 0x38;
-
 		if (count == 0)
 		{
 			return;
@@ -1440,44 +1435,44 @@ namespace emul
 			BYTE before = work;
 			BYTE sign;
 			bool carry;
-			switch (op2 & 0x38)
+			switch (GetOP2(op2))
 			{
-			case 0x00: // ROL
+			case 0: // ROL
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
 				SetFlag(FLAG_C, GetMSB(work));
 				work = (work << 1) | (work >> 7);
 				break;
-			case 0x08: // ROR
+			case 1: // ROR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
 				SetFlag(FLAG_C, GetLSB(work));
 				work = (work >> 1) | (work << 7);
 				break;
-			case 0x10: // RCL
+			case 2: // RCL
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
 				carry = GetFlag(FLAG_C);
 				SetFlag(FLAG_C, GetMSB(work));
 				work <<= 1;
 				work |= (carry ? 1 : 0);
 				break;
-			case 0x18: // RCR
+			case 3: // RCR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
 				carry = GetLSB(work);
 				work >>= 1;
 				work |= (GetFlag(FLAG_C) ? 128 : 0);
 				SetFlag(FLAG_C, carry);
 				break;
-			case 0x20: // SHL/SAL
-			case 0x30: // Undocumented 
+			case 4: // SHL/SAL
+			case 6: // Undocumented 
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
 				SetFlag(FLAG_C, GetMSB(work));
 				work <<= 1;
 				break;
-			case 0x28: // SHR
+			case 5: // SHR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
 				SetFlag(FLAG_C, GetLSB(work));
 				work >>= 1;
 				break;
-			case 0x38: // SAR
+			case 7: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
 				SetFlag(FLAG_C, GetLSB(work));
 				sign = (work & 128);
@@ -1492,7 +1487,7 @@ namespace emul
 		dest.Write(work);
 		LogPrintf(LOG_DEBUG, "SHIFTROT8 after=" PRINTF_BIN_PATTERN_INT8 " (%02X)", PRINTF_BYTE_TO_BIN_INT8(work), work);
 
-		if (op2 >= 0x20) // Only shift operation adjusts SZP flags
+		if (GetOP2(op2) >= 4) // Only shift operation adjusts SZP flags
 		{
 			AdjustSign(work);
 			AdjustZero(work);
@@ -1507,8 +1502,6 @@ namespace emul
 		Mem16 dest = GetModRM16(op2);
 		WORD work = dest.Read();
 
-		op2 &= 0x38;
-
 		if (count == 0)
 		{
 			return;
@@ -1521,44 +1514,44 @@ namespace emul
 			WORD before = work;
 			WORD sign;
 			bool carry;
-			switch (op2)
+			switch (GetOP2(op2))
 			{
-			case 0x00: // ROL
+			case 0: // ROL
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROL");
 				SetFlag(FLAG_C, GetMSB(work));
 				work = (work << 1) | (work >> 15);
 				break;
-			case 0x08: // ROR
+			case 1: // ROR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROR");
 				SetFlag(FLAG_C, GetLSB(work));
 				work = (work >> 1) | (work << 15);
 				break;
-			case 0x10: // RCL
+			case 2: // RCL
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCL");
 				carry = GetFlag(FLAG_C);
 				SetFlag(FLAG_C, GetMSB(work));
 				work <<= 1;
 				work |= (carry ? 1 : 0);
 				break;
-			case 0x18: // RCR
+			case 3: // RCR
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
 				carry = GetLSB(work);
 				work >>= 1;
 				work |= (GetFlag(FLAG_C) ? 32768 : 0);
 				SetFlag(FLAG_C, carry);
 				break;
-			case 0x20: // SHL/SAL
-			case 0x30: // Undocumented 
+			case 4: // SHL/SAL
+			case 6: // Undocumented 
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
 				SetFlag(FLAG_C, GetMSB(work));
 				work <<= 1;
 				break;
-			case 0x28: // SHR
+			case 5: // SHR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHR");
 				SetFlag(FLAG_C, GetLSB(work));
 				work >>= 1;
 				break;
-			case 0x38: // SAR
+			case 7: // SAR
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
 				SetFlag(FLAG_C, GetLSB(work));
 				sign = (work & 32768);
@@ -1573,7 +1566,7 @@ namespace emul
 		dest.Write(work);
 		LogPrintf(LOG_DEBUG, "SHIFTROT16 after=" PRINTF_BIN_PATTERN_INT16 " (%04X)", PRINTF_BYTE_TO_BIN_INT16(work), work);
 
-		if (op2 >= 0x20) // Only shift operation adjusts flags
+		if (GetOP2(op2) >= 4) // Only shift operation adjusts flags
 		{
 			AdjustSign(work);
 			AdjustZero(work);
@@ -1743,18 +1736,17 @@ namespace emul
 
 		RawOpFunc8 func;
 
-		switch (op2 & 0x38)
+		switch (GetOP2(op2))
 		{
-		case 0x00: func = rawAdd8; LogPrintf(LOG_DEBUG, "add"); break;
-		case 0x08: func = rawOr8;  LogPrintf(LOG_DEBUG, "or");  break;
-		case 0x10: func = rawAdc8; LogPrintf(LOG_DEBUG, "adc"); break;
-		case 0x18: func = rawSbb8; LogPrintf(LOG_DEBUG, "sbb"); break;
-		case 0x20: func = rawAnd8; LogPrintf(LOG_DEBUG, "and"); break;
-		case 0x28: func = rawSub8; LogPrintf(LOG_DEBUG, "sub"); break;
-		case 0x30: func = rawXor8; LogPrintf(LOG_DEBUG, "xor"); break;
-		case 0x38: func = rawCmp8; LogPrintf(LOG_DEBUG, "cmp"); break;
-		default:
-			throw(std::exception("not possible"));
+		case 0: func = rawAdd8; break;
+		case 1: func = rawOr8;  break;
+		case 2: func = rawAdc8; break;
+		case 3: func = rawSbb8; break;
+		case 4: func = rawAnd8; break;
+		case 5: func = rawSub8; break;
+		case 6: func = rawXor8; break;
+		case 7: func = rawCmp8; break;
+		default: throw std::exception("not possible");
 		}
 
 		SourceDest8 sd;
@@ -1771,18 +1763,17 @@ namespace emul
 
 		RawOpFunc16 func;
 
-		switch (op2 & 0x38)
+		switch (GetOP2(op2))
 		{
-		case 0x00: func = rawAdd16; LogPrintf(LOG_DEBUG, "add"); break;
-		case 0x08: func = rawOr16;  LogPrintf(LOG_DEBUG, "or");  break;
-		case 0x10: func = rawAdc16; LogPrintf(LOG_DEBUG, "adc"); break;
-		case 0x18: func = rawSbb16; LogPrintf(LOG_DEBUG, "sbb"); break;
-		case 0x20: func = rawAnd16; LogPrintf(LOG_DEBUG, "and"); break;
-		case 0x28: func = rawSub16; LogPrintf(LOG_DEBUG, "sub"); break;
-		case 0x30: func = rawXor16; LogPrintf(LOG_DEBUG, "xor"); break;
-		case 0x38: func = rawCmp16; LogPrintf(LOG_DEBUG, "cmp"); break;
-		default:
-			throw(std::exception("not possible"));
+		case 0: func = rawAdd16; break;
+		case 1: func = rawOr16;  break;
+		case 2: func = rawAdc16; break;
+		case 3: func = rawSbb16; break;
+		case 4: func = rawAnd16; break;
+		case 5: func = rawSub16; break;
+		case 6: func = rawXor16; break;
+		case 7: func = rawCmp16; break;
+		default: throw std::exception("not possible");
 		}
 
 		SourceDest16 sd;
@@ -1801,10 +1792,10 @@ namespace emul
 		Mem8 modrm = GetModRM8(op2);
 		BYTE val = modrm.Read();
 
-		switch (op2 & 0x38)
+		switch (GetOP2(op2))
 		{
-		case 0x00: // TEST
-		case 0x08: // Undocumented
+		case 0: // TEST
+		case 1: // Undocumented
 		{
 			LogPrintf(LOG_DEBUG, "TEST8");
 			TICKRM(4, 17);
@@ -1817,14 +1808,14 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
-		case 0x10: // NOT
+		case 2: // NOT
 		{
 			LogPrintf(LOG_DEBUG, "NOT16");
 			TICKRM(3, 16);
 			modrm.Write(~val);
 			break;
 		}
-		case 0x18: // NEG
+		case 3: // NEG
 		{
 			TICKRM(3, 16);
 			SourceDest8 sd;
@@ -1836,7 +1827,7 @@ namespace emul
 			modrm.Write(m_reg[REG8::_T0]);
 			break;
 		}
-		case 0x20: // MUL
+		case 4: // MUL
 		{
 			TICKRM(72, 80); // Varies
 			WORD result = m_reg[REG8::AL] * val;
@@ -1849,7 +1840,7 @@ namespace emul
 			AdjustParity(m_reg[REG8::AL]);
 			break;
 		}
-		case 0x28: // IMUL
+		case 5: // IMUL
 		{
 			TICKRM(82, 90); // Varies
 			int16_t result = (int8_t)m_reg[REG8::AL] * (int8_t)(val);
@@ -1864,7 +1855,7 @@ namespace emul
 			AdjustParity(m_reg[REG8::AL]);
 			break;
 		}
-		case 0x30:
+		case 6:
 		{
 			LogPrintf(LOG_DEBUG, "DIV8");
 			TICKRM(82, 90); // Varies
@@ -1886,7 +1877,7 @@ namespace emul
 			m_reg[REG8::AH] = remainder;
 			break;
 		}
-		case 0x38:
+		case 7:
 		{
 			LogPrintf(LOG_DEBUG, "IDIV8");
 			TICKRM(104, 110); // Varies
@@ -1908,8 +1899,7 @@ namespace emul
 			m_reg[REG8::AH] = (BYTE)remainder;
 			break;
 		}
-		default:
-			throw(std::exception("not possible"));
+		default: throw std::exception("not possible");
 		}
 	}
 
@@ -1920,10 +1910,10 @@ namespace emul
 		Mem16 modrm = GetModRM16(op2);
 		WORD val = modrm.Read();
 
-		switch (op2 & 0x38)
+		switch (GetOP2(op2))
 		{
-		case 0x00: // TEST
-		case 0x08:
+		case 0: // TEST
+		case 1:
 		{
 			LogPrintf(LOG_DEBUG, "TEST16");
 			TICKRM(5, 11); // Varies
@@ -1936,14 +1926,14 @@ namespace emul
 			AdjustParity(after);
 			break;
 		}
-		case 0x10: // NOT
+		case 2: // NOT
 		{
 			LogPrintf(LOG_DEBUG, "NOT16");
 			TICKRM(3, 16);
 			modrm.Write(~val);
 			break;
 		}
-		case 0x18: // NEG
+		case 3: // NEG
 		{
 			TICKRM(3, 16);
 			SourceDest16 sd;
@@ -1955,7 +1945,7 @@ namespace emul
 			modrm.Write(m_reg[REG16::_T0]);
 			break;
 		}
-		case 0x20: // MUL
+		case 4: // MUL
 		{
 			TICKRM(120, 128); // Varies
 			DWORD result = m_reg[REG16::AX] * val;
@@ -1969,7 +1959,7 @@ namespace emul
 			AdjustParity(m_reg[REG16::AX]);
 			break;
 		}
-		case 0x28: // IMUL
+		case 5: // IMUL
 		{
 			TICKRM(132, 140); // Varies
 			int32_t result = (int16_t)m_reg[REG16::AX] * (int16_t)(val);
@@ -1985,7 +1975,7 @@ namespace emul
 			AdjustParity(m_reg[REG16::AX]);
 			break;
 		}
-		case 0x30:
+		case 6:
 		{
 			LogPrintf(LOG_DEBUG, "DIV16");
 			TICKRM(150, 158); // Varies
@@ -2007,7 +1997,7 @@ namespace emul
 			m_reg[REG16::DX] = remainder;
 			break;
 		}
-		case 0x38:
+		case 7:
 		{
 			LogPrintf(LOG_DEBUG, "IDIV16");
 			TICKRM(170, 178); // Varies
@@ -2029,8 +2019,7 @@ namespace emul
 			m_reg[REG16::DX] = (WORD)remainder;
 			break;
 		}
-		default:
-			throw(std::exception("not possible"));
+		default: throw std::exception("not possible");
 		}
 	}
 
@@ -2457,24 +2446,22 @@ namespace emul
 		Mem16 dest = GetModRM16(op2);
 		WORD val = dest.Read();
 
-		switch (op2 & 0x38)
+		switch (GetOP2(op2))
 		{
 		// INC/DEC MEM16
-		case 0x00: TICK(15); INC16(val); dest.Write(val);  break;
-		case 0x08: TICK(15); DEC16(val); dest.Write(val); break;
+		case 0: TICK(15); INC16(val); dest.Write(val);  break;
+		case 1: TICK(15); DEC16(val); dest.Write(val); break;
 		// CALL RM16(intra) / CALL MEM16(intersegment)
-		case 0x10: TICK(21); CALLIntra(val); break;
-		case 0x18: TICK(37); CALLInter(dest); break;
+		case 2: TICK(21); CALLIntra(val); break;
+		case 3: TICK(37); CALLInter(dest); break;
 		// JMP RM16(intra) // JMP MEM16(intersegment)
-		case 0x20: TICK(18); JMPIntra(val); break;
-		case 0x28: TICK(24); JMPInter(dest); break;
+		case 4: TICK(18); JMPIntra(val); break;
+		case 5: TICK(24); JMPInter(dest); break;
 		// PUSH MEM16
-		case 0x30: TICK(16); PUSH(dest); break;
+		case 6: TICK(16); PUSH(dest); break;
 		// not used
-		case 0x38: LogPrintf(LOG_WARNING, "Multifunc(0x28): not used"); break;
-
-		default:
-			throw(std::exception("not possible"));
+		case 7: LogPrintf(LOG_WARNING, "Multifunc(7): not used"); break;
+		default: throw std::exception("not possible");
 		}
 	}
 
