@@ -222,10 +222,16 @@ namespace emul
 		static const char* GetReg16Str(BYTE reg, bool segReg = false);
 		static std::string GetModRMStr(BYTE modrm, bool wide, BYTE& disp);
 
+		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
+
 	protected:
+		CPU8086(cpuInfo::CPUType type, Memory& memory, MemoryMap& mmap);
+
 		inline void TICKRM() { m_opTicks += (m_regMem == REGMEM::REG) ? m_currTiming->base : m_currTiming->mem; };
 		inline void TICK() { CPU::TICK(m_currTiming->base); }
+		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc).base); }
 
+		cpuInfo::CPUInfo m_info;
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_lastOp = 0;
 		int m_irqPending = -1;
@@ -329,8 +335,8 @@ namespace emul
 		void ArithmeticImm8(Mem8 dest, BYTE imm, RawOpFunc8 func);
 		void ArithmeticImm16(Mem16 dest, WORD imm, RawOpFunc16 func);
 
-		void ArithmeticImm8(BYTE op2);
-		void ArithmeticImm16(BYTE op2, bool signExtend);
+		void ArithmeticMulti8Imm(BYTE op2);
+		void ArithmeticMulti16Imm(BYTE op2, bool signExtend);
 
 		void ArithmeticMulti8(BYTE op2);
 		void ArithmeticMulti16(BYTE op2);

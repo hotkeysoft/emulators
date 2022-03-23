@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
 #include "CPU8086.h"
-#include "CPUInfo.h"
 
-using cpuInfo::g_CPUInfo;
 using cpuInfo::Opcode;
+using cpuInfo::MiscTiming;
+using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -38,11 +38,32 @@ namespace emul
 
 	BYTE GetOP2(BYTE op2) { return (op2 >> 3) & 7; }
 
-	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap)
-		: CPU(CPU8086_ADDRESS_BITS, memory, mmap), Logger("CPU8086")
+	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap) : CPU8086(CPUType::i8086, memory, mmap)
+	{
+	}
+
+	CPU8086::CPU8086(cpuInfo::CPUType type, Memory& memory, MemoryMap& mmap) : 
+		CPU(CPU8086_ADDRESS_BITS, memory, mmap), 
+		m_info(type),
+		Logger("CPU8086")
 	{
 		Mem8::Init(&memory, &m_reg);
 		Mem16::Init(&memory, &m_reg);
+
+		try
+		{
+			m_info.LoadConfig();
+		}
+		catch (nlohmann::detail::exception e)
+		{
+			LogPrintf(LOG_ERROR, "Fatal json error loading config: %s\n", e.what());
+			throw;
+		}
+		catch (std::exception e)
+		{
+			LogPrintf(LOG_ERROR, "Fatal error loading config: %s\n", e.what());
+			throw;
+		}
 	}
 
 	CPU8086::~CPU8086()
@@ -67,7 +88,7 @@ namespace emul
 		if (m_irqPending != -1)
 		{
 			assert(!inSegOverride);
-			CPU::TICK(61);
+			TICKMISC(MiscTiming::IRQ);
 			INT(m_irqPending);
 			m_irqPending = -1;
 			m_state = CPUState::RUN;
@@ -87,7 +108,7 @@ namespace emul
 		// Disable override after next instruction
 		bool clearSegOverride = inSegOverride;
 
-		m_currTiming = &g_CPUInfo.GetOpcodeTiming(opcode);
+		m_currTiming = &m_info.GetOpcodeTiming(opcode);
 
 		switch(opcode)
 		{
@@ -411,16 +432,16 @@ namespace emul
 		// ADD/OR/ADC/SBB/AND/SUB/XOR/CMP
 		// ----------
 		// REG8/MEM8, IMM8
-		case 0x80: ArithmeticImm8(FetchByte()); TICKRM(); break; // TODO: CMP is 10
+		case 0x80: ArithmeticMulti8Imm(FetchByte()); break;
 		// REG16/MEM16, IMM16
-		case 0x81: ArithmeticImm16(FetchByte(), false); TICKRM(); break; // imm data = word
+		case 0x81: ArithmeticMulti16Imm(FetchByte(), false); break; // imm data = word
 
 		// ADD/--/ADC/SBB/---/SUB/---/CMP w/sign Extension
 		// ----------
 		// REG8/MEM8, IMM8 (same as 0x80)
-		case 0x82: ArithmeticImm8(FetchByte()); TICKRM(); break; // TODO: CMP is 10
+		case 0x82: ArithmeticMulti8Imm(FetchByte()); break;
 		// REG16/MEM16, IMM8 (sign-extend to 16)
-		case 0x83: ArithmeticImm16(FetchByte(), true); TICKRM(); break; // imm data = sign-extended byte
+		case 0x83: ArithmeticMulti16Imm(FetchByte(), true); break; // imm data = sign-extended byte
 
 		// TEST
 		// ----------
@@ -765,7 +786,7 @@ namespace emul
 		if (trap && GetFlag(FLAG_T))
 		{
 			LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
-			CPU::TICK(50);
+			TICKMISC(MiscTiming::TRAP);
 			INT(1);
 		}
 	}
@@ -925,16 +946,16 @@ namespace emul
 	{
 		if (direct)
 		{
-			CPU::TICK(1);
+			TICKMISC(MiscTiming::EA_DIRECT);
 			return SegmentOffset{ m_reg[REG16::DS], 0 };
 		}
 
 		switch (modregrm & 7)
 		{
-		case 0: CPU::TICK(1); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::SI]) };
-		case 1: CPU::TICK(2); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::DI]) };
-		case 2: CPU::TICK(2); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::SI]) };
-		case 3: CPU::TICK(1); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::DI]) };
+		case 0: TICKMISC(MiscTiming::EA_INDEX_LO); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::SI]) };
+		case 1: TICKMISC(MiscTiming::EA_INDEX_HI); return SegmentOffset{ m_reg[REG16::DS], (WORD)(m_reg[REG16::BX] + m_reg[REG16::DI]) };
+		case 2: TICKMISC(MiscTiming::EA_INDEX_HI); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::SI]) };
+		case 3: TICKMISC(MiscTiming::EA_INDEX_LO); return SegmentOffset{ m_reg[REG16::SS], (WORD)(m_reg[REG16::BP] + m_reg[REG16::DI]) };
 
 		case 4: return SegmentOffset{ m_reg[REG16::DS], m_reg[REG16::SI] };
 		case 5: return SegmentOffset{ m_reg[REG16::DS], m_reg[REG16::DI] };
@@ -1009,7 +1030,7 @@ namespace emul
 	{
 		WORD displacement = 0;
 		bool direct = false;
-		CPU::TICK(5);
+
 		switch (modrm & 0xC0)
 		{
 		case 0xC0: // REG
@@ -1024,15 +1045,17 @@ namespace emul
 			break;
 		case 0x40:
 			displacement = Widen(FetchByte());
-			CPU::TICK(4);
+			TICKMISC(MiscTiming::EA_DISP);
 			break;
 		case 0x80:
 			displacement = FetchWord();
-			CPU::TICK(4);
+			TICKMISC(MiscTiming::EA_DISP);
 			break;
 		default:
 			throw std::exception("GetModRM8: not implemented");
 		}
+
+		TICKMISC(MiscTiming::EA_BASE);
 		m_regMem = REGMEM::MEM;
 
 		SegmentOffset segoff = GetEA(modrm, direct);
@@ -1064,12 +1087,11 @@ namespace emul
 	{
 		WORD displacement = 0;
 		bool direct = false;
-		CPU::TICK(5);
+
 		switch (modrm & 0xC0)
 		{
 		case 0xC0: // REG
 			m_regMem = REGMEM::REG;
-			LogPrintf(LOG_DEBUG, "GetModRM16: REG %s", GetReg16Str(modrm));
 			return GetReg16(modrm);
 		case 0x00: // NO DISP (or DIRECT)
 			if ((modrm & 7) == 6) // Direct 
@@ -1080,15 +1102,17 @@ namespace emul
 			break;
 		case 0x40:
 			displacement = Widen(FetchByte());
-			CPU::TICK(4);
+			TICKMISC(MiscTiming::EA_DISP);
 			break;
 		case 0x80:
 			displacement = FetchWord();
-			CPU::TICK(4);
+			TICKMISC(MiscTiming::EA_DISP);
 			break;
 		default:
 			throw std::exception("GetModRM16: not implemented");
 		}
+
+		TICKMISC(MiscTiming::EA_BASE);
 		m_regMem = REGMEM::MEM;
 
 		SegmentOffset segoff = GetEA(modrm, direct);
@@ -1741,9 +1765,12 @@ namespace emul
 		m_reg[REG16::SP] += value;
 	}
 
-	void CPU8086::ArithmeticImm8(BYTE op2)
+	void CPU8086::ArithmeticMulti8Imm(BYTE op2)
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticImm8");
+
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP3, GetOP2(op2));
+		TICKRM();
 
 		RawOpFunc8 func;
 
@@ -1768,9 +1795,12 @@ namespace emul
 
 		Arithmetic8(sd, func);
 	}
-	void CPU8086::ArithmeticImm16(BYTE op2, bool signExtend)
+	void CPU8086::ArithmeticMulti16Imm(BYTE op2, bool signExtend)
 	{
 		LogPrintf(LOG_DEBUG, "ArithmeticImm16");
+
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP3, GetOP2(op2));
+		TICKRM();
 
 		RawOpFunc16 func;
 
@@ -1803,7 +1833,7 @@ namespace emul
 		Mem8 modrm = GetModRM8(op2);
 		BYTE val = modrm.Read();
 
-		const cpuInfo::OpcodeTiming& timing = g_CPUInfo.GetSubOpcodeTiming(Opcode::MULTI::GRP3, GetOP2(op2));
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP3, GetOP2(op2));
 		TICKRM();
 
 		switch (GetOP2(op2))
@@ -1917,9 +1947,9 @@ namespace emul
 		Mem16 modrm = GetModRM16(op2);
 		WORD val = modrm.Read();
 
-		const cpuInfo::OpcodeTiming& timing = g_CPUInfo.GetSubOpcodeTiming(Opcode::MULTI::GRP3, GetOP2(op2));
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP3, GetOP2(op2));
 		TICKRM();
-		CPU::TICK(timing.t3); // Add 16-bit operation overhead
+		CPU::TICK(m_currTiming->t3); // Add 16-bit operation overhead
 
 		switch (GetOP2(op2))
 		{
@@ -2450,7 +2480,7 @@ namespace emul
 		Mem16 dest = GetModRM16(op2);
 		WORD val = dest.Read();
 
-		const cpuInfo::OpcodeTiming& timing = g_CPUInfo.GetSubOpcodeTiming(Opcode::MULTI::GRP5, GetOP2(op2));
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP5, GetOP2(op2));
 		TICK();
 
 		switch (GetOP2(op2))

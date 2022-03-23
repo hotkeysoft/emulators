@@ -4,22 +4,22 @@
 
 namespace cpuInfo
 {
-	CPUInfo g_CPUInfo(CPUType::i8086, "8086", "8086.json");
-
-	CPUInfo::CPUInfo() : CPUInfo(CPUType::i8086, nullptr, nullptr)
+	CPUInfo::CPUInfo(CPUType model) :
+		m_model(model)
 	{
-	}
+		const auto& cpu = m_cpus.find(model);
+		if (cpu == m_cpus.end())
+		{
+			throw std::exception("cpu model not found");
+		}
 
-	CPUInfo::CPUInfo(CPUType model, const char* name, const char* configFileName) :
-		m_model(model),
-		m_name(name),
-		m_configFileName(configFileName)
-	{
+		m_name = cpu->second.name;
+		m_configFile = cpu->second.configFile;
 	}
 
 	void CPUInfo::LoadConfig()
 	{
-		std::ifstream configFile("config/" + std::string(m_configFileName));
+		std::ifstream configFile("config/" + std::string(m_configFile));
 		if (configFile) 
 		{
 			configFile >> m_config;
@@ -35,7 +35,7 @@ namespace cpuInfo
 		}	
 		BuildOpcodes(m_config["cpu"]["opcodes"]);
 
-		for (int i = 0; i < 5; ++i)
+		for (int i = 0; i < (int)Opcode::MULTI::_COUNT; ++i)
 		{
 			char grpName[32];
 			sprintf(grpName, "opcodes.grp%d", i + 1);
@@ -44,6 +44,15 @@ namespace cpuInfo
 				throw std::exception("opcode.grp# list incomplete");
 			}
 			BuildSubOpcodes(i, m_config["cpu"][grpName]);
+		}
+
+		if (m_config["cpu"]["misc"].size() != (int)MiscTiming::_COUNT)
+		{
+			throw std::exception("misc timing list incomplete");
+		}
+		for (int i = 0; i < (int)MiscTiming::_COUNT; ++i)
+		{
+			m_miscTiming[i] = BuildTiming(m_config["cpu"]["misc"][i]);
 		}
 	}
 
@@ -131,7 +140,7 @@ namespace cpuInfo
 		return ret;
 	}
 
-	const std::string CPUInfo::GetSubOpcode(const Opcode& parent, BYTE op2)
+	const std::string CPUInfo::GetSubOpcode(const Opcode& parent, BYTE op2) const
 	{
 		if (parent.multi == Opcode::MULTI::NONE || op2 > 7)
 		{
