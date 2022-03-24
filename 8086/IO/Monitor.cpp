@@ -99,6 +99,7 @@ namespace emul
 		Update();
 		UpdateRunMode();
 		UpdateRAMMode();
+		UpdateCPUType();
 	}
 
 	void Monitor::WriteValueHex(BYTE value, const Coord& coord, WORD attr)
@@ -128,6 +129,14 @@ namespace emul
 		UpdateFlags();
 		UpdateRAM();
 		UpdateCode();
+	}
+
+	void Monitor::UpdateCPUType()
+	{
+		static Coord cpuId = m_cpu->GetInfo().GetCoord("CPUID");
+		std::ostringstream os;
+		os << std::setw(cpuId.w) << m_cpu->GetInfo().GetName();
+		m_console.WriteAt(cpuId.x, cpuId.y, os.str().c_str());
 	}
 
 	void Monitor::ToggleRunMode()
@@ -218,7 +227,7 @@ namespace emul
 	{
 		uint32_t ticks = m_cpu->GetInstructionTicks();
 		static char buf[5];
-		sprintf(buf, "%04d", (BYTE)ticks);
+		sprintf(buf, "%4d", (BYTE)ticks);
 
 		static Coord coord = m_cpu->GetInfo().GetCoord("TICKS");
 

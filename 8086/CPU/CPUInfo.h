@@ -68,7 +68,7 @@ namespace cpuInfo
 		CPUInfo(CPUInfo&&) = delete;
 		CPUInfo& operator=(CPUInfo&&) = delete;
 
-		std::string GetName() { return m_name; }
+		std::string GetName() const { return m_name; }
 		void LoadConfig();
 
 		CPUType GetModel() const { return m_model; }
@@ -92,9 +92,9 @@ namespace cpuInfo
 		using CPUMap = std::map<CPUType, CPUData>;
 
 		const CPUMap m_cpus = {
-			{ CPUType::i8086, { "8086", "8086.json" } },
-			{ CPUType::i80186, { "80186", "80186.json" } },
-			{ CPUType::i80286, { "80286", "80286.json" } }
+			{ CPUType::i8086, { "i8086", "8086.json" } },
+			{ CPUType::i80186, { "i80186", "80186.json" } },
+			{ CPUType::i80286, { "i80286", "80286.json" } }
 		};
 
 		CPUType m_model;

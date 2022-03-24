@@ -48,6 +48,7 @@ namespace emul
 		void UpdateRunMode();
 		void ToggleRAMMode();
 		void UpdateRAMMode();
+		void UpdateCPUType();
 
 		void WriteValueHex(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(WORD value, const cpuInfo::Coord& coord, WORD attr = 15);
