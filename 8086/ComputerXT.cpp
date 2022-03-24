@@ -10,6 +10,7 @@
 #include <thread>
 
 using cfg::CONFIG;
+using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -44,7 +45,7 @@ namespace emul
 
 	void ComputerXT::Init(WORD baseRAM)
 	{
-		Computer::Init(baseRAM);
+		Computer::Init(CPUType::i8086, baseRAM);
 
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 8));
@@ -53,8 +54,7 @@ namespace emul
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
-		m_memory.EnableLog(CONFIG().GetLogLevel("memory"));
-		m_mmap.EnableLog(CONFIG().GetLogLevel("mmap"));
+		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
@@ -156,24 +156,24 @@ namespace emul
 		static auto lastTick = std::chrono::high_resolution_clock::now();
 		static int64_t syncTicks = 0;
 
-		if (m_pic->InterruptPending() && CanInterrupt())
+		if (m_pic->InterruptPending() && GetCPU().CanInterrupt())
 		{
 			m_pic->InterruptAcknowledge(); 
 			LogPrintf(LOG_DEBUG, "[%zu] IRQ %d", g_ticks, m_pic->GetPendingInterrupt() - 8);
-			Interrupt(m_pic->GetPendingInterrupt());
+			GetCPU().Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
 		else if (m_soundModule.IsReady())
 		{
-			if (!CPU8086::Step())
+			if (!Computer::Step())
 			{
 				return false;
 			}
 		}
 
 		static uint32_t cpuTicks = 0;
-		assert(GetInstructionTicks());
-		cpuTicks += GetInstructionTicks();
+		assert(GetCPU().GetInstructionTicks());
+		cpuTicks += GetCPU().GetInstructionTicks();
 
 		ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
 

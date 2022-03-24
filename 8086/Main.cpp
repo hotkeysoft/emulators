@@ -373,7 +373,7 @@ int main(int argc, char* args[])
 	pc->Reset(0xF000, 0);
 #endif
 
-	monitor.Init(*pc, pc->GetMemory());
+	monitor.Init(pc->GetCPU(), pc->GetMemory());
 
 	if (mode == Mode::MONITOR)
 	{
@@ -391,7 +391,7 @@ int main(int argc, char* args[])
 		while (run)
 		{ 
 			if (breakpointEnabled &&
-				(pc->GetCurrentAddress() == breakpoint.GetAddress()))
+				(pc->GetCPU().GetCurrentAddress() == breakpoint.GetAddress()))
 			{
 				ShowMonitor();
 				mode = Mode::MONITOR;

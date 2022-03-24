@@ -9,6 +9,7 @@
 #include <thread>
 
 using cfg::CONFIG;
+using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -42,7 +43,7 @@ namespace emul
 
 	void ComputerPCjr::Init(WORD baseRAM)
 	{
-		Computer::Init(baseRAM);
+		Computer::Init(CPUType::i8086, baseRAM);
 
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 3));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
@@ -50,8 +51,7 @@ namespace emul
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
-		m_memory.EnableLog(CONFIG().GetLogLevel("memory"));
-		m_mmap.EnableLog(CONFIG().GetLogLevel("mmap"));
+		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
@@ -175,23 +175,23 @@ namespace emul
 
 		if (m_keyboard.NMIPending())
 		{
-			Interrupt(2);
+			GetCPU().Interrupt(2);
 			return true;
 		}
-		else if (m_pic->InterruptPending() && CanInterrupt())
+		else if (m_pic->InterruptPending() && GetCPU().CanInterrupt())
 		{
 			m_pic->InterruptAcknowledge();
-			Interrupt(m_pic->GetPendingInterrupt());
+			GetCPU().Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
-		else if (!CPU8086::Step())
+		else if (!Computer::Step())
 		{
 			return false;
 		}
 
 		static uint32_t cpuTicks = 0;
 		assert(GetInstructionTicks());
-		cpuTicks += GetInstructionTicks();
+		cpuTicks += GetCPU().GetInstructionTicks();
 
 		ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
 		video::VideoPCjr* video = (video::VideoPCjr*)m_video;

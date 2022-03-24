@@ -10,6 +10,7 @@
 #include <thread>
 
 using cfg::CONFIG;
+using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -43,7 +44,7 @@ namespace emul
 
 	void ComputerTandy::Init(WORD baseRAM)
 	{
-		Computer::Init(baseRAM);
+		Computer::Init(CPUType::i8086, baseRAM);
 
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 8));
@@ -52,9 +53,8 @@ namespace emul
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
-		m_memory.EnableLog(CONFIG().GetLogLevel("memory"));
-		m_mmap.EnableLog(CONFIG().GetLogLevel("mmap"));
-
+		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
+		
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
 		InitPIC(new pic::Device8259(0x20));
@@ -177,20 +177,20 @@ namespace emul
 
 		static bool timer0Out = false;
 
-		if (m_pic->InterruptPending() && CanInterrupt())
+		if (m_pic->InterruptPending() && GetCPU().CanInterrupt())
 		{
 			m_pic->InterruptAcknowledge();
-			Interrupt(m_pic->GetPendingInterrupt());
+			GetCPU().Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
-		else if (!CPU8086::Step())
+		else if (!Computer::Step())
 		{
 			return false;
 		}
 
 		static uint32_t cpuTicks = 0;
-		assert(GetInstructionTicks());
-		cpuTicks += GetInstructionTicks();
+		assert(GetCPU().GetInstructionTicks());
+		cpuTicks += GetCPU().GetInstructionTicks();
 
 		ppi::Device8255Tandy* ppi = (ppi::Device8255Tandy*)m_ppi;
 		video::VideoTandy* video = (video::VideoTandy*)m_video;

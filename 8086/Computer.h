@@ -53,7 +53,7 @@ namespace emul
 		size_t m_speed = 4772726;
 	};
 
-	class Computer : public CPU8086
+	class Computer : public Serializable, public PortConnector
 	{
 	public:
 		virtual ~Computer();
@@ -61,10 +61,15 @@ namespace emul
 		virtual std::string_view GetName() const = 0;
 		virtual std::string_view GetID() const = 0;
 
-		virtual void Init(WORD baseRAM);
+		virtual void Init(WORD baseRAM) = 0;
+
+		virtual bool Step() { return m_cpu->Step(); }
+
+		virtual void Reset() { m_cpu->Reset(); }
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
 		
+		CPU8086& GetCPU() const { return *m_cpu; }
 		Memory& GetMemory() { return m_memory; }
 		beeper::DevicePCSpeaker& GetSound() { return m_pcSpeaker; } // TODO: Sound interface
 		fdc::DeviceFloppy* GetFloppy() { return m_floppy; }
@@ -73,7 +78,6 @@ namespace emul
 		video::Video& GetVideo() { return *m_video; }
 		events::InputEvents& GetInputs() { return *m_inputs; }
 		mouse::DeviceSerialMouse* GetMouse() { return m_mouse; }
-		
 
 		virtual void Reboot(bool hard = false);
 		void SetTurbo(bool turbo) { m_turbo = turbo; }
@@ -86,12 +90,14 @@ namespace emul
 		typedef std::set<std::string> VideoModes;
 		const VideoModes& GetVideoModes() const { return m_videoModes; }
 
+		// emul::Serializable
 		virtual void Serialize(json& to);
 		virtual void Deserialize(const json& from);
 
 	protected:
 		Computer(Memory& memory, MemoryMap& mmap);
 
+		virtual void Init(cpuInfo::CPUType cpu, WORD baseRAM);
 		virtual void InitVideo(const std::string& defaultMode, const VideoModes& supported = VideoModes());
 		virtual void InitSound();
 		virtual void InitPIT(pit::Device8254* pit);
@@ -125,6 +131,7 @@ namespace emul
 
 		MemoryBlock m_hddROM;
 
+		emul::CPU8086* m_cpu = nullptr;
 		pit::Device8254* m_pit = nullptr;
 		pic::Device8259* m_pic = nullptr;
 		ppi::Device8255* m_ppi = nullptr;

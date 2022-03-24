@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <fstream>
 
+using cpuInfo::CPUType;
 using memory_ega::RAMSIZE;
 using cfg::CONFIG;
 
@@ -21,7 +22,6 @@ namespace emul
 {
 	Computer::Computer(Memory& memory, MemoryMap& mmap) :
 		Logger("PC"),
-		CPU8086(m_memory, m_map),
 		m_memory(emul::CPU8086_ADDRESS_BITS),
 		m_hddROM("HDD", 8192, MemoryType::ROM)
 	{
@@ -40,6 +40,7 @@ namespace emul
 		delete m_dma;
 		delete m_mouse;
 		delete m_rtc;
+		delete m_cpu;
 	}
 
 	void Computer::AddCPUSpeed(const CPUSpeed& speed)
@@ -59,7 +60,7 @@ namespace emul
 		if (hard)
 		{
 			LogPrintf(LOG_WARNING, "HARD Reset");			
-			Reset();
+			m_cpu->Reset();
 			m_memory.Clear();
 
 			// TODO: Reset all components
@@ -74,9 +75,20 @@ namespace emul
 		}
 	}
 
-	void Computer::Init(WORD baseram)
+	void Computer::Init(CPUType type, WORD baseram)
 	{
-		CPU8086::Init();
+		switch (type)
+		{
+		case CPUType::i8086: m_cpu = new CPU8086(m_memory, m_map); break;
+		case CPUType::i80186:
+		case CPUType::i80286:
+		default:
+			LogPrintf(LOG_ERROR, "CPUType not supported");
+			throw std::exception("CPUType not supported");
+		}
+
+		m_cpu->EnableLog(CONFIG().GetLogLevel("cpu"));
+
 		m_baseRAM = baseram;
 		PortConnector::Clear();
 	}
@@ -481,7 +493,7 @@ namespace emul
 		computer["baseram"] = m_baseRAM;
 		to["computer"] = computer;
 
-		CPU8086::Serialize(to["cpu"]);
+		m_cpu->Serialize(to["cpu"]);
 		m_memory.Serialize(to["memory"]);
 		m_pit->Serialize(to["pit"]);
 		m_pic->Serialize(to["pic"]);
@@ -516,7 +528,7 @@ namespace emul
 			throw SerializableException("Computer: Base RAM is not compatible", SerializationError::COMPAT);
 		}
 
-		CPU8086::Deserialize(from["cpu"]);
+		m_cpu->Deserialize(from["cpu"]);
 		m_memory.Deserialize(from["memory"]);
 		m_pit->Deserialize(from["pit"]);
 		m_pic->Deserialize(from["pic"]);
