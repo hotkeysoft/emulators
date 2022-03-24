@@ -64,9 +64,6 @@ namespace emul
 		InitSound();
 		InitRTC();
 
-		//m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.76489"));
-		//m_soundModule.Init();
-
 		InitVideo("cga", { "cga", "mda", "hgc", "ega", "vga"});
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
@@ -201,11 +198,7 @@ namespace emul
 
 			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
-			// SN76489 clock is 3x base clock
-			//m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
-
-			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
-			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
+			if (!m_turbo) m_pcSpeaker.Tick();
 
 			m_dma->Tick();
 

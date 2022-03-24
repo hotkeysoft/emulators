@@ -16,22 +16,16 @@ namespace emul
 	public:
 		DummyPortPCjr() : Logger("DUMMY")
 		{
-			//EGA
-			for (WORD w = 0x3C0; w < 0x3D0; ++w)
-			{
-				Connect(w, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteData));
-			}
+		}
 
+		void Init()
+		{
 			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteMfgTest));
 		}
 
 		BYTE ReadData()
 		{
 			return 0xFF;
-		}
-
-		void WriteData(BYTE value)
-		{
 		}
 
 		void WriteMfgTest(BYTE value)
