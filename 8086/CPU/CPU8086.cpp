@@ -39,7 +39,7 @@ namespace emul
 
 	BYTE GetOP2(BYTE op2) { return (op2 >> 3) & 7; }
 
-	CPU8086::CPU8086(Memory& memory) : CPU8086(CPUType::i8086, memory)
+	CPU8086::CPU8086(Memory& memory) : CPU8086(CPUType::i80186, memory)
 	{
 	}
 
@@ -1324,6 +1324,8 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "INCDEC8");
 
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP4, GetOP2(op2));
+
 		Mem8 dest = GetModRM8(op2);
 
 		switch (GetOP2(op2))
@@ -2351,7 +2353,13 @@ namespace emul
 	bool CPU8086::PreREP()
 	{
 		if (!inRep)
+		{
+			// penalty for no-REP
+			TICKT4();
 			return true;
+		}
+
+		TICKT3(); // Setup penalty for REP
 
 		if (m_reg[REG16::CX] == 0)
 		{
@@ -2373,7 +2381,6 @@ namespace emul
 		if (!checkZ || (GetFlag(FLAG_Z) == repZ))
 		{ 
 			m_reg[REG16::IP] = m_reg[REG16::_REP_IP];
-			TICKT3(); // Penalty for REP
 		}
 		else
 		{

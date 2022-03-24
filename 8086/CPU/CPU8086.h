@@ -233,6 +233,7 @@ namespace emul
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)m_regMem]; };
 		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc)[0]); }
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
+		inline void TICKT4() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T4]); }
 
 		void Init();
 

@@ -218,8 +218,8 @@
       { "name": "MOV DI, {i16}",        "timing": [4] },
 
       { "name": "RET {i16}",            "timing": [12] },
-      { "name": "RET",                  "timing": [12] },
-      { "name": "RET {i16}",            "timing": [8] },
+      { "name": "RET",                  "timing": [8] },
+      { "name": "RET {i16}",            "timing": [12] },
       { "name": "RET",                  "timing": [8] },
       { "name": "LES {r16}, {rm16}",    "timing": [16] },
       { "name": "LDS {r16}, {rm16}",    "timing": [16] },
@@ -227,8 +227,8 @@
       { "name": "MOV {rm16}, {i16}",    "timing": [10] },
 
       { "name": "RETf {i16}",           "timing": [18] },
-      { "name": "RETf",                 "timing": [18] },
-      { "name": "RETf {i16}",           "timing": [17] },
+      { "name": "RETf",                 "timing": [17] },
+      { "name": "RETf {i16}",           "timing": [18] },
       { "name": "RETf",                 "timing": [17] },
       { "name": "INT 3",                "timing": [52] },
       { "name": "INT {i8}",             "timing": [51] },
@@ -286,7 +286,7 @@
       { "name": "STI",                  "timing": [2] },
       { "name": "CLD",                  "timing": [2] },
       { "name": "STD",                  "timing": [2] },
-      { "name": "{grp4} {rm8}",         "timing": [3] },
+      { "name": "{grp4} {rm8}",         "timing": [0] },
       { "name": "{grp5} {rm16}",        "timing": [0] }
     ],
     "opcodes.grp1": [
@@ -320,8 +320,8 @@
       { "name": "IDIV",                 "timing": [104, 110, 50] }
     ],
     "opcodes.grp4": [
-      { "name": "INC" },
-      { "name": "DEC" },
+      { "name": "INC",                  "timing": [3, 15] },
+      { "name": "DEC",                  "timing": [3, 15] },
       { "name": "grp4.2" },
       { "name": "grp4.3" },
       { "name": "grp4.4" },
@@ -330,8 +330,8 @@
       { "name": "grp4.7" }
     ],
     "opcodes.grp5": [
-      { "name": "INC",                  "timing": [15] },
-      { "name": "DEC",                  "timing": [15] },
+      { "name": "INC",                  "timing": [2, 15] },
+      { "name": "DEC",                  "timing": [2, 15] },
       { "name": "CALL",                 "timing": [21] },
       { "name": "CALLf",                "timing": [37] },
       { "name": "JMP",                  "timing": [18] },
