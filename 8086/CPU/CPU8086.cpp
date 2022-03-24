@@ -1536,11 +1536,11 @@ namespace emul
 		dest.Write(work);
 	}
 
-	void CPU8086::SHIFTROT8Multi(BYTE op2)
+	void CPU8086::SHIFTROT8Multi(BYTE op2, BYTE mask)
 	{
 		LogPrintf(LOG_DEBUG, "SHIFTROT8Multi");
 
-		BYTE count = m_reg[REG8::CL];
+		BYTE count = m_reg[REG8::CL] & mask;
 		Mem8 dest = GetModRM8(op2);
 		BYTE work = dest.Read();
 		work = _SHIFTROT8(work, op2, count);
@@ -1626,11 +1626,11 @@ namespace emul
 		dest.Write(work);
 	}
 
-	void CPU8086::SHIFTROT16Multi(BYTE op2)
+	void CPU8086::SHIFTROT16Multi(BYTE op2, BYTE mask)
 	{
 		LogPrintf(LOG_DEBUG, "SHIFTROT16Multi");
 
-		BYTE count = m_reg[REG8::CL];
+		BYTE count = m_reg[REG8::CL] & mask;
 		Mem16 dest = GetModRM16(op2);
 		WORD work = dest.Read();
 		work = _SHIFTROT16(work, op2, count);

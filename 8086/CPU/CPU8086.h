@@ -338,8 +338,8 @@ namespace emul
 		void SHIFTROT8One(BYTE op2);
 		void SHIFTROT16One(BYTE op2);
 
-		void SHIFTROT8Multi(BYTE op2);
-		void SHIFTROT16Multi(BYTE op2);
+		void SHIFTROT8Multi(BYTE op2, BYTE mask = 0xFF);
+		void SHIFTROT16Multi(BYTE op2, BYTE mask = 0xFF);
 
 		void Arithmetic8(SourceDest8 sd, RawOpFunc8 func);
 		void Arithmetic16(SourceDest16 sd, RawOpFunc16 func);
