@@ -124,6 +124,7 @@ namespace emul
 	void Monitor::Update()
 	{
 		UpdateRegisters();
+		UpdateTicks();
 		UpdateFlags();
 		UpdateRAM();
 		UpdateCode();
@@ -211,6 +212,17 @@ namespace emul
 
 		WriteValueHex(m_cpu->m_reg[REG16::SS], m_cpu->GetInfo().GetCoord("SS"));
 		WriteValueHex(m_cpu->m_reg[REG16::SP], m_cpu->GetInfo().GetCoord("SP"));
+	}
+
+	void Monitor::UpdateTicks()
+	{
+		uint32_t ticks = m_cpu->GetInstructionTicks();
+		static char buf[5];
+		sprintf(buf, "%04d", (BYTE)ticks);
+
+		static Coord coord = m_cpu->GetInfo().GetCoord("TICKS");
+
+		m_console.WriteAt(coord.x, coord.y, buf, 4);
 	}
 
 	void Monitor::UpdateFlags()
@@ -328,11 +340,13 @@ namespace emul
 
 		SegmentOffset address{ m_cpu->m_reg[REG16::CS], m_cpu->m_reg[REG16::IP] };
 
-		for (int i = 0; i < 12; ++i)
+		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w - 1, 4, codePos.y - 1);
+
+		for (int i = 0; i < 8; ++i)
 		{
 			Instruction decoded;
 			address = Disassemble(address, decoded);
-			PrintInstruction(i, decoded);
+			PrintInstruction(i+4, decoded);
 		}
 	}
 

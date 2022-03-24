@@ -22,6 +22,8 @@ public:
 	void WriteAttrAt(short x, short y, const WORD* attr, size_t len);
 	void WriteAttrAt(short x, short y, const WORD attr, size_t len);
 
+	void MoveBlockY(short x, short y, short w, short h, short newY);
+
 private:
 	HANDLE m_hConsole;
 };

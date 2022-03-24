@@ -53,6 +53,7 @@ namespace emul
 		void WriteValueHex(WORD value, const cpuInfo::Coord& coord, WORD attr = 15);
 
 		void UpdateRegisters();
+		void UpdateTicks();
 		void UpdateFlags();
 		void UpdateRAM();
 		void PrintInstruction(short y, Instruction& instr);

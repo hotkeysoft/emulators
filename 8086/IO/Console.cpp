@@ -126,3 +126,33 @@ void Console::WriteBuffer(const char* buf, size_t bufSize)
 	DWORD written;
 	WriteConsoleA(m_hConsole, buf, (DWORD)bufSize, &written, nullptr);
 }
+
+void Console::MoveBlockY(short x, short y, short w, short h, short newY)
+{
+	std::vector<CHAR_INFO> buffer((size_t)w * h);
+
+	SMALL_RECT src;
+	src.Top = y;
+	src.Left = x;
+	src.Bottom = y + h - 1;
+	src.Right = x + w - 1;
+
+	COORD bufferSize{ w, h };
+	COORD bufferCoord{ 0, 0 };
+
+	ReadConsoleOutput(m_hConsole, 
+		&buffer[0], 
+		bufferSize,
+		bufferCoord,
+		&src);
+
+	SMALL_RECT dest = src;
+	dest.Top = newY;
+	dest.Bottom = newY + h;
+
+	WriteConsoleOutput(m_hConsole,
+		&buffer[0],
+		bufferSize,
+		bufferCoord,
+		&dest);
+}
