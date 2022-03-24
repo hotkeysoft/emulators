@@ -35,10 +35,10 @@ namespace emul
 		m_opcodes[0x69] = [=]() { IMULimm16(FetchByte()); };
 		m_opcodes[0x6A] = [=]() { PUSH(Widen(FetchByte())); };
 		m_opcodes[0x6B] = [=]() { IMULimm8(FetchByte()); };
-		m_opcodes[0x6C] = [=]() { NotImplemented(m_opcode); };
-		m_opcodes[0x6D] = [=]() { NotImplemented(m_opcode); };
-		m_opcodes[0x6E] = [=]() { NotImplemented(m_opcode); };
-		m_opcodes[0x6F] = [=]() { NotImplemented(m_opcode); };
+		m_opcodes[0x6C] = [=]() { INSB(); };
+		m_opcodes[0x6D] = [=]() { INSW(); };
+		m_opcodes[0x6E] = [=]() { OUTSB(); };
+		m_opcodes[0x6F] = [=]() { OUTSW(); };
 
 		// ROL/ROR/RCL/RCR/SAL|SHL/SHR/---/SAR
 		// REG8/MEM8, IMM8
@@ -137,4 +137,81 @@ namespace emul
 		AdjustZero(resultW);
 		AdjustParity(resultW);
 	}
+
+	void CPU80186::INSB()
+	{
+		LogPrintf(LOG_DEBUG, "INSB, DI=%04X", m_reg[REG16::DI]);
+
+		if (PreREP())
+		{
+			Mem8 dest = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+
+			BYTE val;
+			In(m_reg[REG16::DX], val);
+			dest.Write(val);
+
+			IndexIncDec(m_reg[REG16::DI]);
+		}
+		PostREP(false);
+	}
+
+	void CPU80186::INSW()
+	{
+		LogPrintf(LOG_DEBUG, "INSW, DI=%04X", m_reg[REG16::DI]);
+
+		if (PreREP())
+		{
+			Mem16 dest = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+
+			BYTE l, h;
+			In(m_reg[REG16::DX], l);
+			In(m_reg[REG16::DX] + 1, h);
+			dest.Write(MakeWord(h, l));
+
+			IndexIncDec(m_reg[REG16::DI]);
+			IndexIncDec(m_reg[REG16::DI]);
+		}
+		PostREP(false);
+	}
+
+	void CPU80186::OUTSB()
+	{
+		LogPrintf(LOG_DEBUG, "OUTSB, SI=%04X", m_reg[REG16::SI]);
+		if (inSegOverride)
+		{
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
+		}
+
+		if (PreREP())
+		{
+			BYTE val = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
+
+			Out(m_reg[REG16::DX], val);
+
+			IndexIncDec(m_reg[REG16::SI]);
+		}
+		PostREP(false);
+	}
+
+	void CPU80186::OUTSW()
+	{
+		LogPrintf(LOG_DEBUG, "OUTSW, SI=%04X", m_reg[REG16::SI]);
+		if (inSegOverride)
+		{
+			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
+		}
+
+		if (PreREP())
+		{
+			WORD val = m_memory.Read16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
+
+			Out(m_reg[REG16::DX], emul::GetLByte(val));
+			Out(m_reg[REG16::DX] + 1, emul::GetHByte(val));
+
+			IndexIncDec(m_reg[REG16::SI]);
+			IndexIncDec(m_reg[REG16::SI]);
+		}
+		PostREP(false);
+	}
+
 }

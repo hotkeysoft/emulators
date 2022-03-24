@@ -20,8 +20,12 @@ namespace emul
 
 		void IMULimm8(BYTE op2);
 		void IMULimm16(BYTE op2);
-
 		void _IMUL16imm(SourceDest16& sd, WORD imm);
 
+		void INSB();
+		void INSW();
+
+		void OUTSB();
+		void OUTSW();
 	};
 }

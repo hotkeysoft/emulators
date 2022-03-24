@@ -2357,11 +2357,10 @@ namespace emul
 			return true;
 		}
 
-		TICKT3(); // Setup penalty for REP
-
 		if (m_reg[REG16::CX] == 0)
 		{
 			LogPrintf(LOG_DEBUG, "PreRep, end loop");
+			TICKT3(); // Setup penalty for REP
 			inRep = false;
 			return false;
 		}
@@ -2383,6 +2382,7 @@ namespace emul
 		else
 		{
 			LogPrintf(LOG_DEBUG, "PostRep, end loop");
+			TICKT3(); // Setup penalty for REP
 			inRep = false;
 		}
 	}
