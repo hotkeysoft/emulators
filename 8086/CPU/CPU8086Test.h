@@ -6,7 +6,7 @@ namespace emul
     class CPU8086Test : public CPU8086
     {
     public:
-        CPU8086Test(Memory& memory, MemoryMap& mmap) : CPU8086(memory, mmap), Logger("CPUtest") {}
+        CPU8086Test(Memory& memory) : CPU8086(memory), Logger("CPUtest") {}
         void Test() { TestRegisters(); TestShiftRotate(); TestArithmetic(); }
 
     protected:

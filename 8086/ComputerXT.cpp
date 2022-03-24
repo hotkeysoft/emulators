@@ -35,7 +35,7 @@ namespace emul
 
 	ComputerXT::ComputerXT() :
 		Logger("XT"),
-		Computer(m_memory, m_map),
+		Computer(m_memory),
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),

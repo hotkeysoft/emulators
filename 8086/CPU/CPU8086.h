@@ -162,7 +162,7 @@ namespace emul
 	class CPU8086 : public CPU, public Serializable, public PortConnector
 	{
 	public:
-		CPU8086(Memory& memory, MemoryMap& mmap);
+		CPU8086(Memory& memory);
 		virtual ~CPU8086();
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
@@ -225,7 +225,7 @@ namespace emul
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
 	protected:
-		CPU8086(cpuInfo::CPUType type, Memory& memory, MemoryMap& mmap);
+		CPU8086(cpuInfo::CPUType type, Memory& memory);
 
 		// Fetch the timing for the reg (base) or mem variant.
 		// If not applicable, this has no impact since timing[base] == timing[mem]

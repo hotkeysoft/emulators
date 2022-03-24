@@ -213,7 +213,6 @@
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="CPU\Memory.cpp" />
     <ClCompile Include="CPU\MemoryBlock.cpp" />
-    <ClCompile Include="CPU\MemoryMap.cpp" />
     <ClCompile Include="IO\Monitor.cpp" />
     <ClCompile Include="CPU\PortConnector.cpp" />
     <ClCompile Include="UI\SnapshotInfo.cpp" />
@@ -288,7 +287,6 @@
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="CPU\Memory.h" />
     <ClInclude Include="CPU\MemoryBlock.h" />
-    <ClInclude Include="CPU\MemoryMap.h" />
     <ClInclude Include="IO\Monitor.h" />
     <ClInclude Include="CPU\PortConnector.h" />
     <ClInclude Include="UI\SnapshotInfo.h" />

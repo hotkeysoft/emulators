@@ -95,7 +95,7 @@ namespace emul
 		virtual void Deserialize(const json& from);
 
 	protected:
-		Computer(Memory& memory, MemoryMap& mmap);
+		Computer(Memory& memory);
 
 		virtual void Init(cpuInfo::CPUType cpu, WORD baseRAM);
 		virtual void InitVideo(const std::string& defaultMode, const VideoModes& supported = VideoModes());
@@ -127,7 +127,6 @@ namespace emul
 
 		WORD m_baseRAM = 640;
 		Memory m_memory;
-		MemoryMap m_map;
 
 		MemoryBlock m_hddROM;
 

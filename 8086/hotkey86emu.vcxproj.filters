@@ -144,9 +144,6 @@
     <ClCompile Include="CPU\MemoryBlock.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="CPU\MemoryMap.cpp">
-      <Filter>Source Files\CPU</Filter>
-    </ClCompile>
     <ClCompile Include="IO\Console.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
@@ -366,9 +363,6 @@
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
     <ClInclude Include="CPU\MemoryBlock.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="CPU\MemoryMap.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
     <ClInclude Include="CPU\PortConnector.h">

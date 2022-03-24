@@ -20,7 +20,7 @@ using cfg::CONFIG;
 
 namespace emul
 {
-	Computer::Computer(Memory& memory, MemoryMap& mmap) :
+	Computer::Computer(Memory& memory) :
 		Logger("PC"),
 		m_memory(emul::CPU8086_ADDRESS_BITS),
 		m_hddROM("HDD", 8192, MemoryType::ROM)
@@ -79,7 +79,7 @@ namespace emul
 	{
 		switch (type)
 		{
-		case CPUType::i8086: m_cpu = new CPU8086(m_memory, m_map); break;
+		case CPUType::i8086: m_cpu = new CPU8086(m_memory); break;
 		case CPUType::i80186:
 		case CPUType::i80286:
 		default:

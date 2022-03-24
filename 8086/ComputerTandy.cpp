@@ -34,7 +34,7 @@ namespace emul
 
 	ComputerTandy::ComputerTandy() :
 		Logger("Tandy"),
-		Computer(m_memory, m_map),
+		Computer(m_memory),
 		m_base128K("SYSRAM", 0x20000, emul::MemoryType::RAM),
 		m_ramExtension("EXTRAM", emul::MemoryType::RAM),
 		m_biosFC00("BIOS", 0x4000, emul::MemoryType::ROM),

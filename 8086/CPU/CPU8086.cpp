@@ -39,12 +39,12 @@ namespace emul
 
 	BYTE GetOP2(BYTE op2) { return (op2 >> 3) & 7; }
 
-	CPU8086::CPU8086(Memory& memory, MemoryMap& mmap) : CPU8086(CPUType::i8086, memory, mmap)
+	CPU8086::CPU8086(Memory& memory) : CPU8086(CPUType::i8086, memory)
 	{
 	}
 
-	CPU8086::CPU8086(cpuInfo::CPUType type, Memory& memory, MemoryMap& mmap) : 
-		CPU(CPU8086_ADDRESS_BITS, memory, mmap), 
+	CPU8086::CPU8086(cpuInfo::CPUType type, Memory& memory) : 
+		CPU(CPU8086_ADDRESS_BITS, memory), 
 		m_info(type),
 		Logger("CPU8086")
 	{
