@@ -185,7 +185,7 @@ namespace emul
 		bool CanInterrupt() 
 		{ 
 			// TODO: last check only if interrupts were disabled previously
-			return GetFlag(FLAG::FLAG_I) && (m_lastOp != 0xFB);
+			return GetFlag(FLAG::FLAG_I) && (m_opcode != 0xFB);
 		}
 
 		Registers m_reg;
@@ -227,13 +227,16 @@ namespace emul
 	protected:
 		CPU8086(cpuInfo::CPUType type, Memory& memory, MemoryMap& mmap);
 
-		inline void TICKRM() { m_opTicks += (m_regMem == REGMEM::REG) ? m_currTiming->base : m_currTiming->mem; };
-		inline void TICK() { CPU::TICK(m_currTiming->base); }
-		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc).base); }
+		// Fetch the timing for the reg (base) or mem variant.
+		// If not applicable, this has no impact since timing[base] == timing[mem]
+		// (This happens when the timing values are loaded: if no mem timing, we copy the base timing)
+		inline void TICK() { m_opTicks += (*m_currTiming)[(int)m_regMem]; };
+		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc)[0]); }
+		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
 
 		cpuInfo::CPUInfo m_info;
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
-		BYTE m_lastOp = 0;
+		BYTE m_opcode = 0;
 		int m_irqPending = -1;
 
 		// Pseudo flags
@@ -266,7 +269,7 @@ namespace emul
 
 		Mem8 GetModRM8(BYTE modrm);
 		Mem16 GetModRM16(BYTE modrm);
-		enum class REGMEM { REG, MEM } m_regMem;
+		enum class REGMEM { REG = 0, MEM = 1} m_regMem = REGMEM::REG;
 
 		SourceDest8 GetModRegRM8(BYTE modregrm, bool toReg = true);
 		SourceDest16 GetModRegRM16(BYTE modregrm, bool toReg = true, bool segReg = false);

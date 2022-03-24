@@ -39,15 +39,15 @@ namespace cpuInfo
 		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, _COUNT } multi = MULTI::NONE;
 	};
 
-#pragma pack(push,1)                                   
-	struct OpcodeTiming
-	{
-		BYTE base = 1; // Base number of ticks for instructions
-		BYTE mem = 0;  // Ticks when operand is memory         
-		BYTE t3 = 0;   // Extra timing info for some opcodes (conditionals, jumps, 16 bits overhead, etc.)
-		BYTE t4 = 0;   // ""
+	enum class OpcodeTimingType {
+		BASE = 0, // Base number of ticks for instructions
+		MEM,      // Ticks when operand is memory         
+		T3,       // Extra timing info for some opcodes (conditionals, jumps, 16 bits overhead, etc.)
+		T4,       // ""
+
+		_COUNT
 	};
-#pragma pack(pop) 
+	using OpcodeTiming = std::array<BYTE, (int)OpcodeTimingType::_COUNT>;
 
 	struct Coord
 	{

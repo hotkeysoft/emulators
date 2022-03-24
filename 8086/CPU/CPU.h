@@ -34,7 +34,7 @@ namespace emul
 		void RemoveWatch(ADDRESS address);
 		void RemoveWatch(const char* label);
 
-		uint32_t GetInstructionTicks() { return m_opTicks; }
+		uint32_t GetInstructionTicks() const { return m_opTicks; }
 
 	protected:
 		enum class CPUState { STOP, RUN, STEP, HALT };

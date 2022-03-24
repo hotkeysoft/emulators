@@ -76,7 +76,7 @@ namespace cpuInfo
 
 	OpcodeTiming CPUInfo::BuildTiming(const json& opcode)
 	{
-		OpcodeTiming timing;
+		OpcodeTiming timing = { 1, 0, 0, 0 };
 		if (!opcode.contains("timing"))
 		{
 			return timing;
@@ -88,10 +88,15 @@ namespace cpuInfo
 			throw std::exception("invalid timing array");
 		}
 
-		BYTE* timingArray = (BYTE*)&timing;
 		for (int i = 0; i < jsonTiming.size(); ++i)
 		{
-			timingArray[i] = jsonTiming[i];
+			timing[i] = jsonTiming[i];
+		}
+
+		// Copy base to mem if not set
+		if (timing[(int)OpcodeTimingType::MEM] == 0)
+		{
+			timing[(int)OpcodeTimingType::MEM] = timing[(int)OpcodeTimingType::BASE];
 		}
 
 		return timing;
