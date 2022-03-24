@@ -65,8 +65,6 @@ namespace emul
 			LogPrintf(LOG_ERROR, "Fatal error loading config: %s\n", e.what());
 			throw;
 		}
-
-		Init();
 	}
 
 	CPU8086::~CPU8086()

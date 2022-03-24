@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Logger.cpp" />
+    <ClCompile Include="CPU\CPU80186.cpp" />
     <ClCompile Include="Hardware\Device8167.cpp" />
     <ClCompile Include="IO\DeviceSerialMouse.cpp" />
     <ClCompile Include="Sound\Sound.cpp" />
@@ -245,6 +246,7 @@
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
+    <ClInclude Include="CPU\CPU80186.h" />
     <ClInclude Include="Hardware\Device8167.h" />
     <ClInclude Include="IO\DeviceSerialMouse.h" />
     <ClInclude Include="Sound\Sound.h" />
@@ -316,6 +318,7 @@
     <ClInclude Include="Video\VideoVGA.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="config\80186.json" />
     <None Include="config\8086.ANS">
       <DeploymentContent>true</DeploymentContent>
     </None>

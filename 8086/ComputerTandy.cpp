@@ -189,7 +189,6 @@ namespace emul
 		}
 
 		static uint32_t cpuTicks = 0;
-		assert(GetCPU().GetInstructionTicks());
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		ppi::Device8255Tandy* ppi = (ppi::Device8255Tandy*)m_ppi;

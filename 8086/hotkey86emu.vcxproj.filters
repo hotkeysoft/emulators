@@ -273,6 +273,9 @@
     <ClCompile Include="Hardware\Device8167.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
+    <ClCompile Include="CPU\CPU80186.cpp">
+      <Filter>Source Files\CPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -494,6 +497,9 @@
     <ClInclude Include="Hardware\Device8167.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="CPU\CPU80186.h">
+      <Filter>Header Files\CPU</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">
@@ -507,6 +513,9 @@
       <Filter>config</Filter>
     </None>
     <None Include="SDLPath.props" />
+    <None Include="config\80186.json">
+      <Filter>config</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\overlay16.png">

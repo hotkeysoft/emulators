@@ -165,6 +165,8 @@ namespace emul
 		CPU8086(Memory& memory);
 		virtual ~CPU8086();
 
+		virtual void Init();
+
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
 		virtual ADDRESS GetCurrentAddress() const { return S2A(m_reg[REG16::CS], m_reg[REG16::IP]); }
 
@@ -234,8 +236,6 @@ namespace emul
 		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc)[0]); }
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
 		inline void TICKT4() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T4]); }
-
-		void Init();
 
 		std::vector<std::function<void()>> m_opcodes;
 

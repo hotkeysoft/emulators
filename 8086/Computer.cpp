@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Computer.h"
 #include "Config.h"
+#include "CPU/CPU80186.h"
 #include "IO/DeviceKeyboard.h"
 #include "Storage/DeviceHardDrive.h"
 #include "Video/VideoCGA.h"
@@ -77,17 +78,38 @@ namespace emul
 
 	void Computer::Init(CPUType type, WORD baseram)
 	{
+		int cpuOverride = CONFIG().GetValueInt32("core", "cpu");
+		switch (cpuOverride)
+		{
+		case 0:
+			// No override
+			break;
+		case 86:
+		case 8086:
+			LogPrintf(LOG_WARNING, "CPU override [8086]");
+			type = CPUType::i8086;
+			break;
+		case 186:
+		case 80186:
+			LogPrintf(LOG_WARNING, "CPU override [80186]");
+			type = CPUType::i80186;
+			break;
+		default:
+			LogPrintf(LOG_WARNING, "Unknown cpu override [%d]", cpuOverride);
+		}
+
 		switch (type)
 		{
 		case CPUType::i8086: m_cpu = new CPU8086(m_memory); break;
-		case CPUType::i80186:
+		case CPUType::i80186: m_cpu = new CPU80186(m_memory); break;
 		case CPUType::i80286:
 		default:
 			LogPrintf(LOG_ERROR, "CPUType not supported");
 			throw std::exception("CPUType not supported");
 		}
-
+	
 		m_cpu->EnableLog(CONFIG().GetLogLevel("cpu"));
+		m_cpu->Init();
 
 		m_baseRAM = baseram;
 		PortConnector::Clear();

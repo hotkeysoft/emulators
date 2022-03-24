@@ -171,8 +171,7 @@ namespace emul
 			}
 		}
 
-		static uint32_t cpuTicks = 0;
-		assert(GetCPU().GetInstructionTicks());
+		static uint32_t cpuTicks = 0;	
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
