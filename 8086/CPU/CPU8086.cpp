@@ -72,6 +72,673 @@ namespace emul
 
 	}
 
+	void CPU8086::Init()
+	{
+		m_opcodes.resize(256);
+		std::fill(m_opcodes.begin(), m_opcodes.end(), [=]() { NotImplemented(m_opcode); });
+
+		// ADD
+		// --------
+		// REG8/MEM8, REG8
+		m_opcodes[0x00] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdd8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x01] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdd16); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x02] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdd8); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x03] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdd16); };
+
+		// ADD
+		// --------
+		// AL, IMMED8
+		m_opcodes[0x04] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawAdd8); };
+		// AX, IMMED16
+		m_opcodes[0x05] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawAdd16); };
+
+		// PUSH ES (1)
+		m_opcodes[0x06] = [=]() { PUSH(REG16::ES); };
+		// POP ES (1)
+		m_opcodes[0x07] = [=]() { POP(REG16::ES); };
+
+		// OR
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x08] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), false), rawOr8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x09] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), false), rawOr16); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x0A] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawOr8); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x0B] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawOr16); };
+
+		// OR
+		// ----------
+		// AL, IMMED8
+		m_opcodes[0x0C] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawOr8); };
+		// AX, IMMED16
+		m_opcodes[0x0D] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawOr16); };
+
+		// PUSH CS
+		m_opcodes[0x0E] = [=]() { PUSH(REG16::CS); };
+		// POP CS // Undocumented, 8086 only
+		m_opcodes[0x0F] = [=]() { POP(REG16::CS); };
+
+		// ADC
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x10] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdc8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x11] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdc16); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x12] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdc8); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x13] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdc16); };
+
+
+		// ADC
+		// ----------
+		// AL, IMMED8
+		m_opcodes[0x14] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawAdc8); };
+		// AX, IMMED16
+		m_opcodes[0x15] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawAdc16); };
+
+		// PUSH SS
+		m_opcodes[0x16] = [=]() { PUSH(REG16::SS); };
+		// POP SS
+		m_opcodes[0x17] = [=]() { POP(REG16::SS); };
+
+		// SBB
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x18] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), false), rawSbb8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x19] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), false), rawSbb16); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x1A] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawSbb8); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x1B] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawSbb16); };
+
+		// SBB
+		// ----------
+		// AL, IMMED8
+		m_opcodes[0x1C] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawSbb8); };
+		// AX, IMMED16
+		m_opcodes[0x1D] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawSbb16); };
+
+		// PUSH DS (1)
+		m_opcodes[0x1E] = [=]() { PUSH(REG16::DS); };
+		// POP DS
+		m_opcodes[0x1F] = [=]() { POP(REG16::DS); };
+
+		// AND
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x20] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), false), rawAnd8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x21] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), false), rawAnd16); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x22] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawAnd8); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x23] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawAnd16); };
+
+		// AND
+		// ----------
+		// AL, IMMED8
+		m_opcodes[0x24] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawAnd8); };
+		// AX, IMMED16
+		m_opcodes[0x25] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawAnd16); };
+
+		// ES Segment Override
+		m_opcodes[0x26] = [=]() { SEGOVERRIDE(m_reg[REG16::ES]); };
+
+		// DAA
+		m_opcodes[0x27] = [=]() { DAA(); };
+
+		// SUB
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x28] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), false), rawSub8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x29] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), false), rawSub16); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x2A] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawSub8); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x2B] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawSub16); };
+
+		// SUB
+		// ----------
+		// AL, IMMED8
+		m_opcodes[0x2C] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawSub8); };
+		// AX, IMMED16
+		m_opcodes[0x2D] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawSub16); };
+
+		// CS Segment Override
+		m_opcodes[0x2E] = [=]() { SEGOVERRIDE(m_reg[REG16::CS]); };
+
+		// DAS
+		m_opcodes[0x2F] = [=]() { DAS(); };
+
+		// XOR
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x30] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), false), rawXor8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x31] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), false), rawXor16); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x32] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawXor8); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x33] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawXor16); };
+
+		// XOR
+		// ----------
+		// AL, IMMED8
+		m_opcodes[0x34] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawXor8); };
+		// AX, IMMED16
+		m_opcodes[0x35] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawXor16); };
+
+		// SS Segment Override
+		m_opcodes[0x36] = [=]() { SEGOVERRIDE(m_reg[REG16::SS]); };
+
+		// AAA
+		m_opcodes[0x37] = [=]() { AAA(); };
+
+		// CMP
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x38] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), false), rawCmp8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x39] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), false), rawCmp16); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x3A] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawCmp8); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x3B] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawCmp16); };
+
+		// CMP
+		// ----------
+		// AL, IMMED8
+		m_opcodes[0x3C] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawCmp8); };
+		// AX, IMMED16
+		m_opcodes[0x3D] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawCmp16); };
+
+		// DS Segment Override
+		m_opcodes[0x3E] = [=]() { SEGOVERRIDE(m_reg[REG16::DS]); };
+
+		// AAS
+		m_opcodes[0x3F] = [=]() { AAS(); };
+
+		// INC
+		// ----------
+		// INC AX
+		m_opcodes[0x40] = [=]() { INC16(m_reg[REG16::AX]); };
+		// INC CX
+		m_opcodes[0x41] = [=]() { INC16(m_reg[REG16::CX]); };
+		// INC DX
+		m_opcodes[0x42] = [=]() { INC16(m_reg[REG16::DX]); };
+		// INC BX
+		m_opcodes[0x43] = [=]() { INC16(m_reg[REG16::BX]); };
+		// INC SP
+		m_opcodes[0x44] = [=]() { INC16(m_reg[REG16::SP]); };
+		// INC BP
+		m_opcodes[0x45] = [=]() { INC16(m_reg[REG16::BP]); };
+		// INC SI
+		m_opcodes[0x46] = [=]() { INC16(m_reg[REG16::SI]); };
+		// INC DI
+		m_opcodes[0x47] = [=]() { INC16(m_reg[REG16::DI]); };
+
+		// DEC
+		// ----------
+		// DEC AX
+		m_opcodes[0x48] = [=]() { DEC16(m_reg[REG16::AX]); };
+		// DEC CX
+		m_opcodes[0x49] = [=]() { DEC16(m_reg[REG16::CX]); };
+		// DEC DX
+		m_opcodes[0x4A] = [=]() { DEC16(m_reg[REG16::DX]); };
+		// DEC BX
+		m_opcodes[0x4B] = [=]() { DEC16(m_reg[REG16::BX]); };
+		// DEC SP
+		m_opcodes[0x4C] = [=]() { DEC16(m_reg[REG16::SP]); };
+		// DEC BP
+		m_opcodes[0x4D] = [=]() { DEC16(m_reg[REG16::BP]); };
+		// DEC SI
+		m_opcodes[0x4E] = [=]() { DEC16(m_reg[REG16::SI]); };
+		// DEC DI
+		m_opcodes[0x4F] = [=]() { DEC16(m_reg[REG16::DI]); };
+
+		// PUSH
+		// ----------
+		// PUSH AX
+		m_opcodes[0x50] = [=]() { PUSH(REG16::AX); };
+		// PUSH CX
+		m_opcodes[0x51] = [=]() { PUSH(REG16::CX); };
+		// PUSH DX
+		m_opcodes[0x52] = [=]() { PUSH(REG16::DX); };
+		// PUSH BX
+		m_opcodes[0x53] = [=]() { PUSH(REG16::BX); };
+		// PUSH SP
+		// "Bug" on 8086/80186 where push sp pushes an already-decremented value
+		m_opcodes[0x54] = [=]() { PUSH(m_reg[REG16::SP] - 2); };
+		// PUSH BP
+		m_opcodes[0x55] = [=]() { PUSH(REG16::BP); };
+		// PUSH SI
+		m_opcodes[0x56] = [=]() { PUSH(REG16::SI); };
+		// PUSH DI
+		m_opcodes[0x57] = [=]() { PUSH(REG16::DI); };
+
+		// POP
+		// ----------
+		// POP AX
+		m_opcodes[0x58] = [=]() { POP(REG16::AX); };
+		// POP CX
+		m_opcodes[0x59] = [=]() { POP(REG16::CX); };
+		// POP DX
+		m_opcodes[0x5A] = [=]() { POP(REG16::DX); };
+		// POP BX
+		m_opcodes[0x5B] = [=]() { POP(REG16::BX); };
+		// POP SP
+		m_opcodes[0x5C] = [=]() { POP(REG16::SP); };
+		// POP BP
+		m_opcodes[0x5D] = [=]() { POP(REG16::BP); };
+		// POP SI
+		m_opcodes[0x5E] = [=]() { POP(REG16::SI); };
+		// POP DI
+		m_opcodes[0x5F] = [=]() { POP(REG16::DI); };
+
+		// Undocumented: 0x60-0x6F maps to 0x70-0x7F on 8086 only
+		// JO
+		m_opcodes[0x60] = [=]() { JMPif(GetFlag(FLAG_O)); };
+		m_opcodes[0x70] = [=]() { JMPif(GetFlag(FLAG_O)); };
+		// JNO
+		m_opcodes[0x61] = [=]() { JMPif(!GetFlag(FLAG_O)); };
+		m_opcodes[0x71] = [=]() { JMPif(!GetFlag(FLAG_O)); };
+		// JB/JNAE/JC
+		m_opcodes[0x62] = [=]() { JMPif(GetFlag(FLAG_C)); };
+		m_opcodes[0x72] = [=]() { JMPif(GetFlag(FLAG_C)); };
+		// JNB/JAE/JNC
+		m_opcodes[0x63] = [=]() { JMPif(!GetFlag(FLAG_C)); };
+		m_opcodes[0x73] = [=]() { JMPif(!GetFlag(FLAG_C)); };
+		// JE/JZ
+		m_opcodes[0x64] = [=]() { JMPif(GetFlag(FLAG_Z)); };
+		m_opcodes[0x74] = [=]() { JMPif(GetFlag(FLAG_Z)); };
+		// JNE/JNZ
+		m_opcodes[0x65] = [=]() { JMPif(!GetFlag(FLAG_Z)); };
+		m_opcodes[0x75] = [=]() { JMPif(!GetFlag(FLAG_Z)); };
+		// JBE/JNA
+		m_opcodes[0x66] = [=]() { JMPif(GetFlagNotAbove()); };
+		m_opcodes[0x76] = [=]() { JMPif(GetFlagNotAbove()); };
+		// JNBE/JA
+		m_opcodes[0x67] = [=]() { JMPif(!GetFlagNotAbove()); };
+		m_opcodes[0x77] = [=]() { JMPif(!GetFlagNotAbove()); };
+		// JS
+		m_opcodes[0x68] = [=]() { JMPif(GetFlag(FLAG_S)); };
+		m_opcodes[0x78] = [=]() { JMPif(GetFlag(FLAG_S)); };
+		// JNS
+		m_opcodes[0x69] = [=]() { JMPif(!GetFlag(FLAG_S)); };
+		m_opcodes[0x79] = [=]() { JMPif(!GetFlag(FLAG_S)); };
+		// JP/JPE
+		m_opcodes[0x6A] = [=]() { JMPif(GetFlag(FLAG_P)); };
+		m_opcodes[0x7A] = [=]() { JMPif(GetFlag(FLAG_P)); };
+		// JNP/JPO
+		m_opcodes[0x6B] = [=]() { JMPif(!GetFlag(FLAG_P)); };
+		m_opcodes[0x7B] = [=]() { JMPif(!GetFlag(FLAG_P)); };
+		// JL/JNGE
+		m_opcodes[0x6C] = [=]() { JMPif(!GetFlagNotLess()); };
+		m_opcodes[0x7C] = [=]() { JMPif(!GetFlagNotLess()); };
+		// JNL/JGE
+		m_opcodes[0x6D] = [=]() { JMPif(GetFlagNotLess()); };
+		m_opcodes[0x7D] = [=]() { JMPif(GetFlagNotLess()); };
+		// JLE/JNG
+		m_opcodes[0x6E] = [=]() { JMPif(!GetFlagGreater()); };
+		m_opcodes[0x7E] = [=]() { JMPif(!GetFlagGreater()); };
+		// JNLE/JG
+		m_opcodes[0x6F] = [=]() { JMPif(GetFlagGreater()); };
+		m_opcodes[0x7F] = [=]() { JMPif(GetFlagGreater()); };
+
+		//----------
+		// ADD/OR/ADC/SBB/AND/SUB/XOR/CMP
+		// ----------
+		// REG8/MEM8, IMM8
+		m_opcodes[0x80] = [=]() { ArithmeticMulti8Imm(FetchByte()); };
+		// REG16/MEM16, IMM16
+		m_opcodes[0x81] = [=]() { ArithmeticMulti16Imm(FetchByte(), false); }; // imm data = word
+
+		// ADD/--/ADC/SBB/---/SUB/---/CMP w/sign Extension
+		// ----------
+		// REG8/MEM8, IMM8 (same as 0x80)
+		m_opcodes[0x82] = [=]() { ArithmeticMulti8Imm(FetchByte()); };
+		// REG16/MEM16, IMM8 (sign-extend to 16)
+		m_opcodes[0x83] = [=]() { ArithmeticMulti16Imm(FetchByte(), true); }; // imm data = sign-extended byte
+
+		// TEST
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x84] = [=]() { Arithmetic8(GetModRegRM8(FetchByte(), true), rawTest8); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x85] = [=]() { Arithmetic16(GetModRegRM16(FetchByte(), true), rawTest16); };
+
+		// XCHG
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x86] = [=]() { XCHG8(GetModRegRM8(FetchByte())); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x87] = [=]() { XCHG16(GetModRegRM16(FetchByte())); };
+
+		// MOV
+		// ----------
+		// REG8/MEM8, REG8
+		m_opcodes[0x88] = [=]() { MOV8(GetModRegRM8(FetchByte(), false)); };
+		// REG16/MEM16, REG16
+		m_opcodes[0x89] = [=]() { MOV16(GetModRegRM16(FetchByte(), false)); };
+		// REG8, REG8/MEM8
+		m_opcodes[0x8A] = [=]() { MOV8(GetModRegRM8(FetchByte(), true)); };
+		// REG16, REG16/MEM16
+		m_opcodes[0x8B] = [=]() { MOV16(GetModRegRM16(FetchByte(), true)); };
+
+		// MOV
+		// ----------
+		// MOV REG16/MEM16, SEGREG
+		m_opcodes[0x8C] = [=]() { MOV16(GetModRegRM16(FetchByte(), false, true)); };
+
+		// LEA
+		// ----------
+		// REG16, MEM16
+		m_opcodes[0x8D] = [=]() { LEA(FetchByte()); };
+
+		// MOV
+		// ----------
+		// MOV SEGREG, REG16/MEM16
+		m_opcodes[0x8E] = [=]() { MOV16(GetModRegRM16(FetchByte(), true, true)); };
+
+		// POP
+		// ----------
+		// POP REG16/MEM16
+		m_opcodes[0x8F] = [=]() { POP(GetModRM16(FetchByte())); };
+
+		// XCHG
+		// ----------
+		// XCHG AX, AX (NOP)
+		m_opcodes[0x90] = [=]() { XCHG16(m_reg[REG16::AX], m_reg[REG16::AX]); };
+		// XCHG AX, CX
+		m_opcodes[0x91] = [=]() { XCHG16(m_reg[REG16::AX], m_reg[REG16::CX]); };
+		// XCHG AX, DX
+		m_opcodes[0x92] = [=]() { XCHG16(m_reg[REG16::AX], m_reg[REG16::DX]); };
+		// XCHG AX, BX
+		m_opcodes[0x93] = [=]() { XCHG16(m_reg[REG16::AX], m_reg[REG16::BX]); };
+		// XCHG AX, SP
+		m_opcodes[0x94] = [=]() { XCHG16(m_reg[REG16::AX], m_reg[REG16::SP]); };
+		// XCHG AX, BP
+		m_opcodes[0x95] = [=]() { XCHG16(m_reg[REG16::AX], m_reg[REG16::BP]); };
+		// XCHG AX, SI
+		m_opcodes[0x96] = [=]() { XCHG16(m_reg[REG16::AX], m_reg[REG16::SI]); };
+		// XCHG AX, DI
+		m_opcodes[0x97] = [=]() { XCHG16(m_reg[REG16::AX], m_reg[REG16::DI]); };
+
+		// CBW
+		m_opcodes[0x98] = [=]() { CBW(); };
+		// CWD
+		m_opcodes[0x99] = [=]() { CWD(); };
+
+		// CALL Far
+		m_opcodes[0x9A] = [=]() { CALLfar(); };
+
+		// WAIT
+		m_opcodes[0x9B] = [=]() { NotImplemented(m_opcode); };
+
+		// PUSHF
+		m_opcodes[0x9C] = [=]() { PUSHF(); };
+		// POPF
+		m_opcodes[0x9D] = [=]() { POPF(); };
+		// SAHF
+		m_opcodes[0x9E] = [=]() { SAHF(); };
+		// LAHF
+		m_opcodes[0x9F] = [=]() { LAHF(); };
+
+		// MOV
+		// ----------
+		// MOV AL, MEM8
+		m_opcodes[0xA0] = [=]() { MOV8(REG8::AL, m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); };
+		// MOV AX, MEM16
+		m_opcodes[0xA1] = [=]() { MOV16(REG16::AX, m_memory.Read16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); };
+
+		// MOV
+		// ----------
+		// MOV MEM8, AL
+		m_opcodes[0xA2] = [=]() { MOV8(Mem8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG8::AL]); };
+		// MOV MEM16, AX
+		m_opcodes[0xA3] = [=]() { MOV16(Mem16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG16::AX]); };
+
+		// MOVS
+		// ----------
+		// MOVS DEST-STR8, SRC-STR8
+		m_opcodes[0xA4] = [=]() { MOVS8(); };
+		// MOVS DEST-STR16, SRC-STR16
+		m_opcodes[0xA5] = [=]() { MOVS16(); };
+
+		// CMPS
+		// ----------
+		// CMPS DEST-STR8, SRC-STR8
+		m_opcodes[0xA6] = [=]() { CMPS8(); };
+		// CMPS DEST-STR16, SRC-STR16
+		m_opcodes[0xA7] = [=]() { CMPS16(); };
+
+		// TEST
+		// ----------
+		// TEST AL, IMM8
+		m_opcodes[0xA8] = [=]() { ArithmeticImm8(REG8::AL, FetchByte(), rawTest8); };
+		// TEST AX, IMM16
+		m_opcodes[0xA9] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawTest16); };
+
+		// STOS
+		// ----------
+		// STOS DEST-STR8
+		m_opcodes[0xAA] = [=]() { STOS8(); };
+		// STOS DEST-STR16
+		m_opcodes[0xAB] = [=]() { STOS16(); };
+
+		// LODS
+		// ----------
+		// LODS SRC-STR8
+		m_opcodes[0xAC] = [=]() { LODS8(); };
+		// LODS SRC-STR16
+		m_opcodes[0xAD] = [=]() { LODS16(); };
+
+		// SCAS
+		// ----------
+		// SCAS DEST-STR8
+		m_opcodes[0xAE] = [=]() { SCAS8(); };
+		// SCAS DEST-STR16
+		m_opcodes[0xAF] = [=]() { SCAS16(); };
+
+		// MOV
+		// ----------
+		// MOV AL, IMM8
+		m_opcodes[0xB0] = [=]() { MOV8(REG8::AL, FetchByte()); };
+		// MOV CL, IMM8
+		m_opcodes[0xB1] = [=]() { MOV8(REG8::CL, FetchByte()); };
+		// MOV DL, IMM8
+		m_opcodes[0xB2] = [=]() { MOV8(REG8::DL, FetchByte()); };
+		// MOV BL, IMM8
+		m_opcodes[0xB3] = [=]() { MOV8(REG8::BL, FetchByte()); };
+		// MOV AH, IMM8
+		m_opcodes[0xB4] = [=]() { MOV8(REG8::AH, FetchByte()); };
+		// MOV CH, IMM8
+		m_opcodes[0xB5] = [=]() { MOV8(REG8::CH, FetchByte()); };
+		// MOV DH, IMM8
+		m_opcodes[0xB6] = [=]() { MOV8(REG8::DH, FetchByte()); };
+		// MOV BH, IMM8
+		m_opcodes[0xB7] = [=]() { MOV8(REG8::BH, FetchByte()); };
+
+		// MOV AX, IMM16
+		m_opcodes[0xB8] = [=]() { MOV16(REG16::AX, FetchWord()); };
+		// MOV CX, IMM16
+		m_opcodes[0xB9] = [=]() { MOV16(REG16::CX, FetchWord()); };
+		// MOV DX, IMM16
+		m_opcodes[0xBA] = [=]() { MOV16(REG16::DX, FetchWord()); };
+		// MOV BX, IMM16
+		m_opcodes[0xBB] = [=]() { MOV16(REG16::BX, FetchWord()); };
+		// MOV SP, IMM16
+		m_opcodes[0xBC] = [=]() { MOV16(REG16::SP, FetchWord()); };
+		// MOV BP, IMM16
+		m_opcodes[0xBD] = [=]() { MOV16(REG16::BP, FetchWord()); };
+		// MOV SI, IMM16
+		m_opcodes[0xBE] = [=]() { MOV16(REG16::SI, FetchWord()); };
+		// MOV DI, IMM16
+		m_opcodes[0xBF] = [=]() { MOV16(REG16::DI, FetchWord()); };
+
+		// RET SP+IMM16
+		m_opcodes[0xC0] = [=]() { RETNear(true, FetchWord()); }; // Undocumented, 8086 only
+		m_opcodes[0xC2] = [=]() { RETNear(true, FetchWord()); };
+		// RET Near
+		m_opcodes[0xC1] = [=]() { RETNear(); }; // Undocumented, 8086 only
+		m_opcodes[0xC3] = [=]() { RETNear(); };
+
+		// LES REG16, MEM16
+		m_opcodes[0xC4] = [=]() { LoadPTR(m_reg[REG16::ES], GetModRegRM16(FetchByte(), true)); };
+		// LDS REG16, MEM16
+		m_opcodes[0xC5] = [=]() { LoadPTR(m_reg[REG16::DS], GetModRegRM16(FetchByte(), true)); };
+
+		// MOV
+		// ----------
+		// MOV MEM8, IMM8
+		m_opcodes[0xC6] = [=]() { MOVIMM8(GetModRM8(FetchByte())); };
+		// MOV MEM16, IMM16
+		m_opcodes[0xC7] = [=]() { MOVIMM16(GetModRM16(FetchByte())); };
+
+		// RET Far SP+IMM16
+		m_opcodes[0xC8] = [=]() { RETFar(true, FetchWord()); }; //Undocumented, 8086 only
+		m_opcodes[0xCA] = [=]() { RETFar(true, FetchWord()); };
+		// RET Far
+		m_opcodes[0xC9] = [=]() { RETFar(); }; //Undocumented, 8086 only
+		m_opcodes[0xCB] = [=]() { RETFar(); };
+
+		// INT3
+		m_opcodes[0xCC] = [=]() { INT(3); };
+		// INT IMM8
+		m_opcodes[0xCD] = [=]() { INT(FetchByte()); };
+		// INTO
+		m_opcodes[0xCE] = [=]() { if (GetFlag(FLAG_O)) { INT(4); TICKT3(); } };
+		// IRET
+		m_opcodes[0xCF] = [=]() { IRET(); };
+
+		// ROL/ROR/RCL/RCR/SAL|SHL/SHR/---/SAR
+		// ----------
+		// REG8/MEM8, 1
+		m_opcodes[0xD0] = [=]() { SHIFTROT8One(FetchByte()); };
+		// REG16/MEM16, 1
+		m_opcodes[0xD1] = [=]() { SHIFTROT16One(FetchByte()); };
+		// REG8/MEM8, CL
+		m_opcodes[0xD2] = [=]() { SHIFTROT8Multi(FetchByte()); };
+		// REG16/MEM16, CL
+		m_opcodes[0xD3] = [=]() { SHIFTROT16Multi(FetchByte()); };
+
+		// AAM
+		m_opcodes[0xD4] = [=]() { AAM(FetchByte()); };
+		// AAD
+		m_opcodes[0xD5] = [=]() { AAD(FetchByte()); };
+
+		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
+		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
+		m_opcodes[0xD6] = [=]() { SALC(); };
+
+		// XLAT
+		m_opcodes[0xD7] = [=]() { XLAT(); };
+
+		// ESC
+		m_opcodes[0xD8] = [=]() { GetModRegRM16(FetchByte()); };
+		m_opcodes[0xD9] = [=]() { GetModRegRM16(FetchByte()); };
+		m_opcodes[0xDA] = [=]() { GetModRegRM16(FetchByte()); };
+		m_opcodes[0xDB] = [=]() { GetModRegRM16(FetchByte()); };
+		m_opcodes[0xDC] = [=]() { GetModRegRM16(FetchByte()); };
+		m_opcodes[0xDD] = [=]() { GetModRegRM16(FetchByte()); };
+		m_opcodes[0xDE] = [=]() { GetModRegRM16(FetchByte()); };
+		m_opcodes[0xDF] = [=]() { GetModRegRM16(FetchByte()); };
+
+		// LOOPNZ/LOOPNE
+		m_opcodes[0xE0] = [=]() { LOOP(FetchByte(), GetFlag(FLAG_Z) == false); };
+		// LOOPZ/LOOPE
+		m_opcodes[0xE1] = [=]() { LOOP(FetchByte(), GetFlag(FLAG_Z) == true); };
+		// LOOP
+		m_opcodes[0xE2] = [=]() { LOOP(FetchByte()); };
+		// JCXZ
+		m_opcodes[0xE3] = [=]() { JMPif(m_reg[REG16::CX] == 0); };
+
+		// IN fixed
+		// --------
+		// IN AL, IMM8
+		m_opcodes[0xE4] = [=]() { IN8(FetchByte()); };
+		// IN AX, IMM16
+		m_opcodes[0xE5] = [=]() { IN16(FetchByte()); };
+
+		// OUT fixed
+		// --------
+		// OUT PORT8, AL
+		m_opcodes[0xE6] = [=]() { OUT8(FetchByte()); };
+		// OUT PORT8, AX
+		m_opcodes[0xE7] = [=]() { OUT16(FetchByte()); };
+
+		// CALL Near
+		m_opcodes[0xE8] = [=]() { CALLNear(FetchWord()); };
+		// JUMP Near
+		m_opcodes[0xE9] = [=]() { JMPNear(FetchWord()); };
+		// JUMP Far
+		m_opcodes[0xEA] = [=]() { JMPfar(); };
+		// JUMP Near Short
+		m_opcodes[0xEB] = [=]() { JMPNear(FetchByte()); };
+
+		// IN variable
+		// --------
+		// IN AL, DX
+		m_opcodes[0xEC] = [=]() { IN8(m_reg[REG16::DX]); };
+		// IN AX, DX
+		m_opcodes[0xED] = [=]() { IN16(m_reg[REG16::DX]); };
+
+		// OUT variable
+		// --------
+		// OUT DX, AL
+		m_opcodes[0xEE] = [=]() { OUT8(m_reg[REG16::DX]); };
+		// OUT DX, AX
+		m_opcodes[0xEF] = [=]() { OUT16(m_reg[REG16::DX]); };
+
+		// LOCK
+		m_opcodes[0xF0] = [=]() { NotImplemented(m_opcode); };
+
+		// REPNZ/REPNE
+		m_opcodes[0xF2] = [=]() { REP(false); };
+		// REPZ/REPE
+		m_opcodes[0xF3] = [=]() { REP(true); };
+
+		// HLT
+		m_opcodes[0xF4] = [=]() { HLT(); };
+		// CMC
+		m_opcodes[0xF5] = [=]() { CMC(); };
+
+		// TEST/---/NOT/NEG/MUL/IMUL/DIV/IDIV
+		// --------
+		// REG8/MEM8 (, IMM8 {TEST})
+		m_opcodes[0xF6] = [=]() { ArithmeticMulti8(FetchByte()); };
+		// REG16/MEM16 (, IMM16 {TEST})
+		m_opcodes[0xF7] = [=]() { ArithmeticMulti16(FetchByte()); };
+
+		m_opcodes[0xF8] = [=]() { CLC(); };
+		// STC (1)
+		m_opcodes[0xF9] = [=]() { STC(); };
+		// CLI (1)
+		m_opcodes[0xFA] = [=]() { CLI(); };
+		// STI (1)
+		m_opcodes[0xFB] = [=]() { STI(); };
+		// CLD (1)
+		m_opcodes[0xFC] = [=]() { CLD(); };
+		// STD (1)
+		m_opcodes[0xFD] = [=]() { STD(); };
+
+		// INC/DEC/---/---/---/---/---/---
+		// --------
+		// REG8/MEM8
+		m_opcodes[0xFE] = [=]() { INCDEC8(FetchByte()); };
+
+		// INC/DEC/CALL/CALL/JMP/JMP/PUSH/---
+		m_opcodes[0xFF] = [=]() { MultiFunc(FetchByte()); };
+	}
+
 	bool CPU8086::Step()
 	{
 		bool ret = CPU::Step();
@@ -110,671 +777,11 @@ namespace emul
 		bool clearSegOverride = inSegOverride;
 
 		m_currTiming = &m_info.GetOpcodeTiming(opcode);
-
-		switch(opcode)
+		
+		// Fetch the function corresponding to the opcode and run it
 		{
-		// ADD
-		// --------
-		// REG8/MEM8, REG8
-		case 0x00: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdd8); break;
-		// REG16/MEM16, REG16
-		case 0x01: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdd16); break;
-		// REG8, REG8/MEM8
-		case 0x02: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdd8); break;
-		// REG16, REG16/MEM16
-		case 0x03: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdd16); break;
-
-		// ADD
-		// --------
-		// AL, IMMED8
-		case 0x04: ArithmeticImm8(REG8::AL, FetchByte(), rawAdd8); break;
-		// AX, IMMED16
-		case 0x05: ArithmeticImm16(REG16::AX, FetchWord(), rawAdd16); break;
-
-		// PUSH ES (1)
-		case 0x06: PUSH(REG16::ES); break;
-		// POP ES (1)
-		case 0x07: POP(REG16::ES); break;
-
-		// OR
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x08: Arithmetic8(GetModRegRM8(FetchByte(), false), rawOr8); break;
-		// REG16/MEM16, REG16
-		case 0x09: Arithmetic16(GetModRegRM16(FetchByte(), false), rawOr16); break;
-		// REG8, REG8/MEM8
-		case 0x0A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawOr8); break;
-		// REG16, REG16/MEM16
-		case 0x0B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawOr16); break;
-
-		// OR
-		// ----------
-		// AL, IMMED8
-		case 0x0C: ArithmeticImm8(REG8::AL, FetchByte(), rawOr8); break;
-		// AX, IMMED16
-		case 0x0D: ArithmeticImm16(REG16::AX, FetchWord(), rawOr16); break;
-
-		// PUSH CS
-		case 0x0E: PUSH(REG16::CS); break;
-		// POP CS // Undocumented, 8086 only
-		case 0x0F: POP(REG16::CS); break;
-
-		// ADC
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x10: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAdc8); break;
-		// REG16/MEM16, REG16
-		case 0x11: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAdc16); break;
-		// REG8, REG8/MEM8
-		case 0x12: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAdc8); break;
-		// REG16, REG16/MEM16
-		case 0x13: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAdc16); break;
-
-
-		// ADC
-		// ----------
-		// AL, IMMED8
-		case 0x14: ArithmeticImm8(REG8::AL, FetchByte(), rawAdc8); break;
-		// AX, IMMED16
-		case 0x15: ArithmeticImm16(REG16::AX, FetchWord(), rawAdc16); break;
-
-		// PUSH SS
-		case 0x16: PUSH(REG16::SS); break;
-		// POP SS
-		case 0x17: POP(REG16::SS); break;
-
-		// SBB
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x18: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSbb8); break;
-		// REG16/MEM16, REG16
-		case 0x19: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSbb16); break;
-		// REG8, REG8/MEM8
-		case 0x1A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSbb8); break;
-		// REG16, REG16/MEM16
-		case 0x1B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSbb16); break;
-
-		// SBB
-		// ----------
-		// AL, IMMED8
-		case 0x1C: ArithmeticImm8(REG8::AL, FetchByte(), rawSbb8); break;
-		// AX, IMMED16
-		case 0x1D: ArithmeticImm16(REG16::AX, FetchWord(), rawSbb16); break;
-
-		// PUSH DS (1)
-		case 0x1E: PUSH(REG16::DS); break;
-		// POP DS
-		case 0x1F: POP(REG16::DS); break;
-
-		// AND
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x20: Arithmetic8(GetModRegRM8(FetchByte(), false), rawAnd8); break;
-		// REG16/MEM16, REG16
-		case 0x21: Arithmetic16(GetModRegRM16(FetchByte(), false), rawAnd16); break;
-		// REG8, REG8/MEM8
-		case 0x22: Arithmetic8(GetModRegRM8(FetchByte(), true), rawAnd8); break;
-		// REG16, REG16/MEM16
-		case 0x23: Arithmetic16(GetModRegRM16(FetchByte(), true), rawAnd16); break;
-
-		// AND
-		// ----------
-		// AL, IMMED8
-		case 0x24: ArithmeticImm8(REG8::AL, FetchByte(), rawAnd8); break;
-		// AX, IMMED16
-		case 0x25: ArithmeticImm16(REG16::AX, FetchWord(), rawAnd16); break;
-
-		// ES Segment Override
-		case 0x26: SEGOVERRIDE(m_reg[REG16::ES]); break;
-
-		// DAA
-		case 0x27: DAA(); break;
-
-		// SUB
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x28: Arithmetic8(GetModRegRM8(FetchByte(), false), rawSub8); break;
-		// REG16/MEM16, REG16
-		case 0x29: Arithmetic16(GetModRegRM16(FetchByte(), false), rawSub16); break;
-		// REG8, REG8/MEM8
-		case 0x2A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawSub8); break;
-		// REG16, REG16/MEM16
-		case 0x2B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawSub16); break;
-
-		// SUB
-		// ----------
-		// AL, IMMED8
-		case 0x2C: ArithmeticImm8(REG8::AL, FetchByte(), rawSub8); break;
-		// AX, IMMED16
-		case 0x2D: ArithmeticImm16(REG16::AX, FetchWord(), rawSub16); break;
-
-		// CS Segment Override
-		case 0x2E: SEGOVERRIDE(m_reg[REG16::CS]); break;
-
-		// DAS
-		case 0x2F: DAS(); break;
-
-		// XOR
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x30: Arithmetic8(GetModRegRM8(FetchByte(), false), rawXor8); break;
-		// REG16/MEM16, REG16
-		case 0x31: Arithmetic16(GetModRegRM16(FetchByte(), false), rawXor16); break;
-		// REG8, REG8/MEM8
-		case 0x32: Arithmetic8(GetModRegRM8(FetchByte(), true), rawXor8); break;
-		// REG16, REG16/MEM16
-		case 0x33: Arithmetic16(GetModRegRM16(FetchByte(), true), rawXor16); break;
-
-		// XOR
-		// ----------
-		// AL, IMMED8
-		case 0x34: ArithmeticImm8(REG8::AL, FetchByte(), rawXor8); break;
-		// AX, IMMED16
-		case 0x35: ArithmeticImm16(REG16::AX, FetchWord(), rawXor16); break;
-
-		// SS Segment Override
-		case 0x36: SEGOVERRIDE(m_reg[REG16::SS]); break;
-
-		// AAA
-		case 0x37: AAA(); break;
-
-		// CMP
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x38: Arithmetic8(GetModRegRM8(FetchByte(), false), rawCmp8); break;
-		// REG16/MEM16, REG16
-		case 0x39: Arithmetic16(GetModRegRM16(FetchByte(), false), rawCmp16); break;
-		// REG8, REG8/MEM8
-		case 0x3A: Arithmetic8(GetModRegRM8(FetchByte(), true), rawCmp8); break;
-		// REG16, REG16/MEM16
-		case 0x3B: Arithmetic16(GetModRegRM16(FetchByte(), true), rawCmp16); break;
-
-		// CMP
-		// ----------
-		// AL, IMMED8
-		case 0x3C: ArithmeticImm8(REG8::AL, FetchByte(), rawCmp8); break;
-		// AX, IMMED16
-		case 0x3D: ArithmeticImm16(REG16::AX, FetchWord(), rawCmp16); break;
-
-		// DS Segment Override
-		case 0x3E: SEGOVERRIDE(m_reg[REG16::DS]); break;
-
-		// AAS
-		case 0x3F: AAS(); break;
-
-		// INC
-		// ----------
-		// INC AX
-		case 0x40: INC16(m_reg[REG16::AX]); break;
-		// INC CX
-		case 0x41: INC16(m_reg[REG16::CX]); break;
-		// INC DX
-		case 0x42: INC16(m_reg[REG16::DX]); break;
-		// INC BX
-		case 0x43: INC16(m_reg[REG16::BX]); break;
-		// INC SP
-		case 0x44: INC16(m_reg[REG16::SP]); break;
-		// INC BP
-		case 0x45: INC16(m_reg[REG16::BP]); break;
-		// INC SI
-		case 0x46: INC16(m_reg[REG16::SI]); break;
-		// INC DI
-		case 0x47: INC16(m_reg[REG16::DI]); break;
-
-		// DEC
-		// ----------
-		// DEC AX
-		case 0x48: DEC16(m_reg[REG16::AX]); break;
-		// DEC CX
-		case 0x49: DEC16(m_reg[REG16::CX]); break;
-		// DEC DX
-		case 0x4A: DEC16(m_reg[REG16::DX]); break;
-		// DEC BX
-		case 0x4B: DEC16(m_reg[REG16::BX]); break;
-		// DEC SP
-		case 0x4C: DEC16(m_reg[REG16::SP]); break;
-		// DEC BP
-		case 0x4D: DEC16(m_reg[REG16::BP]); break;
-		// DEC SI
-		case 0x4E: DEC16(m_reg[REG16::SI]); break;
-		// DEC DI
-		case 0x4F: DEC16(m_reg[REG16::DI]); break;
-
-		// PUSH
-		// ----------
-		// PUSH AX
-		case 0x50: PUSH(REG16::AX); break;
-		// PUSH CX
-		case 0x51: PUSH(REG16::CX); break;
-		// PUSH DX
-		case 0x52: PUSH(REG16::DX); break;
-		// PUSH BX
-		case 0x53: PUSH(REG16::BX); break;
-		// PUSH SP
-		// "Bug" on 8086/80186 where push sp pushes an already-decremented value
-		case 0x54: PUSH(m_reg[REG16::SP] - 2); break;
-		// PUSH BP
-		case 0x55: PUSH(REG16::BP); break;
-		// PUSH SI
-		case 0x56: PUSH(REG16::SI); break;
-		// PUSH DI
-		case 0x57: PUSH(REG16::DI); break;
-
-		// POP
-		// ----------
-		// POP AX
-		case 0x58: POP(REG16::AX); break;
-		// POP CX
-		case 0x59: POP(REG16::CX); break;
-		// POP DX
-		case 0x5A: POP(REG16::DX); break;
-		// POP BX
-		case 0x5B: POP(REG16::BX); break;
-		// POP SP
-		case 0x5C: POP(REG16::SP); break;
-		// POP BP
-		case 0x5D: POP(REG16::BP); break;
-		// POP SI
-		case 0x5E: POP(REG16::SI); break;
-		// POP DI
-		case 0x5F: POP(REG16::DI); break;
-
-		// Undocumented: 0x60-0x6F maps to 0x70-0x7F on 8086 only
-		// JO
-		case 0x60:
-		case 0x70: JMPif(GetFlag(FLAG_O)); break;
-		// JNO
-		case 0x61:
-		case 0x71: JMPif(!GetFlag(FLAG_O)); break;
-		// JB/JNAE/JC
-		case 0x62:
-		case 0x72: JMPif(GetFlag(FLAG_C)); break;
-		// JNB/JAE/JNC
-		case 0x63:
-		case 0x73: JMPif(!GetFlag(FLAG_C)); break;
-		// JE/JZ
-		case 0x64:
-		case 0x74: JMPif(GetFlag(FLAG_Z)); break;
-		// JNE/JNZ
-		case 0x65:
-		case 0x75: JMPif(!GetFlag(FLAG_Z)); break;
-		// JBE/JNA
-		case 0x66:
-		case 0x76: JMPif(GetFlagNotAbove()); break;
-		// JNBE/JA
-		case 0x67:
-		case 0x77: JMPif(!GetFlagNotAbove()); break;
-		// JS
-		case 0x68:
-		case 0x78: JMPif(GetFlag(FLAG_S)); break;
-		// JNS
-		case 0x69:
-		case 0x79: JMPif(!GetFlag(FLAG_S)); break;
-		// JP/JPE
-		case 0x6A:
-		case 0x7A: JMPif(GetFlag(FLAG_P)); break;
-		// JNP/JPO
-		case 0x6B:
-		case 0x7B: JMPif(!GetFlag(FLAG_P)); break;
-		// JL/JNGE
-		case 0x6C:
-		case 0x7C: JMPif(!GetFlagNotLess()); break;
-		// JNL/JGE
-		case 0x6D:
-		case 0x7D: JMPif(GetFlagNotLess()); break;
-		// JLE/JNG
-		case 0x6E:
-		case 0x7E: JMPif(!GetFlagGreater()); break;
-		// JNLE/JG
-		case 0x6F:
-		case 0x7F: JMPif(GetFlagGreater()); break;
-
-		//----------
-		// ADD/OR/ADC/SBB/AND/SUB/XOR/CMP
-		// ----------
-		// REG8/MEM8, IMM8
-		case 0x80: ArithmeticMulti8Imm(FetchByte()); break;
-		// REG16/MEM16, IMM16
-		case 0x81: ArithmeticMulti16Imm(FetchByte(), false); break; // imm data = word
-
-		// ADD/--/ADC/SBB/---/SUB/---/CMP w/sign Extension
-		// ----------
-		// REG8/MEM8, IMM8 (same as 0x80)
-		case 0x82: ArithmeticMulti8Imm(FetchByte()); break;
-		// REG16/MEM16, IMM8 (sign-extend to 16)
-		case 0x83: ArithmeticMulti16Imm(FetchByte(), true); break; // imm data = sign-extended byte
-
-		// TEST
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x84: Arithmetic8(GetModRegRM8(FetchByte(), true), rawTest8); break;
-		// REG16/MEM16, REG16
-		case 0x85: Arithmetic16(GetModRegRM16(FetchByte(), true), rawTest16); break;
-
-		// XCHG
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x86: XCHG8(GetModRegRM8(FetchByte())); break;
-		// REG16/MEM16, REG16
-		case 0x87: XCHG16(GetModRegRM16(FetchByte())); break;
-
-		// MOV
-		// ----------
-		// REG8/MEM8, REG8
-		case 0x88: MOV8(GetModRegRM8(FetchByte(), false)); break;
-		// REG16/MEM16, REG16
-		case 0x89: MOV16(GetModRegRM16(FetchByte(), false)); break;
-		// REG8, REG8/MEM8
-		case 0x8A: MOV8(GetModRegRM8(FetchByte(), true)); break;
-		// REG16, REG16/MEM16
-		case 0x8B: MOV16(GetModRegRM16(FetchByte(), true)); break;
-
-		// MOV
-		// ----------
-		// MOV REG16/MEM16, SEGREG
-		case 0x8C: MOV16(GetModRegRM16(FetchByte(), false, true)); break;
-
-		// LEA
-		// ----------
-		// REG16, MEM16
-		case 0x8D: LEA(FetchByte()); break;
-
-		// MOV
-		// ----------
-		// MOV SEGREG, REG16/MEM16
-		case 0x8E: MOV16(GetModRegRM16(FetchByte(), true, true)); break;
-
-		// POP
-		// ----------
-		// POP REG16/MEM16
-		case 0x8F: POP(GetModRM16(FetchByte())); break;
-
-		// XCHG
-		// ----------
-		// XCHG AX, AX (NOP)
-		case 0x90: XCHG16(m_reg[REG16::AX], m_reg[REG16::AX]); break;
-		// XCHG AX, CX
-		case 0x91: XCHG16(m_reg[REG16::AX], m_reg[REG16::CX]); break;
-		// XCHG AX, DX
-		case 0x92: XCHG16(m_reg[REG16::AX], m_reg[REG16::DX]); break;
-		// XCHG AX, BX
-		case 0x93: XCHG16(m_reg[REG16::AX], m_reg[REG16::BX]); break;
-		// XCHG AX, SP
-		case 0x94: XCHG16(m_reg[REG16::AX], m_reg[REG16::SP]); break;
-		// XCHG AX, BP
-		case 0x95: XCHG16(m_reg[REG16::AX], m_reg[REG16::BP]); break;
-		// XCHG AX, SI
-		case 0x96: XCHG16(m_reg[REG16::AX], m_reg[REG16::SI]); break;
-		// XCHG AX, DI
-		case 0x97: XCHG16(m_reg[REG16::AX], m_reg[REG16::DI]); break;
-
-		// CBW
-		case 0x98: CBW(); break;
-		// CWD
-		case 0x99: CWD(); break;
-
-		// CALL Far
-		case 0x9A: CALLfar(); break;
-
-		// WAIT
-		case 0x9B: NotImplemented(opcode); break;
-
-		// PUSHF
-		case 0x9C: PUSHF(); break;
-		// POPF
-		case 0x9D: POPF(); break;
-		// SAHF
-		case 0x9E: SAHF(); break;
-		// LAHF
-		case 0x9F: LAHF(); break;
-
-		// MOV
-		// ----------
-		// MOV AL, MEM8
-		case 0xA0: MOV8(REG8::AL, m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); break;
-		// MOV AX, MEM16
-		case 0xA1: MOV16(REG16::AX, m_memory.Read16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); break;
-
-		// MOV
-		// ----------
-		// MOV MEM8, AL
-		case 0xA2: MOV8(Mem8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG8::AL]); break;
-		// MOV MEM16, AX
-		case 0xA3: MOV16(Mem16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG16::AX]); break;
-
-		// MOVS
-		// ----------
-		// MOVS DEST-STR8, SRC-STR8
-		case 0xA4: MOVS8(); break;
-		// MOVS DEST-STR16, SRC-STR16
-		case 0xA5: MOVS16(); break;
-
-		// CMPS
-		// ----------
-		// CMPS DEST-STR8, SRC-STR8
-		case 0xA6: CMPS8(); break;
-		// CMPS DEST-STR16, SRC-STR16
-		case 0xA7: CMPS16(); break;
-
-		// TEST
-		// ----------
-		// TEST AL, IMM8
-		case 0xA8: ArithmeticImm8(REG8::AL, FetchByte(), rawTest8); break;
-		// TEST AX, IMM16
-		case 0xA9: ArithmeticImm16(REG16::AX, FetchWord(), rawTest16); break;
-
-		// STOS
-		// ----------
-		// STOS DEST-STR8
-		case 0xAA: STOS8(); break;
-		// STOS DEST-STR16
-		case 0xAB: STOS16(); break;
-
-		// LODS
-		// ----------
-		// LODS SRC-STR8
-		case 0xAC: LODS8(); break;
-		// LODS SRC-STR16
-		case 0xAD: LODS16(); break;
-
-		// SCAS
-		// ----------
-		// SCAS DEST-STR8
-		case 0xAE: SCAS8(); break;
-		// SCAS DEST-STR16
-		case 0xAF: SCAS16(); break;
-
-		// MOV
-		// ----------
-		// MOV AL, IMM8
-		case 0xB0: MOV8(REG8::AL, FetchByte()); break;
-		// MOV CL, IMM8
-		case 0xB1: MOV8(REG8::CL, FetchByte()); break;
-		// MOV DL, IMM8
-		case 0xB2: MOV8(REG8::DL, FetchByte()); break;
-		// MOV BL, IMM8
-		case 0xB3: MOV8(REG8::BL, FetchByte()); break;
-		// MOV AH, IMM8
-		case 0xB4: MOV8(REG8::AH, FetchByte()); break;
-		// MOV CH, IMM8
-		case 0xB5: MOV8(REG8::CH, FetchByte()); break;
-		// MOV DH, IMM8
-		case 0xB6: MOV8(REG8::DH, FetchByte()); break;
-		// MOV BH, IMM8
-		case 0xB7: MOV8(REG8::BH, FetchByte()); break;
-
-		// MOV AX, IMM16
-		case 0xB8: MOV16(REG16::AX, FetchWord()); break;
-		// MOV CX, IMM16
-		case 0xB9: MOV16(REG16::CX, FetchWord()); break;
-		// MOV DX, IMM16
-		case 0xBA: MOV16(REG16::DX, FetchWord()); break;
-		// MOV BX, IMM16
-		case 0xBB: MOV16(REG16::BX, FetchWord()); break;
-		// MOV SP, IMM16
-		case 0xBC: MOV16(REG16::SP, FetchWord()); break;
-		// MOV BP, IMM16
-		case 0xBD: MOV16(REG16::BP, FetchWord()); break;
-		// MOV SI, IMM16
-		case 0xBE: MOV16(REG16::SI, FetchWord()); break;
-		// MOV DI, IMM16
-		case 0xBF: MOV16(REG16::DI, FetchWord()); break;
-
-		// RET SP+IMM16
-		case 0xC0: // Undocumented, 8086 only
-		case 0xC2: RETNear(true, FetchWord()); break;
-		// RET Near
-		case 0xC1: // Undocumented, 8086 only
-		case 0xC3: RETNear(); break;
-
-		// LES REG16, MEM16
-		case 0xC4: LoadPTR(m_reg[REG16::ES], GetModRegRM16(FetchByte(), true)); break;
-		// LDS REG16, MEM16
-		case 0xC5: LoadPTR(m_reg[REG16::DS], GetModRegRM16(FetchByte(), true)); break;
-
-		// MOV
-		// ----------
-		// MOV MEM8, IMM8
-		case 0xC6: MOVIMM8(GetModRM8(FetchByte())); break;
-		// MOV MEM16, IMM16
-		case 0xC7: MOVIMM16(GetModRM16(FetchByte())); break;
-
-		// RET Far SP+IMM16
-		case 0xC8: //Undocumented, 8086 only
-		case 0xCA: RETFar(true, FetchWord()); break;
-		// RET Far
-		case 0xC9: //Undocumented, 8086 only
-		case 0xCB: RETFar(); break;
-
-		// INT3
-		case 0xCC: INT(3); break;
-		// INT IMM8
-		case 0xCD: INT(FetchByte()); break;
-		// INTO
-		case 0xCE: if (GetFlag(FLAG_O)) { INT(4); TICKT3(); } break;
-		// IRET
-		case 0xCF: IRET(); break;
-
-		// ROL/ROR/RCL/RCR/SAL|SHL/SHR/---/SAR
-		// ----------
-		// REG8/MEM8, 1
-		case 0xD0: SHIFTROT8One(FetchByte()); break;
-		// REG16/MEM16, 1
-		case 0xD1: SHIFTROT16One(FetchByte()); break;
-		// REG8/MEM8, CL
-		case 0xD2: SHIFTROT8Multi(FetchByte()); break;
-		// REG16/MEM16, CL
-		case 0xD3: SHIFTROT16Multi(FetchByte()); break;
-
-		// AAM
-		case 0xD4: AAM(FetchByte()); break;
-		// AAD
-		case 0xD5: AAD(FetchByte()); break;
-
-		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
-		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
-		case 0xD6: SALC(); break;
-
-		// XLAT
-		case 0xD7: XLAT(); break;
-
-		// ESC
-		case 0xD8: 
-		case 0xD9: 
-		case 0xDA: 
-		case 0xDB: 
-		case 0xDC: 
-		case 0xDD: 
-		case 0xDE: 
-		case 0xDF: GetModRegRM16(FetchByte()); break;
-
-		// LOOPNZ/LOOPNE
-		case 0xE0: LOOP(FetchByte(), GetFlag(FLAG_Z) == false); break;
-		// LOOPZ/LOOPE
-		case 0xE1: LOOP(FetchByte(), GetFlag(FLAG_Z) == true); break;
-		// LOOP
-		case 0xE2: LOOP(FetchByte()); break;
-		// JCXZ
-		case 0xE3: JMPif(m_reg[REG16::CX] == 0); break;
-
-		// IN fixed
-		// --------
-		// IN AL, IMM8
-		case 0xE4: IN8(FetchByte()); break;
-		// IN AX, IMM16
-		case 0xE5: IN16(FetchByte()); break;
-
-		// OUT fixed
-		// --------
-		// OUT PORT8, AL
-		case 0xE6: OUT8(FetchByte()); break;
-		// OUT PORT8, AX
-		case 0xE7: OUT16(FetchByte()); break;
-
-		// CALL Near
-		case 0xE8: CALLNear(FetchWord()); break;
-		// JUMP Near
-		case 0xE9: JMPNear(FetchWord()); break;
-		// JUMP Far
-		case 0xEA: JMPfar(); break;
-		// JUMP Near Short
-		case 0xEB: JMPNear(FetchByte()); break;
-
-		// IN variable
-		// --------
-		// IN AL, DX
-		case 0xEC: IN8(m_reg[REG16::DX]); break;
-		// IN AX, DX
-		case 0xED: IN16(m_reg[REG16::DX]); break;
-
-		// OUT variable
-		// --------
-		// OUT DX, AL
-		case 0xEE: OUT8(m_reg[REG16::DX]); break;
-		// OUT DX, AX
-		case 0xEF: OUT16(m_reg[REG16::DX]); break;
-
-		// LOCK
-		case 0xF0: NotImplemented(opcode); break;
-
-		// REPNZ/REPNE
-		case 0xF2: REP(false); break;
-		// REPZ/REPE
-		case 0xF3: REP(true); break;
-
-		// HLT
-		case 0xF4: HLT(); break;
-		// CMC
-		case 0xF5: CMC(); break;
-
-		// TEST/---/NOT/NEG/MUL/IMUL/DIV/IDIV
-		// --------
-		// REG8/MEM8 (, IMM8 {TEST})
-		case 0xF6: ArithmeticMulti8(FetchByte()); break;
-		// REG16/MEM16 (, IMM16 {TEST})
-		case 0xF7: ArithmeticMulti16(FetchByte()); break;
-
-		case 0xF8: CLC(); break;
-		// STC (1)
-		case 0xF9: STC(); break;
-		// CLI (1)
-		case 0xFA: CLI(); break;
-		// STI (1)
-		case 0xFB: STI(); break;
-		// CLD (1)
-		case 0xFC: CLD(); break;
-		// STD (1)
-		case 0xFD: STD(); break;
-
-		// INC/DEC/---/---/---/---/---/---
-		// --------
-		// REG8/MEM8
-		case 0xFE: INCDEC8(FetchByte()); break;
-
-		// INC/DEC/CALL/CALL/JMP/JMP/PUSH/---
-		case 0xFF: MultiFunc(FetchByte()); break;
-
-		default: UnknownOpcode(opcode);
+			auto& opFunc = m_opcodes[opcode];
+			opFunc();
 		}
 
 		TICK();

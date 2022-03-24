@@ -234,6 +234,10 @@ namespace emul
 		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc)[0]); }
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
 
+		void Init();
+
+		std::vector<std::function<void()>> m_opcodes;
+
 		cpuInfo::CPUInfo m_info;
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_opcode = 0;

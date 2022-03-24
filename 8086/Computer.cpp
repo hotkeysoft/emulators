@@ -76,6 +76,7 @@ namespace emul
 
 	void Computer::Init(WORD baseram)
 	{
+		CPU8086::Init();
 		m_baseRAM = baseram;
 		PortConnector::Clear();
 	}
