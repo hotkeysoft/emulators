@@ -327,6 +327,9 @@ namespace emul
 
 		void JMPif(bool cond);
 
+		BYTE _SHIFTROT8(BYTE in, BYTE op2, BYTE count);
+		WORD _SHIFTROT16(WORD in, BYTE op2, BYTE count);
+
 		void SHIFTROT8One(BYTE op2);
 		void SHIFTROT16One(BYTE op2);
 

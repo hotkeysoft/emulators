@@ -1448,66 +1448,64 @@ namespace emul
 	// Rotate left: n = (n << d)|(n >> (BITS - d))
 	// Rotate right: n = (n >> d)|(n << (BITS - d))
 
-	void CPU8086::SHIFTROT8One(BYTE op2)
+	BYTE CPU8086::_SHIFTROT8(BYTE work, BYTE op2, BYTE count)
 	{
-		LogPrintf(LOG_DEBUG, "SHIFTROT8One");
-
-		Mem8 dest = GetModRM8(op2);
-		BYTE work = dest.Read();
-
-		BYTE before = work;
-		BYTE sign;
-		bool carry;
-		switch (GetOP2(op2))
+		for (BYTE i = 0; i < count; ++i)
 		{
-		case 0: // ROL
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
-			SetFlag(FLAG_C, GetMSB(work));
-			work = (work << 1) | (work >> 7);
-			break;
-		case 1: // ROR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
-			SetFlag(FLAG_C, GetLSB(work));
-			work = (work >> 1) | (work << 7);
-			break;
-		case 2: // RCL
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
-			carry = GetFlag(FLAG_C);
-			SetFlag(FLAG_C, GetMSB(work));
-			work <<= 1;
-			work |= (carry ? 1 : 0);
-			break;
-		case 3: // RCR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-			carry = GetLSB(work);
-			work >>= 1;
-			work |= (GetFlag(FLAG_C) ? 128 : 0);
-			SetFlag(FLAG_C, carry);
-			break;
-		case 4: // SHL/SAL
-		case 6: // Undocumented 
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
-			SetFlag(FLAG_C, GetMSB(work));
-			work <<= 1;
-			break;
-		case 5: // SHR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
-			SetFlag(FLAG_C, GetLSB(work));
-			work >>= 1;
-			break;
-		case 7: // SAR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
-			SetFlag(FLAG_C, GetLSB(work));
-			sign = (work & 128);
-			work >>= 1;
-			work |= sign;
-			break;
-		default:
-			throw(std::exception("not possible"));
-		}
-		SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
+			BYTE before = work;
+			BYTE sign;
+			bool carry;
+			switch (GetOP2(op2))
+			{
+			case 0: // ROL
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROL");
+				SetFlag(FLAG_C, GetMSB(work));
+				work = (work << 1) | (work >> 7);
+				break;
+			case 1: // ROR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 ROR");
+				SetFlag(FLAG_C, GetLSB(work));
+				work = (work >> 1) | (work << 7);
+				break;
+			case 2: // RCL
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCL");
+				carry = GetFlag(FLAG_C);
+				SetFlag(FLAG_C, GetMSB(work));
+				work <<= 1;
+				work |= (carry ? 1 : 0);
+				break;
+			case 3: // RCR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
+				carry = GetLSB(work);
+				work >>= 1;
+				work |= (GetFlag(FLAG_C) ? 128 : 0);
+				SetFlag(FLAG_C, carry);
+				break;
+			case 4: // SHL/SAL
+			case 6: // Undocumented 
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
+				SetFlag(FLAG_C, GetMSB(work));
+				work <<= 1;
+				break;
+			case 5: // SHR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHR");
+				SetFlag(FLAG_C, GetLSB(work));
+				work >>= 1;
+				break;
+			case 7: // SAR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 SAR");
+				SetFlag(FLAG_C, GetLSB(work));
+				sign = (work & 128);
+				work >>= 1;
+				work |= sign;
+				break;
+			default:
+				throw(std::exception("not possible"));
+			}
+			SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
 
-		dest.Write(work);
+			TICKT3(); // Add overhead for each shift
+		}
 
 		if (GetOP2(op2) >= 4) // Only shift operation adjusts SZP flags
 		{
@@ -1515,6 +1513,18 @@ namespace emul
 			AdjustZero(work);
 			AdjustParity(work);
 		}
+
+		return work;
+	}
+
+	void CPU8086::SHIFTROT8One(BYTE op2)
+	{
+		LogPrintf(LOG_DEBUG, "SHIFTROT8One");
+
+		Mem8 dest = GetModRM8(op2);
+		BYTE work = dest.Read();
+		work = _SHIFTROT8(work, op2, 1);
+		dest.Write(work);
 	}
 
 	void CPU8086::SHIFTROT8Multi(BYTE op2)
@@ -1522,12 +1532,79 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "SHIFTROT8Multi");
 
 		BYTE count = m_reg[REG8::CL];
+		Mem8 dest = GetModRM8(op2);
+		BYTE work = dest.Read();
+		work = _SHIFTROT8(work, op2, count);
+		dest.Write(work);		
+	}
 
+	WORD CPU8086::_SHIFTROT16(WORD work, BYTE op2, BYTE count)
+	{
 		for (BYTE i = 0; i < count; ++i)
 		{
-			SHIFTROT8One(op2);
-			TICKT3();
-		}	
+			WORD before = work;
+			WORD sign;
+			bool carry;
+			switch (GetOP2(op2))
+			{
+			case 0: // ROL
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROL");
+				SetFlag(FLAG_C, GetMSB(work));
+				work = (work << 1) | (work >> 15);
+				break;
+			case 1: // ROR
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 ROR");
+				SetFlag(FLAG_C, GetLSB(work));
+				work = (work >> 1) | (work << 15);
+				break;
+			case 2: // RCL
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 RCL");
+				carry = GetFlag(FLAG_C);
+				SetFlag(FLAG_C, GetMSB(work));
+				work <<= 1;
+				work |= (carry ? 1 : 0);
+				break;
+			case 3: // RCR
+				LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
+				carry = GetLSB(work);
+				work >>= 1;
+				work |= (GetFlag(FLAG_C) ? 32768 : 0);
+				SetFlag(FLAG_C, carry);
+				break;
+			case 4: // SHL/SAL
+			case 6: // Undocumented 
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
+				SetFlag(FLAG_C, GetMSB(work));
+				work <<= 1;
+				break;
+			case 5: // SHR
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHR");
+				SetFlag(FLAG_C, GetLSB(work));
+				work >>= 1;
+				break;
+			case 7: // SAR
+				LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
+				SetFlag(FLAG_C, GetLSB(work));
+				sign = (work & 32768);
+				work >>= 1;
+				work |= sign;
+				break;
+			default:
+				throw(std::exception("not possible"));
+			}
+			SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
+
+			TICKT3(); // Add overhead for each shift
+		}
+
+		if (GetOP2(op2) >= 4) // Only shift operation adjusts flags
+		{
+			AdjustSign(work);
+			AdjustZero(work);
+			AdjustParity(work);
+		}
+
+		return work;
 	}
 
 	void CPU8086::SHIFTROT16One(BYTE op2)
@@ -1536,67 +1613,8 @@ namespace emul
 
 		Mem16 dest = GetModRM16(op2);
 		WORD work = dest.Read();
-
-		WORD before = work;
-		WORD sign;
-		bool carry;
-		switch (GetOP2(op2))
-		{
-		case 0: // ROL
-			LogPrintf(LOG_DEBUG, "SHIFTROT16 ROL");
-			SetFlag(FLAG_C, GetMSB(work));
-			work = (work << 1) | (work >> 15);
-			break;
-		case 1: // ROR
-			LogPrintf(LOG_DEBUG, "SHIFTROT16 ROR");
-			SetFlag(FLAG_C, GetLSB(work));
-			work = (work >> 1) | (work << 15);
-			break;
-		case 2: // RCL
-			LogPrintf(LOG_DEBUG, "SHIFTROT16 RCL");
-			carry = GetFlag(FLAG_C);
-			SetFlag(FLAG_C, GetMSB(work));
-			work <<= 1;
-			work |= (carry ? 1 : 0);
-			break;
-		case 3: // RCR
-			LogPrintf(LOG_DEBUG, "SHIFTROT8 RCR");
-			carry = GetLSB(work);
-			work >>= 1;
-			work |= (GetFlag(FLAG_C) ? 32768 : 0);
-			SetFlag(FLAG_C, carry);
-			break;
-		case 4: // SHL/SAL
-		case 6: // Undocumented 
-			LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
-			SetFlag(FLAG_C, GetMSB(work));
-			work <<= 1;
-			break;
-		case 5: // SHR
-			LogPrintf(LOG_DEBUG, "SHIFTROT16 SHR");
-			SetFlag(FLAG_C, GetLSB(work));
-			work >>= 1;
-			break;
-		case 7: // SAR
-			LogPrintf(LOG_DEBUG, "SHIFTROT16 SAR");
-			SetFlag(FLAG_C, GetLSB(work));
-			sign = (work & 32768);
-			work >>= 1;
-			work |= sign;
-			break;
-		default:
-			throw(std::exception("not possible"));
-		}
-		SetFlag(FLAG_O, GetMSB(before) != GetMSB(work));
-
+		work = _SHIFTROT16(work, op2, 1);
 		dest.Write(work);
-
-		if (GetOP2(op2) >= 4) // Only shift operation adjusts flags
-		{
-			AdjustSign(work);
-			AdjustZero(work);
-			AdjustParity(work);
-		}
 	}
 
 	void CPU8086::SHIFTROT16Multi(BYTE op2)
@@ -1604,11 +1622,10 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "SHIFTROT16Multi");
 
 		BYTE count = m_reg[REG8::CL];
-		for (BYTE i = 0; i < count; ++i)
-		{
-			SHIFTROT16One(op2);
-			TICKT3();
-		}
+		Mem16 dest = GetModRM16(op2);
+		WORD work = dest.Read();
+		work = _SHIFTROT16(work, op2, count);
+		dest.Write(work);
 	}
 
 	void CPU8086::Arithmetic8(SourceDest8 sd, RawOpFunc8 func)
