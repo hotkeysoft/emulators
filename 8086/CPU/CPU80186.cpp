@@ -15,6 +15,8 @@ namespace emul
 	{
 		CPU8086::Init();
 
+		// TODO: Writes at SEG:FFFF don't wrap around on the 80186
+
 		// Invalid Opcodes
 		m_opcodes[0x0F] = [=]() { InvalidOpcode(); };
 
@@ -27,10 +29,6 @@ namespace emul
 		m_opcodes[0xD6] = [=]() { InvalidOpcode(); };
 
 		m_opcodes[0xF1] = [=]() { InvalidOpcode(); };
-
-		// PUSH SP
-		// Fixes the "Bug" on 8086/80186 where push sp pushed an already-decremented value
-		m_opcodes[0x54] = [=]() { PUSH(m_reg[REG16::SP]); };
 
 		// PUSHA
 		m_opcodes[0x60] = [=]() { PUSHA(); };
@@ -94,6 +92,7 @@ namespace emul
 
 		if (value < lowBound || value > hiBound)
 		{
+			// TODO: Push CS:IP of current instruction?
 			INT(5);
 		}
 	}
