@@ -4,6 +4,7 @@
 
 using cpuInfo::Opcode;
 using cpuInfo::Coord;
+using emul::GetBit;
 
 namespace emul
 {
@@ -236,16 +237,17 @@ namespace emul
 
 	void Monitor::UpdateFlags()
 	{
-		static WORD attr[12];
+		static Coord coord = m_cpu->GetInfo().GetCoord("FLAGS");
+		int width = coord.w;
 
-		for (int i = 0; i < 12; ++i)
+		static WORD attr[16];
+
+		for (int i = 0; i < width; ++i)
 		{
-			attr[11-i] = (m_cpu->m_reg[REG16::FLAGS] & (1 << i)) ? 15 : 8;
+			attr[width-i-1] = GetBit(m_cpu->m_reg[REG16::FLAGS], i) ? 15 : 8;
 		}
 
-		static Coord coord = m_cpu->GetInfo().GetCoord("FLAGS");
-
-		m_console.WriteAttrAt(coord.x, coord.y, attr, 12);
+		m_console.WriteAttrAt(coord.x, coord.y, attr, width);
 	}
 
 	void Monitor::UpdateRAM()
