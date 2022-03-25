@@ -136,6 +136,11 @@ namespace cpuInfo
 		else if (ret.i16) ret.imm = Opcode::IMM::W16;
 		else if (ret.i32) ret.imm = Opcode::IMM::W32;
 		else ret.imm = Opcode::IMM::NONE;
+		// Special case: I16/I8 (ENTER)
+		if (ret.i8 && ret.i16)
+		{
+			ret.imm = Opcode::IMM::W16W8;
+		}
 
 		if (ret.sr) ret.modRegRm = Opcode::MODREGRM::SR;
 		else if (ret.r8 || ret.rm8) ret.modRegRm = Opcode::MODREGRM::W8;

@@ -25,6 +25,7 @@ namespace emul
 		m_opcodes[0x67] = [=]() { InvalidOpcode(); };
 
 		m_opcodes[0xD6] = [=]() { InvalidOpcode(); };
+
 		m_opcodes[0xF1] = [=]() { InvalidOpcode(); };
 
 		// PUSH SP
@@ -36,15 +37,22 @@ namespace emul
 
 		// POPA
 		m_opcodes[0x61] = [=]() { POPA(); };
-		m_opcodes[0x62] = [=]() { Bound(FetchByte()); };
-
+		// BOUND REG16, MEM16
+		m_opcodes[0x62] = [=]() { BOUND(FetchByte()); };
+		// PUSH IMM16
 		m_opcodes[0x68] = [=]() { PUSH(FetchWord()); };
 		m_opcodes[0x69] = [=]() { IMULimm16(FetchByte()); };
+		// PUSH IMM8 (sign-extend to 16)
 		m_opcodes[0x6A] = [=]() { PUSH(Widen(FetchByte())); };
+		// IMUL REG16, REG16/MEM16, IMM16
 		m_opcodes[0x6B] = [=]() { IMULimm8(FetchByte()); };
+		// INS8
 		m_opcodes[0x6C] = [=]() { INSB(); };
+		// INS16
 		m_opcodes[0x6D] = [=]() { INSW(); };
+		// OUTS8
 		m_opcodes[0x6E] = [=]() { OUTSB(); };
+		// OUTS16
 		m_opcodes[0x6F] = [=]() { OUTSW(); };
 
 		// ROL/ROR/RCL/RCR/SAL|SHL/SHR/---/SAR
@@ -52,6 +60,11 @@ namespace emul
 		m_opcodes[0xC0] = [=]() { SHIFTROT8Imm(FetchByte()); };
 		// REG16/MEM16, IMM8
 		m_opcodes[0xC1] = [=]() { SHIFTROT16Imm(FetchByte()); };
+
+		// ENTER IMM16, IMM8
+		m_opcodes[0xC8] = [=]() { ENTER(); };
+		// LEAVE
+		m_opcodes[0xC9] = [=]() { LEAVE(); };
 
 		// REG8/MEM8, CL (masked: [0-31])
 		m_opcodes[0xD2] = [=]() { SHIFTROT8Multi(FetchByte(), 31); };
@@ -65,7 +78,7 @@ namespace emul
 		INT(6);
 	}
 
-	void CPU80186::Bound(BYTE op2)
+	void CPU80186::BOUND(BYTE op2)
 	{
 		SourceDest16 sd = GetModRegRM16(op2);
 		if (sd.source.IsRegister())
@@ -85,8 +98,40 @@ namespace emul
 		}
 	}
 
+	void CPU80186::ENTER()
+	{
+		WORD disp = FetchWord();
+		BYTE level = FetchByte();
+		LogPrintf(LOG_DEBUG, "ENTER, data=%04x, level=%02x", disp, level);
+
+		PUSH(REG16::BP);
+
+		WORD framePtr = m_reg[REG16::SP];
+		if (level > 0)
+		{
+			for (int i = 0; i < level - 1; ++i)
+			{
+				m_reg[REG16::BP] -= 2;
+				WORD ptr = m_memory.Read16(S2A(m_reg[REG16::SS], m_reg[REG16::BP]));
+				PUSH(ptr);
+				TICKT3(); // Add overhead for each level
+			}
+			PUSH(framePtr);
+		}
+		m_reg[REG16::BP] = framePtr;
+		m_reg[REG16::SP] -= disp;
+	}
+
+	void CPU80186::LEAVE()
+	{
+		LogPrintf(LOG_DEBUG, "LEAVE");
+		m_reg[REG16::SP] = m_reg[REG16::BP];
+		POP(REG16::BP);
+	}
+
 	void CPU80186::PUSHA()
 	{
+		LogPrintf(LOG_DEBUG, "PUSHA");
 		WORD originalSP = m_reg[REG16::SP];
 
 		PUSH(REG16::AX);
@@ -101,6 +146,7 @@ namespace emul
 
 	void CPU80186::POPA()
 	{
+		LogPrintf(LOG_DEBUG, "POPA");
 		POP(REG16::DI);
 		POP(REG16::SI);
 		POP(REG16::BP);

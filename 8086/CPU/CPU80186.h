@@ -14,7 +14,10 @@ namespace emul
 	protected:
 		virtual void InvalidOpcode() override;
 
-		void Bound(BYTE op2);
+		void BOUND(BYTE op2);
+
+		void ENTER();
+		void LEAVE();
 
 		void PUSHA();
 		void POPA();

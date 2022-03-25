@@ -17,7 +17,7 @@
       { "name": "OR AL, {i8}",               "timing": [3] },    
       { "name": "OR AX, {i16}",              "timing": [4] },    
       { "name": "PUSH CS",                   "timing": [9] },
-      { "name": "POP CS",                    "timing": [8] },
+      { "name": "DB 0x0F",                   "timing": [0] },
                                              
       { "name": "ADC {rm8}, {r8}",           "timing": [3, 10] },
       { "name": "ADC {rm16}, {r16}",         "timing": [3, 10] },
@@ -112,11 +112,11 @@
       { "name": "PUSHA",                     "timing": [36] },
       { "name": "POPA",                      "timing": [51] },
       { "name": "BOUND {r16}, {rm16}",       "timing": [34] },
-      { "name": "DB 0x63",                   "timing": [1] },
-      { "name": "DB 0x64",                   "timing": [1] },
-      { "name": "DB 0x65",                   "timing": [1] },
-      { "name": "DB 0x66",                   "timing": [1] },
-      { "name": "DB 0x67",                   "timing": [1] },
+      { "name": "DB 0x63",                   "timing": [0] },
+      { "name": "DB 0x64",                   "timing": [0] },
+      { "name": "DB 0x65",                   "timing": [0] },
+      { "name": "DB 0x66",                   "timing": [0] },
+      { "name": "DB 0x67",                   "timing": [0] },
                                              
       { "name": "PUSH {i16}",                "timing": [10] },
       { "name": "IMUL {r16}, {rm16}, {i16}", "timing": [24, 30] },
@@ -226,8 +226,8 @@
       { "name": "MOV {rm8}, {i8}",           "timing": [12] },
       { "name": "MOV {rm16}, {i16}",         "timing": [13] },
                                              
-      { "name": "RETf {i16}",                "timing": [25] },
-      { "name": "RETf",                      "timing": [22] },
+      { "name": "ENTER {i16}, {i8}",         "timing": [11, 0, 4] },
+      { "name": "LEAVE",                     "timing": [5] },
       { "name": "RETf {i16}",                "timing": [25] },
       { "name": "RETf",                      "timing": [22] },
       { "name": "INT 3",                     "timing": [45] },
@@ -241,7 +241,7 @@
       { "name": "{grp2} {rm16}, CL",         "timing": [5, 17, 1] },
       { "name": "AAM {i8}",                  "timing": [19] },
       { "name": "AAD {i8}",                  "timing": [15] },
-      { "name": "SALC",                      "timing": [3] },
+      { "name": "0xD6",                      "timing": [0] },
       { "name": "XLAT",                      "timing": [11] },
                                              
       { "name": "ESC0 {rm16}",               "timing": [6] },
@@ -363,7 +363,7 @@
 
         "BP": {"x":15, "y":8, "w":4},
 
-        "CS": {"x":6, "y":9, "w":4}, "IP": {"x":15, "y":8, "w":4},
+        "CS": {"x":6, "y":9, "w":4}, "IP": {"x":15, "y":9, "w":4},
         "SS": {"x":6, "y":10, "w":4}, "SP": {"x":15, "y":10, "w":4},
 
 				"TICKS": {"x":8, "y":12, "w":4},

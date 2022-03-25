@@ -35,7 +35,7 @@ namespace cpuInfo
 		bool i32 = false;
 
 		enum class MODREGRM { NONE, W8, W16, SR } modRegRm = MODREGRM::NONE;
-		enum class IMM { NONE, W8, W16, W32 } imm = IMM::NONE;
+		enum class IMM { NONE, W8, W16, W16W8, W32 } imm = IMM::NONE;
 		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, _COUNT } multi = MULTI::NONE;
 	};
 

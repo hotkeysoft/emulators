@@ -480,6 +480,24 @@ namespace emul
 			replace(text, "{i16}", buf);
 			break;
 		}
+		case Opcode::IMM::W16W8:
+		{
+			++address.offset;
+			WORD imm16 = m_memory->Read16(address.GetAddress());
+			address.offset++;
+			decoded.AddRaw(imm16);
+
+			sprintf(buf, "0%Xh", imm16);
+			replace(text, "{i16}", buf);
+
+			++address.offset;
+			BYTE imm8 = m_memory->Read8(address.GetAddress());
+			decoded.AddRaw(imm8);
+
+			sprintf(buf, "0%Xh", imm8);
+			replace(text, "{i8}", buf);
+			break;
+		}
 		case Opcode::IMM::W32:
 		{
 			++address.offset;
