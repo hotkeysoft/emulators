@@ -291,7 +291,7 @@ namespace pit
 			break;
 		case CounterMode::Mode1:
 			LogPrintf(LOG_INFO, "SetMode: 1 - HARDWARE RETRIGGERABLE ONE-SHOT");
-			throw std::exception("SetMode: 1: Not implemented");
+			LogPrintf(LOG_ERROR, "Mode 1 Not implemented");
 			break;
 		case CounterMode::Mode2:
 			LogPrintf(LOG_INFO, "SetMode: 2 - RATE GENERATOR");
@@ -308,7 +308,6 @@ namespace pit
 		case CounterMode::Mode5:
 			LogPrintf(LOG_INFO, "SetMode: 5 - HARDWARE TRIGGERED STROBE");
 			LogPrintf(LOG_ERROR, "Mode 5 Not implemented");
-			throw std::exception("SetMode: 5: Not implemented");
 			break;
 		default:
 			throw std::exception("SetMode: Not implemented");
