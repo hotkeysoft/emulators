@@ -15,6 +15,18 @@ namespace emul
 	{
 		CPU8086::Init();
 
+		// Invalid Opcodes
+		m_opcodes[0x0F] = [=]() { InvalidOpcode(); };
+
+		m_opcodes[0x63] = [=]() { InvalidOpcode(); };
+		m_opcodes[0x64] = [=]() { InvalidOpcode(); };
+		m_opcodes[0x65] = [=]() { InvalidOpcode(); };
+		m_opcodes[0x66] = [=]() { InvalidOpcode(); };
+		m_opcodes[0x67] = [=]() { InvalidOpcode(); };
+
+		m_opcodes[0xD6] = [=]() { InvalidOpcode(); };
+		m_opcodes[0xF1] = [=]() { InvalidOpcode(); };
+
 		// PUSH SP
 		// Fixes the "Bug" on 8086/80186 where push sp pushed an already-decremented value
 		m_opcodes[0x54] = [=]() { PUSH(m_reg[REG16::SP]); };
@@ -24,13 +36,8 @@ namespace emul
 
 		// POPA
 		m_opcodes[0x61] = [=]() { POPA(); };
+		m_opcodes[0x62] = [=]() { Bound(FetchByte()); };
 
-		m_opcodes[0x62] = [=]() { NotImplemented(m_opcode); };
-		m_opcodes[0x63] = [=]() { NotImplemented(m_opcode); };
-		m_opcodes[0x64] = [=]() { NotImplemented(m_opcode); };
-		m_opcodes[0x65] = [=]() { NotImplemented(m_opcode); };
-		m_opcodes[0x66] = [=]() { NotImplemented(m_opcode); };
-		m_opcodes[0x67] = [=]() { NotImplemented(m_opcode); };
 		m_opcodes[0x68] = [=]() { PUSH(FetchWord()); };
 		m_opcodes[0x69] = [=]() { IMULimm16(FetchByte()); };
 		m_opcodes[0x6A] = [=]() { PUSH(Widen(FetchByte())); };
@@ -50,6 +57,32 @@ namespace emul
 		m_opcodes[0xD2] = [=]() { SHIFTROT8Multi(FetchByte(), 31); };
 		// REG16/MEM16, CL (masked: [0-31])
 		m_opcodes[0xD3] = [=]() { SHIFTROT16Multi(FetchByte(), 31); };
+	}
+
+	void CPU80186::InvalidOpcode()
+	{	
+		LogPrintf(LOG_ERROR, "TRAP: Invalid opcode [%02x] @ %08x", m_opcode, GetCurrentAddress());
+		INT(6);
+	}
+
+	void CPU80186::Bound(BYTE op2)
+	{
+		SourceDest16 sd = GetModRegRM16(op2);
+		if (sd.source.IsRegister())
+		{
+			InvalidOpcode();
+			return;
+		}
+
+		int16_t value = (int16_t)sd.dest.Read();
+		int16_t lowBound = (int16_t)sd.source.Read();
+		sd.source.Increment();
+		int16_t hiBound = (int16_t)sd.source.Read();
+
+		if (value < lowBound || value > hiBound)
+		{
+			INT(5);
+		}
 	}
 
 	void CPU80186::PUSHA()

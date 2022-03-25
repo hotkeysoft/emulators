@@ -37,7 +37,5 @@ namespace emul
 
 		uint32_t m_opTicks = 0;
 		inline void TICK(uint32_t count) { m_opTicks += count; }
-
-		void UnknownOpcode(BYTE opcode);
 	};
 }

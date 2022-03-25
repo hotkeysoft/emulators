@@ -111,7 +111,7 @@
                                              
       { "name": "PUSHA",                     "timing": [36] },
       { "name": "POPA",                      "timing": [51] },
-      { "name": "DB 0x62",                   "timing": [1] },
+      { "name": "BOUND {r16}, {rm16}",       "timing": [34] },
       { "name": "DB 0x63",                   "timing": [1] },
       { "name": "DB 0x64",                   "timing": [1] },
       { "name": "DB 0x65",                   "timing": [1] },
@@ -119,9 +119,9 @@
       { "name": "DB 0x67",                   "timing": [1] },
                                              
       { "name": "PUSH {i16}",                "timing": [10] },
-      { "name": "IMUL {r16}, {rm16}, {i16}", "timing": [21, 24] },
+      { "name": "IMUL {r16}, {rm16}, {i16}", "timing": [24, 30] },
       { "name": "PUSH s{i8}",                "timing": [10] },
-      { "name": "IMUL {r16}, {rm16}, s{i8}", "timing": [21, 24] },
+      { "name": "IMUL {r16}, {rm16}, s{i8}", "timing": [24, 30] },
       { "name": "INSB",                      "timing": [8, 0, 8, 6] },
       { "name": "INSW",                      "timing": [8, 0, 8, 6] },
       { "name": "OUTSB",                     "timing": [8, 0, 8, 6] },

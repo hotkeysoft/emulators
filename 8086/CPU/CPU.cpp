@@ -48,10 +48,4 @@ namespace emul
 
 		return (m_state == CPUState::RUN);
 	}
-
-	void CPU::UnknownOpcode(BYTE opcode)
-	{
-		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X! Stopping CPU.\n", opcode, GetCurrentAddress());
-		m_state = CPUState::STOP;
-	}
 }

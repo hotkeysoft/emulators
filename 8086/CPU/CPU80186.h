@@ -12,6 +12,10 @@ namespace emul
 		virtual void Init() override;
 
 	protected:
+		virtual void InvalidOpcode() override;
+
+		void Bound(BYTE op2);
+
 		void PUSHA();
 		void POPA();
 

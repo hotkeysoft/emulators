@@ -123,6 +123,8 @@ namespace emul
 		Mem16(ADDRESS a) { SetAddress(a); }
 		Mem16(REG16 r16) : l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
 
+		bool IsRegister() const { return a == uint32_t(-1); }
+
 		void SetAddress(ADDRESS a)
 		{
 			this->a = a;
@@ -130,9 +132,12 @@ namespace emul
 			this->h = Mem8(a + 1);
 		}
 
-		void Increment(Memory& memory)
+		void Increment()
 		{
-			SetAddress(this->a + 2);
+			if (!IsRegister())
+			{
+				SetAddress(this->a + 2);
+			}
 		}
 
 		WORD Read() const { return MakeWord(h.Read(), l.Read()); }
@@ -286,6 +291,8 @@ namespace emul
 		Mem16 GetReg16(BYTE reg, bool segReg = false);
 
 		// Opcodes
+		void NotImplemented();
+		virtual void InvalidOpcode();
 
 		void CALLfar();
 		void CALLNear(WORD offset);
@@ -415,7 +422,5 @@ namespace emul
 		void LEA(BYTE op2);
 
 		void SALC();
-
-		void NotImplemented(BYTE);
 	};
 }

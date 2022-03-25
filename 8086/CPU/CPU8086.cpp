@@ -75,7 +75,7 @@ namespace emul
 	void CPU8086::Init()
 	{
 		m_opcodes.resize(256);
-		std::fill(m_opcodes.begin(), m_opcodes.end(), [=]() { NotImplemented(m_opcode); });
+		std::fill(m_opcodes.begin(), m_opcodes.end(), [=]() { InvalidOpcode(); });
 
 		// ADD
 		// --------
@@ -481,7 +481,7 @@ namespace emul
 		m_opcodes[0x9A] = [=]() { CALLfar(); };
 
 		// WAIT
-		m_opcodes[0x9B] = [=]() { NotImplemented(m_opcode); };
+		m_opcodes[0x9B] = [=]() { NotImplemented(); };
 
 		// PUSHF
 		m_opcodes[0x9C] = [=]() { PUSHF(); };
@@ -699,7 +699,7 @@ namespace emul
 		m_opcodes[0xEF] = [=]() { OUT16(m_reg[REG16::DX]); };
 
 		// LOCK
-		m_opcodes[0xF0] = [=]() { NotImplemented(m_opcode); };
+		m_opcodes[0xF0] = [=]() { NotImplemented(); };
 
 		// REPNZ/REPNE
 		m_opcodes[0xF2] = [=]() { REP(false); };
@@ -1272,7 +1272,7 @@ namespace emul
 		PUSH(REG16::IP);
 
 		m_reg[REG16::IP] = destPtr.Read();
-		destPtr.Increment(m_memory);
+		destPtr.Increment();
 		m_reg[REG16::CS] = destPtr.Read();
 		LogPrintf(LOG_DEBUG, "CALLInter newCS=%04X, newIP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
 	}
@@ -1306,15 +1306,19 @@ namespace emul
 	void CPU8086::JMPInter(Mem16 destPtr)
 	{
 		m_reg[REG16::IP] = destPtr.Read();
-		destPtr.Increment(m_memory);
+		destPtr.Increment();
 		m_reg[REG16::CS] = destPtr.Read();
 		LogPrintf(LOG_DEBUG, "JMPInter newCS=%04X, newIP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
 	}
 
-	void CPU8086::NotImplemented(BYTE op)
+	void CPU8086::InvalidOpcode()
 	{
-		EnableLog(LOG_DEBUG);
-		LogPrintf(LOG_ERROR, "Not implemented op=%x", op);
+		LogPrintf(LOG_ERROR, "TRAP: Invalid opcode [%02x] @ %08x", m_opcode, GetCurrentAddress());
+	}
+
+	void CPU8086::NotImplemented()
+	{
+		LogPrintf(LOG_ERROR, "Not implemented opcode [%02x] @ %08x", m_opcode, GetCurrentAddress());
 		m_state = CPUState::STOP;
 	}
 
@@ -1335,7 +1339,8 @@ namespace emul
 			DEC8(dest);
 			break;
 		default:
-			throw std::exception("INCDEC8: invalid op2");
+			InvalidOpcode();
+			break;
 		}
 	}
 
@@ -2524,7 +2529,7 @@ namespace emul
 		// PUSH MEM16
 		case 6: PUSH(dest); break;
 		// not used
-		case 7: LogPrintf(LOG_WARNING, "Multifunc(7): not used"); break;
+		case 7: InvalidOpcode(); break;
 		default: throw std::exception("not possible");
 		}
 	}
@@ -2540,7 +2545,7 @@ namespace emul
 		regMem.dest.Write(regMem.source.Read());
 		
 		// Read segment
-		regMem.source.Increment(m_memory);
+		regMem.source.Increment();
 		destSegment = regMem.source.Read();
 
 		LogPrintf(LOG_DEBUG, "LoadPtr Loaded [%04X:%04X]", destSegment, regMem.dest.Read());
