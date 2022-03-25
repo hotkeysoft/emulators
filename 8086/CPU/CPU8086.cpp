@@ -868,6 +868,13 @@ namespace emul
 		m_reg[REG16::FLAGS] = FLAG_RESERVED_ON;
 	}
 
+	void CPU8086::SetFlags(WORD flags)
+	{
+		SetBitMask(flags, FLAG_RESERVED_OFF, false);
+		SetBitMask(flags, FLAG_RESERVED_ON, true);
+		m_reg[REG16::FLAGS] = flags;
+	}
+
 	BYTE CPU8086::FetchByte()
 	{
 		BYTE b = m_memory.Read8(GetCurrentAddress());
@@ -2128,18 +2135,20 @@ namespace emul
 
 	void CPU8086::PUSH(WORD w)
 	{
-		LogPrintf(LOG_DEBUG, "PUSH %04X", w);
 		m_memory.Write8(S2A(m_reg[REG16::SS], --m_reg[REG16::SP]), GetHByte(w));
 		m_memory.Write8(S2A(m_reg[REG16::SS], --m_reg[REG16::SP]), GetLByte(w));
 	}
 
 	void CPU8086::POP(Mem16 dest)
 	{
+		dest.Write(POP());
+	}
+
+	WORD CPU8086::POP()
+	{
 		BYTE lo = m_memory.Read8(S2A(m_reg[REG16::SS], m_reg[REG16::SP]++));
 		BYTE hi = m_memory.Read8(S2A(m_reg[REG16::SS], m_reg[REG16::SP]++));
-		WORD w = MakeWord(hi, lo);
-		dest.Write(w);
-		LogPrintf(LOG_DEBUG, "POP %04X", w);
+		return MakeWord(hi, lo);
 	}
 
 	void CPU8086::PUSHF()
@@ -2149,9 +2158,8 @@ namespace emul
 
 	void CPU8086::POPF()
 	{
-		POP(REG16::FLAGS); 
-		SetBitMask(m_reg[REG16::FLAGS], FLAG_RESERVED_OFF, false); 
-		SetBitMask(m_reg[REG16::FLAGS], FLAG_RESERVED_ON, true);
+		WORD flags = POP(); 
+		SetFlags(flags);
 	}
 
 	void CPU8086::LODS8()

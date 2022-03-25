@@ -216,12 +216,14 @@ namespace emul
 			FLAG_R13 = 0x2000, // Reserved, 1
 			FLAG_R14 = 0x4000, // Reserved, 1
 			FLAG_R15 = 0x8000, // Reserved, 1
-
-			FLAG_RESERVED_OFF = FLAG_R3 | FLAG_R5,
-			FLAG_RESERVED_ON = FLAG_R1 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15
 		};
+		
+		FLAG FLAG_RESERVED_ON = FLAG(FLAG_R1 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15);
+		FLAG FLAG_RESERVED_OFF = FLAG(FLAG_R3 | FLAG_R5);
 
-		void ClearFlags();
+		virtual void ClearFlags();
+		virtual void SetFlags(WORD flags);
+
 		bool GetFlag(FLAG f) { return (m_reg[REG16::FLAGS] & f) ? true : false; };
 		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg[REG16::FLAGS], f, v); };
 
@@ -378,6 +380,8 @@ namespace emul
 		void PUSH(WORD w);
 		void PUSH(Mem16 w);
 		void POP(Mem16 w);
+		WORD POP();
+
 		void PUSHF();
 		void POPF();
 
