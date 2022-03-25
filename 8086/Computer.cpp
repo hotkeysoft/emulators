@@ -2,6 +2,7 @@
 #include "Computer.h"
 #include "Config.h"
 #include "CPU/CPU80186.h"
+#include "CPU/CPU80286.h"
 #include "IO/DeviceKeyboard.h"
 #include "Storage/DeviceHardDrive.h"
 #include "Video/VideoCGA.h"
@@ -94,6 +95,11 @@ namespace emul
 			LogPrintf(LOG_WARNING, "CPU override [80186]");
 			type = CPUType::i80186;
 			break;
+		case 286:
+		case 80286:
+			LogPrintf(LOG_WARNING, "CPU override [80286]");
+			type = CPUType::i80286;
+			break;
 		default:
 			LogPrintf(LOG_WARNING, "Unknown cpu override [%d]", cpuOverride);
 		}
@@ -102,7 +108,7 @@ namespace emul
 		{
 		case CPUType::i8086: m_cpu = new CPU8086(m_memory); break;
 		case CPUType::i80186: m_cpu = new CPU80186(m_memory); break;
-		case CPUType::i80286:
+		case CPUType::i80286: m_cpu = new CPU80286(m_memory); break;
 		default:
 			LogPrintf(LOG_ERROR, "CPUType not supported");
 			throw std::exception("CPUType not supported");

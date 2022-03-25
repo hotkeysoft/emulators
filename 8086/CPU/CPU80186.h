@@ -12,6 +12,8 @@ namespace emul
 		virtual void Init() override;
 
 	protected:
+		CPU80186(cpuInfo::CPUType type, Memory& memory);
+
 		virtual void InvalidOpcode() override;
 
 		void BOUND(BYTE op2);

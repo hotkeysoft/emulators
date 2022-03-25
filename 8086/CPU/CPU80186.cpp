@@ -5,8 +5,12 @@ using cpuInfo::CPUType;
 
 namespace emul
 {
-	CPU80186::CPU80186(Memory& memory) : 
-		CPU8086(CPUType::i80186, memory),
+	CPU80186::CPU80186(Memory& memory) : CPU80186::CPU80186(CPUType::i80186, memory)
+	{
+	}
+
+	CPU80186::CPU80186(CPUType type, Memory& memory) :
+		CPU8086(type, memory),
 		Logger("CPU80186")
 	{
 	}

@@ -276,6 +276,9 @@
     <ClCompile Include="CPU\CPU80186.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
+    <ClCompile Include="CPU\CPU80286.cpp">
+      <Filter>Source Files\CPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -498,6 +501,9 @@
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
     <ClInclude Include="CPU\CPU80186.h">
+      <Filter>Header Files\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="CPU\CPU80286.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
   </ItemGroup>

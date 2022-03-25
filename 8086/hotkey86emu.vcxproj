@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="CPU\CPU80186.cpp" />
+    <ClCompile Include="CPU\CPU80286.cpp" />
     <ClCompile Include="Hardware\Device8167.cpp" />
     <ClCompile Include="IO\DeviceSerialMouse.cpp" />
     <ClCompile Include="Sound\Sound.cpp" />
@@ -247,6 +248,7 @@
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="CPU\CPU80186.h" />
+    <ClInclude Include="CPU\CPU80286.h" />
     <ClInclude Include="Hardware\Device8167.h" />
     <ClInclude Include="IO\DeviceSerialMouse.h" />
     <ClInclude Include="Sound\Sound.h" />
