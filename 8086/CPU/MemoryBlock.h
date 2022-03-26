@@ -6,6 +6,7 @@
 namespace emul
 {
 	enum class MemoryType { RAM, ROM };
+	enum class OddEven { ODD = 1, EVEN = 0 };
 
 	class MemoryBlock : public Logger
 	{
@@ -26,7 +27,9 @@ namespace emul
 		void Alloc(DWORD size);
 
 		virtual bool LoadFromFile(const char* file, WORD offset = 0);
+		virtual bool LoadOddEven(const char* file, OddEven oddEven = OddEven::ODD);
 
+		virtual bool Dump(const char* outFile) const { return Dump(0, m_size, outFile); }
 		virtual bool Dump(ADDRESS offset, DWORD len, const char* outFile) const;
 
 		virtual BYTE read(ADDRESS offset);

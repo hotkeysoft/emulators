@@ -108,7 +108,7 @@ namespace emul
 			return false;
 		}
 
-		size_t bytesRead = fread(m_data+offset, sizeof(char), m_size-offset, f);
+		size_t bytesRead = fread(m_data+offset, sizeof(BYTE), m_size-offset, f);
 		if (bytesRead < 1)
 		{
 			LogPrintf(LOG_ERROR, "LoadBinary: error reading binary file");
@@ -120,6 +120,41 @@ namespace emul
 		}
 
 		fclose(f);
+		return true;
+	}
+
+	bool MemoryBlock::LoadOddEven(const char* file, OddEven oddEven)
+	{
+		LogPrintf(LOG_INFO, "LoadBinary: loading %s [%d]", file, oddEven == OddEven::ODD ? "ODD" : "EVEN");
+
+		WORD halfSize = m_size / 2;
+		std::vector<BYTE> tempBuf(halfSize);
+
+		FILE* f = fopen(file, "rb");
+		if (!f)
+		{
+			LogPrintf(LOG_ERROR, "LoadBinary: error opening binary file");
+			return false;
+		}
+
+		size_t bytesRead = fread(&tempBuf[0], sizeof(BYTE), halfSize, f);
+		if (bytesRead < 1)
+		{
+			LogPrintf(LOG_ERROR, "LoadBinary: error reading binary file");
+			return false;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "LoadBinary: read %d bytes to memory block (%s addresses)", oddEven == OddEven::ODD ? "ODD" : "EVEN");
+		}
+		fclose(f);
+
+		// 
+		for (auto i = 0; i < halfSize; ++i)
+		{
+			m_data[(2 * i) + (int)oddEven] = tempBuf[i];
+		}
+
 		return true;
 	}
 
