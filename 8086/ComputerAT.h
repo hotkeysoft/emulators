@@ -47,6 +47,8 @@ namespace emul
 
 		kbd::DeviceKeyboardXT m_keyboard;
 
+		pic::Device8259 m_picSecondary;
+
 		POSTCard m_post;
 	};
 }

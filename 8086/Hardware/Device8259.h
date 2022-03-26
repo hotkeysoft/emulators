@@ -12,7 +12,8 @@ namespace pic
 	class Device8259 : public PortConnector, public emul::Serializable
 	{
 	public:
-		Device8259(WORD baseAddress);
+		Device8259(const char* id, WORD baseAddress, bool isPrimary = true);
+		Device8259(WORD baseAddress, bool isPrimary = true);
 
 		Device8259() = delete;
 		Device8259(const Device8259&) = delete;
@@ -21,6 +22,8 @@ namespace pic
 		Device8259& operator=(Device8259&&) = delete;
 
 		void InterruptRequest(BYTE interrupt, bool value = true);
+
+		void AttachSecondaryDevice(BYTE irq, Device8259* secondary);
 
 		void Init();
 		void Reset();
@@ -63,6 +66,8 @@ namespace pic
 			bool autoEOI = false; // 1 = Auto EOI (End of Interrupt), 0 = Normal EOI
 			bool buffered = false; // 1 = Buffered Mode
 			bool sfnm = false; // 1 = Special Fully Nested Mode
+
+			void Reset();
 		} m_init;
 
 		BYTE Read0();
@@ -84,5 +89,22 @@ namespace pic
 		BYTE m_interruptMaskRegister = 0;
 
 		BYTE* m_reg0 = &m_inServiceRegister; // points to IR or IS depending on last OCW3 command
+
+		// Cascade mode
+		void SetPrimary(Device8259* primary) { m_cascade.primaryDevice = primary; }
+		struct Cascade
+		{
+			bool primary = true;
+
+			// Primary config
+			std::array<bool, 8> secondaryConnected = { false, false, false, false, false, false, false };
+			std::array<Device8259*, 8> secondaryDevices = { 0, 0, 0, 0, 0, 0, 0 };
+
+			// Secondary config
+			Device8259* primaryDevice = nullptr;
+			BYTE primaryIRQ = 0;
+
+			void Reset();
+		} m_cascade;
 	};
 }

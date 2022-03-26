@@ -31,11 +31,14 @@ namespace emul
 	static const BYTE IRQ_HDD = 5;
 	static const BYTE DMA_HDD = 3;
 
+	static const BYTE IRQ_PIC2 = 2;
+
 	ComputerAT::ComputerAT() :
 		Logger("AT"),
 		Computer(m_memory),
 		m_baseRAM("RAM", emul::MemoryType::RAM),
-		m_biosF000("BIOS", 0x10000, emul::MemoryType::ROM)
+		m_biosF000("BIOS", 0x10000, emul::MemoryType::ROM),
+		m_picSecondary("pic2", 0xA0, false)
 	{
 	}
 
@@ -56,6 +59,16 @@ namespace emul
 		InitPPI(new ppi::Device8255XT(0x60));
 		InitDMA(new dma::Device8237(0x00, m_memory));
 		InitSound();
+
+		m_picSecondary.EnableLog(CONFIG().GetLogLevel("pic"));
+		m_picSecondary.Init();
+		m_pic->AttachSecondaryDevice(IRQ_PIC2, &m_picSecondary);
+
+		// TODO: 
+		// Port 70: NMI control
+		// Port F0: Clear Math Coprocessor BUSY signal
+		// Port F1: Reset Math Coprocessor
+
 
 		// TODO: MCGA, VGA(?)
 		InitVideo("cga", { "cga" });
@@ -147,7 +160,6 @@ namespace emul
 		}
 
 		static uint32_t cpuTicks = 0;
-		assert(GetInstructionTicks());
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;

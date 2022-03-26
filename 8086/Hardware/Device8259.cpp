@@ -10,16 +10,51 @@ using emul::LogBase2;
 
 namespace pic
 {
-	Device8259::Device8259(WORD baseAddress) :
-		Logger("pic"),
+	Device8259::Device8259(const char* id, WORD baseAddress, bool isPrimary) :
+		Logger(id),
 		m_baseAddress(baseAddress)
 	{
-		Reset();
+		m_cascade.primary = isPrimary;
+	}
+
+	Device8259::Device8259(WORD baseAddress, bool isPrimary) : Device8259("pic", baseAddress, isPrimary)
+	{
+	}
+
+	void Device8259::INIT::Reset()
+	{
+		memset(this, 0, sizeof(INIT));
+	}
+
+	void Device8259::Cascade::Reset()
+	{ 
+		this->secondaryConnected.fill(false);
+		this->primaryIRQ = 0;
 	}
 
 	void Device8259::Reset()
 	{
 		m_state = STATE::UNINITIALIZED;
+
+		m_lastInterruptRequestRegister = 0xFF;
+		m_interruptRequestRegister = 0;
+		m_inServiceRegister = 0;
+		m_interruptMaskRegister = 0;
+		m_reg0 = &m_inServiceRegister;
+
+		m_init.Reset();
+		m_cascade.Reset();
+	}
+
+	void Device8259::AttachSecondaryDevice(BYTE irq, Device8259* secondary)
+	{
+		if (irq > 7)
+		{
+			throw std::exception("AttachSecondaryDevice: irq > 7 not supported");
+		}
+		LogPrintf(LOG_INFO, "Setting secondary device for IRQ%d", irq);
+		m_cascade.secondaryDevices[irq] = secondary;
+		secondary->SetPrimary(this);
 	}
 
 	void Device8259::InterruptRequest(BYTE interrupt, bool value)
@@ -89,16 +124,12 @@ namespace pic
 
 			m_init.single = (value & 2);
 			LogPrintf(LOG_INFO, "ICW1: SINGLE mode: %d", m_init.single);
-			if (!m_init.single)
-			{
-				throw std::exception("ICW1: cascade mode not supported");
-			}
 
 			m_init.levelTriggered = (value & 8);
 			LogPrintf(LOG_INFO, "ICW1: %s trigger mode", m_init.levelTriggered ? "LEVEL" : "EDGE");
 			if (m_init.levelTriggered)
 			{
-				throw std::exception("ICW1: LEVEL trigger mode supported");
+				throw std::exception("ICW1: LEVEL trigger not mode supported");
 			}
 
 			m_state = STATE::ICW2;
@@ -203,7 +234,34 @@ namespace pic
 			m_state = m_init.single ? (m_init.icw4Needed ? STATE::ICW4 : STATE::READY) : STATE::ICW3;
 			break;
 		case STATE::ICW3:
-			throw std::exception("ICW3: not supported");
+			if (m_init.single)
+			{
+				throw std::exception("ICW3: Single mode, invalid state");
+			}
+			if (m_cascade.primary)
+			{
+				LogPrintf(LOG_INFO, "ICW3: Primary device, setting connected secondary devices:");
+				for (int i = 0; i < 7; ++i)
+				{
+					bool connected = GetBit(value, i);
+					LogPrintf(LOG_INFO, "ICW3: - Secondary[%d] : %s", i, connected ? "YES" : "NO");
+					m_cascade.secondaryConnected[i] = connected;
+					if (connected && !m_cascade.secondaryDevices[i])
+					{
+						LogPrintf(LOG_WARNING, "ICW3: Warning: secondary device is not connected");
+					}
+				}
+			}
+			else
+			{
+				m_cascade.primaryIRQ = value & 7;
+				LogPrintf(LOG_INFO, "ICW3: Secondary device, set primary IRQ=[%d]", m_cascade.primaryIRQ);
+				if (!m_cascade.primaryDevice)
+				{
+					LogPrintf(LOG_WARNING, "ICW3: Warning: primary device is not connected");
+				}
+			}
+			m_state = m_init.icw4Needed ? STATE::ICW4 : STATE::READY;
 			break;
 		case STATE::ICW4:
 			m_init.cpu8086 = (value & 1);
@@ -327,6 +385,12 @@ namespace pic
 		init["sfnm"] = m_init.sfnm;
 		to["init"] = init;
 
+		json cascade;
+		cascade["primary"] = m_cascade.primary;
+		cascade["secondaryConnected"] = m_cascade.secondaryConnected;
+		cascade["primaryIRQ"] = m_cascade.primaryIRQ;
+		to["cascade"] = cascade;
+
 		to["irr0"] = m_lastInterruptRequestRegister;
 		to["irr"] = m_interruptRequestRegister;
 		to["isr"] = m_inServiceRegister;
@@ -352,6 +416,11 @@ namespace pic
 		m_init.autoEOI = init["autoEOI"];
 		m_init.buffered = init["buffered"];
 		m_init.sfnm = init["sfnm"];
+
+		const json& cascade = from["cascade"];
+		m_cascade.primary = cascade["primary"];
+		m_cascade.secondaryConnected = cascade["secondaryConnected"];
+		m_cascade.primaryIRQ = cascade["primaryIRQ"];
 
 		m_lastInterruptRequestRegister = from["irr0"];
 		m_interruptRequestRegister = from["irr"];
