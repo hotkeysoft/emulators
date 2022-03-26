@@ -16,8 +16,10 @@ namespace emul
 	class Memory : public Logger, public Serializable
 	{
 	public:
-		Memory(size_t addressBits);
+		Memory();
 		virtual ~Memory();
+
+		void Init(size_t addressBits);
 
 		bool Allocate(MemoryBlock* block, ADDRESS base, DWORD len = (DWORD)-1);
 		bool Free(MemoryBlock* block);
@@ -37,13 +39,17 @@ namespace emul
 		virtual void Serialize(json& to);
 		virtual void Deserialize(const json& from);
 
+		void SetAddressMask(ADDRESS mask) { m_addressMask = mask; }
+		ADDRESS GetAddressMask() const { return m_addressMask; }
+
 	protected:
 		MemoryBlock* FindBlock(const char* id) const;
 
 	private:
-		static WORD s_uninitialized;
+		size_t m_addressBits = 0;
+		ADDRESS m_addressMask = 0;
 
-		const size_t m_addressBits;
+		static WORD s_uninitialized;
 
 		std::vector<MemorySlot> m_memory;
 		std::set<MemoryBlock*> m_blocks;

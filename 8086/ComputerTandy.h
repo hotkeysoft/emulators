@@ -21,7 +21,6 @@ namespace emul
 
 		virtual bool Step() override;
 
-		Memory& GetMemory() { return m_memory; }
 		virtual kbd::DeviceKeyboard& GetKeyboard() override { return m_keyboard; }
 
 	protected:

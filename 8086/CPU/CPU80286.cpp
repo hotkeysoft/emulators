@@ -60,6 +60,23 @@ namespace emul
 		m_reg.Write16(REG16::IP, 0xFFF0);
 	}
 
+	void CPU80286::ForceA20Low(bool forceLow)
+	{
+		LogPrintf(LOG_WARNING, "Force A20 line LOW: [%d]", forceLow);
+
+		ADDRESS mask = m_memory.GetAddressMask();
+		if (mask == 0)
+		{
+			LogPrintf(LOG_ERROR, "CPU Not initialized");
+			return;
+		}
+
+		SetBit(mask, 20, !forceLow);
+		m_memory.SetAddressMask(mask);
+
+		LogPrintf(LOG_WARNING, "New mask=["PRINTF_BIN_PATTERN_INT32"]", PRINTF_BYTE_TO_BIN_INT32(mask));
+	}
+
 	void CPU80286::SetFlags(WORD flags)
 	{
 		SetBitMask(flags, FLAG_RESERVED_OFF, false);

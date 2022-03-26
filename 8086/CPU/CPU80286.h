@@ -4,6 +4,8 @@
 
 namespace emul
 {
+	static const size_t CPU80286_ADDRESS_BITS = 24;
+
 	class CPU80286 : public CPU80186
 	{
 	public:
@@ -13,6 +15,8 @@ namespace emul
 
 		virtual void Reset() override;
 
+		virtual size_t GetAddressBits() const { return CPU80286_ADDRESS_BITS; }
+
 		enum FLAG286 : WORD
 		{
 			FLAG_IOPL0 = 0x1000,
@@ -20,6 +24,8 @@ namespace emul
 
 			FLAG_NT = 0x4000,
 		};
+
+		void ForceA20Low(bool forceLow);
 
 	protected:
 

@@ -10,9 +10,23 @@ namespace emul
 
 	const WORD BlockGranularity = 4096;
 
-	Memory::Memory(size_t addressBits) : Logger("MEM"),
-		m_addressBits(addressBits)
+	Memory::Memory() : Logger("MEM")	
 	{
+	}
+
+	Memory::~Memory()
+	{
+	}
+
+	void Memory::Init(size_t addressBits)
+	{
+		m_addressBits = addressBits;
+		m_addressMask = (ADDRESS)GetMaxAddress(addressBits);
+
+		LogPrintf(LOG_INFO, "Setting up [%d] bit memory address space mask=["PRINTF_BIN_PATTERN_INT32"]", 
+			addressBits, 
+			PRINTF_BYTE_TO_BIN_INT32(m_addressMask));
+
 		size_t memSlots = ((uint64_t)1 << addressBits) / BlockGranularity;
 		LogPrintf(LOG_INFO, "BlockGranularity: %d, Allocating %d memory slots", BlockGranularity, memSlots);
 
@@ -23,14 +37,15 @@ namespace emul
 		}
 	}
 
-	Memory::~Memory()
-	{
-
-	}
-
 	bool Memory::Allocate(MemoryBlock* block, ADDRESS base, DWORD len)
 	{
 		assert(block);
+
+		if (m_addressBits == 0)
+		{
+			LogPrintf(LOG_ERROR, "Not Initialized");
+			return false;
+		}
 
 		if (len == (DWORD)-1)
 		{
@@ -101,7 +116,6 @@ namespace emul
 			}
 		}
 	}
-
 
 	bool Memory::MapWindow(ADDRESS source, ADDRESS window, DWORD len)
 	{
@@ -176,6 +190,7 @@ namespace emul
 
 	BYTE Memory::Read8(ADDRESS address) const
 	{
+		address &= m_addressMask;
 		const MemorySlot& slot = m_memory[address / BlockGranularity];
 		MemoryBlock* block = slot.block;
 
@@ -199,6 +214,7 @@ namespace emul
 
 	void Memory::Write8(ADDRESS address, BYTE value)
 	{
+		address &= m_addressMask;
 		const MemorySlot& slot = m_memory[address / BlockGranularity];
 		MemoryBlock* block = slot.block;
 

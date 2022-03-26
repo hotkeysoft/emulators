@@ -16,6 +16,11 @@
 #define PRINTF_BYTE_TO_BIN_INT16(i) \
     PRINTF_BYTE_TO_BIN_INT8((i) >> 8),   PRINTF_BYTE_TO_BIN_INT8(i)
 
+#define PRINTF_BIN_PATTERN_INT32 \
+    PRINTF_BIN_PATTERN_INT16             PRINTF_BIN_PATTERN_INT16
+#define PRINTF_BYTE_TO_BIN_INT32(i) \
+    PRINTF_BYTE_TO_BIN_INT16((i) >> 16), PRINTF_BYTE_TO_BIN_INT16(i)
+
 namespace emul
 {
 	extern size_t g_ticks;
@@ -28,7 +33,7 @@ namespace emul
 
 	inline ADDRESS S2A(const WORD segment, const WORD offset = 0)
 	{
-		return ((segment << 4) + offset) & 0xFFFFF;
+		return ((segment << 4) + offset);
 	}
 
 	inline size_t GetMaxAddress(const size_t addressBits)

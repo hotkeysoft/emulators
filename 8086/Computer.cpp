@@ -24,7 +24,6 @@ namespace emul
 {
 	Computer::Computer(Memory& memory) :
 		Logger("PC"),
-		m_memory(emul::CPU8086_ADDRESS_BITS),
 		m_hddROM("HDD", 8192, MemoryType::ROM)
 	{
 	}
@@ -116,6 +115,8 @@ namespace emul
 	
 		m_cpu->EnableLog(CONFIG().GetLogLevel("cpu"));
 		m_cpu->Init();
+
+		m_memory.Init(m_cpu->GetAddressBits());
 
 		m_baseRAM = baseram;
 		PortConnector::Clear();
