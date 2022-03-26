@@ -611,11 +611,11 @@ namespace emul
 		m_opcodes[0xCB] = [=]() { RETFar(); };
 
 		// INT3
-		m_opcodes[0xCC] = [=]() { INT(3); };
+		m_opcodes[0xCC] = [=]() { throw CPUException(CPUExceptionType::EX_BREAKPOINT); };
 		// INT IMM8
 		m_opcodes[0xCD] = [=]() { INT(FetchByte()); };
 		// INTO
-		m_opcodes[0xCE] = [=]() { if (GetFlag(FLAG_O)) { INT(4); TICKT3(); } };
+		m_opcodes[0xCE] = [=]() { if (GetFlag(FLAG_O)) { TICKT3(); throw CPUException(CPUExceptionType::EX_OVERFLOW); } };
 		// IRET
 		m_opcodes[0xCF] = [=]() { IRET(); };
 
@@ -701,6 +701,9 @@ namespace emul
 		// LOCK
 		m_opcodes[0xF0] = [=]() { NotImplemented(); };
 
+		// Unused/undocumented prefix
+		m_opcodes[0xF1] = [=]() {};
+
 		// REPNZ/REPNE
 		m_opcodes[0xF2] = [=]() { REP(false); };
 		// REPZ/REPE
@@ -778,26 +781,33 @@ namespace emul
 
 		m_currTiming = &m_info.GetOpcodeTiming(opcode);
 		
-		// Fetch the function corresponding to the opcode and run it
+		try
 		{
-			auto& opFunc = m_opcodes[opcode];
-			opFunc();
+			// Fetch the function corresponding to the opcode and run it
+			{
+				auto& opFunc = m_opcodes[opcode];
+				opFunc();
+			}
+
+			TICK();
+
+			// Disable override after next instruction
+			if (clearSegOverride)
+			{
+				inSegOverride = false;
+			}
+
+			// Check for trap
+			if (trap && GetFlag(FLAG_T))
+			{
+				LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
+				TICKMISC(MiscTiming::TRAP);
+				throw CPUException(CPUExceptionType::EX_STEP);
+			}
 		}
-
-		TICK();
-
-		// Disable override after next instruction
-		if (clearSegOverride)
+		catch (CPUException e)
 		{
-			inSegOverride = false;
-		}
-
-		// Check for trap
-		if (trap && GetFlag(FLAG_T))
-		{
-			LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
-			TICKMISC(MiscTiming::TRAP);
-			INT(1);
+			CPUExceptionHandler(e);
 		}
 	}
 
@@ -819,6 +829,26 @@ namespace emul
 		CPU8086::Reset();
 		m_reg.Write16(REG16::CS, segment);
 		m_reg.Write16(REG16::IP, offset);
+	}
+
+	void CPU8086::CPUExceptionHandler(CPUException e)
+	{
+		switch (e.GetType())
+		{
+		case CPUExceptionType::EX_DIVIDE:
+		case CPUExceptionType::EX_STEP:
+		case CPUExceptionType::EX_NMI:
+		case CPUExceptionType::EX_BREAKPOINT:
+		case CPUExceptionType::EX_OVERFLOW:
+		case CPUExceptionType::EX_BOUND:
+		case CPUExceptionType::EX_NO_MATH_UNIT:
+			LogPrintf(LOG_WARNING, "CPU Exception -> INT(%d)", e.GetType());
+			INT((BYTE)e.GetType());
+			break;
+		default:
+			LogPrintf(LOG_WARNING, "CPU Exception [%d] (not supported by CPU) -> no action", e.GetType());
+			break;
+		}
 	}
 
 	void CPU8086::Dump()
@@ -1312,6 +1342,10 @@ namespace emul
 
 	void CPU8086::JMPInter(Mem16 destPtr)
 	{
+		if (destPtr.IsRegister())
+		{
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+		}
 		m_reg[REG16::IP] = destPtr.Read();
 		destPtr.Increment();
 		m_reg[REG16::CS] = destPtr.Read();
@@ -1321,6 +1355,7 @@ namespace emul
 	void CPU8086::InvalidOpcode()
 	{
 		LogPrintf(LOG_ERROR, "TRAP: Invalid opcode [%02x] @ %08x", m_opcode, GetCurrentAddress());
+		throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
 	}
 
 	void CPU8086::NotImplemented()
@@ -1935,15 +1970,13 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "DIV8");
 			if (val == 0)
 			{
-				INT(0);
-				return;
+				throw CPUException(CPUExceptionType::EX_DIVIDE);
 			}
 			WORD dividend = m_reg[REG16::AX];
 			WORD quotient = dividend / val;
 			if (quotient > 0xFF)
 			{
-				INT(0);
-				return;
+				throw CPUException(CPUExceptionType::EX_DIVIDE);
 			}
 			BYTE remainder = dividend % val;
 			LogPrintf(LOG_DEBUG, "DIV8 %04X / %02X = %02X r %02X", dividend, val, quotient, remainder);
@@ -1956,15 +1989,13 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "IDIV8");
 			if (val == 0)
 			{
-				INT(0);
-				return;
+				throw CPUException(CPUExceptionType::EX_DIVIDE);
 			}
 			int16_t dividend = (int16_t)m_reg[REG16::AX];
 			int16_t quotient = dividend / int8_t(val);
 			if (quotient > 127 || quotient < -127)
 			{
-				INT(0);
-				return;
+				throw CPUException(CPUExceptionType::EX_DIVIDE);
 			}
 			int8_t remainder = dividend % int8_t(val);
 			LogPrintf(LOG_DEBUG, "IDIV8 %04X / %02X = %02X r %02X", dividend, val, quotient, remainder);
@@ -2051,15 +2082,13 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "DIV16");
 			if (val == 0)
 			{
-				INT(0);
-				return;
+				throw CPUException(CPUExceptionType::EX_DIVIDE);
 			}
 			DWORD dividend = MakeDword(m_reg[REG16::DX], m_reg[REG16::AX]);
 			DWORD quotient = dividend / val;
 			if (quotient > 0xFFFF)
 			{
-				INT(0);
-				return;
+				throw CPUException(CPUExceptionType::EX_DIVIDE);
 			}
 			WORD remainder = dividend % val;
 			LogPrintf(LOG_DEBUG, "DIV16 %08X / %04X = %04X r %04X", dividend, val, quotient, remainder);
@@ -2072,15 +2101,13 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "IDIV16");
 			if (val == 0)
 			{
-				INT(0);
-				return;
+				throw CPUException(CPUExceptionType::EX_DIVIDE);
 			}
 			int32_t dividend = (int32_t)MakeDword(m_reg[REG16::DX], m_reg[REG16::AX]);
 			int32_t quotient = dividend / int16_t(val);
 			if (quotient > 32767 || quotient < -32767)
 			{
-				INT(0);
-				return;
+				throw CPUException(CPUExceptionType::EX_DIVIDE);
 			}
 			int16_t remainder = dividend % int16_t(val);
 			LogPrintf(LOG_DEBUG, "IDIV16 %08X / %04X = %04X r %04X", dividend, val, quotient, remainder);
@@ -2545,8 +2572,15 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "LoadPtr");
 
-		// TODO: This should fail if modrm is register
-		// otherwise we will read data in *this instead of memory
+		if (regMem.source.IsRegister())
+		{
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+		}
+
+		if (regMem.source.GetOffset() == 0xFFFD)
+		{
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+		}
 
 		// Target register -> offset
 		regMem.dest.Write(regMem.source.Read());
@@ -2618,8 +2652,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "AAM base %d", base);
 		if (base == 0)
 		{
-			INT(0);
-			return;
+			throw CPUException(CPUExceptionType::EX_DIVIDE);
 		}
 
 		m_reg[REG8::AH] = m_reg[REG8::AL] / base;
@@ -2705,7 +2738,8 @@ namespace emul
 		switch (modregrm & 0xC0)
 		{
 		case 0xC0: // REG
-			throw std::exception("register not valid source");
+			// Register is not a valid source
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
 		case 0x00: // NO DISP (or DIRECT)
 			if ((modregrm & 7) == 6) // Direct 
 			{
@@ -2726,7 +2760,7 @@ namespace emul
 			LogPrintf(LOG_DEBUG, "GetModRM16: MEM disp16=%04X", displacement);
 			break;
 		default:
-			throw std::exception("GetModRM16: not implemented");
+			throw std::exception("not possible");
 		}
 
 		SegmentOffset segoff = GetEA(modregrm, direct);

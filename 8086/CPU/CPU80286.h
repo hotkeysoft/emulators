@@ -23,6 +23,8 @@ namespace emul
 
 	protected:
 
+		virtual void CPUExceptionHandler(CPUException e) override;
+
 		BYTE GetIOPL(WORD flags) const
 		{
 			return (flags >> 12) & 3;

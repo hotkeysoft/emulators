@@ -43,9 +43,12 @@ namespace emul
 		// 
 		// 0x0F 0x03 /r LSL rw,ew 14,16 (noreal)
 		// 
-		// 0x0F 0x06 CLTS 2 (real)
+		// 0x0F 0x05 LOADALL 195 (undocumented) (real)
 		// 
-		// 0x63 ARPL
+		// 0x0F 0x06 CLTS 2 (real)
+
+		// Not recognized in real mode
+		m_opcodes[0x63] = [=]() { InvalidOpcode(); };
 
 	}
 
@@ -64,4 +67,10 @@ namespace emul
 		m_reg[REG16::FLAGS] = flags;
 	}
 
+	void CPU80286::CPUExceptionHandler(CPUException e)
+	{
+		// TODO, different behavior for different exceptions
+		LogPrintf(LOG_WARNING, "CPU Exception -> INT(%d)", e.GetType());
+		INT((BYTE)e.GetType());
+	}
 }

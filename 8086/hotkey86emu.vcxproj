@@ -249,6 +249,7 @@
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="CPU\CPU80186.h" />
     <ClInclude Include="CPU\CPU80286.h" />
+    <ClInclude Include="CPU\CPUException.h" />
     <ClInclude Include="Hardware\Device8167.h" />
     <ClInclude Include="IO\DeviceSerialMouse.h" />
     <ClInclude Include="Sound\Sound.h" />

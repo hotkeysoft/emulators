@@ -74,10 +74,25 @@ namespace emul
 		m_opcodes[0xD3] = [=]() { SHIFTROT16Multi(FetchByte(), 31); };
 	}
 
-	void CPU80186::InvalidOpcode()
-	{	
-		LogPrintf(LOG_ERROR, "TRAP: Invalid opcode [%02x] @ %08x", m_opcode, GetCurrentAddress());
-		INT(6);
+	void CPU80186::CPUExceptionHandler(CPUException e)
+	{
+		switch (e.GetType())
+		{
+		case CPUExceptionType::EX_DIVIDE:
+		case CPUExceptionType::EX_STEP:
+		case CPUExceptionType::EX_NMI:
+		case CPUExceptionType::EX_BREAKPOINT:
+		case CPUExceptionType::EX_OVERFLOW:
+		case CPUExceptionType::EX_BOUND:
+		case CPUExceptionType::EX_UNDEFINED_OPCODE:
+		case CPUExceptionType::EX_NO_MATH_UNIT:
+			LogPrintf(LOG_WARNING, "CPU Exception -> INT(%d)", e.GetType());
+			INT((BYTE)e.GetType());
+			break;
+		default:
+			LogPrintf(LOG_WARNING, "CPU Exception [%d] (not supported by CPU) -> no action", e.GetType());
+			break;
+		}
 	}
 
 	void CPU80186::BOUND(BYTE op2)
@@ -85,8 +100,12 @@ namespace emul
 		SourceDest16 sd = GetModRegRM16(op2);
 		if (sd.source.IsRegister())
 		{
-			InvalidOpcode();
-			return;
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+		}
+
+		if (sd.source.GetOffset() >= 0xFFFD)
+		{
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
 		}
 
 		int16_t value = (int16_t)sd.dest.Read();
@@ -97,7 +116,7 @@ namespace emul
 		if (value < lowBound || value > hiBound)
 		{
 			// TODO: Push CS:IP of current instruction?
-			INT(5);
+			throw CPUException(CPUExceptionType::EX_BOUND);
 		}
 	}
 

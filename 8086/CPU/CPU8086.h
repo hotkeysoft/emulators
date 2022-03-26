@@ -3,6 +3,7 @@
 #include "../Serializable.h"
 #include "CPU.h"
 #include "CPUInfo.h"
+#include "CPUException.h"
 #include "PortConnector.h"
 #include <tuple>
 #include <assert.h>
@@ -103,9 +104,41 @@ namespace emul
 
 		static void Init(Memory* m, Registers* r) { m_memory = m; m_registers = r; }
 
+		bool IsRegister() const
+		{
+			return m_reg8 != REG8::INVALID;
+		}
+
 		void Increment(int i = 1)
 		{
 			m_segOff.offset += i;
+		}
+
+		WORD GetSegment() const
+		{
+			if (!IsRegister())
+			{
+				return m_segOff.segment;
+			}
+			else
+			{
+				// We shouldn't get there. This means that the operation expects a
+				// memory operand and not a register, so this is an invalid opcode
+				throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+			}
+		}
+		WORD GetOffset() const
+		{
+			if (!IsRegister())
+			{
+				return m_segOff.offset;
+			}
+			else
+			{
+				// We shouldn't get there. This means that the operation needs a
+				// memory operand instead of a register, so this is an invalid opcode
+				throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+			}
 		}
 
 	protected:
@@ -126,15 +159,39 @@ namespace emul
 	{
 	public:
 		Mem16() {}
-		Mem16(const SegmentOffset& segoff) : l(segoff), h(segoff, true) {}
+		Mem16(const SegmentOffset& segoff) : l(segoff), h(segoff, true) 
+		{
+			if (segoff.offset == 0xFFFF)
+			{
+				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+			}
+		}
 		Mem16(REG16 r16) : m_isReg(true), l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
+
+		WORD GetSegment() const
+		{
+			return l.GetSegment();
+		}
+		WORD GetOffset() const
+		{
+			return l.GetOffset();
+		}
 
 		bool IsRegister() const { return m_isReg; }
 
 		void Increment()
 		{
-			l.Increment(2);
-			h.Increment(2);
+			if (!IsRegister())
+			{
+				l.Increment(2);
+				h.Increment(2);
+			}
+			else
+			{
+				// We shouldn't get there. This means that the operation needs a
+				// memory operand instead of a register, so this is an invalid opcode
+				throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+			}
 		}
 
 		WORD Read() const { return MakeWord(h.Read(), l.Read()); }
@@ -287,6 +344,9 @@ namespace emul
 
 		Mem8 GetReg8(BYTE reg);
 		Mem16 GetReg16(BYTE reg, bool segReg = false);
+
+		// Exceptions
+		virtual void CPUExceptionHandler(CPUException e);
 
 		// Opcodes
 		void NotImplemented();

@@ -14,7 +14,7 @@ namespace emul
 	protected:
 		CPU80186(cpuInfo::CPUType type, Memory& memory);
 
-		virtual void InvalidOpcode() override;
+		virtual void CPUExceptionHandler(CPUException e) override;
 
 		void BOUND(BYTE op2);
 

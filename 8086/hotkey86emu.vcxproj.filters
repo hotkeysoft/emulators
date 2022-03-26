@@ -506,6 +506,9 @@
     <ClInclude Include="CPU\CPU80286.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
+    <ClInclude Include="CPU\CPUException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">
