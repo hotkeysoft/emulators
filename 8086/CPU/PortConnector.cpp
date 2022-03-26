@@ -24,10 +24,9 @@ namespace emul
 
 	bool PortConnector::Connect(WORD portNb, INFunction inFunc)
 	{
-		LogPrintf(LOG_INFO, "Connect input port 0x%04X", portNb);
-
-		auto it = m_inputPorts.find(portNb);
-		if (it != m_inputPorts.end())
+		LogPrintf(LOG_INFO, "Connect input port 0x%04X", portNb);		
+		
+		if (m_inputPorts.find(portNb) != m_inputPorts.end())
 		{
 			LogPrintf(LOG_ERROR, "Port already exists");
 			return false;
@@ -38,18 +37,17 @@ namespace emul
 		return true;
 	}
 
-	bool PortConnector::Connect(WORD portNb, OUTFunction outFunc)
+	bool PortConnector::Connect(WORD portNb, OUTFunction outFunc, bool share)
 	{
 		LogPrintf(LOG_INFO, "Connect output port 0x%04X", portNb);
 
-		auto it = m_outputPorts.find(portNb);
-		if (it != m_outputPorts.end())
+		if (!share && m_outputPorts.count(portNb) > 0)
 		{
 			LogPrintf(LOG_ERROR, "Port already exists");
 			return false;
 		}
 
-		m_outputPorts[portNb] = std::make_tuple(this, outFunc);
+		m_outputPorts.insert(std::make_pair(portNb, std::make_tuple(this, outFunc)));
 
 		return true;
 	}
@@ -69,8 +67,14 @@ namespace emul
 	}
 
 	bool PortConnector::DisconnectOutput(WORD portNb)
-	{
-		if (m_outputPorts.erase(portNb))
+	{	
+		size_t count = m_outputPorts.erase(portNb);
+		if (count > 1)
+		{
+			LogPrintf(LOG_WARNING, "Multiple listeners disconnected at port 0x%04X", portNb);
+			return true;
+		}
+		else if (count == 1)
 		{
 			LogPrintf(LOG_INFO, "Disconnect output port 0x%04X", portNb);
 			return true;
@@ -104,20 +108,24 @@ namespace emul
 
 	bool PortConnector::Out(WORD port, BYTE value)
 	{
-		auto it = m_outputPorts.find(port);
-		if (it == m_outputPorts.end())
-		{
 #ifdef _DEBUG
+		if (m_outputPorts.count(port) == 0)
+		{
 			LogPrintf(LOG_WARNING, "PortConnector::Out(0x%04X, 0x%02X): port not allocated", port, value);
-#endif
 			return false;
 		}
+#endif
 
-		auto outFunc = it->second;
-		PortConnector* owner = std::get<0>(outFunc);
-		OUTFunction& func = std::get<1>(outFunc);
+		auto listeners = m_outputPorts.equal_range(port);
+		std::for_each(listeners.first, listeners.second, [value](const auto& listener)
+		{
+			auto outFunc = listener.second;
 
-		(owner->*func)(value);
+			PortConnector* owner = std::get<0>(outFunc);
+			OUTFunction& func = std::get<1>(outFunc);
+
+			(owner->*func)(value);
+		});
 
 		return true;
 	}
