@@ -502,9 +502,9 @@ namespace emul
 		// MOV
 		// ----------
 		// MOV MEM8, AL
-		m_opcodes[0xA2] = [=]() { MOV8(Mem8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG8::AL]); };
+		m_opcodes[0xA2] = [=]() { MOV8(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()), m_reg[REG8::AL]); };
 		// MOV MEM16, AX
-		m_opcodes[0xA3] = [=]() { MOV16(Mem16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())), m_reg[REG16::AX]); };
+		m_opcodes[0xA3] = [=]() { MOV16(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()), m_reg[REG16::AX]); };
 
 		// MOVS
 		// ----------
@@ -2190,7 +2190,7 @@ namespace emul
 		{
 			SourceDest16 sd;
 			sd.dest = REG16::AX;
-			sd.source = S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
+			sd.source = SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
 			sd.dest.Write(sd.source.Read());
 
 			IndexIncDec(m_reg[REG16::SI]);
@@ -2217,7 +2217,7 @@ namespace emul
 		if (PreREP())
 		{
 			SourceDest16 sd;
-			sd.dest = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			sd.dest = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
 			sd.source = REG16::AX;
 			sd.dest.Write(sd.source.Read());
 
@@ -2235,7 +2235,7 @@ namespace emul
 		{
 			SourceDest8 sd;
 
-			sd.source = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			sd.source = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
 			sd.dest = REG8::AL;
 			Arithmetic8(sd, rawCmp8);
 
@@ -2251,7 +2251,7 @@ namespace emul
 		{
 			SourceDest16 sd;
 
-			sd.source = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			sd.source = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
 			sd.dest = REG16::AX;
 			Arithmetic16(sd, rawCmp16);
 
@@ -2290,8 +2290,8 @@ namespace emul
 		if (PreREP())
 		{
 			SourceDest16 sd;
-			sd.source.SetAddress(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
-			sd.dest.SetAddress(S2A(m_reg[REG16::ES], m_reg[REG16::DI]));
+			sd.source = SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
+			sd.dest = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
 
 			sd.dest.Write(sd.source.Read());
 
@@ -2315,8 +2315,8 @@ namespace emul
 		if (PreREP())
 		{
 			SourceDest8 sd;
-			sd.dest = S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
-			sd.source = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			sd.dest = SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
+			sd.source = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
 
 			Arithmetic8(sd, rawCmp8);
 
@@ -2337,9 +2337,8 @@ namespace emul
 		if (PreREP())
 		{
 			SourceDest16 sd;
-			
-			sd.dest = S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
-			sd.source = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			sd.dest = SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]);
+			sd.source = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
 
 			Arithmetic16(sd, rawCmp16);
 
@@ -2564,7 +2563,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "XLAT");
 
-		WORD offset = m_reg[REG16::BX] + m_reg[REG8::AL]; // TODO: Wrap around?
+		WORD offset = m_reg[REG16::BX] + m_reg[REG8::AL];
 		m_reg[REG8::AL] = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], offset));
 	}
 

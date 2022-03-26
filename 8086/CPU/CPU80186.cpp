@@ -226,7 +226,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			Mem8 dest = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			Mem8 dest = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
 
 			BYTE val;
 			In(m_reg[REG16::DX], val);
@@ -243,7 +243,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			Mem16 dest = S2A(m_reg[REG16::ES], m_reg[REG16::DI]);
+			Mem16 dest = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
 
 			BYTE l, h;
 			In(m_reg[REG16::DX], l);

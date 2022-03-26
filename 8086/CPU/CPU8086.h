@@ -77,6 +77,9 @@ namespace emul
 
 	struct SegmentOffset
 	{
+		SegmentOffset() {}
+		SegmentOffset(WORD seg, WORD off) : segment(seg), offset(off) {}
+
 		WORD segment = 0;
 		WORD offset = 0;
 
@@ -92,20 +95,24 @@ namespace emul
 	{
 	public:
 		Mem8() {}
-		Mem8(const SegmentOffset& segoff) : Mem8(segoff.GetAddress()) {}
-		Mem8(ADDRESS a) : m_address(a) {}
+		Mem8(const SegmentOffset& segoff, bool high = false) : m_segOff(segoff) { if (high) Increment(); }
 		Mem8(REG8 r8) : m_reg8(r8) {}
 
-		BYTE Read() const { return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_address); }
-		void Write(BYTE value) { (int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_address, value); }
+		BYTE Read() const { return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_segOff.GetAddress()); }
+		void Write(BYTE value) { (int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_segOff.GetAddress(), value); }
 
 		static void Init(Memory* m, Registers* r) { m_memory = m; m_registers = r; }
 
-	protected:		
+		void Increment(int i = 1)
+		{
+			m_segOff.offset += i;
+		}
+
+	protected:
 		static Memory* m_memory;
 		static Registers* m_registers;
 
-		ADDRESS m_address = ADDRESS(-1);
+		SegmentOffset m_segOff;
 		REG8 m_reg8 = REG8::INVALID;
 	};
 
@@ -119,25 +126,15 @@ namespace emul
 	{
 	public:
 		Mem16() {}
-		Mem16(const SegmentOffset& segoff) : Mem16(segoff.GetAddress()) {}
-		Mem16(ADDRESS a) { SetAddress(a); }
-		Mem16(REG16 r16) : l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
+		Mem16(const SegmentOffset& segoff) : l(segoff), h(segoff, true) {}
+		Mem16(REG16 r16) : m_isReg(true), l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
 
-		bool IsRegister() const { return a == uint32_t(-1); }
-
-		void SetAddress(ADDRESS a)
-		{
-			this->a = a;
-			this->l = Mem8(a);
-			this->h = Mem8(a + 1);
-		}
+		bool IsRegister() const { return m_isReg; }
 
 		void Increment()
 		{
-			if (!IsRegister())
-			{
-				SetAddress(this->a + 2);
-			}
+			l.Increment(2);
+			h.Increment(2);
 		}
 
 		WORD Read() const { return MakeWord(h.Read(), l.Read()); }
@@ -149,10 +146,9 @@ namespace emul
 		static Memory* m_memory;
 		static Registers* m_registers;
 
+		bool m_isReg = false;
 		Mem8 h;
 		Mem8 l;
-
-		ADDRESS a = uint32_t(-1);
 	};
 
 	struct SourceDest16
