@@ -11,6 +11,7 @@
 #include "ComputerXT.h"
 #include "ComputerPCjr.h"
 #include "ComputerTandy.h"
+#include "ComputerAT.h"
 
 #include "Config.h"
 #include "Sound/Sound.h"
@@ -130,6 +131,10 @@ Computer* CreateComputer(std::string arch)
 	if (arch == "xt")
 	{
 		return new emul::ComputerXT();
+	}
+	if (arch == "at")
+	{
+		return new emul::ComputerAT();
 	}
 	else if (arch == "pcjr")
 	{
@@ -514,6 +519,14 @@ int main(int argc, char* args[])
 							}
 							break;
 						case FKEY + 8:
+							if (pc->GetID() != "at")
+							{
+								fprintf(stderr, "Creating AT computer\n");
+								delete pc;
+								pc = CreateComputer("at");
+								pc->Init(640); //TODO
+								InitPC(pc, overlay);
+							}
 							break;
 						case FKEY + 9:
 							fprintf(stderr, "Capture mouse ON\n");

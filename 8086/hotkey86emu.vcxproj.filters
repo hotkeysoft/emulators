@@ -279,6 +279,9 @@
     <ClCompile Include="CPU\CPU80286.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
+    <ClCompile Include="ComputerAT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -507,6 +510,9 @@
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
     <ClInclude Include="CPU\CPUException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputerAT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

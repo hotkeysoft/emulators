@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Logger.cpp" />
+    <ClCompile Include="ComputerAT.cpp" />
     <ClCompile Include="CPU\CPU80186.cpp" />
     <ClCompile Include="CPU\CPU80286.cpp" />
     <ClCompile Include="Hardware\Device8167.cpp" />
@@ -247,6 +248,7 @@
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
+    <ClInclude Include="ComputerAT.h" />
     <ClInclude Include="CPU\CPU80186.h" />
     <ClInclude Include="CPU\CPU80286.h" />
     <ClInclude Include="CPU\CPUException.h" />
