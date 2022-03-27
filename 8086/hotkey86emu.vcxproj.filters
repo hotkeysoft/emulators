@@ -282,6 +282,9 @@
     <ClCompile Include="ComputerAT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Hardware\Device146818.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -514,6 +517,9 @@
     </ClInclude>
     <ClInclude Include="ComputerAT.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device146818.h">
+      <Filter>Header Files\Hardware</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -38,8 +38,16 @@ namespace emul
 		Computer(m_memory),
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS", 0x10000, emul::MemoryType::ROM),
-		m_picSecondary("pic2", 0xA0, false)
+		m_picSecondary("pic2", 0xA0, false),
+		m_rtc(0x70)
 	{
+	}
+
+	void ComputerAT::Reset()
+	{
+		Computer::Reset();
+		m_nmiEnabled = true;
+		m_picSecondary.Reset();
 	}
 
 	void ComputerAT::Init(WORD baseRAM)
@@ -64,14 +72,12 @@ namespace emul
 		m_picSecondary.Init();
 		m_pic->AttachSecondaryDevice(IRQ_PIC2, &m_picSecondary);
 
-		// TODO: 
-		// Port 70: NMI control
-		// Port F0: Clear Math Coprocessor BUSY signal
-		// Port F1: Reset Math Coprocessor
+		m_rtc.EnableLog(CONFIG().GetLogLevel("rtc"));
+		m_rtc.Init();
 
+		Connect(0x70, PortConnector::OUTFunction(&ComputerAT::WriteNMIMask), true);
 
-		// TODO: MCGA, VGA(?)
-		InitVideo("cga", { "cga" });
+		InitVideo("cga", { "cga", "ega", "vga" });
 
 		m_biosF000.LoadOddEven("data/AT/BIOS_5170_V3_F000_ODD.BIN", OddEven::ODD);
 		m_biosF000.LoadOddEven("data/AT/BIOS_5170_V3_F000_EVEN.BIN", OddEven::EVEN);
@@ -140,6 +146,18 @@ namespace emul
 		m_baseRAM.Alloc(baseRAM * 1024);
 		m_baseRAM.Clear();
 		m_memory.Allocate(&m_baseRAM, 0);
+	}
+
+	void ComputerAT::WriteNMIMask(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "WriteNMIMask, value=%02x", value);
+
+		bool enabled = !GetBit(value, 7);
+		if (m_nmiEnabled != enabled)
+		{
+			LogPrintf(LOG_WARNING, "NMI is %s", m_nmiEnabled ? "Enabled" : "Disabled");
+		}
+		m_nmiEnabled = enabled;
 	}
 
 	bool ComputerAT::Step()
