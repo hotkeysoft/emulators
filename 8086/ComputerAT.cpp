@@ -39,7 +39,8 @@ namespace emul
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS", 0x10000, emul::MemoryType::ROM),
 		m_picSecondary("pic2", 0xA0, false),
-		m_rtc(0x70)
+		m_rtc(0x70),
+		m_dmaSecondary("dma2", 0xC0, m_memory)
 	{
 	}
 
@@ -71,6 +72,13 @@ namespace emul
 		m_picSecondary.EnableLog(CONFIG().GetLogLevel("pic"));
 		m_picSecondary.Init();
 		m_pic->AttachSecondaryDevice(IRQ_PIC2, &m_picSecondary);
+
+		// TODO: Page registers
+
+		// Secondary DMA Controller works on 16 bit transfers:
+		// All bits are shifted to the left (including port addresses)
+		m_dmaSecondary.EnableLog(CONFIG().GetLogLevel("dma"));
+		m_dmaSecondary.Init(1);
 
 		m_rtc.EnableLog(CONFIG().GetLogLevel("rtc"));
 		m_rtc.Init();
@@ -211,6 +219,7 @@ namespace emul
 			if (!m_turbo) m_pcSpeaker.Tick();
 
 			m_dma->Tick();
+			m_dmaSecondary.Tick();
 
 			if (syncTicks & 1)
 			{

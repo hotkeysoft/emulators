@@ -17,7 +17,7 @@ namespace dma
 	class DMAChannel : public PortConnector
 	{
 	public:
-		DMAChannel(Device8237* parent, emul::Memory& memory, BYTE id, const char* label);
+		DMAChannel(Device8237* parent, emul::Memory& memory, BYTE id, std::string label);
 
 		DMAChannel() = delete;
 		DMAChannel(const DMAChannel&) = delete;
@@ -25,7 +25,7 @@ namespace dma
 		DMAChannel(DMAChannel&&) = delete;
 		DMAChannel& operator=(DMAChannel&&) = delete;
 
-		void Init();
+		void Init(BYTE addressShift);
 		void Reset();
 
 		void Tick();
@@ -38,7 +38,7 @@ namespace dma
 
 		void SetMode(BYTE mode);
 
-		void SetPage(BYTE page) { m_page = (page & 0x0F); }
+		void SetPage(BYTE page) { m_page = page; }
 
 		OPERATION GetOperation() { return m_operation; }
 		void DMAOperation(BYTE& value);
@@ -47,6 +47,7 @@ namespace dma
 		Device8237* m_parent;
 		emul::Memory& m_memory;
 		BYTE m_id;
+		BYTE m_addressShift = 0;
 
 		enum MODE {
 			MODE_M1 = 128,
@@ -74,6 +75,7 @@ namespace dma
 	class Device8237 : public PortConnector
 	{
 	public:
+		Device8237(const char* id, WORD baseAddress, emul::Memory& m_memory);
 		Device8237(WORD baseAddress, emul::Memory& m_memory);
 
 		Device8237() = delete;
@@ -82,11 +84,13 @@ namespace dma
 		Device8237(Device8237&&) = delete;
 		Device8237& operator=(Device8237&&) = delete;
 
-		WORD GetBaseAdress() { return m_baseAddress; }
+		WORD GetBaseAddress() { return m_baseAddress; }
 
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO);
 
-		void Init();
+		// Address shift will shift all addresses and ports one bit, for 16 bit DMA transfers
+		// (used on AT+)
+		void Init(BYTE addressShift = 0);
 		void Reset();
 
 		void Tick();

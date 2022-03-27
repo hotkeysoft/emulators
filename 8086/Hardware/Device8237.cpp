@@ -11,21 +11,25 @@ using emul::SetBit;
 namespace dma
 {
 
-	DMAChannel::DMAChannel(Device8237* parent, emul::Memory& memory, BYTE id, const char* label) :
-		Logger(label),
+	DMAChannel::DMAChannel(Device8237* parent, emul::Memory& memory, BYTE id, std::string label) :
+		Logger(label.c_str()),
 		m_parent(parent),
 		m_memory(memory),
 		m_id(id)
 	{
 	}
-
-	void DMAChannel::Init()
+	
+	void DMAChannel::Init(BYTE addressShift)
 	{
-		Connect(m_parent->GetBaseAdress() + (m_id * 2), static_cast<PortConnector::INFunction>(&DMAChannel::ReadAddress));
-		Connect(m_parent->GetBaseAdress() + (m_id * 2), static_cast<PortConnector::OUTFunction>(&DMAChannel::WriteAddress));
+		m_addressShift = addressShift;
 
-		Connect(m_parent->GetBaseAdress() + (m_id * 2) + 1, static_cast<PortConnector::INFunction>(&DMAChannel::ReadCount));
-		Connect(m_parent->GetBaseAdress() + (m_id * 2) + 1, static_cast<PortConnector::OUTFunction>(&DMAChannel::WriteCount));
+		WORD address = m_parent->GetBaseAddress() + (m_id << (m_addressShift + 1));
+
+		Connect(address, static_cast<PortConnector::INFunction>(&DMAChannel::ReadAddress));
+		Connect(address, static_cast<PortConnector::OUTFunction>(&DMAChannel::WriteAddress));
+
+		Connect(address + (1 << m_addressShift), static_cast<PortConnector::INFunction>(&DMAChannel::ReadCount));
+		Connect(address + (1 << m_addressShift), static_cast<PortConnector::OUTFunction>(&DMAChannel::WriteCount));
 	}
 
 	void DMAChannel::Reset()
@@ -45,7 +49,6 @@ namespace dma
 		if (m_parent->IsDisabled())
 			return;
 
-		// Fake memory refresh
 		--m_count;
 
 		if (m_decrement)
@@ -164,7 +167,8 @@ namespace dma
 
 	void DMAChannel::DMAOperation(BYTE& value)
 	{
-		emul::ADDRESS addr = (m_page << 16) + m_address;
+		// Page register is not shifted, bit 0 is cleared and ignored
+		emul::ADDRESS addr = (m_page << 16) + (m_address << m_addressShift ? 1 : 0);
 
 		if (m_terminalCount)
 		{
@@ -191,12 +195,12 @@ namespace dma
 		Tick();
 	}
 
-	Device8237::Device8237(WORD baseAddress, emul::Memory& memory) :
-		Logger("dma"),
-		m_channel0(this, memory, 0, "dma.0"),
-		m_channel1(this, memory, 1, "dma.1"),
-		m_channel2(this, memory, 2, "dma.2"),
-		m_channel3(this, memory, 3, "dma.3"),
+	Device8237::Device8237(const char* id, WORD baseAddress, emul::Memory& memory) :
+		Logger(id),
+		m_channel0(this, memory, 0, std::string(id) + ".0"),
+		m_channel1(this, memory, 1, std::string(id) + ".1"),
+		m_channel2(this, memory, 2, std::string(id) + ".2"),
+		m_channel3(this, memory, 3, std::string(id) + ".3"),
 		m_baseAddress(baseAddress),
 		m_commandReg(0),
 		m_statusReg(0),
@@ -206,6 +210,11 @@ namespace dma
 		m_byteFlipFlop(false)
 	{
 		Reset();
+	}
+
+	Device8237::Device8237(WORD baseAddress, emul::Memory& memory) :
+		Device8237("dma", baseAddress, memory)
+	{
 	}
 
 	void Device8237::EnableLog(SEVERITY minSev)
@@ -233,39 +242,40 @@ namespace dma
 		DMARequests[3] = false;
 	}
 
-	void Device8237::Init()
+	void Device8237::Init(BYTE addressShift)
 	{
 		// Registers port 0..7
-		m_channel0.Init();
-		m_channel1.Init();
-		m_channel2.Init();
-		m_channel3.Init();
+		m_channel0.Init(addressShift);
+		m_channel1.Init(addressShift);
+		m_channel2.Init(addressShift);
+		m_channel3.Init(addressShift);
 
 		// Ports 8..16, control, etc.
 
 		// base+8: Command Register (write), Status Register (read)
-		Connect(GetBaseAdress() + 8, static_cast<PortConnector::INFunction>(&Device8237::ReadStatus));
-		Connect(GetBaseAdress() + 8, static_cast<PortConnector::OUTFunction>(&Device8237::WriteCommand));
+		Connect(GetBaseAddress() + (0x8 << addressShift), static_cast<PortConnector::INFunction>(&Device8237::ReadStatus));
+		Connect(GetBaseAddress() + (0x8 << addressShift), static_cast<PortConnector::OUTFunction>(&Device8237::WriteCommand));
 
 		// base+9: Request (write)
-		Connect(GetBaseAdress() + 9, static_cast<PortConnector::OUTFunction>(&Device8237::WriteRequest));
+		Connect(GetBaseAddress() + (0x9 << addressShift), static_cast<PortConnector::OUTFunction>(&Device8237::WriteRequest));
 
-		// base+10: Single Mask Bit (write)
-		Connect(GetBaseAdress() + 10, static_cast<PortConnector::OUTFunction>(&Device8237::WriteSingleMaskBit));
+		// base+A: Single Mask Bit (write)
+		Connect(GetBaseAddress() + (0xA << addressShift), static_cast<PortConnector::OUTFunction>(&Device8237::WriteSingleMaskBit));
 
-		// base+11: Mode (write)
-		Connect(GetBaseAdress() + 11, static_cast<PortConnector::OUTFunction>(&Device8237::WriteMode));
+		// base+B: Mode (write)
+		Connect(GetBaseAddress() + (0xB << addressShift), static_cast<PortConnector::OUTFunction>(&Device8237::WriteMode));
 
-		// base+12: Clear Byte Flip-flop (write)
-		Connect(GetBaseAdress() + 12, static_cast<PortConnector::OUTFunction>(&Device8237::ClearFlipFlop));
+		// base+C: Clear Byte Flip-flop (write)
+		Connect(GetBaseAddress() + (0xC << addressShift), static_cast<PortConnector::OUTFunction>(&Device8237::ClearFlipFlop));
 
-		// base+13: Master Clear (write), Temporary Register (read)
-		Connect(GetBaseAdress() + 13, static_cast<PortConnector::INFunction>(&Device8237::ReadTemp));
-		Connect(GetBaseAdress() + 13, static_cast<PortConnector::OUTFunction>(&Device8237::MasterClear));
+		// base+D: Master Clear (write), Temporary Register (read)
+		Connect(GetBaseAddress() + (0xD << addressShift), static_cast<PortConnector::INFunction>(&Device8237::ReadTemp));
+		Connect(GetBaseAddress() + (0xE << addressShift), static_cast<PortConnector::OUTFunction>(&Device8237::MasterClear));
 
-		// base+15: All Mask Bits (write)
-		Connect(GetBaseAdress() + 15, static_cast<PortConnector::OUTFunction>(&Device8237::WriteAllMaskBits));
+		// base+E: All Mask Bits (write)
+		Connect(GetBaseAddress() + 0xF, static_cast<PortConnector::OUTFunction>(&Device8237::WriteAllMaskBits));
 
+		// TODO: Move this out of here
 		// Page Registers
 		Connect(0x87, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel0Page));
 		Connect(0x83, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel1Page));
