@@ -44,6 +44,12 @@ namespace dma
 		m_terminalCount = false;
 	}
 
+	void DMAChannel::SetCascadedDevice(Device8237* device)
+	{
+		LogPrintf(LOG_INFO, "Setting cascaded device");
+		m_cascadedDevice = device;
+	}
+
 	void DMAChannel::Tick()
 	{
 		if (m_parent->IsDisabled())
@@ -133,7 +139,12 @@ namespace dma
 		case MODE_M1: LogPrintf(LOG_INFO, "Mode: BLOCK");
 			break;
 		case MODE_M1 | MODE_M0: LogPrintf(LOG_INFO, "Mode: CASCADE");
-			throw std::exception("not implemented");
+			m_cascade = true;
+			if (!m_cascadedDevice)
+			{
+				LogPrintf(LOG_ERROR, "Mode: CASCADE - No connected device");
+			}
+			break;
 		default:
 			throw std::exception("not possible");
 		}
@@ -168,7 +179,7 @@ namespace dma
 	void DMAChannel::DMAOperation(BYTE& value)
 	{
 		// Page register is not shifted, bit 0 is cleared and ignored
-		emul::ADDRESS addr = (m_page << 16) + (m_address << m_addressShift ? 1 : 0);
+		emul::ADDRESS addr = (m_page << 16) + (m_address << m_addressShift);
 
 		if (m_terminalCount)
 		{
@@ -197,10 +208,12 @@ namespace dma
 
 	Device8237::Device8237(const char* id, WORD baseAddress, emul::Memory& memory) :
 		Logger(id),
-		m_channel0(this, memory, 0, std::string(id) + ".0"),
-		m_channel1(this, memory, 1, std::string(id) + ".1"),
-		m_channel2(this, memory, 2, std::string(id) + ".2"),
-		m_channel3(this, memory, 3, std::string(id) + ".3"),
+		m_channels {
+			DMAChannel(this, memory, 0, std::string(id) + ".0"),
+			DMAChannel(this, memory, 1, std::string(id) + ".1"),
+			DMAChannel(this, memory, 2, std::string(id) + ".2"),
+			DMAChannel(this, memory, 3, std::string(id) + ".3"),
+		},
 		m_baseAddress(baseAddress),
 		m_commandReg(0),
 		m_statusReg(0),
@@ -221,11 +234,16 @@ namespace dma
 	{
 		Logger::EnableLog(minSev);
 
-		m_channel0.EnableLog(minSev);
-		m_channel1.EnableLog(minSev);
-		m_channel2.EnableLog(minSev);
-		m_channel3.EnableLog(minSev);
+		for (DMAChannel& channel : m_channels)
+		{
+			channel.EnableLog(minSev);
+		}
 	}
+
+	//void Device8237::Cascade::Reset()
+	//{
+	//	memset(this, 0, sizeof(Cascade));
+	//}
 
 	void Device8237::Reset()
 	{
@@ -236,19 +254,16 @@ namespace dma
 		m_maskReg = 0xFF;
 		m_byteFlipFlop = false;
 
-		DMARequests[0] = false;
-		DMARequests[1] = false;
-		DMARequests[2] = false;
-		DMARequests[3] = false;
+		m_dmaRequests.fill(false);
 	}
 
 	void Device8237::Init(BYTE addressShift)
 	{
 		// Registers port 0..7
-		m_channel0.Init(addressShift);
-		m_channel1.Init(addressShift);
-		m_channel2.Init(addressShift);
-		m_channel3.Init(addressShift);
+		for (DMAChannel& channel : m_channels)
+		{
+			channel.Init(addressShift);
+		}
 
 		// Ports 8..16, control, etc.
 
@@ -274,25 +289,22 @@ namespace dma
 
 		// base+E: All Mask Bits (write)
 		Connect(GetBaseAddress() + 0xF, static_cast<PortConnector::OUTFunction>(&Device8237::WriteAllMaskBits));
+	}
 
-		// TODO: Move this out of here
-		// Page Registers
-		Connect(0x87, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel0Page));
-		Connect(0x83, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel1Page));
-		Connect(0x81, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel2Page));
-		Connect(0x82, static_cast<PortConnector::OUTFunction>(&Device8237::WriteChannel3Page));
+	void Device8237::SetCascadedDevice(BYTE channel, Device8237* device)
+	{
+		assert(device);
+		if (channel > 3)
+		{
+			throw std::exception("SetCascadedDevice: dma > 3 not supported");
+		}
+
+		LogPrintf(LOG_INFO, "Cascaded controller on DMA%d channel", channel);
+		m_channels[channel].SetCascadedDevice(device);
 	}
 
 	void Device8237::Tick()
 	{
-		static size_t div = 0;
-
-		// TODO: Fake memory refresh until everything is connected
-		if (div++ == 15)
-		{
-			div = 0;
-			m_channel0.Tick();
-		}
 	}
 
 	BYTE Device8237::ReadStatus()
@@ -375,14 +387,14 @@ namespace dma
 	void Device8237::DMARequest(BYTE channel, bool state)
 	{
 		if (channel > 3) throw std::exception("invalid dma channel");
-		DMARequests[channel & 3] = state;
+		m_dmaRequests[channel & 3] = state;
 	}
 	bool Device8237::DMAAcknowledged(BYTE channel)
 	{
 		if (channel > 3) throw std::exception("invalid dma channel");
-		// TODO
-		bool ack = DMARequests[channel & 3];
-		DMARequests[channel & 3] = false;
+
+		bool ack = m_dmaRequests[channel & 3];
+		m_dmaRequests[channel & 3] = false;
 		return ack;
 	}
 
@@ -411,39 +423,5 @@ namespace dma
 	{
 		channel &= 3;
 		return m_statusReg & (1 << channel);
-	}
-
-	DMAChannel& Device8237::GetChannel(BYTE channel)
-	{
-		switch (channel & 3)
-		{
-		case 0: return m_channel0;
-		case 1: return m_channel1;
-		case 2: return m_channel2;
-		case 3: return m_channel3;
-		default:
-			throw std::exception("not possible");
-		}
-	}
-
-	void Device8237::WriteChannel0Page(BYTE value)
-	{
-		LogPrintf(LOG_INFO, "Set Channel 0 Page Register, value=%02X", value);
-		m_channel0.SetPage(value);
-	}
-	void Device8237::WriteChannel1Page(BYTE value)
-	{
-		LogPrintf(LOG_INFO, "Set Channel 1 Page Register, value=%02X", value);
-		m_channel1.SetPage(value);
-	}
-	void Device8237::WriteChannel2Page(BYTE value)
-	{
-		LogPrintf(LOG_INFO, "Set Channel 2 Page Register, value=%02X", value);
-		m_channel2.SetPage(value);
-	}
-	void Device8237::WriteChannel3Page(BYTE value)
-	{
-		LogPrintf(LOG_INFO, "Set Channel 3 Page Register, value=%02X", value);
-		m_channel3.SetPage(value);
 	}
 }

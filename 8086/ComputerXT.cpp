@@ -199,8 +199,17 @@ namespace emul
 			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
 			if (!m_turbo) m_pcSpeaker.Tick();
+		
 
-			m_dma->Tick();
+			// Fake DMA Channel 0 memory refresh to shut up POST
+			{
+				static size_t dma0Div = 0;
+				if (dma0Div++ == 15)
+				{
+					dma0Div = 0;
+					m_dma1->GetChannel(0).Tick();
+				}
+			}
 
 			if (syncTicks & 1)
 			{

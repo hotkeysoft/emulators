@@ -31,7 +31,8 @@ namespace emul
 	static const BYTE IRQ_HDD = 5;
 	static const BYTE DMA_HDD = 3;
 
-	static const BYTE IRQ_PIC2 = 2;
+	static const BYTE IRQ_SECONDARY = 2; // Secondary PIC is connected to IRQ2 of primary
+	static const BYTE DMA_CASCADE = 0;  // First dma controller is cascaded to DMA0 of second controller
 
 	ComputerAT::ComputerAT() :
 		Logger("AT"),
@@ -40,7 +41,6 @@ namespace emul
 		m_biosF000("BIOS", 0x10000, emul::MemoryType::ROM),
 		m_picSecondary("pic2", 0xA0, false),
 		m_rtc(0x70),
-		m_dmaSecondary("dma2", 0xC0, m_memory),
 		m_post(0x80)
 	{
 	}
@@ -67,19 +67,15 @@ namespace emul
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
 		InitPIC(new pic::Device8259(0x20));
 		InitPPI(new ppi::Device8255XT(0x60));
-		InitDMA(new dma::Device8237(0x00, m_memory));
+		InitDMA(new dma::Device8237("dma1", 0x00, m_memory), new dma::Device8237("dma2", 0xC0, m_memory));
 		InitSound();
 
 		m_picSecondary.EnableLog(CONFIG().GetLogLevel("pic"));
 		m_picSecondary.Init();
-		m_pic->AttachSecondaryDevice(IRQ_PIC2, &m_picSecondary);
+		m_pic->AttachSecondaryDevice(IRQ_SECONDARY, &m_picSecondary);
 
-		// TODO: Page registers
-
-		// Secondary DMA Controller works on 16 bit transfers:
-		// All bits are shifted to the left (including port addresses)
-		m_dmaSecondary.EnableLog(CONFIG().GetLogLevel("dma"));
-		m_dmaSecondary.Init(1);
+		// Cascade DMA controllers
+		m_dma2->SetCascadedDevice(DMA_CASCADE, m_dma1);
 
 		m_rtc.EnableLog(CONFIG().GetLogLevel("rtc"));
 		m_rtc.Init();
@@ -94,8 +90,6 @@ namespace emul
 
 		m_keyboard.EnableLog(CONFIG().GetLogLevel("keyboard"));
 		m_keyboard.Init(m_ppi, m_pic);
-
-		m_post.Init();
 
 		InitJoystick(0x201, PIT_CLK);
 
@@ -114,6 +108,8 @@ namespace emul
 		{
 			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
 		}
+
+		m_post.Init();
 
 		// Configuration switches
 		//{
@@ -218,9 +214,6 @@ namespace emul
 
 			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
 			if (!m_turbo) m_pcSpeaker.Tick();
-
-			m_dma->Tick();
-			m_dmaSecondary.Tick();
 
 			if (syncTicks & 1)
 			{

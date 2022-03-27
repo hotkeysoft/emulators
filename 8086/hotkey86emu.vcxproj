@@ -171,6 +171,7 @@
     <ClCompile Include="CPU\CPU80286.cpp" />
     <ClCompile Include="Hardware\Device146818.cpp" />
     <ClCompile Include="Hardware\Device8167.cpp" />
+    <ClCompile Include="Hardware\DeviceDMAPageRegister.cpp" />
     <ClCompile Include="IO\DeviceSerialMouse.cpp" />
     <ClCompile Include="Sound\Sound.cpp" />
     <ClCompile Include="stdafx.cpp">

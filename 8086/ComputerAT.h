@@ -38,8 +38,6 @@ namespace emul
 
 		pic::Device8259 m_picSecondary;
 
-		dma::Device8237 m_dmaSecondary;
-
 		rtc::Device146818 m_rtc;
 
 		post::DevicePOSTCard m_post;

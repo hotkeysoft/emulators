@@ -24,7 +24,8 @@ namespace emul
 {
 	Computer::Computer(Memory& memory) :
 		Logger("PC"),
-		m_hddROM("HDD", 8192, MemoryType::ROM)
+		m_hddROM("HDD", 8192, MemoryType::ROM),
+		m_dmaPageRegister(0x80)
 	{
 	}
 
@@ -38,7 +39,8 @@ namespace emul
 		delete m_pit;
 		delete m_pic;
 		delete m_ppi;
-		delete m_dma;
+		delete m_dma1;
+		delete m_dma2;
 		delete m_mouse;
 		delete m_rtc;
 		delete m_cpu;
@@ -244,12 +246,25 @@ namespace emul
 		m_ppi->Init();
 	}
 
-	void Computer::InitDMA(dma::Device8237* dma)
+	void Computer::InitDMA(dma::Device8237* dma1, dma::Device8237* dma2)
 	{
-		assert(dma);
-		m_dma = dma;
-		m_dma->EnableLog(CONFIG().GetLogLevel("dma"));
-		m_dma->Init();
+		assert(dma1);
+		m_dma1 = dma1;
+		m_dma1->EnableLog(CONFIG().GetLogLevel("dma"));
+		m_dma1->Init();
+
+		if (dma2)
+		{
+			m_dma2 = dma2;
+			m_dma2->EnableLog(CONFIG().GetLogLevel("dma"));
+
+			// Secondary DMA Controller works on 16 bit transfers:
+			// All bits are shifted to the left (including port addresses)
+			m_dma2->Init(1);
+		}
+
+		m_dmaPageRegister.EnableLog(CONFIG().GetLogLevel("dma.page"));
+		m_dmaPageRegister.Init(dma1, dma2);
 	}
 
 	void Computer::InitJoystick(WORD baseAddress, size_t baseClock)
@@ -423,17 +438,17 @@ namespace emul
 
 		if (m_hardDrive->IsDMAPending())
 		{
-			m_dma->DMARequest(m_hddDMA, true);
+			m_dma1->DMARequest(m_hddDMA, true);
 		}
 
-		if (m_dma->DMAAcknowledged(m_hddDMA))
+		if (m_dma1->DMAAcknowledged(m_hddDMA))
 		{
-			m_dma->DMARequest(m_hddDMA, false);
+			m_dma1->DMARequest(m_hddDMA, false);
 
 			// Do it manually
 			m_hardDrive->DMAAcknowledge();
 
-			dma::DMAChannel& channel = m_dma->GetChannel(m_hddDMA);
+			dma::DMAChannel& channel = m_dma1->GetChannel(m_hddDMA);
 			dma::OPERATION op = channel.GetOperation();
 			BYTE value;
 			switch (op)
@@ -453,7 +468,7 @@ namespace emul
 				throw std::exception("DMAOperation: Operation not supported");
 			}
 
-			if (m_dma->GetTerminalCount(m_hddDMA))
+			if (m_dma1->GetTerminalCount(m_hddDMA))
 			{
 				m_hardDrive->DMATerminalCount();
 			}
@@ -477,17 +492,17 @@ namespace emul
 		// TODO: duplication with HDD
 		if (m_floppy->IsDMAPending())
 		{
-			m_dma->DMARequest(m_floppyDMA, true);
+			m_dma1->DMARequest(m_floppyDMA, true);
 		}
 
-		if (m_dma->DMAAcknowledged(m_floppyDMA))
+		if (m_dma1->DMAAcknowledged(m_floppyDMA))
 		{
-			m_dma->DMARequest(m_floppyDMA, false);
+			m_dma1->DMARequest(m_floppyDMA, false);
 
 			// Do it manually
 			m_floppy->DMAAcknowledge();
 
-			dma::DMAChannel& channel = m_dma->GetChannel(m_floppyDMA);
+			dma::DMAChannel& channel = m_dma1->GetChannel(m_floppyDMA);
 			dma::OPERATION op = channel.GetOperation();
 			BYTE value;
 			switch (op)
@@ -507,7 +522,7 @@ namespace emul
 				throw std::exception("DMAOperation: Operation not supported");
 			}
 
-			if (m_dma->GetTerminalCount(m_floppyDMA))
+			if (m_dma1->GetTerminalCount(m_floppyDMA))
 			{
 				m_floppy->DMATerminalCount();
 			}

@@ -227,8 +227,6 @@ namespace emul
 			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
 			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
 
-			m_dma->Tick();
-
 			TickFloppy();
 			TickHardDrive();
 

@@ -285,6 +285,9 @@
     <ClCompile Include="Hardware\Device146818.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
+    <ClCompile Include="Hardware\DeviceDMAPageRegister.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">

@@ -9,6 +9,7 @@
 #include "Hardware/Device8259.h"
 #include "Hardware/Device8237.h"
 #include "Hardware/Device8167.h"
+#include "Hardware/DeviceDMAPageRegister.h"
 #include "Sound/DevicePCSpeaker.h"
 #include "IO/DeviceJoystick.h"
 #include "IO/DeviceSerialMouse.h"
@@ -103,7 +104,7 @@ namespace emul
 		virtual void InitPIT(pit::Device8254* pit);
 		virtual void InitPIC(pic::Device8259* pic);
 		virtual void InitPPI(ppi::Device8255* ppi);
-		virtual void InitDMA(dma::Device8237* dma);
+		virtual void InitDMA(dma::Device8237* dmaPrimary, dma::Device8237* dmaSecondary = nullptr);
 		virtual void InitJoystick(WORD baseAddress, size_t baseClock);
 		virtual void InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq=0, BYTE dma=0);
 		virtual void InitHardDrive(hdd::DeviceHardDrive* hdd, BYTE irq = 0, BYTE dma = 0);
@@ -134,7 +135,9 @@ namespace emul
 		pit::Device8254* m_pit = nullptr;
 		pic::Device8259* m_pic = nullptr;
 		ppi::Device8255* m_ppi = nullptr;
-		dma::Device8237* m_dma = nullptr;
+		dma::Device8237* m_dma1 = nullptr;
+		dma::Device8237* m_dma2 = nullptr;
+		dma::DeviceDMAPageRegister m_dmaPageRegister;
 		video::Video* m_video = nullptr;
 		joy::DeviceJoystick* m_joystick = nullptr;
 		beeper::DevicePCSpeaker m_pcSpeaker;

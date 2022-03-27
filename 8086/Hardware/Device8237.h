@@ -10,6 +10,8 @@ using emul::WORD;
 
 namespace dma
 {
+	static const BYTE DMA_CHANNELS = 4;
+
 	class Device8237;
 
 	enum class OPERATION { VERIFY, READ, WRITE, INVALID };
@@ -27,6 +29,8 @@ namespace dma
 
 		void Init(BYTE addressShift);
 		void Reset();
+
+		void SetCascadedDevice(Device8237* primary);
 
 		void Tick();
 
@@ -48,6 +52,9 @@ namespace dma
 		emul::Memory& m_memory;
 		BYTE m_id;
 		BYTE m_addressShift = 0;
+
+		bool m_cascade = false;
+		Device8237* m_cascadedDevice = nullptr;
 
 		enum MODE {
 			MODE_M1 = 128,
@@ -93,6 +100,8 @@ namespace dma
 		void Init(BYTE addressShift = 0);
 		void Reset();
 
+		void SetCascadedDevice(BYTE channel, Device8237* device);
+
 		void Tick();
 
 		void DMARequest(BYTE channel, bool state);
@@ -104,7 +113,7 @@ namespace dma
 		bool GetTerminalCount(BYTE channel);
 		void SetTerminalCount(BYTE channel, bool tc = true);
 
-		DMAChannel& GetChannel(BYTE channel);
+		DMAChannel& GetChannel(BYTE channel) { return m_channels[channel & 3]; }
 
 	protected:
 		const WORD m_baseAddress;
@@ -131,17 +140,8 @@ namespace dma
 		void MasterClear(BYTE value);
 		void WriteAllMaskBits(BYTE value);
 
-		void WriteChannel0Page(BYTE value);
-		void WriteChannel1Page(BYTE value);
-		void WriteChannel2Page(BYTE value);
-		void WriteChannel3Page(BYTE value);
-
-		DMAChannel m_channel0;
-		DMAChannel m_channel1;
-		DMAChannel m_channel2;
-		DMAChannel m_channel3;
-
-		bool DMARequests[4] = { false, false, false, false };
+		std::array<DMAChannel, DMA_CHANNELS> m_channels;
+		std::array<bool, DMA_CHANNELS> m_dmaRequests = {};
 
 		BYTE m_commandReg;
 		BYTE m_statusReg;
