@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../Common.h"
-#include "../CPU/PortConnector.h"
+#include "DevicePPI.h"
 
 using emul::PortConnector;
 using emul::BYTE;
@@ -9,23 +8,21 @@ using emul::WORD;
 
 namespace ppi
 {
-	class Device8255 : public PortConnector
+	class Device8255 : public DevicePPI
 	{
 	public:
-		virtual ~Device8255() {}
-
 		Device8255() = delete;
 		Device8255(const Device8255&) = delete;
 		Device8255& operator=(const Device8255&) = delete;
 		Device8255(Device8255&&) = delete;
 		Device8255& operator=(Device8255&&) = delete;
 
-		virtual void Init();
-		virtual void Reset();
+		virtual void Init() override;
+		virtual void Reset() override;
 
-		virtual bool IsSoundON();
+		virtual bool IsSoundON() override;
 
-		virtual void SetCurrentKeyCode(BYTE keyCode) { m_portAData = keyCode; }
+		virtual void SetCurrentKeyCode(BYTE keyCode) override { m_portAData = keyCode; }
 
 	protected:
 		Device8255(WORD baseAddress);
@@ -43,8 +40,6 @@ namespace ppi
 
 		BYTE CONTROL_IN();
 		void CONTROL_OUT(BYTE value);
-
-		const WORD m_baseAddress;
 
 		enum CTRL {
 			CTRL_MODESETFLAG = 128,

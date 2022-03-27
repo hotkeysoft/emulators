@@ -2,7 +2,7 @@
 
 #include "../Common.h"
 #include "../CPU/PortConnector.h"
-#include "../Hardware/Device8255.h"
+#include "../Hardware/DevicePPI.h"
 #include "../Hardware/Device8259.h"
 
 using emul::BYTE;
@@ -21,14 +21,14 @@ namespace kbd
 		DeviceKeyboard(DeviceKeyboard&&) = delete;
 		DeviceKeyboard& operator=(DeviceKeyboard&&) = delete;
 
-		virtual void Init(ppi::Device8255* ppi, pic::Device8259* pic);
+		virtual void Init(ppi::DevicePPI* ppi, pic::Device8259* pic);
 
 		virtual void Tick() = 0;
 
 		void InputKey(BYTE ch) { LogPrintf(LOG_DEBUG, "InputKey %02Xh", ch); m_keyBuf[m_keyBufWrite++] = ch; }
 
 	protected:
-		ppi::Device8255* m_ppi = nullptr;
+		ppi::DevicePPI* m_ppi = nullptr;
 		pic::Device8259* m_pic = nullptr;
 
 		// Keyboard buffer

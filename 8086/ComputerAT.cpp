@@ -2,8 +2,12 @@
 
 #include "ComputerAT.h"
 #include "Config.h"
+#include "Hardware/Device8042AT.h"
+#include "Hardware/Device8237.h"
+#include "Hardware/Device8254.h"
+#include "Hardware/Device8259.h"
 #include "IO/Console.h"
-#include "Hardware/Device8255XT.h"
+#include "IO/DeviceJoystick.h"
 #include "Storage/DeviceFloppyXT.h"
 #include "Storage/DeviceHardDrive.h"
 
@@ -66,7 +70,7 @@ namespace emul
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
 		InitPIC(new pic::Device8259(0x20));
-		InitPPI(new ppi::Device8255XT(0x60));
+		InitPPI(new ppi::Device8042AT(0x60));
 		InitDMA(new dma::Device8237("dma1", 0x00, m_memory), new dma::Device8237("dma2", 0xC0, m_memory));
 		InitSound();
 
@@ -89,7 +93,7 @@ namespace emul
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
 
 		m_keyboard.EnableLog(CONFIG().GetLogLevel("keyboard"));
-		m_keyboard.Init(m_ppi, m_pic);
+		//m_keyboard.Init(m_ppi, m_pic);
 
 		InitJoystick(0x201, PIT_CLK);
 
@@ -111,6 +115,10 @@ namespace emul
 
 		m_post.Init();
 
+		{
+			ppi::Device8042AT* ppi = (ppi::Device8042AT*)m_ppi;
+			ppi->SetCPU(m_cpu);
+		}
 		// Configuration switches
 		//{
 		//	ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
@@ -185,7 +193,7 @@ namespace emul
 		static uint32_t cpuTicks = 0;
 		cpuTicks += GetCPU().GetInstructionTicks();
 
-		ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
+		//ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
 
 		for (uint32_t i = 0; i < cpuTicks / GetCPUSpeedRatio(); ++i)
 		{
@@ -205,10 +213,10 @@ namespace emul
 			}
 
 			pit::Counter& timer2 = m_pit->GetCounter(2);
-			timer2.SetGate(ppi->GetTimer2Gate());
+			//timer2.SetGate(ppi->GetTimer2Gate());
 
 			m_pit->Tick();
-			ppi->SetTimer2Output(timer2.GetOutput());
+			//ppi->SetTimer2Output(timer2.GetOutput());
 
 			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 

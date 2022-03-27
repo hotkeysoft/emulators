@@ -20,7 +20,7 @@ namespace kbd
 		DeviceKeyboardPCjr(DeviceKeyboardPCjr&&) = delete;
 		DeviceKeyboardPCjr& operator=(DeviceKeyboardPCjr&&) = delete;
 
-		virtual void Init(ppi::Device8255* ppi, pic::Device8259* pic) override;
+		virtual void Init(ppi::DevicePPI* ppi, pic::Device8259* pic) override;
 
 		virtual void Tick() override;
 

@@ -2,17 +2,8 @@
 
 #include "CPU/CPU8086.h"
 #include "CPU/Memory.h"
-#include "Storage/DeviceFloppy.h"
-#include "IO/InputEvents.h"
-#include "Hardware/Device8254.h"
-#include "Hardware/Device8255.h"
-#include "Hardware/Device8259.h"
-#include "Hardware/Device8237.h"
-#include "Hardware/Device8167.h"
 #include "Hardware/DeviceDMAPageRegister.h"
 #include "Sound/DevicePCSpeaker.h"
-#include "IO/DeviceJoystick.h"
-#include "IO/DeviceSerialMouse.h"
 #include "Video/Video.h"
 #include "Serializable.h"
 
@@ -20,7 +11,16 @@
 
 using emul::WORD;
 
+namespace dma { class Device8237; }
+namespace events { class InputEvents; }
+namespace fdc { class DeviceFloppy; }
 namespace hdd { class DeviceHardDrive; }
+namespace joy { class DeviceJoystick; }
+namespace mouse { class DeviceSerialMouse; }
+namespace pic { class Device8259; }
+namespace pit { class Device8254; }
+namespace ppi { class DevicePPI; }
+namespace rtc { class Device8167; }
 
 namespace emul
 {
@@ -103,7 +103,7 @@ namespace emul
 		virtual void InitSound();
 		virtual void InitPIT(pit::Device8254* pit);
 		virtual void InitPIC(pic::Device8259* pic);
-		virtual void InitPPI(ppi::Device8255* ppi);
+		virtual void InitPPI(ppi::DevicePPI* ppi);
 		virtual void InitDMA(dma::Device8237* dmaPrimary, dma::Device8237* dmaSecondary = nullptr);
 		virtual void InitJoystick(WORD baseAddress, size_t baseClock);
 		virtual void InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq=0, BYTE dma=0);
@@ -134,7 +134,7 @@ namespace emul
 		emul::CPU8086* m_cpu = nullptr;
 		pit::Device8254* m_pit = nullptr;
 		pic::Device8259* m_pic = nullptr;
-		ppi::Device8255* m_ppi = nullptr;
+		ppi::DevicePPI* m_ppi = nullptr;
 		dma::Device8237* m_dma1 = nullptr;
 		dma::Device8237* m_dma2 = nullptr;
 		dma::DeviceDMAPageRegister m_dmaPageRegister;

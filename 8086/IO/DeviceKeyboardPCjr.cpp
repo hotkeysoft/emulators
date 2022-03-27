@@ -12,7 +12,7 @@ namespace kbd
 	{
 	}
 
-	void DeviceKeyboardPCjr::Init(ppi::Device8255* ppi, pic::Device8259* pic)
+	void DeviceKeyboardPCjr::Init(ppi::DevicePPI* ppi, pic::Device8259* pic)
 	{
 		assert(dynamic_cast<ppi::Device8255PCjr*>(ppi));
 		DeviceKeyboard::Init(ppi, pic);

@@ -2,7 +2,9 @@
 
 #include "ComputerPCjr.h"
 #include "Config.h"
+#include "Hardware/Device8254.h"
 #include "Hardware/Device8255PCjr.h"
+#include "IO/DeviceJoystick.h"
 #include "Video/VideoPCjr.h"
 #include "Storage/DeviceFloppyPCjr.h"
 

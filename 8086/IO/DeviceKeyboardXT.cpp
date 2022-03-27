@@ -9,7 +9,7 @@ namespace kbd
 	{
 	}
 
-	void DeviceKeyboardXT::Init(ppi::Device8255* ppi, pic::Device8259* pic)
+	void DeviceKeyboardXT::Init(ppi::DevicePPI* ppi, pic::Device8259* pic)
 	{
 		assert(ppi);
 		assert(pic);

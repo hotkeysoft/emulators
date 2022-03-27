@@ -3,7 +3,11 @@
 #include "ComputerXT.h"
 #include "Config.h"
 #include "IO/Console.h"
+#include "Hardware/Device8237.h"
+#include "Hardware/Device8254.h"
 #include "Hardware/Device8255XT.h"
+#include "IO/DeviceJoystick.h"
+#include "IO/DeviceSerialMouse.h"
 #include "Storage/DeviceFloppyXT.h"
 #include "Storage/DeviceHardDrive.h"
 

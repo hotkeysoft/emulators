@@ -5,8 +5,8 @@
 namespace ppi
 {
 	Device8255::Device8255(WORD baseAddress) : 
-		Logger("8255"), 
-		m_baseAddress(baseAddress)
+		DevicePPI(baseAddress),
+		Logger("8255")
 	{
 	}
 

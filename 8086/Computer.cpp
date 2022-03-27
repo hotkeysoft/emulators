@@ -3,7 +3,16 @@
 #include "Config.h"
 #include "CPU/CPU80186.h"
 #include "CPU/CPU80286.h"
+#include "Hardware/Device8167.h"
+#include "Hardware/Device8237.h"
+#include "Hardware/Device8254.h"
+#include "Hardware/Device8259.h"
+#include "Hardware/DevicePPI.h"
+#include "IO/DeviceJoystick.h"
 #include "IO/DeviceKeyboard.h"
+#include "IO/DeviceSerialMouse.h"
+#include "IO/InputEvents.h"
+#include "Storage/DeviceFloppy.h"
 #include "Storage/DeviceHardDrive.h"
 #include "Video/VideoCGA.h"
 #include "Video/VideoMDA.h"
@@ -238,7 +247,7 @@ namespace emul
 		m_pic->EnableLog(CONFIG().GetLogLevel("pic"));
 		m_pic->Init();
 	}
-	void Computer::InitPPI(ppi::Device8255* ppi)
+	void Computer::InitPPI(ppi::DevicePPI* ppi)
 	{
 		assert(ppi);
 		m_ppi = ppi;

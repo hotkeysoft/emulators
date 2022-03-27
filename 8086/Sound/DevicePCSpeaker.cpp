@@ -1,6 +1,8 @@
 #include "stdafx.h"
 
 #include "DevicePCSpeaker.h"
+#include "../Hardware/Device8254.h"
+#include "../Hardware/Device8255.h"
 #include "Sound.h"
 
 using sound::SOUND;
@@ -15,12 +17,12 @@ namespace beeper
 	{
 	}
 
-	void DevicePCSpeaker::Init(ppi::Device8255* ppi, pit::Device8254* pit)
+	void DevicePCSpeaker::Init(ppi::DevicePPI* ppi, pit::Device8254* pit)
 	{
 		assert(ppi);
 		assert(pit);
 		m_8254 = pit;
-		m_8255 = ppi;
+		m_ppi = ppi;
 	}
 
 	void DevicePCSpeaker::Tick(WORD mixWith)
@@ -28,7 +30,7 @@ namespace beeper
 		static int sample = 0;
 		static int32_t avg = 0;
 
-		BYTE speakerData = (m_8255->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 128 : 0;
+		BYTE speakerData = (m_ppi->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 128 : 0;
 		SOUND().Play(speakerData + mixWith);
 	}
 }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Hardware/Device8254.h"
-#include "../Hardware/Device8255.h"
+namespace pit { class Device8254; }
+namespace ppi { class DevicePPI; }
 
 namespace beeper
 {	
@@ -16,12 +16,12 @@ namespace beeper
 		DevicePCSpeaker(DevicePCSpeaker&&) = delete;
 		DevicePCSpeaker& operator=(DevicePCSpeaker&&) = delete;
 
-		void Init(ppi::Device8255* ppi, pit::Device8254* pit);
+		void Init(ppi::DevicePPI* ppi, pit::Device8254* pit);
 
 		void Tick(WORD mixWith = 0);
 
 	protected:
-		ppi::Device8255* m_8255 = nullptr;
+		ppi::DevicePPI* m_ppi = nullptr;
 		pit::Device8254* m_8254 = nullptr;
 	};
 }

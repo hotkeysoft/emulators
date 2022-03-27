@@ -2,6 +2,7 @@
 
 #include "../Video/Video.h"
 #include "../IO/InputEvents.h"
+#include "../IO/DeviceJoystick.h"
 #include "../Computer.h"
 #include <CoreUI.h>
 
