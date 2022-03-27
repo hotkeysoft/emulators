@@ -29,8 +29,13 @@ namespace emul
 		bool DisconnectInput(WORD portNb);
 		bool DisconnectOutput(WORD portNb);
 
+		WORD GetCurrentPort() const { return m_currentPort; }
+
 	protected:
 		static OutputPortMap m_outputPorts;
 		static InputPortMap m_inputPorts;
+
+	private:
+		WORD m_currentPort;
 	};
 }

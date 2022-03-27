@@ -102,6 +102,7 @@ namespace emul
 		PortConnector* owner = std::get<0>(inFunc);
 		INFunction& func = std::get<1>(inFunc);
 
+		owner->m_currentPort = port;
 		value = (owner->*func)();
 		return true;
 	}
@@ -117,13 +118,13 @@ namespace emul
 #endif
 
 		auto listeners = m_outputPorts.equal_range(port);
-		std::for_each(listeners.first, listeners.second, [value](const auto& listener)
+		std::for_each(listeners.first, listeners.second, [value, port](const auto& listener)
 		{
 			auto outFunc = listener.second;
 
 			PortConnector* owner = std::get<0>(outFunc);
 			OUTFunction& func = std::get<1>(outFunc);
-
+			owner->m_currentPort = port;
 			(owner->*func)(value);
 		});
 
