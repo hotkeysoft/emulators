@@ -521,6 +521,9 @@
     <ClInclude Include="Hardware\Device146818.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\DevicePOSTCard.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">

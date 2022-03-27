@@ -5,26 +5,10 @@
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardXT.h"
 #include "Hardware/Device146818.h"
+#include "Hardware/DevicePOSTCard.h"
 
 namespace emul
 {
-	class POSTCard : public PortConnector
-	{
-	public:
-		POSTCard() : Logger("POST")
-		{
-		}
-
-		void Init()
-		{
-			Connect(0x80, static_cast<PortConnector::OUTFunction>(&POSTCard::WritePOST));
-		}
-
-		void WritePOST(BYTE value)
-		{
-			LogPrintf(LOG_INFO, "[%02x]", value);
-		}
-	};
 
 	class ComputerAT : public Computer
 	{
@@ -58,6 +42,6 @@ namespace emul
 
 		rtc::Device146818 m_rtc;
 
-		POSTCard m_post;
+		post::DevicePOSTCard m_post;
 	};
 }

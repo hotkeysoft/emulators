@@ -6,34 +6,12 @@
 #include "Storage/CartridgePCjr.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardPCjr.h"
+#include "Hardware/DevicePOSTCard.h"
 
 using emul::WORD;
 
 namespace emul
 {
-	class DummyPortPCjr : public PortConnector
-	{
-	public:
-		DummyPortPCjr() : Logger("DUMMY")
-		{
-		}
-
-		void Init()
-		{
-			Connect(0x10, static_cast<PortConnector::OUTFunction>(&DummyPortPCjr::WriteMfgTest));
-		}
-
-		BYTE ReadData()
-		{
-			return 0xFF;
-		}
-
-		void WriteMfgTest(BYTE value)
-		{
-			LogPrintf(LOG_ERROR, "MFG TEST: %02Xh", value);
-		}
-	};
-
 	class ComputerPCjr : public Computer
 	{
 	public:
@@ -67,6 +45,6 @@ namespace emul
 		uart::Device8250 m_uart;
 		sn76489::DeviceSN76489 m_soundModule;
 
-		DummyPortPCjr m_dummyPorts;
+		post::DevicePOSTCard m_post;
 	};
 }

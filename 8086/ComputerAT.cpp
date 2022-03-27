@@ -40,7 +40,8 @@ namespace emul
 		m_biosF000("BIOS", 0x10000, emul::MemoryType::ROM),
 		m_picSecondary("pic2", 0xA0, false),
 		m_rtc(0x70),
-		m_dmaSecondary("dma2", 0xC0, m_memory)
+		m_dmaSecondary("dma2", 0xC0, m_memory),
+		m_post(0x80)
 	{
 	}
 

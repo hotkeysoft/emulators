@@ -255,6 +255,7 @@
     <ClInclude Include="CPU\CPUException.h" />
     <ClInclude Include="Hardware\Device146818.h" />
     <ClInclude Include="Hardware\Device8167.h" />
+    <ClInclude Include="Hardware\DevicePOSTCard.h" />
     <ClInclude Include="IO\DeviceSerialMouse.h" />
     <ClInclude Include="Sound\Sound.h" />
     <ClInclude Include="stdafx.h" />

@@ -37,7 +37,8 @@ namespace emul
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_keyboard(0xA0),
 		m_uart(0x2F8, IRQ_UART, UART_CLK),
-		m_soundModule(0xC0, SOUND_CLK)
+		m_soundModule(0xC0, SOUND_CLK),
+		m_post(0x10)
 	{
 	}
 
@@ -53,7 +54,7 @@ namespace emul
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
-		m_dummyPorts.Init();
+		m_post.Init();
 
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
