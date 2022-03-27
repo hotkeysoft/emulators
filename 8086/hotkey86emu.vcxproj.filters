@@ -288,6 +288,9 @@
     <ClCompile Include="Hardware\DeviceDMAPageRegister.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
+    <ClCompile Include="Hardware\Device8042AT.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -526,6 +529,12 @@
     </ClInclude>
     <ClInclude Include="Hardware\DevicePOSTCard.h">
       <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device8042AT.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\DevicePPI.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

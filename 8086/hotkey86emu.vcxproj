@@ -170,6 +170,7 @@
     <ClCompile Include="CPU\CPU80186.cpp" />
     <ClCompile Include="CPU\CPU80286.cpp" />
     <ClCompile Include="Hardware\Device146818.cpp" />
+    <ClCompile Include="Hardware\Device8042AT.cpp" />
     <ClCompile Include="Hardware\Device8167.cpp" />
     <ClCompile Include="Hardware\DeviceDMAPageRegister.cpp" />
     <ClCompile Include="IO\DeviceSerialMouse.cpp" />
@@ -255,8 +256,10 @@
     <ClInclude Include="CPU\CPU80286.h" />
     <ClInclude Include="CPU\CPUException.h" />
     <ClInclude Include="Hardware\Device146818.h" />
+    <ClInclude Include="Hardware\Device8042AT.h" />
     <ClInclude Include="Hardware\Device8167.h" />
     <ClInclude Include="Hardware\DevicePOSTCard.h" />
+    <ClInclude Include="Hardware\DevicePPI.h" />
     <ClInclude Include="IO\DeviceSerialMouse.h" />
     <ClInclude Include="Sound\Sound.h" />
     <ClInclude Include="stdafx.h" />

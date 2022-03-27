@@ -193,7 +193,7 @@ namespace emul
 		static uint32_t cpuTicks = 0;
 		cpuTicks += GetCPU().GetInstructionTicks();
 
-		//ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
+		ppi::Device8042AT* ppi = (ppi::Device8042AT*)m_ppi;
 
 		for (uint32_t i = 0; i < cpuTicks / GetCPUSpeedRatio(); ++i)
 		{
@@ -214,6 +214,8 @@ namespace emul
 
 			pit::Counter& timer2 = m_pit->GetCounter(2);
 			//timer2.SetGate(ppi->GetTimer2Gate());
+
+			ppi->SetRefresh(m_pit->GetCounter(1).GetOutput());
 
 			m_pit->Tick();
 			//ppi->SetTimer2Output(timer2.GetOutput());
