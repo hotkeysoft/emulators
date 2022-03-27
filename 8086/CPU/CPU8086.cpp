@@ -744,19 +744,23 @@ namespace emul
 
 	bool CPU8086::Step()
 	{
-		bool ret = CPU::Step();
-		if (ret && inSegOverride)
+		bool ret = true;
+		if (m_state != CPUState::HALT)
 		{
 			ret = CPU::Step();
+			// TODO: Other prefixes
+			if (ret && inSegOverride)
+			{
+				ret = CPU::Step();
+			}
 		}
-
+		
 		if (m_state == CPUState::HALT)
 		{
-			CPU::TICK(1);
+			m_opTicks = 1;
 			ret = true;
-		}
-
-		if (m_irqPending != -1)
+		} 
+		else if (ret && m_irqPending != -1)
 		{
 			assert(!inSegOverride);
 			TICKMISC(MiscTiming::IRQ);
@@ -1274,7 +1278,7 @@ namespace emul
 
 	void CPU8086::HLT()
 	{
-		LogPrintf(LOG_DEBUG, "HLT");
+		LogPrintf(LOG_WARNING, "HLT");
 		m_state = CPUState::HALT;
 	}
 	
