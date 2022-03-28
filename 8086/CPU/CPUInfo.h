@@ -36,7 +36,7 @@ namespace cpuInfo
 
 		enum class MODREGRM { NONE, W8, W16, SR } modRegRm = MODREGRM::NONE;
 		enum class IMM { NONE, W8, W16, W16W8, W32 } imm = IMM::NONE;
-		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, _COUNT } multi = MULTI::NONE;
+		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, GRP6, GRP7, GRP8, _COUNT } multi = MULTI::NONE;
 	};
 
 	enum class OpcodeTimingType {
@@ -76,7 +76,8 @@ namespace cpuInfo
 		std::string GetANSIFile() const;
 		Coord GetCoord(const char* label) const;
 		const Opcode& GetOpcode(BYTE opcode) const { return m_opcodes[opcode]; }
-		const std::string GetSubOpcode(const Opcode& parent, BYTE op2) const;
+		const std::string GetSubOpcodeStr(const Opcode& parent, BYTE op2) const;
+		Opcode GetSubOpcode(const Opcode& parent, BYTE op2) const;
 
 		const OpcodeTiming& GetOpcodeTiming(BYTE opcode) const { return m_timing[opcode]; }
 		const OpcodeTiming& GetSubOpcodeTiming(Opcode::MULTI sub, BYTE opcode) const { return m_subTiming[(int)sub][opcode]; }
@@ -104,9 +105,9 @@ namespace cpuInfo
 		json m_config;
 
 		void BuildOpcodes(const json& opcode);
-		Opcode BuildOpcode(const json& opcode);
+		Opcode BuildOpcode(std::string opcocode) const;
 		void BuildSubOpcodes(int index, const json& opcodes);
-		OpcodeTiming BuildTiming(const json& opcode);
+		OpcodeTiming BuildTiming(const json& opcode) const;
 
 		Opcode m_opcodes[256];
 		std::string m_subOpcodes[(int)Opcode::MULTI::_COUNT][8];

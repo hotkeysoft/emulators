@@ -35,7 +35,13 @@ namespace cpuInfo
 		}	
 		BuildOpcodes(m_config["cpu"]["opcodes"]);
 
-		for (int i = 0; i < (int)Opcode::MULTI::_COUNT; ++i)
+		int groupCount = m_config["cpu"]["opcodes.grp"];
+		if ((groupCount < 1) || (groupCount > (int)Opcode::MULTI::_COUNT))
+		{
+			throw std::exception("invalid opcode.grp count");
+		}
+
+		for (int i = 0; i < groupCount; ++i)
 		{
 			char grpName[32];
 			sprintf(grpName, "opcodes.grp%d", i + 1);
@@ -60,7 +66,7 @@ namespace cpuInfo
 	{
 		for (int i = 0; i < 256; ++i)
 		{
-			m_opcodes[i] = BuildOpcode(opcodes[i]);
+			m_opcodes[i] = BuildOpcode(opcodes[i]["name"]);
 			m_timing[i] = BuildTiming(opcodes[i]);
 		}
 	}
@@ -74,7 +80,7 @@ namespace cpuInfo
 		}
 	}
 
-	OpcodeTiming CPUInfo::BuildTiming(const json& opcode)
+	OpcodeTiming CPUInfo::BuildTiming(const json& opcode) const
 	{
 		OpcodeTiming timing = { 1, 0, 0, 0 };
 		if (!opcode.contains("timing"))
@@ -102,10 +108,9 @@ namespace cpuInfo
 		return timing;
 	}
 
-	Opcode CPUInfo::BuildOpcode(const json& opcode)
+	Opcode CPUInfo::BuildOpcode(const std::string text) const
 	{
 		Opcode ret;
-		const std::string text = opcode["name"];
 		ret.text = text;
 
 		ret.rm8 = text.find("{rm8}") != std::string::npos;
@@ -124,12 +129,18 @@ namespace cpuInfo
 		bool grp3 = text.find("{grp3}") != std::string::npos;
 		bool grp4 = text.find("{grp4}") != std::string::npos;
 		bool grp5 = text.find("{grp5}") != std::string::npos;
+		bool grp6 = text.find("{grp6}") != std::string::npos;
+		bool grp7 = text.find("{grp7}") != std::string::npos;
+		bool grp8 = text.find("{grp8}") != std::string::npos;
 
 		if (grp1) ret.multi = Opcode::MULTI::GRP1;
 		else if (grp2) ret.multi = Opcode::MULTI::GRP2;
 		else if (grp3) ret.multi = Opcode::MULTI::GRP3;
 		else if (grp4) ret.multi = Opcode::MULTI::GRP4;
 		else if (grp5) ret.multi = Opcode::MULTI::GRP5;
+		else if (grp6) ret.multi = Opcode::MULTI::GRP6;
+		else if (grp7) ret.multi = Opcode::MULTI::GRP7;
+		else if (grp8) ret.multi = Opcode::MULTI::GRP8;
 		else ret.multi = Opcode::MULTI::NONE;
 
 		if (ret.i8) ret.imm = Opcode::IMM::W8;
@@ -150,7 +161,7 @@ namespace cpuInfo
 		return ret;
 	}
 
-	const std::string CPUInfo::GetSubOpcode(const Opcode& parent, BYTE op2) const
+	const std::string CPUInfo::GetSubOpcodeStr(const Opcode& parent, BYTE op2) const
 	{
 		if (parent.multi == Opcode::MULTI::NONE || op2 > 7)
 		{
@@ -159,6 +170,21 @@ namespace cpuInfo
 		else
 		{
 			return m_subOpcodes[(int)parent.multi][op2];
+		}
+	}
+
+	Opcode CPUInfo::GetSubOpcode(const Opcode& parent, BYTE op2) const
+	{
+		if (parent.multi == Opcode::MULTI::NONE)
+		{
+			return parent;
+		}
+		else
+		{
+			std::string subOpcodeText = m_subOpcodes[(int)parent.multi][op2];
+
+			// There may be another level of indirection
+			return BuildOpcode(subOpcodeText);
 		}
 	}
 

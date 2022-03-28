@@ -1,5 +1,6 @@
 {
   "cpu": {
+  	"opcodes.grp": 8,
     "opcodes": [
 			{ "name": "ADD {rm8}, {r8}",			     "timing": [2, 7] },
       { "name": "ADD {rm16}, {r16}",         "timing": [2, 7] },
@@ -17,7 +18,7 @@
       { "name": "OR AL, {i8}",               "timing": [3] },    
       { "name": "OR AX, {i16}",              "timing": [3] },    
       { "name": "PUSH CS",                   "timing": [3] },
-      { "name": "DB 0x0F",                   "timing": [0] },
+      { "name": "{grp6}",                    "timing": [0] },
                                              
       { "name": "ADC {rm8}, {r8}",           "timing": [2, 7] },
       { "name": "ADC {rm16}, {r16}",         "timing": [2, 7] },
@@ -365,8 +366,8 @@
       { "name": "LGDT",                      "timing": [11] },
       { "name": "LIDT",                      "timing": [12] },
       { "name": "SMSW",                      "timing": [2, 3] },
+      { "name": "grp8.5" },
       { "name": "LMSW",                      "timing": [2, 3] },
-      { "name": "grp8.6" },
       { "name": "grp8.7" }
     ],        
     "misc": [                                

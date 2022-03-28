@@ -331,6 +331,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="config\80186.json" />
+    <None Include="config\80286.ANS" />
+    <None Include="config\80286.json" />
     <None Include="config\8086.ANS">
       <DeploymentContent>true</DeploymentContent>
     </None>

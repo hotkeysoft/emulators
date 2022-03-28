@@ -552,6 +552,12 @@
     <None Include="config\80186.json">
       <Filter>config</Filter>
     </None>
+    <None Include="config\80286.json">
+      <Filter>config</Filter>
+    </None>
+    <None Include="config\80286.ANS">
+      <Filter>config</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\overlay16.png">

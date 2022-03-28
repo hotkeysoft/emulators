@@ -1,5 +1,6 @@
 {
   "cpu": {
+  	"opcodes.grp": 5,
     "opcodes": [
 			{ "name": "ADD {rm8}, {r8}",			"timing": [3, 16] },
       { "name": "ADD {rm16}, {r16}",    "timing": [3, 16] },

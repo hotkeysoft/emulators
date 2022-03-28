@@ -382,6 +382,17 @@ namespace emul
 		Opcode instr = m_cpu->GetInfo().GetOpcode(data);
 		std::string text = instr.text;
 
+		// Group 6 are weird, sub command in 2nd byte, 
+		// modrm in 3rd byte with possible sub-sub command
+		if (instr.multi == Opcode::MULTI::GRP6)
+		{
+			address.offset++;
+			BYTE op2 = m_memory->Read8(address.GetAddress());
+			decoded.AddRaw(op2);
+			instr = m_cpu->GetInfo().GetSubOpcode(instr, op2);
+			replace(text, "{grp6}", instr.text);
+		}
+
 		if (instr.modRegRm != Opcode::MODREGRM::NONE ||
 			instr.multi != Opcode::MULTI::NONE)
 		{
@@ -390,7 +401,7 @@ namespace emul
 			decoded.AddRaw(modRegRm);
 
 			BYTE op2 = (modRegRm >> 3) & 7;
-			const std::string op2Str = m_cpu->GetInfo().GetSubOpcode(instr, op2);
+			const std::string op2Str = m_cpu->GetInfo().GetSubOpcodeStr(instr, op2);
 
 			char grpLabel[16] = "";
 			if (instr.multi != Opcode::MULTI::NONE)
@@ -405,6 +416,9 @@ namespace emul
 			case Opcode::MULTI::GRP3:
 			case Opcode::MULTI::GRP4:
 			case Opcode::MULTI::GRP5:
+			//case Opcode::MULTI::GRP6: 6 already handled
+			case Opcode::MULTI::GRP7:
+			case Opcode::MULTI::GRP8:
 				replace(text, grpLabel, op2Str); break;
 			default:
 				break;
