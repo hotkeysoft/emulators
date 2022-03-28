@@ -1,10 +1,15 @@
 #include "stdafx.h"
 #include "CPU80286.h"
 
+using cpuInfo::Opcode;
+using cpuInfo::MiscTiming;
 using cpuInfo::CPUType;
+using cpuInfo::OpcodeTimingType;
 
 namespace emul
 {
+	static BYTE GetOPn(BYTE opn) { return (opn >> 3) & 7; }
+
 	CPU80286::CPU80286(Memory& memory) : 
 		CPU80186(CPUType::i80286, memory),
 		Logger("CPU80286")
@@ -25,31 +30,11 @@ namespace emul
 		// Fixes the "Bug" on 8086/80186 where push sp pushed an already-decremented value
 		m_opcodes[0x54] = [=]() { PUSH(m_reg[REG16::SP]); };
 
-		// 0x0F 0x00 /0 SLDT ew 2,3 (noreal)
-		// 0x0F 0x00 /1 STR ew 2,3 (noreal)
-		// 0x0F 0x00 /2 LLDT ew 17,19 (noreal)
-		// 0x0F 0x00 /3 LTR ew 17,19 (noreal)
-		// 0x0F 0x00 /4 VERR ew 14,16 (noreal)
-		// 0x0F 0x00 /5 VERW ew 14,16 (noreal)
-
-		// 0x0F 0x01 /0 SGDT m 11 (real)
-		// 0x0F 0x01 /1 SIDT m 12 (real)
-		// 0x0F 0x01 /2 LGDT m 11 (real)
-		// 0x0F 0x01 /3 LIDT m 12 (real)
-		// 0x0F 0x01 /4 SMSW ew 2,3 (real)
-		// 0x0F 0x01 /6 LMSW ew 3,6 (real)
-		// 
-		// 0x0F 0x02 LAR 14,16 (noreal)
-		// 
-		// 0x0F 0x03 /r LSL rw,ew 14,16 (noreal)
-		// 
-		// 0x0F 0x05 LOADALL 195 (undocumented) (real)
-		// 
-		// 0x0F 0x06 CLTS 2 (real)
+		// Multi 2-3 opcodes instructions
+		m_opcodes[0x0F] = [=]() { MultiF0(FetchByte()); };
 
 		// Not recognized in real mode
 		m_opcodes[0x63] = [=]() { InvalidOpcode(); };
-
 	}
 
 	void CPU80286::Reset()
@@ -58,6 +43,7 @@ namespace emul
 
 		m_reg.Write16(REG16::CS, 0xF000);
 		m_reg.Write16(REG16::IP, 0xFFF0);
+		m_msw = MSW_RESET;
 	}
 
 	void CPU80286::ForceA20Low(bool forceLow)
@@ -89,5 +75,135 @@ namespace emul
 		// TODO, different behavior for different exceptions
 		LogPrintf(LOG_WARNING, "CPU Exception -> INT(%d)", e.GetType());
 		INT((BYTE)e.GetType());
+	}
+
+	void CPU80286::MultiF0(BYTE op2)
+	{
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP6, GetOPn(op2));
+
+		switch (op2)
+		{
+		case 0: MultiF000(FetchByte()); break;
+		case 1: MultiF001(FetchByte()); break;
+		case 2: LAR(FetchByte()); break;
+		case 3: LSL(FetchByte()); break;
+		case 5: LOADALL(); break;
+		case 6: CLTS(); break;
+		default: InvalidOpcode(); break;
+		}
+	}
+
+	void CPU80286::MultiF000(BYTE op3)
+	{
+		Mem16 modrm = GetModRM16(op3);
+
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP7, GetOPn(op3));
+
+		switch (GetOPn(op3))
+		{
+		case 0: LogPrintf(LOG_ERROR, "SLDT ew 2,3 (noreal)"); break;
+		case 1: LogPrintf(LOG_ERROR, "STR ew 2, 3 (noreal)"); break;
+		case 2: LogPrintf(LOG_ERROR, "LLDT ew 17,19 (noreal)"); break;
+		case 3: LogPrintf(LOG_ERROR, "LTR ew 17,19 (noreal)"); break;
+		case 4: LogPrintf(LOG_ERROR, "VERR ew 14,16 (noreal)"); break;
+		case 5: LogPrintf(LOG_ERROR, "VERW ew 14,16 (noreal)"); break;
+		default:
+			InvalidOpcode();
+			break;
+		}
+	}
+	void CPU80286::MultiF001(BYTE op3)
+	{
+		Mem16 modrm = GetModRM16(op3);
+
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP8, GetOPn(op3));
+
+		switch (GetOPn(op3))
+		{
+		case 0: SGDT(modrm); break;
+		case 1: SIDT(modrm); break;
+		case 2: LGDT(modrm); break; // Load Global Descriptor Table Register
+		case 3: LIDT(modrm); break; // Load Interrupt Descriptor Table Register
+		case 4: SMSW(modrm); break; // Store Machine Status Word	
+		case 6: LMSW(modrm); break; // Load Machine Status Word
+		default:
+			InvalidOpcode();
+			break;
+		}
+	}
+
+	void CPU80286::SGDT(Mem16& dest)
+	{
+		LogPrintf(LOG_ERROR, "SGDT");
+		if (dest.IsRegister())
+		{
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+		}
+	}
+	void CPU80286::SIDT(Mem16& dest)
+	{
+		LogPrintf(LOG_ERROR, "SIDT");
+		if (dest.IsRegister())
+		{
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+		}
+	}
+	void CPU80286::LGDT(const Mem16& source)
+	{
+		LogPrintf(LOG_ERROR, "LGDT");
+		if (source.IsRegister())
+		{
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+		}
+	}
+	void CPU80286::LIDT(const Mem16& source)
+	{
+		LogPrintf(LOG_ERROR, "LIDT");
+		if (source.IsRegister())
+		{
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+		}
+	}
+
+	void CPU80286::SMSW(Mem16& dest)
+	{
+		LogPrintf(LOG_WARNING, "SMSW");
+	}
+
+	void CPU80286::LMSW(const Mem16& source)
+	{
+		LogPrintf(LOG_WARNING, "LMSW");
+		WORD value = source.Read();
+		SetBitMask(value, MSW_RESERVED_ON, true);
+
+		if (IsProtectedMode())
+		{
+			// TODO
+
+			// Don't allow going back to real mode
+			value |= MSW_PE;
+		}
+		m_msw = (MSW)value;
+	}
+
+	void CPU80286::LAR(BYTE regrm)
+	{
+		LogPrintf(LOG_ERROR, "LAR rw,ew 14,16 (noreal)");
+		InvalidOpcode();
+	}
+	void CPU80286::LSL(BYTE regrm)
+	{
+		LogPrintf(LOG_ERROR, "LSL rw,ew 14,16 (noreal)");
+		InvalidOpcode();
+	}
+	void CPU80286::LOADALL()
+	{
+		LogPrintf(LOG_ERROR, "LOADALL 195 (undocumented)(real)");
+		InvalidOpcode();
+	}
+	void CPU80286::CLTS()
+	{
+		LogPrintf(LOG_ERROR, "CLTS 2 (real)");
+		InvalidOpcode();
 	}
 }
