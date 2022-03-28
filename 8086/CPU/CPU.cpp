@@ -17,7 +17,6 @@ namespace emul
 
 	void CPU::Reset()
 	{
-		m_state = CPUState::STOP;
 	}
 
 	void CPU::Run()
