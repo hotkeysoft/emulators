@@ -375,7 +375,7 @@ namespace emul
 	SegmentOffset Monitor::Disassemble(SegmentOffset address, Monitor::Instruction& decoded)
 	{
 		decoded.address = address;
-		BYTE data = m_memory->Read8(address.GetAddress());
+		BYTE data = m_memory->Read8(m_cpu->GetAddress(address));
 
 		decoded.AddRaw(data);
 
@@ -387,7 +387,7 @@ namespace emul
 		if (instr.multi == Opcode::MULTI::GRP6)
 		{
 			address.offset++;
-			BYTE op2 = m_memory->Read8(address.GetAddress());
+			BYTE op2 = m_memory->Read8(m_cpu->GetAddress(address));
 			decoded.AddRaw(op2);
 			instr = m_cpu->GetInfo().GetSubOpcode(instr, op2);
 			replace(text, "{grp6}", instr.text);
@@ -397,7 +397,7 @@ namespace emul
 			instr.multi != Opcode::MULTI::NONE)
 		{
 			address.offset++;
-			BYTE modRegRm = m_memory->Read8(address.GetAddress());
+			BYTE modRegRm = m_memory->Read8(m_cpu->GetAddress(address));
 			decoded.AddRaw(modRegRm);
 
 			BYTE op2 = (modRegRm >> 3) & 7;
@@ -454,7 +454,7 @@ namespace emul
 			if (disp == 8)
 			{
 				address.offset++;
-				BYTE disp8 = m_memory->Read8(address.GetAddress());
+				BYTE disp8 = m_memory->Read8(m_cpu->GetAddress(address));
 				decoded.AddRaw(disp8);
 
 				sprintf(buf, "0%Xh", disp8);
@@ -463,7 +463,7 @@ namespace emul
 			else if (disp == 16)
 			{
 				address.offset++;
-				WORD disp16 = m_memory->Read16(address.GetAddress());
+				WORD disp16 = m_memory->Read16(m_cpu->GetAddress(address));
 				address.offset++;
 				decoded.AddRaw(disp16);
 
@@ -478,7 +478,7 @@ namespace emul
 		case Opcode::IMM::W8:
 		{
 			++address.offset;
-			BYTE imm8 = m_memory->Read8(address.GetAddress());
+			BYTE imm8 = m_memory->Read8(m_cpu->GetAddress(address));
 			decoded.AddRaw(imm8);
 
 			sprintf(buf, "0%Xh", imm8);
@@ -488,7 +488,7 @@ namespace emul
 		case Opcode::IMM::W16:
 		{
 			++address.offset;
-			WORD imm16 = m_memory->Read16(address.GetAddress());
+			WORD imm16 = m_memory->Read16(m_cpu->GetAddress(address));
 			address.offset++;
 			decoded.AddRaw(imm16);
 
@@ -499,7 +499,7 @@ namespace emul
 		case Opcode::IMM::W16W8:
 		{
 			++address.offset;
-			WORD imm16 = m_memory->Read16(address.GetAddress());
+			WORD imm16 = m_memory->Read16(m_cpu->GetAddress(address));
 			address.offset++;
 			decoded.AddRaw(imm16);
 
@@ -507,7 +507,7 @@ namespace emul
 			replace(text, "{i16}", buf);
 
 			++address.offset;
-			BYTE imm8 = m_memory->Read8(address.GetAddress());
+			BYTE imm8 = m_memory->Read8(m_cpu->GetAddress(address));
 			decoded.AddRaw(imm8);
 
 			sprintf(buf, "0%Xh", imm8);
@@ -517,11 +517,11 @@ namespace emul
 		case Opcode::IMM::W32:
 		{
 			++address.offset;
-			WORD imm16Offset = m_memory->Read16(address.GetAddress());
+			WORD imm16Offset = m_memory->Read16(m_cpu->GetAddress(address));
 			address.offset++;
 			decoded.AddRaw(imm16Offset);
 			address.offset++;
-			WORD imm16Segment = m_memory->Read16(address.GetAddress());
+			WORD imm16Segment = m_memory->Read16(m_cpu->GetAddress(address));
 			address.offset++;
 			decoded.AddRaw(imm16Segment);
 			sprintf(buf, "0%Xh:0%Xh", imm16Segment, imm16Offset);

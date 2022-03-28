@@ -394,8 +394,8 @@ int main(int argc, char* args[])
 
 		while (run)
 		{ 
-			if (breakpointEnabled &&
-				(pc->GetCPU().GetCurrentAddress() == breakpoint.GetAddress()))
+			if (breakpointEnabled && 
+				(pc->GetCPU().GetCurrentAddress() == pc->GetCPU().GetAddress(breakpoint)))
 			{
 				ShowMonitor();
 				mode = Mode::MONITOR;
