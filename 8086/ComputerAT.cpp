@@ -60,7 +60,7 @@ namespace emul
 	{
 		Computer::Init(CPUType::i80286, baseRAM);
 
-		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
+		AddCPUSpeed(CPUSpeed(PIT_CLK, 7));
 
 		LogPrintf(LOG_INFO, "PIT Clock:  [%zu]", PIT_CLK);
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
@@ -216,6 +216,7 @@ namespace emul
 			//timer2.SetGate(ppi->GetTimer2Gate());
 
 			ppi->SetRefresh(m_pit->GetCounter(1).GetOutput());
+			ppi->Tick();
 
 			m_pit->Tick();
 			//ppi->SetTimer2Output(timer2.GetOutput());
