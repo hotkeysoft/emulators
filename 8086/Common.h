@@ -55,11 +55,14 @@ namespace emul
 	inline BYTE GetLByte(const WORD w) { return BYTE(w); };
 	inline BYTE GetHByte(const WORD w) { return BYTE(w >> 8); };
 
-	inline WORD SetLByte(WORD& out, const BYTE low) { out &= 0xFF00; out |= low; return out; }
-	inline WORD SetHByte(WORD& out, const BYTE hi) { out &= 0x00FF; out |= (hi << 8); return out; }
+	inline void SetLByte(WORD& out, const BYTE low) { out &= 0xFF00; out |= low; }
+	inline void SetHByte(WORD& out, const BYTE hi) { out &= 0x00FF; out |= (hi << 8); }
 
 	inline WORD GetLWord(const DWORD d) { return WORD(d & 0x0000FFFF); };
 	inline WORD GetHWord(const DWORD d) { return WORD(d >> 16); };
+
+	inline void SetLWord(DWORD& out, const WORD low) { out &= 0xFFFF0000; out |= low; }
+	inline void SetHWord(DWORD& out, const WORD hi) { out &= 0x0000FFFF; out |= (hi << 16); }
 
 	inline WORD MakeWord(const BYTE h, const BYTE l) { return (((WORD)h) << 8) + l; };
 	inline DWORD MakeDword(const WORD h, const WORD l) { return (((DWORD)h) << 16) + l; }
