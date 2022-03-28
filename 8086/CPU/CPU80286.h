@@ -6,6 +6,14 @@ namespace emul
 {
 	static const size_t CPU80286_ADDRESS_BITS = 24;
 
+	struct ExplicitRegister
+	{
+		WORD limit = 0; // 16 bits
+		DWORD base = 0; // 32 bits (24 used, 8 undefined)
+
+		const char* ToString() const;
+	};
+
 	class CPU80286 : public CPU80186
 	{
 	public:
@@ -47,6 +55,10 @@ namespace emul
 
 		bool GetMSW(MSW flag) const { return m_msw & flag; }
 
+		// System ADdress Registers
+		ExplicitRegister m_gdt; // Global Descriptor Table Register
+		ExplicitRegister m_idt; // Interrupt Descriptor Table Register
+
 		BYTE GetIOPL(WORD flags) const
 		{
 			return (flags >> 12) & 3;
@@ -60,10 +72,10 @@ namespace emul
 
 		void SGDT(Mem16& dest);
 		void SIDT(Mem16& dest);
-		void LGDT(const Mem16& source);
-		void LIDT(const Mem16& source);
+		void LGDT(Mem16& source);
+		void LIDT(Mem16& source);
 		void SMSW(Mem16& dest);
-		void LMSW(const Mem16& source);
+		void LMSW(Mem16& source);
 
 		void LAR(BYTE regrm);
 		void LSL(BYTE regrm);

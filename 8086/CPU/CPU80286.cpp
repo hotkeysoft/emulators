@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Common.h"
 #include "CPU80286.h"
 
 using cpuInfo::Opcode;
@@ -6,9 +7,26 @@ using cpuInfo::MiscTiming;
 using cpuInfo::CPUType;
 using cpuInfo::OpcodeTimingType;
 
+using emul::GetLByte;
+using emul::GetHByte;
+
+using emul::GetHWord;
+using emul::GetLWord;
+using emul::SetHWord;
+using emul::SetLWord;
+
 namespace emul
 {
 	static BYTE GetOPn(BYTE opn) { return (opn >> 3) & 7; }
+
+
+	// Not thread safe
+	const char* ExplicitRegister::ToString() const
+	{
+		static char buf[16];
+		sprintf(buf, "[%08x][%04x]", base, limit);
+		return buf;
+	}
 
 	CPU80286::CPU80286(Memory& memory) : 
 		CPU80186(CPUType::i80286, memory),
@@ -134,35 +152,63 @@ namespace emul
 
 	void CPU80286::SGDT(Mem16& dest)
 	{
-		LogPrintf(LOG_ERROR, "SGDT");
 		if (dest.IsRegister())
 		{
 			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
 		}
+
+		dest.Write(m_gdt.limit);
+		dest.Increment();
+		dest.Write(GetLWord(m_gdt.base));
+		dest.Increment();
+		dest.Write(GetHWord(m_gdt.base));
+
+		LogPrintf(LOG_WARNING, "SGDT: %s", m_idt.ToString());
 	}
 	void CPU80286::SIDT(Mem16& dest)
 	{
-		LogPrintf(LOG_ERROR, "SIDT");
 		if (dest.IsRegister())
 		{
 			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
 		}
+
+		dest.Write(m_idt.limit);
+		dest.Increment();
+		dest.Write(GetLWord(m_idt.base));
+		dest.Increment();
+		dest.Write(GetHWord(m_idt.base));
+
+		LogPrintf(LOG_WARNING, "SGDT: %s", m_idt.ToString());
 	}
-	void CPU80286::LGDT(const Mem16& source)
+	void CPU80286::LGDT(Mem16& source)
 	{
-		LogPrintf(LOG_ERROR, "LGDT");
 		if (source.IsRegister())
 		{
 			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
 		}
+
+		m_gdt.limit = source.Read();
+		source.Increment();
+		SetLWord(m_gdt.base, source.Read());
+		source.Increment();
+		SetHWord(m_gdt.base, source.Read());
+
+		LogPrintf(LOG_WARNING, "LGDT: %s", m_gdt.ToString());
 	}
-	void CPU80286::LIDT(const Mem16& source)
+	void CPU80286::LIDT(Mem16& source)
 	{
-		LogPrintf(LOG_ERROR, "LIDT");
 		if (source.IsRegister())
 		{
 			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
 		}
+
+		m_idt.limit = source.Read();
+		source.Increment();
+		SetLWord(m_idt.base, source.Read());
+		source.Increment();
+		SetHWord(m_idt.base, source.Read());
+
+		LogPrintf(LOG_WARNING, "LIDT: %s", m_gdt.ToString());
 	}
 
 	void CPU80286::SMSW(Mem16& dest)
@@ -170,7 +216,7 @@ namespace emul
 		LogPrintf(LOG_WARNING, "SMSW");
 	}
 
-	void CPU80286::LMSW(const Mem16& source)
+	void CPU80286::LMSW(Mem16& source)
 	{
 		LogPrintf(LOG_WARNING, "LMSW");
 		WORD value = source.Read();
