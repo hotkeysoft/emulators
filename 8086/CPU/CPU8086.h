@@ -12,6 +12,8 @@ namespace emul
 {
 	static const size_t CPU8086_ADDRESS_BITS = 20;
 
+	class CPU8086;
+
 	enum class REG16
 	{
 		// Indices in WORD array of memblock
@@ -84,8 +86,6 @@ namespace emul
 		WORD segment = 0;
 		WORD offset = 0;
 
-		ADDRESS GetAddress() const { return S2A(segment, offset); }
-
 		// Decodes from "xxxx:yyyy" string
 		bool FromString(const char*);
 
@@ -99,10 +99,10 @@ namespace emul
 		Mem8(const SegmentOffset& segoff, bool high = false) : m_segOff(segoff) { if (high) Increment(); }
 		Mem8(REG8 r8) : m_reg8(r8) {}
 
-		BYTE Read() const { return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_segOff.GetAddress()); }
-		void Write(BYTE value) { (int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_segOff.GetAddress(), value); }
+		BYTE Read() const;
+		void Write(BYTE value);
 
-		static void Init(Memory* m, Registers* r) { m_memory = m; m_registers = r; }
+		static void Init(CPU8086* cpu, Memory* m, Registers* r) { m_cpu = cpu; m_memory = m; m_registers = r; }
 
 		bool IsRegister() const
 		{
@@ -142,6 +142,7 @@ namespace emul
 		}
 
 	protected:
+		static CPU8086* m_cpu;
 		static Memory* m_memory;
 		static Registers* m_registers;
 
@@ -226,6 +227,7 @@ namespace emul
 		virtual void Init();
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
+		virtual ADDRESS GetAddress(SegmentOffset segoff) const { return S2A(segoff.segment, segoff.offset); }
 		virtual ADDRESS GetCurrentAddress() const { return S2A(m_reg[REG16::CS], m_reg[REG16::IP]); }
 
 		virtual bool Step() override;

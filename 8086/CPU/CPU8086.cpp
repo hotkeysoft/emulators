@@ -31,6 +31,7 @@ namespace emul
 	DWORD rawXor16(WORD& dest, const WORD src, bool) { dest ^= src; return dest; }
 	DWORD rawTest16(WORD& dest, const WORD src, bool) { return dest & src; }
 
+	CPU8086* Mem8::m_cpu = nullptr;
 	Memory* Mem8::m_memory = nullptr;
 	Registers* Mem8::m_registers = nullptr;
 
@@ -38,6 +39,15 @@ namespace emul
 	Registers* Mem16::m_registers = nullptr;
 
 	BYTE GetOP2(BYTE op2) { return (op2 >> 3) & 7; }
+
+	BYTE Mem8::Read() const 
+	{ 
+		return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_cpu->GetAddress(m_segOff)); 
+	}
+	void Mem8::Write(BYTE value) 
+	{ 
+		(int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_cpu->GetAddress(m_segOff), value); 
+	}
 
 	CPU8086::CPU8086(Memory& memory) : CPU8086(CPUType::i80186, memory)
 	{
@@ -48,7 +58,7 @@ namespace emul
 		m_info(type),
 		Logger("CPU8086")
 	{
-		Mem8::Init(&memory, &m_reg);
+		Mem8::Init(this, &memory, &m_reg);
 		Mem16::Init(&memory, &m_reg);
 
 		try
@@ -495,9 +505,9 @@ namespace emul
 		// MOV
 		// ----------
 		// MOV AL, MEM8
-		m_opcodes[0xA0] = [=]() { MOV8(REG8::AL, m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); };
+		m_opcodes[0xA0] = [=]() { MOV8(REG8::AL, m_memory.Read8(GetAddress(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())))); };
 		// MOV AX, MEM16
-		m_opcodes[0xA1] = [=]() { MOV16(REG16::AX, m_memory.Read16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord()))); };
+		m_opcodes[0xA1] = [=]() { MOV16(REG16::AX, m_memory.Read16(GetAddress(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], FetchWord())))); };
 
 		// MOV
 		// ----------
@@ -1109,15 +1119,15 @@ namespace emul
 		TICKMISC(MiscTiming::EA_BASE);
 		m_regMem = REGMEM::MEM;
 
-		SegmentOffset segoff = GetEA(modrm, direct);
+		SegmentOffset so = GetEA(modrm, direct);
 
 		if (inSegOverride)
 		{
-			segoff.segment = m_reg[REG16::_SEG_O];
+			so.segment = m_reg[REG16::_SEG_O];
 		}
 
-		segoff.offset = (direct ? 0 : segoff.offset) + displacement;
-		return Mem8(segoff);
+		so.offset = (direct ? 0 : so.offset) + displacement;
+		return Mem8(so);
 	}
 
 	SourceDest8 CPU8086::GetModRegRM8(BYTE modregrm, bool toReg)
@@ -1166,16 +1176,16 @@ namespace emul
 		TICKMISC(MiscTiming::EA_BASE);
 		m_regMem = REGMEM::MEM;
 
-		SegmentOffset segoff = GetEA(modrm, direct);
+		SegmentOffset so = GetEA(modrm, direct);
 
 		if (inSegOverride)
 		{
-			segoff.segment = m_reg[REG16::_SEG_O];
+			so.segment = m_reg[REG16::_SEG_O];
 		}
 
-		segoff.offset = (direct ? 0 : segoff.offset) + displacement;
-		LogPrintf(LOG_DEBUG, "GetModRM16: MEM %04X:%04X", segoff.segment, segoff.offset);
-		return Mem16(segoff);
+		so.offset = (direct ? 0 : so.offset) + displacement;
+		LogPrintf(LOG_DEBUG, "GetModRM16: MEM %04X:%04X", so.segment, so.offset);
+		return Mem16(so);
 	}
 
 	SourceDest16 CPU8086::GetModRegRM16(BYTE modregrm, bool toReg, bool segReg)
@@ -1831,6 +1841,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "RETNear [%s][%d]", pop?"Pop":"NoPop", value);
 
 		POP(REG16::IP);
+
 		m_reg[REG16::SP] += value;
 	}
 
@@ -2166,8 +2177,10 @@ namespace emul
 
 	void CPU8086::PUSH(WORD w)
 	{
-		m_memory.Write8(S2A(m_reg[REG16::SS], --m_reg[REG16::SP]), GetHByte(w));
-		m_memory.Write8(S2A(m_reg[REG16::SS], --m_reg[REG16::SP]), GetLByte(w));
+		SegmentOffset h{ m_reg[REG16::SS], --m_reg[REG16::SP] };
+		m_memory.Write8(GetAddress(h), GetHByte(w));
+		SegmentOffset l{ m_reg[REG16::SS], --m_reg[REG16::SP] };
+		m_memory.Write8(GetAddress(l), GetLByte(w));
 	}
 
 	void CPU8086::POP(Mem16 dest)
@@ -2177,9 +2190,9 @@ namespace emul
 
 	WORD CPU8086::POP()
 	{
-		BYTE lo = m_memory.Read8(S2A(m_reg[REG16::SS], m_reg[REG16::SP]++));
-		BYTE hi = m_memory.Read8(S2A(m_reg[REG16::SS], m_reg[REG16::SP]++));
-		return MakeWord(hi, lo);
+		WORD popped = m_memory.Read16(GetAddress(SegmentOffset(m_reg[REG16::SS], m_reg[REG16::SP])));
+		m_reg[REG16::SP] += 2;
+		return popped;
 	}
 
 	void CPU8086::PUSHF()
@@ -2202,8 +2215,8 @@ namespace emul
 		}
 
 		if (PreREP())
-		{
-			m_reg[REG8::AL] = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
+		{	
+			m_reg[REG8::AL] = m_memory.Read8(GetAddress(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI])));
 			IndexIncDec(m_reg[REG16::SI]);
 		}
 		PostREP(false);
@@ -2236,7 +2249,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			m_memory.Write8(S2A(m_reg[REG16::ES], m_reg[REG16::DI]), m_reg[REG8::AL]);
+			m_memory.Write8(GetAddress(SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI])), m_reg[REG8::AL]);
 			IndexIncDec(m_reg[REG16::DI]);
 		}
 		PostREP(false);
@@ -2302,8 +2315,8 @@ namespace emul
 
 		if (PreREP())
 		{
-			BYTE val = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
-			m_memory.Write8(S2A(m_reg[REG16::ES], m_reg[REG16::DI]), val);
+			BYTE val = m_memory.Read8(GetAddress(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI])));
+			m_memory.Write8(GetAddress(SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI])), val);
 
 			IndexIncDec(m_reg[REG16::SI]);
 			IndexIncDec(m_reg[REG16::DI]);
@@ -2601,8 +2614,11 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "XLAT");
 
-		WORD offset = m_reg[REG16::BX] + m_reg[REG8::AL];
-		m_reg[REG8::AL] = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], offset));
+		SegmentOffset so(
+			m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], 
+			m_reg[REG16::BX] + m_reg[REG8::AL]);
+
+		m_reg[REG8::AL] = m_memory.Read8(GetAddress(so));
 	}
 
 	void CPU8086::AAA()
@@ -2767,11 +2783,11 @@ namespace emul
 			throw std::exception("not possible");
 		}
 
-		SegmentOffset segoff = GetEA(modregrm, direct);
+		SegmentOffset so = GetEA(modregrm, direct);
 
-		segoff.offset = (direct ? 0 : segoff.offset) + displacement;
+		so.offset = (direct ? 0 : so.offset) + displacement;
 
-		dest.Write(segoff.offset);
+		dest.Write(so.offset);
 	}
 
 	void CPU8086::SALC()

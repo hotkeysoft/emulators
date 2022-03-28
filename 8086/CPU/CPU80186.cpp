@@ -134,7 +134,7 @@ namespace emul
 			for (int i = 0; i < level - 1; ++i)
 			{
 				m_reg[REG16::BP] -= 2;
-				WORD ptr = m_memory.Read16(S2A(m_reg[REG16::SS], m_reg[REG16::BP]));
+				WORD ptr = m_memory.Read16(GetAddress(SegmentOffset(m_reg[REG16::SS], m_reg[REG16::BP])));
 				PUSH(ptr);
 				TICKT3(); // Add overhead for each level
 			}
@@ -285,7 +285,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			BYTE val = m_memory.Read8(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
+			BYTE val = m_memory.Read8(GetAddress(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI])));
 
 			Out(m_reg[REG16::DX], val);
 
@@ -304,7 +304,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			WORD val = m_memory.Read16(S2A(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI]));
+			WORD val = m_memory.Read16(GetAddress(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI])));
 
 			Out(m_reg[REG16::DX], emul::GetLByte(val));
 			Out(m_reg[REG16::DX] + 1, emul::GetHByte(val));
