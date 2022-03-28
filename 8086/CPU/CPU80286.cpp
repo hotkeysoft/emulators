@@ -64,6 +64,35 @@ namespace emul
 		m_msw = MSW_RESET;
 	}
 
+	ADDRESS CPU80286::GetAddress(SegmentOffset segoff) const
+	{
+		if (IsProtectedMode())
+		{
+			Selector selector(segoff.segment);
+
+			// TODO: Shortcut for segment registers
+			SegmentDescriptor dest = selector.GetTI() ? LoadSegmentLocal(selector) : LoadSegmentGlobal(selector);
+			return dest.GetBase() + segoff.offset;
+		}
+		else
+		{
+			return S2A(segoff.segment, segoff.offset);
+		}
+	}
+
+	ADDRESS CPU80286::GetCurrentAddress() const
+	{
+		if (IsProtectedMode())
+		{
+			// TODO: Checks
+			return m_cs.base + m_reg[REG16::IP];
+		}
+		else
+		{
+			return S2A(m_reg[REG16::CS], m_reg[REG16::IP]);
+		}
+	}
+
 	void CPU80286::ForceA20Low(bool forceLow)
 	{
 		LogPrintf(LOG_WARNING, "Force A20 line LOW: [%d]", forceLow);
@@ -93,6 +122,64 @@ namespace emul
 		// TODO, different behavior for different exceptions
 		LogPrintf(LOG_WARNING, "CPU Exception -> INT(%d)", e.GetType());
 		INT((BYTE)e.GetType());
+	}
+
+	SegmentDescriptor CPU80286::LoadSegmentLocal(Selector selector) const
+	{
+		LogPrintf(LOG_WARNING, "LoadSegmentLocal[%d]", selector);
+		throw std::exception("LoadSegmentLocaL: Not implemented");
+	}
+
+	SegmentDescriptor CPU80286::LoadSegmentGlobal(Selector selector) const
+	{
+		LogPrintf(LOG_DEBUG, "LoadSegmentGlobal[%d]", selector);
+
+		if (selector.GetIndex() >= m_gdt.limit)
+		{
+			// TODO
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+		}
+		ADDRESS address = m_gdt.base + (selector.GetIndex() * 8);
+
+		SegmentDescriptor desc;
+		desc.limit = m_memory.Read16(address);
+		desc.baseL = m_memory.Read16(address + 2);
+		desc.baseH = m_memory.Read8(address + 4);
+		desc.access = m_memory.Read8(address + 5);
+
+		return desc;
+	}
+	void CPU80286::UpdateTranslationRegister(SegmentTranslationRegister& dest, Selector selector, SegmentDescriptor desc)
+	{
+		dest.size = desc.limit;
+		dest.base = desc.GetBase();
+		dest.access = desc.access;
+		dest.selector = selector;
+	}
+
+	void CPU80286::ProtectedMode()
+	{
+		// TODO: Since there is no instruction prefetch, the next instruction
+		// has to be fetched through the memory, but the CS descriptor is not set yet
+		// (it will be set in pJMPfar, the next instruction after the mode switch)
+		// In the mean time, fake it and pre fill the CD descriptor with the current real mode base.
+		m_cs.size = 0xFFFF;
+		m_cs.base = S2A(m_reg[REG16::CS]);
+		m_cs.access = 0; // TODO: Adjust when protection/checks are added
+
+		// TODO: Now this is getting ugly, we get the selector in the next jmp command.
+		BYTE instruction = FetchByte();
+		if (instruction != 0xEA)
+		{
+			throw std::exception("CPU80286::ModeSwitch: Expected jmpfar");
+		}
+		
+		WORD offset = FetchWord();
+		WORD segment = FetchWord();
+		// Put IP back where we were
+		m_reg[REG16::IP] -= 5;
+
+		m_cs.selector = segment;
 	}
 
 	void CPU80286::MultiF0(BYTE op2)
@@ -214,6 +301,7 @@ namespace emul
 	void CPU80286::SMSW(Mem16& dest)
 	{
 		LogPrintf(LOG_WARNING, "SMSW");
+		dest.Write(m_msw);
 	}
 
 	void CPU80286::LMSW(Mem16& source)
@@ -222,13 +310,22 @@ namespace emul
 		WORD value = source.Read();
 		SetBitMask(value, MSW_RESERVED_ON, true);
 
-		if (IsProtectedMode())
+		bool protectedMode = IsProtectedMode();
+		if (protectedMode)
 		{
-			// TODO
-
 			// Don't allow going back to real mode
 			value |= MSW_PE;
 		}
+
+		MSW newMSW = (MSW)value;
+		if (!protectedMode && (newMSW & MSW::MSW_PE))
+		{
+			LogPrintf(LOG_WARNING, "Switching to Protected Mode");
+			ProtectedMode();
+		}
+
+		// Don't actually set the MSW until we made the switch: ProtectedMode need
+		// access to real mode access functions before the transition
 		m_msw = (MSW)value;
 	}
 

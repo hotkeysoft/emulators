@@ -6,12 +6,46 @@ namespace emul
 {
 	static const size_t CPU80286_ADDRESS_BITS = 24;
 
+	struct Selector
+	{
+		Selector() : data(0) {}
+		Selector(WORD d) : data(d) {}
+
+		BYTE GetRPL() const { return data & 3; }
+		bool GetTI() const { return GetBit(data, 0); }
+		WORD GetIndex() const { return data >> 3; }
+
+	protected:
+		WORD data;
+	};
+
 	struct ExplicitRegister
 	{
 		WORD limit = 0; // 16 bits
 		DWORD base = 0; // 32 bits (24 used, 8 undefined)
 
 		const char* ToString() const;
+	};
+
+#pragma pack(push, 1)
+	struct SegmentDescriptor
+	{
+		WORD limit = 0;
+		WORD baseL = 0;
+		BYTE baseH = 0;
+		BYTE access = 0;
+		WORD reserved = 0;
+
+		DWORD GetBase() const { return (baseH << 16) | baseL; }
+	};
+#pragma pack(pop)
+
+	struct SegmentTranslationRegister
+	{
+		Selector selector;
+		BYTE access = 0;
+		DWORD base = 0;
+		WORD size = 0;
 	};
 
 	class CPU80286 : public CPU80186
@@ -24,6 +58,9 @@ namespace emul
 		virtual void Reset() override;
 
 		virtual size_t GetAddressBits() const { return CPU80286_ADDRESS_BITS; }
+
+		virtual ADDRESS GetAddress(SegmentOffset segoff) const override;
+		virtual ADDRESS GetCurrentAddress() const override;
 
 		enum FLAG286 : WORD
 		{
@@ -40,6 +77,9 @@ namespace emul
 
 		bool IsProtectedMode() const { return GetMSW(MSW_PE); }
 
+		// Switch instructions for real/protected mode
+		void ProtectedMode();
+
 		// Machine Status Word
 		enum MSW : WORD
 		{
@@ -55,9 +95,19 @@ namespace emul
 
 		bool GetMSW(MSW flag) const { return m_msw & flag; }
 
-		// System ADdress Registers
+		// System Address Registers
 		ExplicitRegister m_gdt; // Global Descriptor Table Register
 		ExplicitRegister m_idt; // Interrupt Descriptor Table Register
+
+		SegmentDescriptor LoadSegmentGlobal(Selector selector) const;
+		SegmentDescriptor LoadSegmentLocal(Selector selector) const;
+
+		// Segment Address Translation Registers;
+		SegmentTranslationRegister m_cs;
+		SegmentTranslationRegister m_ds;
+		SegmentTranslationRegister m_es;
+		SegmentTranslationRegister m_ss;
+		void UpdateTranslationRegister(SegmentTranslationRegister& dest, Selector selector, SegmentDescriptor desc);
 
 		BYTE GetIOPL(WORD flags) const
 		{
