@@ -99,6 +99,13 @@ namespace ppi
 			(command < Command::CMD_PULSE_OUTPUT_PORT_MAX))
 		{
 			LogPrintf(LOG_WARNING, "Pulse bits %02x", value & 0x0F);
+
+			// Restart CPU
+			if (((int)command & 1) == 0)
+			{
+				LogPrintf(LOG_WARNING, "***RESTART CPU***");
+				m_cpu->Reset();
+			}
 		}
 		else switch (command)
 		{
@@ -110,7 +117,6 @@ namespace ppi
 			break;
 		case Command::CMD_SELF_TEST:
 			LogPrintf(LOG_INFO, "Self Test");
-			// TODO: Should have a delay...
 			StartSelfTest();
 			break;
 		case Command::CMD_INTERFACE_TEST:
