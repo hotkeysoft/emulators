@@ -29,6 +29,7 @@ namespace emul
 		BYTE Read8(ADDRESS address) const;
 		WORD Read16(ADDRESS address) const;
 		void Write8(ADDRESS address, BYTE value);
+		void Write16(ADDRESS address, WORD value);
 
 		void Clear(BYTE filler = 0);
 

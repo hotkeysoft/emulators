@@ -228,6 +228,12 @@ namespace emul
 		}
 	}
 
+	void Memory::Write16(ADDRESS address, WORD value)
+	{
+		Write8(address, GetLByte(value));
+		Write8(address + 1, GetHByte(value));
+	}
+
 	void Memory::Dump(ADDRESS start, DWORD len, const char* outFile)
 	{
 		MemorySlot& slot = m_memory[start / BlockGranularity];
