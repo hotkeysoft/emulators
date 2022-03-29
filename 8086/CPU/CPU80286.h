@@ -14,6 +14,7 @@ namespace emul
 		BYTE GetRPL() const { return data & 3; }
 		bool GetTI() const { return GetBit(data, 0); }
 		WORD GetIndex() const { return data >> 3; }
+		bool IsNull() const { return data == 0; }
 
 		const char* ToString() const;
 
@@ -90,6 +91,10 @@ namespace emul
 	protected:
 		virtual void CPUExceptionHandler(CPUException e) override;
 
+		std::map<BYTE, std::function<void()>> m_replacedOpcodes;
+		void ReplaceOpcode(BYTE, std::function<void()>);
+		void RestoreOpcodes();
+
 		bool IsProtectedMode() const { return GetMSW(MSW_PE); }
 
 		// Switch instructions for real/protected mode
@@ -153,5 +158,6 @@ namespace emul
 
 		void MOVSegReg(SourceDest16 sd);
 		void POPSegReg(SEGREG segreg);
+
 	};
 }

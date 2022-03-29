@@ -166,14 +166,15 @@ namespace emul
 				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
 			}
 		}
-		Mem16(REG16 r16) : m_isReg(true), l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
+		Mem16(REG16 r16) : m_reg16(r16), l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
 
 		WORD GetOffset() const
 		{
 			return l.GetOffset();
 		}
 
-		bool IsRegister() const { return m_isReg; }
+		bool IsRegister() const { return m_reg16 != REG16::INVALID; }
+		REG16 GetRegister() const { return m_reg16; }
 
 		void Increment()
 		{
@@ -201,7 +202,7 @@ namespace emul
 		static Registers* m_registers;
 		static bool m_checkAlignment;
 
-		bool m_isReg = false;
+		REG16 m_reg16 = REG16::INVALID;
 		Mem8 h;
 		Mem8 l;
 	};
@@ -243,6 +244,15 @@ namespace emul
 		void Interrupt(BYTE irq) { m_irqPending = irq; }
 		bool CanInterrupt() 
 		{ 
+			if (m_opcode == 0x17)
+			{
+				// POP SS inhibits all interrupts, including NMI, until after 
+				// the execution of the next instruction. This permits a POP SP 
+				// instruction to be performed first.
+				// (Possibly 286+ but can't harm)
+				return false;
+			}
+				
 			// TODO: last check only if interrupts were disabled previously
 			return GetFlag(FLAG::FLAG_I) && (m_opcode != 0xFB);
 		}

@@ -534,7 +534,7 @@
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
     <ClInclude Include="Hardware\DevicePPI.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Hardware</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

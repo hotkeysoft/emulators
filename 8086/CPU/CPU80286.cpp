@@ -83,6 +83,8 @@ namespace emul
 		m_reg.Write16(REG16::CS, 0xF000);
 		m_reg.Write16(REG16::IP, 0xFFF0);
 		m_msw = MSW_RESET;
+
+		RestoreOpcodes();
 	}
 
 	ADDRESS CPU80286::GetAddress(SegmentOffset segoff) const
@@ -101,9 +103,7 @@ namespace emul
 				throw std::exception("Invalid segment register");
 			}
 
-			//SegmentDescriptor dest = seg->selector.GetTI() ? LoadSegmentLocal(seg->selector) : LoadSegmentGlobal(seg->selector);
-
-			if (segoff.offset > seg->size)
+			if ((seg->size == 0) || (segoff.offset > seg->size))
 			{
 				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
 			}
@@ -195,6 +195,13 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "LoadSegmentGlobal[%d]", selector);
 
+		SegmentDescriptor desc;
+
+		if (selector.IsNull())
+		{
+			return desc;
+		}
+
 		if (selector.GetIndex() >= m_gdt.limit)
 		{
 			// TODO
@@ -202,7 +209,6 @@ namespace emul
 		}
 		ADDRESS address = m_gdt.base + (selector.GetIndex() * 8);
 
-		SegmentDescriptor desc;
 		desc.limit = m_memory.Read16(address);
 
 		WORD baseL = m_memory.Read16(address + 2);
@@ -222,13 +228,30 @@ namespace emul
 		dest.selector = selector;
 	}
 
+	void CPU80286::ReplaceOpcode(BYTE opcode, std::function<void()> func)
+	{
+		LogPrintf(LOG_INFO, "Replace Opcode[%02x]", opcode);
+		m_replacedOpcodes[opcode] = m_opcodes[opcode];
+		m_opcodes[opcode] = func;
+	}
+
+	void CPU80286::RestoreOpcodes()
+	{
+		LogPrintf(LOG_INFO, "Restoring %d Real Mode opcodes", m_replacedOpcodes.size());
+		for (auto realOp : m_replacedOpcodes)
+		{
+			m_opcodes[realOp.first] = realOp.second;
+		}
+		m_replacedOpcodes.clear();
+	}
+
 	void CPU80286::ProtectedMode()
 	{
 		// Opcodes that are overridden in protected mode
-		m_opcodes[0x07] = [=]() { POPSegReg(SEGREG::ES); };
-		m_opcodes[0x17] = [=]() { POPSegReg(SEGREG::SS); };
-		m_opcodes[0x1F] = [=]() { POPSegReg(SEGREG::DS); };
-		m_opcodes[0x8C] = [=]() { MOVSegReg(GetModRegRM16(FetchByte(), false, true)); };
+		ReplaceOpcode(0x07, [=]() { POPSegReg(SEGREG::ES); });
+		ReplaceOpcode(0x17, [=]() { POPSegReg(SEGREG::SS); });
+		ReplaceOpcode(0x1F, [=]() { POPSegReg(SEGREG::DS); });
+		ReplaceOpcode(0x8E, [=]() { MOVSegReg(GetModRegRM16(FetchByte(), true, true)); });
 
 		// Preinitialize Segment Address Translation Registers to match 
 		// existing real mode segments
@@ -471,15 +494,61 @@ namespace emul
 	void CPU80286::MOVSegReg(SourceDest16 sd)
 	{
 		LogPrintf(LOG_WARNING, "MOV SegReg");
+
+		CPU::TICK(15); // TODO: Dynamic timings
+
 		// TEMP
 		CPU8086::MOV16(sd);
+
+		Selector sel = sd.source.Read();
+		SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+
+		switch (sd.dest.GetRegister())
+		{
+		case REG16::ES:
+			m_reg[REG16::ES] = sel;
+			UpdateTranslationRegister(m_es, sel, desc);
+			break;
+		case REG16::DS:
+			m_reg[REG16::DS] = sel;
+			UpdateTranslationRegister(m_ds, sel, desc);
+			break;
+		case REG16::SS:
+			m_reg[REG16::SS] = sel;
+			UpdateTranslationRegister(m_ss, sel, desc);
+			break;
+		default:
+			InvalidOpcode();
+			break;
+		}
+
+
 	}
 
 	void CPU80286::POPSegReg(SEGREG segreg)
 	{
-		LogPrintf(LOG_WARNING, "POP SegReg");
-		// TEMP
-		CPU8086::POP(Mem16(REG16(segreg)));
+		CPU::TICK(15); // TODO: Dynamic timings
 
+		Selector sel = POP();
+		SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+
+		switch (segreg)
+		{
+		case SEGREG::ES:
+			m_reg[REG16::ES] = sel;
+			UpdateTranslationRegister(m_es, sel, desc);
+			break;
+		case SEGREG::DS:
+			m_reg[REG16::DS] = sel;
+			UpdateTranslationRegister(m_ds, sel, desc);
+			break;
+		case SEGREG::SS:
+			m_reg[REG16::SS] = sel;
+			UpdateTranslationRegister(m_ss, sel, desc);
+			break;
+		default:
+			InvalidOpcode();
+			break;
+		}
 	}
 }
