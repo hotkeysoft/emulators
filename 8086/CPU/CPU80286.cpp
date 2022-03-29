@@ -59,11 +59,11 @@ namespace emul
 	{
 		CPU80186::Init();
 
+		Mem16::CheckAlignment(true);
+
 		FLAG_RESERVED_ON = FLAG(FLAG_R1);
 		// Real mode: iopl & nested task bits are locked to zero (and R15 apparently)
 		FLAG_RESERVED_OFF = FLAG(FLAG_R3 | FLAG_R5 | FLAG_IOPL0 | FLAG_IOPL1 | FLAG_NT | FLAG_R15);
-
-		// TODO: Writes at SEG:FFFF exception 13
 
 		// PUSH SP
 		// Fixes the "Bug" on 8086/80186 where push sp pushed an already-decremented value
@@ -89,25 +89,30 @@ namespace emul
 	{
 		if (IsProtectedMode())
 		{
-			Selector selector(segoff.segment);
+			const SegmentTranslationRegister* seg;
 
-			// TODO: Shortcut for segment registers
-			SegmentDescriptor dest = selector.GetTI() ? LoadSegmentLocal(selector) : LoadSegmentGlobal(selector);
-
-			if (segoff.offset > dest.limit)
+			switch (segoff.segment)
 			{
-				// TODO
-				LogPrintf(LOG_ERROR, segoff.ToString());
-				LogPrintf(LOG_ERROR, dest.ToString());
+			case SEGREG::CS: seg = &m_cs; break;
+			case SEGREG::DS: seg = &m_ds; break;
+			case SEGREG::ES: seg = &m_es; break;
+			case SEGREG::SS: seg = &m_ss; break;
+			default:
+				throw std::exception("Invalid segment register");
+			}
 
+			//SegmentDescriptor dest = seg->selector.GetTI() ? LoadSegmentLocal(seg->selector) : LoadSegmentGlobal(seg->selector);
+
+			if (segoff.offset > seg->size)
+			{
 				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
 			}
 
-			return dest.base + segoff.offset;
+			return seg->base + segoff.offset;
 		}
 		else
 		{
-			return S2A(segoff.segment, segoff.offset);
+			return CPU80186::GetAddress(segoff);
 		}
 	}
 
@@ -120,7 +125,7 @@ namespace emul
 		}
 		else
 		{
-			return S2A(m_reg[REG16::CS], m_reg[REG16::IP]);
+			return CPU80186::GetCurrentAddress();
 		}
 	}
 
@@ -219,6 +224,12 @@ namespace emul
 
 	void CPU80286::ProtectedMode()
 	{
+		// Opcodes that are overridden in protected mode
+		m_opcodes[0x07] = [=]() { POPSegReg(SEGREG::ES); };
+		m_opcodes[0x17] = [=]() { POPSegReg(SEGREG::SS); };
+		m_opcodes[0x1F] = [=]() { POPSegReg(SEGREG::DS); };
+		m_opcodes[0x8C] = [=]() { MOVSegReg(GetModRegRM16(FetchByte(), false, true)); };
+
 		// Preinitialize Segment Address Translation Registers to match 
 		// existing real mode segments
 		m_cs.selector = 0;
@@ -455,5 +466,20 @@ namespace emul
 		{
 			CPU80186::INT(interrupt);
 		}
+	}
+
+	void CPU80286::MOVSegReg(SourceDest16 sd)
+	{
+		LogPrintf(LOG_WARNING, "MOV SegReg");
+		// TEMP
+		CPU8086::MOV16(sd);
+	}
+
+	void CPU80286::POPSegReg(SEGREG segreg)
+	{
+		LogPrintf(LOG_WARNING, "POP SegReg");
+		// TEMP
+		CPU8086::POP(Mem16(REG16(segreg)));
+
 	}
 }

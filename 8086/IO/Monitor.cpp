@@ -331,7 +331,7 @@ namespace emul
 		pos.y = baseY + y;
 
 		pos.x = segmentPos.x;
-		WriteValueHex(instr.address.segment, pos);
+		WriteValueHex(m_cpu->GetRegValue(instr.address.segment), pos);
 		pos.x = offsetPos.x;
 		WriteValueHex(instr.address.offset, pos);
 		pos.x = rawPos.x;
@@ -349,7 +349,7 @@ namespace emul
 	{
 		static Coord codePos = m_cpu->GetInfo().GetCoord("CODE");
 
-		SegmentOffset address{ m_cpu->m_reg[REG16::CS], m_cpu->m_reg[REG16::IP] };
+		SegmentOffset address(SEGREG::CS, m_cpu->m_reg[REG16::IP]);
 
 		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w - 1, 4, codePos.y - 1);
 

@@ -39,6 +39,7 @@ namespace fs = std::filesystem;
 
 using cfg::CONFIG;
 using emul::Computer;
+using emul::REG16;
 using sound::SOUND;
 using ui::MAINWND;
 using ui::Overlay;
@@ -307,7 +308,7 @@ int main(int argc, char* args[])
 	}
 
 	bool breakpointEnabled = false;
-	emul::SegmentOffset breakpoint;
+	emul::RawSegmentOffset breakpoint;
 	std::string breakpointStr = CONFIG().GetValueStr("monitor", "breakpoint");
 	if (breakpointStr.size())
 	{
@@ -325,7 +326,7 @@ int main(int argc, char* args[])
 	std::string memViewStr = CONFIG().GetValueStr("monitor", "custommem");
 	if (memViewStr.size())
 	{
-		emul::SegmentOffset memView;
+		emul::RawSegmentOffset memView;
 		if (memView.FromString(memViewStr.c_str()))
 		{
 			monitor.SetCustomMemoryView(memView);
@@ -395,7 +396,8 @@ int main(int argc, char* args[])
 		while (run)
 		{ 
 			if (breakpointEnabled && 
-				(pc->GetCPU().GetCurrentAddress() == pc->GetCPU().GetAddress(breakpoint)))
+				(pc->GetCPU().GetRegValue(REG16::CS) == breakpoint.segment) &&
+				(pc->GetCPU().GetRegValue(REG16::IP) == breakpoint.offset))
 			{
 				ShowMonitor();
 				mode = Mode::MONITOR;

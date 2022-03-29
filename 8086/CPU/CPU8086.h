@@ -14,6 +14,14 @@ namespace emul
 
 	class CPU8086;
 
+	enum class SEGREG
+	{
+		CS = 9,     // Code Segment
+		DS = 10,     // Data Segment
+		SS = 11,     // Stack Segment
+		ES = 12     // Extra Segment
+	};
+
 	enum class REG16
 	{
 		// Indices in WORD array of memblock
@@ -40,7 +48,6 @@ namespace emul
 		FLAGS = 14,   // Flags
 
 		_REP_IP = 15, // IP in REP
-		_SEG_O = 16, // Segment override
 
 		_T0 = 17      // Temp register
 	};
@@ -78,18 +85,23 @@ namespace emul
 		WORD& operator[](REG16 r8) { return Get16(r8); }
 	};
 
-	struct SegmentOffset
+	struct RawSegmentOffset
 	{
-		SegmentOffset() {}
-		SegmentOffset(WORD seg, WORD off) : segment(seg), offset(off) {}
-
 		WORD segment = 0;
 		WORD offset = 0;
 
 		// Decodes from "xxxx:yyyy" string
 		bool FromString(const char*);
+		const char* ToString() const;
+	};
 
-		const char* ToString() const; // Not thread safe
+	struct SegmentOffset
+	{
+		SegmentOffset() {}
+		SegmentOffset(SEGREG seg, WORD off = 0) : segment(seg), offset(off) {}
+
+		SEGREG segment = SEGREG::CS;
+		WORD offset = 0;
 	};
 
 	class Mem8
@@ -114,19 +126,6 @@ namespace emul
 			m_segOff.offset += i;
 		}
 
-		WORD GetSegment() const
-		{
-			if (!IsRegister())
-			{
-				return m_segOff.segment;
-			}
-			else
-			{
-				// We shouldn't get there. This means that the operation expects a
-				// memory operand and not a register, so this is an invalid opcode
-				throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
-			}
-		}
 		WORD GetOffset() const
 		{
 			if (!IsRegister())
@@ -162,17 +161,13 @@ namespace emul
 		Mem16() {}
 		Mem16(const SegmentOffset& segoff) : l(segoff), h(segoff, true) 
 		{
-			if (segoff.offset == 0xFFFF)
+			if (m_checkAlignment && (segoff.offset == 0xFFFF))
 			{
 				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
 			}
 		}
 		Mem16(REG16 r16) : m_isReg(true), l((REG8)((int)r16 * 2)), h((REG8)((int)r16 * 2 + 1)) {}
 
-		WORD GetSegment() const
-		{
-			return l.GetSegment();
-		}
 		WORD GetOffset() const
 		{
 			return l.GetOffset();
@@ -198,11 +193,13 @@ namespace emul
 		WORD Read() const { return MakeWord(h.Read(), l.Read()); }
 		void Write(WORD value) { l.Write(GetLByte(value)); h.Write(GetHByte(value)); }
 
-		static void Init(Memory* m, Registers* r) { m_memory = m; m_registers = r; }
+		static void Init(Memory* m, Registers* r) { m_memory = m; m_registers = r; m_checkAlignment; }
+		static void CheckAlignment(bool check) { m_checkAlignment = check; }
 
 	protected:
 		static Memory* m_memory;
 		static Registers* m_registers;
+		static bool m_checkAlignment;
 
 		bool m_isReg = false;
 		Mem8 h;
@@ -227,7 +224,7 @@ namespace emul
 		virtual void Init();
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
-		virtual ADDRESS GetAddress(SegmentOffset segoff) const { return S2A(segoff.segment, segoff.offset); }
+		virtual ADDRESS GetAddress(SegmentOffset segoff) const { return S2A(GetRegValue(segoff.segment), segoff.offset); }
 		virtual ADDRESS GetCurrentAddress() const { return S2A(m_reg[REG16::CS], m_reg[REG16::IP]); }
 
 		virtual bool Step() override;
@@ -288,6 +285,10 @@ namespace emul
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
+		WORD GetRegValue(SEGREG segreg) const { return m_reg[(REG16)segreg]; }
+		WORD GetRegValue(REG16 reg) const { return m_reg[reg]; }
+		WORD GetRegValue(REG8 reg) const { return m_reg[reg]; }
+
 	protected:
 		CPU8086(cpuInfo::CPUType type, Memory& memory);
 
@@ -318,6 +319,7 @@ namespace emul
 
 		// segment Override
 		bool inSegOverride = false;
+		SEGREG segOverride = SEGREG::DS;
 
 		// Helper functions
 
@@ -462,7 +464,7 @@ namespace emul
 		bool PreREP();
 		void PostREP(bool checkZ);
 
-		void SEGOVERRIDE(WORD);
+		void SEGOVERRIDE(SEGREG);
 
 		virtual void INT(BYTE interrupt);
 

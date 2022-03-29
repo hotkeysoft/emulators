@@ -150,5 +150,8 @@ namespace emul
 		InterruptDescriptor GetInterruptDescriptor(BYTE interrupt) const;
 
 		virtual void INT(BYTE interrupt) override;
+
+		void MOVSegReg(SourceDest16 sd);
+		void POPSegReg(SEGREG segreg);
 	};
 }

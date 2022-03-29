@@ -134,7 +134,7 @@ namespace emul
 			for (int i = 0; i < level - 1; ++i)
 			{
 				m_reg[REG16::BP] -= 2;
-				WORD ptr = m_memory.Read16(GetAddress(SegmentOffset(m_reg[REG16::SS], m_reg[REG16::BP])));
+				WORD ptr = m_memory.Read16(GetAddress(SegmentOffset(SEGREG::SS, m_reg[REG16::BP])));
 				PUSH(ptr);
 				TICKT3(); // Add overhead for each level
 			}
@@ -245,7 +245,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			Mem8 dest = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
+			Mem8 dest = SegmentOffset(SEGREG::ES, m_reg[REG16::DI]);
 
 			BYTE val;
 			In(m_reg[REG16::DX], val);
@@ -262,7 +262,7 @@ namespace emul
 
 		if (PreREP())
 		{
-			Mem16 dest = SegmentOffset(m_reg[REG16::ES], m_reg[REG16::DI]);
+			Mem16 dest = SegmentOffset(SEGREG::ES, m_reg[REG16::DI]);
 
 			BYTE l, h;
 			In(m_reg[REG16::DX], l);
@@ -277,15 +277,11 @@ namespace emul
 
 	void CPU80186::OUTSB()
 	{
-		LogPrintf(LOG_DEBUG, "OUTSB, SI=%04X", m_reg[REG16::SI]);
-		if (inSegOverride)
-		{
-			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
-		}
+		LogPrintf(LOG_DEBUG, "OUTSB");
 
 		if (PreREP())
 		{
-			BYTE val = m_memory.Read8(GetAddress(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI])));
+			BYTE val = m_memory.Read8(GetAddress(SegmentOffset(inSegOverride ? segOverride : SEGREG::DS, m_reg[REG16::SI])));
 
 			Out(m_reg[REG16::DX], val);
 
@@ -296,15 +292,11 @@ namespace emul
 
 	void CPU80186::OUTSW()
 	{
-		LogPrintf(LOG_DEBUG, "OUTSW, SI=%04X", m_reg[REG16::SI]);
-		if (inSegOverride)
-		{
-			LogPrintf(LOG_DEBUG, "SEG OVERRIDE %04X", m_reg[REG16::_SEG_O]);
-		}
+		LogPrintf(LOG_DEBUG, "OUTSW");
 
 		if (PreREP())
 		{
-			WORD val = m_memory.Read16(GetAddress(SegmentOffset(m_reg[inSegOverride ? REG16::_SEG_O : REG16::DS], m_reg[REG16::SI])));
+			WORD val = m_memory.Read16(GetAddress(SegmentOffset(inSegOverride ? segOverride : SEGREG::DS, m_reg[REG16::SI])));
 
 			Out(m_reg[REG16::DX], emul::GetLByte(val));
 			Out(m_reg[REG16::DX] + 1, emul::GetHByte(val));

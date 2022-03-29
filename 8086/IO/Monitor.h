@@ -21,14 +21,14 @@ namespace emul
 
 		void Init(CPU8086& cpu, Memory& memory);
 
-		void SetCustomMemoryView(SegmentOffset segoff) { m_customMemView = segoff; }
+		void SetCustomMemoryView(RawSegmentOffset segoff) { m_customMemView = segoff; }
 
 		void Show();
 		MonitorState Run();
 		void Update();
 
 	protected:
-		SegmentOffset m_customMemView{ 0, 0 };
+		RawSegmentOffset m_customMemView{ 0, 0 };
 
 		struct Instruction
 		{
