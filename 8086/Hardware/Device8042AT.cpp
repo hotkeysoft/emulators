@@ -2,6 +2,8 @@
 #include "Device8042AT.h"
 #include "CPU/CPU80286.h"
 
+using emul::GetBit;
+
 namespace ppi
 {
 	Device8042AT::Device8042AT(WORD baseAddress) :
@@ -64,25 +66,23 @@ namespace ppi
 
 	BYTE Device8042AT::ReadStatus()
 	{
-		LogPrintf(LOG_TRACE, "Read Status");
-
 		BYTE value =
 			(m_status.parityError << 7) |
 			(m_status.receiveTimeout << 6) |
 			(m_status.transmitTimeout << 5) |
 			(m_status.inhibit << 4) |
 			((BYTE)m_status.mode << 3) |
-			(m_status.selfTestOK << 2) |
+			(m_status.systemFlag << 2) |
 			(m_status.inputBufferFull << 1) |
 			(m_status.outputBufferFull << 0);
 
-		LogPrintf(LOG_DEBUG, "ReadStatus: [%cPE %cRTO %cTTO %cINHIBIT MODE[%s] %cSELFTESTOK %cINFULL %cOUTFULL]",
+		LogPrintf(LOG_TRACE, "ReadStatus: [%cPE %cRTO %cTTO %cINHIBIT MODE[%s] %cSYSFLAG %cINFULL %cOUTFULL]",
 			(m_status.parityError ? ' ' : '/'),
 			(m_status.receiveTimeout ? ' ' : '/'),
 			(m_status.transmitTimeout ? ' ' : '/'),
 			(m_status.inhibit ? ' ' : '/'),
 			((BYTE)m_status.mode ? "CMD" : "DAT"),
-			(m_status.selfTestOK ? ' ' : '/'),
+			(m_status.systemFlag ? ' ' : '/'),
 			(m_status.inputBufferFull ? ' ' : '/'),
 			(m_status.outputBufferFull ? ' ' : '/'));
 
@@ -110,10 +110,10 @@ namespace ppi
 		else switch (command)
 		{
 		case Command::CMD_READ_COMMAND_BYTE:
-			LogPrintf(LOG_INFO, "Read Command Byte");
+			ReadCommandByte();
 			break;
 		case Command::CMD_WRITE_COMMAND_BYTE:
-			LogPrintf(LOG_INFO, "Write Command Byte");
+			m_activeCommand = command; // Need to wait for value in input buffer
 			break;
 		case Command::CMD_SELF_TEST:
 			LogPrintf(LOG_INFO, "Self Test");
@@ -121,9 +121,11 @@ namespace ppi
 			break;
 		case Command::CMD_INTERFACE_TEST:
 			LogPrintf(LOG_INFO, "Interface Test");
+			LogPrintf(LOG_ERROR, "Interface Test Not Implemented");
 			break;
 		case Command::CMD_DIAGNOSTIC_DUMP:
 			LogPrintf(LOG_INFO, "Diagnostic Dump");
+			LogPrintf(LOG_ERROR, "Diagnostic Dump Not Implemented");
 			break;
 		case Command::CMD_DISABLE_KEYBOARD:
 			LogPrintf(LOG_INFO, "Disable Keyboard");
@@ -139,12 +141,16 @@ namespace ppi
 			break;
 		case Command::CMD_READ_OUTPUT_PORT:
 			LogPrintf(LOG_INFO, "Read Output Port");
+			LogPrintf(LOG_ERROR, "Read Output Port Not Implemented");
 			break;
 		case Command::CMD_WRITE_OUTPUT_PORT:
 			LogPrintf(LOG_INFO, "Write Output Port");
+			LogPrintf(LOG_ERROR, "Read Output Port Not Implemented");
+			m_activeCommand = command; // Need to wait for value in input buffer
 			break;
 		case Command::CMD_READ_TEST_INPUTS:
 			LogPrintf(LOG_INFO, "Test Inputs");
+			LogPrintf(LOG_ERROR, "Test Inputs Not Implemented");
 			break;
 		default:
 			LogPrintf(LOG_ERROR, "Invalid Command %02x", command);
@@ -154,28 +160,86 @@ namespace ppi
 
 	BYTE Device8042AT::ReadPortB()
 	{
-		LogPrintf(LOG_DEBUG, "Read Port B, refresh=%d", m_portB.refresh);
+		BYTE value = 
+			(m_portB.parityCheckOccurred << 7) |
+			(m_portB.channelCheckOccurred << 6) |
+			(m_portB.timer2Output << 5) |
+			((m_portB.refresh == 0) << 4) |
+			(m_portB.channelCheckEnabled << 3) |
+			(m_portB.parityCheckEnabled << 2) |
+			(m_portB.speakerDataEnabled << 1) |
+			(m_portB.timer2Gate << 0);
 
-		return ((m_portB.refresh == 0) << 4);
+		LogPrintf(LOG_TRACE, "ReadPortB [%cPCHK %cCCHK %cTIMER2 %cRFSH %CCHKEN %cPCHKEN %cSPKEN %cTIMER2GATE]",
+			(m_portB.parityCheckOccurred ? ' ' : '/'),
+			(m_portB.channelCheckOccurred ? ' ' : '/'),
+			(m_portB.timer2Output ? ' ' : '/'),
+			((m_portB.refresh == 0) ? ' ' : '/'),
+			(m_portB.channelCheckEnabled ? ' ' : '/'),
+			(m_portB.parityCheckEnabled ? ' ' : '/'),
+			(m_portB.speakerDataEnabled ? ' ' : '/'),
+			(m_portB.timer2Gate ? ' ' : '/'));
+
+		return value;
 	}
 	void Device8042AT::WritePortB(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "Write Port B, value=%02x", value);
+
+		m_portB.channelCheckEnabled = GetBit(value, 3);
+		m_portB.parityCheckEnabled = GetBit(value, 2);
+		m_portB.speakerDataEnabled = GetBit(value, 1);
+		m_portB.timer2Gate = GetBit(value, 0);
+	}
+
+	void Device8042AT::ReadCommandByte()
+	{
+		BYTE value =
+			(m_commandByte.pcCompatibilityMode << 6) |
+			(m_commandByte.pcComputerMode << 5) |
+			(m_commandByte.disableKeyboard << 4) |
+			(m_commandByte.inhibitOverride << 3) |
+			(m_status.systemFlag << 2) |
+			(m_commandByte.outputBufferFullInterrupt << 0);
+
+		LogPrintf(LOG_DEBUG, "Read Command Byte, value=%02x", value);
+		WriteOutputBuffer(value);
+	}
+	void Device8042AT::WriteCommandByte()
+	{
+		BYTE value = ReadInputBuffer();
+
+		m_commandByte.pcCompatibilityMode = GetBit(value, 6);
+		m_commandByte.pcComputerMode = GetBit(value, 5);
+		m_commandByte.disableKeyboard = GetBit(value, 4);
+		m_commandByte.inhibitOverride = GetBit(value, 3);
+		m_status.systemFlag = GetBit(value, 2);
+		m_commandByte.outputBufferFullInterrupt = GetBit(value, 0);
+
+		LogPrintf(LOG_INFO, "WriteCommandByte [%cPCCOMPAT %cPCMODE %cKBDDISABLE %cINHOVR %cSYSFLAG %cINTERRUPT]",
+			(m_commandByte.pcCompatibilityMode ? ' ' : '/'),
+			(m_commandByte.pcComputerMode ? ' ' : '/'),
+			(m_commandByte.disableKeyboard ? ' ' : '/'),
+			(m_commandByte.inhibitOverride ? ' ' : '/'),
+			(m_status.systemFlag ? ' ' : '/'),
+			(m_commandByte.outputBufferFullInterrupt ? ' ' : '/'));
+
+		m_activeCommand = Command::CMD_NONE;
 	}
 
 	void Device8042AT::StartSelfTest()
 	{
 		LogPrintf(LOG_INFO, "Start Self Test");
-		m_selfTest = true;
+		m_activeCommand = Command::CMD_SELF_TEST;
 		m_commandDelay = 1000;
 	}
 
 	void Device8042AT::EndSelfTest()
 	{
 		LogPrintf(LOG_INFO, "End Self Test");
-		m_selfTest = false;
 		WriteOutputBuffer(0x55);
-		m_status.selfTestOK = true;
+		m_status.systemFlag = true;
+		m_activeCommand = Command::CMD_NONE;
 	}
 
 	void Device8042AT::SetRefresh(bool refreshBit)
@@ -191,11 +255,32 @@ namespace ppi
 
 	void Device8042AT::Tick()
 	{
-		if (m_selfTest && m_commandDelay)
+		if (m_activeCommand != Command::CMD_NONE)
 		{
-			if (--m_commandDelay == 0)
+			switch (m_activeCommand)
 			{
-				EndSelfTest();
+			case Command::CMD_SELF_TEST:
+				if (--m_commandDelay == 0)
+				{
+					EndSelfTest();
+				}
+				break;
+			case Command::CMD_WRITE_COMMAND_BYTE:
+				if (m_status.inputBufferFull)
+				{
+					WriteCommandByte();
+				}
+				break;
+			case Command::CMD_WRITE_OUTPUT_PORT:
+				if (m_status.inputBufferFull)
+				{
+					LogPrintf(LOG_ERROR, "Write Output Port: Not implemented");
+					m_activeCommand = Command::CMD_NONE;
+				}
+				break;
+			default:
+				LogPrintf(LOG_WARNING, "Invalid active command");
+				break;
 			}
 		}
 	}

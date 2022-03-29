@@ -19,6 +19,8 @@ namespace ppi
 {
 	enum class Command
 	{
+		CMD_NONE = 0,
+
 		CMD_READ_COMMAND_BYTE = 0x20,
 		CMD_WRITE_COMMAND_BYTE = 0x60,
 		CMD_SELF_TEST = 0xAA,
@@ -49,7 +51,7 @@ namespace ppi
 
 		virtual void Init() override;
 
-		virtual bool IsSoundON() override { return false; }
+		virtual bool IsSoundON() override { return m_portB.speakerDataEnabled; }
 		virtual void SetCurrentKeyCode(BYTE keyCode) override {}
 
 		void Tick();
@@ -58,6 +60,9 @@ namespace ppi
 
 		// Timer 1 output, indicates ram refresh
 		void SetRefresh(bool refreshBit);
+
+		bool GetTimer2Gate() const { return m_portB.timer2Gate; }
+		void SetTimer2Output(bool value) { m_portB.timer2Output = value; }
 
 	protected:
 		emul::CPU80286* m_cpu = nullptr;
@@ -70,6 +75,8 @@ namespace ppi
 		BYTE ReadInputBuffer();
 		BYTE ReadOutputBuffer();
 
+		Command m_activeCommand = Command::CMD_NONE;
+
 		struct Status
 		{
 			bool parityError = false;
@@ -77,7 +84,7 @@ namespace ppi
 			bool transmitTimeout = false;
 			bool inhibit = false;
 			enum class Mode { DATA = 0, COMMAND } mode = Mode::DATA;
-			bool selfTestOK = false;
+			bool systemFlag = false;
 			bool inputBufferFull = false;
 			bool outputBufferFull = false;
 
@@ -89,14 +96,31 @@ namespace ppi
 
 		struct PortB
 		{
-			BYTE refresh = 0;
-
+			bool parityCheckOccurred = false;  // R
+			bool channelCheckOccurred = false; // R
+			bool timer2Output = false; // R
+			BYTE refresh = 0; // R
+			bool channelCheckEnabled = false; // R/W
+			bool parityCheckEnabled = false; // R/W
+			bool speakerDataEnabled = false; // R/W
+			bool timer2Gate = false; // R/W
 		} m_portB;
 		BYTE ReadPortB();
 		void WritePortB(BYTE value);
 
+
+		struct CommandByte
+		{
+			bool pcCompatibilityMode = false;
+			bool pcComputerMode = false;
+			bool disableKeyboard = false;
+			bool inhibitOverride = false;
+			bool outputBufferFullInterrupt = false;
+		} m_commandByte;
+		void ReadCommandByte();
+		void WriteCommandByte();
+
 		size_t m_commandDelay = 0;
-		bool m_selfTest = false;
 		void StartSelfTest();
 		void EndSelfTest();
 	};

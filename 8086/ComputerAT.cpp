@@ -139,6 +139,9 @@ namespace emul
 		//	}
 		//	ppi->SetFloppyCount(floppyCount);
 		//}
+
+		//MemoryBlock* extra = new MemoryBlock("HIGH", 1024 * 1024);
+		//m_memory.Allocate(extra, 0x100000);
 	}
 
 	void ComputerAT::InitRAM(emul::WORD baseRAM)
@@ -213,13 +216,13 @@ namespace emul
 			}
 
 			pit::Counter& timer2 = m_pit->GetCounter(2);
-			//timer2.SetGate(ppi->GetTimer2Gate());
+			timer2.SetGate(ppi->GetTimer2Gate());
 
 			ppi->SetRefresh(m_pit->GetCounter(1).GetOutput());
 			ppi->Tick();
 
 			m_pit->Tick();
-			//ppi->SetTimer2Output(timer2.GetOutput());
+			ppi->SetTimer2Output(timer2.GetOutput());
 
 			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
