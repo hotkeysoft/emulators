@@ -19,12 +19,33 @@ namespace emul
 {
 	static BYTE GetOPn(BYTE opn) { return (opn >> 3) & 7; }
 
+	const char* Selector::ToString() const
+	{
+		static char buf[32];
+		sprintf(buf, "IDX[%04x] RPL[%04x] TI[%d]", GetIndex(), GetRPL(), GetTI());
+		return buf;
+	}
 
-	// Not thread safe
+	const char* SegmentDescriptor::ToString() const
+	{
+		static char buf[64];
+		sprintf(buf, "BASE[%08x] LIMIT[%04x] ACCESS[%02x]", base, limit, access);
+		return buf;
+	}
+
 	const char* ExplicitRegister::ToString() const
 	{
 		static char buf[16];
 		sprintf(buf, "[%08x][%04x]", base, limit);
+		return buf;
+	}
+
+	const char* InterruptDescriptor::ToString() const
+	{
+		static char buf[64];
+		sprintf(buf, "SEL[%s] OFF[%04x] DPL[%d] GATE[%s]",
+			selector.ToString(), offset, GetDPL(), 
+			GetGateType() == GateType::INTERRUPT ? "INT" : "TRP");
 		return buf;
 	}
 
@@ -72,7 +93,17 @@ namespace emul
 
 			// TODO: Shortcut for segment registers
 			SegmentDescriptor dest = selector.GetTI() ? LoadSegmentLocal(selector) : LoadSegmentGlobal(selector);
-			return dest.GetBase() + segoff.offset;
+
+			if (segoff.offset > dest.limit)
+			{
+				// TODO
+				LogPrintf(LOG_ERROR, segoff.ToString());
+				LogPrintf(LOG_ERROR, dest.ToString());
+
+				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+			}
+
+			return dest.base + segoff.offset;
 		}
 		else
 		{
@@ -91,6 +122,31 @@ namespace emul
 		{
 			return S2A(m_reg[REG16::CS], m_reg[REG16::IP]);
 		}
+	}
+
+	InterruptDescriptor CPU80286::GetInterruptDescriptor(BYTE interrupt) const
+	{
+		LogPrintf(LOG_DEBUG, "GetInterruptDescriptor[%d]", interrupt);
+
+		if (interrupt >= m_idt.limit)
+		{
+			// TODO
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+		}
+		ADDRESS address = m_idt.base + (interrupt * 8);
+
+		InterruptDescriptor desc;
+		desc.offset = m_memory.Read16(address);
+		desc.selector = m_memory.Read16(address + 2);
+		desc.flags = m_memory.Read8(address + 5);
+
+		if (!desc.IsGateTypeValid())
+		{
+			// TODO
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+		}
+
+		return desc;
 	}
 
 	void CPU80286::ForceA20Low(bool forceLow)
@@ -143,8 +199,12 @@ namespace emul
 
 		SegmentDescriptor desc;
 		desc.limit = m_memory.Read16(address);
-		desc.baseL = m_memory.Read16(address + 2);
-		desc.baseH = m_memory.Read8(address + 4);
+
+		WORD baseL = m_memory.Read16(address + 2);
+		emul::SetLWord(desc.base, baseL);
+		WORD baseH = m_memory.Read8(address + 4);
+		emul::SetHWord(desc.base, baseH);
+
 		desc.access = m_memory.Read8(address + 5);
 
 		return desc;
@@ -152,22 +212,38 @@ namespace emul
 	void CPU80286::UpdateTranslationRegister(SegmentTranslationRegister& dest, Selector selector, SegmentDescriptor desc)
 	{
 		dest.size = desc.limit;
-		dest.base = desc.GetBase();
+		dest.base = desc.base;
 		dest.access = desc.access;
 		dest.selector = selector;
 	}
 
 	void CPU80286::ProtectedMode()
 	{
-		// TODO: Since there is no instruction prefetch, the next instruction
-		// has to be fetched through the memory, but the CS descriptor is not set yet
-		// (it will be set in pJMPfar, the next instruction after the mode switch)
-		// In the mean time, fake it and pre fill the CD descriptor with the current real mode base.
+		// Preinitialize Segment Address Translation Registers to match 
+		// existing real mode segments
+		m_cs.selector = 0;
 		m_cs.size = 0xFFFF;
 		m_cs.base = S2A(m_reg[REG16::CS]);
 		m_cs.access = 0; // TODO: Adjust when protection/checks are added
 
-		// TODO: Now this is getting ugly, we get the selector in the next jmp command.
+		m_ds.selector = 0;
+		m_ds.size = 0xFFFF;
+		m_ds.base = S2A(m_reg[REG16::DS]);
+		m_ds.access = 0; // TODO: Adjust when protection/checks are added
+
+		m_es.selector = 0;
+		m_es.size = 0xFFFF;
+		m_es.base = S2A(m_reg[REG16::DS]);
+		m_es.access = 0; // TODO: Adjust when protection/checks are added
+
+		m_ss.selector = 0;
+		m_ss.size = 0xFFFF;
+		m_ss.base = S2A(m_reg[REG16::SS]);
+		m_ss.access = 0; // TODO: Adjust when protection/checks are added
+
+		// TODO: Since there is no instruction prefetch, the next instruction
+		// has to be fetched through the memory.
+		// Get the selector in the next jmp command.
 		BYTE instruction = FetchByte();
 		if (instruction != 0xEA)
 		{
@@ -212,6 +288,7 @@ namespace emul
 		case 3: LogPrintf(LOG_ERROR, "LTR ew 17,19 (noreal)"); break;
 		case 4: LogPrintf(LOG_ERROR, "VERR ew 14,16 (noreal)"); break;
 		case 5: LogPrintf(LOG_ERROR, "VERW ew 14,16 (noreal)"); break;
+			throw std::exception("Not implemented");
 		default:
 			InvalidOpcode();
 			break;
@@ -332,21 +409,51 @@ namespace emul
 	void CPU80286::LAR(BYTE regrm)
 	{
 		LogPrintf(LOG_ERROR, "LAR rw,ew 14,16 (noreal)");
-		InvalidOpcode();
+		throw std::exception("Not implemented");
 	}
 	void CPU80286::LSL(BYTE regrm)
 	{
 		LogPrintf(LOG_ERROR, "LSL rw,ew 14,16 (noreal)");
-		InvalidOpcode();
+		throw std::exception("Not implemented");
 	}
 	void CPU80286::LOADALL()
 	{
 		LogPrintf(LOG_ERROR, "LOADALL 195 (undocumented)(real)");
-		InvalidOpcode();
+		throw std::exception("Not implemented");
 	}
 	void CPU80286::CLTS()
 	{
 		LogPrintf(LOG_ERROR, "CLTS 2 (real)");
-		InvalidOpcode();
+		throw std::exception("Not implemented");
+	}
+
+	void CPU80286::INT(BYTE interrupt)
+	{
+		if (IsProtectedMode())
+		{
+			LogPrintf(LOG_WARNING, "INT(%02xh)[Protected Mode]", interrupt);
+
+			InterruptDescriptor desc = GetInterruptDescriptor(interrupt);
+			LogPrintf(LOG_WARNING, desc.ToString());
+
+			// TODO: From 8086, adjust
+			PUSHF();
+			PUSH(m_reg[REG16::CS]);
+			PUSH(m_reg[inRep ? REG16::_REP_IP : REG16::IP]);
+			if (inRep)
+			{
+				inRep = false;
+			}
+
+			SetFlag(FLAG_T, false);
+			CLI();
+
+			m_reg[REG16::CS] = desc.selector;
+			m_reg[REG16::IP] = desc.offset;
+		}
+		else
+		{
+			CPU80186::INT(interrupt);
+		}
 	}
 }

@@ -15,6 +15,10 @@ namespace emul
 		bool GetTI() const { return GetBit(data, 0); }
 		WORD GetIndex() const { return data >> 3; }
 
+		const char* ToString() const;
+
+		operator WORD() const { return data; };
+
 	protected:
 		WORD data;
 	};
@@ -27,18 +31,14 @@ namespace emul
 		const char* ToString() const;
 	};
 
-#pragma pack(push, 1)
 	struct SegmentDescriptor
 	{
 		WORD limit = 0;
-		WORD baseL = 0;
-		BYTE baseH = 0;
+		DWORD base = 0;
 		BYTE access = 0;
-		WORD reserved = 0;
 
-		DWORD GetBase() const { return (baseH << 16) | baseL; }
+		const char* ToString() const;
 	};
-#pragma pack(pop)
 
 	struct SegmentTranslationRegister
 	{
@@ -46,6 +46,21 @@ namespace emul
 		BYTE access = 0;
 		DWORD base = 0;
 		WORD size = 0;
+	};
+
+	struct InterruptDescriptor
+	{
+		WORD offset = 0;
+		Selector selector;
+		BYTE flags = 0;
+
+		bool IsPresent() const { return GetBit(flags, 7); }
+		BYTE GetDPL() const { return (flags >> 5) & 3; }
+		enum class GateType { INTERRUPT = 0b0110, TRAP = 0b0111 };
+		bool IsGateTypeValid() const { return (flags & 0b1110) == 0b0110; }
+		GateType GetGateType() const { return (GateType)(flags & 0b1111); }
+
+		const char* ToString() const;
 	};
 
 	class CPU80286 : public CPU80186
@@ -131,5 +146,9 @@ namespace emul
 		void LSL(BYTE regrm);
 		void LOADALL();
 		void CLTS();
+
+		InterruptDescriptor GetInterruptDescriptor(BYTE interrupt) const;
+
+		virtual void INT(BYTE interrupt) override;
 	};
 }

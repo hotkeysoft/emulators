@@ -464,7 +464,7 @@ namespace emul
 
 		void SEGOVERRIDE(WORD);
 
-		void INT(BYTE interrupt);
+		virtual void INT(BYTE interrupt);
 
 		void IRET();
 
