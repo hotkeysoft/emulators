@@ -137,25 +137,44 @@ namespace ppi
 			break;
 		case Command::CMD_READ_INPUT_PORT:
 			LogPrintf(LOG_INFO, "Read Input Port");
-			WriteOutputBuffer(0x55);
+			ReadConfigurationSwitches();
 			break;
 		case Command::CMD_READ_OUTPUT_PORT:
 			LogPrintf(LOG_INFO, "Read Output Port");
 			LogPrintf(LOG_ERROR, "Read Output Port Not Implemented");
+			throw std::exception("Not implemented");
 			break;
 		case Command::CMD_WRITE_OUTPUT_PORT:
 			LogPrintf(LOG_INFO, "Write Output Port");
 			LogPrintf(LOG_ERROR, "Read Output Port Not Implemented");
+			throw std::exception("Not implemented");
 			m_activeCommand = command; // Need to wait for value in input buffer
 			break;
 		case Command::CMD_READ_TEST_INPUTS:
-			LogPrintf(LOG_INFO, "Test Inputs");
-			LogPrintf(LOG_ERROR, "Test Inputs Not Implemented");
+			LogPrintf(LOG_INFO, "Read Test Inputs");
+			WriteOutputBuffer(0); // Read CLK(B0) and Data(B1) bits
 			break;
 		default:
 			LogPrintf(LOG_ERROR, "Invalid Command %02x", command);
 			break;
 		}
+	}
+
+	void Device8042AT::ReadConfigurationSwitches()
+	{
+		BYTE value =
+			(!m_switches.keyboardLock << 7) |
+			((BYTE)m_switches.display << 6) |
+			(!m_switches.manufacturing << 5) |
+			(m_switches.ramsel << 4);
+
+		LogPrintf(LOG_INFO, "ReadConfigurationSwitches [%cKEYLOCK DISP[%s] %cPOSTLOOP %cRAMSEL]",
+			(m_switches.keyboardLock ? ' ' : '/'),
+			((m_switches.display == DISPLAY::MDA) ? "MDA" : "CGA"),
+			(m_switches.manufacturing ? ' ' : '/'),
+			(m_switches.ramsel ?' ' : '/'));
+		
+		WriteOutputBuffer(value);
 	}
 
 	BYTE Device8042AT::ReadPortB()

@@ -119,26 +119,27 @@ namespace emul
 			ppi::Device8042AT* ppi = (ppi::Device8042AT*)m_ppi;
 			ppi->SetCPU(m_cpu);
 		}
+
 		// Configuration switches
-		//{
-		//	ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;
-		//	ppi->SetPOSTLoop(false);
-		//	ppi->SetMathCoprocessor(false);
-		//	ppi->SetRAMConfig(ppi::RAMSIZE::RAM_256K);
-		//	if (m_video->IsMonoAdapter())
-		//	{
-		//		ppi->SetDisplayConfig(ppi::DISPLAY::MONO_80x25);
-		//	}
-		//	else if (m_video->GetID() == "ega")
-		//	{
-		//		ppi->SetDisplayConfig(ppi::DISPLAY::NONE);
-		//	}
-		//	else
-		//	{
-		//		ppi->SetDisplayConfig(screenWidth == COLS80 ? ppi::DISPLAY::COLOR_80x25 : ppi::DISPLAY::COLOR_40x25);
-		//	}
-		//	ppi->SetFloppyCount(floppyCount);
-		//}
+		{
+			ppi::Device8042AT* ppi = (ppi::Device8042AT*)m_ppi;
+
+			ppi->SetPOSTLoop(false);
+			ppi->SetKeyLock(false);
+
+			if (m_video->GetID() == "cga")
+			{
+				ppi->SetDisplayConfig(ppi::DISPLAY::CGA);
+			}
+			else if ((m_video->GetID() == "mda") || (m_video->GetID() == "hgc"))
+			{
+				ppi->SetDisplayConfig(ppi::DISPLAY::MDA);
+			}
+			else
+			{
+				ppi->SetDisplayConfig(ppi::DISPLAY::OTHER);
+			}
+		}
 
 		//MemoryBlock* extra = new MemoryBlock("HIGH", 1024 * 1024);
 		//m_memory.Allocate(extra, 0x100000);

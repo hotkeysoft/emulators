@@ -17,6 +17,14 @@ namespace emul
 
 namespace ppi
 {
+	enum class DISPLAY
+	{
+		CGA = 0,
+		MDA = 1,
+
+		OTHER = 0
+	};
+
 	enum class Command
 	{
 		CMD_NONE = 0,
@@ -64,6 +72,18 @@ namespace ppi
 		bool GetTimer2Gate() const { return m_portB.timer2Gate; }
 		void SetTimer2Output(bool value) { m_portB.timer2Output = value; }
 
+		// Configuration Switches
+		//
+		// Connected to the lock on the front of the panel.
+		void SetKeyLock(bool lock) { m_switches.keyboardLock = lock; }
+		//
+		// Manufacturing mode jumper, makes POST loop forever
+		void SetPOSTLoop(bool en) { m_switches.manufacturing = en; }
+		//
+		// Tells the motherboard what kind of display to initialize (CGA | MDA)
+		// Switch is don't care for cards with onboard ROM that do their own setup (EGA | VGA)
+		void SetDisplayConfig(DISPLAY disp) { m_switches.display = disp; }
+
 	protected:
 		emul::CPU80286* m_cpu = nullptr;
 
@@ -76,6 +96,17 @@ namespace ppi
 		BYTE ReadOutputBuffer();
 
 		Command m_activeCommand = Command::CMD_NONE;
+
+		// Configuration Swiches on motherboard
+		struct Switches
+		{
+			bool keyboardLock = false; // Bit 7
+			DISPLAY display = DISPLAY::OTHER; // Bit 6
+			bool manufacturing = false; // Bit 5
+			bool ramsel = false; // Bit 4 256/512k decoding on main board
+			// Bit 3-0 unused
+		} m_switches;
+		void ReadConfigurationSwitches();
 
 		struct Status
 		{
@@ -107,7 +138,6 @@ namespace ppi
 		} m_portB;
 		BYTE ReadPortB();
 		void WritePortB(BYTE value);
-
 
 		struct CommandByte
 		{
