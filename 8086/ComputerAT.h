@@ -3,7 +3,7 @@
 #include "Computer.h"
 #include "Sound/DevicePCSpeaker.h"
 #include "IO/InputEvents.h"
-#include "IO/DeviceKeyboardXT.h"
+#include "IO/DeviceKeyboardAT.h"
 #include "Hardware/Device146818.h"
 #include "Hardware/DevicePOSTCard.h"
 
@@ -34,7 +34,7 @@ namespace emul
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_biosF000;
 
-		kbd::DeviceKeyboardXT m_keyboard;
+		kbd::DeviceKeyboardAT m_keyboard;
 
 		pic::Device8259 m_picSecondary;
 

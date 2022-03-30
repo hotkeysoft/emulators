@@ -173,6 +173,7 @@
     <ClCompile Include="Hardware\Device8042AT.cpp" />
     <ClCompile Include="Hardware\Device8167.cpp" />
     <ClCompile Include="Hardware\DeviceDMAPageRegister.cpp" />
+    <ClCompile Include="IO\DeviceKeyboardAT.cpp" />
     <ClCompile Include="IO\DeviceSerialMouse.cpp" />
     <ClCompile Include="Sound\Sound.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -260,6 +261,7 @@
     <ClInclude Include="Hardware\Device8167.h" />
     <ClInclude Include="Hardware\DevicePOSTCard.h" />
     <ClInclude Include="Hardware\DevicePPI.h" />
+    <ClInclude Include="IO\DeviceKeyboardAT.h" />
     <ClInclude Include="IO\DeviceSerialMouse.h" />
     <ClInclude Include="Sound\Sound.h" />
     <ClInclude Include="stdafx.h" />

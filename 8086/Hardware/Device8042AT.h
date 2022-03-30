@@ -60,7 +60,7 @@ namespace ppi
 		virtual void Init() override;
 
 		virtual bool IsSoundON() override { return m_portB.speakerDataEnabled; }
-		virtual void SetCurrentKeyCode(BYTE keyCode) override {}
+		virtual void SetCurrentKeyCode(BYTE keyCode) override { WriteOutputBuffer(keyCode); }
 
 		void Tick();
 
@@ -84,6 +84,13 @@ namespace ppi
 		// Switch is don't care for cards with onboard ROM that do their own setup (EGA | VGA)
 		void SetDisplayConfig(DISPLAY disp) { m_switches.display = disp; }
 
+		bool IsKeyboardEnabled() const { return !m_status.inhibit; }
+
+		bool IsInterruptPending() const { return m_commandByte.outputBufferFullInterrupt && m_status.outputBufferFull; }
+		bool IsKeyboardCommandPending() const { return m_status.inputBufferFull && !m_commandParameter; }
+
+		BYTE ReadInputBuffer();
+
 	protected:
 		emul::CPU80286* m_cpu = nullptr;
 
@@ -92,10 +99,11 @@ namespace ppi
 
 		void WriteInputBuffer(BYTE value);
 		void WriteOutputBuffer(BYTE value);
-		BYTE ReadInputBuffer();
 		BYTE ReadOutputBuffer();
 
 		Command m_activeCommand = Command::CMD_NONE;
+		// true if active command needs parameter in input buffer
+		bool m_commandParameter = false; 
 
 		// Configuration Swiches on motherboard
 		struct Switches
@@ -149,6 +157,7 @@ namespace ppi
 		} m_commandByte;
 		void ReadCommandByte();
 		void WriteCommandByte();
+		void WriteOutputPort();
 
 		size_t m_commandDelay = 0;
 		void StartSelfTest();

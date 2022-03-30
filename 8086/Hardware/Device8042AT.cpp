@@ -70,13 +70,13 @@ namespace ppi
 			(m_status.parityError << 7) |
 			(m_status.receiveTimeout << 6) |
 			(m_status.transmitTimeout << 5) |
-			(m_status.inhibit << 4) |
+			(!m_status.inhibit << 4) |
 			((BYTE)m_status.mode << 3) |
 			(m_status.systemFlag << 2) |
 			(m_status.inputBufferFull << 1) |
 			(m_status.outputBufferFull << 0);
 
-		LogPrintf(LOG_TRACE, "ReadStatus: [%cPE %cRTO %cTTO %cINHIBIT MODE[%s] %cSYSFLAG %cINFULL %cOUTFULL]",
+		LogPrintf(LOG_DEBUG, "ReadStatus: [%cPE %cRTO %cTTO %cINHIBIT MODE[%s] %cSYSFLAG %cINFULL %cOUTFULL]",
 			(m_status.parityError ? ' ' : '/'),
 			(m_status.receiveTimeout ? ' ' : '/'),
 			(m_status.transmitTimeout ? ' ' : '/'),
@@ -91,20 +91,27 @@ namespace ppi
 
 	void Device8042AT::WriteCommand(BYTE value)
 	{
-		LogPrintf(LOG_TRACE, "Write Command, value=%02x", value);
+		LogPrintf(LOG_DEBUG, "Write Command, value=%02x", value);
 		m_status.mode = Status::Mode::COMMAND;
+
+		m_commandParameter = false;
 
 		Command command = (Command)value;
 		if ((command >= Command::CMD_PULSE_OUTPUT_PORT_MIN) && 
-			(command < Command::CMD_PULSE_OUTPUT_PORT_MAX))
+			(command <= Command::CMD_PULSE_OUTPUT_PORT_MAX))
 		{
-			LogPrintf(LOG_WARNING, "Pulse bits %02x", value & 0x0F);
+			LogPrintf(LOG_INFO, "Pulse bits %02x", value & 0x0F);
 
 			// Restart CPU
-			if (((int)command & 1) == 0)
+			if ((value & 1) == 0)
 			{
 				LogPrintf(LOG_WARNING, "***RESTART CPU***");
 				m_cpu->Reset();
+			} 
+			else if ((value & 0x0F) != 0x0F)
+			{
+				LogPrintf(LOG_ERROR, "Pulse bits %02x Not implemented", value);
+				throw std::exception("Not implemented");
 			}
 		}
 		else switch (command)
@@ -113,7 +120,8 @@ namespace ppi
 			ReadCommandByte();
 			break;
 		case Command::CMD_WRITE_COMMAND_BYTE:
-			m_activeCommand = command; // Need to wait for value in input buffer
+			m_activeCommand = command;
+			m_commandParameter = true;
 			break;
 		case Command::CMD_SELF_TEST:
 			LogPrintf(LOG_INFO, "Self Test");
@@ -121,11 +129,13 @@ namespace ppi
 			break;
 		case Command::CMD_INTERFACE_TEST:
 			LogPrintf(LOG_INFO, "Interface Test");
-			LogPrintf(LOG_ERROR, "Interface Test Not Implemented");
+			// Checks for stuck CLK/DATA lines
+			WriteOutputBuffer(0); // No error
 			break;
 		case Command::CMD_DIAGNOSTIC_DUMP:
 			LogPrintf(LOG_INFO, "Diagnostic Dump");
 			LogPrintf(LOG_ERROR, "Diagnostic Dump Not Implemented");
+			throw std::exception("Not implemented");
 			break;
 		case Command::CMD_DISABLE_KEYBOARD:
 			LogPrintf(LOG_INFO, "Disable Keyboard");
@@ -146,13 +156,14 @@ namespace ppi
 			break;
 		case Command::CMD_WRITE_OUTPUT_PORT:
 			LogPrintf(LOG_INFO, "Write Output Port");
-			LogPrintf(LOG_ERROR, "Read Output Port Not Implemented");
-			throw std::exception("Not implemented");
-			m_activeCommand = command; // Need to wait for value in input buffer
+			m_activeCommand = command;
+			m_commandParameter = true;
 			break;
 		case Command::CMD_READ_TEST_INPUTS:
 			LogPrintf(LOG_INFO, "Read Test Inputs");
-			WriteOutputBuffer(0); // Read CLK(B0) and Data(B1) bits
+			// CLK (B0) line is driven low when inhibit = true
+			// DATA(B1) doesn't really matter (serial stream)
+			WriteOutputBuffer(m_status.inhibit ? 0 : 1); // Read CLK(B0) and Data(B1) bits
 			break;
 		default:
 			LogPrintf(LOG_ERROR, "Invalid Command %02x", command);
@@ -246,6 +257,36 @@ namespace ppi
 		m_activeCommand = Command::CMD_NONE;
 	}
 
+	void Device8042AT::WriteOutputPort()
+	{
+		BYTE value = ReadInputBuffer();
+
+		// Bit 7: Keyboard DATA (unconnected)
+		// Bit 6: Keyboard CLK (unconnected)
+		// Bit 5: Input buffer full (unconnected)
+		// Bit 4: Output buffer full
+		// Bit 2,3 reserved, unconnected
+		// Bit 1: 1 = A20 Line enabled, 0 = A20 Forced to 0
+		// Bit 0: 0 = CPU Reset
+
+		// We only care about bit 0, 1 and 4
+
+		// Bit 4 is connected to IRQ1, normally reflects m_status.outputBufferFull
+		// We do it the other way around
+		m_status.outputBufferFull = GetBit(value, 4);
+
+		// A20 Gate
+		m_cpu->ForceA20Low(!GetBit(value, 1));
+
+		// CPU Reset
+		if (!GetBit(value, 0))
+		{
+			m_cpu->Reset();
+		}
+
+		m_activeCommand = Command::CMD_NONE;
+	}
+
 	void Device8042AT::StartSelfTest()
 	{
 		LogPrintf(LOG_INFO, "Start Self Test");
@@ -293,8 +334,7 @@ namespace ppi
 			case Command::CMD_WRITE_OUTPUT_PORT:
 				if (m_status.inputBufferFull)
 				{
-					LogPrintf(LOG_ERROR, "Write Output Port: Not implemented");
-					m_activeCommand = Command::CMD_NONE;
+					WriteOutputPort();
 				}
 				break;
 			default:

@@ -291,6 +291,9 @@
     <ClCompile Include="Hardware\Device8042AT.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
+    <ClCompile Include="IO\DeviceKeyboardAT.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -535,6 +538,9 @@
     </ClInclude>
     <ClInclude Include="Hardware\DevicePPI.h">
       <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\DeviceKeyboardAT.h">
+      <Filter>Header Files\IO</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -93,7 +93,7 @@ namespace emul
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
 
 		m_keyboard.EnableLog(CONFIG().GetLogLevel("keyboard"));
-		//m_keyboard.Init(m_ppi, m_pic);
+		m_keyboard.Init(m_ppi, m_pic);
 
 		InitJoystick(0x201, PIT_CLK);
 
@@ -125,7 +125,7 @@ namespace emul
 			ppi::Device8042AT* ppi = (ppi::Device8042AT*)m_ppi;
 
 			ppi->SetPOSTLoop(false);
-			ppi->SetKeyLock(false);
+			ppi->SetKeyLock(true);
 
 			if (m_video->GetID() == "cga")
 			{
@@ -172,7 +172,7 @@ namespace emul
 		bool enabled = !GetBit(value, 7);
 		if (m_nmiEnabled != enabled)
 		{
-			LogPrintf(LOG_WARNING, "NMI is %s", m_nmiEnabled ? "Enabled" : "Disabled");
+			LogPrintf(LOG_INFO, "NMI is %s", m_nmiEnabled ? "Enabled" : "Disabled");
 		}
 		m_nmiEnabled = enabled;
 	}
@@ -221,6 +221,7 @@ namespace emul
 
 			ppi->SetRefresh(m_pit->GetCounter(1).GetOutput());
 			ppi->Tick();
+			m_pic->InterruptRequest(1, ppi->IsInterruptPending());
 
 			m_pit->Tick();
 			ppi->SetTimer2Output(timer2.GetOutput());
