@@ -113,7 +113,7 @@ namespace emul
 			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
 		}
 
-		m_post.Init();
+		m_post.Init(m_cpu);
 
 		{
 			ppi::Device8042AT* ppi = (ppi::Device8042AT*)m_ppi;

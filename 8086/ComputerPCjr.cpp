@@ -56,7 +56,7 @@ namespace emul
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
-		m_post.Init();
+		m_post.Init(m_cpu);
 
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
