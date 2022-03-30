@@ -274,7 +274,7 @@ namespace emul
 	void CPU80286::ProtectedMode()
 	{
 		// Opcodes that are overridden in protected mode
-		//ReplaceOpcode(0x63, [=]() { ARPL(); });
+		ReplaceOpcode(0x63, [=]() { ARPL(GetModRegRM16(FetchByte(), false)); });
 
 		ReplaceOpcode(0x07, [=]() { POPSegReg(SEGREG::ES); });
 		ReplaceOpcode(0x17, [=]() { POPSegReg(SEGREG::SS); });
@@ -320,12 +320,23 @@ namespace emul
 		m_cs.selector = segment;
 	}
 
-	void CPU80286::ARPL(BYTE regrm)
+	void CPU80286::ARPL(SourceDest16 sd)
 	{
 		LogPrintf(LOG_WARNING, "ARPL");
 
-		SourceDest16 sd = GetModRegRM16(regrm);
+		Selector source = sd.source.Read();
+		Selector dest = sd.dest.Read();
 
+		if (dest.GetRPL() < source.GetRPL())
+		{
+			SetFlag(FLAG_Z, true);
+			dest.SetRPL(source.GetRPL());
+			sd.dest.Write(dest);
+		}
+		else
+		{
+			SetFlag(FLAG_Z, false);
+		}
 	}
 
 	void CPU80286::MultiF0(BYTE op2)
@@ -336,8 +347,8 @@ namespace emul
 		{
 		case 0: MultiF000(FetchByte()); break;
 		case 1: MultiF001(FetchByte()); break;
-		case 2: LAR(FetchByte()); break;
-		case 3: LSL(FetchByte()); break;
+		case 2: LAR(GetModRegRM16(FetchByte())); break; // Load Access Rights Byte
+		case 3: LSL(GetModRegRM16(FetchByte())); break; // Load Segment Limit
 		case 5: LOADALL(); break;
 		case 6: CLTS(); break;
 		default: InvalidOpcode(); break;
@@ -637,16 +648,96 @@ namespace emul
 		m_msw = (MSW)value;
 	}
 
-	void CPU80286::LAR(BYTE regrm)
+	// Load Access Rights Byte
+	void CPU80286::LAR(SourceDest16 sd)
 	{
-		LogPrintf(LOG_ERROR, "LAR rw,ew 14,16 (noreal)");
-		throw std::exception("Not implemented");
+		LogPrintf(LOG_ERROR, "LAR");
+
+		// Result is in zero flag
+		SetFlag(FLAG_Z, false);
+
+		if (!IsProtectedMode())
+		{
+			InvalidOpcode();
+			return;
+		}
+
+		Selector sel = sd.source.Read();
+		LogPrintf(LOG_WARNING, "LAR,  sel = %s", sel.ToString());
+
+		// From here, no error should be thrown, result is in ZF
+		try
+		{
+			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+			LogPrintf(LOG_WARNING, "LAR, desc = %s", desc.ToString());
+
+			// These check probably need to happen in LoadSegment
+			BYTE dpl = desc.access.GetDPL();
+			if (dpl < m_iopl || dpl < sel.GetRPL())
+			{
+				return;
+			}
+
+			WORD ret = 0;
+			SetHByte(ret, desc.access);
+			sd.dest.Write(ret);
+
+			// Everything checks out
+			SetFlag(FLAG_Z, true);
+			LogPrintf(LOG_WARNING, "LAR: OK");
+		}
+		catch (CPUException)
+		{
+			// Nothing to do, ZF is alredy cleared
+		}
 	}
-	void CPU80286::LSL(BYTE regrm)
+	void CPU80286::LSL(SourceDest16 sd)
 	{
-		LogPrintf(LOG_ERROR, "LSL rw,ew 14,16 (noreal)");
-		throw std::exception("Not implemented");
+		LogPrintf(LOG_ERROR, "LSL");
+
+		// Result is in zero flag
+		SetFlag(FLAG_Z, false);
+
+		if (!IsProtectedMode())
+		{
+			InvalidOpcode();
+			return;
+		}
+
+		Selector sel = sd.source.Read();
+		LogPrintf(LOG_WARNING, "LSL,  sel = %s", sel.ToString());
+
+		// From here, no error should be thrown, result is in ZF
+		try
+		{
+			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+			LogPrintf(LOG_WARNING, "LSL, desc = %s", desc.ToString());
+
+			// These check probably need to happen in LoadSegment
+			BYTE dpl = desc.access.GetDPL();
+			if (dpl < m_iopl || dpl < sel.GetRPL())
+			{
+				return;
+			}
+
+			if (desc.access.IsConforming())
+			{
+				return;
+			}
+
+			WORD ret = desc.limit;
+			sd.dest.Write(ret);
+
+			// Everything checks out
+			SetFlag(FLAG_Z, true);
+			LogPrintf(LOG_WARNING, "LSL: OK");
+		}
+		catch (CPUException)
+		{
+			// Nothing to do, ZF is alredy cleared
+		}
 	}
+
 	void CPU80286::LOADALL()
 	{
 		LogPrintf(LOG_ERROR, "LOADALL 195 (undocumented)(real)");

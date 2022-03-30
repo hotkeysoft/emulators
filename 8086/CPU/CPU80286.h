@@ -12,6 +12,7 @@ namespace emul
 		Selector(WORD d) : data(d) {}
 
 		BYTE GetRPL() const { return data & 3; }
+		void SetRPL(BYTE rpl) { SetBitMask(data, 0b11111000, false); data |= (rpl & 3); }
 		bool GetTI() const { return GetBit(data, 0); }
 		WORD GetIndex() const { return data >> 3; }
 		bool IsNull() const { return data == 0; }
@@ -37,7 +38,8 @@ namespace emul
 	{
 		AccessRights() {}
 		AccessRights(BYTE a) : access(a) {}
-		BYTE access = 0;
+
+		operator BYTE() const { return access; }
 
 		// Applicable to all types
 		bool IsValid() const { return (access & 0b00001111) == 0; }
@@ -67,6 +69,9 @@ namespace emul
 		const char* GetTypeStr() const;
 
 		const char* ToString() const;
+
+	protected:
+		BYTE access = 0;
 	};
 
 	struct SegmentDescriptor
@@ -177,7 +182,7 @@ namespace emul
 
 		virtual void SetFlags(WORD flags) override;
 
-		void ARPL(BYTE regrm);
+		void ARPL(SourceDest16 sd);
 
 		void MultiF0(BYTE op2);
 		void MultiF000(BYTE op3);
@@ -197,8 +202,8 @@ namespace emul
 		void SMSW(Mem16& dest);
 		void LMSW(Mem16& source);
 
-		void LAR(BYTE regrm);
-		void LSL(BYTE regrm);
+		void LAR(SourceDest16 sd);
+		void LSL(SourceDest16 sd);
 		void LOADALL();
 		void CLTS();
 
