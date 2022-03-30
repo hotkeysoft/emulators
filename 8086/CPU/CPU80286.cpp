@@ -182,7 +182,7 @@ namespace emul
 
 	void CPU80286::ForceA20Low(bool forceLow)
 	{
-		LogPrintf(LOG_WARNING, "Force A20 line LOW: [%d]", forceLow);
+		LogPrintf(LOG_INFO, "Force A20 line LOW: [%d]", forceLow);
 
 		ADDRESS mask = m_memory.GetAddressMask();
 		if (mask == 0)
@@ -193,8 +193,6 @@ namespace emul
 
 		SetBit(mask, 20, !forceLow);
 		m_memory.SetAddressMask(mask);
-
-		LogPrintf(LOG_WARNING, "New mask=["PRINTF_BIN_PATTERN_INT32"]", PRINTF_BYTE_TO_BIN_INT32(mask));
 	}
 
 	void CPU80286::SetFlags(WORD flags)
@@ -207,7 +205,7 @@ namespace emul
 	void CPU80286::CPUExceptionHandler(CPUException e)
 	{
 		// TODO, different behavior for different exceptions
-		LogPrintf(LOG_WARNING, "CPU Exception -> INT(%d)", e.GetType());
+		LogPrintf(LOG_INFO, "CPU Exception -> INT(%d)", e.GetType());
 		INT((BYTE)e.GetType());
 	}
 
@@ -322,7 +320,7 @@ namespace emul
 
 	void CPU80286::ARPL(SourceDest16 sd)
 	{
-		LogPrintf(LOG_WARNING, "ARPL");
+		LogPrintf(LOG_DEBUG, "ARPL");
 
 		Selector source = sd.source.Read();
 		Selector dest = sd.dest.Read();
@@ -403,7 +401,7 @@ namespace emul
 	// Store Local Descriptor Table Register
 	void CPU80286::SLDT(Mem16& dest)
 	{
-		LogPrintf(LOG_WARNING, "SLDT");
+		LogPrintf(LOG_DEBUG, "SLDT");
 
 		dest.Write(m_ldtr.selector);
 	}
@@ -411,7 +409,7 @@ namespace emul
 	// Store Task Register
 	void CPU80286::STR(Mem16& dest)
 	{
-		LogPrintf(LOG_WARNING, "STR");
+		LogPrintf(LOG_DEBUG, "STR");
 		
 		dest.Write(m_task.selector);
 	}
@@ -419,7 +417,7 @@ namespace emul
 	// Load Local Descriptor Table Register
 	void CPU80286::LLDT(Mem16& source)
 	{
-		LogPrintf(LOG_WARNING, "LLDT");
+		LogPrintf(LOG_DEBUG, "LLDT");
 
 		if (m_iopl != 0)
 		{
@@ -429,7 +427,7 @@ namespace emul
 		Selector sel = source.Read();
 
 		SegmentDescriptor desc = LoadSegmentGlobal(sel);
-		LogPrintf(LOG_WARNING, desc.ToString());
+		LogPrintf(LOG_DEBUG, desc.ToString());
 
 		if (!sel.IsNull())
 		{
@@ -449,7 +447,7 @@ namespace emul
 	// Load Task Register
 	void CPU80286::LTR(Mem16& source)
 	{
-		LogPrintf(LOG_WARNING, "LTR");
+		LogPrintf(LOG_DEBUG, "LTR");
 
 		if (m_iopl != 0)
 		{
@@ -459,7 +457,7 @@ namespace emul
 		Selector sel = source.Read();
 
 		SegmentDescriptor desc = LoadSegmentGlobal(sel);
-		LogPrintf(LOG_WARNING, desc.ToString());
+		LogPrintf(LOG_DEBUG, desc.ToString());
 
 		if (!sel.IsNull())
 		{
@@ -479,7 +477,7 @@ namespace emul
 	// Verify Read
 	void CPU80286::VERR(Mem16& source)
 	{
-		LogPrintf(LOG_WARNING, "VERR");
+		LogPrintf(LOG_DEBUG, "VERR");
 
 		// Result is in zero flag
 		SetFlag(FLAG_Z, false);
@@ -491,7 +489,7 @@ namespace emul
 		{
 			// 1. Bound check, done in LoadSegment
 			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
-			LogPrintf(LOG_WARNING, desc.ToString());
+			LogPrintf(LOG_DEBUG, desc.ToString());
 			// 2. Must be code or data segment
 			if (!desc.access.IsCodeOrData())
 			{
@@ -508,7 +506,7 @@ namespace emul
 
 			// Everything checks out
 			SetFlag(FLAG_Z, true);
-			LogPrintf(LOG_WARNING, "VERR: OK");
+			LogPrintf(LOG_DEBUG, "VERR: OK");
 		}
 		catch (CPUException)
 		{
@@ -519,7 +517,7 @@ namespace emul
 	// Verify Write
 	void CPU80286::VERW(Mem16& source)
 	{
-		LogPrintf(LOG_WARNING, "VERW");
+		LogPrintf(LOG_DEBUG, "VERW");
 
 		// Result is in zero flag
 		SetFlag(FLAG_Z, false);
@@ -548,7 +546,7 @@ namespace emul
 
 			// Everything checks out
 			SetFlag(FLAG_Z, true);
-			LogPrintf(LOG_WARNING, "VERW: OK");
+			LogPrintf(LOG_DEBUG, "VERW: OK");
 		}
 		catch (CPUException)
 		{
@@ -569,7 +567,7 @@ namespace emul
 		dest.Increment();
 		dest.Write(GetHWord(m_gdt.base));
 
-		LogPrintf(LOG_WARNING, "SGDT: %s", m_idt.ToString());
+		LogPrintf(LOG_DEBUG, "SGDT: %s", m_idt.ToString());
 	}
 	void CPU80286::SIDT(Mem16& dest)
 	{
@@ -584,7 +582,7 @@ namespace emul
 		dest.Increment();
 		dest.Write(GetHWord(m_idt.base));
 
-		LogPrintf(LOG_WARNING, "SGDT: %s", m_idt.ToString());
+		LogPrintf(LOG_DEBUG, "SGDT: %s", m_idt.ToString());
 	}
 	void CPU80286::LGDT(Mem16& source)
 	{
@@ -599,7 +597,7 @@ namespace emul
 		source.Increment();
 		SetHWord(m_gdt.base, source.Read());
 
-		LogPrintf(LOG_WARNING, "LGDT: %s", m_gdt.ToString());
+		LogPrintf(LOG_DEBUG, "LGDT: %s", m_gdt.ToString());
 	}
 	void CPU80286::LIDT(Mem16& source)
 	{
@@ -614,18 +612,18 @@ namespace emul
 		source.Increment();
 		SetHWord(m_idt.base, source.Read());
 
-		LogPrintf(LOG_WARNING, "LIDT: %s", m_gdt.ToString());
+		LogPrintf(LOG_DEBUG, "LIDT: %s", m_gdt.ToString());
 	}
 
 	void CPU80286::SMSW(Mem16& dest)
 	{
-		LogPrintf(LOG_WARNING, "SMSW");
+		LogPrintf(LOG_DEBUG, "SMSW");
 		dest.Write(m_msw);
 	}
 
 	void CPU80286::LMSW(Mem16& source)
 	{
-		LogPrintf(LOG_WARNING, "LMSW");
+		LogPrintf(LOG_DEBUG, "LMSW");
 		WORD value = source.Read();
 		SetBitMask(value, MSW_RESERVED_ON, true);
 
@@ -651,7 +649,7 @@ namespace emul
 	// Load Access Rights Byte
 	void CPU80286::LAR(SourceDest16 sd)
 	{
-		LogPrintf(LOG_ERROR, "LAR");
+		LogPrintf(LOG_DEBUG, "LAR");
 
 		// Result is in zero flag
 		SetFlag(FLAG_Z, false);
@@ -663,13 +661,13 @@ namespace emul
 		}
 
 		Selector sel = sd.source.Read();
-		LogPrintf(LOG_WARNING, "LAR,  sel = %s", sel.ToString());
+		LogPrintf(LOG_DEBUG, "LAR,  sel = %s", sel.ToString());
 
 		// From here, no error should be thrown, result is in ZF
 		try
 		{
 			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
-			LogPrintf(LOG_WARNING, "LAR, desc = %s", desc.ToString());
+			LogPrintf(LOG_DEBUG, "LAR, desc = %s", desc.ToString());
 
 			// These check probably need to happen in LoadSegment
 			BYTE dpl = desc.access.GetDPL();
@@ -684,7 +682,7 @@ namespace emul
 
 			// Everything checks out
 			SetFlag(FLAG_Z, true);
-			LogPrintf(LOG_WARNING, "LAR: OK");
+			LogPrintf(LOG_DEBUG, "LAR: OK");
 		}
 		catch (CPUException)
 		{
@@ -693,7 +691,7 @@ namespace emul
 	}
 	void CPU80286::LSL(SourceDest16 sd)
 	{
-		LogPrintf(LOG_ERROR, "LSL");
+		LogPrintf(LOG_DEBUG, "LSL");
 
 		// Result is in zero flag
 		SetFlag(FLAG_Z, false);
@@ -705,13 +703,13 @@ namespace emul
 		}
 
 		Selector sel = sd.source.Read();
-		LogPrintf(LOG_WARNING, "LSL,  sel = %s", sel.ToString());
+		LogPrintf(LOG_DEBUG, "LSL,  sel = %s", sel.ToString());
 
 		// From here, no error should be thrown, result is in ZF
 		try
 		{
 			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
-			LogPrintf(LOG_WARNING, "LSL, desc = %s", desc.ToString());
+			LogPrintf(LOG_DEBUG, "LSL, desc = %s", desc.ToString());
 
 			// These check probably need to happen in LoadSegment
 			BYTE dpl = desc.access.GetDPL();
@@ -730,7 +728,7 @@ namespace emul
 
 			// Everything checks out
 			SetFlag(FLAG_Z, true);
-			LogPrintf(LOG_WARNING, "LSL: OK");
+			LogPrintf(LOG_DEBUG, "LSL: OK");
 		}
 		catch (CPUException)
 		{
@@ -766,10 +764,10 @@ namespace emul
 	{
 		if (IsProtectedMode())
 		{
-			LogPrintf(LOG_WARNING, "INT(%02xh)[Protected Mode]", interrupt);
+			LogPrintf(LOG_DEBUG, "INT(%02xh)[Protected Mode]", interrupt);
 
 			InterruptDescriptor desc = GetInterruptDescriptor(interrupt);
-			LogPrintf(LOG_WARNING, desc.ToString());
+			LogPrintf(LOG_DEBUG, desc.ToString());
 
 			// TODO: From 8086, adjust
 			PUSHF();
@@ -794,7 +792,7 @@ namespace emul
 
 	void CPU80286::MOVSegReg(SourceDest16 sd)
 	{
-		LogPrintf(LOG_WARNING, "MOV SegReg");
+		LogPrintf(LOG_DEBUG, "MOV SegReg");
 
 		CPU::TICK(15); // TODO: Dynamic timings
 

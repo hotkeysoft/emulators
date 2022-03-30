@@ -172,7 +172,7 @@ namespace fdc
 			ClearInterrupt();
 		}
 
-		LogPrintf(Logger::LOG_DEBUG, "ReadMainStatusReg [%cRQM %cDIO %cEXM %cBUSY %cACTD %cATCD %cACTB %cACTA]",
+		LogPrintf(Logger::LOG_TRACE, "ReadMainStatusReg [%cRQM %cDIO %cEXM %cBUSY %cACTD %cATCD %cACTB %cACTA]",
 			m_dataRegisterReady ? ' ' : '/',
 			(m_dataInputOutput == DataDirection::FDC2CPU) ? ' ' : '/',
 			(m_executionPhase && m_nonDMA) ? ' ' : '/',
@@ -292,7 +292,7 @@ namespace fdc
 		case STATE::RQM_DELAY:
 			if (--m_currOpWait == 0)
 			{
-				LogPrintf(Logger::LOG_DEBUG, "RQM Delay done");
+				LogPrintf(Logger::LOG_TRACE, "RQM Delay done");
 				m_dataRegisterReady = m_fifo.size();
 				m_state = m_nextState;
 			}
@@ -417,7 +417,7 @@ namespace fdc
 	void DeviceFloppy::RQMDelay(STATE nextState)
 	{
 		m_currOpWait = DelayToTicks(RQM_DELAY_US);
-		LogPrintf(Logger::LOG_DEBUG, "Start RQM Delay, count=%zu", m_currOpWait);
+		LogPrintf(Logger::LOG_TRACE, "Start RQM Delay, count=%zu", m_currOpWait);
 		m_dataRegisterReady = false;
 		m_state = STATE::RQM_DELAY;
 		m_nextState = nextState;

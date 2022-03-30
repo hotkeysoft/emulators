@@ -300,7 +300,10 @@ int main(int argc, char* args[])
 	if (logFileName.size())
 	{
 		fprintf(stdout, "Logging to output file: %s\n", logFileName.c_str());
-		logFile = fopen(logFileName.c_str(), "wc");
+
+		bool flush = CONFIG().GetValueBool("debug", "logfile.flush");
+
+		logFile = fopen(logFileName.c_str(), flush ? "wc" : "w");
 		if (!logFile)
 		{
 			fprintf(stderr, "Error opening log file\n");

@@ -68,6 +68,8 @@ namespace emul
 		InitSound();
 		InitRTC();
 
+		m_dma1->GetChannel(0).EnableLog(LOG_OFF);
+
 		InitVideo("cga", { "cga", "mda", "hgc", "ega", "vga"});
 
 		m_biosF000.LoadFromFile("data/XT/BIOS_5160_V3_F000.BIN");
