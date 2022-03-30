@@ -603,9 +603,9 @@ namespace emul
 		m_opcodes[0xC3] = [=]() { RETNear(); };
 
 		// LES REG16, MEM16
-		m_opcodes[0xC4] = [=]() { LoadPTR(m_reg[REG16::ES], GetModRegRM16(FetchByte(), true)); };
+		m_opcodes[0xC4] = [=]() { LoadPTR(SEGREG::ES, GetModRegRM16(FetchByte(), true)); };
 		// LDS REG16, MEM16
-		m_opcodes[0xC5] = [=]() { LoadPTR(m_reg[REG16::DS], GetModRegRM16(FetchByte(), true)); };
+		m_opcodes[0xC5] = [=]() { LoadPTR(SEGREG::DS, GetModRegRM16(FetchByte(), true)); };
 
 		// MOV
 		// ----------
@@ -2562,7 +2562,7 @@ namespace emul
 		}
 	}
 
-	void CPU8086::LoadPTR(WORD& destSegment, SourceDest16 regMem)
+	void CPU8086::LoadPTR(SEGREG dest, SourceDest16 regMem)
 	{
 		LogPrintf(LOG_DEBUG, "LoadPtr");
 
@@ -2581,10 +2581,7 @@ namespace emul
 		
 		// Read segment
 		regMem.source.Increment();
-		destSegment = regMem.source.Read();
-
-		LogPrintf(LOG_DEBUG, "LoadPtr Loaded [%04X:%04X]", destSegment, regMem.dest.Read());
-
+		m_reg[(REG16)dest] = regMem.source.Read();
 	}
 
 	void CPU8086::XLAT()

@@ -32,11 +32,39 @@ namespace emul
 		const char* ToString() const;
 	};
 
+
+	struct AccessRights
+	{
+		AccessRights() {}
+		AccessRights(BYTE a) : access(a) {}
+		BYTE access = 0;
+
+		// Applicable to all types
+		bool IsValid() const { return (access & 0b00001111) == 0; }
+		bool IsPresent() const { return GetBit(access, 7); }
+		BYTE GetDPL() const { return (access >> 5) & 3; }
+
+		bool IsCodeOrData() const { return GetBit(access, 4); }
+		bool IsControl() const { return !GetBit(access, 4); }
+
+		// Applies to Code/Data descriptor
+		bool IsAccessed() const { return GetBit(access, 0); }
+
+		// Applies to Control descriptor
+		bool IsLDT() const      { return (access & 0b00011111) == 0b00000010; }
+		bool IsTask() const     { return (access & 0b00011101) == 0b00000001; }
+		bool IsTaskBusy() const { return (access & 0b00011111) == 0b00000011; }
+
+		const char* GetTypeStr() const;
+
+		const char* ToString() const;
+	};
+
 	struct SegmentDescriptor
 	{
 		WORD limit = 0;
 		DWORD base = 0;
-		BYTE access = 0;
+		AccessRights access;
 
 		const char* ToString() const;
 	};
@@ -44,7 +72,7 @@ namespace emul
 	struct SegmentTranslationRegister
 	{
 		Selector selector;
-		BYTE access = 0;
+		AccessRights access;
 		DWORD base = 0;
 		WORD size = 0;
 	};
@@ -127,18 +155,27 @@ namespace emul
 		SegmentTranslationRegister m_ds;
 		SegmentTranslationRegister m_es;
 		SegmentTranslationRegister m_ss;
+
+		// Local Descriptor Table Register
+		SegmentTranslationRegister m_ldtr;
+
+		// Task Register
+		SegmentTranslationRegister m_task;
+
 		void UpdateTranslationRegister(SegmentTranslationRegister& dest, Selector selector, SegmentDescriptor desc);
 
-		BYTE GetIOPL(WORD flags) const
-		{
-			return (flags >> 12) & 3;
-		}
+		BYTE m_iopl = 0;
 
 		virtual void SetFlags(WORD flags) override;
 
 		void MultiF0(BYTE op2);
 		void MultiF000(BYTE op3);
 		void MultiF001(BYTE op3);
+
+		void SLDT(Mem16& dest);
+		void STR(Mem16& dest);
+		void LLDT(Mem16& source);
+		void LTR(Mem16& source);
 
 		void SGDT(Mem16& dest);
 		void SIDT(Mem16& dest);
@@ -155,6 +192,7 @@ namespace emul
 		InterruptDescriptor GetInterruptDescriptor(BYTE interrupt) const;
 
 		virtual void INT(BYTE interrupt) override;
+		virtual void LoadPTR(SEGREG dest, SourceDest16 modRegRm) override;
 
 		void MOVSegReg(SourceDest16 sd);
 		void POPSegReg(SEGREG segreg);

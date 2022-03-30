@@ -19,6 +19,13 @@ namespace emul
 {
 	static BYTE GetOPn(BYTE opn) { return (opn >> 3) & 7; }
 
+	const char* AccessRights::ToString() const
+	{
+		static char buf[48];
+		sprintf(buf, "P[%d] DPL[%d] [%s] TYPE[%x]", IsPresent(), GetDPL(), IsControl() ? "CONTROL" : "CODE/DATA", access & 0xF);
+		return buf;
+	}
+
 	const char* Selector::ToString() const
 	{
 		static char buf[32];
@@ -28,8 +35,8 @@ namespace emul
 
 	const char* SegmentDescriptor::ToString() const
 	{
-		static char buf[64];
-		sprintf(buf, "BASE[%08x] LIMIT[%04x] ACCESS[%02x]", base, limit, access);
+		static char buf[80];
+		sprintf(buf, "BASE[%08x] LIMIT[%04x] ACCESS[%s]", base, limit, access.ToString());
 		return buf;
 	}
 
@@ -310,19 +317,24 @@ namespace emul
 
 	void CPU80286::MultiF000(BYTE op3)
 	{
+		if (!IsProtectedMode())
+		{
+			InvalidOpcode();
+			return;
+		}
+
 		Mem16 modrm = GetModRM16(op3);
 
 		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP7, GetOPn(op3));
 
 		switch (GetOPn(op3))
 		{
-		case 0: LogPrintf(LOG_ERROR, "SLDT ew 2,3 (noreal)"); break;
-		case 1: LogPrintf(LOG_ERROR, "STR ew 2, 3 (noreal)"); break;
-		case 2: LogPrintf(LOG_ERROR, "LLDT ew 17,19 (noreal)"); break;
-		case 3: LogPrintf(LOG_ERROR, "LTR ew 17,19 (noreal)"); break;
-		case 4: LogPrintf(LOG_ERROR, "VERR ew 14,16 (noreal)"); break;
-		case 5: LogPrintf(LOG_ERROR, "VERW ew 14,16 (noreal)"); break;
-			throw std::exception("Not implemented");
+		case 0: SLDT(modrm); break; // Store Local Descriptor Table Register
+		case 1: STR(modrm); break;  // Store Task Register
+		case 2: LLDT(modrm); break; //  Load Local Descriptor Table Register
+		case 3: LTR(modrm); break;  //  Load Task Register
+		case 4: LogPrintf(LOG_ERROR, "VERR ew 14,16 (noreal)"); throw std::exception("Not implemented"); break;
+		case 5: LogPrintf(LOG_ERROR, "VERW ew 14,16 (noreal)"); throw std::exception("Not implemented"); break;
 		default:
 			InvalidOpcode();
 			break;
@@ -336,16 +348,92 @@ namespace emul
 
 		switch (GetOPn(op3))
 		{
-		case 0: SGDT(modrm); break;
-		case 1: SIDT(modrm); break;
-		case 2: LGDT(modrm); break; // Load Global Descriptor Table Register
-		case 3: LIDT(modrm); break; // Load Interrupt Descriptor Table Register
+		case 0: SGDT(modrm); break; // Store Global Descriptor Table Register
+		case 1: SIDT(modrm); break; // Store Interrupt Descriptor Table Register
+		case 2: LGDT(modrm); break; //  Load Global Descriptor Table Register
+		case 3: LIDT(modrm); break; //  Load Interrupt Descriptor Table Register
 		case 4: SMSW(modrm); break; // Store Machine Status Word	
-		case 6: LMSW(modrm); break; // Load Machine Status Word
+		case 6: LMSW(modrm); break; //  Load Machine Status Word
 		default:
 			InvalidOpcode();
 			break;
 		}
+	}
+
+	// Store Local Descriptor Table Register
+	void CPU80286::SLDT(Mem16& dest)
+	{
+		LogPrintf(LOG_WARNING, "SLDT");
+
+		dest.Write(m_ldtr.selector);
+	}
+
+	// Store Task Register
+	void CPU80286::STR(Mem16& dest)
+	{
+		LogPrintf(LOG_WARNING, "STR");
+		
+		dest.Write(m_task.selector);
+	}
+
+	// Load Local Descriptor Table Register
+	void CPU80286::LLDT(Mem16& source)
+	{
+		LogPrintf(LOG_WARNING, "LLDT");
+
+		if (m_iopl != 0)
+		{
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+		}
+
+		Selector sel = source.Read();
+
+		SegmentDescriptor desc = LoadSegmentGlobal(sel);
+		LogPrintf(LOG_WARNING, desc.ToString());
+
+		if (!sel.IsNull())
+		{
+			if (!desc.access.IsLDT())
+			{
+				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, sel);
+			}
+			if (!desc.access.IsPresent())
+			{
+				throw CPUException(CPUExceptionType::EX_NOT_PRESENT, sel);
+			}
+		}
+
+		UpdateTranslationRegister(m_ldtr, sel, desc);
+	}
+
+	// Load Task Register
+	void CPU80286::LTR(Mem16& source)
+	{
+		LogPrintf(LOG_WARNING, "LTR");
+
+		if (m_iopl != 0)
+		{
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+		}
+
+		Selector sel = source.Read();
+
+		SegmentDescriptor desc = LoadSegmentGlobal(sel);
+		LogPrintf(LOG_WARNING, desc.ToString());
+
+		if (!sel.IsNull())
+		{
+			if (!desc.access.IsTask() || desc.access.IsTaskBusy())
+			{
+				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, sel);
+			}
+			if (!desc.access.IsPresent())
+			{
+				throw CPUException(CPUExceptionType::EX_NOT_PRESENT, sel);
+			}
+		}
+
+		UpdateTranslationRegister(m_task, sel, desc);
 	}
 
 	void CPU80286::SGDT(Mem16& dest)
@@ -459,6 +547,19 @@ namespace emul
 	{
 		LogPrintf(LOG_ERROR, "CLTS 2 (real)");
 		throw std::exception("Not implemented");
+	}
+
+	void CPU80286::LoadPTR(SEGREG dest, SourceDest16 modRegRm)
+	{
+		if (IsProtectedMode())
+		{
+			LogPrintf(LOG_ERROR, "LoadPTR(SEGREG)[Protected mode]");
+			throw std::exception("Not implemented");
+		}
+		else
+		{
+			CPU80186::LoadPTR(dest, modRegRm);
+		}
 	}
 
 	void CPU80286::INT(BYTE interrupt)

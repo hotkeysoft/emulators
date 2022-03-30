@@ -482,7 +482,7 @@ namespace emul
 
 		void MultiFunc(BYTE op2);
 
-		void LoadPTR(WORD& destSegment, SourceDest16 modRegRm);
+		virtual void LoadPTR(SEGREG dest, SourceDest16 modRegRm);
 
 		void XLAT();
 
