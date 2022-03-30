@@ -135,6 +135,7 @@ namespace fdc
 		STATE NotImplemented();
 		STATE SenseInterrupt();
 		STATE Recalibrate();
+		STATE ReadID();
 		STATE Seek();
 		STATE SenseDriveStatus();
 		STATE Specify();
@@ -252,7 +253,7 @@ namespace fdc
 			{ CMD::RECALIBRATE,        { "Recalibrate"     , 1, &DeviceFloppy::Recalibrate,      true  } },
 			{ CMD::SENSE_INT_STATUS,   { "SenseInterrupt"  , 0, &DeviceFloppy::SenseInterrupt,   false } },
 			{ CMD::WRITE_DELETED_DATA, { "WriteDeletedData", 8, &DeviceFloppy::NotImplemented,   false } },
-			{ CMD::READ_ID,            { "ReadID"          , 1, &DeviceFloppy::NotImplemented,   false } },
+			{ CMD::READ_ID,            { "ReadID"          , 1, &DeviceFloppy::ReadID,           true  } },
 			{ CMD::READ_DELETED_DATA,  { "ReadDeletedData" , 8, &DeviceFloppy::NotImplemented,   false } },
 			{ CMD::FORMAT_TRACK,       { "FormatTrack"     , 5, &DeviceFloppy::NotImplemented,   false } },
 			{ CMD::SEEK,               { "Seek"            , 2, &DeviceFloppy::Seek,             true  } },

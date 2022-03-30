@@ -516,6 +516,35 @@ namespace fdc
 		return STATE::CMD_EXEC_DONE;
 	}
 
+	DeviceFloppy::STATE DeviceFloppy::ReadID()
+	{
+		BYTE param = Pop();
+
+		BYTE driveNumber = param % 3;
+		bool head = param & 4;
+
+		LogPrintf(LOG_INFO, "COMMAND: Read ID d=[%d] h=[%d]", driveNumber, head);
+
+		m_dataRegisterReady = false;
+		m_driveActive[driveNumber] = true;
+		m_st0 = param & 7; // head + drive
+
+		assert(m_fifo.size() == 0);
+
+		m_fifo.clear();
+
+		Push(m_st0);
+		Push(0/*m_st1*/); // TODO: Error stuff, check details
+		Push(0/*m_st2*/); // TODO: Error stuff, check details
+		Push(m_pcn);
+		Push(m_currHead);
+		Push(m_currSector);
+		Push(2); // N
+
+		m_currOpWait = DelayToTicks(1 * 1000); // 1 ms
+		return STATE::CMD_EXEC_DONE;
+	}
+
 	DeviceFloppy::STATE DeviceFloppy::Seek()
 	{
 		// TODO: Support parallel seek/recalibrate
