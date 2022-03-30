@@ -4,6 +4,8 @@
 
 namespace dma
 {
+	using emul::SetBit;
+
 	DeviceDMAPageRegister::DeviceDMAPageRegister(WORD baseAddress) :
 		Logger("dmaPage"),
 		m_baseAddress(baseAddress)
@@ -14,14 +16,19 @@ namespace dma
 	{
 		// Page mask for 20 bit address bus:
 		// 
-		// Page Register               | DMA Controller (16 bit address)
-		// 0 0 0 0 A20 A19 A18 A17 A16 | A15 A14 A13 A12 A11 A10 A9 A8 A7 A6 A5 A4 A3 A2 A1 A0
+		// Page Register                   | DMA Controller (16 bit address)
+		//  0   0   0  A20 A19 A18 A17 A16 | A15 A14 A13 A12 A11 A10 A9 A8 A7 A6 A5 A4 A3 A2 A1 A0
 
-		// Page mask for 24 bit address bus, bit 0 is cleared
-		// because A16 is part of the shifted DMA controller address:
+		// Page mask for 24 bit address bus, 8-bit DMA controller (DMA[0-3])
 		// 
-		// Page Register                      | DMA Controller (16 bit address)
-		// A23 A22 A21 A20 A19 A18 A17 A16(0) | A16 A14 A13 A12 A11 A10 A9 A8 A7 A6 A5 A4 A3 A2 A1 | A0 (always 0)
+		// Page Register                   | DMA Controller (16 bit address)
+		// A23 A22 A21 A20 A19 A18 A17 A16 | A15 A14 A13 A12 A11 A10 A9 A8 A7 A6 A5 A4 A3 A2 A1 A0
+
+		// Page mask for 24 bit address bus, 16-bit DMA controller (DMA[0-3])
+		// bit 0 is cleared because A16 is part of the shifted DMA controller address:
+		// 
+		// Page Register                   | DMA Controller (16 bit address)
+		// A23 A22 A21 A20 A19 A18 A17  0  | A16 A15 A14 A13 A12 A11 A10 A9 A8 A7 A6 A5 A4 A3 A2 A1 | A0 (always 0)
 
 		assert(dmaPrimary);
 		m_dmaPrimary = dmaPrimary;
@@ -31,8 +38,7 @@ namespace dma
 		// we assume the machine type:
 		// 1 controller:  XT-class machine with a 20 bit data bus, 
 		// 2 controllers: AT-class machine with a 24 bit data bus
-
-		m_pageMask = m_dmaSecondary ? 0xFE : 0x0F;
+		m_pageMask = m_dmaSecondary ? 0xFF : 0x0F;
 
 		for (int i = 0; i < 16; ++i)
 		{
@@ -52,12 +58,17 @@ namespace dma
 	void DeviceDMAPageRegister::WriteRegister(BYTE value)
 	{
 		WORD address = GetCurrentPort() - m_baseAddress;
+
+		LogPrintf(LOG_DEBUG, "WriteRegister, address[%02x] = %02x", address, value);
+
+		// Store raw value in the register
 		m_registers[address] = value;
 
-		LogPrintf(LOG_INFO, "WriteRegister, address[%02x] = %02x", address, value);
+		PageRegister reg = (PageRegister)address;
 
 		value &= m_pageMask;
-		switch ((PageRegister)address)
+
+		switch (reg)
 		{
 		case PageRegister::DMA0:
 			LogPrintf(LOG_INFO, "Set DMA Channel 0 Page [%02x]", value);
@@ -79,15 +90,19 @@ namespace dma
 			m_dmaPrimary->GetChannel(3).SetPage(value);
 			break;
 
+		// 16-bit Channels: Clear bit 0
 		case PageRegister::DMA5:
+			SetBit(value, 0, 0);
 			LogPrintf(LOG_INFO, "Set DMA Channel 5 Page [%02x]", value);
 			m_dmaSecondary->GetChannel(1).SetPage(value);
 			break;
 		case PageRegister::DMA6:
+			SetBit(value, 0, 0);
 			LogPrintf(LOG_INFO, "Set DMA Channel 6 Page [%02x]", value);
 			m_dmaSecondary->GetChannel(2).SetPage(value);
 			break;
 		case PageRegister::DMA7:
+			SetBit(value, 0, 0);
 			LogPrintf(LOG_INFO, "Set DMA Channel 7 Page [%02x]", value);
 			m_dmaSecondary->GetChannel(3).SetPage(value);
 			break;
