@@ -48,7 +48,16 @@ namespace emul
 		bool IsControl() const { return !GetBit(access, 4); }
 
 		// Applies to Code/Data descriptor
+		bool IsExecutable() const { return GetBit(access, 3); }
 		bool IsAccessed() const { return GetBit(access, 0); }
+		bool IsReadable() const { return !IsExecutable() || (IsExecutable() && GetBit(access, 1)); }
+
+		// Applies to Code
+		bool IsConforming() const { return IsExecutable() && GetBit(access, 2); }
+
+		// Applies to Data
+		bool IsExpandDown() const { return !IsExecutable() && GetBit(access, 2); }
+		bool IsWritable() const { return !IsExecutable() && GetBit(access, 1); }
 
 		// Applies to Control descriptor
 		bool IsLDT() const      { return (access & 0b00011111) == 0b00000010; }
@@ -103,7 +112,7 @@ namespace emul
 
 		virtual size_t GetAddressBits() const { return CPU80286_ADDRESS_BITS; }
 
-		virtual ADDRESS GetAddress(SegmentOffset segoff) const override;
+		virtual ADDRESS GetAddress(SegmentOffset segoff, MemAccess access = MemAccess::NONE) const override;
 		virtual ADDRESS GetCurrentAddress() const override;
 
 		enum FLAG286 : WORD
@@ -168,6 +177,8 @@ namespace emul
 
 		virtual void SetFlags(WORD flags) override;
 
+		void ARPL(BYTE regrm);
+
 		void MultiF0(BYTE op2);
 		void MultiF000(BYTE op3);
 		void MultiF001(BYTE op3);
@@ -176,6 +187,8 @@ namespace emul
 		void STR(Mem16& dest);
 		void LLDT(Mem16& source);
 		void LTR(Mem16& source);
+		void VERR(Mem16& source);
+		void VERW(Mem16& source);
 
 		void SGDT(Mem16& dest);
 		void SIDT(Mem16& dest);

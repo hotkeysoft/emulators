@@ -94,7 +94,7 @@ namespace emul
 		RestoreOpcodes();
 	}
 
-	ADDRESS CPU80286::GetAddress(SegmentOffset segoff) const
+	ADDRESS CPU80286::GetAddress(SegmentOffset segoff, MemAccess access) const
 	{
 		if (IsProtectedMode())
 		{
@@ -112,7 +112,26 @@ namespace emul
 
 			if ((seg->size == 0) || (segoff.offset > seg->size))
 			{
-				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
+			}
+
+			switch(access)
+			{
+			case MemAccess::READ:
+				if (!seg->access.IsReadable())
+				{
+					throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
+				}
+				break;
+			case MemAccess::WRITE:
+				if (!seg->access.IsWritable())
+				{
+					throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
+				}
+				break;
+			default:
+				// No check
+				break;
 			}
 
 			return seg->base + segoff.offset;
@@ -255,6 +274,8 @@ namespace emul
 	void CPU80286::ProtectedMode()
 	{
 		// Opcodes that are overridden in protected mode
+		//ReplaceOpcode(0x63, [=]() { ARPL(); });
+
 		ReplaceOpcode(0x07, [=]() { POPSegReg(SEGREG::ES); });
 		ReplaceOpcode(0x17, [=]() { POPSegReg(SEGREG::SS); });
 		ReplaceOpcode(0x1F, [=]() { POPSegReg(SEGREG::DS); });
@@ -299,6 +320,14 @@ namespace emul
 		m_cs.selector = segment;
 	}
 
+	void CPU80286::ARPL(BYTE regrm)
+	{
+		LogPrintf(LOG_WARNING, "ARPL");
+
+		SourceDest16 sd = GetModRegRM16(regrm);
+
+	}
+
 	void CPU80286::MultiF0(BYTE op2)
 	{
 		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP6, GetOPn(op2));
@@ -329,12 +358,12 @@ namespace emul
 
 		switch (GetOPn(op3))
 		{
-		case 0: SLDT(modrm); break; // Store Local Descriptor Table Register
-		case 1: STR(modrm); break;  // Store Task Register
-		case 2: LLDT(modrm); break; //  Load Local Descriptor Table Register
-		case 3: LTR(modrm); break;  //  Load Task Register
-		case 4: LogPrintf(LOG_ERROR, "VERR ew 14,16 (noreal)"); throw std::exception("Not implemented"); break;
-		case 5: LogPrintf(LOG_ERROR, "VERW ew 14,16 (noreal)"); throw std::exception("Not implemented"); break;
+		case 0: SLDT(modrm); break; //  Store Local Descriptor Table Register
+		case 1: STR(modrm); break;  //  Store Task Register
+		case 2: LLDT(modrm); break; //   Load Local Descriptor Table Register
+		case 3: LTR(modrm); break;  //   Load Task Register
+		case 4: VERR(modrm); break; // Verify Read
+		case 5: VERW(modrm); break; // Verify Write
 		default:
 			InvalidOpcode();
 			break;
@@ -434,6 +463,86 @@ namespace emul
 		}
 
 		UpdateTranslationRegister(m_task, sel, desc);
+	}
+
+	// Verify Read
+	void CPU80286::VERR(Mem16& source)
+	{
+		LogPrintf(LOG_WARNING, "VERR");
+
+		// Result is in zero flag
+		SetFlag(FLAG_Z, false);
+
+		Selector sel = source.Read();
+
+		// From here, no error should be thrown, result is in ZF
+		try
+		{
+			// 1. Bound check, done in LoadSegment
+			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+			LogPrintf(LOG_WARNING, desc.ToString());
+			// 2. Must be code or data segment
+			if (!desc.access.IsCodeOrData())
+			{
+				return;
+			}
+
+			// 3. Segment must be readable
+			if (!desc.access.IsReadable())
+			{
+				return;
+			}
+
+			// 4. Privilege level... TODO
+
+			// Everything checks out
+			SetFlag(FLAG_Z, true);
+			LogPrintf(LOG_WARNING, "VERR: OK");
+		}
+		catch (CPUException)
+		{
+			// Nothing to do, ZF is alredy cleared
+		}
+	}
+
+	// Verify Write
+	void CPU80286::VERW(Mem16& source)
+	{
+		LogPrintf(LOG_WARNING, "VERW");
+
+		// Result is in zero flag
+		SetFlag(FLAG_Z, false);
+
+		Selector sel = source.Read();
+
+		// From here, no error should be thrown, result is in ZF
+		try
+		{
+			// 1. Bound check, done in LoadSegment
+			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+
+			// 2. Must be code or data segment
+			if (!desc.access.IsCodeOrData())
+			{
+				return;
+			}
+
+			// 3. Segment must be writable
+			if (!desc.access.IsWritable())
+			{
+				return;
+			}
+
+			// 4. Privilege level... TODO
+
+			// Everything checks out
+			SetFlag(FLAG_Z, true);
+			LogPrintf(LOG_WARNING, "VERW: OK");
+		}
+		catch (CPUException)
+		{
+			// Nothing to do, ZF is alredy cleared
+		}
 	}
 
 	void CPU80286::SGDT(Mem16& dest)
@@ -602,6 +711,7 @@ namespace emul
 		CPU8086::MOV16(sd);
 
 		Selector sel = sd.source.Read();
+		// TODO
 		SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
 
 		switch (sd.dest.GetRegister())
@@ -631,6 +741,7 @@ namespace emul
 		CPU::TICK(15); // TODO: Dynamic timings
 
 		Selector sel = POP();
+		// TODO
 		SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
 
 		switch (segreg)

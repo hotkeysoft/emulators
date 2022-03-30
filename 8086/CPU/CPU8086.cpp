@@ -43,11 +43,11 @@ namespace emul
 
 	BYTE Mem8::Read() const 
 	{ 
-		return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_cpu->GetAddress(m_segOff)); 
+		return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_cpu->GetAddress(m_segOff, MemAccess::READ)); 
 	}
 	void Mem8::Write(BYTE value) 
 	{ 
-		(int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_cpu->GetAddress(m_segOff), value); 
+		(int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_cpu->GetAddress(m_segOff, MemAccess::WRITE), value);
 	}
 
 	CPU8086::CPU8086(Memory& memory) : CPU8086(CPUType::i80186, memory)

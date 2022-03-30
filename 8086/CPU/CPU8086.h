@@ -213,6 +213,8 @@ namespace emul
 		Mem16 dest;
 	};
 
+	enum class MemAccess { NONE, READ, WRITE };
+
 	typedef WORD(*RawOpFunc8)(BYTE& dest, const BYTE src, bool);
 	typedef DWORD(*RawOpFunc16)(WORD& dest, const WORD src, bool);
 
@@ -225,7 +227,7 @@ namespace emul
 		virtual void Init();
 
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
-		virtual ADDRESS GetAddress(SegmentOffset segoff) const { return S2A(GetRegValue(segoff.segment), segoff.offset); }
+		virtual ADDRESS GetAddress(SegmentOffset segoff, MemAccess = MemAccess::NONE) const { return S2A(GetRegValue(segoff.segment), segoff.offset); }
 		virtual ADDRESS GetCurrentAddress() const { return S2A(m_reg[REG16::CS], m_reg[REG16::IP]); }
 
 		virtual bool Step() override;
