@@ -25,6 +25,7 @@ namespace fdc
 		void Reset();
 
 		void WriteDigitalOutputReg(BYTE value);
+		BYTE ReadDigitalInputReg();
 
 		virtual bool IsActive(BYTE drive) override { return m_dor.motor[drive]; };
 

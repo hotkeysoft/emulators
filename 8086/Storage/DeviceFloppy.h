@@ -150,6 +150,8 @@ namespace fdc
 		virtual void SetInterruptPending() { m_interruptPending = true; }
 		void ClearInterrupt() { m_interruptPending = false; }
 
+		bool GetDiskChanged() const { return m_diskChanged; }
+
 		// Status
 		enum MSR
 		{
@@ -279,5 +281,10 @@ namespace fdc
 		};
 
 		FloppyDisk m_images[4];
+
+	private:
+		void SetDiskChanged() { m_diskChanged = true; }
+		void ClearDiskChanged() { m_diskChanged = false; }
+		bool m_diskChanged = true;
 	};
 }

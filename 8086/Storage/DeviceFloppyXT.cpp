@@ -26,8 +26,19 @@ namespace fdc
 	{
 		DeviceFloppy::Init();
 
-		// DIGITAL_OUTPUT_REGISTER = 0x3F2,
+		// Digtal Output Register
 		Connect(m_baseAddress + 2, static_cast<PortConnector::OUTFunction>(&DeviceFloppyXT::WriteDigitalOutputReg));
+
+		// Digital Input Register
+		Connect(m_baseAddress + 7, static_cast<PortConnector::INFunction>(&DeviceFloppyXT::ReadDigitalInputReg));
+	}
+
+	BYTE DeviceFloppyXT::ReadDigitalInputReg()
+	{
+		bool changed = GetDiskChanged();
+		LogPrintf(Logger::LOG_INFO, "Disk change[%d]", changed);
+
+		return changed ? 0x80 : 0;
 	}
 
 	void DeviceFloppyXT::WriteDigitalOutputReg(BYTE value)

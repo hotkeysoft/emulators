@@ -52,6 +52,7 @@ namespace fdc
 
 		LogPrintf(LOG_INFO, "ClearDiskImage: unloading drive %d", drive);
 		m_images[drive].Clear();
+		SetDiskChanged();
 		return true;
 	}
 
@@ -76,6 +77,8 @@ namespace fdc
 			LogPrintf(LOG_ERROR, "LoadDiskImage: Unsupported image file, size=%d", size);
 			return false;
 		}
+
+		SetDiskChanged();
 
 		const Geometry& geometry = it->second;
 
@@ -157,6 +160,8 @@ namespace fdc
 		//DATA_FIFO = 0x3F5,
 		Connect(m_baseAddress + 5, static_cast<PortConnector::INFunction>(&DeviceFloppy::ReadDataFIFO));
 		Connect(m_baseAddress + 5, static_cast<PortConnector::OUTFunction>(&DeviceFloppy::WriteDataFIFO));
+
+		SetDiskChanged();
 	}
 
 	size_t DeviceFloppy::DelayToTicks(size_t delayUS)
@@ -542,6 +547,9 @@ namespace fdc
 		Push(2); // N
 
 		m_currOpWait = DelayToTicks(1 * 1000); // 1 ms
+
+		ClearDiskChanged();
+
 		return STATE::CMD_EXEC_DONE;
 	}
 
@@ -568,6 +576,9 @@ namespace fdc
 		assert(m_fifo.size() == 0);
 
 		m_currOpWait = DelayToTicks(travel * (size_t)m_srt * 1000);
+
+		ClearDiskChanged();
+
 		return STATE::CMD_EXEC_DONE;
 	}
 
@@ -799,6 +810,9 @@ namespace fdc
 	void DeviceFloppy::RWSectorEnd()
 	{
 		LogPrintf(LOG_DEBUG, "ReadSectorEnd, fifo=%d", m_fifo.size());
+
+		ClearDiskChanged();
+
 		m_st0 = 0;
 
 		m_fifo.clear();
