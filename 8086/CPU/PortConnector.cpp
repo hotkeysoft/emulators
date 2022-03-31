@@ -7,6 +7,28 @@ namespace emul
 {
 	PortConnector::OutputPortMap PortConnector::m_outputPorts;
 	PortConnector::InputPortMap PortConnector::m_inputPorts;
+	WORD PortConnector::m_currentPort;
+
+	PortConnector::PortHandler::~PortHandler()
+	{
+		PortHandler* handler = this->chained;
+		while (handler)
+		{
+			PortHandler* toDelete = handler;
+			handler = handler->chained;
+			delete (toDelete);
+		}		
+	}
+
+	void PortConnector::PortHandler::Chain(PortHandler chained)
+	{
+		PortHandler* handler = this;
+		while (handler->chained)
+		{
+			handler = handler->chained;
+		}
+		handler->chained = new PortHandler(chained);
+	}
 
 	PortConnector::PortConnector() : Logger("PORT")
 	{
@@ -19,6 +41,7 @@ namespace emul
 	void PortConnector::Clear()
 	{
 		m_inputPorts.clear();
+		m_outputPorts.reserve(200);
 		m_outputPorts.clear();
 	}
 
@@ -32,7 +55,7 @@ namespace emul
 			return false;
 		}
 
-		m_inputPorts[portNb] = std::make_tuple(this, inFunc);
+		m_inputPorts.emplace(portNb, PortHandler(this, inFunc));
 
 		return true;
 	}
@@ -41,13 +64,22 @@ namespace emul
 	{
 		LogPrintf(LOG_INFO, "Connect output port 0x%04X", portNb);
 
-		if (!share && m_outputPorts.count(portNb) > 0)
+		OutputPortMap::iterator it = m_outputPorts.find(portNb);
+		if (it != m_outputPorts.end())
 		{
-			LogPrintf(LOG_ERROR, "Port already exists");
-			return false;
+			if (share)
+			{
+				LogPrintf(LOG_INFO, "Chaining output port 0x%04X", portNb);
+				it->second.Chain(PortHandler(this, outFunc));
+			}
+			else
+			{
+				LogPrintf(LOG_ERROR, "Port already exists");
+				return false;
+			}
 		}
 
-		m_outputPorts.insert(std::make_pair(portNb, std::make_tuple(this, outFunc)));
+		m_outputPorts.emplace(portNb, PortHandler(this, outFunc));
 
 		return true;
 	}
@@ -61,33 +93,28 @@ namespace emul
 		}
 		else
 		{
-			LogPrintf(LOG_DEBUG, "Disconnect input port 0x%04X (not connected)", portNb);
+			LogPrintf(LOG_INFO, "Disconnect input port 0x%04X (not connected)", portNb);
 			return false;
 		}
 	}
 
 	bool PortConnector::DisconnectOutput(WORD portNb)
-	{	
-		size_t count = m_outputPorts.erase(portNb);
-		if (count > 1)
-		{
-			LogPrintf(LOG_WARNING, "Multiple listeners disconnected at port 0x%04X", portNb);
-			return true;
-		}
-		else if (count == 1)
+	{
+		if (m_outputPorts.erase(portNb))
 		{
 			LogPrintf(LOG_INFO, "Disconnect output port 0x%04X", portNb);
 			return true;
 		}
 		else
 		{
-			LogPrintf(LOG_DEBUG, "Disconnect output port 0x%04X (not connected)", portNb);
+			LogPrintf(LOG_INFO, "Disconnect output port 0x%04X (not connected)", portNb);
 			return false;
 		}
 	}
 
 	bool PortConnector::In(WORD port, BYTE& value)
 	{
+		m_currentPort = port;
 		auto it = m_inputPorts.find(port);
 		if (it == m_inputPorts.end())
 		{
@@ -98,36 +125,23 @@ namespace emul
 			return false;
 		}
 
-		auto inFunc = it->second;
-		PortConnector* owner = std::get<0>(inFunc);
-		INFunction& func = std::get<1>(inFunc);
-
-		owner->m_currentPort = port;
-		value = (owner->*func)();
+		value = it->second.In();
 		return true;
 	}
 
 	bool PortConnector::Out(WORD port, BYTE value)
 	{
-#ifdef _DEBUG
-		if (m_outputPorts.count(port) == 0)
+		m_currentPort = port;
+		auto it = m_outputPorts.find(port);
+		if (it == m_outputPorts.end())
 		{
+#ifdef _DEBUG
 			LogPrintf(LOG_WARNING, "PortConnector::Out(0x%04X, 0x%02X): port not allocated", port, value);
+#endif
 			return false;
 		}
-#endif
 
-		auto listeners = m_outputPorts.equal_range(port);
-		std::for_each(listeners.first, listeners.second, [value, port](const auto& listener)
-		{
-			auto outFunc = listener.second;
-
-			PortConnector* owner = std::get<0>(outFunc);
-			OUTFunction& func = std::get<1>(outFunc);
-			owner->m_currentPort = port;
-			(owner->*func)(value);
-		});
-
+		it->second.Out(value);
 		return true;
 	}
 }

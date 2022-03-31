@@ -16,8 +16,38 @@ namespace emul
 		typedef void (PortConnector::* OUTFunction)(BYTE);
 		typedef BYTE(PortConnector::* INFunction)();
 
-		using InputPortMap = std::map<WORD, std::tuple<PortConnector*, INFunction > >;
-		using OutputPortMap = std::multimap<WORD, std::tuple<PortConnector*, OUTFunction> >;
+		class PortHandler
+		{
+		public:
+			PortHandler(PortConnector* owner, OUTFunction func) : owner(owner), outFunc(func) {}
+			PortHandler(PortConnector* owner, INFunction func) : owner(owner), inFunc(func) {}
+			~PortHandler();
+
+			void Chain(PortHandler);
+
+			BYTE In() const { return (owner->*inFunc)(); }
+			void Out(BYTE value) const
+			{
+				const PortHandler* next = this;
+				do
+				{
+					((next->owner)->*(next->outFunc))(value);
+					next = next->chained;
+				} while (next);
+			}
+
+		protected:
+			PortConnector* owner = 0;
+			union
+			{
+				OUTFunction outFunc;
+				INFunction inFunc;
+			};
+			PortHandler* chained = nullptr;
+		};
+
+		using InputPortMap = std::unordered_map<WORD, PortHandler> ;
+		using OutputPortMap = std::unordered_map<WORD, PortHandler> ;
 
 		bool In(WORD port, BYTE& value);
 		bool Out(WORD port, BYTE value);
@@ -29,13 +59,12 @@ namespace emul
 		bool DisconnectInput(WORD portNb);
 		bool DisconnectOutput(WORD portNb);
 
-		WORD GetCurrentPort() const { return m_currentPort; }
+		static WORD GetCurrentPort() { return m_currentPort; }
 
 	protected:
 		static OutputPortMap m_outputPorts;
 		static InputPortMap m_inputPorts;
-
 	private:
-		WORD m_currentPort;
+		static WORD m_currentPort;
 	};
 }
