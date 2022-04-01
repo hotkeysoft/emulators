@@ -64,6 +64,15 @@ namespace emul
 
 	void CPU80286::Init()
 	{
+		// Even with generous alignment, shouldn't be more than 16 bytes
+		// With Visual Studio 2019 x64, we get 12.
+		// We have to explose if larger than 16 because that's the space
+		// we keep between segment registers in m_regs
+		if (sizeof(SegmentTranslationRegister) > 16)
+		{
+			throw std::exception("Fatal: sizeof(SegmentTranslationRegister) > 16");
+		}
+
 		CPU80186::Init();
 
 		Mem16::CheckAlignment(true);
@@ -72,87 +81,88 @@ namespace emul
 		// Real mode: iopl & nested task bits are locked to zero (and R15 apparently)
 		FLAG_RESERVED_OFF = FLAG(FLAG_R3 | FLAG_R5 | FLAG_IOPL0 | FLAG_IOPL1 | FLAG_NT | FLAG_R15);
 
-		// PUSH SP
-		// Fixes the "Bug" on 8086/80186 where push sp pushed an already-decremented value
-		m_opcodes[0x54] = [=]() { PUSH(m_reg[REG16::SP]); };
-
+		// PUSH ES
+		m_opcodes[0x06] = [=]() { PUSHSegReg(SEGREG::ES); };
+		// POP ES
+		m_opcodes[0x07] = [=]() { POPSegReg(SEGREG::ES); };
+		// PUSH CS
+		m_opcodes[0x0E] = [=]() { PUSHSegReg(SEGREG::CS); };
 		// Multi 2-3 opcodes instructions
 		m_opcodes[0x0F] = [=]() { MultiF0(FetchByte()); };
+		// PUSH SS
+		m_opcodes[0x16] = [=]() { PUSHSegReg(SEGREG::SS); };
+		// POP SS
+		m_opcodes[0x17] = [=]() { POPSegReg(SEGREG::SS); };
+		// PUSH DS
+		m_opcodes[0x1E] = [=]() { PUSHSegReg(SEGREG::DS); };
+		// POP DS
+		m_opcodes[0x1F] = [=]() { POPSegReg(SEGREG::DS); };
+		// PUSH SP - Fixes the "Bug" on 8086/80186 where push sp pushed an already-decremented value
+		m_opcodes[0x54] = [=]() { PUSH(m_reg[REG16::SP]); };
+		// ARPL (Protected Mode only)
+		m_opcodes[0x63] = [=]() { ARPL(GetModRegRM16(FetchByte(), false)); };
+		// MOV REG16/MEM16, SEGREG
+		m_opcodes[0x8C] = [=]() { MOVfromSegReg(GetModRegRM16(FetchByte(), false, true)); };
+		// MOV SEGREG, REG16/MEM16
+		m_opcodes[0x8E] = [=]() { MOVtoSegReg(GetModRegRM16(FetchByte(), true, true)); };
 
-		// Not recognized in real mode
-		m_opcodes[0x63] = [=]() { InvalidOpcode(); };
+
 	}
 
 	void CPU80286::Reset()
 	{
 		CPU80186::Reset();
 
-		m_reg.Write16(REG16::CS, 0xF000);
+		Selector sel = 0xF000;
+		SegmentDescriptor desc = LoadSegmentReal(sel);
+		UpdateTranslationRegister(m_cs, sel, desc);
 		m_reg.Write16(REG16::IP, 0xFFF0);
 		m_msw = MSW_RESET;
-
-		RestoreOpcodes();
 	}
 
 	ADDRESS CPU80286::GetAddress(SegmentOffset segoff, MemAccess access) const
 	{
-		if (IsProtectedMode())
+		if (!IsProtectedMode())
 		{
-			const SegmentTranslationRegister* seg;
+			access = MemAccess::NONE;
+		}
 
-			switch (segoff.segment)
-			{
-			case SEGREG::CS: seg = &m_cs; break;
-			case SEGREG::DS: seg = &m_ds; break;
-			case SEGREG::ES: seg = &m_es; break;
-			case SEGREG::SS: seg = &m_ss; break;
-			default:
-				throw std::exception("Invalid segment register");
-			}
+		const SegmentTranslationRegister* seg;
 
-			if ((seg->size == 0) || (segoff.offset > seg->size))
+		switch (segoff.segment)
+		{
+		case SEGREG::CS: seg = &m_cs; break;
+		case SEGREG::DS: seg = &m_ds; break;
+		case SEGREG::ES: seg = &m_es; break;
+		case SEGREG::SS: seg = &m_ss; break;
+		default: throw std::exception("Invalid segment register");
+		}
+
+		if (IsProtectedMode() && ((seg->size == 0) || (segoff.offset > seg->size)))
+		{
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
+		}
+
+		switch(access)
+		{
+		case MemAccess::READ:
+			if (!seg->access.IsReadable())
 			{
 				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
 			}
-
-			switch(access)
+			break;
+		case MemAccess::WRITE:
+			if (!seg->access.IsWritable())
 			{
-			case MemAccess::READ:
-				if (!seg->access.IsReadable())
-				{
-					throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
-				}
-				break;
-			case MemAccess::WRITE:
-				if (!seg->access.IsWritable())
-				{
-					throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
-				}
-				break;
-			default:
-				// No check
-				break;
+				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
 			}
+			break;
+		default:
+			// No check
+			break;
+		}
 
-			return seg->base + segoff.offset;
-		}
-		else
-		{
-			return CPU80186::GetAddress(segoff);
-		}
-	}
-
-	ADDRESS CPU80286::GetCurrentAddress() const
-	{
-		if (IsProtectedMode())
-		{
-			// TODO: Checks
-			return m_cs.base + m_reg[REG16::IP];
-		}
-		else
-		{
-			return CPU80186::GetCurrentAddress();
-		}
+		return seg->base + segoff.offset;
 	}
 
 	InterruptDescriptor CPU80286::GetInterruptDescriptor(BYTE interrupt) const
@@ -209,6 +219,16 @@ namespace emul
 		INT((BYTE)e.GetType());
 	}
 
+	SegmentDescriptor CPU80286::LoadSegmentReal(Selector selector) const
+	{
+		LogPrintf(LOG_DEBUG, "LoadSegmentReal[%d]", selector);
+		SegmentDescriptor desc;
+		desc.limit = 0xFFFF;
+		desc.base = S2A(selector);
+		desc.access = 0; // TODO: Adjust when protection/checks are added
+		return desc;
+	}
+
 	SegmentDescriptor CPU80286::LoadSegmentLocal(Selector selector) const
 	{
 		LogPrintf(LOG_WARNING, "LoadSegmentLocal[%d]", selector);
@@ -252,55 +272,8 @@ namespace emul
 		dest.selector = selector;
 	}
 
-	void CPU80286::ReplaceOpcode(BYTE opcode, std::function<void()> func)
-	{
-		LogPrintf(LOG_INFO, "Replace Opcode[%02x]", opcode);
-		m_replacedOpcodes[opcode] = m_opcodes[opcode];
-		m_opcodes[opcode] = func;
-	}
-
-	void CPU80286::RestoreOpcodes()
-	{
-		LogPrintf(LOG_INFO, "Restoring %d Real Mode opcodes", m_replacedOpcodes.size());
-		for (auto realOp : m_replacedOpcodes)
-		{
-			m_opcodes[realOp.first] = realOp.second;
-		}
-		m_replacedOpcodes.clear();
-	}
-
 	void CPU80286::ProtectedMode()
 	{
-		// Opcodes that are overridden in protected mode
-		ReplaceOpcode(0x63, [=]() { ARPL(GetModRegRM16(FetchByte(), false)); });
-
-		ReplaceOpcode(0x07, [=]() { POPSegReg(SEGREG::ES); });
-		ReplaceOpcode(0x17, [=]() { POPSegReg(SEGREG::SS); });
-		ReplaceOpcode(0x1F, [=]() { POPSegReg(SEGREG::DS); });
-		ReplaceOpcode(0x8E, [=]() { MOVSegReg(GetModRegRM16(FetchByte(), true, true)); });
-
-		// Preinitialize Segment Address Translation Registers to match 
-		// existing real mode segments
-		m_cs.selector = 0;
-		m_cs.size = 0xFFFF;
-		m_cs.base = S2A(m_reg[REG16::CS]);
-		m_cs.access = 0; // TODO: Adjust when protection/checks are added
-
-		m_ds.selector = 0;
-		m_ds.size = 0xFFFF;
-		m_ds.base = S2A(m_reg[REG16::DS]);
-		m_ds.access = 0; // TODO: Adjust when protection/checks are added
-
-		m_es.selector = 0;
-		m_es.size = 0xFFFF;
-		m_es.base = S2A(m_reg[REG16::DS]);
-		m_es.access = 0; // TODO: Adjust when protection/checks are added
-
-		m_ss.selector = 0;
-		m_ss.size = 0xFFFF;
-		m_ss.base = S2A(m_reg[REG16::SS]);
-		m_ss.access = 0; // TODO: Adjust when protection/checks are added
-
 		// TODO: Since there is no instruction prefetch, the next instruction
 		// has to be fetched through the memory.
 		// Get the selector in the next jmp command.
@@ -320,6 +293,12 @@ namespace emul
 
 	void CPU80286::ARPL(SourceDest16 sd)
 	{
+		if (!IsProtectedMode())
+		{
+			InvalidOpcode();
+			return;
+		}
+
 		LogPrintf(LOG_DEBUG, "ARPL");
 
 		Selector source = sd.source.Read();
@@ -488,8 +467,8 @@ namespace emul
 		try
 		{
 			// 1. Bound check, done in LoadSegment
-			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
-			LogPrintf(LOG_DEBUG, desc.ToString());
+			SegmentDescriptor desc = LoadSegment(sel);
+
 			// 2. Must be code or data segment
 			if (!desc.access.IsCodeOrData())
 			{
@@ -528,7 +507,7 @@ namespace emul
 		try
 		{
 			// 1. Bound check, done in LoadSegment
-			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+			SegmentDescriptor desc = LoadSegment(sel);
 
 			// 2. Must be code or data segment
 			if (!desc.access.IsCodeOrData())
@@ -661,13 +640,11 @@ namespace emul
 		}
 
 		Selector sel = sd.source.Read();
-		LogPrintf(LOG_DEBUG, "LAR,  sel = %s", sel.ToString());
 
 		// From here, no error should be thrown, result is in ZF
 		try
 		{
-			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
-			LogPrintf(LOG_DEBUG, "LAR, desc = %s", desc.ToString());
+			SegmentDescriptor desc = LoadSegment(sel);
 
 			// These check probably need to happen in LoadSegment
 			BYTE dpl = desc.access.GetDPL();
@@ -703,13 +680,11 @@ namespace emul
 		}
 
 		Selector sel = sd.source.Read();
-		LogPrintf(LOG_DEBUG, "LSL,  sel = %s", sel.ToString());
 
 		// From here, no error should be thrown, result is in ZF
 		try
 		{
-			SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
-			LogPrintf(LOG_DEBUG, "LSL, desc = %s", desc.ToString());
+			SegmentDescriptor desc = LoadSegment(sel);
 
 			// These check probably need to happen in LoadSegment
 			BYTE dpl = desc.access.GetDPL();
@@ -736,11 +711,73 @@ namespace emul
 		}
 	}
 
+	void CPU80286::LoadTranslationDescriptor(SegmentTranslationRegister& dest, Selector selector, ADDRESS base)
+	{
+		dest.selector = selector;
+		WORD baseL = m_memory.Read16(base + 0);
+		emul::SetLWord(dest.base, baseL);
+		WORD baseH = m_memory.Read8(base + 2);
+		emul::SetHWord(dest.base, baseH);
+		dest.access = m_memory.Read8(base + 3);
+		dest.size = m_memory.Read16(base + 4);
+	}
+
 	void CPU80286::LOADALL()
 	{
-		LogPrintf(LOG_ERROR, "LOADALL 195 (undocumented)(real)");
-		throw std::exception("Not implemented");
+		LogPrintf(LOG_ERROR, "LOADALL (undocumented) [%04x:%04x]", m_reg[REG16::CS], m_reg[REG16::IP]);
+		
+		// Reads at fixed address 800h
+		ADDRESS base = 0x800;
+
+		// check mode change
+		m_msw = (MSW)m_memory.Read16(base + 0x04); // TODO mode change
+		WORD tReg = m_memory.Read16(base + 0x16);
+		SetFlags(m_memory.Read16(base + 0x18)); // TODO
+		m_reg[REG16::IP] = m_memory.Read16(base + 0x1A);
+		WORD ldtReg = m_memory.Read16(base + 0x1C);
+		WORD ds = m_memory.Read16(base + 0x1E);
+		WORD ss = m_memory.Read16(base + 0x20);
+		WORD cs = m_memory.Read16(base + 0x22);
+		WORD es = m_memory.Read16(base + 0x24);
+		m_reg[REG16::DI] = m_memory.Read16(base + 0x26);
+		m_reg[REG16::SI] = m_memory.Read16(base + 0x28);
+		m_reg[REG16::BP] = m_memory.Read16(base + 0x2A);
+		m_reg[REG16::SP] = m_memory.Read16(base + 0x2C);
+		m_reg[REG16::BX] = m_memory.Read16(base + 0x2E);
+		m_reg[REG16::DX] = m_memory.Read16(base + 0x30);
+		m_reg[REG16::CX] = m_memory.Read16(base + 0x32);
+		m_reg[REG16::AX] = m_memory.Read16(base + 0x34);
+
+		LoadTranslationDescriptor(m_es, es, base + 0x36);
+		LoadTranslationDescriptor(m_cs, cs, base + 0x3C);
+		LoadTranslationDescriptor(m_ss, ss, base + 0x42);
+		LoadTranslationDescriptor(m_ds, ds, base + 0x48);
+		
+		// GDT
+		{
+			ADDRESS gdt = base + 0x4E;
+			WORD baseL = m_memory.Read16(gdt + 0);
+			emul::SetLWord(m_gdt.base, baseL);
+			WORD baseH = m_memory.Read8(gdt + 2);
+			emul::SetHWord(m_gdt.base, baseH);
+			m_gdt.limit = m_memory.Read16(gdt + 4);
+		}
+
+		LoadTranslationDescriptor(m_ldtr, ldtReg, base + 0x54);
+
+		// IDT
+		{
+			ADDRESS idt = base + 0x5A;
+			WORD baseL = m_memory.Read16(idt + 0);
+			emul::SetLWord(m_idt.base, baseL);
+			WORD baseH = m_memory.Read8(idt + 2);
+			emul::SetHWord(m_idt.base, baseH);
+			m_idt.limit = m_memory.Read16(idt + 4);
+		}
+
+		LoadTranslationDescriptor(m_task, tReg, base + 0x60);
 	}
+
 	void CPU80286::CLTS()
 	{
 		LogPrintf(LOG_ERROR, "CLTS 2 (real)");
@@ -749,107 +786,218 @@ namespace emul
 
 	void CPU80286::LoadPTR(SEGREG dest, SourceDest16 modRegRm)
 	{
+		LogPrintf(LOG_DEBUG, "LoadPtr");
+
+		if (modRegRm.source.IsRegister())
+		{
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
+		}
+
+		if (modRegRm.source.GetOffset() == 0xFFFD)
+		{
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION);
+		}
+
 		if (IsProtectedMode())
 		{
-			LogPrintf(LOG_ERROR, "LoadPTR(SEGREG)[Protected mode]");
-			throw std::exception("Not implemented");
+			CPU::TICK(15); // TODO: Dynamic timings
 		}
-		else
+
+		// Target register -> offset
+		modRegRm.dest.Write(modRegRm.source.Read());
+
+		// Read segment
+		modRegRm.source.Increment();
+		Selector sel = modRegRm.source.Read();
+		SegmentDescriptor desc = LoadSegment(sel);
+
+		SegmentTranslationRegister& seg = dest == SEGREG::DS ? m_ds : m_es;
+		UpdateTranslationRegister(seg, sel, desc);
+	}
+
+	void CPU80286::CALLfar()
+	{
+		WORD offset = FetchWord();
+		Selector sel = FetchWord();
+		LogPrintf(LOG_DEBUG, "CALLfar %02X|%02X", sel, offset);
+
+		PUSH(m_cs.selector);
+		PUSH(REG16::IP);
+
+		m_reg[REG16::IP] = offset;
+
+		SegmentDescriptor desc = LoadSegment(sel);
+		UpdateTranslationRegister(m_cs, sel, desc);
+	}
+
+	void CPU80286::CALLInter(Mem16 destPtr)
+	{
+		PUSH(m_cs.selector);
+		PUSH(REG16::IP);
+
+		m_reg[REG16::IP] = destPtr.Read();
+		destPtr.Increment();
+		Selector sel = destPtr.Read();
+		LogPrintf(LOG_DEBUG, "CALLInter newCS=%04X, newIP=%04X", sel, m_reg[REG16::IP]);
+
+		SegmentDescriptor desc = LoadSegment(sel);
+		UpdateTranslationRegister(m_cs, sel, desc);
+	}
+
+	void CPU80286::JMPfar()
+	{
+		WORD offset = FetchWord();
+		Selector sel = FetchWord();
+		LogPrintf(LOG_DEBUG, "JMPfar %02X|%02X", sel, offset);
+
+		m_reg[REG16::IP] = offset;
+
+		SegmentDescriptor desc = LoadSegment(sel);
+		UpdateTranslationRegister(m_cs, sel, desc);
+	}
+
+	void CPU80286::JMPInter(Mem16 destPtr)
+	{
+		if (destPtr.IsRegister())
 		{
-			CPU80186::LoadPTR(dest, modRegRm);
+			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
 		}
+		m_reg[REG16::IP] = destPtr.Read();
+		destPtr.Increment();
+
+		Selector sel = destPtr.Read();
+		LogPrintf(LOG_DEBUG, "JMPInter newCS=%04X, newIP=%04X", sel, m_reg[REG16::IP]);
+
+		SegmentDescriptor desc = LoadSegment(sel);
+		UpdateTranslationRegister(m_cs, sel, desc);
+	}
+
+	void CPU80286::RETFar(bool pop, WORD value)
+	{
+		LogPrintf(LOG_DEBUG, "RETFar [%s][%d]", pop ? "Pop" : "NoPop", value);
+
+		POP(REG16::IP);
+		Selector sel = POP();
+		m_reg[REG16::SP] += value;
+
+		SegmentDescriptor desc = LoadSegment(sel);
+		UpdateTranslationRegister(m_cs, sel, desc);
 	}
 
 	void CPU80286::INT(BYTE interrupt)
 	{
+		LogPrintf(LOG_DEBUG, "INT (%02xh)", interrupt);
+
+		PUSHF();
+		PUSH(m_cs.selector);
+		PUSH(m_reg[inRep ? REG16::_REP_IP : REG16::IP]);
+		if (inRep)
+		{
+			inRep = false;
+		}
+
+		SetFlag(FLAG_T, false);
+		CLI();
+
 		if (IsProtectedMode())
 		{
-			LogPrintf(LOG_DEBUG, "INT(%02xh)[Protected Mode]", interrupt);
+			InterruptDescriptor intDesc = GetInterruptDescriptor(interrupt);
+			SegmentDescriptor segDesc = LoadSegment(intDesc.selector);
+			UpdateTranslationRegister(m_cs, intDesc.selector, segDesc);
 
-			InterruptDescriptor desc = GetInterruptDescriptor(interrupt);
-			LogPrintf(LOG_DEBUG, desc.ToString());
-
-			// TODO: From 8086, adjust
-			PUSHF();
-			PUSH(m_reg[REG16::CS]);
-			PUSH(m_reg[inRep ? REG16::_REP_IP : REG16::IP]);
-			if (inRep)
-			{
-				inRep = false;
-			}
-
-			SetFlag(FLAG_T, false);
-			CLI();
-
-			m_reg[REG16::CS] = desc.selector;
-			m_reg[REG16::IP] = desc.offset;
+			m_reg[REG16::IP] = intDesc.offset;
 		}
 		else
 		{
-			CPU80186::INT(interrupt);
+			ADDRESS interruptAddress = interrupt * 4;
+			Selector sel = m_memory.Read16(interruptAddress + 2);
+			SegmentDescriptor desc = LoadSegment(sel);
+			UpdateTranslationRegister(m_cs, sel, desc);
+
+			m_reg[REG16::IP] = m_memory.Read16(interruptAddress);
 		}
 	}
 
-	void CPU80286::MOVSegReg(SourceDest16 sd)
+	void CPU80286::IRET()
 	{
-		LogPrintf(LOG_DEBUG, "MOV SegReg");
+		LogPrintf(LOG_DEBUG, "IRET");
+		POP(REG16::IP);
+		Selector sel = POP();
+		POPF();
 
-		CPU::TICK(15); // TODO: Dynamic timings
+		SegmentDescriptor desc = LoadSegment(sel);
+		UpdateTranslationRegister(m_cs, sel, desc);
+	}
 
-		// TEMP
-		CPU8086::MOV16(sd);
+	void CPU80286::MOVfromSegReg(SourceDest16 sd)
+	{
+		LogPrintf(LOG_DEBUG, "MOV from SEGREG");
+
+		Selector sel;
+		switch (sd.source.GetRegister())
+		{
+		case REG16::CS: sel = m_cs.selector; break;
+		case REG16::DS: sel = m_ds.selector; break;
+		case REG16::SS: sel = m_ss.selector; break;
+		case REG16::ES: sel = m_es.selector; break;
+		default: InvalidOpcode(); break;
+		}
+		sd.dest.Write(sel);
+	}
+
+	void CPU80286::MOVtoSegReg(SourceDest16 sd)
+	{
+		LogPrintf(LOG_DEBUG, "MOV to SEGREG");
+
+		if (IsProtectedMode())
+		{
+			CPU::TICK(15); // TODO: Dynamic timings
+		}
 
 		Selector sel = sd.source.Read();
-		// TODO
-		SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+		SegmentDescriptor desc = LoadSegment(sel);
 
 		switch (sd.dest.GetRegister())
 		{
-		case REG16::ES:
-			m_reg[REG16::ES] = sel;
-			UpdateTranslationRegister(m_es, sel, desc);
-			break;
-		case REG16::DS:
-			m_reg[REG16::DS] = sel;
-			UpdateTranslationRegister(m_ds, sel, desc);
-			break;
-		case REG16::SS:
-			m_reg[REG16::SS] = sel;
-			UpdateTranslationRegister(m_ss, sel, desc);
-			break;
-		default:
-			InvalidOpcode();
-			break;
+		case REG16::ES: UpdateTranslationRegister(m_es, sel, desc); break;
+		case REG16::DS: UpdateTranslationRegister(m_ds, sel, desc); break;
+		case REG16::SS: UpdateTranslationRegister(m_ss, sel, desc); break;
+		default: InvalidOpcode(); break;
 		}
+	}
 
+	void CPU80286::PUSHSegReg(SEGREG segreg)
+	{
+		LogPrintf(LOG_DEBUG, "PUSH SEGREG");
 
+		switch (segreg)
+		{
+		case SEGREG::CS: PUSH(m_cs.selector); break;
+		case SEGREG::DS: PUSH(m_ds.selector); break;
+		case SEGREG::SS: PUSH(m_ss.selector); break;
+		case SEGREG::ES: PUSH(m_es.selector); break;
+		default: InvalidOpcode(); break;
+		}
 	}
 
 	void CPU80286::POPSegReg(SEGREG segreg)
 	{
-		CPU::TICK(15); // TODO: Dynamic timings
+		LogPrintf(LOG_DEBUG, "POP SEGREG");
+
+		if (IsProtectedMode())
+		{
+			CPU::TICK(15); // TODO: Dynamic timings
+		}
 
 		Selector sel = POP();
-		// TODO
-		SegmentDescriptor desc = sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel);
+		SegmentDescriptor desc = LoadSegment(sel);
 
 		switch (segreg)
 		{
-		case SEGREG::ES:
-			m_reg[REG16::ES] = sel;
-			UpdateTranslationRegister(m_es, sel, desc);
-			break;
-		case SEGREG::DS:
-			m_reg[REG16::DS] = sel;
-			UpdateTranslationRegister(m_ds, sel, desc);
-			break;
-		case SEGREG::SS:
-			m_reg[REG16::SS] = sel;
-			UpdateTranslationRegister(m_ss, sel, desc);
-			break;
-		default:
-			InvalidOpcode();
-			break;
+		case SEGREG::ES: UpdateTranslationRegister(m_es, sel, desc); break;
+		case SEGREG::DS: UpdateTranslationRegister(m_ds, sel, desc); break;
+		case SEGREG::SS: UpdateTranslationRegister(m_ss, sel, desc); break;
+		default: InvalidOpcode(); break;
 		}
 	}
 }

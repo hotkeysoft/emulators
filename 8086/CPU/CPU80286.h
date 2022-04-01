@@ -118,7 +118,18 @@ namespace emul
 		virtual size_t GetAddressBits() const { return CPU80286_ADDRESS_BITS; }
 
 		virtual ADDRESS GetAddress(SegmentOffset segoff, MemAccess access = MemAccess::NONE) const override;
-		virtual ADDRESS GetCurrentAddress() const override;
+		virtual ADDRESS GetCurrentAddress() const override { return m_cs.base + m_reg[REG16::IP]; }
+		virtual WORD GetRegValue(SEGREG segreg) const
+		{
+			switch (segreg)
+			{
+			case SEGREG::CS: return m_cs.selector;
+			case SEGREG::DS: return m_ds.selector;
+			case SEGREG::ES: return m_es.selector;
+			case SEGREG::SS: return m_ss.selector;
+			default: throw std::exception("Invalid segment register");
+			}
+		}
 
 		enum FLAG286 : WORD
 		{
@@ -132,10 +143,6 @@ namespace emul
 
 	protected:
 		virtual void CPUExceptionHandler(CPUException e) override;
-
-		std::map<BYTE, std::function<void()>> m_replacedOpcodes;
-		void ReplaceOpcode(BYTE, std::function<void()>);
-		void RestoreOpcodes();
 
 		bool IsProtectedMode() const { return GetMSW(MSW_PE); }
 
@@ -161,6 +168,12 @@ namespace emul
 		ExplicitRegister m_gdt; // Global Descriptor Table Register
 		ExplicitRegister m_idt; // Interrupt Descriptor Table Register
 
+		SegmentDescriptor LoadSegment(Selector sel) const 
+		{
+			return IsProtectedMode() ? (sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel)) : LoadSegmentReal(sel);
+		}
+
+		SegmentDescriptor LoadSegmentReal(Selector selector) const;
 		SegmentDescriptor LoadSegmentGlobal(Selector selector) const;
 		SegmentDescriptor LoadSegmentLocal(Selector selector) const;
 
@@ -176,6 +189,7 @@ namespace emul
 		// Task Register
 		SegmentTranslationRegister m_task;
 
+		void LoadTranslationDescriptor(SegmentTranslationRegister& dest, Selector selector, ADDRESS base);
 		void UpdateTranslationRegister(SegmentTranslationRegister& dest, Selector selector, SegmentDescriptor desc);
 
 		BYTE m_iopl = 0;
@@ -209,10 +223,19 @@ namespace emul
 
 		InterruptDescriptor GetInterruptDescriptor(BYTE interrupt) const;
 
+		virtual void CALLfar() override;
+		virtual void CALLInter(Mem16 destPtr) override;
+		virtual void JMPfar() override;
+		virtual void JMPInter(Mem16 destPtr) override;
+		virtual void RETFar(bool pop = false, WORD value = 0) override;
 		virtual void INT(BYTE interrupt) override;
+		virtual void IRET() override;
+
 		virtual void LoadPTR(SEGREG dest, SourceDest16 modRegRm) override;
 
-		void MOVSegReg(SourceDest16 sd);
+		void MOVtoSegReg(SourceDest16 sd);
+		void MOVfromSegReg(SourceDest16 sd);
+		void PUSHSegReg(SEGREG segreg);
 		void POPSegReg(SEGREG segreg);
 
 	};

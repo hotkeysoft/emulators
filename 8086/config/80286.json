@@ -346,8 +346,8 @@
       { "name": "LAR",                       "timing": [14, 16] },
       { "name": "LSL {r16}, {rm16}",         "timing": [14, 16] },
       { "name": "grp6.4" },
-      { "name": "grp6.5" },
-      { "name": "grp6.6" },
+      { "name": "LOADALL",                   "timing": [195] },
+      { "name": "CLTS" },
       { "name": "grp6.7" }
     ],
     "opcodes.grp7": [                        

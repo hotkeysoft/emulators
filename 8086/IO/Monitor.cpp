@@ -197,31 +197,31 @@ namespace emul
 
 	void Monitor::UpdateRegisters()
 	{
-		WriteValueHex(m_cpu->m_reg[REG8::AH], m_cpu->GetInfo().GetCoord("AH"));
-		WriteValueHex(m_cpu->m_reg[REG8::AL], m_cpu->GetInfo().GetCoord("AL"));
+		WriteValueHex(m_cpu->GetRegValue(REG8::AH), m_cpu->GetInfo().GetCoord("AH"));
+		WriteValueHex(m_cpu->GetRegValue(REG8::AL), m_cpu->GetInfo().GetCoord("AL"));
 
-		WriteValueHex(m_cpu->m_reg[REG8::BH], m_cpu->GetInfo().GetCoord("BH"));
-		WriteValueHex(m_cpu->m_reg[REG8::BL], m_cpu->GetInfo().GetCoord("BL"));
+		WriteValueHex(m_cpu->GetRegValue(REG8::BH), m_cpu->GetInfo().GetCoord("BH"));
+		WriteValueHex(m_cpu->GetRegValue(REG8::BL), m_cpu->GetInfo().GetCoord("BL"));
 
-		WriteValueHex(m_cpu->m_reg[REG8::CH], m_cpu->GetInfo().GetCoord("CH"));
-		WriteValueHex(m_cpu->m_reg[REG8::CL], m_cpu->GetInfo().GetCoord("CL"));
+		WriteValueHex(m_cpu->GetRegValue(REG8::CH), m_cpu->GetInfo().GetCoord("CH"));
+		WriteValueHex(m_cpu->GetRegValue(REG8::CL), m_cpu->GetInfo().GetCoord("CL"));
 
-		WriteValueHex(m_cpu->m_reg[REG8::DH], m_cpu->GetInfo().GetCoord("DH"));
-		WriteValueHex(m_cpu->m_reg[REG8::DL], m_cpu->GetInfo().GetCoord("DL"));
+		WriteValueHex(m_cpu->GetRegValue(REG8::DH), m_cpu->GetInfo().GetCoord("DH"));
+		WriteValueHex(m_cpu->GetRegValue(REG8::DL), m_cpu->GetInfo().GetCoord("DL"));
 
-		WriteValueHex(m_cpu->m_reg[REG16::DS], m_cpu->GetInfo().GetCoord("DS"));
-		WriteValueHex(m_cpu->m_reg[REG16::SI], m_cpu->GetInfo().GetCoord("SI"));
+		WriteValueHex(m_cpu->GetRegValue(SEGREG::DS), m_cpu->GetInfo().GetCoord("DS"));
+		WriteValueHex(m_cpu->GetRegValue(REG16::SI), m_cpu->GetInfo().GetCoord("SI"));
 
-		WriteValueHex(m_cpu->m_reg[REG16::ES], m_cpu->GetInfo().GetCoord("ES"));
-		WriteValueHex(m_cpu->m_reg[REG16::DI], m_cpu->GetInfo().GetCoord("DI"));
+		WriteValueHex(m_cpu->GetRegValue(SEGREG::ES), m_cpu->GetInfo().GetCoord("ES"));
+		WriteValueHex(m_cpu->GetRegValue(REG16::DI), m_cpu->GetInfo().GetCoord("DI"));
 
-		WriteValueHex(m_cpu->m_reg[REG16::BP], m_cpu->GetInfo().GetCoord("BP"));
+		WriteValueHex(m_cpu->GetRegValue(REG16::BP), m_cpu->GetInfo().GetCoord("BP"));
 
-		WriteValueHex(m_cpu->m_reg[REG16::CS], m_cpu->GetInfo().GetCoord("CS"));
-		WriteValueHex(m_cpu->m_reg[REG16::IP], m_cpu->GetInfo().GetCoord("IP"));
+		WriteValueHex(m_cpu->GetRegValue(SEGREG::CS), m_cpu->GetInfo().GetCoord("CS"));
+		WriteValueHex(m_cpu->GetRegValue(REG16::IP), m_cpu->GetInfo().GetCoord("IP"));
 
-		WriteValueHex(m_cpu->m_reg[REG16::SS], m_cpu->GetInfo().GetCoord("SS"));
-		WriteValueHex(m_cpu->m_reg[REG16::SP], m_cpu->GetInfo().GetCoord("SP"));
+		WriteValueHex(m_cpu->GetRegValue(SEGREG::SS), m_cpu->GetInfo().GetCoord("SS"));
+		WriteValueHex(m_cpu->GetRegValue(REG16::SP), m_cpu->GetInfo().GetCoord("SP"));
 	}
 
 	void Monitor::UpdateTicks()
@@ -244,7 +244,7 @@ namespace emul
 
 		for (int i = 0; i < width; ++i)
 		{
-			attr[width-i-1] = GetBit(m_cpu->m_reg[REG16::FLAGS], i) ? 15 : 8;
+			attr[width-i-1] = GetBit(m_cpu->GetRegValue(REG16::FLAGS), i) ? 15 : 8;
 		}
 
 		m_console.WriteAttrAt(coord.x, coord.y, attr, width);
@@ -265,16 +265,16 @@ namespace emul
 		switch (m_ramMode)
 		{
 		case RAMMode::DSSI:
-			segment = m_cpu->m_reg[REG16::DS];
-			offset = m_cpu->m_reg[REG16::SI];
+			segment = m_cpu->GetRegValue(SEGREG::DS);
+			offset = m_cpu->GetRegValue(REG16::SI);
 			break;
 		case RAMMode::ESDI:
-			segment = m_cpu->m_reg[REG16::ES];
-			offset = m_cpu->m_reg[REG16::DI];
+			segment = m_cpu->GetRegValue(SEGREG::ES);
+			offset = m_cpu->GetRegValue(REG16::DI);
 			break;
 		case RAMMode::STACK:
-			segment = m_cpu->m_reg[REG16::SS];
-			offset = m_cpu->m_reg[REG16::SP];
+			segment = m_cpu->GetRegValue(SEGREG::SS);
+			offset = m_cpu->GetRegValue(REG16::SP);
 			break;
 		case RAMMode::CUSTOM:
 		default:
@@ -349,7 +349,7 @@ namespace emul
 	{
 		static Coord codePos = m_cpu->GetInfo().GetCoord("CODE");
 
-		SegmentOffset address(SEGREG::CS, m_cpu->m_reg[REG16::IP]);
+		SegmentOffset address(SEGREG::CS, m_cpu->GetRegValue(REG16::IP));
 
 		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w - 1, 4, codePos.y - 1);
 

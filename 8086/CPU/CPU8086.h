@@ -27,48 +27,52 @@ namespace emul
 		// Indices in WORD array of memblock
 		INVALID = 0,
 
-		AX = 1,     // Accumulator
-		BX = 2,     // Base
-		CX = 3,     // Count
-		DX = 4,     // Data
+		AX = 1,       // Accumulator
+		BX = 2,       // Base
+		CX = 3,       // Count
+		DX = 4,       // Data
+				   
+		SP = 5,       // Stack Pointer
+		BP = 6,       // Base Pointer
+		SI = 7,       // Source Index
+		DI = 8,       // Destination Index
+				   
+		IP = 9,       // Instruction Pointer
 
-		SP = 5,    // Stack Pointer
-		BP = 6,    // Base Pointer
-		SI = 7,    // Source Index
-		DI = 8,    // Destination Index
+		FLAGS = 10,   // Flags
+
+		// Pseudo-Registers
+		_REP_IP = 11, // IP in REP
+		_T0     = 12, // Temp register
 
 		// Segment Registers
-		CS = 9,     // Code Segment
-		DS = 10,     // Data Segment
-		SS = 11,     // Stack Segment
-		ES = 12,     // Extra Segment
-
-		IP = 13,      // Instruction Pointer
-
-		FLAGS = 14,   // Flags
-
-		_REP_IP = 15, // IP in REP
-
-		_T0 = 17      // Temp register
+		// We leave ample space (16 bytes - 8 words) 
+		// in between for 80286 register cache data
+		// This way, the segment descriptors match with
+		// the legacy segment value
+		CS = 16,      // Code Segment
+		DS = 24,      // Data Segment
+		SS = 32,      // Stack Segment
+		ES = 40,      // Extra Segment
 	};
 
 	enum class REG8
 	{
-		// Indices in BYTE array of memblock (to align, AL must be 2*AX, etc)
+		// Indices in BYTE array of memblock (to align, AL must be 2*AX)
 		INVALID = 0,
 
-		AL = (1 * 2), AH, // Accumulator
-		BL = (2 * 2), BH, // Base
-		CL = (3 * 2), CH, // Count
-		DL = (4 * 2), DH, // Data
+		AL = ((int)REG16::AX * 2), AH, // Accumulator
+		BL = ((int)REG16::BX * 2), BH, // Base
+		CL = ((int)REG16::CX * 2), CH, // Count
+		DL = ((int)REG16::DX * 2), DH, // Data
 
-		_T0 = (17 * 2), // Temp register
+		_T0 = ((int)REG16::_T0 * 2), // Temp register
 	};
 
 	class Registers : public MemoryBlock
 	{
 	public:
-		Registers() : MemoryBlock("REG", 64) { Clear(0xFF); }
+		Registers() : MemoryBlock("REG", 128) { Clear(0xFF); }
 
 		BYTE& Get8(REG8 r8) { return m_data[(int)r8]; }
 		BYTE Read8(REG8 r8) const { return m_data[(int)r8]; }
@@ -234,9 +238,6 @@ namespace emul
 
 		virtual void Exec(BYTE opcode);
 
-		void Dump();
-		void DumpInterruptTable();
-
 		virtual void Serialize(json& to);
 		virtual void Deserialize(const json& from);
 
@@ -297,9 +298,9 @@ namespace emul
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
-		WORD GetRegValue(SEGREG segreg) const { return m_reg[(REG16)segreg]; }
+		virtual WORD GetRegValue(SEGREG segreg) const { return m_reg[(REG16)segreg]; }
 		WORD GetRegValue(REG16 reg) const { return m_reg[reg]; }
-		WORD GetRegValue(REG8 reg) const { return m_reg[reg]; }
+		BYTE GetRegValue(REG8 reg) const { return m_reg[reg]; }
 
 	protected:
 		CPU8086(cpuInfo::CPUType type, Memory& memory);
@@ -368,16 +369,16 @@ namespace emul
 		void NotImplemented();
 		virtual void InvalidOpcode();
 
-		void CALLfar();
+		virtual void CALLfar();
 		void CALLNear(WORD offset);
 		void CALLIntra(WORD address);
-		void CALLInter(Mem16 destPtr);
+		virtual void CALLInter(Mem16 destPtr);
 
-		void JMPfar();
+		virtual void JMPfar();
 		void JMPNear(BYTE offset);
 		void JMPNear(WORD offset);
 		void JMPIntra(WORD address);
-		void JMPInter(Mem16 destPtr);
+		virtual void JMPInter(Mem16 destPtr);
 
 		void CLC();
 		void CMC();
@@ -441,7 +442,7 @@ namespace emul
 		void LOOP(BYTE offset, bool cond = true);
 
 		void RETNear(bool pop = false, WORD value = 0);
-		void RETFar(bool pop = false, WORD value = 0);
+		virtual void RETFar(bool pop = false, WORD value = 0);
 
 		void XCHG8(SourceDest8 sd);
 		void XCHG8(BYTE& b1, BYTE& b2);
@@ -479,8 +480,7 @@ namespace emul
 		void SEGOVERRIDE(SEGREG);
 
 		virtual void INT(BYTE interrupt);
-
-		void IRET();
+		virtual void IRET();
 
 		void MultiFunc(BYTE op2);
 

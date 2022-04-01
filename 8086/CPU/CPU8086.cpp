@@ -106,9 +106,9 @@ namespace emul
 		// AX, IMMED16
 		m_opcodes[0x05] = [=]() { ArithmeticImm16(REG16::AX, FetchWord(), rawAdd16); };
 
-		// PUSH ES (1)
+		// PUSH ES
 		m_opcodes[0x06] = [=]() { PUSH(REG16::ES); };
-		// POP ES (1)
+		// POP ES
 		m_opcodes[0x07] = [=]() { POP(REG16::ES); };
 
 		// OR
@@ -815,7 +815,7 @@ namespace emul
 			// Check for trap
 			if (trap && GetFlag(FLAG_T))
 			{
-				LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
+				LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", GetRegValue(SEGREG::CS), GetRegValue(REG16::IP));
 				TICKMISC(MiscTiming::TRAP);
 				throw CPUException(CPUExceptionType::EX_STEP);
 			}
@@ -863,48 +863,6 @@ namespace emul
 		default:
 			LogPrintf(LOG_WARNING, "CPU Exception [%d] (not supported by CPU) -> no action", e.GetType());
 			break;
-		}
-	}
-
-	void CPU8086::Dump()
-	{
-		//	LogPrintf(LOG_DEBUG, "PC = %04X\n", m_programCounter);
-		LogPrintf(LOG_DEBUG, "REGISTER DUMP\n"
-			"\tAH|AL %02X|%02X\n"
-			"\tBH|BL %02X|%02X\n"
-			"\tCH|CL %02X|%02X\n"
-			"\tDH|DL %02X|%02X\n"
-			"\t---------------\n"
-			"\tCS|IP %04X|%04X\n"
-			"\tDS|SI %04X|%04X\n"
-			"\tES|DI %04X|%04X\n"
-			"\tSS|SP %04X|%04X\n"
-			"\t   BP %04X\n"
-			"FLAGS xxxxODITSZxAxPxC\n"
-			"      " PRINTF_BIN_PATTERN_INT16
-			"\n",
-			m_reg[REG8::AH], m_reg[REG8::AL],
-			m_reg[REG8::BH], m_reg[REG8::BL],
-			m_reg[REG8::CH], m_reg[REG8::CL],
-			m_reg[REG8::DH], m_reg[REG8::DL],
-			m_reg[REG16::CS], m_reg[REG16::IP],
-			m_reg[REG16::DS], m_reg[REG16::SI],
-			m_reg[REG16::ES], m_reg[REG16::DI],
-			m_reg[REG16::SS], m_reg[REG16::SP],
-			m_reg[REG16::BP],
-			PRINTF_BYTE_TO_BIN_INT16(m_reg[REG16::FLAGS]));
-	}
-
-	void CPU8086::DumpInterruptTable()
-	{
-		LogPrintf(LOG_ERROR, "INTERRUPT TABLE @ %04X:%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
-		for (BYTE interrupt = 0; interrupt <= 0x1F; ++interrupt)
-		{
-			emul::ADDRESS interruptAddress = interrupt * 4;
-			WORD CS = m_memory.Read16(interruptAddress + 2);
-			WORD IP = m_memory.Read16(interruptAddress);
-
-			LogPrintf(LOG_ERROR, "\tINT%02X: %04X:%04X", interrupt, CS, IP);
 		}
 	}
 
