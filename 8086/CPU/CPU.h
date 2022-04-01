@@ -19,6 +19,7 @@ namespace emul
 		CPU(size_t addressBits, Memory& memory);
 		virtual ~CPU();
 
+		virtual const std::string GetID() const = 0;
 		virtual size_t GetAddressBits() const = 0;
 		virtual ADDRESS GetCurrentAddress() const = 0;
 		virtual void Exec(BYTE opcode) = 0;

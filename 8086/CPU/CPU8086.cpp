@@ -2729,6 +2729,7 @@ namespace emul
 
 	void CPU8086::Serialize(json& to)
 	{
+		to["cpuid"] = GetID();
 		to["ax"] = m_reg[REG16::AX];
 		to["bx"] = m_reg[REG16::BX];
 		to["cx"] = m_reg[REG16::CX];
@@ -2760,6 +2761,11 @@ namespace emul
 
 	void CPU8086::Deserialize(const json& from)
 	{
+		if (from["cpuid"] != GetID())
+		{
+			throw emul::SerializableException("CPU: Incompatible", emul::SerializationError::COMPAT);
+		}
+
 		m_reg[REG16::AX] = from["ax"];
 		m_reg[REG16::BX] = from["bx"];
 		m_reg[REG16::CX] = from["cx"];

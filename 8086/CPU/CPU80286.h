@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CPU80186.h"
+#include "Serializable.h"
 
 namespace emul
 {
@@ -36,14 +37,17 @@ namespace emul
 		WORD data;
 	};
 
-	struct ExplicitRegister
+	struct ExplicitRegister : public Serializable
 	{
 		WORD limit = 0; // 16 bits
 		DWORD base = 0; // 32 bits (24 used, 8 undefined)
 
 		const char* ToString() const;
-	};
 
+		// Don't derive from Serializable so we remain a POD
+		void Serialize(json& to);
+		void Deserialize(const json& from);
+	};
 
 	struct AccessRights
 	{
@@ -77,8 +81,6 @@ namespace emul
 		bool IsTask() const     { return (access & 0b00011101) == 0b00000001; }
 		bool IsTaskBusy() const { return (access & 0b00011111) == 0b00000011; }
 
-		const char* GetTypeStr() const;
-
 		const char* ToString() const;
 
 	protected:
@@ -100,6 +102,10 @@ namespace emul
 		AccessRights access;
 		DWORD base = 0;
 		WORD size = 0;
+
+		// Don't derive from Serializable so we remain a POD
+		void Serialize(json& to);
+		void Deserialize(const json& from);
 	};
 
 	struct InterruptDescriptor
@@ -126,6 +132,7 @@ namespace emul
 
 		virtual void Reset() override;
 
+		virtual const std::string GetID() const override { return "80286"; }
 		virtual size_t GetAddressBits() const { return CPU80286_ADDRESS_BITS; }
 
 		virtual ADDRESS GetAddress(SegmentOffset segoff, MemAccess access = MemAccess::NONE) const override;
@@ -145,6 +152,10 @@ namespace emul
 		};
 
 		void ForceA20Low(bool forceLow);
+
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 		virtual void CPUExceptionHandler(CPUException e) override;
@@ -172,6 +183,8 @@ namespace emul
 		// System Address Registers
 		ExplicitRegister m_gdt; // Global Descriptor Table Register
 		ExplicitRegister m_idt; // Interrupt Descriptor Table Register
+
+		InterruptDescriptor GetInterruptDescriptor(BYTE interrupt) const;
 
 		SegmentDescriptor LoadSegment(Selector sel) const 
 		{
@@ -222,8 +235,6 @@ namespace emul
 		void LSL(SourceDest16 sd);
 		void LOADALL();
 		void CLTS();
-
-		InterruptDescriptor GetInterruptDescriptor(BYTE interrupt) const;
 
 		virtual void CALLfar() override;
 		virtual void CALLInter(Mem16 destPtr) override;

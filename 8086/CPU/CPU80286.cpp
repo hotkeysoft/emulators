@@ -1006,4 +1006,67 @@ namespace emul
 			break;
 		}
 	}
+
+	void ExplicitRegister::Serialize(json& to)
+	{
+		to["base"] = base;
+		to["limit"] = limit;
+	}
+	void ExplicitRegister::Deserialize(const json& from)
+	{
+		base = from["base"];
+		limit = from["limit"];
+	}
+
+	void SegmentTranslationRegister::Serialize(json& to)
+	{
+		to["selector"] = (WORD)selector;
+		to["access"] = (BYTE)access;
+		to["base"] = base;
+		to["size"] = size;
+	}
+
+	void SegmentTranslationRegister::Deserialize(const json& from)
+	{
+		selector = (WORD)from["selector"];
+		access = (BYTE)from["access"];
+		base = from["base"];
+		size = from["size"];
+	}
+
+	void CPU80286::Serialize(json& to)
+	{
+		CPU80186::Serialize(to);
+
+		to["msw"] = m_msw;
+		to["iopl"] = m_iopl;
+
+		m_gdt.Serialize(to["gdt"]);
+		m_idt.Serialize(to["idt"]);
+
+		GetSegmentTranslationRegister(SEGREG286::CS)->Serialize(to["cs.286"]);
+		GetSegmentTranslationRegister(SEGREG286::DS)->Serialize(to["ds.286"]);
+		GetSegmentTranslationRegister(SEGREG286::ES)->Serialize(to["es.286"]);
+		GetSegmentTranslationRegister(SEGREG286::SS)->Serialize(to["ss.286"]);
+
+		GetSegmentTranslationRegister(SEGREG286::LDT)->Serialize(to["ldt"]);
+		GetSegmentTranslationRegister(SEGREG286::TSS)->Serialize(to["tss"]);
+	}
+	void CPU80286::Deserialize(const json& from)
+	{
+		CPU80186::Deserialize(from);
+
+		m_msw = from["msw"];
+		m_iopl = from["iopl"];
+
+		m_gdt.Deserialize(from["gdt"]);
+		m_idt.Deserialize(from["idt"]);
+
+		GetSegmentTranslationRegister(SEGREG286::CS)->Deserialize(from["cs.286"]);
+		GetSegmentTranslationRegister(SEGREG286::DS)->Deserialize(from["ds.286"]);
+		GetSegmentTranslationRegister(SEGREG286::ES)->Deserialize(from["es.286"]);
+		GetSegmentTranslationRegister(SEGREG286::SS)->Deserialize(from["ss.286"]);
+		GetSegmentTranslationRegister(SEGREG286::LDT)->Deserialize(from["ldt"]);
+		GetSegmentTranslationRegister(SEGREG286::TSS)->Deserialize(from["tss"]);
+	}
 }
