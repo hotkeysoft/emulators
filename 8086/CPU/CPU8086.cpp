@@ -815,7 +815,7 @@ namespace emul
 			// Check for trap
 			if (trap && GetFlag(FLAG_T))
 			{
-				LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", GetRegValue(SEGREG::CS), GetRegValue(REG16::IP));
+				LogPrintf(LOG_INFO, "TRAP AT CS=%04X, IP=%04X", m_reg[REG16::CS], m_reg[REG16::IP]);
 				TICKMISC(MiscTiming::TRAP);
 				throw CPUException(CPUExceptionType::EX_STEP);
 			}

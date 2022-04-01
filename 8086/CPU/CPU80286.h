@@ -6,6 +6,17 @@ namespace emul
 {
 	static const size_t CPU80286_ADDRESS_BITS = 24;
 
+	enum class SEGREG286
+	{
+		CS = (int)SEGREG::CS,
+		DS = (int)SEGREG::DS,
+		SS = (int)SEGREG::SS,
+		ES = (int)SEGREG::ES,
+
+		LDT = ES + 8,
+		TSS = LDT + 8
+	};
+
 	struct Selector
 	{
 		Selector() : data(0) {}
@@ -118,17 +129,11 @@ namespace emul
 		virtual size_t GetAddressBits() const { return CPU80286_ADDRESS_BITS; }
 
 		virtual ADDRESS GetAddress(SegmentOffset segoff, MemAccess access = MemAccess::NONE) const override;
-		virtual ADDRESS GetCurrentAddress() const override { return m_cs.base + m_reg[REG16::IP]; }
-		virtual WORD GetRegValue(SEGREG segreg) const
-		{
-			switch (segreg)
-			{
-			case SEGREG::CS: return m_cs.selector;
-			case SEGREG::DS: return m_ds.selector;
-			case SEGREG::ES: return m_es.selector;
-			case SEGREG::SS: return m_ss.selector;
-			default: throw std::exception("Invalid segment register");
-			}
+		virtual ADDRESS GetCurrentAddress() const override 
+		{ 
+			const auto cs = GetSegmentTranslationRegister(SEGREG286::CS);
+			WORD ip = m_reg[REG16::IP];
+			return cs->base + ip; 
 		}
 
 		enum FLAG286 : WORD
@@ -177,20 +182,17 @@ namespace emul
 		SegmentDescriptor LoadSegmentGlobal(Selector selector) const;
 		SegmentDescriptor LoadSegmentLocal(Selector selector) const;
 
-		// Segment Address Translation Registers;
-		SegmentTranslationRegister m_cs;
-		SegmentTranslationRegister m_ds;
-		SegmentTranslationRegister m_es;
-		SegmentTranslationRegister m_ss;
+		const SegmentTranslationRegister* GetSegmentTranslationRegister(SEGREG286 segreg) const 
+		{ 
+			return (SegmentTranslationRegister*)m_reg.GetRawPtr16((size_t)segreg); 
+		}
+		SegmentTranslationRegister* GetSegmentTranslationRegister(SEGREG286 segreg)
+		{ 
+			return (SegmentTranslationRegister*)m_reg.GetRawPtr16((size_t)segreg); 
+		}
 
-		// Local Descriptor Table Register
-		SegmentTranslationRegister m_ldtr;
-
-		// Task Register
-		SegmentTranslationRegister m_task;
-
-		void LoadTranslationDescriptor(SegmentTranslationRegister& dest, Selector selector, ADDRESS base);
-		void UpdateTranslationRegister(SegmentTranslationRegister& dest, Selector selector, SegmentDescriptor desc);
+		void LoadTranslationDescriptor(SEGREG286 dest, Selector selector, ADDRESS base);
+		void UpdateTranslationRegister(SEGREG286 dest, Selector selector, SegmentDescriptor desc);
 
 		BYTE m_iopl = 0;
 

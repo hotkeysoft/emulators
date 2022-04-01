@@ -14,14 +14,6 @@ namespace emul
 
 	class CPU8086;
 
-	enum class SEGREG
-	{
-		CS = 9,     // Code Segment
-		DS = 10,     // Data Segment
-		SS = 11,     // Stack Segment
-		ES = 12     // Extra Segment
-	};
-
 	enum class REG16
 	{
 		// Indices in WORD array of memblock
@@ -56,6 +48,14 @@ namespace emul
 		ES = 40,      // Extra Segment
 	};
 
+	enum class SEGREG
+	{
+		CS = (int)REG16::CS,
+		DS = (int)REG16::DS,
+		SS = (int)REG16::SS,
+		ES = (int)REG16::ES	
+	};
+
 	enum class REG8
 	{
 		// Indices in BYTE array of memblock (to align, AL must be 2*AX)
@@ -87,6 +87,8 @@ namespace emul
 
 		WORD operator[](REG16 r8) const { return Read16(r8); }
 		WORD& operator[](REG16 r8) { return Get16(r8); }
+
+		void* GetRawPtr16(size_t offset) const { return (WORD*)m_data + offset; }
 	};
 
 	struct RawSegmentOffset

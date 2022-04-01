@@ -115,7 +115,7 @@ namespace emul
 
 		Selector sel = 0xF000;
 		SegmentDescriptor desc = LoadSegmentReal(sel);
-		UpdateTranslationRegister(m_cs, sel, desc);
+		UpdateTranslationRegister(SEGREG286::CS, sel, desc);
 		m_reg.Write16(REG16::IP, 0xFFF0);
 		m_msw = MSW_RESET;
 	}
@@ -127,34 +127,25 @@ namespace emul
 			access = MemAccess::NONE;
 		}
 
-		const SegmentTranslationRegister* seg;
+		const auto reg = GetSegmentTranslationRegister((SEGREG286)segoff.segment);
 
-		switch (segoff.segment)
+		if (IsProtectedMode() && ((reg->size == 0) || (segoff.offset > reg->size)))
 		{
-		case SEGREG::CS: seg = &m_cs; break;
-		case SEGREG::DS: seg = &m_ds; break;
-		case SEGREG::ES: seg = &m_es; break;
-		case SEGREG::SS: seg = &m_ss; break;
-		default: throw std::exception("Invalid segment register");
-		}
-
-		if (IsProtectedMode() && ((seg->size == 0) || (segoff.offset > seg->size)))
-		{
-			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
+			throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, reg->selector);
 		}
 
 		switch(access)
 		{
 		case MemAccess::READ:
-			if (!seg->access.IsReadable())
+			if (!reg->access.IsReadable())
 			{
-				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
+				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, reg->selector);
 			}
 			break;
 		case MemAccess::WRITE:
-			if (!seg->access.IsWritable())
+			if (!reg->access.IsWritable())
 			{
-				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, seg->selector);
+				throw CPUException(CPUExceptionType::EX_GENERAL_PROTECTION, reg->selector);
 			}
 			break;
 		default:
@@ -162,7 +153,7 @@ namespace emul
 			break;
 		}
 
-		return seg->base + segoff.offset;
+		return reg->base + segoff.offset;
 	}
 
 	InterruptDescriptor CPU80286::GetInterruptDescriptor(BYTE interrupt) const
@@ -221,7 +212,7 @@ namespace emul
 
 	SegmentDescriptor CPU80286::LoadSegmentReal(Selector selector) const
 	{
-		LogPrintf(LOG_DEBUG, "LoadSegmentReal[%d]", selector);
+		LogPrintf(LOG_DEBUG, "LoadSegmentReal[%04x]", selector);
 		SegmentDescriptor desc;
 		desc.limit = 0xFFFF;
 		desc.base = S2A(selector);
@@ -231,13 +222,13 @@ namespace emul
 
 	SegmentDescriptor CPU80286::LoadSegmentLocal(Selector selector) const
 	{
-		LogPrintf(LOG_WARNING, "LoadSegmentLocal[%d]", selector);
+		LogPrintf(LOG_WARNING, "LoadSegmentLocal[%04x]", selector);
 		throw std::exception("LoadSegmentLocaL: Not implemented");
 	}
 
 	SegmentDescriptor CPU80286::LoadSegmentGlobal(Selector selector) const
 	{
-		LogPrintf(LOG_DEBUG, "LoadSegmentGlobal[%d]", selector);
+		LogPrintf(LOG_DEBUG, "LoadSegmentGlobal[%04x]", selector);
 
 		SegmentDescriptor desc;
 
@@ -264,12 +255,13 @@ namespace emul
 
 		return desc;
 	}
-	void CPU80286::UpdateTranslationRegister(SegmentTranslationRegister& dest, Selector selector, SegmentDescriptor desc)
+	void CPU80286::UpdateTranslationRegister(SEGREG286 dest, Selector selector, SegmentDescriptor desc)
 	{
-		dest.size = desc.limit;
-		dest.base = desc.base;
-		dest.access = desc.access;
-		dest.selector = selector;
+		auto reg = GetSegmentTranslationRegister(dest);
+		reg->size = desc.limit;
+		reg->base = desc.base;
+		reg->access = desc.access;
+		reg->selector = selector;
 	}
 
 	void CPU80286::ProtectedMode()
@@ -287,8 +279,7 @@ namespace emul
 		WORD segment = FetchWord();
 		// Put IP back where we were
 		m_reg[REG16::IP] -= 5;
-
-		m_cs.selector = segment;
+		m_reg[REG16::CS] = segment;
 	}
 
 	void CPU80286::ARPL(SourceDest16 sd)
@@ -382,7 +373,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "SLDT");
 
-		dest.Write(m_ldtr.selector);
+		dest.Write(m_reg[(REG16)SEGREG286::LDT]);
 	}
 
 	// Store Task Register
@@ -390,7 +381,7 @@ namespace emul
 	{
 		LogPrintf(LOG_DEBUG, "STR");
 		
-		dest.Write(m_task.selector);
+		dest.Write(m_reg[(REG16)SEGREG286::TSS]);
 	}
 
 	// Load Local Descriptor Table Register
@@ -420,7 +411,7 @@ namespace emul
 			}
 		}
 
-		UpdateTranslationRegister(m_ldtr, sel, desc);
+		UpdateTranslationRegister(SEGREG286::LDT, sel, desc);
 	}
 
 	// Load Task Register
@@ -450,7 +441,7 @@ namespace emul
 			}
 		}
 
-		UpdateTranslationRegister(m_task, sel, desc);
+		UpdateTranslationRegister(SEGREG286::TSS, sel, desc);
 	}
 
 	// Verify Read
@@ -711,15 +702,16 @@ namespace emul
 		}
 	}
 
-	void CPU80286::LoadTranslationDescriptor(SegmentTranslationRegister& dest, Selector selector, ADDRESS base)
+	void CPU80286::LoadTranslationDescriptor(SEGREG286 dest, Selector selector, ADDRESS base)
 	{
-		dest.selector = selector;
+		auto reg = GetSegmentTranslationRegister(dest);
+		reg->selector = selector;
 		WORD baseL = m_memory.Read16(base + 0);
-		emul::SetLWord(dest.base, baseL);
+		emul::SetLWord(reg->base, baseL);
 		WORD baseH = m_memory.Read8(base + 2);
-		emul::SetHWord(dest.base, baseH);
-		dest.access = m_memory.Read8(base + 3);
-		dest.size = m_memory.Read16(base + 4);
+		emul::SetHWord(reg->base, baseH);
+		reg->access = m_memory.Read8(base + 3);
+		reg->size = m_memory.Read16(base + 4);
 	}
 
 	void CPU80286::LOADALL()
@@ -748,10 +740,10 @@ namespace emul
 		m_reg[REG16::CX] = m_memory.Read16(base + 0x32);
 		m_reg[REG16::AX] = m_memory.Read16(base + 0x34);
 
-		LoadTranslationDescriptor(m_es, es, base + 0x36);
-		LoadTranslationDescriptor(m_cs, cs, base + 0x3C);
-		LoadTranslationDescriptor(m_ss, ss, base + 0x42);
-		LoadTranslationDescriptor(m_ds, ds, base + 0x48);
+		LoadTranslationDescriptor(SEGREG286::ES, es, base + 0x36);
+		LoadTranslationDescriptor(SEGREG286::CS, cs, base + 0x3C);
+		LoadTranslationDescriptor(SEGREG286::SS, ss, base + 0x42);
+		LoadTranslationDescriptor(SEGREG286::DS, ds, base + 0x48);
 		
 		// GDT
 		{
@@ -763,7 +755,7 @@ namespace emul
 			m_gdt.limit = m_memory.Read16(gdt + 4);
 		}
 
-		LoadTranslationDescriptor(m_ldtr, ldtReg, base + 0x54);
+		LoadTranslationDescriptor(SEGREG286::LDT, ldtReg, base + 0x54);
 
 		// IDT
 		{
@@ -775,7 +767,7 @@ namespace emul
 			m_idt.limit = m_memory.Read16(idt + 4);
 		}
 
-		LoadTranslationDescriptor(m_task, tReg, base + 0x60);
+		LoadTranslationDescriptor(SEGREG286::TSS, tReg, base + 0x60);
 	}
 
 	void CPU80286::CLTS()
@@ -811,8 +803,7 @@ namespace emul
 		Selector sel = modRegRm.source.Read();
 		SegmentDescriptor desc = LoadSegment(sel);
 
-		SegmentTranslationRegister& seg = dest == SEGREG::DS ? m_ds : m_es;
-		UpdateTranslationRegister(seg, sel, desc);
+		UpdateTranslationRegister((SEGREG286)dest, sel, desc);
 	}
 
 	void CPU80286::CALLfar()
@@ -821,18 +812,18 @@ namespace emul
 		Selector sel = FetchWord();
 		LogPrintf(LOG_DEBUG, "CALLfar %02X|%02X", sel, offset);
 
-		PUSH(m_cs.selector);
+		PUSH(REG16::CS);
 		PUSH(REG16::IP);
 
 		m_reg[REG16::IP] = offset;
 
 		SegmentDescriptor desc = LoadSegment(sel);
-		UpdateTranslationRegister(m_cs, sel, desc);
+		UpdateTranslationRegister(SEGREG286::CS, sel, desc);
 	}
 
 	void CPU80286::CALLInter(Mem16 destPtr)
 	{
-		PUSH(m_cs.selector);
+		PUSH(REG16::CS);
 		PUSH(REG16::IP);
 
 		m_reg[REG16::IP] = destPtr.Read();
@@ -841,7 +832,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "CALLInter newCS=%04X, newIP=%04X", sel, m_reg[REG16::IP]);
 
 		SegmentDescriptor desc = LoadSegment(sel);
-		UpdateTranslationRegister(m_cs, sel, desc);
+		UpdateTranslationRegister(SEGREG286::CS, sel, desc);
 	}
 
 	void CPU80286::JMPfar()
@@ -853,7 +844,7 @@ namespace emul
 		m_reg[REG16::IP] = offset;
 
 		SegmentDescriptor desc = LoadSegment(sel);
-		UpdateTranslationRegister(m_cs, sel, desc);
+		UpdateTranslationRegister(SEGREG286::CS, sel, desc);
 	}
 
 	void CPU80286::JMPInter(Mem16 destPtr)
@@ -869,7 +860,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "JMPInter newCS=%04X, newIP=%04X", sel, m_reg[REG16::IP]);
 
 		SegmentDescriptor desc = LoadSegment(sel);
-		UpdateTranslationRegister(m_cs, sel, desc);
+		UpdateTranslationRegister(SEGREG286::CS, sel, desc);
 	}
 
 	void CPU80286::RETFar(bool pop, WORD value)
@@ -881,7 +872,7 @@ namespace emul
 		m_reg[REG16::SP] += value;
 
 		SegmentDescriptor desc = LoadSegment(sel);
-		UpdateTranslationRegister(m_cs, sel, desc);
+		UpdateTranslationRegister(SEGREG286::CS, sel, desc);
 	}
 
 	void CPU80286::INT(BYTE interrupt)
@@ -889,7 +880,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "INT (%02xh)", interrupt);
 
 		PUSHF();
-		PUSH(m_cs.selector);
+		PUSH(REG16::CS);
 		PUSH(m_reg[inRep ? REG16::_REP_IP : REG16::IP]);
 		if (inRep)
 		{
@@ -903,7 +894,7 @@ namespace emul
 		{
 			InterruptDescriptor intDesc = GetInterruptDescriptor(interrupt);
 			SegmentDescriptor segDesc = LoadSegment(intDesc.selector);
-			UpdateTranslationRegister(m_cs, intDesc.selector, segDesc);
+			UpdateTranslationRegister(SEGREG286::CS, intDesc.selector, segDesc);
 
 			m_reg[REG16::IP] = intDesc.offset;
 		}
@@ -912,7 +903,7 @@ namespace emul
 			ADDRESS interruptAddress = interrupt * 4;
 			Selector sel = m_memory.Read16(interruptAddress + 2);
 			SegmentDescriptor desc = LoadSegment(sel);
-			UpdateTranslationRegister(m_cs, sel, desc);
+			UpdateTranslationRegister(SEGREG286::CS, sel, desc);
 
 			m_reg[REG16::IP] = m_memory.Read16(interruptAddress);
 		}
@@ -926,23 +917,25 @@ namespace emul
 		POPF();
 
 		SegmentDescriptor desc = LoadSegment(sel);
-		UpdateTranslationRegister(m_cs, sel, desc);
+		UpdateTranslationRegister(SEGREG286::CS, sel, desc);
 	}
 
 	void CPU80286::MOVfromSegReg(SourceDest16 sd)
 	{
 		LogPrintf(LOG_DEBUG, "MOV from SEGREG");
 
-		Selector sel;
-		switch (sd.source.GetRegister())
+		SEGREG286 segreg = (SEGREG286)sd.source.GetRegister();
+		switch (segreg)
 		{
-		case REG16::CS: sel = m_cs.selector; break;
-		case REG16::DS: sel = m_ds.selector; break;
-		case REG16::SS: sel = m_ss.selector; break;
-		case REG16::ES: sel = m_es.selector; break;
-		default: InvalidOpcode(); break;
+		case SEGREG286::CS:
+		case SEGREG286::DS:
+		case SEGREG286::SS:
+		case SEGREG286::ES:
+			sd.dest.Write(GetSegmentTranslationRegister(segreg)->selector);
+			break;
+		default: InvalidOpcode(); 
+			break;
 		}
-		sd.dest.Write(sel);
 	}
 
 	void CPU80286::MOVtoSegReg(SourceDest16 sd)
@@ -957,12 +950,17 @@ namespace emul
 		Selector sel = sd.source.Read();
 		SegmentDescriptor desc = LoadSegment(sel);
 
-		switch (sd.dest.GetRegister())
+		SEGREG segreg = (SEGREG)sd.dest.GetRegister();
+		switch (segreg)
 		{
-		case REG16::ES: UpdateTranslationRegister(m_es, sel, desc); break;
-		case REG16::DS: UpdateTranslationRegister(m_ds, sel, desc); break;
-		case REG16::SS: UpdateTranslationRegister(m_ss, sel, desc); break;
-		default: InvalidOpcode(); break;
+		case SEGREG::ES:
+		case SEGREG::DS:
+		case SEGREG::SS:
+			UpdateTranslationRegister((SEGREG286)segreg, sel, desc);
+			break;
+		default: 
+			InvalidOpcode(); 
+			break;
 		}
 	}
 
@@ -972,11 +970,15 @@ namespace emul
 
 		switch (segreg)
 		{
-		case SEGREG::CS: PUSH(m_cs.selector); break;
-		case SEGREG::DS: PUSH(m_ds.selector); break;
-		case SEGREG::SS: PUSH(m_ss.selector); break;
-		case SEGREG::ES: PUSH(m_es.selector); break;
-		default: InvalidOpcode(); break;
+		case SEGREG::CS:
+		case SEGREG::DS:
+		case SEGREG::SS:
+		case SEGREG::ES:
+			PUSH(m_reg[(REG16)segreg]);
+			break;
+		default: 
+			InvalidOpcode(); 
+			break;
 		}
 	}
 
@@ -994,10 +996,14 @@ namespace emul
 
 		switch (segreg)
 		{
-		case SEGREG::ES: UpdateTranslationRegister(m_es, sel, desc); break;
-		case SEGREG::DS: UpdateTranslationRegister(m_ds, sel, desc); break;
-		case SEGREG::SS: UpdateTranslationRegister(m_ss, sel, desc); break;
-		default: InvalidOpcode(); break;
+		case SEGREG::ES:
+		case SEGREG::DS: 
+		case SEGREG::SS: 
+			UpdateTranslationRegister((SEGREG286)segreg, sel, desc); 
+			break;
+		default: 
+			InvalidOpcode(); 
+			break;
 		}
 	}
 }
