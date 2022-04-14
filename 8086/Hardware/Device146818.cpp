@@ -66,6 +66,45 @@ namespace rtc
 
 		Connect(m_baseAddress + 1, static_cast<PortConnector::INFunction>(&Device146818::ReadData));
 		Connect(m_baseAddress + 1, static_cast<PortConnector::OUTFunction>(&Device146818::WriteData));
+
+		// Temp manual initialization
+
+		//// No HDD, VGA
+		//// 
+		//// Floppy disks
+		//m_data[16] = 68; // 2 x 1.44
+		//// Hard disks
+		//m_data[18] = 0; // None
+		//// Display / coprocessor / floppy
+		//m_data[20] = 65;
+		//// Base memory
+		//m_data[21] = 128;
+		//m_data[22] = 2;
+		//// Expansion memory
+		//m_data[23] = 0;
+		//m_data[24] = 0;
+		//// Checksum
+		//m_data[46] = 1;
+		//m_data[47] = 7;
+
+		// No HDD, VGA
+		// 
+		// Floppy disks
+		m_data[16] = 68; // 2 x 1.44
+		// Hard disks
+		m_data[18] = 0; // None
+		// Display / coprocessor / floppy
+		m_data[20] = 65;
+		// Base memory
+		m_data[21] = 128;
+		m_data[22] = 2;
+		// Expansion memory
+		m_data[23] = 0;
+		m_data[24] = 4;
+		// Checksum
+		m_data[46] = 1;
+		m_data[47] = 11;
+
 	}
 
 	const char* Device146818::GetCurrentRegisterName() const

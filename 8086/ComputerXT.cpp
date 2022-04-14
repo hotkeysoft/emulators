@@ -90,6 +90,14 @@ namespace emul
 		GetInputs().InitJoystick(m_joystick);
 		GetInputs().InitMouse(m_mouse);
 
+		std::string soundModule = CONFIG().GetValueStr("sound", "soundcard");
+		if (soundModule == "pcjr" ||
+			soundModule == "tandy")
+		{
+			m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.76489"));
+			m_soundModule.Init();
+		}
+
 		int floppyCount = 0;
 		if (CONFIG().GetValueBool("floppy", "enable"))
 		{

@@ -32,6 +32,7 @@ namespace emul
 		bool m_nmiEnabled = false;
 
 		emul::MemoryBlock m_baseRAM;
+		emul::MemoryBlock m_highRAM;
 		emul::MemoryBlock m_biosF000;
 
 		kbd::DeviceKeyboardAT m_keyboard;
@@ -41,5 +42,10 @@ namespace emul
 		rtc::Device146818 m_rtc;
 
 		post::DevicePOSTCard m_post;
+
+		BYTE ReadHDDStatus() { return 0; }
+		void WriteHDDReg(BYTE value) { m_tempHDD = value; }
+		BYTE ReadHDDReg() { return m_tempHDD; }
+		BYTE m_tempHDD = 0;
 	};
 }

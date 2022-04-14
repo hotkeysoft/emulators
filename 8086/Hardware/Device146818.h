@@ -92,6 +92,6 @@ namespace rtc
 		BYTE ReadRegisterC();
 		BYTE ReadRegisterD();
 
-		std::array<BYTE, (int)Address::_RTC_MAX> m_data;
+		std::array<BYTE, (int)Address::_RTC_MAX> m_data = {};
 	};
 }
