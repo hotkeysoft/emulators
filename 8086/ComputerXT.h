@@ -3,6 +3,7 @@
 #include "Computer.h"
 #include "Sound/DevicePCSpeaker.h"
 #include "Sound/DeviceSN76489.h"
+#include "Sound/DeviceGameBlaster.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardXT.h"
 
@@ -30,6 +31,8 @@ namespace emul
 		emul::MemoryBlock m_biosF800;
 
 		sn76489::DeviceSN76489 m_soundModule;
+		cms::DeviceGameBlaster m_gameBlaster;
+
 		kbd::DeviceKeyboardXT m_keyboard;
 	};
 }

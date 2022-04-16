@@ -43,7 +43,8 @@ namespace emul
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
-		m_soundModule(0xC0, SOUND_CLK)
+		m_soundModule(0xC0, SOUND_CLK),
+		m_gameBlaster(0x220)
 	{
 	}
 
@@ -100,6 +101,9 @@ namespace emul
 		{
 			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
 		}
+
+		m_gameBlaster.EnableLog(CONFIG().GetLogLevel("sound.cms"));
+		m_gameBlaster.Init();	
 
 		// Configuration switches
 		{
@@ -204,8 +208,18 @@ namespace emul
 
 			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
-			if (!m_turbo) m_pcSpeaker.Tick();
-		
+			// SN76489 clock is 3x base clock
+			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
+
+			// TODO: Ugly
+			// Runs as 7.159MHz, 6x base frequency
+			for (int i = 0; i < 6; ++i)
+			{
+				m_gameBlaster.Tick();
+			}
+
+			saa1099::OutputData out = m_gameBlaster.GetOutput();
+			if (!m_turbo) m_pcSpeaker.Tick(out.left * 10, out.right * 10);
 
 			// Fake DMA Channel 0 memory refresh to shut up POST
 			{
