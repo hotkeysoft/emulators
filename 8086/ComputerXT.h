@@ -30,8 +30,11 @@ namespace emul
 		emul::MemoryBlock m_biosF000;
 		emul::MemoryBlock m_biosF800;
 
-		sn76489::DeviceSN76489 m_soundModule;
+		sn76489::DeviceSN76489 m_soundPCjr;
+		bool isSoundPCjr = false;
+
 		cms::DeviceGameBlaster m_gameBlaster;
+		bool isSoundGameBlaster = false;
 
 		kbd::DeviceKeyboardXT m_keyboard;
 	};

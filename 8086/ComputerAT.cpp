@@ -47,7 +47,8 @@ namespace emul
 		m_biosF000("BIOS", 0x10000, emul::MemoryType::ROM),
 		m_picSecondary("pic2", 0xA0, false),
 		m_rtc(0x70),
-		m_post(0x80)
+		m_post(0x80),
+		m_gameBlaster(0x220)
 	{
 	}
 
@@ -109,6 +110,14 @@ namespace emul
 		GetInputs().InitKeyboard(&m_keyboard);
 		GetInputs().InitJoystick(m_joystick);
 		GetInputs().InitMouse(m_mouse);
+
+		std::string soundModule = CONFIG().GetValueStr("sound", "soundcard");
+		if (soundModule == "cms" || soundModule == "gb")
+		{
+			m_gameBlaster.EnableLog(CONFIG().GetLogLevel("sound.cms"));
+			m_gameBlaster.Init();
+			isSoundGameBlaster = true;
+		}
 
 		int floppyCount = 0;
 		if (CONFIG().GetValueBool("floppy", "enable"))
@@ -262,7 +271,22 @@ namespace emul
 
 			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
-			if (!m_turbo) m_pcSpeaker.Tick();
+			if (isSoundGameBlaster)
+			{
+				// TODO: Ugly
+				// Runs as 7.159MHz, 6x base frequency
+				for (int i = 0; i < 6; ++i)
+				{
+					m_gameBlaster.Tick();
+				}
+
+				saa1099::OutputData out = m_gameBlaster.GetOutput();
+				if (!m_turbo) m_pcSpeaker.Tick(out.left * 10, out.right * 10);
+			}
+			else // PC Speaker only
+			{
+				if (!m_turbo) m_pcSpeaker.Tick();
+			}
 
 			if (syncTicks & 1)
 			{

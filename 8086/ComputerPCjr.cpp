@@ -73,7 +73,7 @@ namespace emul
 
 		InitSound();
 
-		m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.76489"));
+		m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.pcjr"));
 		m_soundModule.Init();
 
 		InitVideo("pcjr");

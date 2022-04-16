@@ -30,7 +30,7 @@ namespace beeper
 		static int sample = 0;
 		static int32_t avg = 0;
 
-		BYTE speakerData = (m_ppi->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 128 : 0;
+		WORD speakerData = (m_ppi->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 1024 : 0;
 		SOUND().PlayStereo(speakerData + mixWithL, speakerData + mixWithR);
 	}
 }

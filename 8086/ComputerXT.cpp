@@ -43,7 +43,7 @@ namespace emul
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
-		m_soundModule(0xC0, SOUND_CLK),
+		m_soundPCjr(0xC0, SOUND_CLK),
 		m_gameBlaster(0x220)
 	{
 	}
@@ -91,11 +91,17 @@ namespace emul
 		GetInputs().InitMouse(m_mouse);
 
 		std::string soundModule = CONFIG().GetValueStr("sound", "soundcard");
-		if (soundModule == "pcjr" ||
-			soundModule == "tandy")
+		if (soundModule == "pcjr" || soundModule == "tandy")
 		{
-			m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.76489"));
-			m_soundModule.Init();
+			m_soundPCjr.EnableLog(CONFIG().GetLogLevel("sound.pcjr"));
+			m_soundPCjr.Init();
+			isSoundPCjr = true;
+		}
+		else if (soundModule == "cms" || soundModule == "gb")
+		{
+			m_gameBlaster.EnableLog(CONFIG().GetLogLevel("sound.cms"));
+			m_gameBlaster.Init();
+			isSoundGameBlaster = true;
 		}
 
 		int floppyCount = 0;
@@ -109,9 +115,6 @@ namespace emul
 		{
 			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
 		}
-
-		m_gameBlaster.EnableLog(CONFIG().GetLogLevel("sound.cms"));
-		m_gameBlaster.Init();	
 
 		// Configuration switches
 		{
@@ -178,7 +181,7 @@ namespace emul
 			GetCPU().Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
-		else if (m_soundModule.IsReady())
+		else if (m_soundPCjr.IsReady())
 		{
 			if (!Computer::Step())
 			{
@@ -216,18 +219,28 @@ namespace emul
 
 			m_pic->InterruptRequest(0, m_pit->GetCounter(0).GetOutput());
 
-			// SN76489 clock is 3x base clock
-			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
-
-			// TODO: Ugly
-			// Runs as 7.159MHz, 6x base frequency
-			for (int i = 0; i < 6; ++i)
+			if (isSoundPCjr)
 			{
-				m_gameBlaster.Tick();
+				// SN76489 clock is 3x base clock
+				m_soundPCjr.Tick(); m_soundPCjr.Tick(); m_soundPCjr.Tick();
+				if (!m_turbo) m_pcSpeaker.Tick(m_soundPCjr.GetOutput());
 			}
+			else if (isSoundGameBlaster)
+			{
+				// TODO: Ugly
+				// Runs as 7.159MHz, 6x base frequency
+				for (int i = 0; i < 6; ++i)
+				{
+					m_gameBlaster.Tick();
+				}
 
-			saa1099::OutputData out = m_gameBlaster.GetOutput();
-			if (!m_turbo) m_pcSpeaker.Tick(out.left * 10, out.right * 10);
+				saa1099::OutputData out = m_gameBlaster.GetOutput();
+				if (!m_turbo) m_pcSpeaker.Tick(out.left * 10, out.right * 10);
+			}
+			else // PC Speaker only
+			{
+				if (!m_turbo) m_pcSpeaker.Tick();
+			}
 
 			// Fake DMA Channel 0 memory refresh to shut up POST
 			{

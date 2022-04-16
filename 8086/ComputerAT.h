@@ -6,6 +6,7 @@
 #include "IO/DeviceKeyboardAT.h"
 #include "Hardware/Device146818.h"
 #include "Hardware/DevicePOSTCard.h"
+#include "Sound/DeviceGameBlaster.h"
 
 namespace emul
 {
@@ -42,6 +43,9 @@ namespace emul
 		rtc::Device146818 m_rtc;
 
 		post::DevicePOSTCard m_post;
+
+		cms::DeviceGameBlaster m_gameBlaster;
+		bool isSoundGameBlaster = false;
 
 		BYTE ReadHDDStatus() { return 0; }
 		void WriteHDDReg(BYTE value) { m_tempHDD = value; }
