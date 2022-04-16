@@ -19,7 +19,8 @@ namespace sound
 
 		static Sound& Get();
 
-		bool Init(WORD bufferSize = 1024);
+		// A sample frame is a chunk of audio data of the size specified in format multiplied by the number of channels
+		bool Init(WORD bufferSampleFrames = 1024);
 
 		void StreamToFile(bool stream, const char* outFile = nullptr);
 
@@ -28,7 +29,7 @@ namespace sound
 		int16_t* GetPlayingBuffer() const { return m_bufPlaying; }
 		int16_t* GetSilenceBuffer() const { return m_bufSilence; }
 
-		bool IsStagingFull() const { return m_bufStagingPos == m_bufferSize; }
+		bool IsStagingFull() const { return m_bufStagingPos == m_bufferSize * 2; }
 		void ResetStaging() { m_bufStagingPos = 0; }
 
 		void SetMute(bool mute) { m_muted = mute; }
@@ -36,7 +37,8 @@ namespace sound
 		int GetMasterVolume() const { return m_masterVolume; }
 		void SetMasterVolume(int vol);
 
-		void Play(WORD data);
+		void PlayMono(int16_t data);
+		void PlayStereo(int16_t left, int16_t right);
 
 	protected:
 		Sound();

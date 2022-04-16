@@ -25,12 +25,12 @@ namespace beeper
 		m_ppi = ppi;
 	}
 
-	void DevicePCSpeaker::Tick(WORD mixWith)
+	void DevicePCSpeaker::Tick(WORD mixWithL, WORD mixWithR)
 	{
 		static int sample = 0;
 		static int32_t avg = 0;
 
 		BYTE speakerData = (m_ppi->IsSoundON() && m_8254->GetCounter(2).GetOutput()) ? 128 : 0;
-		SOUND().Play(speakerData + mixWith);
+		SOUND().PlayStereo(speakerData + mixWithL, speakerData + mixWithR);
 	}
 }

@@ -18,7 +18,7 @@ namespace beeper
 
 		void Init(ppi::DevicePPI* ppi, pit::Device8254* pit);
 
-		void Tick(WORD mixWith = 0);
+		void Tick(WORD mixWithL = 0, WORD mixWithR = 0);
 
 	protected:
 		ppi::DevicePPI* m_ppi = nullptr;

@@ -11,11 +11,11 @@ namespace sound
 	{
 		const SDL_AudioSpec& spec = SOUND().GetAudioSpec();
 
-		assert(length == spec.samples * 2);
+		assert(length == spec.samples * sizeof(int16_t) * 2);
 
 		const uint8_t* source = (const uint8_t*)SOUND().GetPlayingBuffer();
 
-		memset(stream, 0, length * sizeof(uint16_t));
+		memset(stream, 0, length);
 		SDL_MixAudioFormat(stream, source, spec.format, length, SOUND().GetMasterVolume());
 		if (SOUND().IsStagingFull())
 		{
@@ -41,21 +41,22 @@ namespace sound
 		delete[] m_bufStaging;
 	}
 
-	bool Sound::Init(WORD bufferSize)
+	bool Sound::Init(WORD bufferSampleFrames)
 	{
-		m_bufferSize = bufferSize;
+		m_bufferSize = bufferSampleFrames;
 
-		if (!emul::IsPowerOf2(bufferSize))
+		if (!emul::IsPowerOf2(bufferSampleFrames))
 		{
-			LogPrintf(LOG_ERROR, "Buffer size is not a power of two: %d", bufferSize);
+			LogPrintf(LOG_ERROR, "Buffer size is not a power of two: %d", bufferSampleFrames);
 			return false;
 		}
 
-		m_bufSilence = new int16_t[m_bufferSize];
-		m_bufPlaying = new int16_t[m_bufferSize];
-		m_bufStaging = new int16_t[m_bufferSize];
+		// x2 for stereo
+		m_bufSilence = new int16_t[m_bufferSize * 2];
+		m_bufPlaying = new int16_t[m_bufferSize * 2];
+		m_bufStaging = new int16_t[m_bufferSize * 2];
 
-		LogPrintf(LOG_INFO, "Initialize sound engine - Buffer size: %d", bufferSize);
+		LogPrintf(LOG_INFO, "Initialize sound engine - Buffer size: %d sample frames", m_bufferSize);
 
 		if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
 		{
@@ -76,14 +77,18 @@ namespace sound
 		SDL_AudioSpec want;
 		want.freq = 44100;
 		want.format = AUDIO_S16;
-		want.channels = 1;
+		want.channels = 2; // Stereo
 		want.samples = m_bufferSize;
 		want.callback = &AudioCallback;
 		want.userdata = nullptr;
 
-		m_audioDeviceID = SDL_OpenAudioDevice(0, 0, &want, &m_audioSpec, /*SDL_AUDIO_ALLOW_ANY_CHANGE*/0);
+		m_audioDeviceID = SDL_OpenAudioDevice(0, 0, &want, &m_audioSpec, 0);
+		if (m_audioDeviceID == 0)
+		{
+			LogPrintf(LOG_ERROR, "Unable to open Audio Device: %s", SDL_GetError());
+		}
 
-		for (WORD i = 0; i < m_bufferSize; ++i)
+		for (WORD i = 0; i < m_bufferSize * 2; ++i)
 		{
 			m_bufSilence[i] = m_audioSpec.silence;
 			m_bufStaging[i] = m_audioSpec.silence;
@@ -96,7 +101,7 @@ namespace sound
 	void Sound::MoveToPlayingBuffer()
 	{
 		SDL_LockAudio();
-		memcpy(m_bufPlaying, m_bufStaging, m_bufferSize * sizeof(uint16_t));
+		memcpy(m_bufPlaying, m_bufStaging, m_bufferSize * sizeof(uint16_t) * 2);
 		SDL_UnlockAudio();
 	}
 
@@ -104,11 +109,6 @@ namespace sound
 	{
 		m_masterVolume = std::clamp(vol, 0, SDL_MIX_MAXVOLUME);
 		LogPrintf(LOG_INFO, "Set Master Volume [%d]", m_masterVolume);
-	}
-
-	uint16_t Sound::PeriodToSamples(float period)
-	{
-		return (uint16_t)(period * m_audioSpec.freq / 1000000.0);
 	}
 
 	void Sound::StreamToFile(bool stream, const char* outFile)
@@ -137,7 +137,7 @@ namespace sound
 		}
 	}
 
-	void Sound::Play(WORD data)
+	void Sound::PlayMono(int16_t data)
 	{
 		static int sample = 0;
 		static int32_t avg = 0;
@@ -150,6 +150,7 @@ namespace sound
 		++sample;
 		if (sample == 27)
 		{
+			//LogPrintf(LOG_INFO, "pos: %d", m_bufStagingPos);
 			if (IsStagingFull())
 			{
 				MoveToPlayingBuffer();
@@ -158,9 +159,47 @@ namespace sound
 			// Crude synchronization
 			while (IsStagingFull()) { std::this_thread::yield(); };
 
-			AddSample(m_muted ? 0 : avg);
+			avg /= 27;
+			AddSample(m_muted ? 0 : avg); // Left
+			AddSample(m_muted ? 0 : avg); // Right
 
 			avg = 0;
+			sample = 0;
+		}
+	}
+
+	void Sound::PlayStereo(int16_t left, int16_t right)
+	{
+		static int sample = 0;
+		static int32_t avgL = 0;
+		static int32_t avgR = 0;
+
+		// temp hack, "average" 27 samples
+		// possibly 4 incoming channels + this one, max possible value = 255*5 = 34425
+		// could clip with 4 channels + pc speaker full blast but very unlikely
+		if (m_outputFile)
+		{
+			fputc(left, m_outputFile);
+			fputc(right, m_outputFile);
+		}
+		avgL += left;
+		avgR += right;
+		++sample;
+		if (sample == 27)
+		{
+			if (IsStagingFull())
+			{
+				MoveToPlayingBuffer();
+			}
+
+			// Crude synchronization
+			while (IsStagingFull()) { std::this_thread::yield(); };
+
+			AddSample(m_muted ? 0 : (avgL / 27));
+			AddSample(m_muted ? 0 : (avgR / 27));
+
+			avgL = 0;
+			avgR = 0;
 			sample = 0;
 		}
 	}
