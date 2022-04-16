@@ -278,6 +278,12 @@
     </ClCompile>
     <ClCompile Include="CPU\CPU80286.cpp">
       <Filter>Source Files\CPU</Filter>
+    </ClCompile>      
+    <ClCompile Include="Sound\DeviceSAA1099.cpp">
+      <Filter>Source Files\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound\DeviceGameBlaster.cpp">
+      <Filter>Source Files\Sound</Filter>
     </ClCompile>
     <ClCompile Include="ComputerAT.cpp">
       <Filter>Source Files</Filter>
@@ -523,6 +529,12 @@
     </ClInclude>
     <ClInclude Include="CPU\CPUException.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound\DeviceSAA1099.h">
+      <Filter>Header Files\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound\DeviceGameBlaster.h">
+      <Filter>Header Files\Sound</Filter>
     </ClInclude>
     <ClInclude Include="ComputerAT.h">
       <Filter>Header Files</Filter>

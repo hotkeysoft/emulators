@@ -175,6 +175,8 @@
     <ClCompile Include="Hardware\DeviceDMAPageRegister.cpp" />
     <ClCompile Include="IO\DeviceKeyboardAT.cpp" />
     <ClCompile Include="IO\DeviceSerialMouse.cpp" />
+    <ClCompile Include="Sound\DeviceGameBlaster.cpp" />
+    <ClCompile Include="Sound\DeviceSAA1099.cpp" />
     <ClCompile Include="Sound\Sound.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -263,6 +265,8 @@
     <ClInclude Include="Hardware\DevicePPI.h" />
     <ClInclude Include="IO\DeviceKeyboardAT.h" />
     <ClInclude Include="IO\DeviceSerialMouse.h" />
+    <ClInclude Include="Sound\DeviceGameBlaster.h" />
+    <ClInclude Include="Sound\DeviceSAA1099.h" />
     <ClInclude Include="Sound\Sound.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UI\MainWindow.h" />
