@@ -268,7 +268,7 @@ namespace events
 
 	InputEvents::~InputEvents()
 	{
-		if (m_gameController && SDL_GameControllerGetAttached(m_gameController))
+		if (m_gameController)
 		{
 			SDL_GameControllerClose(m_gameController);
 			m_gameController = nullptr;
@@ -422,7 +422,6 @@ namespace events
 			switch (e.type)
 			{
 			case SDL_QUIT:
-				SDL_Quit();
 				m_quit = true;
 				break;
 			case SDL_KEYDOWN:

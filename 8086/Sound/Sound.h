@@ -21,6 +21,7 @@ namespace sound
 
 		// A sample frame is a chunk of audio data of the size specified in format multiplied by the number of channels
 		bool Init(WORD bufferSampleFrames = 1024);
+		void Cleanup();
 
 		void StreamToFile(bool stream, const char* outFile = nullptr);
 
@@ -42,7 +43,6 @@ namespace sound
 
 	protected:
 		Sound();
-
 		WORD m_bufferSize;
 
 		uint16_t PeriodToSamples(float period);

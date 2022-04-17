@@ -35,10 +35,25 @@ namespace sound
 
 	Sound::~Sound()
 	{
-		SDL_CloseAudioDevice(m_audioDeviceID);
+		Cleanup();
+	}
+
+	void Sound::Cleanup()
+	{
+		if (m_audioDeviceID)
+		{
+			SDL_CloseAudioDevice(m_audioDeviceID);
+			m_audioDeviceID = 0;
+		}
+
 		delete[] m_bufSilence;
+		m_bufSilence = nullptr;
+
 		delete[] m_bufPlaying;
+		m_bufPlaying = nullptr;
+
 		delete[] m_bufStaging;
+		m_bufStaging = nullptr;
 	}
 
 	bool Sound::Init(WORD bufferSampleFrames)

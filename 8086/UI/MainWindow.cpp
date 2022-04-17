@@ -34,6 +34,7 @@ namespace ui
 			if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) 
 			{
 				LogPrintf(LOG_ERROR, "Error initializing video subsystem: %s", SDL_GetError());
+				return false;
 			}
 		}
 

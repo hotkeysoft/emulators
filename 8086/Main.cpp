@@ -602,12 +602,20 @@ int main(int argc, char* args[])
 		fprintf(stderr, "Error while running cpu [%s]\n", e.what());
 	}
 
-	delete pc;
-	pc = nullptr;
-
-	if (logFile)
+	// Cleanup
 	{
-		fclose(logFile);
+		delete pc;
+		pc = nullptr;
+
+		SOUND().Cleanup();
+
+		fprintf(stderr, "Shutdown SDL Subsystems\n");
+		SDL_Quit();
+
+		if (logFile)
+		{
+			fclose(logFile);
+		}
 	}
 
 	return 0;
