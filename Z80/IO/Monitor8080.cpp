@@ -252,7 +252,7 @@ namespace emul
 		switch (m_ramMode)
 		{
 		case RAMMode::HL:
-			offset = m_cpu->getHL();
+			offset = m_cpu->GetHL();
 			break;
 		case RAMMode::SP:
 			offset = m_cpu->regSP;

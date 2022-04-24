@@ -35,7 +35,8 @@ namespace emul
 
 	void CPU8080::Init()
 	{
-		std::fill(m_opcodesTable.begin(), m_opcodesTable.end(), (OPCodeFunction)(&CPU8080::UnknownOpcode));
+		m_opcodes.resize(256);
+		std::fill(m_opcodes.begin(), m_opcodes.end(), [=]() { UnknownOpcode(); });
 
 		// -------------------
 		// 1. Data Transfer Group
@@ -44,146 +45,146 @@ namespace emul
 		// (r1) <- (r2)
 
 		// Destination B
-		AddOpcode(0100, (OPCodeFunction)(&CPU8080::MOVrr));	// B,B
-		AddOpcode(0101, (OPCodeFunction)(&CPU8080::MOVrr));	// B,C
-		AddOpcode(0102, (OPCodeFunction)(&CPU8080::MOVrr));	// B,D
-		AddOpcode(0103, (OPCodeFunction)(&CPU8080::MOVrr));	// B,E
-		AddOpcode(0104, (OPCodeFunction)(&CPU8080::MOVrr));	// B,H
-		AddOpcode(0105, (OPCodeFunction)(&CPU8080::MOVrr));	// B,L
-		AddOpcode(0107, (OPCodeFunction)(&CPU8080::MOVrr));	// B,A
+		m_opcodes[0100] = [=]() { regB = regB; }; // B,B
+		m_opcodes[0101] = [=]() { regB = regC; }; // B,C
+		m_opcodes[0102] = [=]() { regB = regD; }; // B,D
+		m_opcodes[0103] = [=]() { regB = regE; }; // B,E
+		m_opcodes[0104] = [=]() { regB = regH; }; // B,H
+		m_opcodes[0105] = [=]() { regB = regL; }; // B,L
+		m_opcodes[0107] = [=]() { regB = regA; }; // B,A
 
 		// Destination C
-		AddOpcode(0110, (OPCodeFunction)(&CPU8080::MOVrr));	// C,B
-		AddOpcode(0111, (OPCodeFunction)(&CPU8080::MOVrr));	// C,C
-		AddOpcode(0112, (OPCodeFunction)(&CPU8080::MOVrr));	// C,D
-		AddOpcode(0113, (OPCodeFunction)(&CPU8080::MOVrr));	// C,E
-		AddOpcode(0114, (OPCodeFunction)(&CPU8080::MOVrr));	// C,H
-		AddOpcode(0115, (OPCodeFunction)(&CPU8080::MOVrr));	// C,L
-		AddOpcode(0117, (OPCodeFunction)(&CPU8080::MOVrr));	// C,A
+		m_opcodes[0110] = [=]() { regC = regB; }; // C,B
+		m_opcodes[0111] = [=]() { regC = regC; }; // C,C
+		m_opcodes[0112] = [=]() { regC = regD; }; // C,D
+		m_opcodes[0113] = [=]() { regC = regE; }; // C,E
+		m_opcodes[0114] = [=]() { regC = regH; }; // C,H
+		m_opcodes[0115] = [=]() { regC = regL; }; // C,L
+		m_opcodes[0117] = [=]() { regC = regA; }; // C,A
 
 		// Destination D
-		AddOpcode(0120, (OPCodeFunction)(&CPU8080::MOVrr));	// D,B
-		AddOpcode(0121, (OPCodeFunction)(&CPU8080::MOVrr));	// D,C
-		AddOpcode(0122, (OPCodeFunction)(&CPU8080::MOVrr));	// D,D
-		AddOpcode(0123, (OPCodeFunction)(&CPU8080::MOVrr));	// D,E
-		AddOpcode(0124, (OPCodeFunction)(&CPU8080::MOVrr));	// D,H
-		AddOpcode(0125, (OPCodeFunction)(&CPU8080::MOVrr));	// D,L
-		AddOpcode(0127, (OPCodeFunction)(&CPU8080::MOVrr));	// D,A
+		m_opcodes[0120] = [=]() { regD = regB; }; // D,B
+		m_opcodes[0121] = [=]() { regD = regC; }; // D,C
+		m_opcodes[0122] = [=]() { regD = regD; }; // D,D
+		m_opcodes[0123] = [=]() { regD = regE; }; // D,E
+		m_opcodes[0124] = [=]() { regD = regH; }; // D,H
+		m_opcodes[0125] = [=]() { regD = regL; }; // D,L
+		m_opcodes[0127] = [=]() { regD = regA; }; // D,A
 
 		// Destination E	
-		AddOpcode(0130, (OPCodeFunction)(&CPU8080::MOVrr));	// E,B
-		AddOpcode(0131, (OPCodeFunction)(&CPU8080::MOVrr));	// E,C
-		AddOpcode(0132, (OPCodeFunction)(&CPU8080::MOVrr));	// E,D
-		AddOpcode(0133, (OPCodeFunction)(&CPU8080::MOVrr));	// E,E
-		AddOpcode(0134, (OPCodeFunction)(&CPU8080::MOVrr));	// E,H
-		AddOpcode(0135, (OPCodeFunction)(&CPU8080::MOVrr));	// E,L
-		AddOpcode(0137, (OPCodeFunction)(&CPU8080::MOVrr));	// E,A
+		m_opcodes[0130] = [=]() { regE = regB; }; // E,B
+		m_opcodes[0131] = [=]() { regE = regC; }; // E,C
+		m_opcodes[0132] = [=]() { regE = regD; }; // E,D
+		m_opcodes[0133] = [=]() { regE = regE; }; // E,E
+		m_opcodes[0134] = [=]() { regE = regH; }; // E,H
+		m_opcodes[0135] = [=]() { regE = regL; }; // E,L
+		m_opcodes[0137] = [=]() { regE = regA; }; // E,A
 	
 		// Destination H
-		AddOpcode(0140, (OPCodeFunction)(&CPU8080::MOVrr));	// H,B
-		AddOpcode(0141, (OPCodeFunction)(&CPU8080::MOVrr));	// H,C
-		AddOpcode(0142, (OPCodeFunction)(&CPU8080::MOVrr));	// H,D
-		AddOpcode(0143, (OPCodeFunction)(&CPU8080::MOVrr));	// H,E
-		AddOpcode(0144, (OPCodeFunction)(&CPU8080::MOVrr));	// H,H
-		AddOpcode(0145, (OPCodeFunction)(&CPU8080::MOVrr));	// H,L
-		AddOpcode(0147, (OPCodeFunction)(&CPU8080::MOVrr));	// H,A
+		m_opcodes[0140] = [=]() { regH = regB; }; // H,B
+		m_opcodes[0141] = [=]() { regH = regC; }; // H,C
+		m_opcodes[0142] = [=]() { regH = regD; }; // H,D
+		m_opcodes[0143] = [=]() { regH = regE; }; // H,E
+		m_opcodes[0144] = [=]() { regH = regH; }; // H,H
+		m_opcodes[0145] = [=]() { regH = regL; }; // H,L
+		m_opcodes[0147] = [=]() { regH = regA; }; // H,A
 
 		// Destination L
-		AddOpcode(0150, (OPCodeFunction)(&CPU8080::MOVrr));	// L,B
-		AddOpcode(0151, (OPCodeFunction)(&CPU8080::MOVrr));	// L,C
-		AddOpcode(0152, (OPCodeFunction)(&CPU8080::MOVrr));	// L,D
-		AddOpcode(0153, (OPCodeFunction)(&CPU8080::MOVrr));	// L,E
-		AddOpcode(0154, (OPCodeFunction)(&CPU8080::MOVrr));	// L,H
-		AddOpcode(0155, (OPCodeFunction)(&CPU8080::MOVrr));	// L,L
-		AddOpcode(0157, (OPCodeFunction)(&CPU8080::MOVrr));	// L,A
+		m_opcodes[0150] = [=]() { regL = regB; }; // L,B
+		m_opcodes[0151] = [=]() { regL = regC; }; // L,C
+		m_opcodes[0152] = [=]() { regL = regD; }; // L,D
+		m_opcodes[0153] = [=]() { regL = regE; }; // L,E
+		m_opcodes[0154] = [=]() { regL = regH; }; // L,H
+		m_opcodes[0155] = [=]() { regL = regL; }; // L,L
+		m_opcodes[0157] = [=]() { regL = regA; }; // L,A
 
 		// Destination A
-		AddOpcode(0170, (OPCodeFunction)(&CPU8080::MOVrr));	// A,B
-		AddOpcode(0171, (OPCodeFunction)(&CPU8080::MOVrr));	// A,C
-		AddOpcode(0172, (OPCodeFunction)(&CPU8080::MOVrr));	// A,D
-		AddOpcode(0173, (OPCodeFunction)(&CPU8080::MOVrr));	// A,E
-		AddOpcode(0174, (OPCodeFunction)(&CPU8080::MOVrr));	// A,H
-		AddOpcode(0175, (OPCodeFunction)(&CPU8080::MOVrr));	// A,L
-		AddOpcode(0177, (OPCodeFunction)(&CPU8080::MOVrr));	// A,A
+		m_opcodes[0170] = [=]() { regA = regB; }; // A,B
+		m_opcodes[0171] = [=]() { regA = regC; }; // A,C
+		m_opcodes[0172] = [=]() { regA = regD; }; // A,D
+		m_opcodes[0173] = [=]() { regA = regE; }; // A,E
+		m_opcodes[0174] = [=]() { regA = regH; }; // A,H
+		m_opcodes[0175] = [=]() { regA = regL; }; // A,L
+		m_opcodes[0177] = [=]() { regA = regA; }; // A,A
 
 		// MOV r, M (Move from memory)
 		// (r) <- ((H)(L))
-		AddOpcode(0106, (OPCodeFunction)(&CPU8080::MOVrm));	// B,m
-		AddOpcode(0116, (OPCodeFunction)(&CPU8080::MOVrm));	// C,m
-		AddOpcode(0126, (OPCodeFunction)(&CPU8080::MOVrm));	// D,m
-		AddOpcode(0136, (OPCodeFunction)(&CPU8080::MOVrm));	// E,m
-		AddOpcode(0146, (OPCodeFunction)(&CPU8080::MOVrm));	// H,m
-		AddOpcode(0156, (OPCodeFunction)(&CPU8080::MOVrm));	// L,m
-		AddOpcode(0176, (OPCodeFunction)(&CPU8080::MOVrm));	// A,m
+		m_opcodes[0106] = [=]() { regB = ReadMem(); }; // B,m
+		m_opcodes[0116] = [=]() { regC = ReadMem(); }; // C,m
+		m_opcodes[0126] = [=]() { regD = ReadMem(); }; // D,m
+		m_opcodes[0136] = [=]() { regE = ReadMem(); }; // E,m
+		m_opcodes[0146] = [=]() { regH = ReadMem(); }; // H,m
+		m_opcodes[0156] = [=]() { regL = ReadMem(); }; // L,m
+		m_opcodes[0176] = [=]() { regA = ReadMem(); }; // A,m
 
 		// MOV M, r (Move to memory)
 		// ((H)(L) <- (r)
-		AddOpcode(0160, (OPCodeFunction)(&CPU8080::MOVmr));	// m,B
-		AddOpcode(0161, (OPCodeFunction)(&CPU8080::MOVmr));	// m,C
-		AddOpcode(0162, (OPCodeFunction)(&CPU8080::MOVmr));	// m,D
-		AddOpcode(0163, (OPCodeFunction)(&CPU8080::MOVmr));	// m,E
-		AddOpcode(0164, (OPCodeFunction)(&CPU8080::MOVmr));	// m,H
-		AddOpcode(0165, (OPCodeFunction)(&CPU8080::MOVmr));	// m,L
-		AddOpcode(0167, (OPCodeFunction)(&CPU8080::MOVmr));	// m,A
+		m_opcodes[0160] = [=]() { WriteMem(regB); }; // m,B
+		m_opcodes[0161] = [=]() { WriteMem(regC); }; // m,C
+		m_opcodes[0162] = [=]() { WriteMem(regD); }; // m,D
+		m_opcodes[0163] = [=]() { WriteMem(regE); }; // m,E
+		m_opcodes[0164] = [=]() { WriteMem(regH); }; // m,H
+		m_opcodes[0165] = [=]() { WriteMem(regL); }; // m,L
+		m_opcodes[0167] = [=]() { WriteMem(regA); }; // m,A
 
 		// MVI r, data (Move immediate)
 		// (r) <- (byte 2)
-		AddOpcode(0006, (OPCodeFunction)(&CPU8080::MVIr));	// B
-		AddOpcode(0016, (OPCodeFunction)(&CPU8080::MVIr));	// C
-		AddOpcode(0026, (OPCodeFunction)(&CPU8080::MVIr));	// D
-		AddOpcode(0036, (OPCodeFunction)(&CPU8080::MVIr));	// E
-		AddOpcode(0046, (OPCodeFunction)(&CPU8080::MVIr));	// H
-		AddOpcode(0056, (OPCodeFunction)(&CPU8080::MVIr));	// L
-		AddOpcode(0076, (OPCodeFunction)(&CPU8080::MVIr));	// A
+		m_opcodes[0006] = [=]() { regB = FetchByte(); }; // B
+		m_opcodes[0016] = [=]() { regC = FetchByte(); }; // C
+		m_opcodes[0026] = [=]() { regD = FetchByte(); }; // D
+		m_opcodes[0036] = [=]() { regE = FetchByte(); }; // E
+		m_opcodes[0046] = [=]() { regH = FetchByte(); }; // H
+		m_opcodes[0056] = [=]() { regL = FetchByte(); }; // L
+		m_opcodes[0076] = [=]() { regA = FetchByte(); }; // A
 
 		// MVI M, data (Move to memory immediate)
 		// ((H)(L) <- (byte 2)
-		AddOpcode(0066, (OPCodeFunction)(&CPU8080::MVIm));	// m
+		m_opcodes[0066] = [=]() { WriteMem(FetchByte()); };	// m
 
 		// LXI rp, data 16 (Load register pair immediate)
 		// (rh) <- (byte3)
 		// (lh) <- (byte2)
-		AddOpcode(0001, (OPCodeFunction)(&CPU8080::LXIb));	// BC
-		AddOpcode(0021, (OPCodeFunction)(&CPU8080::LXId));	// DE
-		AddOpcode(0041, (OPCodeFunction)(&CPU8080::LXIh));	// HL
-		AddOpcode(0061, (OPCodeFunction)(&CPU8080::LXIsp));	// SP
+		m_opcodes[0001] = [=]() { LXIb(); };  // BC
+		m_opcodes[0021] = [=]() { LXId(); };  // DE
+		m_opcodes[0041] = [=]() { LXIh(); };  // HL
+		m_opcodes[0061] = [=]() { LXIsp(); }; // SP
 
 		// LDA addr (Load Accumulator direct)
 		// (A) <- ((byte2)(byte3))
-		AddOpcode(0072, (OPCodeFunction)(&CPU8080::LDA));
+		m_opcodes[0072] = [=]() { LDA(); };
 
 		// STA addr (Store Accumulator direct)
 		// ((byte2)(byte3)) <- (A)
-		AddOpcode(0062, (OPCodeFunction)(&CPU8080::STA));
+		m_opcodes[0062] = [=]() { STA(); };
 
 		// LHLD addr (Load H and L direct)
 		// (H)<-((byte2)(byte3))
 		// (L)<-((byte2)(byte3)+1)
-		AddOpcode(0052, (OPCodeFunction)(&CPU8080::LHLD));
+		m_opcodes[0052] = [=]() { LHLD(); };
 
 		// SHLD addr (Store H and L direct)
 		// ((byte2)(byte3))<-(H)
 		// ((byte2)(byte3)+1)<-(L)
-		AddOpcode(0042, (OPCodeFunction)(&CPU8080::SHLD));
+		m_opcodes[0042] = [=]() { SHLD(); };
 
 		// LDAX rp (Load accumulator indirect)
 		// (A) <- ((rp))
 		// Note: only register pairs rp=B (B and C) or rp=D (D and E) 
 		// may be specified.
-		AddOpcode(0012, (OPCodeFunction)(&CPU8080::LDAXb));
-		AddOpcode(0032, (OPCodeFunction)(&CPU8080::LDAXd));
+		m_opcodes[0012] = [=]() { LDAXb(); };
+		m_opcodes[0032] = [=]() { LDAXd(); };
 
 		// STAX rp (Store accumulator indirect)
 		// ((rp) <- (A)
 		// Note: only register pairs rp=B (B and C) or rp=D (D and E) 
 		// may be specified.
-		AddOpcode(0002, (OPCodeFunction)(&CPU8080::STAXb));
-		AddOpcode(0022, (OPCodeFunction)(&CPU8080::STAXd));
+		m_opcodes[0002] = [=]() { STAXb(); };
+		m_opcodes[0022] = [=]() { STAXd(); };
 
 		// XCHG (Exchange H and L with D and E)
 		// (H) <- (D)
 		// (L) <- (E)
-		AddOpcode(0353, (OPCodeFunction)(&CPU8080::XCHG));
+		m_opcodes[0353] = [=]() { XCHG(); };
 	
 		// -------------------
 		// 2. Arithmetic group
@@ -197,131 +198,131 @@ namespace emul
 
 		// ADD r (Add Register)
 		// (A) <- (A) + (r)
-		AddOpcode(0200, (OPCodeFunction)(&CPU8080::ADDr));	// B
-		AddOpcode(0201, (OPCodeFunction)(&CPU8080::ADDr));	// C
-		AddOpcode(0202, (OPCodeFunction)(&CPU8080::ADDr));	// D
-		AddOpcode(0203, (OPCodeFunction)(&CPU8080::ADDr));	// E
-		AddOpcode(0204, (OPCodeFunction)(&CPU8080::ADDr));	// H
-		AddOpcode(0205, (OPCodeFunction)(&CPU8080::ADDr));	// L
-		AddOpcode(0207, (OPCodeFunction)(&CPU8080::ADDr));	// A
+		m_opcodes[0200] = [=]() { add(regB); };	// B
+		m_opcodes[0201] = [=]() { add(regC); };	// C
+		m_opcodes[0202] = [=]() { add(regD); };	// D
+		m_opcodes[0203] = [=]() { add(regE); };	// E
+		m_opcodes[0204] = [=]() { add(regH); };	// H
+		m_opcodes[0205] = [=]() { add(regL); };	// L
+		m_opcodes[0207] = [=]() { add(regA); };	// A
 
 		// ADD M (Add memory)
 		// (A) <- (A) + ((H)(L))
-		AddOpcode(0206, (OPCodeFunction)(&CPU8080::ADDm));	// m
+		m_opcodes[0206] = [=]() { add(ReadMem()); }; // m
 
 		// ADI data (Add immediate)
 		// (A) <- (A) + (byte2)
-		AddOpcode(0306, (OPCodeFunction)(&CPU8080::ADI));
+		m_opcodes[0306] = [=]() { add(FetchByte()); };
 
 		// ADC r (Add Register with Carry)
 		// (A) <- (A) + (r) + (CY)
-		AddOpcode(0210, (OPCodeFunction)(&CPU8080::ADCr));	// B
-		AddOpcode(0211, (OPCodeFunction)(&CPU8080::ADCr));	// C
-		AddOpcode(0212, (OPCodeFunction)(&CPU8080::ADCr));	// D
-		AddOpcode(0213, (OPCodeFunction)(&CPU8080::ADCr));	// E
-		AddOpcode(0214, (OPCodeFunction)(&CPU8080::ADCr));	// H
-		AddOpcode(0215, (OPCodeFunction)(&CPU8080::ADCr));	// L
-		AddOpcode(0217, (OPCodeFunction)(&CPU8080::ADCr));	// A
+		m_opcodes[0210] = [=]() { add(regB, GetFlag(FLAG_CY)); }; // B
+		m_opcodes[0211] = [=]() { add(regC, GetFlag(FLAG_CY)); }; // C
+		m_opcodes[0212] = [=]() { add(regD, GetFlag(FLAG_CY)); }; // D
+		m_opcodes[0213] = [=]() { add(regE, GetFlag(FLAG_CY)); }; // E
+		m_opcodes[0214] = [=]() { add(regH, GetFlag(FLAG_CY)); }; // H
+		m_opcodes[0215] = [=]() { add(regL, GetFlag(FLAG_CY)); }; // L
+		m_opcodes[0217] = [=]() { add(regA, GetFlag(FLAG_CY)); }; // A
 
 		// ADC M (Add Memory with Carry)
 		// (A) <- (A) + ((H)(L)) + (CY)
-		AddOpcode(0216, (OPCodeFunction)(&CPU8080::ADCm));	// m
+		m_opcodes[0216] = [=]() { add(ReadMem(), GetFlag(FLAG_CY)); }; // m
 
 		// ACI data (Add immediate with Carry)
 		// (A) <- (A) + (byte2) + (CY)
-		AddOpcode(0316, (OPCodeFunction)(&CPU8080::ACI));
+		m_opcodes[0316] = [=]() { add(FetchByte(), GetFlag(FLAG_CY)); };
 
 		// SUB r (Substract Register)
 		// (A) <- (A) - (r)
-		AddOpcode(0220, (OPCodeFunction)(&CPU8080::SUBr));	// B
-		AddOpcode(0221, (OPCodeFunction)(&CPU8080::SUBr));	// C
-		AddOpcode(0222, (OPCodeFunction)(&CPU8080::SUBr));	// D
-		AddOpcode(0223, (OPCodeFunction)(&CPU8080::SUBr));	// E
-		AddOpcode(0224, (OPCodeFunction)(&CPU8080::SUBr));	// H
-		AddOpcode(0225, (OPCodeFunction)(&CPU8080::SUBr));	// L
-		AddOpcode(0227, (OPCodeFunction)(&CPU8080::SUBr));	// A
+		m_opcodes[0220] = [=]() { sub(regB); };	// B
+		m_opcodes[0221] = [=]() { sub(regC); };	// C
+		m_opcodes[0222] = [=]() { sub(regD); };	// D
+		m_opcodes[0223] = [=]() { sub(regE); };	// E
+		m_opcodes[0224] = [=]() { sub(regH); };	// H
+		m_opcodes[0225] = [=]() { sub(regL); };	// L
+		m_opcodes[0227] = [=]() { sub(regA); };	// A
 
 		// SUB M (Substract memory)
 		// (A) <- (A) - ((H)(L))
-		AddOpcode(0226, (OPCodeFunction)(&CPU8080::SUBm));	// m
+		m_opcodes[0226] = [=]() { sub(ReadMem()); };	// m
 
 		// SUI data (Substract immediate)
 		// (A) <- (A) - (byte2)
-		AddOpcode(0326, (OPCodeFunction)(&CPU8080::SUI));
+		m_opcodes[0326] = [=]() { sub(FetchByte()); };
 
 		// SBB r (Substract Register with Borrow)
 		// (A) <- (A) - (r) - (CY)
-		AddOpcode(0230, (OPCodeFunction)(&CPU8080::SBBr));	// B
-		AddOpcode(0231, (OPCodeFunction)(&CPU8080::SBBr));	// C
-		AddOpcode(0232, (OPCodeFunction)(&CPU8080::SBBr));	// D
-		AddOpcode(0233, (OPCodeFunction)(&CPU8080::SBBr));	// E
-		AddOpcode(0234, (OPCodeFunction)(&CPU8080::SBBr));	// H
-		AddOpcode(0235, (OPCodeFunction)(&CPU8080::SBBr));	// L
-		AddOpcode(0237, (OPCodeFunction)(&CPU8080::SBBr));	// A
+		m_opcodes[0230] = [=]() { sub(regB, GetFlag(FLAG_CY)); }; // B
+		m_opcodes[0231] = [=]() { sub(regC, GetFlag(FLAG_CY)); }; // C
+		m_opcodes[0232] = [=]() { sub(regD, GetFlag(FLAG_CY)); }; // D
+		m_opcodes[0233] = [=]() { sub(regE, GetFlag(FLAG_CY)); }; // E
+		m_opcodes[0234] = [=]() { sub(regH, GetFlag(FLAG_CY)); }; // H
+		m_opcodes[0235] = [=]() { sub(regL, GetFlag(FLAG_CY)); }; // L
+		m_opcodes[0237] = [=]() { sub(regA, GetFlag(FLAG_CY)); }; // A
 
 		// SBB M (Substract Memory with Borrow)
 		// (A) <- (A) - ((H)(L)) - (CY)
-		AddOpcode(0236, (OPCodeFunction)(&CPU8080::SBBm));	// m
+		m_opcodes[0236] = [=]() { sub(ReadMem(), GetFlag(FLAG_CY)); }; // m
 
 		// SBI data (Substract immediate with Borrow)
 		// (A) <- (A) - (byte2) - (CY)
-		AddOpcode(0336, (OPCodeFunction)(&CPU8080::SBI));
+		m_opcodes[0336] = [=]() { sub(FetchByte(), GetFlag(FLAG_CY)); };
 
 		// INR r (Increment Register)
 		// (r) <- (r) + 1
 		// Note: CY not affected
-		AddOpcode(0004, (OPCodeFunction)(&CPU8080::INRr));	// B
-		AddOpcode(0014, (OPCodeFunction)(&CPU8080::INRr));	// C
-		AddOpcode(0024, (OPCodeFunction)(&CPU8080::INRr));	// D
-		AddOpcode(0034, (OPCodeFunction)(&CPU8080::INRr));	// E
-		AddOpcode(0044, (OPCodeFunction)(&CPU8080::INRr));	// H
-		AddOpcode(0054, (OPCodeFunction)(&CPU8080::INRr));	// L
-		AddOpcode(0074, (OPCodeFunction)(&CPU8080::INRr));	// A
+		m_opcodes[0004] = [=]() { INRr(regB); }; // B
+		m_opcodes[0014] = [=]() { INRr(regC); }; // C
+		m_opcodes[0024] = [=]() { INRr(regD); }; // D
+		m_opcodes[0034] = [=]() { INRr(regE); }; // E
+		m_opcodes[0044] = [=]() { INRr(regH); }; // H
+		m_opcodes[0054] = [=]() { INRr(regL); }; // L
+		m_opcodes[0074] = [=]() { INRr(regA); }; // A
 
 		// INR M (Increment Memory)
 		// ((H)(L)) <- ((H)(L)) + 1
 		// Note: CY not affected
-		AddOpcode(0064, (OPCodeFunction)(&CPU8080::INRm));	// m
+		m_opcodes[0064] = [=]() { INRm(); }; // m
 
 		// DCR r (Decrement Register)
 		// (r) <- (r) - 1
 		// Note: CY not affected
-		AddOpcode(0005, (OPCodeFunction)(&CPU8080::DCRr));	// B
-		AddOpcode(0015, (OPCodeFunction)(&CPU8080::DCRr));	// C
-		AddOpcode(0025, (OPCodeFunction)(&CPU8080::DCRr));	// D
-		AddOpcode(0035, (OPCodeFunction)(&CPU8080::DCRr));	// E
-		AddOpcode(0045, (OPCodeFunction)(&CPU8080::DCRr));	// H
-		AddOpcode(0055, (OPCodeFunction)(&CPU8080::DCRr));	// L
-		AddOpcode(0075, (OPCodeFunction)(&CPU8080::DCRr));	// A
+		m_opcodes[0005] = [=]() { DCRr(regB); }; // B
+		m_opcodes[0015] = [=]() { DCRr(regC); }; // C
+		m_opcodes[0025] = [=]() { DCRr(regD); }; // D
+		m_opcodes[0035] = [=]() { DCRr(regE); }; // E
+		m_opcodes[0045] = [=]() { DCRr(regH); }; // H
+		m_opcodes[0055] = [=]() { DCRr(regL); }; // L
+		m_opcodes[0075] = [=]() { DCRr(regA); }; // A
 	
 		// DCR M (Decrement Memory)
 		// ((H)(L)) <- ((H)(L)) - 1
 		// Note: CY not affected
-		AddOpcode(0065, (OPCodeFunction)(&CPU8080::DCRm));	// m
+		m_opcodes[0065] = [=]() { DCRm(); }; // m
 
 		// INX rp (Increment Register Pair)
 		// (rh)(rl) <- (rh)(rl) + 1
 		// Note: No condition flags are affected
-		AddOpcode(0003, (OPCodeFunction)(&CPU8080::INXb));
-		AddOpcode(0023, (OPCodeFunction)(&CPU8080::INXd));
-		AddOpcode(0043, (OPCodeFunction)(&CPU8080::INXh));
-		AddOpcode(0063, (OPCodeFunction)(&CPU8080::INXsp));
+		m_opcodes[0003] = [=]() { INX(regB, regC); }; // BC
+		m_opcodes[0023] = [=]() { INX(regD, regE); }; // DE
+		m_opcodes[0043] = [=]() { INX(regH, regL); }; // HL
+		m_opcodes[0063] = [=]() { ++regSP; };         // SP
 
 		// DCX rp (Decrement Register Pair)
 		// (rh)(rl) <- (rh)(rl) - 1
 		// Note: No condition flags are affected
-		AddOpcode(0013, (OPCodeFunction)(&CPU8080::DCXb));
-		AddOpcode(0033, (OPCodeFunction)(&CPU8080::DCXd));
-		AddOpcode(0053, (OPCodeFunction)(&CPU8080::DCXh));
-		AddOpcode(0073, (OPCodeFunction)(&CPU8080::DCXsp));
+		m_opcodes[0013] = [=]() { DCX(regB, regC); }; // BC
+		m_opcodes[0033] = [=]() { DCX(regD, regE); }; // DE
+		m_opcodes[0053] = [=]() { DCX(regH, regL); }; // HL
+		m_opcodes[0073] = [=]() { --regSP; };         // SP
 
 		// DAD rp (Add register pair to H and L)
 		// (H)(L) <- (H)(L) + (rh)(rl)
 		// Note: Only the CY flag is affected
-		AddOpcode(0011, (OPCodeFunction)(&CPU8080::DADb));
-		AddOpcode(0031, (OPCodeFunction)(&CPU8080::DADd));
-		AddOpcode(0051, (OPCodeFunction)(&CPU8080::DADh));
-		AddOpcode(0071, (OPCodeFunction)(&CPU8080::DADsp));
+		m_opcodes[0011] = [=]() { dad(MakeWord(regB, regC)); }; // BC
+		m_opcodes[0031] = [=]() { dad(MakeWord(regD, regE)); }; // DE
+		m_opcodes[0051] = [=]() { dad(GetHL()); };              // HL
+		m_opcodes[0071] = [=]() { dad(regSP); };                // SP
 
 		// DAA (Decimal Adjust Accumulator)
 		// The eight-bit number in the accumulator is adjusted to
@@ -336,8 +337,7 @@ namespace emul
 		//    is set, 6 is added to the most significant 4 bits of
 		//    the accumulator.
 		// Note: All flags are adjusted
-		//	AddOpcode(0047, (OPCodeFunction)(&CPU8080::DAA)); // TODO: Not implemented
-		AddOpcode(0047, (OPCodeFunction)(&CPU8080::DAA)); // TODO: Currently used to dump regs
+		m_opcodes[0047] = [=]() { DAA(); }; // TODO: Not implemented
 
 		// -------------------
 		// 3. Logical Group
@@ -351,65 +351,65 @@ namespace emul
 		// Note: The CY flag is cleared and the AC is set (8085)
 		// The CY flag is cleared and AC is set to the ORing of 
 		// bits 3 of the operands (8080)
-		AddOpcode(0240, (OPCodeFunction)(&CPU8080::ANAr));	// B
-		AddOpcode(0241, (OPCodeFunction)(&CPU8080::ANAr));	// C
-		AddOpcode(0242, (OPCodeFunction)(&CPU8080::ANAr));	// D
-		AddOpcode(0243, (OPCodeFunction)(&CPU8080::ANAr));	// E
-		AddOpcode(0244, (OPCodeFunction)(&CPU8080::ANAr));	// H
-		AddOpcode(0245, (OPCodeFunction)(&CPU8080::ANAr));	// L
-		AddOpcode(0247, (OPCodeFunction)(&CPU8080::ANAr));	// A
+		m_opcodes[0240] = [=]() { ana(regB); };	// B
+		m_opcodes[0241] = [=]() { ana(regC); };	// C
+		m_opcodes[0242] = [=]() { ana(regD); };	// D
+		m_opcodes[0243] = [=]() { ana(regE); };	// E
+		m_opcodes[0244] = [=]() { ana(regH); };	// H
+		m_opcodes[0245] = [=]() { ana(regL); };	// L
+		m_opcodes[0247] = [=]() { ana(regA); };	// A
 
 		// ANA M (AND Memory)
 		// (A) <- (A) and ((H)(L))
 		// Note: same CY rules as ANA
-		AddOpcode(0246, (OPCodeFunction)(&CPU8080::ANAm));	// m
+		m_opcodes[0246] = [=]() { ana(ReadMem()); }; // m
 
 		// ANI data (AND Immediate)
 		// Note: same CY rules as ANA
 		// (A) <- (A) and (byte 2)
-		AddOpcode(0346, (OPCodeFunction)(&CPU8080::ANI));
+		m_opcodes[0346] = [=]() { ana(FetchByte()); };
 
 		// XRA r (XOR Register)
 		// (A) <- (A) xor (r)
 		// Note: The CY  and AC flags are cleared
-		AddOpcode(0250, (OPCodeFunction)(&CPU8080::XRAr));	// B
-		AddOpcode(0251, (OPCodeFunction)(&CPU8080::XRAr));	// C
-		AddOpcode(0252, (OPCodeFunction)(&CPU8080::XRAr));	// D
-		AddOpcode(0253, (OPCodeFunction)(&CPU8080::XRAr));	// E
-		AddOpcode(0254, (OPCodeFunction)(&CPU8080::XRAr));	// H
-		AddOpcode(0255, (OPCodeFunction)(&CPU8080::XRAr));	// L
-		AddOpcode(0257, (OPCodeFunction)(&CPU8080::XRAr));	// A
+		m_opcodes[0250] = [=]() { xra(regB); };	// B
+		m_opcodes[0251] = [=]() { xra(regC); };	// C
+		m_opcodes[0252] = [=]() { xra(regD); };	// D
+		m_opcodes[0253] = [=]() { xra(regE); };	// E
+		m_opcodes[0254] = [=]() { xra(regH); };	// H
+		m_opcodes[0255] = [=]() { xra(regL); };	// L
+		m_opcodes[0257] = [=]() { xra(regA); };	// A
 
 		// XRA M (XOR Memory)
 		// (A) <- (A) xor ((H)(L))
 		// Note: The CY  and AC flags are cleared
-		AddOpcode(0256, (OPCodeFunction)(&CPU8080::XRAm));	// m
+		m_opcodes[0256] = [=]() { xra(ReadMem()); }; // m
 
 		// XRI data (XOR Immediate)
 		// (A) <- (A) xor (byte 2)
 		// Note: The CY  and AC flags are cleared
-		AddOpcode(0356, (OPCodeFunction)(&CPU8080::XRI));
+		m_opcodes[0356] = [=]() { xra(FetchByte()); };
 
 		// ORA r (OR Register)
 		// (A) <- (A) or (r)
 		// Note: The CY  and AC flags are cleared
-		AddOpcode(0260, (OPCodeFunction)(&CPU8080::ORAr));	// B
-		AddOpcode(0261, (OPCodeFunction)(&CPU8080::ORAr));	// C
-		AddOpcode(0262, (OPCodeFunction)(&CPU8080::ORAr));	// D
-		AddOpcode(0263, (OPCodeFunction)(&CPU8080::ORAr));	// E
-		AddOpcode(0264, (OPCodeFunction)(&CPU8080::ORAr));	// H
-		AddOpcode(0265, (OPCodeFunction)(&CPU8080::ORAr));	// L
-		AddOpcode(0267, (OPCodeFunction)(&CPU8080::ORAr));	// A
+		m_opcodes[0260] = [=]() { ora(regB); };	// B
+		m_opcodes[0261] = [=]() { ora(regC); };	// C
+		m_opcodes[0262] = [=]() { ora(regD); };	// D
+		m_opcodes[0263] = [=]() { ora(regE); };	// E
+		m_opcodes[0264] = [=]() { ora(regH); };	// H
+		m_opcodes[0265] = [=]() { ora(regL); };	// L
+		m_opcodes[0267] = [=]() { ora(regA); };	// A
 
 		// ORA M (OR Memory)
 		// (A) <- (A) or ((H)(L))
 		// Note: The CY  and AC flags are cleared
-		AddOpcode(0266, (OPCodeFunction)(&CPU8080::ORAm));	// m
+		m_opcodes[0266] = [=]() { ora(ReadMem()); }; // m
 
 		// ORI data (OR Immediate)
 		// (A) <- (A) oor (byte 2)
 		// Note: The CY  and AC flags are cleared
-		AddOpcode(0366, (OPCodeFunction)(&CPU8080::ORI));
+		m_opcodes[0366] = [=]() { ora(FetchByte()); };
 
 		// CMP r (Compare Register)
 		// (A) - (r)
@@ -418,66 +418,66 @@ namespace emul
 		// the result of the substraction.  The Z flag
 		// is set to 1 if (A) = (r).  The CY flag is set
 		// to 1 if (A) < (r)
-		AddOpcode(0270, (OPCodeFunction)(&CPU8080::CMPr));	// B
-		AddOpcode(0271, (OPCodeFunction)(&CPU8080::CMPr));	// C
-		AddOpcode(0272, (OPCodeFunction)(&CPU8080::CMPr));	// D
-		AddOpcode(0273, (OPCodeFunction)(&CPU8080::CMPr));	// E
-		AddOpcode(0274, (OPCodeFunction)(&CPU8080::CMPr));	// H
-		AddOpcode(0275, (OPCodeFunction)(&CPU8080::CMPr));	// L
-		AddOpcode(0277, (OPCodeFunction)(&CPU8080::CMPr));	// A
+		m_opcodes[0270] = [=]() { cmp(regB); };	// B
+		m_opcodes[0271] = [=]() { cmp(regC); };	// C
+		m_opcodes[0272] = [=]() { cmp(regD); };	// D
+		m_opcodes[0273] = [=]() { cmp(regE); };	// E
+		m_opcodes[0274] = [=]() { cmp(regH); };	// H
+		m_opcodes[0275] = [=]() { cmp(regL); };	// L
+		m_opcodes[0277] = [=]() { cmp(regA); };	// A
 
 		// CMP M (Compare Memory)
 		// (A) - ((H)(L))
 		// Note: Same rules as CMP r
-		AddOpcode(0276, (OPCodeFunction)(&CPU8080::CMPm));	// m
+		m_opcodes[0276] = [=]() { cmp(ReadMem()); }; // m
 
 		// CPI data (Compare immediate)
 		// (A) - (byte2)
 		// Note Same rules as CMP r
-		AddOpcode(0376, (OPCodeFunction)(&CPU8080::CPI));
+		m_opcodes[0376] = [=]() { cmp(FetchByte()); };
 
 		// RLC (Rotate left)
 		// (An+1) <- (An)
 		// (A0) <- (A7)
 		// (CY) <- (A7)
 		// Note: Only the CY flag is affected
-		AddOpcode(0007, (OPCodeFunction)(&CPU8080::RLC));
+		m_opcodes[0007] = [=]() { RLC(); };
 
 		// RRC (Rotate right)
 		// (An) <- (An+1)
 		// (A7) <- (A0)
 		// (CY) <- (A0)
 		// Note: Only the CY flag is affected
-		AddOpcode(0017, (OPCodeFunction)(&CPU8080::RRC));
+		m_opcodes[0017] = [=]() { RRC(); };
 
 		// RAL (Rotate left through carry)
 		// (An+1) <- (An)
 		// (CY) <- (A7)
 		// (A0) <- (CY)
 		// Note: Only the CY flag is affected
-		AddOpcode(0027, (OPCodeFunction)(&CPU8080::RAL));
+		m_opcodes[0027] = [=]() { RAL(); };
 
 		// RAL (Rotate right through carry)
 		// (An) <- (An+1)
 		// (CY) <- (A0)
 		// (A7) <- (CY)
 		// Note: Only the CY flag is affected
-		AddOpcode(0037, (OPCodeFunction)(&CPU8080::RAR));
+		m_opcodes[0037] = [=]() { RAR(); };
 
 		// CMA (Complement accumulator)
 		// (A) <- /(A)
 		// Note: No flags are affected
-		AddOpcode(0057, (OPCodeFunction)(&CPU8080::CMA));
+		m_opcodes[0057] = [=]() { regA = ~regA; };
 
 		// CMC (Complement carry)
 		// (CY) <- /(CY)
 		// Note: No other flags are affected
-		AddOpcode(0077, (OPCodeFunction)(&CPU8080::CMC));
+		m_opcodes[0077] = [=]() { SetFlag(FLAG_CY, !GetFlag(FLAG_CY)); };
 	
 		// STC (Set Carry)
 		// (CY) <- 1
 		// Note: No other flags are affected
-		AddOpcode(0067, (OPCodeFunction)(&CPU8080::STC));
+		m_opcodes[0067] = [=]() { SetFlag(FLAG_CY, true); };
 
 		// -------------------
 		// 4. Branch Group
@@ -496,30 +496,30 @@ namespace emul
 
 		// JMP addr (Jump)
 		// (PC) <- (byte3)(byte2)
-		AddOpcode(0303, (OPCodeFunction)(&CPU8080::JMP));
-		AddOpcode(0313, (OPCodeFunction)(&CPU8080::JMP)); // Undocumented
+		m_opcodes[0303] = [=]() { jumpIF(true); };
+		m_opcodes[0313] = [=]() { jumpIF(true); }; // Undocumented
 
 		// Jcondition addr (Conditional Jump)
 		// If (CCC),
 		// (PC) <- (byte3)(byte2)
-		AddOpcode(0302, (OPCodeFunction)(&CPU8080::JNZ));
-		AddOpcode(0312, (OPCodeFunction)(&CPU8080::JZ));
-		AddOpcode(0322, (OPCodeFunction)(&CPU8080::JNC));
-		AddOpcode(0332, (OPCodeFunction)(&CPU8080::JC));
-		AddOpcode(0342, (OPCodeFunction)(&CPU8080::JPO));
-		AddOpcode(0352, (OPCodeFunction)(&CPU8080::JPE));
-		AddOpcode(0362, (OPCodeFunction)(&CPU8080::JP));
-		AddOpcode(0372, (OPCodeFunction)(&CPU8080::JM));
+		m_opcodes[0302] = [=]() { jumpIF(GetFlag(FLAG_Z) == false); };  // JNZ
+		m_opcodes[0312] = [=]() { jumpIF(GetFlag(FLAG_Z) == true); };   // JZ
+		m_opcodes[0322] = [=]() { jumpIF(GetFlag(FLAG_CY) == false); }; // JNC
+		m_opcodes[0332] = [=]() { jumpIF(GetFlag(FLAG_CY) == true); };  // JC
+		m_opcodes[0342] = [=]() { jumpIF(GetFlag(FLAG_P) == false); };  // JPO
+		m_opcodes[0352] = [=]() { jumpIF(GetFlag(FLAG_P) == true); };   // JPE
+		m_opcodes[0362] = [=]() { jumpIF(GetFlag(FLAG_S) == false); };  // JP
+		m_opcodes[0372] = [=]() { jumpIF(GetFlag(FLAG_S) == true); };   // JM
 
 		// CALL addr (Call)
 		// ((SP) - 1) <- (PCH)
 		// ((SP) - 2) <- (PCL)
 		// (SP) <- (SP) - 2
 		// (PC) <- (byte3)(byte2)
-		AddOpcode(0315, (OPCodeFunction)(&CPU8080::CALL));
-		AddOpcode(0335, (OPCodeFunction)(&CPU8080::CALL)); // Undocumented
-		AddOpcode(0355, (OPCodeFunction)(&CPU8080::CALL)); // Undocumented
-		AddOpcode(0375, (OPCodeFunction)(&CPU8080::CALL)); // Undocumented
+		m_opcodes[0315] = [=]() { callIF(true); };
+		m_opcodes[0335] = [=]() { callIF(true); }; // Undocumented
+		m_opcodes[0355] = [=]() { callIF(true); }; // Undocumented
+		m_opcodes[0375] = [=]() { callIF(true); }; // Undocumented
 
 		// Ccondition addr (Conditional Call)
 		// If (CCC),
@@ -527,54 +527,54 @@ namespace emul
 		// ((SP) - 2) <- (PCL)
 		// (SP) <- (SP) - 2
 		// (PC) <- (byte3)(byte2)
-		AddOpcode(0304, (OPCodeFunction)(&CPU8080::CNZ));
-		AddOpcode(0314, (OPCodeFunction)(&CPU8080::CZ));
-		AddOpcode(0324, (OPCodeFunction)(&CPU8080::CNC));
-		AddOpcode(0334, (OPCodeFunction)(&CPU8080::CC));
-		AddOpcode(0344, (OPCodeFunction)(&CPU8080::CPO));
-		AddOpcode(0354, (OPCodeFunction)(&CPU8080::CPE));
-		AddOpcode(0364, (OPCodeFunction)(&CPU8080::CP));
-		AddOpcode(0374, (OPCodeFunction)(&CPU8080::CM));
+		m_opcodes[0304] = [=]() { callIF(GetFlag(FLAG_Z) == false); };  // CNZ
+		m_opcodes[0314] = [=]() { callIF(GetFlag(FLAG_Z) == true); };   // CZ
+		m_opcodes[0324] = [=]() { callIF(GetFlag(FLAG_CY) == false); }; // CNC
+		m_opcodes[0334] = [=]() { callIF(GetFlag(FLAG_CY) == true); };  // CC
+		m_opcodes[0344] = [=]() { callIF(GetFlag(FLAG_P) == false); };  // CPO
+		m_opcodes[0354] = [=]() { callIF(GetFlag(FLAG_P) == true); };   // CPE
+		m_opcodes[0364] = [=]() { callIF(GetFlag(FLAG_S) == false); };  // CP
+		m_opcodes[0374] = [=]() { callIF(GetFlag(FLAG_S) == true); };   // CM
 
 		// RET (Return)
 		// (PCL) <- ((SP))
 		// (PCH) <- ((SP) + 1)
 		// (SP) <- (SP) + 2
-		AddOpcode(0311, (OPCodeFunction)(&CPU8080::RET));
-		AddOpcode(0331, (OPCodeFunction)(&CPU8080::RET)); // Undocumented
+		m_opcodes[0311] = [=]() { retIF(true); };
+		m_opcodes[0331] = [=]() { retIF(true); }; // Undocumented
 
 		// Rcondition (Conditional Return)
 		// If (CCC),
 		// (PCL) <- ((SP))
 		// (PCH) <- ((SP) + 1)
 		// (SP) <- (SP) + 2
-		AddOpcode(0300, (OPCodeFunction)(&CPU8080::RNZ));
-		AddOpcode(0310, (OPCodeFunction)(&CPU8080::RZ));
-		AddOpcode(0320, (OPCodeFunction)(&CPU8080::RNC));
-		AddOpcode(0330, (OPCodeFunction)(&CPU8080::RC));
-		AddOpcode(0340, (OPCodeFunction)(&CPU8080::RPO));
-		AddOpcode(0350, (OPCodeFunction)(&CPU8080::RPE));
-		AddOpcode(0360, (OPCodeFunction)(&CPU8080::RP));
-		AddOpcode(0370, (OPCodeFunction)(&CPU8080::RM));
+		m_opcodes[0300] = [=]() { retIF(GetFlag(FLAG_Z) == false); };  // RNZ
+		m_opcodes[0310] = [=]() { retIF(GetFlag(FLAG_Z) == true); };   // RZ
+		m_opcodes[0320] = [=]() { retIF(GetFlag(FLAG_CY) == false); }; // RNC
+		m_opcodes[0330] = [=]() { retIF(GetFlag(FLAG_CY) == true); };  // RC
+		m_opcodes[0340] = [=]() { retIF(GetFlag(FLAG_P) == false); };  // RPO
+		m_opcodes[0350] = [=]() { retIF(GetFlag(FLAG_P) == true); };   // RPE
+		m_opcodes[0360] = [=]() { retIF(GetFlag(FLAG_S) == false); };  // RP
+		m_opcodes[0370] = [=]() { retIF(GetFlag(FLAG_S) == true); };   // RM
 
 		// RST n (Restart)
 		// ((SP) - 1) <- (PCH)
 		// ((SP) - 2) <- (PCL)
 		// (SP) <- (SP) - 2
 		// (PC) <- 8 * NNN
-		AddOpcode(0307, (OPCodeFunction)(&CPU8080::RST));
-		AddOpcode(0317, (OPCodeFunction)(&CPU8080::RST));
-		AddOpcode(0327, (OPCodeFunction)(&CPU8080::RST));
-		AddOpcode(0337, (OPCodeFunction)(&CPU8080::RST));
-		AddOpcode(0347, (OPCodeFunction)(&CPU8080::RST));
-		AddOpcode(0357, (OPCodeFunction)(&CPU8080::RST));
-		AddOpcode(0367, (OPCodeFunction)(&CPU8080::RST));
-		AddOpcode(0377, (OPCodeFunction)(&CPU8080::RST));
+		m_opcodes[0307] = [=]() { RST(0); };
+		m_opcodes[0317] = [=]() { RST(1); };
+		m_opcodes[0327] = [=]() { RST(2); };
+		m_opcodes[0337] = [=]() { RST(3); };
+		m_opcodes[0347] = [=]() { RST(4); };
+		m_opcodes[0357] = [=]() { RST(5); };
+		m_opcodes[0367] = [=]() { RST(6); };
+		m_opcodes[0377] = [=]() { RST(7); };
 
 		// PCHL (Jump H and L indirect - move H and L to PC)
 		// (PCH)<-(H)
 		// (PCL)<-(L)
-		AddOpcode(0351, (OPCodeFunction)(&CPU8080::PCHL));
+		m_opcodes[0351] = [=]() { m_programCounter = GetHL(); };
 
 		// -------------------
 		// 5. Stack, I/O and Machine Control Group
@@ -584,84 +584,73 @@ namespace emul
 		// ((SP) - 2)<-(rl)
 		// (SP)<-(SP)-2
 		// Note: Register pair rp=SP may not be specified
-		AddOpcode(0305, (OPCodeFunction)(&CPU8080::PUSHb));
-		AddOpcode(0325, (OPCodeFunction)(&CPU8080::PUSHd));
-		AddOpcode(0345, (OPCodeFunction)(&CPU8080::PUSHh));
+		m_opcodes[0305] = [=]() { push(regB, regC); }; // BC
+		m_opcodes[0325] = [=]() { push(regD, regE); }; // DE
+		m_opcodes[0345] = [=]() { push(regH, regL); }; // HL
 
 		// PUSH PSW (Push processor status word)
-		// ((SP) - 1)  <- (A)
-		// ((SP) - 2)0 <- (CY)
-		// ((SP) - 2)1 <- (Undefined)
-		// ((SP) - 2)2 <- (P)
-		// ((SP) - 2)3 <- (Undefined)
-		// ((SP) - 2)4 <- (AC)
-		// ((SP) - 2)5 <- (Undefined)
-		// ((SP) - 2)6 <- (Z)
-		// ((SP) - 2)7 <- (S)
+		// ((SP) - 1)<-(A)
+		// ((SP) - 2)<-(FLAGS)
 		// (SP)<-(SP)-2
-		AddOpcode(0365, (OPCodeFunction)(&CPU8080::PUSHpsw));
+		m_opcodes[0365] = [=]() { push(regA, flags); };
 
 		// POP rp (Pop)
 		// (rl) <- ((SP))
 		// (rh) <- ((SP) + 1)
 		// (SP) <- (SP)+2
 		// Note: Register pair rp=SP may not be specified
-		AddOpcode(0301, (OPCodeFunction)(&CPU8080::POPb));
-		AddOpcode(0321, (OPCodeFunction)(&CPU8080::POPd));
-		AddOpcode(0341, (OPCodeFunction)(&CPU8080::POPh));
+		m_opcodes[0301] = [=]() { pop(regB, regC); }; // BC
+		m_opcodes[0321] = [=]() { pop(regD, regE); }; // DE
+		m_opcodes[0341] = [=]() { pop(regH, regL); }; // HL
 
 		// POP PSW (Pop processor status word)
-		// (CY) <- ((SP))0
-		// (P)  <- ((SP))2
-		// (AC) <- ((SP))4
-		// (Z)  <- ((SP))6
-		// (S)  <- ((SP))7
-		// (A)  <- ((SP)+1)
-		// (SP) <- (SP)+2
-		AddOpcode(0361, (OPCodeFunction)(&CPU8080::POPpsw));
+		// (FLAGS)<- ((SP))
+		// (A)    <- ((SP)+1)
+		// (SP)   <- (SP)+2
+		m_opcodes[0361] = [=]() { BYTE f; pop(regA, f); SetFlags(f); };
 
 		//XTHL (Exchange stack top with H and L)
 		// (L) <- ((SP))
 		// (H) <- ((SP) + 1)
-		AddOpcode(0343, (OPCodeFunction)(&CPU8080::XTHL));
+		m_opcodes[0343] = [=]() { XTHL(); };
 
 		// SPHL (Move HL to SP)
 		// (SP) <- (H)(L)
-		AddOpcode(0371, (OPCodeFunction)(&CPU8080::SPHL));
+		m_opcodes[0371] = [=]() { SPHL(); };
 
 		// IN port (Input)
 		// (A) <- (data)
-		AddOpcode(0333, (OPCodeFunction)(&CPU8080::IN));
+		m_opcodes[0333] = [=]() { In(FetchByte(), regA); };
 
 		// OUT port (Output)
 		// (data) <- (A)
-		AddOpcode(0323, (OPCodeFunction)(&CPU8080::OUT));
+		m_opcodes[0323] = [=]() { Out(FetchByte(), regA); };
 
 		// EI (Enable Interrupts)
 		// The interrupt system is enabled following the execution
 		// of the next instruction. 
-		AddOpcode(0373, (OPCodeFunction)(&CPU8080::EI));
+		m_opcodes[0373] = [=]() { EI(); };
 
 		// DI (Disable Interrupts)
 		// The interrupt ststem is disabled immediately following
 		// the execution of the DI instruction.  Interrupts are
 		// not recognized during the DI instruction
-		AddOpcode(0363, (OPCodeFunction)(&CPU8080::DI));
+		m_opcodes[0363] = [=]() { m_interruptsEnabled = false; };
 
 		// HLT (Halt)
-		AddOpcode(0166, (OPCodeFunction)(&CPU8080::HLT));
+		m_opcodes[0166] = [=]() { HLT(); };
 
 		// NOP (No op)
-		AddOpcode(0000, (OPCodeFunction)(&CPU8080::NOP));
+		m_opcodes[0000] = [=]() { };
 
-		// Illegal/Undocumented
-		AddOpcode(0010, (OPCodeFunction)(&CPU8080::NOP));
-		AddOpcode(0020, (OPCodeFunction)(&CPU8080::NOP));
-		AddOpcode(0030, (OPCodeFunction)(&CPU8080::NOP));
-		AddOpcode(0040, (OPCodeFunction)(&CPU8080::NOP));
-		AddOpcode(0050, (OPCodeFunction)(&CPU8080::NOP));
-		AddOpcode(0060, (OPCodeFunction)(&CPU8080::NOP));
-		AddOpcode(0070, (OPCodeFunction)(&CPU8080::NOP));
+		// Illegal/Undocumented (NOP)
+		m_opcodes[0010] = [=]() { };
+		m_opcodes[0020] = [=]() { };
+		m_opcodes[0030] = [=]() { };
+		m_opcodes[0040] = [=]() { };
+		m_opcodes[0050] = [=]() { };
+		m_opcodes[0060] = [=]() { };
+		m_opcodes[0070] = [=]() { };
 	}
 
 	CPU8080::~CPU8080()
@@ -744,43 +733,25 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "");
 	}
 
-	void CPU8080::DumpUnassignedOpcodes()
+	void CPU8080::UnknownOpcode()
 	{
-		LogPrintf(LOG_WARNING, "Dumping Unassigned Opcodes");
-		for (int i = 0; i < 256; ++i)
-		{
-			if (m_opcodesTable[i] == &CPU8080::UnknownOpcode)
-			{
-				LogPrintf(LOG_WARNING, "Unassigned: 0x%02X\t0%03o", i, i);
-			}
-		}
-	}
-
-	void CPU8080::AddOpcode(BYTE opcode, OPCodeFunction f)
-	{
-		if (m_opcodesTable[opcode] != &CPU8080::UnknownOpcode)
-		{
-			LogPrintf(LOG_ERROR, "CPU: Opcode (0x%02X) already defined!", opcode);
-		}
-
-		m_opcodesTable[opcode] = f;
-	}
-
-	void CPU8080::UnknownOpcode(BYTE opcode)
-	{
-		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X", opcode, m_programCounter);
+		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X", m_opcode, m_programCounter);
 	}
 
 	void CPU8080::Exec(BYTE opcode)
 	{
 		++m_programCounter;
 
+		m_opcode = opcode;
 		m_currTiming = &m_info.GetOpcodeTiming(opcode);
 
 		try
 		{
 			// Fetch the function corresponding to the opcode and run it
-			(this->*m_opcodesTable[opcode])(opcode);
+			{
+				auto& opFunc = m_opcodes[opcode];
+				opFunc();
+			}
 
 			TICK();
 		}
@@ -818,44 +789,6 @@ namespace emul
 		}
 	}
 
-	BYTE &CPU8080::getRegL(BYTE opcode)
-	{
-		switch(opcode & 070)
-		{
-		case 000:	return regB;
-		case 010:	return regC;
-		case 020:	return regD;
-		case 030:	return regE;
-		case 040:	return regH;
-		case 050:	return regL;
-		case 070:	return regA;
-
-		default:
-			LogPrintf(LOG_ERROR, "reg flag = mem");
-		}
-
-		return dummy;
-	}
-
-	BYTE &CPU8080::getRegR(BYTE opcode)
-	{
-		switch(opcode & 007)
-		{
-		case 000:	return regB;
-		case 001:	return regC;
-		case 002:	return regD;
-		case 003:	return regE;
-		case 004:	return regH;
-		case 005:	return regL;
-		case 007:	return regA;
-
-		default:
-			LogPrintf(LOG_ERROR, "reg flag = mem");
-		}
-
-		return dummy;
-	}
-
 	void CPU8080::adjustParity(BYTE data)
 	{
 		SetFlag(FLAG_P, IsParityEven(data));
@@ -871,95 +804,70 @@ namespace emul
 		SetFlag(FLAG_Z, (data==0));
 	}
 
-	void CPU8080::MOVrr(BYTE opcode)
-	{
-		getRegL(opcode) = getRegR(opcode);
-	}
-
-	void CPU8080::MOVmr(BYTE opcode)
-	{
-		m_memory.Write8(getHL(), getRegR(opcode));
-	}
-
-	void CPU8080::MOVrm(BYTE opcode)
-	{
-		getRegL(opcode) = m_memory.Read8(getHL());
-	}
-
-	void CPU8080::MVIr(BYTE opcode)
-	{
-		getRegL(opcode) = FetchByte();
-	}
-
-	void CPU8080::MVIm(BYTE opcode)
-	{
-		m_memory.Write8(getHL(), FetchByte());
-	}
-
-	void CPU8080::LXIb(BYTE opcode)
+	void CPU8080::LXIb()
 	{
 		regC = FetchByte();
 		regB = FetchByte();
 	}
 
-	void CPU8080::LXId(BYTE opcode)
+	void CPU8080::LXId()
 	{
 		regE = FetchByte();
 		regD = FetchByte();
 	}
 
-	void CPU8080::LXIh(BYTE opcode)
+	void CPU8080::LXIh()
 	{
 		regL = FetchByte();
 		regH = FetchByte();
 	}
 
-	void CPU8080::STAXb(BYTE opcode)
+	void CPU8080::STAXb()
 	{
 		m_memory.Write8(MakeWord(regB, regC), regA);
 	}
 
-	void CPU8080::STAXd(BYTE opcode)
+	void CPU8080::STAXd()
 	{
 		m_memory.Write8(MakeWord(regD, regE), regA);
 	}
 
-	void CPU8080::LDAXb(BYTE opcode)
+	void CPU8080::LDAXb()
 	{
 		regA = m_memory.Read8(MakeWord(regB, regC));
 	}
 
-	void CPU8080::LDAXd(BYTE opcode)
+	void CPU8080::LDAXd()
 	{
 		regA = m_memory.Read8(MakeWord(regD, regE));
 	}
 
-	void CPU8080::STA(BYTE opcode)
+	void CPU8080::STA()
 	{
 		ADDRESS dest = FetchWord();
 		m_memory.Write8(dest, regA);
 	}
 
-	void CPU8080::LDA(BYTE opcode)
+	void CPU8080::LDA()
 	{
 		ADDRESS src = FetchWord();
 		regA = m_memory.Read8(src);
 	}
 
-	void CPU8080::SHLD(BYTE opcode)
+	void CPU8080::SHLD()
 	{
 		ADDRESS dest = FetchWord();
-		m_memory.Write16(dest, getHL());
+		m_memory.Write16(dest, GetHL());
 	}
 
-	void CPU8080::LHLD(BYTE opcode)
+	void CPU8080::LHLD()
 	{
 		ADDRESS src = FetchWord();
 		regL = m_memory.Read8(src);
 		regH = m_memory.Read8(src + 1);
 	}
 
-	void CPU8080::XCHG(BYTE opcode)
+	void CPU8080::XCHG()
 	{
 		BYTE oldH, oldL;
 
@@ -971,63 +879,17 @@ namespace emul
 
 	void CPU8080::push(BYTE h, BYTE l)
 	{
-		regSP--;
-		m_memory.Write8(regSP, h);
-		regSP--;
-		m_memory.Write8(regSP, l);
-	}
-
-	void CPU8080::PUSHb(BYTE opcode)
-	{
-		push(regB, regC);
-	}
-
-	void CPU8080::PUSHd(BYTE opcode)
-	{
-		push(regD, regE);
-	}
-
-	void CPU8080::PUSHh(BYTE opcode)
-	{
-		push(regH, regL);
-	}
-
-	void CPU8080::PUSHpsw(BYTE opcode)
-	{
-		push(regA, flags);
+		m_memory.Write8(--regSP, h);
+		m_memory.Write8(--regSP, l);
 	}
 
 	void CPU8080::pop(BYTE &h, BYTE &l)
 	{
-		l = m_memory.Read8(regSP);
-		regSP++;
-		h = m_memory.Read8(regSP);
-		regSP++;
+		l = m_memory.Read8(regSP++);
+		h = m_memory.Read8(regSP++);
 	}
 
-	void CPU8080::POPb(BYTE opcode)
-	{
-		pop(regB, regC);
-	}
-
-	void CPU8080::POPd(BYTE opcode)
-	{
-		pop(regD, regE);
-	}
-
-	void CPU8080::POPh(BYTE opcode)
-	{
-		pop(regH, regL);
-	}
-
-	void CPU8080::POPpsw(BYTE opcode)
-	{
-		BYTE f;
-		pop(regA, f);
-		SetFlags(f);
-	}
-
-	void CPU8080::XTHL(BYTE opcode)
+	void CPU8080::XTHL()
 	{
 		BYTE oldH, oldL;
 
@@ -1040,24 +902,14 @@ namespace emul
 		m_memory.Write8(regSP+1, oldH);
 	}
 
-	void CPU8080::SPHL(BYTE opcode)
+	void CPU8080::SPHL()
 	{
-		regSP = getHL();
+		regSP = GetHL();
 	}
 
-	void CPU8080::LXIsp(BYTE opcode)
+	void CPU8080::LXIsp()
 	{
 		regSP = FetchWord();
-	}
-
-	void CPU8080::INXsp(BYTE opcode)
-	{
-		regSP++;
-	}
-
-	void CPU8080::DCXsp(BYTE opcode)
-	{
-		regSP--;
 	}
 
 	void CPU8080::jumpIF(bool condition)
@@ -1068,56 +920,6 @@ namespace emul
 			m_programCounter = dest;
 			TICKT3();
 		}
-	}
-
-	void CPU8080::JMP(BYTE opcode)
-	{
-		jumpIF(true);
-	}
-
-	void CPU8080::JC(BYTE opcode)
-	{
-		jumpIF(GetFlag(FLAG_CY) == true);
-	}
-
-	void CPU8080::JNC(BYTE opcode)
-	{
-		jumpIF(GetFlag(FLAG_CY) == false);
-	}
-
-	void CPU8080::JZ(BYTE opcode)
-	{
-		jumpIF(GetFlag(FLAG_Z) == true);
-	}
-
-	void CPU8080::JNZ(BYTE opcode)
-	{
-		jumpIF(GetFlag(FLAG_Z) == false);
-	}
-
-	void CPU8080::JP(BYTE opcode)
-	{
-		jumpIF(GetFlag(FLAG_S) == false);
-	}
-
-	void CPU8080::JM(BYTE opcode)
-	{
-		jumpIF(GetFlag(FLAG_S) == true);
-	}
-
-	void CPU8080::JPE(BYTE opcode)
-	{
-		jumpIF(GetFlag(FLAG_P) == true);
-	}
-
-	void CPU8080::JPO(BYTE opcode)
-	{
-		jumpIF(GetFlag(FLAG_P) == false);
-	}
-
-	void CPU8080::PCHL(BYTE opcode)
-	{
-		m_programCounter = getHL();
 	}
 
 	void CPU8080::callIF(bool condition)
@@ -1134,51 +936,6 @@ namespace emul
 			m_programCounter = dest;
 			TICKT3();
 		}
-	}
-
-	void CPU8080::CALL(BYTE opcode)
-	{
-		callIF(true);
-	}
-
-	void CPU8080::CC(BYTE opcode)
-	{
-		callIF(GetFlag(FLAG_CY) == true);
-	}
-
-	void CPU8080::CNC(BYTE opcode)
-	{
-		callIF(GetFlag(FLAG_CY) == false);
-	}
-
-	void CPU8080::CZ(BYTE opcode)
-	{
-		callIF(GetFlag(FLAG_Z) == true);
-	}
-
-	void CPU8080::CNZ(BYTE opcode)
-	{
-		callIF(GetFlag(FLAG_Z) == false);
-	}
-
-	void CPU8080::CP(BYTE opcode)
-	{
-		callIF(GetFlag(FLAG_S) == false);
-	}
-
-	void CPU8080::CM(BYTE opcode)
-	{
-		callIF(GetFlag(FLAG_S) == true);
-	}
-
-	void CPU8080::CPE(BYTE opcode)
-	{
-		callIF(GetFlag(FLAG_P) == true);
-	}
-
-	void CPU8080::CPO(BYTE opcode)
-	{
-		callIF(GetFlag(FLAG_P) == false);
 	}
 
 	void CPU8080::retIF(bool condition)
@@ -1198,161 +955,78 @@ namespace emul
 		}
 	}
 
-	void CPU8080::RET(BYTE opcode)
+	void CPU8080::RST(BYTE rst)
 	{
-		retIF(true);
+		m_memory.Write8(--regSP, GetHByte(m_programCounter));
+		m_memory.Write8(--regSP, GetLByte(m_programCounter));
+
+		m_programCounter = (rst << 3);
 	}
 
-	void CPU8080::RC(BYTE opcode)
+	void CPU8080::INRr(BYTE& reg)
 	{
-		retIF(GetFlag(FLAG_CY) == true);
-	}
-
-	void CPU8080::RNC(BYTE opcode)
-	{
-		retIF(GetFlag(FLAG_CY) == false);
-	}
-
-	void CPU8080::RZ(BYTE opcode)
-	{
-		retIF(GetFlag(FLAG_Z) == true);
-	}
-
-	void CPU8080::RNZ(BYTE opcode)
-	{
-		retIF(GetFlag(FLAG_Z) == false);
-	}
-
-	void CPU8080::RP(BYTE opcode)
-	{
-		retIF(GetFlag(FLAG_S) == false);
-	}
-
-	void CPU8080::RM(BYTE opcode)
-	{
-		retIF(GetFlag(FLAG_S) == true);
-	}
-
-	void CPU8080::RPE(BYTE opcode)
-	{
-		retIF(GetFlag(FLAG_P) == true);
-	}
-
-	void CPU8080::RPO(BYTE opcode)
-	{
-		retIF(GetFlag(FLAG_P) == true);
-	}
-
-	void CPU8080::RST(BYTE opcode)
-	{
-		regSP--;
-		m_memory.Write8(regSP, GetHByte(m_programCounter));
-		regSP--;
-		m_memory.Write8(regSP, GetLByte(m_programCounter));
-
-		m_programCounter = (opcode & 070);
-	}
-
-	void CPU8080::INRr(BYTE opcode)
-	{
-		BYTE &reg = getRegL(opcode);
 		reg++;
 
 		adjustParity(reg);
 		adjustZero(reg);
 		adjustSign(reg);
-		SetFlag(FLAG_AC, (reg&0x0F)==0);
+		SetFlag(FLAG_AC, (reg & 0x0F) == 0);
 	}
 
-	void CPU8080::DCRr(BYTE opcode)
+	void CPU8080::DCRr(BYTE& reg)
 	{
-		BYTE &reg = getRegL(opcode);
 		reg--;
 
 		adjustParity(reg);
 		adjustZero(reg);
 		adjustSign(reg);
-		SetFlag(FLAG_AC, (reg&0x0F)!=0x0F);
+		SetFlag(FLAG_AC, (reg & 0x0F) != 0x0F);
 	}
 
-	void CPU8080::INRm(BYTE opcode)
+	void CPU8080::INRm()
 	{
-		BYTE value;
-		value = m_memory.Read8(getHL());
+		BYTE value = ReadMem();
 		value++;
-		m_memory.Write8(getHL(), value);
+		WriteMem(value);
 
 		adjustParity(value);
 		adjustZero(value);
 		adjustSign(value);
-		SetFlag(FLAG_AC, (value&0x0F)==0);
+		SetFlag(FLAG_AC, (value & 0x0F) == 0);
 	}
 
-	void CPU8080::DCRm(BYTE opcode)
+	void CPU8080::DCRm()
 	{
-		BYTE value;
-		value = m_memory.Read8(getHL());
+		BYTE value = ReadMem();
 		value--;
-		m_memory.Write8(getHL(), value);
+		WriteMem(value);
 
 		adjustParity(value);
 		adjustZero(value);
 		adjustSign(value);
-		SetFlag(FLAG_AC, (value&0x0F)!=0x0F);
+		SetFlag(FLAG_AC, (value & 0x0F) != 0x0F);
 	}
 
-	void CPU8080::INXb(BYTE opcode)
+	void CPU8080::INX(BYTE& h, BYTE& l)
 	{
-		WORD value = MakeWord(regB, regC);
+		WORD value = MakeWord(h, l);
 		value++;
-		regB = GetHByte(value);
-		regC = GetLByte(value);
+		h = GetHByte(value);
+		l = GetLByte(value);
 	}
 
-	void CPU8080::INXd(BYTE opcode)
+	void CPU8080::DCX(BYTE& h, BYTE& l)
 	{
-		WORD value = MakeWord(regD, regE);
-		value++;
-		regD = GetHByte(value);
-		regE = GetLByte(value);
-	}
-
-	void CPU8080::INXh(BYTE opcode)
-	{
-		WORD value = getHL();
-		value++;
-		regH = GetHByte(value);
-		regL = GetLByte(value);
-	}
-
-	void CPU8080::DCXb(BYTE opcode)
-	{
-		WORD value = MakeWord(regB, regC);
+		WORD value = MakeWord(h, l);
 		value--;
-		regB = GetHByte(value);
-		regC = GetLByte(value);
-	}
-
-	void CPU8080::DCXd(BYTE opcode)
-	{
-		WORD value = MakeWord(regD, regE);
-		value--;
-		regD = GetHByte(value);
-		regE = GetLByte(value);
-	}
-
-	void CPU8080::DCXh(BYTE opcode)
-	{
-		WORD value = getHL();
-		value--;
-		regH = GetHByte(value);
-		regL = GetLByte(value);
+		h = GetHByte(value);
+		l = GetLByte(value);
 	}
 
 	void CPU8080::add(BYTE src, bool carry)
 	{
 		// AC flag
-		BYTE loNibble = (regA&0x0F) + (src&0x0F);
+		BYTE loNibble = (regA & 0x0F) + (src & 0x0F);
 
 		WORD temp = regA + src;
 		if (carry)
@@ -1363,88 +1037,30 @@ namespace emul
 
 		regA = (BYTE)temp;
 
-		SetFlag(FLAG_CY, (temp>0xFF));
-		SetFlag(FLAG_AC, (loNibble>0x0F));
+		SetFlag(FLAG_CY, (temp > 0xFF));
+		SetFlag(FLAG_AC, (loNibble > 0x0F));
 		adjustSign(regA);
 		adjustZero(regA);
 		adjustParity(regA);
 	}
 
-	void CPU8080::ADDr(BYTE opcode)
-	{
-		add(getRegR(opcode));
-	}
-
-	void CPU8080::ADCr(BYTE opcode)
-	{
-		add(getRegR(opcode), GetFlag(FLAG_CY));
-	}
-
-	void CPU8080::ADDm(BYTE opcode)
-	{
-		BYTE value = m_memory.Read8(getHL());
-
-		add(value);
-	}
-
-	void CPU8080::ADCm(BYTE opcode)
-	{
-		BYTE value = m_memory.Read8(getHL());
-
-		add(value, GetFlag(FLAG_CY));
-	}
-
-	void CPU8080::ADI(BYTE opcode)
-	{
-		BYTE value = FetchByte();
-
-		add(value);
-	}
-
-	void CPU8080::ACI(BYTE opcode)
-	{
-		BYTE value = FetchByte();
-
-		add(value, GetFlag(FLAG_CY));
-	}
-
 	void CPU8080::dad(WORD value)
 	{
-		long hl = getHL();
+		DWORD hl = GetHL();
 
 		hl += value;
 
-		SetFlag(FLAG_CY, hl>0xFFFF);
+		SetFlag(FLAG_CY, hl > 0xFFFF);
 
 		regH = GetHByte((WORD)hl);
 		regL = GetLByte((WORD)hl);
 	}
 
-	void CPU8080::DADb(BYTE opcode)
-	{
-		dad(MakeWord(regB, regC));
-	}
-
-	void CPU8080::DADd(BYTE opcode)
-	{
-		dad(MakeWord(regD, regE));
-	}
-
-	void CPU8080::DADh(BYTE opcode)
-	{
-		dad(getHL());
-	}
-
-	void CPU8080::DADsp(BYTE opcode)
-	{
-		dad(regSP);
-	}
-
 	void CPU8080::sub(BYTE src, bool borrow)
 	{
 		// AC flag
-		char loNibble = (regA&0x0F) - (src&0x0F);
-	
+		char loNibble = (regA & 0x0F) - (src & 0x0F);
+
 		int temp = regA - src;
 		if (borrow)
 		{
@@ -1454,50 +1070,16 @@ namespace emul
 
 		regA = (BYTE)temp;
 
-		SetFlag(FLAG_CY, (temp<0));
-		SetFlag(FLAG_AC, !(loNibble<0));
+		SetFlag(FLAG_CY, (temp < 0));
+		SetFlag(FLAG_AC, !(loNibble < 0));
 		adjustSign(regA);
 		adjustZero(regA);
 		adjustParity(regA);
 	}
 
-	void CPU8080::SUBr(BYTE opcode)
+	void CPU8080::ana(BYTE src)
 	{
-		sub(getRegR(opcode));
-	}
-
-	void CPU8080::SBBr(BYTE opcode)
-	{
-		sub(getRegR(opcode), GetFlag(FLAG_CY));
-	}
-
-	void CPU8080::SUBm(BYTE opcode)
-	{
-		BYTE value = m_memory.Read8(getHL());
-
-		sub(value);
-	}
-
-	void CPU8080::SBBm(BYTE opcode)
-	{
-		BYTE value = m_memory.Read8(getHL());
-
-		sub(value, GetFlag(FLAG_CY));
-	}
-
-	void CPU8080::SUI(BYTE opcode)
-	{
-		sub(FetchByte());
-	}
-
-	void CPU8080::SBI(BYTE opcode)
-	{
-		sub(FetchByte(), GetFlag(FLAG_CY));
-	}
-
-	void CPU8080::ANAr(BYTE opcode)
-	{
-		regA &= getRegR(opcode);
+		regA &= src;
 
 		adjustSign(regA);
 		adjustZero(regA);
@@ -1506,9 +1088,9 @@ namespace emul
 		SetFlag(FLAG_CY, false);
 	}
 
-	void CPU8080::XRAr(BYTE opcode)
+	void CPU8080::xra(BYTE src)
 	{
-		regA ^= getRegR(opcode);
+		regA ^= src;
 
 		adjustSign(regA);
 		adjustZero(regA);
@@ -1517,9 +1099,9 @@ namespace emul
 		SetFlag(FLAG_CY, false);
 	}
 
-	void CPU8080::ORAr(BYTE opcode)
+	void CPU8080::ora(BYTE src)
 	{
-		regA |= getRegR(opcode);
+		regA |= src;
 
 		adjustSign(regA);
 		adjustZero(regA);
@@ -1531,201 +1113,75 @@ namespace emul
 	void CPU8080::cmp(BYTE src)
 	{
 		// AC flag
-		char loNibble = (regA&0x0F) - (src&0x0F);
-	
+		char loNibble = (regA & 0x0F) - (src & 0x0F);
+
 		int temp = regA - src;
 
-		SetFlag(FLAG_CY, (temp<0));
-		SetFlag(FLAG_AC, !(loNibble<0));
+		SetFlag(FLAG_CY, (temp < 0));
+		SetFlag(FLAG_AC, !(loNibble < 0));
 		adjustSign((BYTE)temp);
 		adjustZero((BYTE)temp);
 		adjustParity((BYTE)temp);
 	}
 
-	void CPU8080::CMPr(BYTE opcode)
-	{
-		cmp(getRegR(opcode));
-	}
-
-	void CPU8080::ANAm(BYTE opcode)
-	{
-		BYTE value = m_memory.Read8(getHL());
-
-		regA &= value;
-
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
-		SetFlag(FLAG_AC, true);			// Must confirm
-		SetFlag(FLAG_CY, false);
-	}
-
-	void CPU8080::XRAm(BYTE opcode)
-	{
-		BYTE value = m_memory.Read8(getHL());
-
-		regA ^= value;
-
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
-		SetFlag(FLAG_AC, false);
-		SetFlag(FLAG_CY, false);
-	}
-
-	void CPU8080::ORAm(BYTE opcode)
-	{
-		BYTE value = m_memory.Read8(getHL());
-
-		regA |= value;
-
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
-		SetFlag(FLAG_AC, false);
-		SetFlag(FLAG_CY, false);
-	}
-
-	void CPU8080::CMPm(BYTE opcode)
-	{
-		BYTE value = m_memory.Read8(getHL());
-
-		cmp(value);
-	}
-
-	void CPU8080::ANI(BYTE opcode)
-	{
-		BYTE value = FetchByte();
-
-		regA &= value;
-
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
-		SetFlag(FLAG_AC, true);			// Must confirm
-		SetFlag(FLAG_CY, false);
-	}
-
-	void CPU8080::XRI(BYTE opcode)
-	{
-		BYTE value = FetchByte();
-
-		regA ^= value;
-
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
-		SetFlag(FLAG_AC, false);
-		SetFlag(FLAG_CY, false);
-	}
-
-	void CPU8080::ORI(BYTE opcode)
-	{
-		BYTE value = FetchByte();
-
-		regA |= value;
-
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
-		SetFlag(FLAG_AC, false);
-		SetFlag(FLAG_CY, false);
-	}
-
-	void CPU8080::CPI(BYTE opcode)
-	{
-		cmp(FetchByte());
-	}
-
-	void CPU8080::RLC(BYTE opcode)
+	void CPU8080::RLC()
 	{
 		bool msb = (regA & 128);
 
 		regA = (regA << 1);
-		regA |= (msb?1:0);
+		regA |= (msb ? 1 : 0);
 
 		SetFlag(FLAG_CY, msb);
 	}
 
-	void CPU8080::RRC(BYTE opcode)
+	void CPU8080::RRC()
 	{
 		bool lsb = (regA & 1);
 
 		regA = (regA >> 1);
 		regA &= ~128;
-		regA |= (lsb?128:0);
+		regA |= (lsb ? 128 : 0);
 
 		SetFlag(FLAG_CY, lsb);
 	}
 
-	void CPU8080::RAL(BYTE opcode)
+	void CPU8080::RAL()
 	{
 		bool msb = (regA & 128);
 
 		regA = (regA << 1);
-		regA |= (GetFlag(FLAG_CY)?1:0);
+		regA |= (GetFlag(FLAG_CY) ? 1 : 0);
 
 		SetFlag(FLAG_CY, msb);
 	}
 
-	void CPU8080::RAR(BYTE opcode)
+	void CPU8080::RAR()
 	{
 		bool lsb = (regA & 1);
 
 		regA = (regA >> 1);
 		regA &= ~128;
-		regA |= (GetFlag(FLAG_CY)?128:0);
+		regA |= (GetFlag(FLAG_CY) ? 128 : 0);
 
 		SetFlag(FLAG_CY, lsb);
 	}
 
-	void CPU8080::CMA(BYTE opcode)
-	{
-		regA = ~regA;
-	}
-
-	void CPU8080::STC(BYTE opcode)
-	{
-		SetFlag(FLAG_CY, true);
-	}
-
-	void CPU8080::CMC(BYTE opcode)
-	{
-		SetFlag(FLAG_CY, !GetFlag(FLAG_CY));
-	}
-
-	void CPU8080::DAA(BYTE opcode)
+	void CPU8080::DAA()
 	{
 		// TODO
+		LogPrintf(LOG_WARNING, "DAA: Not implemented");
 	}
 
-	void CPU8080::IN(BYTE opcode)
-	{
-		BYTE portNb = FetchByte();
-		In(portNb, regA);
-	}
-
-	void CPU8080::OUT(BYTE opcode)
-	{
-		BYTE portNb = FetchByte();
-		Out(portNb, regA);
-	}
-
-	void CPU8080::EI(BYTE opcode)
+	void CPU8080::EI()
 	{
 		m_interruptsEnabled = true; // TODO: Should happen after next instruction execution
 	}
 
-	void CPU8080::DI(BYTE opcode)
-	{
-		m_interruptsEnabled = false;
-	}
-
-	void CPU8080::NOP(BYTE opcode)
+	void CPU8080::NOP()
 	{
 	}
 
-	void CPU8080::HLT(BYTE opcode)
+	void CPU8080::HLT()
 	{
 		LogPrintf(LOG_INFO, "HLT");
 		m_state = CPUState::STOP;

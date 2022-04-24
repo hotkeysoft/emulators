@@ -49,12 +49,12 @@ namespace emul
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
 
-		typedef void (CPU::* OPCodeFunction)(BYTE);
-		void AddOpcode(BYTE, OPCodeFunction);
-		std::array<OPCodeFunction, 256> m_opcodesTable;
+		std::vector<std::function<void()>> m_opcodes;
+		void UnknownOpcode();
 
-		void UnknownOpcode(BYTE);
-		void DumpUnassignedOpcodes();
+		cpuInfo::CPUInfo m_info;
+		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
+		BYTE m_opcode = 0;
 
 		Interrupts& m_interrupts;
 		bool m_interruptsEnabled = false;
@@ -73,9 +73,6 @@ namespace emul
 
 		FLAG FLAG_RESERVED_ON = FLAG(_FLAG_R1);
 		FLAG FLAG_RESERVED_OFF = FLAG(_FLAG_R3 | _FLAG_R5);
-
-		cpuInfo::CPUInfo m_info;
-		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 
 		ADDRESS m_programCounter = 0;
 
@@ -104,10 +101,9 @@ namespace emul
 
 		void interrupt(InterruptSource source);
 
-		BYTE& getRegL(BYTE opcode);
-		BYTE& getRegR(BYTE opcode);
-
-		ADDRESS getHL() { return MakeWord(regH, regL); };
+		ADDRESS GetHL() const { return MakeWord(regH, regL); };
+		BYTE ReadMem() const { return m_memory.Read8(GetHL()); }
+		void WriteMem(BYTE value) { m_memory.Write8(GetHL(), value); }
 
 		void jumpIF(bool condition);
 		void callIF(bool condition);
@@ -117,6 +113,9 @@ namespace emul
 		void add(BYTE src, bool carry = false);
 		void sub(BYTE src, bool borrow = false);
 		void dad(WORD value);
+		void ana(BYTE src);
+		void xra(BYTE src);
+		void ora(BYTE src);
 		void cmp(BYTE src);
 
 		void adjustParity(BYTE data);
@@ -126,143 +125,48 @@ namespace emul
 		// Opcodes
 
 		// Move, load and store
-		void MOVrr(BYTE opcode);
-		void MOVmr(BYTE opcode);
-		void MOVrm(BYTE opcode);
-		void MVIr(BYTE opcode);
-		void MVIm(BYTE opcode);
-		void LXIb(BYTE opcode);
-		void LXId(BYTE opcode);
-		void LXIh(BYTE opcode);
-		void STAXb(BYTE opcode);
-		void STAXd(BYTE opcode);
-		void LDAXb(BYTE opcode);
-		void LDAXd(BYTE opcode);
-		void STA(BYTE opcode);
-		void LDA(BYTE opcode);
-		void SHLD(BYTE opcode);
-		void LHLD(BYTE opcode);
-		void XCHG(BYTE opcode);
+		void LXIb();
+		void LXId();
+		void LXIh();
+		void STAXb();
+		void STAXd();
+		void LDAXb();
+		void LDAXd();
+		void STA();
+		void LDA();
+		void SHLD();
+		void LHLD();
+		void XCHG();
 
 		// Stack ops
-		void PUSHb(BYTE opcode);
-		void PUSHd(BYTE opcode);
-		void PUSHh(BYTE opcode);
-		void PUSHpsw(BYTE opcode);
-		void POPb(BYTE opcode);
-		void POPd(BYTE opcode);
-		void POPh(BYTE opcode);
-		void POPpsw(BYTE opcode);
-		void XTHL(BYTE opcode);
-		void SPHL(BYTE opcode);
-		void LXIsp(BYTE opcode);
-		void INXsp(BYTE opcode);
-		void DCXsp(BYTE opcode);
-
-		// Jump
-		void JMP(BYTE opcode);
-		void JC(BYTE opcode);
-		void JNC(BYTE opcode);
-		void JZ(BYTE opcode);
-		void JNZ(BYTE opcode);
-		void JP(BYTE opcode);
-		void JM(BYTE opcode);
-		void JPE(BYTE opcode);
-		void JPO(BYTE opcode);
-		void PCHL(BYTE opcode);
-
-		// Call
-		void CALL(BYTE opcode);
-		void CC(BYTE opcode);
-		void CNC(BYTE opcode);
-		void CZ(BYTE opcode);
-		void CNZ(BYTE opcode);
-		void CP(BYTE opcode);
-		void CM(BYTE opcode);
-		void CPE(BYTE opcode);
-		void CPO(BYTE opcode);
-
-		// Return
-		void RET(BYTE opcode);
-		void RC(BYTE opcode);
-		void RNC(BYTE opcode);
-		void RZ(BYTE opcode);
-		void RNZ(BYTE opcode);
-		void RP(BYTE opcode);
-		void RM(BYTE opcode);
-		void RPE(BYTE opcode);
-		void RPO(BYTE opcode);
+		void XTHL();
+		void SPHL();
+		void LXIsp();
 
 		// Restart
-		void RST(BYTE opcode);
+		void RST(BYTE rst);
 
 		// Increment and Decrement
-		void INRr(BYTE opcode);
-		void DCRr(BYTE opcode);
-		void INRm(BYTE opcode);
-		void DCRm(BYTE opcode);
-		void INXb(BYTE opcode);
-		void INXd(BYTE opcode);
-		void INXh(BYTE opcode);
-		void DCXb(BYTE opcode);
-		void DCXd(BYTE opcode);
-		void DCXh(BYTE opcode);
-
-		// Add
-		void ADDr(BYTE opcode);
-		void ADCr(BYTE opcode);
-		void ADDm(BYTE opcode);
-		void ADCm(BYTE opcode);
-		void ADI(BYTE opcode);
-		void ACI(BYTE opcode);
-		void DADb(BYTE opcode);
-		void DADd(BYTE opcode);
-		void DADh(BYTE opcode);
-		void DADsp(BYTE opcode);
-
-		// Substract
-		void SUBr(BYTE opcode);
-		void SBBr(BYTE opcode);
-		void SUBm(BYTE opcode);
-		void SBBm(BYTE opcode);
-		void SUI(BYTE opcode);
-		void SBI(BYTE opcode);
-
-		// Logical
-		void ANAr(BYTE opcode);
-		void XRAr(BYTE opcode);
-		void ORAr(BYTE opcode);
-		void CMPr(BYTE opcode);
-		void ANAm(BYTE opcode);
-		void XRAm(BYTE opcode);
-		void ORAm(BYTE opcode);
-		void CMPm(BYTE opcode);
-		void ANI(BYTE opcode);
-		void XRI(BYTE opcode);
-		void ORI(BYTE opcode);
-		void CPI(BYTE opcode);
+		void INRr(BYTE& reg);
+		void DCRr(BYTE& reg);
+		void INRm();
+		void DCRm();
+		void INX(BYTE& h, BYTE& l);
+		void DCX(BYTE& h, BYTE& l);
 
 		// Rotate
-		void RLC(BYTE opcode);
-		void RRC(BYTE opcode);
-		void RAL(BYTE opcode);
-		void RAR(BYTE opcode);
+		void RLC();
+		void RRC();
+		void RAL();
+		void RAR();
 
 		// Specials
-		void CMA(BYTE opcode);
-		void STC(BYTE opcode);
-		void CMC(BYTE opcode);
-		void DAA(BYTE opcode);
-
-		// Input/Output
-		void IN(BYTE opcode);
-		void OUT(BYTE opcode);
+		void DAA();
 
 		// Control
-		void EI(BYTE opcode);
-		void DI(BYTE opcode);
-		void NOP(BYTE opcode);
-		void HLT(BYTE opcode);
+		void EI();
+		void NOP();
+		void HLT();
 
 		friend class Monitor8080;
 	};
