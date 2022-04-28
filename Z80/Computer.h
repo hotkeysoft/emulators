@@ -2,7 +2,7 @@
 
 #include "CPU/CPU8080.h"
 #include "CPU/Memory.h"
-#include "CPU/Interrupts.h"
+#include "CPU/Interrupts8080.h"
 
 #include "Video/Video.h"
 #include "Serializable.h"
@@ -46,7 +46,7 @@ namespace emul
 		virtual void Init(cpuInfo::CPUType cpu, WORD baseRAM);
 
 		Memory m_memory;
-		Interrupts m_interrupts;
+		Interrupts8080 m_interrupts;
 
 		emul::CPU8080* m_cpu = nullptr;
 		video::Video* m_video = nullptr;

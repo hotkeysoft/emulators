@@ -16,8 +16,6 @@ namespace emul
 	class CPU8080 : public CPU, public Serializable, public PortConnector
 	{
 	public:
-		enum InterruptSource { TRAP = 0, RST75, RST65, RST55 /*TODO INTR/INTA not implemented*/ };
-
 		CPU8080(Memory& memory, Interrupts& interrupts);
 		virtual ~CPU8080();
 
@@ -99,7 +97,7 @@ namespace emul
 		BYTE FetchByte();
 		WORD FetchWord();
 
-		void interrupt(InterruptSource source);
+		void Interrupt();
 
 		ADDRESS GetHL() const { return MakeWord(regH, regL); };
 		BYTE ReadMem() const { return m_memory.Read8(GetHL()); }
@@ -109,7 +107,9 @@ namespace emul
 		void callIF(bool condition);
 		void retIF(bool condition);
 		void push(BYTE h, BYTE l);
+		void pushPC();
 		void pop(BYTE& h, BYTE& l);
+		void popPC();
 		void add(BYTE src, bool carry = false);
 		void sub(BYTE src, bool borrow = false);
 		void dad(WORD value);

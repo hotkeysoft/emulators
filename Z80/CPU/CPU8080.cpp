@@ -710,13 +710,9 @@ namespace emul
 			return false;
 
 		// Check for interrupts
-		// TODO: No Timing, no latching, no masking... 
 		if (m_interruptsEnabled)
 		{
-			interrupt(TRAP);
-			interrupt(RST75);
-			interrupt(RST65);
-			interrupt(RST55);
+			Interrupt();
 		}
 
 		return true;
@@ -762,31 +758,33 @@ namespace emul
 		}
 	}
 
-	void CPU8080::interrupt(InterruptSource source)
+	void CPU8080::Interrupt()
 	{
-		if (m_interrupts.IsInterrupting(source))
+		Interrupts::IntType type = m_interrupts.GetType();
+		if (type == Interrupts::IntType::NONE)
 		{
-			m_interruptsEnabled = false;
-
-			regSP--;
-			m_memory.Write8(regSP, GetHByte(m_programCounter));
-			regSP--;
-			m_memory.Write8(regSP, GetLByte(m_programCounter));
-
-			ADDRESS vector = 0;
-
-			switch (source)
-			{
-			case TRAP:	vector = 0x24; break;
-			case RST75:	vector = 0x3C; break;
-			case RST65:	vector = 0x34; break;
-			case RST55:	vector = 0x2C; break;
-			default:
-				LogPrintf(LOG_ERROR, "Invalid interrupt source");
-			}
-
-			m_programCounter = vector;
+			return;
 		}
+
+		m_interruptsEnabled = false;
+		pushPC();
+
+		switch (type)
+		{
+		case Interrupts::IntType::OPCODE:
+			//TODO: Untested
+			--m_programCounter; // Undo Exec() increment of program counter
+			Exec(m_interrupts.GetOpcode());
+			break;
+
+		case Interrupts::IntType::VECTOR:
+			pushPC();
+			m_interruptsEnabled = false;
+			m_programCounter = m_interrupts.GetVector();
+			break;
+		}
+
+		m_interrupts.Acknowledge();
 	}
 
 	void CPU8080::adjustParity(BYTE data)
@@ -883,10 +881,22 @@ namespace emul
 		m_memory.Write8(--regSP, l);
 	}
 
+	void CPU8080::pushPC()
+	{
+		push(GetHByte(m_programCounter), GetLByte(m_programCounter));
+	}
+
 	void CPU8080::pop(BYTE &h, BYTE &l)
 	{
 		l = m_memory.Read8(regSP++);
 		h = m_memory.Read8(regSP++);
+	}
+
+	void CPU8080::popPC()
+	{
+		BYTE h, l;
+		pop(h, l);
+		m_programCounter = MakeWord(h, l);
 	}
 
 	void CPU8080::XTHL()
@@ -928,11 +938,7 @@ namespace emul
 
 		if (condition == true)
 		{
-			regSP--;
-			m_memory.Write8(regSP, GetHByte(m_programCounter));
-			regSP--;
-			m_memory.Write8(regSP, GetLByte(m_programCounter));
-
+			pushPC();
 			m_programCounter = dest;
 			TICKT3();
 		}
@@ -942,23 +948,15 @@ namespace emul
 	{
 		if (condition == true)
 		{
-			BYTE valL, valH;
+			popPC();
 
-			valL = m_memory.Read8(regSP);
-			regSP++;
-			valH = m_memory.Read8(regSP);
-			regSP++;		
-
-			WORD returnTo = MakeWord(valH, valL);
-			m_programCounter = returnTo;
 			TICKT3();
 		}
 	}
 
 	void CPU8080::RST(BYTE rst)
 	{
-		m_memory.Write8(--regSP, GetHByte(m_programCounter));
-		m_memory.Write8(--regSP, GetLByte(m_programCounter));
+		pushPC();
 
 		m_programCounter = (rst << 3);
 	}

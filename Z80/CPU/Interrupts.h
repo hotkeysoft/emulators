@@ -1,21 +1,21 @@
 #pragma once
+#include "Common.h"
 
-#include "InterruptSource.h"
-#include <list>
-
-const int MAXINTERRUPT = 16;
-
-class Interrupts : public Logger
+namespace emul
 {
-public:
-	Interrupts();
-	virtual ~Interrupts();
+	class Interrupts : public Logger
+	{
+	public:
+		Interrupts() : Logger("INTR") {}
+		virtual ~Interrupts() {}
 
-	bool Allocate(BYTE intNb, InterruptSource *intSource);
-	bool Free(InterruptSource *intSource);
+		enum class IntType { NONE, VECTOR, OPCODE };
 
-	bool IsInterrupting(BYTE intNb);
+		virtual bool IsInterrupting() const = 0;
+		virtual void Acknowledge() = 0;
 
-private:
-	InterruptSource* m_interrupts[MAXINTERRUPT];
-};
+		virtual IntType GetType() const = 0;
+		virtual BYTE GetOpcode() const { return 0; }
+		virtual BYTE GetVector() const { return 0; }
+	};
+}
