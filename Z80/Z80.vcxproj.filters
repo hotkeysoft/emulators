@@ -132,6 +132,9 @@
     <ClInclude Include="CPU\Interrupts8080.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ComputerZ80.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp">
@@ -192,6 +195,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CPU\Interrupts8080.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerZ80.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

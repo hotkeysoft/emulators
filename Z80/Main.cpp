@@ -8,6 +8,7 @@
 #include "UI/MainWindow.h"
 
 #include "Computer8080.h"
+#include "ComputerZ80.h"
 
 #include "Config.h"
 #include "Sound/Sound.h"
@@ -37,7 +38,7 @@ size_t emul::g_ticks = 0;
 FILE* logFile = nullptr;
 
 enum class Mode { MONITOR = 0, LOG = 2};
-Mode mode = Mode::MONITOR;
+Mode mode = Mode::LOG;
 
 Console console;
 emul::Monitor8080* monitor = nullptr;
@@ -125,7 +126,7 @@ Computer* CreateComputer(std::string arch)
 	}
 	else if (arch == "z80")
 	{
-		// computer = new emul::ComputerZ80();
+		computer = new emul::ComputerZ80();
 	}
 
 	return computer;
