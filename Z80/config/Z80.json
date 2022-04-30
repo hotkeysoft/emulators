@@ -1,5 +1,6 @@
 {
   "cpu": {
+  	"opcodes.grp": 4,    
     "opcodes": [
       { "name": "NOP",            "timing": [4] },
       { "name": "LD BC, {i16}",   "timing": [10] },
@@ -249,7 +250,7 @@
       { "name": "JP C, {i16}",    "timing": [10] },
       { "name": "IN A, ({i8})",   "timing": [10] },
       { "name": "CALL C, {i16}",  "timing": [11, 0, 6] },
-      { "name": "{grp.ix}",       "timing": [17] },
+      { "name": "{grp3}",         "timing": [17] },
       { "name": "SBC A,{i8}",     "timing": [7] },
       { "name": "RST 18h",        "timing": [11] },
                                  
@@ -267,7 +268,7 @@
       { "name": "JP PE, {i16}",   "timing": [10] },
       { "name": "EX DE, HL",      "timing": [4] },
       { "name": "CALL PE, {i16}", "timing": [11, 0, 6] },
-      { "name": "{grp.extd}" },
+      { "name": "{grp2}" },
       { "name": "XOR {i8}",       "timing": [7] },
       { "name": "RST 28h",        "timing": [11] },
                                  
@@ -285,13 +286,13 @@
       { "name": "JP M, {i16}",    "timing": [10] },
       { "name": "EI",             "timing": [4] },
       { "name": "CALL M, {i16}",  "timing": [11, 0, 6] },
-      { "name": "{grp.iy}",       "timing": [17] },
+      { "name": "{grp4}",         "timing": [17] },
       { "name": "CP {i8}",        "timing": [7] },
       { "name": "RST 38h",        "timing": [11] }
+    ],  
+    "opcodes.grp1": [      
     ],
-    "grp.bits": [      
-    ],
-    "grp.extd": [
+    "opcodes.grp2": [
     	"0x40",
       { "name": "IN B, (C)" },
       { "name": "OUT (C), B" },
@@ -392,9 +393,9 @@
       { "name": "INDR" },
       { "name": "OTDR" }
     ],
-    "grp.ix": [
+    "opcodes.grp3": [
     ],
-    "grp.iy": [
+    "opcodes.grp4": [
     ]
   },
   "monitor": {

@@ -29,9 +29,9 @@ namespace cpuInfo
 			throw std::exception("file not found");
 		}
 
-		if (m_config["cpu"]["opcodes"].size() != 256) 
+		if (!m_config["cpu"].contains("opcodes"))
 		{
-			throw std::exception("opcode list incomplete");
+			throw std::exception("missing [opcodes] array");
 		}	
 		BuildOpcodes(m_config["cpu"]["opcodes"]);
 
@@ -40,6 +40,7 @@ namespace cpuInfo
 		{
 			groupCount = m_config["cpu"]["opcodes.grp"];
 		}
+
 		if (groupCount > (int)Opcode::MULTI::_COUNT)
 		{
 			throw std::exception("invalid opcode.grp count");
@@ -49,9 +50,9 @@ namespace cpuInfo
 		{
 			char grpName[32];
 			sprintf(grpName, "opcodes.grp%d", i + 1);
-			if (m_config["cpu"][grpName].size() != 8)
+			if (!m_config["cpu"].contains(grpName))
 			{
-				throw std::exception("opcode.grp# list incomplete");
+				throw std::exception("opcode.grp# list missing");
 			}
 			BuildSubOpcodes(i, m_config["cpu"][grpName]);
 		}
@@ -72,19 +73,107 @@ namespace cpuInfo
 
 	void CPUInfo::BuildOpcodes(const json& opcodes)
 	{
+		// Trivial case is an array of 256 opcodes. However, to account for holes
+		// and other weirdness, it is possible to specify a new index (int or hex string e.g. "0x12")
+		// so that the count jumps to the new value and continue loading opcodes linearly from there.
+
+		// First fill in the array so we don't have empty holes
 		for (int i = 0; i < 256; ++i)
 		{
-			m_opcodes[i] = BuildOpcode(opcodes[i]["name"]);
-			m_timing[i] = BuildTiming(opcodes[i]);
+			char buf[16];
+			sprintf(buf, "DB 0x%02X", i);
+			m_opcodes[i] = BuildOpcode(buf);
+			m_timing[i] = OpcodeTiming {};
+		}
+
+		BYTE opcode = 0;
+		for (const json& curr : opcodes)
+		{
+			if (opcode > 255)
+			{
+				throw std::exception("BuildOpcodes: index > 255");
+			}
+
+			if (curr.is_number_integer()) // new index (integer)
+			{
+				int newIndex = curr;
+				if (newIndex < 0 || newIndex > 255)
+				{
+					throw std::exception("BuildOpcodes: Invalid index");
+				}
+				opcode = newIndex;
+			}
+			else if (curr.is_string()) // new index (string)
+			{
+				int newIndex = std::stoul((const std::string&)curr, nullptr, 16);
+				if (newIndex < 0 || newIndex > 255)
+				{
+					throw std::exception("BuildOpcodes: Invalid index");
+				}
+				opcode = newIndex;
+			}
+			else if (curr.is_object()) // opcode data
+			{
+				m_opcodes[opcode] = BuildOpcode(curr["name"]);
+				m_timing[opcode] = BuildTiming(curr);
+				++opcode;
+			}
+			else
+			{
+				throw std::exception("BuildOpcodes: Invalid value");
+			}
 		}
 	}
 
 	void CPUInfo::BuildSubOpcodes(int index, const json& opcodes)
 	{
-		for (int i = 0; i < 8; ++i)
+		// First fill in the array so we don't have empty holes
+		for (int i = 0; i < 256; ++i)
 		{
-			m_subOpcodes[index][i] = opcodes[i]["name"];
-			m_subTiming[index][i] = BuildTiming(opcodes[i]);
+			char buf[16];
+			sprintf(buf, "DB 0x%02X", i);
+			m_subOpcodes[index][i] = buf;
+			m_subTiming[index][i] = OpcodeTiming{};
+		}
+
+		// TODO: Code duplication w/BuildOpcodes
+		BYTE opcode = 0;
+		for (const json& curr : opcodes)
+		{
+			if (opcode > 255)
+			{
+				throw std::exception("BuildOpcodes: index > 255");
+			}
+
+
+			if (curr.is_number_integer()) // new index (integer)
+			{
+				int newIndex = curr;
+				if (newIndex < 0 || newIndex > 255)
+				{
+					throw std::exception("BuildSubOpcodes: Invalid index");
+				}
+				opcode = newIndex;
+			}
+			else if (curr.is_string()) // new index (string)
+			{
+				int newIndex = std::stoul((const std::string&)curr, nullptr, 16);
+				if (newIndex < 0 || newIndex > 255)
+				{
+					throw std::exception("BuildOpcodes: Invalid index");
+				}
+				opcode = newIndex;
+			}
+			else if (curr.is_object()) // opcode data
+			{
+				m_subOpcodes[index][opcode] = opcode["name"];
+				m_subTiming[index][opcode] = BuildTiming(opcode);
+				++opcode;
+			}
+			else
+			{
+				throw std::exception("BuildSubOpcodes: Invalid value");
+			}
 		}
 	}
 
@@ -171,7 +260,7 @@ namespace cpuInfo
 
 	const std::string CPUInfo::GetSubOpcodeStr(const Opcode& parent, BYTE op2) const
 	{
-		if (parent.multi == Opcode::MULTI::NONE || op2 > 7)
+		if (parent.multi == Opcode::MULTI::NONE)
 		{
 			return "{err}";
 		}

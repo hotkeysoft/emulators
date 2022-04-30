@@ -110,10 +110,10 @@ namespace cpuInfo
 		OpcodeTiming BuildTiming(const json& opcode) const;
 
 		Opcode m_opcodes[256];
-		std::string m_subOpcodes[(int)Opcode::MULTI::_COUNT][8];
+		std::string m_subOpcodes[(int)Opcode::MULTI::_COUNT][256];
 
 		OpcodeTiming m_timing[256];
-		OpcodeTiming m_subTiming[(int)Opcode::MULTI::_COUNT][8];
+		OpcodeTiming m_subTiming[(int)Opcode::MULTI::_COUNT][256];
 		OpcodeTiming m_miscTiming[(int)MiscTiming::_COUNT];
 	};
 }
