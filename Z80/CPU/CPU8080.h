@@ -74,22 +74,28 @@ namespace emul
 
 		ADDRESS m_programCounter = 0;
 
-		BYTE regA = 0;
-		BYTE regB = 0;
-		BYTE regC = 0;
-		BYTE regD = 0; 
-		BYTE regE = 0;
-		BYTE regH = 0; 
-		BYTE regL = 0;
-		WORD regSP = 0;
+		struct Registers
+		{
+			BYTE A = 0;
+			BYTE flags = 0;
 
-		BYTE flags = 0;
+			BYTE B = 0;
+			BYTE C = 0;
 
-		void ClearFlags();
+			BYTE D = 0;
+			BYTE E = 0;
+
+			BYTE H = 0;
+			BYTE L = 0;
+		} m_reg;
+
+		WORD m_regSP = 0;
+
+		void ClearFlags(BYTE& flags);
 		void SetFlags(BYTE f);
 
-		bool GetFlag(FLAG f) { return (flags & f) ? true : false; };
-		void SetFlag(FLAG f, bool v) { SetBitMask(flags, f, v); };
+		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; };
+		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); };
 
 		BYTE dummy = 0;
 
@@ -99,7 +105,7 @@ namespace emul
 
 		void Interrupt();
 
-		ADDRESS GetHL() const { return MakeWord(regH, regL); };
+		ADDRESS GetHL() const { return MakeWord(m_reg.H, m_reg.L); };
 		BYTE ReadMem() const { return m_memory.Read8(GetHL()); }
 		void WriteMem(BYTE value) { m_memory.Write8(GetHL(), value); }
 

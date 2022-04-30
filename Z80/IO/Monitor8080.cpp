@@ -197,18 +197,18 @@ namespace emul
 
 	void Monitor8080::UpdateRegisters()
 	{
-		WriteValueHex(m_cpu->regA, m_cpu->GetInfo().GetCoord("A"));
-		WriteValueHex(m_cpu->regB, m_cpu->GetInfo().GetCoord("B"));
-		WriteValueHex(m_cpu->regC, m_cpu->GetInfo().GetCoord("C"));
-		WriteValueHex(m_cpu->regD, m_cpu->GetInfo().GetCoord("D"));
-		WriteValueHex(m_cpu->regE, m_cpu->GetInfo().GetCoord("E"));
+		WriteValueHex(m_cpu->m_reg.A, m_cpu->GetInfo().GetCoord("A"));
+		WriteValueHex(m_cpu->m_reg.B, m_cpu->GetInfo().GetCoord("B"));
+		WriteValueHex(m_cpu->m_reg.C, m_cpu->GetInfo().GetCoord("C"));
+		WriteValueHex(m_cpu->m_reg.D, m_cpu->GetInfo().GetCoord("D"));
+		WriteValueHex(m_cpu->m_reg.E, m_cpu->GetInfo().GetCoord("E"));
 
-		WriteValueHex(m_cpu->regH, m_cpu->GetInfo().GetCoord("H"));
-		WriteValueHex(m_cpu->regL, m_cpu->GetInfo().GetCoord("L"));
+		WriteValueHex(m_cpu->m_reg.H, m_cpu->GetInfo().GetCoord("H"));
+		WriteValueHex(m_cpu->m_reg.L, m_cpu->GetInfo().GetCoord("L"));
 
-		WriteValueHex(m_cpu->flags, m_cpu->GetInfo().GetCoord("F"));
+		WriteValueHex(m_cpu->m_reg.flags, m_cpu->GetInfo().GetCoord("F"));
 			
-		WriteValueHex((WORD)m_cpu->regSP, m_cpu->GetInfo().GetCoord("SP"));
+		WriteValueHex((WORD)m_cpu->m_regSP, m_cpu->GetInfo().GetCoord("SP"));
 		WriteValueHex((WORD)m_cpu->GetCurrentAddress(), m_cpu->GetInfo().GetCoord("PC"));
 	}
 
@@ -232,7 +232,7 @@ namespace emul
 
 		for (int i = 0; i < width; ++i)
 		{
-			attr[width-i-1] = GetBit(m_cpu->flags, i) ? 15 : 8;
+			attr[width-i-1] = GetBit(m_cpu->m_reg.flags, i) ? 15 : 8;
 		}
 
 		m_console.WriteAttrAt(coord.x, coord.y, attr, width);
@@ -255,7 +255,7 @@ namespace emul
 			offset = m_cpu->GetHL();
 			break;
 		case RAMMode::SP:
-			offset = m_cpu->regSP;
+			offset = m_cpu->m_regSP;
 			break;
 		case RAMMode::PC:
 			offset = m_cpu->GetCurrentAddress();
@@ -339,7 +339,7 @@ namespace emul
 		}
 	}
 
-	bool replace(std::string& str, const std::string& from, const std::string& to) 
+	bool Monitor8080::Replace(std::string& str, const std::string& from, const std::string& to)
 	{
 		size_t start = str.find(from);
 		if (start == std::string::npos)
@@ -369,7 +369,7 @@ namespace emul
 			decoded.AddRaw(imm8);
 
 			sprintf(buf, "0%Xh", imm8);
-			replace(text, "{i8}", buf);
+			Replace(text, "{i8}", buf);
 			break;
 		}
 		case Opcode::IMM::W16:
@@ -379,7 +379,7 @@ namespace emul
 			decoded.AddRaw(imm16);
 
 			sprintf(buf, "0%Xh", imm16);
-			replace(text, "{i16}", buf);
+			Replace(text, "{i16}", buf);
 			break;
 		}
 		default:

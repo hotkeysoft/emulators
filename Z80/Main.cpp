@@ -4,6 +4,7 @@
 #include "CPU/MemoryBlock.h"
 #include "IO/Console.h"
 #include "IO/Monitor8080.h"
+#include "IO/MonitorZ80.h"
 
 #include "UI/MainWindow.h"
 
@@ -39,6 +40,7 @@ FILE* logFile = nullptr;
 
 enum class Mode { MONITOR = 0, LOG = 2};
 Mode mode = Mode::LOG;
+ADDRESS customMemoryView = 0;
 
 Console console;
 emul::Monitor8080* monitor = nullptr;
@@ -79,6 +81,7 @@ void ShowMonitor()
 		consoleInit = true;
 		console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
 	}
+	monitor->SetCustomMemoryView(customMemoryView);
 	monitor->Show();
 }
 
@@ -141,7 +144,21 @@ void InitPC(Computer* pc, /*Overlay& overlay, */bool reset = true)
 	}
 
 	delete monitor;
-	monitor = new emul::Monitor8080(console);
+
+	std::string cpuID = pc->GetCPU().GetID();
+	if (cpuID == "8080")
+	{
+		monitor = new emul::Monitor8080(console);
+	}
+	else if (cpuID == "z80")
+	{
+		monitor = new emul::MonitorZ80(console);
+	}
+	else
+	{
+		throw std::exception("Unkwown cpuID");
+	}
+
 	monitor->Init(pc->GetCPU(), pc->GetMemory());
 
 //	overlay.SetPC(pc);
@@ -281,36 +298,36 @@ int main(int argc, char* args[])
 		}
 	}
 
-	//bool breakpointEnabled = false;
-	//emul::RawSegmentOffset breakpoint;
-	//std::string breakpointStr = CONFIG().GetValueStr("monitor", "breakpoint");
-	//if (breakpointStr.size())
-	//{
-	//	if (breakpoint.FromString(breakpointStr.c_str()))
-	//	{
-	//		breakpointEnabled = true;
-	//		fprintf(stderr, "Set Breakpoint to [%s]\n", breakpoint.ToString());
-	//	}
-	//	else
-	//	{
-	//		fprintf(stderr, "Unable to decode SEGMENT:OFFSET value [%s]\n", breakpointStr.c_str());
-	//	}		
-	//}
+	bool breakpointEnabled = false;
+	emul::ADDRESS breakpoint;
+	std::string breakpointStr = CONFIG().GetValueStr("monitor", "breakpoint");
+	if (breakpointStr.size())
+	{
+		breakpoint = std::stoul(breakpointStr, nullptr, 0);
+		if (breakpoint < 0 || breakpoint > 0xFFFF)
+		{
+			fprintf(stderr, "Unable to decode breakpoint value [%s]\n", breakpointStr.c_str());
+		}
+		else
+		{
+			breakpointEnabled = true;
+			fprintf(stderr, "Set Breakpoint to [0x%04X]\n", breakpoint);
+		}
+	}
 
-	//std::string memViewStr = CONFIG().GetValueStr("monitor", "custommem");
-	//if (memViewStr.size())
-	//{
-	//	emul::RawSegmentOffset memView;
-	//	if (memView.FromString(memViewStr.c_str()))
-	//	{
-	//		monitor.SetCustomMemoryView(memView);
-	//		fprintf(stderr, "Set Monitor Custom Memory View to [%s]\n", memView.ToString());
-	//	}
-	//	else
-	//	{
-	//		fprintf(stderr, "Unable to decode SEGMENT:OFFSET value [%s]\n", memViewStr.c_str());
-	//	}	
-	//}
+	std::string memViewStr = CONFIG().GetValueStr("monitor", "custommem");
+	if (memViewStr.size())
+	{
+		customMemoryView = std::stoul(breakpointStr, nullptr, 0);
+		if (customMemoryView < 0 || customMemoryView > 0xFFFF)
+		{
+			fprintf(stderr, "Unable to decode Custom Memory View value [%s]\n", memViewStr.c_str());
+		}
+		else
+		{
+			fprintf(stderr, "Set Monitor Custom Memory View to [0x%04X]\n", customMemoryView);
+		}
+	}
 
 	MAINWND().Init();
 	InitSound();
@@ -355,13 +372,12 @@ int main(int argc, char* args[])
 
 		while (run)
 		{ 
-			//if (breakpointEnabled && 
-			//	(pc->GetCPU().GetRegValue(REG16::CS) == breakpoint.segment) &&
-			//	(pc->GetCPU().GetRegValue(REG16::IP) == breakpoint.offset))
-			//{
-			//	ShowMonitor();
-			//	mode = Mode::MONITOR;
-			//}
+			if (breakpointEnabled && 
+				(pc->GetCPU().GetCurrentAddress() == breakpoint))
+			{
+				ShowMonitor();
+				mode = Mode::MONITOR;
+			}
 
 			if (mode == Mode::MONITOR)
 			{

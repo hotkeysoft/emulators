@@ -12,8 +12,14 @@ namespace emul
 
 		virtual void Reset() override;
 
+		virtual const std::string GetID() const override { return "z80"; };
+
 	protected:
 		CPUZ80(cpuInfo::CPUType type, Memory& memory, Interrupts& interrupts);
+
+		Registers m_regAlt;
+		WORD m_regIX = 0;
+		WORD m_regIY = 0;
 
 		// Helper functions
 		void jumpRelIF(bool condition, BYTE offset);
@@ -27,5 +33,7 @@ namespace emul
 		void IX(BYTE op2);
 		void EXTD(BYTE op2);
 		void IY(BYTE op2);
+
+		friend class MonitorZ80;
 	};
 }

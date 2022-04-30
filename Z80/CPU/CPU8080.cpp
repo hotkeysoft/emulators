@@ -45,97 +45,97 @@ namespace emul
 		// (r1) <- (r2)
 
 		// Destination B
-		m_opcodes[0100] = [=]() { regB = regB; }; // B,B
-		m_opcodes[0101] = [=]() { regB = regC; }; // B,C
-		m_opcodes[0102] = [=]() { regB = regD; }; // B,D
-		m_opcodes[0103] = [=]() { regB = regE; }; // B,E
-		m_opcodes[0104] = [=]() { regB = regH; }; // B,H
-		m_opcodes[0105] = [=]() { regB = regL; }; // B,L
-		m_opcodes[0107] = [=]() { regB = regA; }; // B,A
+		m_opcodes[0100] = [=]() { m_reg.B = m_reg.B; }; // B,B
+		m_opcodes[0101] = [=]() { m_reg.B = m_reg.C; }; // B,C
+		m_opcodes[0102] = [=]() { m_reg.B = m_reg.D; }; // B,D
+		m_opcodes[0103] = [=]() { m_reg.B = m_reg.E; }; // B,E
+		m_opcodes[0104] = [=]() { m_reg.B = m_reg.H; }; // B,H
+		m_opcodes[0105] = [=]() { m_reg.B = m_reg.L; }; // B,L
+		m_opcodes[0107] = [=]() { m_reg.B = m_reg.A; }; // B,A
 
 		// Destination C
-		m_opcodes[0110] = [=]() { regC = regB; }; // C,B
-		m_opcodes[0111] = [=]() { regC = regC; }; // C,C
-		m_opcodes[0112] = [=]() { regC = regD; }; // C,D
-		m_opcodes[0113] = [=]() { regC = regE; }; // C,E
-		m_opcodes[0114] = [=]() { regC = regH; }; // C,H
-		m_opcodes[0115] = [=]() { regC = regL; }; // C,L
-		m_opcodes[0117] = [=]() { regC = regA; }; // C,A
+		m_opcodes[0110] = [=]() { m_reg.C = m_reg.B; }; // C,B
+		m_opcodes[0111] = [=]() { m_reg.C = m_reg.C; }; // C,C
+		m_opcodes[0112] = [=]() { m_reg.C = m_reg.D; }; // C,D
+		m_opcodes[0113] = [=]() { m_reg.C = m_reg.E; }; // C,E
+		m_opcodes[0114] = [=]() { m_reg.C = m_reg.H; }; // C,H
+		m_opcodes[0115] = [=]() { m_reg.C = m_reg.L; }; // C,L
+		m_opcodes[0117] = [=]() { m_reg.C = m_reg.A; }; // C,A
 
 		// Destination D
-		m_opcodes[0120] = [=]() { regD = regB; }; // D,B
-		m_opcodes[0121] = [=]() { regD = regC; }; // D,C
-		m_opcodes[0122] = [=]() { regD = regD; }; // D,D
-		m_opcodes[0123] = [=]() { regD = regE; }; // D,E
-		m_opcodes[0124] = [=]() { regD = regH; }; // D,H
-		m_opcodes[0125] = [=]() { regD = regL; }; // D,L
-		m_opcodes[0127] = [=]() { regD = regA; }; // D,A
+		m_opcodes[0120] = [=]() { m_reg.D = m_reg.B; }; // D,B
+		m_opcodes[0121] = [=]() { m_reg.D = m_reg.C; }; // D,C
+		m_opcodes[0122] = [=]() { m_reg.D = m_reg.D; }; // D,D
+		m_opcodes[0123] = [=]() { m_reg.D = m_reg.E; }; // D,E
+		m_opcodes[0124] = [=]() { m_reg.D = m_reg.H; }; // D,H
+		m_opcodes[0125] = [=]() { m_reg.D = m_reg.L; }; // D,L
+		m_opcodes[0127] = [=]() { m_reg.D = m_reg.A; }; // D,A
 
 		// Destination E	
-		m_opcodes[0130] = [=]() { regE = regB; }; // E,B
-		m_opcodes[0131] = [=]() { regE = regC; }; // E,C
-		m_opcodes[0132] = [=]() { regE = regD; }; // E,D
-		m_opcodes[0133] = [=]() { regE = regE; }; // E,E
-		m_opcodes[0134] = [=]() { regE = regH; }; // E,H
-		m_opcodes[0135] = [=]() { regE = regL; }; // E,L
-		m_opcodes[0137] = [=]() { regE = regA; }; // E,A
+		m_opcodes[0130] = [=]() { m_reg.E = m_reg.B; }; // E,B
+		m_opcodes[0131] = [=]() { m_reg.E = m_reg.C; }; // E,C
+		m_opcodes[0132] = [=]() { m_reg.E = m_reg.D; }; // E,D
+		m_opcodes[0133] = [=]() { m_reg.E = m_reg.E; }; // E,E
+		m_opcodes[0134] = [=]() { m_reg.E = m_reg.H; }; // E,H
+		m_opcodes[0135] = [=]() { m_reg.E = m_reg.L; }; // E,L
+		m_opcodes[0137] = [=]() { m_reg.E = m_reg.A; }; // E,A
 	
 		// Destination H
-		m_opcodes[0140] = [=]() { regH = regB; }; // H,B
-		m_opcodes[0141] = [=]() { regH = regC; }; // H,C
-		m_opcodes[0142] = [=]() { regH = regD; }; // H,D
-		m_opcodes[0143] = [=]() { regH = regE; }; // H,E
-		m_opcodes[0144] = [=]() { regH = regH; }; // H,H
-		m_opcodes[0145] = [=]() { regH = regL; }; // H,L
-		m_opcodes[0147] = [=]() { regH = regA; }; // H,A
+		m_opcodes[0140] = [=]() { m_reg.H = m_reg.B; }; // H,B
+		m_opcodes[0141] = [=]() { m_reg.H = m_reg.C; }; // H,C
+		m_opcodes[0142] = [=]() { m_reg.H = m_reg.D; }; // H,D
+		m_opcodes[0143] = [=]() { m_reg.H = m_reg.E; }; // H,E
+		m_opcodes[0144] = [=]() { m_reg.H = m_reg.H; }; // H,H
+		m_opcodes[0145] = [=]() { m_reg.H = m_reg.L; }; // H,L
+		m_opcodes[0147] = [=]() { m_reg.H = m_reg.A; }; // H,A
 
 		// Destination L
-		m_opcodes[0150] = [=]() { regL = regB; }; // L,B
-		m_opcodes[0151] = [=]() { regL = regC; }; // L,C
-		m_opcodes[0152] = [=]() { regL = regD; }; // L,D
-		m_opcodes[0153] = [=]() { regL = regE; }; // L,E
-		m_opcodes[0154] = [=]() { regL = regH; }; // L,H
-		m_opcodes[0155] = [=]() { regL = regL; }; // L,L
-		m_opcodes[0157] = [=]() { regL = regA; }; // L,A
+		m_opcodes[0150] = [=]() { m_reg.L = m_reg.B; }; // L,B
+		m_opcodes[0151] = [=]() { m_reg.L = m_reg.C; }; // L,C
+		m_opcodes[0152] = [=]() { m_reg.L = m_reg.D; }; // L,D
+		m_opcodes[0153] = [=]() { m_reg.L = m_reg.E; }; // L,E
+		m_opcodes[0154] = [=]() { m_reg.L = m_reg.H; }; // L,H
+		m_opcodes[0155] = [=]() { m_reg.L = m_reg.L; }; // L,L
+		m_opcodes[0157] = [=]() { m_reg.L = m_reg.A; }; // L,A
 
 		// Destination A
-		m_opcodes[0170] = [=]() { regA = regB; }; // A,B
-		m_opcodes[0171] = [=]() { regA = regC; }; // A,C
-		m_opcodes[0172] = [=]() { regA = regD; }; // A,D
-		m_opcodes[0173] = [=]() { regA = regE; }; // A,E
-		m_opcodes[0174] = [=]() { regA = regH; }; // A,H
-		m_opcodes[0175] = [=]() { regA = regL; }; // A,L
-		m_opcodes[0177] = [=]() { regA = regA; }; // A,A
+		m_opcodes[0170] = [=]() { m_reg.A = m_reg.B; }; // A,B
+		m_opcodes[0171] = [=]() { m_reg.A = m_reg.C; }; // A,C
+		m_opcodes[0172] = [=]() { m_reg.A = m_reg.D; }; // A,D
+		m_opcodes[0173] = [=]() { m_reg.A = m_reg.E; }; // A,E
+		m_opcodes[0174] = [=]() { m_reg.A = m_reg.H; }; // A,H
+		m_opcodes[0175] = [=]() { m_reg.A = m_reg.L; }; // A,L
+		m_opcodes[0177] = [=]() { m_reg.A = m_reg.A; }; // A,A
 
 		// MOV r, M (Move from memory)
 		// (r) <- ((H)(L))
-		m_opcodes[0106] = [=]() { regB = ReadMem(); }; // B,m
-		m_opcodes[0116] = [=]() { regC = ReadMem(); }; // C,m
-		m_opcodes[0126] = [=]() { regD = ReadMem(); }; // D,m
-		m_opcodes[0136] = [=]() { regE = ReadMem(); }; // E,m
-		m_opcodes[0146] = [=]() { regH = ReadMem(); }; // H,m
-		m_opcodes[0156] = [=]() { regL = ReadMem(); }; // L,m
-		m_opcodes[0176] = [=]() { regA = ReadMem(); }; // A,m
+		m_opcodes[0106] = [=]() { m_reg.B = ReadMem(); }; // B,m
+		m_opcodes[0116] = [=]() { m_reg.C = ReadMem(); }; // C,m
+		m_opcodes[0126] = [=]() { m_reg.D = ReadMem(); }; // D,m
+		m_opcodes[0136] = [=]() { m_reg.E = ReadMem(); }; // E,m
+		m_opcodes[0146] = [=]() { m_reg.H = ReadMem(); }; // H,m
+		m_opcodes[0156] = [=]() { m_reg.L = ReadMem(); }; // L,m
+		m_opcodes[0176] = [=]() { m_reg.A = ReadMem(); }; // A,m
 
 		// MOV M, r (Move to memory)
 		// ((H)(L) <- (r)
-		m_opcodes[0160] = [=]() { WriteMem(regB); }; // m,B
-		m_opcodes[0161] = [=]() { WriteMem(regC); }; // m,C
-		m_opcodes[0162] = [=]() { WriteMem(regD); }; // m,D
-		m_opcodes[0163] = [=]() { WriteMem(regE); }; // m,E
-		m_opcodes[0164] = [=]() { WriteMem(regH); }; // m,H
-		m_opcodes[0165] = [=]() { WriteMem(regL); }; // m,L
-		m_opcodes[0167] = [=]() { WriteMem(regA); }; // m,A
+		m_opcodes[0160] = [=]() { WriteMem(m_reg.B); }; // m,B
+		m_opcodes[0161] = [=]() { WriteMem(m_reg.C); }; // m,C
+		m_opcodes[0162] = [=]() { WriteMem(m_reg.D); }; // m,D
+		m_opcodes[0163] = [=]() { WriteMem(m_reg.E); }; // m,E
+		m_opcodes[0164] = [=]() { WriteMem(m_reg.H); }; // m,H
+		m_opcodes[0165] = [=]() { WriteMem(m_reg.L); }; // m,L
+		m_opcodes[0167] = [=]() { WriteMem(m_reg.A); }; // m,A
 
 		// MVI r, data (Move immediate)
 		// (r) <- (byte 2)
-		m_opcodes[0006] = [=]() { regB = FetchByte(); }; // B
-		m_opcodes[0016] = [=]() { regC = FetchByte(); }; // C
-		m_opcodes[0026] = [=]() { regD = FetchByte(); }; // D
-		m_opcodes[0036] = [=]() { regE = FetchByte(); }; // E
-		m_opcodes[0046] = [=]() { regH = FetchByte(); }; // H
-		m_opcodes[0056] = [=]() { regL = FetchByte(); }; // L
-		m_opcodes[0076] = [=]() { regA = FetchByte(); }; // A
+		m_opcodes[0006] = [=]() { m_reg.B = FetchByte(); }; // B
+		m_opcodes[0016] = [=]() { m_reg.C = FetchByte(); }; // C
+		m_opcodes[0026] = [=]() { m_reg.D = FetchByte(); }; // D
+		m_opcodes[0036] = [=]() { m_reg.E = FetchByte(); }; // E
+		m_opcodes[0046] = [=]() { m_reg.H = FetchByte(); }; // H
+		m_opcodes[0056] = [=]() { m_reg.L = FetchByte(); }; // L
+		m_opcodes[0076] = [=]() { m_reg.A = FetchByte(); }; // A
 
 		// MVI M, data (Move to memory immediate)
 		// ((H)(L) <- (byte 2)
@@ -198,13 +198,13 @@ namespace emul
 
 		// ADD r (Add Register)
 		// (A) <- (A) + (r)
-		m_opcodes[0200] = [=]() { add(regB); };	// B
-		m_opcodes[0201] = [=]() { add(regC); };	// C
-		m_opcodes[0202] = [=]() { add(regD); };	// D
-		m_opcodes[0203] = [=]() { add(regE); };	// E
-		m_opcodes[0204] = [=]() { add(regH); };	// H
-		m_opcodes[0205] = [=]() { add(regL); };	// L
-		m_opcodes[0207] = [=]() { add(regA); };	// A
+		m_opcodes[0200] = [=]() { add(m_reg.B); };	// B
+		m_opcodes[0201] = [=]() { add(m_reg.C); };	// C
+		m_opcodes[0202] = [=]() { add(m_reg.D); };	// D
+		m_opcodes[0203] = [=]() { add(m_reg.E); };	// E
+		m_opcodes[0204] = [=]() { add(m_reg.H); };	// H
+		m_opcodes[0205] = [=]() { add(m_reg.L); };	// L
+		m_opcodes[0207] = [=]() { add(m_reg.A); };	// A
 
 		// ADD M (Add memory)
 		// (A) <- (A) + ((H)(L))
@@ -216,13 +216,13 @@ namespace emul
 
 		// ADC r (Add Register with Carry)
 		// (A) <- (A) + (r) + (CY)
-		m_opcodes[0210] = [=]() { add(regB, GetFlag(FLAG_CY)); }; // B
-		m_opcodes[0211] = [=]() { add(regC, GetFlag(FLAG_CY)); }; // C
-		m_opcodes[0212] = [=]() { add(regD, GetFlag(FLAG_CY)); }; // D
-		m_opcodes[0213] = [=]() { add(regE, GetFlag(FLAG_CY)); }; // E
-		m_opcodes[0214] = [=]() { add(regH, GetFlag(FLAG_CY)); }; // H
-		m_opcodes[0215] = [=]() { add(regL, GetFlag(FLAG_CY)); }; // L
-		m_opcodes[0217] = [=]() { add(regA, GetFlag(FLAG_CY)); }; // A
+		m_opcodes[0210] = [=]() { add(m_reg.B, GetFlag(FLAG_CY)); }; // B
+		m_opcodes[0211] = [=]() { add(m_reg.C, GetFlag(FLAG_CY)); }; // C
+		m_opcodes[0212] = [=]() { add(m_reg.D, GetFlag(FLAG_CY)); }; // D
+		m_opcodes[0213] = [=]() { add(m_reg.E, GetFlag(FLAG_CY)); }; // E
+		m_opcodes[0214] = [=]() { add(m_reg.H, GetFlag(FLAG_CY)); }; // H
+		m_opcodes[0215] = [=]() { add(m_reg.L, GetFlag(FLAG_CY)); }; // L
+		m_opcodes[0217] = [=]() { add(m_reg.A, GetFlag(FLAG_CY)); }; // A
 
 		// ADC M (Add Memory with Carry)
 		// (A) <- (A) + ((H)(L)) + (CY)
@@ -234,13 +234,13 @@ namespace emul
 
 		// SUB r (Substract Register)
 		// (A) <- (A) - (r)
-		m_opcodes[0220] = [=]() { sub(regB); };	// B
-		m_opcodes[0221] = [=]() { sub(regC); };	// C
-		m_opcodes[0222] = [=]() { sub(regD); };	// D
-		m_opcodes[0223] = [=]() { sub(regE); };	// E
-		m_opcodes[0224] = [=]() { sub(regH); };	// H
-		m_opcodes[0225] = [=]() { sub(regL); };	// L
-		m_opcodes[0227] = [=]() { sub(regA); };	// A
+		m_opcodes[0220] = [=]() { sub(m_reg.B); };	// B
+		m_opcodes[0221] = [=]() { sub(m_reg.C); };	// C
+		m_opcodes[0222] = [=]() { sub(m_reg.D); };	// D
+		m_opcodes[0223] = [=]() { sub(m_reg.E); };	// E
+		m_opcodes[0224] = [=]() { sub(m_reg.H); };	// H
+		m_opcodes[0225] = [=]() { sub(m_reg.L); };	// L
+		m_opcodes[0227] = [=]() { sub(m_reg.A); };	// A
 
 		// SUB M (Substract memory)
 		// (A) <- (A) - ((H)(L))
@@ -252,13 +252,13 @@ namespace emul
 
 		// SBB r (Substract Register with Borrow)
 		// (A) <- (A) - (r) - (CY)
-		m_opcodes[0230] = [=]() { sub(regB, GetFlag(FLAG_CY)); }; // B
-		m_opcodes[0231] = [=]() { sub(regC, GetFlag(FLAG_CY)); }; // C
-		m_opcodes[0232] = [=]() { sub(regD, GetFlag(FLAG_CY)); }; // D
-		m_opcodes[0233] = [=]() { sub(regE, GetFlag(FLAG_CY)); }; // E
-		m_opcodes[0234] = [=]() { sub(regH, GetFlag(FLAG_CY)); }; // H
-		m_opcodes[0235] = [=]() { sub(regL, GetFlag(FLAG_CY)); }; // L
-		m_opcodes[0237] = [=]() { sub(regA, GetFlag(FLAG_CY)); }; // A
+		m_opcodes[0230] = [=]() { sub(m_reg.B, GetFlag(FLAG_CY)); }; // B
+		m_opcodes[0231] = [=]() { sub(m_reg.C, GetFlag(FLAG_CY)); }; // C
+		m_opcodes[0232] = [=]() { sub(m_reg.D, GetFlag(FLAG_CY)); }; // D
+		m_opcodes[0233] = [=]() { sub(m_reg.E, GetFlag(FLAG_CY)); }; // E
+		m_opcodes[0234] = [=]() { sub(m_reg.H, GetFlag(FLAG_CY)); }; // H
+		m_opcodes[0235] = [=]() { sub(m_reg.L, GetFlag(FLAG_CY)); }; // L
+		m_opcodes[0237] = [=]() { sub(m_reg.A, GetFlag(FLAG_CY)); }; // A
 
 		// SBB M (Substract Memory with Borrow)
 		// (A) <- (A) - ((H)(L)) - (CY)
@@ -271,13 +271,13 @@ namespace emul
 		// INR r (Increment Register)
 		// (r) <- (r) + 1
 		// Note: CY not affected
-		m_opcodes[0004] = [=]() { INRr(regB); }; // B
-		m_opcodes[0014] = [=]() { INRr(regC); }; // C
-		m_opcodes[0024] = [=]() { INRr(regD); }; // D
-		m_opcodes[0034] = [=]() { INRr(regE); }; // E
-		m_opcodes[0044] = [=]() { INRr(regH); }; // H
-		m_opcodes[0054] = [=]() { INRr(regL); }; // L
-		m_opcodes[0074] = [=]() { INRr(regA); }; // A
+		m_opcodes[0004] = [=]() { INRr(m_reg.B); }; // B
+		m_opcodes[0014] = [=]() { INRr(m_reg.C); }; // C
+		m_opcodes[0024] = [=]() { INRr(m_reg.D); }; // D
+		m_opcodes[0034] = [=]() { INRr(m_reg.E); }; // E
+		m_opcodes[0044] = [=]() { INRr(m_reg.H); }; // H
+		m_opcodes[0054] = [=]() { INRr(m_reg.L); }; // L
+		m_opcodes[0074] = [=]() { INRr(m_reg.A); }; // A
 
 		// INR M (Increment Memory)
 		// ((H)(L)) <- ((H)(L)) + 1
@@ -287,13 +287,13 @@ namespace emul
 		// DCR r (Decrement Register)
 		// (r) <- (r) - 1
 		// Note: CY not affected
-		m_opcodes[0005] = [=]() { DCRr(regB); }; // B
-		m_opcodes[0015] = [=]() { DCRr(regC); }; // C
-		m_opcodes[0025] = [=]() { DCRr(regD); }; // D
-		m_opcodes[0035] = [=]() { DCRr(regE); }; // E
-		m_opcodes[0045] = [=]() { DCRr(regH); }; // H
-		m_opcodes[0055] = [=]() { DCRr(regL); }; // L
-		m_opcodes[0075] = [=]() { DCRr(regA); }; // A
+		m_opcodes[0005] = [=]() { DCRr(m_reg.B); }; // B
+		m_opcodes[0015] = [=]() { DCRr(m_reg.C); }; // C
+		m_opcodes[0025] = [=]() { DCRr(m_reg.D); }; // D
+		m_opcodes[0035] = [=]() { DCRr(m_reg.E); }; // E
+		m_opcodes[0045] = [=]() { DCRr(m_reg.H); }; // H
+		m_opcodes[0055] = [=]() { DCRr(m_reg.L); }; // L
+		m_opcodes[0075] = [=]() { DCRr(m_reg.A); }; // A
 	
 		// DCR M (Decrement Memory)
 		// ((H)(L)) <- ((H)(L)) - 1
@@ -303,26 +303,26 @@ namespace emul
 		// INX rp (Increment Register Pair)
 		// (rh)(rl) <- (rh)(rl) + 1
 		// Note: No condition flags are affected
-		m_opcodes[0003] = [=]() { INX(regB, regC); }; // BC
-		m_opcodes[0023] = [=]() { INX(regD, regE); }; // DE
-		m_opcodes[0043] = [=]() { INX(regH, regL); }; // HL
-		m_opcodes[0063] = [=]() { ++regSP; };         // SP
+		m_opcodes[0003] = [=]() { INX(m_reg.B, m_reg.C); }; // BC
+		m_opcodes[0023] = [=]() { INX(m_reg.D, m_reg.E); }; // DE
+		m_opcodes[0043] = [=]() { INX(m_reg.H, m_reg.L); }; // HL
+		m_opcodes[0063] = [=]() { ++m_regSP; };         // SP
 
 		// DCX rp (Decrement Register Pair)
 		// (rh)(rl) <- (rh)(rl) - 1
 		// Note: No condition flags are affected
-		m_opcodes[0013] = [=]() { DCX(regB, regC); }; // BC
-		m_opcodes[0033] = [=]() { DCX(regD, regE); }; // DE
-		m_opcodes[0053] = [=]() { DCX(regH, regL); }; // HL
-		m_opcodes[0073] = [=]() { --regSP; };         // SP
+		m_opcodes[0013] = [=]() { DCX(m_reg.B, m_reg.C); }; // BC
+		m_opcodes[0033] = [=]() { DCX(m_reg.D, m_reg.E); }; // DE
+		m_opcodes[0053] = [=]() { DCX(m_reg.H, m_reg.L); }; // HL
+		m_opcodes[0073] = [=]() { --m_regSP; };         // SP
 
 		// DAD rp (Add register pair to H and L)
 		// (H)(L) <- (H)(L) + (rh)(rl)
 		// Note: Only the CY flag is affected
-		m_opcodes[0011] = [=]() { dad(MakeWord(regB, regC)); }; // BC
-		m_opcodes[0031] = [=]() { dad(MakeWord(regD, regE)); }; // DE
+		m_opcodes[0011] = [=]() { dad(MakeWord(m_reg.B, m_reg.C)); }; // BC
+		m_opcodes[0031] = [=]() { dad(MakeWord(m_reg.D, m_reg.E)); }; // DE
 		m_opcodes[0051] = [=]() { dad(GetHL()); };              // HL
-		m_opcodes[0071] = [=]() { dad(regSP); };                // SP
+		m_opcodes[0071] = [=]() { dad(m_regSP); };                // SP
 
 		// DAA (Decimal Adjust Accumulator)
 		// The eight-bit number in the accumulator is adjusted to
@@ -351,13 +351,13 @@ namespace emul
 		// Note: The CY flag is cleared and the AC is set (8085)
 		// The CY flag is cleared and AC is set to the ORing of 
 		// bits 3 of the operands (8080)
-		m_opcodes[0240] = [=]() { ana(regB); };	// B
-		m_opcodes[0241] = [=]() { ana(regC); };	// C
-		m_opcodes[0242] = [=]() { ana(regD); };	// D
-		m_opcodes[0243] = [=]() { ana(regE); };	// E
-		m_opcodes[0244] = [=]() { ana(regH); };	// H
-		m_opcodes[0245] = [=]() { ana(regL); };	// L
-		m_opcodes[0247] = [=]() { ana(regA); };	// A
+		m_opcodes[0240] = [=]() { ana(m_reg.B); };	// B
+		m_opcodes[0241] = [=]() { ana(m_reg.C); };	// C
+		m_opcodes[0242] = [=]() { ana(m_reg.D); };	// D
+		m_opcodes[0243] = [=]() { ana(m_reg.E); };	// E
+		m_opcodes[0244] = [=]() { ana(m_reg.H); };	// H
+		m_opcodes[0245] = [=]() { ana(m_reg.L); };	// L
+		m_opcodes[0247] = [=]() { ana(m_reg.A); };	// A
 
 		// ANA M (AND Memory)
 		// (A) <- (A) and ((H)(L))
@@ -372,13 +372,13 @@ namespace emul
 		// XRA r (XOR Register)
 		// (A) <- (A) xor (r)
 		// Note: The CY  and AC flags are cleared
-		m_opcodes[0250] = [=]() { xra(regB); };	// B
-		m_opcodes[0251] = [=]() { xra(regC); };	// C
-		m_opcodes[0252] = [=]() { xra(regD); };	// D
-		m_opcodes[0253] = [=]() { xra(regE); };	// E
-		m_opcodes[0254] = [=]() { xra(regH); };	// H
-		m_opcodes[0255] = [=]() { xra(regL); };	// L
-		m_opcodes[0257] = [=]() { xra(regA); };	// A
+		m_opcodes[0250] = [=]() { xra(m_reg.B); };	// B
+		m_opcodes[0251] = [=]() { xra(m_reg.C); };	// C
+		m_opcodes[0252] = [=]() { xra(m_reg.D); };	// D
+		m_opcodes[0253] = [=]() { xra(m_reg.E); };	// E
+		m_opcodes[0254] = [=]() { xra(m_reg.H); };	// H
+		m_opcodes[0255] = [=]() { xra(m_reg.L); };	// L
+		m_opcodes[0257] = [=]() { xra(m_reg.A); };	// A
 
 		// XRA M (XOR Memory)
 		// (A) <- (A) xor ((H)(L))
@@ -393,13 +393,13 @@ namespace emul
 		// ORA r (OR Register)
 		// (A) <- (A) or (r)
 		// Note: The CY  and AC flags are cleared
-		m_opcodes[0260] = [=]() { ora(regB); };	// B
-		m_opcodes[0261] = [=]() { ora(regC); };	// C
-		m_opcodes[0262] = [=]() { ora(regD); };	// D
-		m_opcodes[0263] = [=]() { ora(regE); };	// E
-		m_opcodes[0264] = [=]() { ora(regH); };	// H
-		m_opcodes[0265] = [=]() { ora(regL); };	// L
-		m_opcodes[0267] = [=]() { ora(regA); };	// A
+		m_opcodes[0260] = [=]() { ora(m_reg.B); };	// B
+		m_opcodes[0261] = [=]() { ora(m_reg.C); };	// C
+		m_opcodes[0262] = [=]() { ora(m_reg.D); };	// D
+		m_opcodes[0263] = [=]() { ora(m_reg.E); };	// E
+		m_opcodes[0264] = [=]() { ora(m_reg.H); };	// H
+		m_opcodes[0265] = [=]() { ora(m_reg.L); };	// L
+		m_opcodes[0267] = [=]() { ora(m_reg.A); };	// A
 
 		// ORA M (OR Memory)
 		// (A) <- (A) or ((H)(L))
@@ -418,13 +418,13 @@ namespace emul
 		// the result of the substraction.  The Z flag
 		// is set to 1 if (A) = (r).  The CY flag is set
 		// to 1 if (A) < (r)
-		m_opcodes[0270] = [=]() { cmp(regB); };	// B
-		m_opcodes[0271] = [=]() { cmp(regC); };	// C
-		m_opcodes[0272] = [=]() { cmp(regD); };	// D
-		m_opcodes[0273] = [=]() { cmp(regE); };	// E
-		m_opcodes[0274] = [=]() { cmp(regH); };	// H
-		m_opcodes[0275] = [=]() { cmp(regL); };	// L
-		m_opcodes[0277] = [=]() { cmp(regA); };	// A
+		m_opcodes[0270] = [=]() { cmp(m_reg.B); };	// B
+		m_opcodes[0271] = [=]() { cmp(m_reg.C); };	// C
+		m_opcodes[0272] = [=]() { cmp(m_reg.D); };	// D
+		m_opcodes[0273] = [=]() { cmp(m_reg.E); };	// E
+		m_opcodes[0274] = [=]() { cmp(m_reg.H); };	// H
+		m_opcodes[0275] = [=]() { cmp(m_reg.L); };	// L
+		m_opcodes[0277] = [=]() { cmp(m_reg.A); };	// A
 
 		// CMP M (Compare Memory)
 		// (A) - ((H)(L))
@@ -467,7 +467,7 @@ namespace emul
 		// CMA (Complement accumulator)
 		// (A) <- /(A)
 		// Note: No flags are affected
-		m_opcodes[0057] = [=]() { regA = ~regA; };
+		m_opcodes[0057] = [=]() { m_reg.A = ~m_reg.A; };
 
 		// CMC (Complement carry)
 		// (CY) <- /(CY)
@@ -584,30 +584,30 @@ namespace emul
 		// ((SP) - 2)<-(rl)
 		// (SP)<-(SP)-2
 		// Note: Register pair rp=SP may not be specified
-		m_opcodes[0305] = [=]() { push(regB, regC); }; // BC
-		m_opcodes[0325] = [=]() { push(regD, regE); }; // DE
-		m_opcodes[0345] = [=]() { push(regH, regL); }; // HL
+		m_opcodes[0305] = [=]() { push(m_reg.B, m_reg.C); }; // BC
+		m_opcodes[0325] = [=]() { push(m_reg.D, m_reg.E); }; // DE
+		m_opcodes[0345] = [=]() { push(m_reg.H, m_reg.L); }; // HL
 
 		// PUSH PSW (Push processor status word)
 		// ((SP) - 1)<-(A)
 		// ((SP) - 2)<-(FLAGS)
 		// (SP)<-(SP)-2
-		m_opcodes[0365] = [=]() { push(regA, flags); };
+		m_opcodes[0365] = [=]() { push(m_reg.A, m_reg.flags); };
 
 		// POP rp (Pop)
 		// (rl) <- ((SP))
 		// (rh) <- ((SP) + 1)
 		// (SP) <- (SP)+2
 		// Note: Register pair rp=SP may not be specified
-		m_opcodes[0301] = [=]() { pop(regB, regC); }; // BC
-		m_opcodes[0321] = [=]() { pop(regD, regE); }; // DE
-		m_opcodes[0341] = [=]() { pop(regH, regL); }; // HL
+		m_opcodes[0301] = [=]() { pop(m_reg.B, m_reg.C); }; // BC
+		m_opcodes[0321] = [=]() { pop(m_reg.D, m_reg.E); }; // DE
+		m_opcodes[0341] = [=]() { pop(m_reg.H, m_reg.L); }; // HL
 
 		// POP PSW (Pop processor status word)
 		// (FLAGS)<- ((SP))
 		// (A)    <- ((SP)+1)
 		// (SP)   <- (SP)+2
-		m_opcodes[0361] = [=]() { BYTE f; pop(regA, f); SetFlags(f); };
+		m_opcodes[0361] = [=]() { BYTE f; pop(m_reg.A, f); SetFlags(f); };
 
 		//XTHL (Exchange stack top with H and L)
 		// (L) <- ((SP))
@@ -620,11 +620,11 @@ namespace emul
 
 		// IN port (Input)
 		// (A) <- (data)
-		m_opcodes[0333] = [=]() { In(FetchByte(), regA); };
+		m_opcodes[0333] = [=]() { In(FetchByte(), m_reg.A); };
 
 		// OUT port (Output)
 		// (data) <- (A)
-		m_opcodes[0323] = [=]() { Out(FetchByte(), regA); };
+		m_opcodes[0323] = [=]() { Out(FetchByte(), m_reg.A); };
 
 		// EI (Enable Interrupts)
 		// The interrupt system is enabled following the execution
@@ -661,22 +661,22 @@ namespace emul
 	{
 		CPU::Reset();
 
-		regA = 0;
-		regB = 0;
-		regC = 0;
-		regD = 0;
-		regE = 0;
-		regH = 0;
-		regL = 0;
+		m_reg.A = 0;
+		m_reg.B = 0;
+		m_reg.C = 0;
+		m_reg.D = 0;
+		m_reg.E = 0;
+		m_reg.H = 0;
+		m_reg.L = 0;
 
-		regSP = 0;
+		m_regSP = 0;
 		m_programCounter = 0;
 
-		ClearFlags();
+		ClearFlags(m_reg.flags);
 	}
 
-	void CPU8080::ClearFlags()
-	{
+	void CPU8080::ClearFlags(BYTE& flags)
+	{	
 		flags = FLAG_RESERVED_ON;
 	}
 
@@ -684,7 +684,7 @@ namespace emul
 	{
 		SetBitMask(f, FLAG_RESERVED_OFF, false);
 		SetBitMask(f, FLAG_RESERVED_ON, true);
-		flags = f;
+		m_reg.flags = f;
 	}
 
 	BYTE CPU8080::FetchByte()
@@ -720,11 +720,11 @@ namespace emul
 
 	void CPU8080::Dump()
 	{
-		LogPrintf(LOG_DEBUG, "AF = %02X %02X\tCY = %c", regA, flags, GetFlag(FLAG_CY)?'1':'0');
-		LogPrintf(LOG_DEBUG, "BC = %02X %02X\tP  = %c", regB, regC, GetFlag(FLAG_P)?'1':'0');
-		LogPrintf(LOG_DEBUG, "DE = %02X %02X\tAC = %c", regD, regE, GetFlag(FLAG_AC)?'1':'0');
-		LogPrintf(LOG_DEBUG, "HL = %02X %02X\tZ  = %c", regH, regL, GetFlag(FLAG_Z)?'1':'0');
-		LogPrintf(LOG_DEBUG, "SP = %04X   \tS  = %c", regSP, GetFlag(FLAG_S)?'1':'0');
+		LogPrintf(LOG_DEBUG, "AF = %02X %02X\tCY = %c", m_reg.A, m_reg.flags, GetFlag(FLAG_CY)?'1':'0');
+		LogPrintf(LOG_DEBUG, "BC = %02X %02X\tP  = %c", m_reg.B, m_reg.C, GetFlag(FLAG_P)?'1':'0');
+		LogPrintf(LOG_DEBUG, "DE = %02X %02X\tAC = %c", m_reg.D, m_reg.E, GetFlag(FLAG_AC)?'1':'0');
+		LogPrintf(LOG_DEBUG, "HL = %02X %02X\tZ  = %c", m_reg.H, m_reg.L, GetFlag(FLAG_Z)?'1':'0');
+		LogPrintf(LOG_DEBUG, "SP = %04X   \tS  = %c", m_regSP, GetFlag(FLAG_S)?'1':'0');
 		LogPrintf(LOG_DEBUG, "PC = %04X", m_programCounter);
 		LogPrintf(LOG_DEBUG, "");
 	}
@@ -804,52 +804,52 @@ namespace emul
 
 	void CPU8080::LXIb()
 	{
-		regC = FetchByte();
-		regB = FetchByte();
+		m_reg.C = FetchByte();
+		m_reg.B = FetchByte();
 	}
 
 	void CPU8080::LXId()
 	{
-		regE = FetchByte();
-		regD = FetchByte();
+		m_reg.E = FetchByte();
+		m_reg.D = FetchByte();
 	}
 
 	void CPU8080::LXIh()
 	{
-		regL = FetchByte();
-		regH = FetchByte();
+		m_reg.L = FetchByte();
+		m_reg.H = FetchByte();
 	}
 
 	void CPU8080::STAXb()
 	{
-		m_memory.Write8(MakeWord(regB, regC), regA);
+		m_memory.Write8(MakeWord(m_reg.B, m_reg.C), m_reg.A);
 	}
 
 	void CPU8080::STAXd()
 	{
-		m_memory.Write8(MakeWord(regD, regE), regA);
+		m_memory.Write8(MakeWord(m_reg.D, m_reg.E), m_reg.A);
 	}
 
 	void CPU8080::LDAXb()
 	{
-		regA = m_memory.Read8(MakeWord(regB, regC));
+		m_reg.A = m_memory.Read8(MakeWord(m_reg.B, m_reg.C));
 	}
 
 	void CPU8080::LDAXd()
 	{
-		regA = m_memory.Read8(MakeWord(regD, regE));
+		m_reg.A = m_memory.Read8(MakeWord(m_reg.D, m_reg.E));
 	}
 
 	void CPU8080::STA()
 	{
 		ADDRESS dest = FetchWord();
-		m_memory.Write8(dest, regA);
+		m_memory.Write8(dest, m_reg.A);
 	}
 
 	void CPU8080::LDA()
 	{
 		ADDRESS src = FetchWord();
-		regA = m_memory.Read8(src);
+		m_reg.A = m_memory.Read8(src);
 	}
 
 	void CPU8080::SHLD()
@@ -861,24 +861,24 @@ namespace emul
 	void CPU8080::LHLD()
 	{
 		ADDRESS src = FetchWord();
-		regL = m_memory.Read8(src);
-		regH = m_memory.Read8(src + 1);
+		m_reg.L = m_memory.Read8(src);
+		m_reg.H = m_memory.Read8(src + 1);
 	}
 
 	void CPU8080::XCHG()
 	{
 		BYTE oldH, oldL;
 
-		oldL = regL; oldH = regH;
+		oldL = m_reg.L; oldH = m_reg.H;
 	
-		regL = regE; regH = regD;
-		regE = oldL; regD = oldH;
+		m_reg.L = m_reg.E; m_reg.H = m_reg.D;
+		m_reg.E = oldL; m_reg.D = oldH;
 	}
 
 	void CPU8080::push(BYTE h, BYTE l)
 	{
-		m_memory.Write8(--regSP, h);
-		m_memory.Write8(--regSP, l);
+		m_memory.Write8(--m_regSP, h);
+		m_memory.Write8(--m_regSP, l);
 	}
 
 	void CPU8080::pushPC()
@@ -888,8 +888,8 @@ namespace emul
 
 	void CPU8080::pop(BYTE &h, BYTE &l)
 	{
-		l = m_memory.Read8(regSP++);
-		h = m_memory.Read8(regSP++);
+		l = m_memory.Read8(m_regSP++);
+		h = m_memory.Read8(m_regSP++);
 	}
 
 	void CPU8080::popPC()
@@ -903,23 +903,23 @@ namespace emul
 	{
 		BYTE oldH, oldL;
 
-		oldL = regL; oldH = regH;
+		oldL = m_reg.L; oldH = m_reg.H;
 	
-		regL = m_memory.Read8(regSP);
-		regH = m_memory.Read8(regSP+1);
+		m_reg.L = m_memory.Read8(m_regSP);
+		m_reg.H = m_memory.Read8(m_regSP+1);
 	
-		m_memory.Write8(regSP, oldL);
-		m_memory.Write8(regSP+1, oldH);
+		m_memory.Write8(m_regSP, oldL);
+		m_memory.Write8(m_regSP+1, oldH);
 	}
 
 	void CPU8080::SPHL()
 	{
-		regSP = GetHL();
+		m_regSP = GetHL();
 	}
 
 	void CPU8080::LXIsp()
 	{
-		regSP = FetchWord();
+		m_regSP = FetchWord();
 	}
 
 	void CPU8080::jumpIF(bool condition)
@@ -1024,22 +1024,22 @@ namespace emul
 	void CPU8080::add(BYTE src, bool carry)
 	{
 		// AC flag
-		BYTE loNibble = (regA & 0x0F) + (src & 0x0F);
+		BYTE loNibble = (m_reg.A & 0x0F) + (src & 0x0F);
 
-		WORD temp = regA + src;
+		WORD temp = m_reg.A + src;
 		if (carry)
 		{
 			temp++;
 			loNibble++;
 		}
 
-		regA = (BYTE)temp;
+		m_reg.A = (BYTE)temp;
 
 		SetFlag(FLAG_CY, (temp > 0xFF));
 		SetFlag(FLAG_AC, (loNibble > 0x0F));
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
+		adjustSign(m_reg.A);
+		adjustZero(m_reg.A);
+		adjustParity(m_reg.A);
 	}
 
 	void CPU8080::dad(WORD value)
@@ -1050,60 +1050,60 @@ namespace emul
 
 		SetFlag(FLAG_CY, hl > 0xFFFF);
 
-		regH = GetHByte((WORD)hl);
-		regL = GetLByte((WORD)hl);
+		m_reg.H = GetHByte((WORD)hl);
+		m_reg.L = GetLByte((WORD)hl);
 	}
 
 	void CPU8080::sub(BYTE src, bool borrow)
 	{
 		// AC flag
-		char loNibble = (regA & 0x0F) - (src & 0x0F);
+		char loNibble = (m_reg.A & 0x0F) - (src & 0x0F);
 
-		int temp = regA - src;
+		int temp = m_reg.A - src;
 		if (borrow)
 		{
 			temp--;
 			loNibble--;
 		}
 
-		regA = (BYTE)temp;
+		m_reg.A = (BYTE)temp;
 
 		SetFlag(FLAG_CY, (temp < 0));
 		SetFlag(FLAG_AC, !(loNibble < 0));
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
+		adjustSign(m_reg.A);
+		adjustZero(m_reg.A);
+		adjustParity(m_reg.A);
 	}
 
 	void CPU8080::ana(BYTE src)
 	{
-		regA &= src;
+		m_reg.A &= src;
 
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
+		adjustSign(m_reg.A);
+		adjustZero(m_reg.A);
+		adjustParity(m_reg.A);
 		SetFlag(FLAG_AC, true);				// Must confirm
 		SetFlag(FLAG_CY, false);
 	}
 
 	void CPU8080::xra(BYTE src)
 	{
-		regA ^= src;
+		m_reg.A ^= src;
 
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
+		adjustSign(m_reg.A);
+		adjustZero(m_reg.A);
+		adjustParity(m_reg.A);
 		SetFlag(FLAG_AC, false);
 		SetFlag(FLAG_CY, false);
 	}
 
 	void CPU8080::ora(BYTE src)
 	{
-		regA |= src;
+		m_reg.A |= src;
 
-		adjustSign(regA);
-		adjustZero(regA);
-		adjustParity(regA);
+		adjustSign(m_reg.A);
+		adjustZero(m_reg.A);
+		adjustParity(m_reg.A);
 		SetFlag(FLAG_AC, false);
 		SetFlag(FLAG_CY, false);
 	}
@@ -1111,9 +1111,9 @@ namespace emul
 	void CPU8080::cmp(BYTE src)
 	{
 		// AC flag
-		char loNibble = (regA & 0x0F) - (src & 0x0F);
+		char loNibble = (m_reg.A & 0x0F) - (src & 0x0F);
 
-		int temp = regA - src;
+		int temp = m_reg.A - src;
 
 		SetFlag(FLAG_CY, (temp < 0));
 		SetFlag(FLAG_AC, !(loNibble < 0));
@@ -1124,42 +1124,42 @@ namespace emul
 
 	void CPU8080::RLC()
 	{
-		bool msb = (regA & 128);
+		bool msb = (m_reg.A & 128);
 
-		regA = (regA << 1);
-		regA |= (msb ? 1 : 0);
+		m_reg.A = (m_reg.A << 1);
+		m_reg.A |= (msb ? 1 : 0);
 
 		SetFlag(FLAG_CY, msb);
 	}
 
 	void CPU8080::RRC()
 	{
-		bool lsb = (regA & 1);
+		bool lsb = (m_reg.A & 1);
 
-		regA = (regA >> 1);
-		regA &= ~128;
-		regA |= (lsb ? 128 : 0);
+		m_reg.A = (m_reg.A >> 1);
+		m_reg.A &= ~128;
+		m_reg.A |= (lsb ? 128 : 0);
 
 		SetFlag(FLAG_CY, lsb);
 	}
 
 	void CPU8080::RAL()
 	{
-		bool msb = (regA & 128);
+		bool msb = (m_reg.A & 128);
 
-		regA = (regA << 1);
-		regA |= (GetFlag(FLAG_CY) ? 1 : 0);
+		m_reg.A = (m_reg.A << 1);
+		m_reg.A |= (GetFlag(FLAG_CY) ? 1 : 0);
 
 		SetFlag(FLAG_CY, msb);
 	}
 
 	void CPU8080::RAR()
 	{
-		bool lsb = (regA & 1);
+		bool lsb = (m_reg.A & 1);
 
-		regA = (regA >> 1);
-		regA &= ~128;
-		regA |= (GetFlag(FLAG_CY) ? 128 : 0);
+		m_reg.A = (m_reg.A >> 1);
+		m_reg.A &= ~128;
+		m_reg.A |= (GetFlag(FLAG_CY) ? 128 : 0);
 
 		SetFlag(FLAG_CY, lsb);
 	}

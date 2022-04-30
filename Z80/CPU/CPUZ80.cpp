@@ -41,14 +41,32 @@ namespace emul
 	void CPUZ80::Reset()
 	{
 		CPU8080::Reset();
+
+		m_regAlt.A = 0;
+		m_regAlt.B = 0;
+		m_regAlt.C = 0;
+		m_regAlt.D = 0;
+		m_regAlt.E = 0;
+		m_regAlt.H = 0;
+		m_regAlt.L = 0;
+
+		m_regIX = 0;
+		m_regIY = 0;
+
+		ClearFlags(m_regAlt.flags);
 	}
 
 	void CPUZ80::jumpRelIF(bool condition, BYTE offset)
 	{
 		if (condition == true)
 		{
-			m_programCounter += Widen(offset);
+			WORD address = (WORD)m_programCounter + Widen(offset);
+			m_programCounter = address;
 			TICKT3();
+		}
+		else
+		{
+			int a = 1;
 		}
 	}
 

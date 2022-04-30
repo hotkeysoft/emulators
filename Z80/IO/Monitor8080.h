@@ -13,6 +13,7 @@ namespace emul
 	{
 	public:
 		Monitor8080(Console& console);
+		virtual ~Monitor8080() {}
 
 		Monitor8080() = delete;
 		Monitor8080(const Monitor8080&) = delete;
@@ -54,14 +55,16 @@ namespace emul
 		void WriteValueHex(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(WORD value, const cpuInfo::Coord& coord, WORD attr = 15);
 
-		void UpdateRegisters();
+		virtual void UpdateRegisters();
 		void UpdateTicks();
 		void UpdateFlags();
 		void UpdateRAM();
 		void PrintInstruction(short y, Instruction& instr);
 		void UpdateCode();
 
-		ADDRESS Disassemble(ADDRESS address, Monitor8080::Instruction& decoded);
+		static bool Replace(std::string& str, const std::string& from, const std::string& to);
+
+		virtual ADDRESS Disassemble(ADDRESS address, Monitor8080::Instruction& decoded);
 
 		enum class RUNMode { STEP, RUN };
 		RUNMode m_runMode = RUNMode::STEP;

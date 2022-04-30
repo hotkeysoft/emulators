@@ -105,7 +105,7 @@ namespace cpuInfo
 			}
 			else if (curr.is_string()) // new index (string)
 			{
-				int newIndex = std::stoul((const std::string&)curr, nullptr, 16);
+				int newIndex = std::stoul((const std::string&)curr, nullptr, 0);
 				if (newIndex < 0 || newIndex > 255)
 				{
 					throw std::exception("BuildOpcodes: Invalid index");
@@ -166,8 +166,8 @@ namespace cpuInfo
 			}
 			else if (curr.is_object()) // opcode data
 			{
-				m_subOpcodes[index][opcode] = opcode["name"];
-				m_subTiming[index][opcode] = BuildTiming(opcode);
+				m_subOpcodes[index][opcode] = curr["name"];
+				m_subTiming[index][opcode] = BuildTiming(curr);
 				++opcode;
 			}
 			else
