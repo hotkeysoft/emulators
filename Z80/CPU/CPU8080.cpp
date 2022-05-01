@@ -234,13 +234,13 @@ namespace emul
 
 		// SUB r (Substract Register)
 		// (A) <- (A) - (r)
-		m_opcodes[0220] = [=]() { sub(m_reg.B); };	// B
-		m_opcodes[0221] = [=]() { sub(m_reg.C); };	// C
-		m_opcodes[0222] = [=]() { sub(m_reg.D); };	// D
-		m_opcodes[0223] = [=]() { sub(m_reg.E); };	// E
-		m_opcodes[0224] = [=]() { sub(m_reg.H); };	// H
-		m_opcodes[0225] = [=]() { sub(m_reg.L); };	// L
-		m_opcodes[0227] = [=]() { sub(m_reg.A); };	// A
+		m_opcodes[0220] = [=]() { sub(m_reg.B); }; // B
+		m_opcodes[0221] = [=]() { sub(m_reg.C); }; // C
+		m_opcodes[0222] = [=]() { sub(m_reg.D); }; // D
+		m_opcodes[0223] = [=]() { sub(m_reg.E); }; // E
+		m_opcodes[0224] = [=]() { sub(m_reg.H); }; // H
+		m_opcodes[0225] = [=]() { sub(m_reg.L); }; // L
+		m_opcodes[0227] = [=]() { sub(m_reg.A); }; // A
 
 		// SUB M (Substract memory)
 		// (A) <- (A) - ((H)(L))
@@ -306,7 +306,7 @@ namespace emul
 		m_opcodes[0003] = [=]() { INX(m_reg.B, m_reg.C); }; // BC
 		m_opcodes[0023] = [=]() { INX(m_reg.D, m_reg.E); }; // DE
 		m_opcodes[0043] = [=]() { INX(m_reg.H, m_reg.L); }; // HL
-		m_opcodes[0063] = [=]() { ++m_regSP; };         // SP
+		m_opcodes[0063] = [=]() { ++m_regSP; };             // SP
 
 		// DCX rp (Decrement Register Pair)
 		// (rh)(rl) <- (rh)(rl) - 1
@@ -314,15 +314,15 @@ namespace emul
 		m_opcodes[0013] = [=]() { DCX(m_reg.B, m_reg.C); }; // BC
 		m_opcodes[0033] = [=]() { DCX(m_reg.D, m_reg.E); }; // DE
 		m_opcodes[0053] = [=]() { DCX(m_reg.H, m_reg.L); }; // HL
-		m_opcodes[0073] = [=]() { --m_regSP; };         // SP
+		m_opcodes[0073] = [=]() { --m_regSP; };             // SP
 
 		// DAD rp (Add register pair to H and L)
 		// (H)(L) <- (H)(L) + (rh)(rl)
 		// Note: Only the CY flag is affected
-		m_opcodes[0011] = [=]() { dad(MakeWord(m_reg.B, m_reg.C)); }; // BC
-		m_opcodes[0031] = [=]() { dad(MakeWord(m_reg.D, m_reg.E)); }; // DE
-		m_opcodes[0051] = [=]() { dad(GetHL()); };              // HL
-		m_opcodes[0071] = [=]() { dad(m_regSP); };                // SP
+		m_opcodes[0011] = [=]() { dad(GetBC()); }; // BC
+		m_opcodes[0031] = [=]() { dad(GetDE()); }; // DE
+		m_opcodes[0051] = [=]() { dad(GetHL()); }; // HL
+		m_opcodes[0071] = [=]() { dad(m_regSP); }; // SP
 
 		// DAA (Decimal Adjust Accumulator)
 		// The eight-bit number in the accumulator is adjusted to
@@ -822,22 +822,22 @@ namespace emul
 
 	void CPU8080::STAXb()
 	{
-		m_memory.Write8(MakeWord(m_reg.B, m_reg.C), m_reg.A);
+		m_memory.Write8(GetBC(), m_reg.A);
 	}
 
 	void CPU8080::STAXd()
 	{
-		m_memory.Write8(MakeWord(m_reg.D, m_reg.E), m_reg.A);
+		m_memory.Write8(GetDE(), m_reg.A);
 	}
 
 	void CPU8080::LDAXb()
 	{
-		m_reg.A = m_memory.Read8(MakeWord(m_reg.B, m_reg.C));
+		m_reg.A = m_memory.Read8(GetBC());
 	}
 
 	void CPU8080::LDAXd()
 	{
-		m_reg.A = m_memory.Read8(MakeWord(m_reg.D, m_reg.E));
+		m_reg.A = m_memory.Read8(GetDE());
 	}
 
 	void CPU8080::STA()

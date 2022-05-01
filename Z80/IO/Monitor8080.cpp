@@ -103,6 +103,14 @@ namespace emul
 		UpdateCPUType();
 	}
 
+	void Monitor8080::WriteValueNibble(BYTE value, const cpuInfo::Coord& coord, WORD attr)
+	{
+		static char hex[1];
+		hex[0] = hexDigits[(value & 0x0F)];
+
+		m_console.WriteAt(coord.x, coord.y, hex, 1, attr);
+	}
+
 	void Monitor8080::WriteValueHex(BYTE value, const Coord& coord, WORD attr)
 	{
 		static char hex[2];
@@ -238,6 +246,22 @@ namespace emul
 		m_console.WriteAttrAt(coord.x, coord.y, attr, width);
 	}
 
+	ADDRESS Monitor8080::GetRAMBase() const
+	{
+		switch (m_ramMode)
+		{
+		case RAMMode::HL:
+			return m_cpu->GetHL();
+		case RAMMode::SP:
+			return  m_cpu->m_regSP;
+		case RAMMode::PC:
+			return  m_cpu->GetCurrentAddress();
+		case RAMMode::CUSTOM:
+		default: 
+			return m_customMemView;
+		}
+	}
+
 	void Monitor8080::UpdateRAM()
 	{
 		static Coord addrPos = m_cpu->GetInfo().GetCoord("ram.ADDR");
@@ -247,24 +271,7 @@ namespace emul
 		static int bytesTotal = charPos.w * charPos.h;
 
 		// Adjust position so the view doesn't move around too much
-		WORD offset = 0;
-
-		switch (m_ramMode)
-		{
-		case RAMMode::HL:
-			offset = m_cpu->GetHL();
-			break;
-		case RAMMode::SP:
-			offset = m_cpu->m_regSP;
-			break;
-		case RAMMode::PC:
-			offset = m_cpu->GetCurrentAddress();
-			break;
-		case RAMMode::CUSTOM:
-		default:
-			offset = m_customMemView;
-			break;
-		}
+		WORD offset = GetRAMBase();
 
 		WORD adjustedOffset = (offset / bytesPerLine) * bytesPerLine;
 		

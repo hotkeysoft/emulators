@@ -23,6 +23,62 @@ namespace emul
 		}
 	}
 
+	void MonitorZ80::ToggleRAMMode()
+	{
+		switch (m_ramMode)
+		{
+		case RAMMode::HL: m_ramMode = (RAMMode)RAMModeZ80::IX; break;
+		case (RAMMode)RAMModeZ80::IX: m_ramMode = (RAMMode)RAMModeZ80::IY; break;
+		case (RAMMode)RAMModeZ80::IY: m_ramMode = RAMMode::SP; break;
+		case RAMMode::SP: m_ramMode = RAMMode::PC; break;
+		case RAMMode::PC: m_ramMode = RAMMode::CUSTOM; break;
+		case RAMMode::CUSTOM: m_ramMode = RAMMode::HL; break;
+		}
+
+		UpdateRAMMode();
+	}
+
+	void MonitorZ80::UpdateRAMMode()
+	{
+		const WORD highlight = (3 << 4) | 14;
+		const WORD regular = (0 << 4) | 8;
+		static Coord ramHL = m_cpu->GetInfo().GetCoord("ram.HL");
+		static Coord ramPC = m_cpu->GetInfo().GetCoord("ram.PC");
+		static Coord ramIX = m_cpu->GetInfo().GetCoord("ram.IX");
+		static Coord ramIY = m_cpu->GetInfo().GetCoord("ram.IY");
+		static Coord ramSP = m_cpu->GetInfo().GetCoord("ram.SP");
+		static Coord ramCustom = m_cpu->GetInfo().GetCoord("ram.CUSTOM");
+
+		m_console.WriteAttrAt(ramHL.x, ramHL.y, (m_ramMode == RAMMode::HL) ? highlight : regular, ramHL.w);
+		m_console.WriteAttrAt(ramPC.x, ramPC.y, (m_ramMode == RAMMode::PC) ? highlight : regular, ramHL.w);
+		m_console.WriteAttrAt(ramIX.x, ramIX.y, (m_ramMode == (RAMMode)RAMModeZ80::IX) ? highlight : regular, ramHL.w);
+		m_console.WriteAttrAt(ramIY.x, ramIY.y, (m_ramMode == (RAMMode)RAMModeZ80::IY) ? highlight : regular, ramHL.w);
+		m_console.WriteAttrAt(ramSP.x, ramSP.y, (m_ramMode == RAMMode::SP) ? highlight : regular, ramSP.w);
+
+		{
+			static char buf[32];
+			sprintf(buf, " CUSTOM:%04X", m_customMemView);
+			m_console.WriteAt(ramCustom.x, ramCustom.y, buf);
+			m_console.WriteAttrAt(ramCustom.x, ramCustom.y, (m_ramMode == RAMMode::CUSTOM) ? highlight : regular, ramCustom.w);
+		}
+
+		UpdateRAM();
+	}
+
+	ADDRESS MonitorZ80::GetRAMBase() const
+	{
+		switch ((RAMModeZ80)m_ramMode)
+		{
+		case RAMModeZ80::IX:
+			return m_cpuZ80->m_regIX;
+		case RAMModeZ80::IY:
+			return m_cpuZ80->m_regIY;
+
+		default:
+			return Monitor8080::GetRAMBase();
+		}
+	}
+
 	void MonitorZ80::UpdateRegisters()
 	{
 		Monitor8080::UpdateRegisters();
@@ -40,6 +96,20 @@ namespace emul
 
 		WriteValueHex(m_cpuZ80->m_regIX, m_cpu->GetInfo().GetCoord("IX"));
 		WriteValueHex(m_cpuZ80->m_regIY, m_cpu->GetInfo().GetCoord("IY"));
+
+		WriteValueHex(m_cpuZ80->m_regI, m_cpu->GetInfo().GetCoord("I"));
+		WriteValueHex(m_cpuZ80->m_regR, m_cpu->GetInfo().GetCoord("R"));
+
+		WriteValueNibble(m_cpuZ80->m_interruptMode, m_cpu->GetInfo().GetCoord("IM"));
+		WriteValueNibble(m_cpuZ80->m_iff1, m_cpu->GetInfo().GetCoord("IFF1"));
+		WriteValueNibble(m_cpuZ80->m_iff1, m_cpu->GetInfo().GetCoord("IFF2"));
+	}
+
+	std::string ToHex(DWORD val)
+	{
+		static char buf[32];
+		sprintf(buf, "0%Xh", val);
+		return (isalpha(buf[1])) ? buf : (buf + 1);
 	}
 
 	ADDRESS MonitorZ80::Disassemble(ADDRESS address, MonitorZ80::Instruction& decoded)
@@ -67,22 +137,25 @@ namespace emul
 			case Opcode::MULTI::GRP2:
 			case Opcode::MULTI::GRP3:
 			case Opcode::MULTI::GRP4:
+				instr = m_cpu->GetInfo().GetSubOpcode(instr, op2);
 				Replace(text, grpLabel, op2Str); break;
 			default:
 				break;
 			}
 		}
 
-		char buf[32];
 		switch (instr.imm)
 		{
 		case Opcode::IMM::W8:
+		case Opcode::IMM::W8W8:
 		{
-			BYTE imm8 = m_memory->Read8(++address);
-			decoded.AddRaw(imm8);
-
-			sprintf(buf, "0%Xh", imm8);
-			Replace(text, "{i8}", buf);
+			int count = (instr.imm == Opcode::IMM::W8W8) ? 2 : 1;
+			for (int i = 0; i < count; ++i)
+			{
+				BYTE imm8 = m_memory->Read8(++address);
+				decoded.AddRaw(imm8);		
+				Replace(text, "{i8}", ToHex(imm8));
+			}
 			break;
 		}
 		case Opcode::IMM::W16:
@@ -90,9 +163,7 @@ namespace emul
 			WORD imm16 = m_memory->Read16(++address);
 			++address;
 			decoded.AddRaw(imm16);
-
-			sprintf(buf, "0%Xh", imm16);
-			Replace(text, "{i16}", buf);
+			Replace(text, "{i16}", ToHex(imm16));
 			break;
 		}
 		default:

@@ -48,16 +48,18 @@ namespace emul
 
 		void ToggleRunMode();
 		void UpdateRunMode();
-		void ToggleRAMMode();
-		void UpdateRAMMode();
+		virtual void ToggleRAMMode();
+		virtual void UpdateRAMMode();
 		void UpdateCPUType();
 
+		void WriteValueNibble(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(WORD value, const cpuInfo::Coord& coord, WORD attr = 15);
 
 		virtual void UpdateRegisters();
 		void UpdateTicks();
 		void UpdateFlags();
+		virtual ADDRESS GetRAMBase() const;
 		void UpdateRAM();
 		void PrintInstruction(short y, Instruction& instr);
 		void UpdateCode();

@@ -24,8 +24,14 @@ namespace emul
 		virtual void Init(CPU8080& cpu, Memory& memory) override;
 
 	protected:
+		virtual void ToggleRAMMode() override;
+		virtual void UpdateRAMMode() override;
+		virtual ADDRESS GetRAMBase() const;
+
 		virtual void UpdateRegisters() override;
 		virtual ADDRESS Disassemble(ADDRESS address, Monitor8080::Instruction& decoded) override;
+
+		enum class RAMModeZ80 { IX = 10, IY };
 
 		CPUZ80* m_cpuZ80 = nullptr;
 	};

@@ -318,7 +318,7 @@ int main(int argc, char* args[])
 	std::string memViewStr = CONFIG().GetValueStr("monitor", "custommem");
 	if (memViewStr.size())
 	{
-		customMemoryView = std::stoul(breakpointStr, nullptr, 0);
+		customMemoryView = std::stoul(memViewStr, nullptr, 0);
 		if (customMemoryView < 0 || customMemoryView > 0xFFFF)
 		{
 			fprintf(stderr, "Unable to decode Custom Memory View value [%s]\n", memViewStr.c_str());

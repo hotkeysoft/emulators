@@ -47,7 +47,8 @@ namespace emul
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
 
-		std::vector<std::function<void()>> m_opcodes;
+		using OpcodeTable = std::vector<std::function<void()>>;
+		OpcodeTable m_opcodes;
 		void UnknownOpcode();
 
 		cpuInfo::CPUInfo m_info;
@@ -105,7 +106,14 @@ namespace emul
 
 		void Interrupt();
 
-		ADDRESS GetHL() const { return MakeWord(m_reg.H, m_reg.L); };
+		WORD GetBC() const { return MakeWord(m_reg.B, m_reg.C); };
+		WORD GetDE() const { return MakeWord(m_reg.D, m_reg.E); };
+		WORD GetHL() const { return MakeWord(m_reg.H, m_reg.L); };
+
+		void SetBC(WORD val) { m_reg.B = GetHByte(val); m_reg.C = GetLByte(val); }
+		void SetDE(WORD val) { m_reg.D = GetHByte(val); m_reg.E = GetLByte(val); }
+		void SetHL(WORD val) { m_reg.H = GetHByte(val); m_reg.L = GetLByte(val); }
+
 		BYTE ReadMem() const { return m_memory.Read8(GetHL()); }
 		void WriteMem(BYTE value) { m_memory.Write8(GetHL(), value); }
 

@@ -133,7 +133,8 @@ namespace cpuInfo
 			char buf[16];
 			sprintf(buf, "DB 0x%02X", i);
 			m_subOpcodes[index][i] = buf;
-			m_subTiming[index][i] = OpcodeTiming{};
+			// All undefined sub opcodes are equivalent to 2xNOP
+			m_subTiming[index][i] = OpcodeTiming{ 8, 0, 0, 0 };
 		}
 
 		// TODO: Code duplication w/BuildOpcodes
@@ -179,7 +180,7 @@ namespace cpuInfo
 
 	OpcodeTiming CPUInfo::BuildTiming(const json& opcode) const
 	{
-		OpcodeTiming timing = { 1, 0, 0, 0 };
+		OpcodeTiming timing = { 4, 0, 0, 0 };
 		if (!opcode.contains("timing"))
 		{
 			return timing;
@@ -244,10 +245,22 @@ namespace cpuInfo
 		else if (ret.i16) ret.imm = Opcode::IMM::W16;
 		else if (ret.i32) ret.imm = Opcode::IMM::W32;
 		else ret.imm = Opcode::IMM::NONE;
+
 		// Special case: I16/I8 (ENTER)
 		if (ret.i8 && ret.i16)
 		{
 			ret.imm = Opcode::IMM::W16W8;
+		}
+		// Check for double i8
+		if (ret.i8)
+		{
+			// Skip over first one
+			std::string::size_type pos = text.find("{i8}");
+			pos = text.find("{i8}", pos + 1);
+			if (pos != std::string::npos)
+			{
+				ret.imm = Opcode::IMM::W8W8;
+			}
 		}
 
 		if (ret.sr) ret.modRegRm = Opcode::MODREGRM::SR;
