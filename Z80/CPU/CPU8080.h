@@ -132,9 +132,10 @@ namespace emul
 		void ora(BYTE src);
 		void cmp(BYTE src);
 
-		void adjustParity(BYTE data);
-		void adjustSign(BYTE data);
-		void adjustZero(BYTE data);
+		void AdjustParity(BYTE data);
+		void AdjustSign(BYTE data);
+		void AdjustZero(BYTE data);
+		virtual void AdjustBaseFlags(BYTE val);
 
 		// Opcodes
 

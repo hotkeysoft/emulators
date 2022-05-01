@@ -122,7 +122,10 @@ namespace emul
 		Opcode instr = m_cpu->GetInfo().GetOpcode(data);
 		std::string text = instr.text;
 
-		if (instr.multi != Opcode::MULTI::NONE)
+		BYTE imm8 = 0;
+		bool imm8Loaded = false;
+
+		while (instr.multi != Opcode::MULTI::NONE)
 		{
 			BYTE op2 = m_memory->Read8(++address);
 			decoded.AddRaw(op2);
@@ -139,7 +142,30 @@ namespace emul
 			case Opcode::MULTI::GRP4:
 				instr = m_cpu->GetInfo().GetSubOpcode(instr, op2);
 				Replace(text, grpLabel, op2Str); break;
+				break;
 			default:
+				break;
+			}
+
+			// For GRP3.GRP4 we need to fetch the immediate offset before the sub opcode
+			if (instr.multi == Opcode::MULTI::GRP4)
+			{
+				imm8 = m_memory->Read8(++address);
+				decoded.AddRaw(imm8);
+				imm8Loaded = true;
+			}
+		}
+
+		// Used for IY/IX edtended instructions
+		if (instr.r16)
+		{
+			switch (data)
+			{
+			case 0xDD:
+				Replace(text, "{r16}", "IX");
+				break;
+			case 0xFD:
+				Replace(text, "{r16}", "IY");
 				break;
 			}
 		}
@@ -152,8 +178,11 @@ namespace emul
 			int count = (instr.imm == Opcode::IMM::W8W8) ? 2 : 1;
 			for (int i = 0; i < count; ++i)
 			{
-				BYTE imm8 = m_memory->Read8(++address);
-				decoded.AddRaw(imm8);		
+				if (!imm8Loaded)
+				{
+					imm8 = m_memory->Read8(++address);
+					decoded.AddRaw(imm8);
+				}
 				Replace(text, "{i8}", ToHex(imm8));
 			}
 			break;

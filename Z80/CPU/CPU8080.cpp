@@ -787,19 +787,11 @@ namespace emul
 		m_interrupts.Acknowledge();
 	}
 
-	void CPU8080::adjustParity(BYTE data)
+	void CPU8080::AdjustBaseFlags(BYTE val)
 	{
-		SetFlag(FLAG_P, IsParityEven(data));
-	}
-
-	void CPU8080::adjustSign(BYTE data)
-	{
-		SetFlag(FLAG_S, (data&128)?true:false);
-	}
-
-	void CPU8080::adjustZero(BYTE data)
-	{
-		SetFlag(FLAG_Z, (data==0));
+		SetFlag(FLAG_Z, (val == 0));
+		SetFlag(FLAG_S, GetBit(val, 7));
+		SetFlag(FLAG_P, IsParityEven(val));
 	}
 
 	void CPU8080::LXIb()
@@ -965,9 +957,7 @@ namespace emul
 	{
 		reg++;
 
-		adjustParity(reg);
-		adjustZero(reg);
-		adjustSign(reg);
+		AdjustBaseFlags(reg);
 		SetFlag(FLAG_AC, (reg & 0x0F) == 0);
 	}
 
@@ -975,9 +965,7 @@ namespace emul
 	{
 		reg--;
 
-		adjustParity(reg);
-		adjustZero(reg);
-		adjustSign(reg);
+		AdjustBaseFlags(reg);
 		SetFlag(FLAG_AC, (reg & 0x0F) != 0x0F);
 	}
 
@@ -987,9 +975,7 @@ namespace emul
 		value++;
 		WriteMem(value);
 
-		adjustParity(value);
-		adjustZero(value);
-		adjustSign(value);
+		AdjustBaseFlags(value);
 		SetFlag(FLAG_AC, (value & 0x0F) == 0);
 	}
 
@@ -999,9 +985,7 @@ namespace emul
 		value--;
 		WriteMem(value);
 
-		adjustParity(value);
-		adjustZero(value);
-		adjustSign(value);
+		AdjustBaseFlags(value);
 		SetFlag(FLAG_AC, (value & 0x0F) != 0x0F);
 	}
 
@@ -1035,11 +1019,9 @@ namespace emul
 
 		m_reg.A = (BYTE)temp;
 
+		AdjustBaseFlags(m_reg.A);
 		SetFlag(FLAG_CY, (temp > 0xFF));
 		SetFlag(FLAG_AC, (loNibble > 0x0F));
-		adjustSign(m_reg.A);
-		adjustZero(m_reg.A);
-		adjustParity(m_reg.A);
 	}
 
 	void CPU8080::dad(WORD value)
@@ -1068,20 +1050,16 @@ namespace emul
 
 		m_reg.A = (BYTE)temp;
 
+		AdjustBaseFlags(m_reg.A);
 		SetFlag(FLAG_CY, (temp < 0));
 		SetFlag(FLAG_AC, !(loNibble < 0));
-		adjustSign(m_reg.A);
-		adjustZero(m_reg.A);
-		adjustParity(m_reg.A);
 	}
 
 	void CPU8080::ana(BYTE src)
 	{
 		m_reg.A &= src;
 
-		adjustSign(m_reg.A);
-		adjustZero(m_reg.A);
-		adjustParity(m_reg.A);
+		AdjustBaseFlags(m_reg.A);
 		SetFlag(FLAG_AC, true);				// Must confirm
 		SetFlag(FLAG_CY, false);
 	}
@@ -1090,9 +1068,7 @@ namespace emul
 	{
 		m_reg.A ^= src;
 
-		adjustSign(m_reg.A);
-		adjustZero(m_reg.A);
-		adjustParity(m_reg.A);
+		AdjustBaseFlags(m_reg.A);
 		SetFlag(FLAG_AC, false);
 		SetFlag(FLAG_CY, false);
 	}
@@ -1101,9 +1077,7 @@ namespace emul
 	{
 		m_reg.A |= src;
 
-		adjustSign(m_reg.A);
-		adjustZero(m_reg.A);
-		adjustParity(m_reg.A);
+		AdjustBaseFlags(m_reg.A);
 		SetFlag(FLAG_AC, false);
 		SetFlag(FLAG_CY, false);
 	}
@@ -1117,9 +1091,7 @@ namespace emul
 
 		SetFlag(FLAG_CY, (temp < 0));
 		SetFlag(FLAG_AC, !(loNibble < 0));
-		adjustSign((BYTE)temp);
-		adjustZero((BYTE)temp);
-		adjustParity((BYTE)temp);
+		AdjustBaseFlags(temp);
 	}
 
 	void CPU8080::RLC()
