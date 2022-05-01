@@ -10,14 +10,6 @@ namespace emul
 
 		virtual void Init() override;
 
-		void InitIY();
-
-		void InitIX();
-
-		void InitEXTD();
-
-		void InitBITS();
-
 		virtual void Reset() override;
 
 		virtual const std::string GetID() const override { return "z80"; };
@@ -42,9 +34,17 @@ namespace emul
 		virtual void AdjustBaseFlags(BYTE val) override;
 		void AdjustBaseFlags(WORD val);
 
+		void InitIXY();
+		void InitEXTD();
+		void InitBITS();
+		void InitBITSxy();
+
 		Registers m_regAlt;
 		WORD m_regIX = 0;
 		WORD m_regIY = 0;
+		WORD* m_currIdx = &m_regIX;
+		BYTE m_currOffset = 0;
+		BYTE m_regDummy = 0;
 
 		// Interrupt vector
 		BYTE m_regI = 0;
@@ -60,7 +60,8 @@ namespace emul
 		enum InterruptMode {IM0 = 0, IM1, IM2 } m_interruptMode = InterruptMode::IM0;
 
 		// Helper functions
-		BYTE ReadMemIdx(WORD base);
+		BYTE ReadMemIdx(BYTE offset);
+		void WriteMemIdx(BYTE offset, BYTE value);
 		void MEMop(std::function<void(CPUZ80*, BYTE& dest)> func);
 
 		void jumpRelIF(bool condition, BYTE offset);
@@ -78,19 +79,25 @@ namespace emul
 		void EXX();
 
 		void BITS(BYTE op2);
+		void BITSxy();
 		void EXTD(BYTE op2);
-		void IX(BYTE op2);
-		void IY(BYTE op2);
+		void IXY(BYTE op2);
 
 		OpcodeTable m_opcodesBITS;
+		OpcodeTable m_opcodesBITSxy;
 		OpcodeTable m_opcodesEXTD;
-		OpcodeTable m_opcodesIX;
-		OpcodeTable m_opcodesIY;
+		OpcodeTable m_opcodesIXY;
 
 		void RL(BYTE& dest);
+		void RLC(BYTE& dest);
+
 		void BITget(BYTE bit, BYTE src);
+		void BITgetIXY(BYTE bit);
 		void BITset(BYTE bit, bool set, BYTE& dest);
+		void BITsetIXY(BYTE bit, bool set, BYTE& altDest);
 		void BITsetM(BYTE bit, bool set);
+
+		void INc(BYTE& dest);
 
 		friend class MonitorZ80;
 	};

@@ -40,6 +40,11 @@ namespace emul
 	{
 		CPU8080::Init();
 
+		m_opcodes[0010] = [=]() { EXAF(); }; // 0x08
+
+		// DJNZ rel8 - Decrement B, jump relative if non zero
+		m_opcodes[0020] = [=]() { jumpRelIF(--m_reg.B, FetchByte()); }; // 0x10
+
 		// Jump Relative
 		m_opcodes[0030] = [=]() { jumpRelIF(true, FetchByte()); };
 		m_opcodes[0040] = [=]() { jumpRelIF(GetFlag(FLAG_Z) == false, FetchByte()); };  // JNZ
@@ -47,29 +52,39 @@ namespace emul
 		m_opcodes[0060] = [=]() { jumpRelIF(GetFlag(FLAG_CY) == false, FetchByte()); }; // JNC
 		m_opcodes[0070] = [=]() { jumpRelIF(GetFlag(FLAG_CY) == true, FetchByte()); };  // JC
 
-		m_opcodes[0010] = [=]() { EXAF(); }; // 0x08
-
-		// DJNZ rel8 - Decrement B, jump relative if non zero
-		m_opcodes[0020] = [=]() { jumpRelIF(--m_reg.B, FetchByte()); }; // 0x10
-
 		m_opcodes[0331] = [=]() { EXX(); };  // 0xD9
 
 		// Extended instructions
 		m_opcodes[0313] = [=]() { BITS(FetchByte()); }; // 0xCB
-		m_opcodes[0335] = [=]() { IX(FetchByte()); }; // 0xDD
+		m_opcodes[0335] = [=]() { m_currIdx = &m_regIX; IXY(FetchByte()); }; // 0xDD
 		m_opcodes[0355] = [=]() { EXTD(FetchByte()); }; // 0xED
-		m_opcodes[0375] = [=]() { IY(FetchByte()); }; // 0xFD
-	
+		m_opcodes[0375] = [=]() { m_currIdx = &m_regIY; IXY(FetchByte()); }; // 0xFD
+
+		// Replace IN/OUT Opcodes with Z80 version
+		// On Z80, IN/OUT put reg A value in A8..A15
+		m_opcodes[0333] = [=]() { In(MakeWord(m_reg.A, FetchByte()), m_reg.A); };
+		m_opcodes[0323] = [=]() { Out(MakeWord(m_reg.A, FetchByte()), m_reg.A); };
+
 		InitBITS(); // Bit instructions (Prefix 0xCB)
+		InitBITSxy(); // Bit instructions, indexed (Prefix 0xDDCF, 0xFDCB)
 		InitEXTD();	// Extended instructions (Prefix 0xED)
-		InitIX();   // IX instructions (Prefix 0xDD)
-		InitIY();   // IY instructions (Prefix 0xFD)
+		InitIXY();   // IX/IY instructions (Prefix 0xDD, 0xFD)
 	}
 
 	void CPUZ80::InitBITS()
 	{
 		m_opcodesBITS.resize(256);
 		std::fill(m_opcodesBITS.begin(), m_opcodesBITS.end(), [=]() { NotImplemented("BITS"); });
+
+		// Rotate Left through carry
+		m_opcodesBITS[0x00] = [=]() { RLC(m_reg.B); };
+		m_opcodesBITS[0x01] = [=]() { RLC(m_reg.C); };
+		m_opcodesBITS[0x02] = [=]() { RLC(m_reg.D); };
+		m_opcodesBITS[0x03] = [=]() { RLC(m_reg.E); };
+		m_opcodesBITS[0x04] = [=]() { RLC(m_reg.H); };
+		m_opcodesBITS[0x05] = [=]() { RLC(m_reg.L); };
+		//m_opcodesBITS[0x06] = [=]() { MEMop(&CPUZ80::RLC); };
+		m_opcodesBITS[0x07] = [=]() { RLC(m_reg.A); };
 
 		// Rotate Left
 		m_opcodesBITS[0x10] = [=]() { RL(m_reg.B); };
@@ -228,6 +243,241 @@ namespace emul
 		m_opcodesBITS[0xFF] = [=]() { BITset(7, true, m_reg.A); };
 	}
 
+	void CPUZ80::InitBITSxy()
+	{
+		m_opcodesBITSxy.resize(256);
+		std::fill(m_opcodesBITSxy.begin(), m_opcodesBITSxy.end(), [=]() { NotImplemented("BITSxy"); });
+
+		// Rotate Left
+		//m_opcodesBITSxy[0x10] = [=]() { RL(m_reg.B); };
+		//m_opcodesBITSxy[0x11] = [=]() { RL(m_reg.C); };
+		//m_opcodesBITSxy[0x12] = [=]() { RL(m_reg.D); };
+		//m_opcodesBITSxy[0x13] = [=]() { RL(m_reg.E); };
+		//m_opcodesBITSxy[0x14] = [=]() { RL(m_reg.H); };
+		//m_opcodesBITSxy[0x15] = [=]() { RL(m_reg.L); };
+		////m_opcodesBITSxy[0x16] = [=]() { MEMop(&CPUZ80::RL); };
+		//m_opcodesBITSxy[0x17] = [=]() { RL(m_reg.A); };
+
+		// BIT: Test bit n of (IX+s8) and set Z flag
+		m_opcodesBITSxy[0x40] = [=]() { BITgetIXY(0); };
+		m_opcodesBITSxy[0x41] = [=]() { BITgetIXY(0); };
+		m_opcodesBITSxy[0x42] = [=]() { BITgetIXY(0); };
+		m_opcodesBITSxy[0x43] = [=]() { BITgetIXY(0); };
+		m_opcodesBITSxy[0x44] = [=]() { BITgetIXY(0); };
+		m_opcodesBITSxy[0x45] = [=]() { BITgetIXY(0); };
+		m_opcodesBITSxy[0x46] = [=]() { BITgetIXY(0); };
+		m_opcodesBITSxy[0x47] = [=]() { BITgetIXY(0); };
+
+		m_opcodesBITSxy[0x48] = [=]() { BITgetIXY(1); };
+		m_opcodesBITSxy[0x49] = [=]() { BITgetIXY(1); };
+		m_opcodesBITSxy[0x4A] = [=]() { BITgetIXY(1); };
+		m_opcodesBITSxy[0x4B] = [=]() { BITgetIXY(1); };
+		m_opcodesBITSxy[0x4C] = [=]() { BITgetIXY(1); };
+		m_opcodesBITSxy[0x4D] = [=]() { BITgetIXY(1); };
+		m_opcodesBITSxy[0x4E] = [=]() { BITgetIXY(1); };
+		m_opcodesBITSxy[0x4F] = [=]() { BITgetIXY(1); };
+
+		m_opcodesBITSxy[0x50] = [=]() { BITgetIXY(2); };
+		m_opcodesBITSxy[0x51] = [=]() { BITgetIXY(2); };
+		m_opcodesBITSxy[0x52] = [=]() { BITgetIXY(2); };
+		m_opcodesBITSxy[0x53] = [=]() { BITgetIXY(2); };
+		m_opcodesBITSxy[0x54] = [=]() { BITgetIXY(2); };
+		m_opcodesBITSxy[0x55] = [=]() { BITgetIXY(2); };
+		m_opcodesBITSxy[0x56] = [=]() { BITgetIXY(2); };
+		m_opcodesBITSxy[0x57] = [=]() { BITgetIXY(2); };
+
+		m_opcodesBITSxy[0x58] = [=]() { BITgetIXY(3); };
+		m_opcodesBITSxy[0x59] = [=]() { BITgetIXY(3); };
+		m_opcodesBITSxy[0x5A] = [=]() { BITgetIXY(3); };
+		m_opcodesBITSxy[0x5B] = [=]() { BITgetIXY(3); };
+		m_opcodesBITSxy[0x5C] = [=]() { BITgetIXY(3); };
+		m_opcodesBITSxy[0x5D] = [=]() { BITgetIXY(3); };
+		m_opcodesBITSxy[0x5E] = [=]() { BITgetIXY(3); };
+		m_opcodesBITSxy[0x5F] = [=]() { BITgetIXY(3); };
+
+		m_opcodesBITSxy[0x60] = [=]() { BITgetIXY(4); };
+		m_opcodesBITSxy[0x61] = [=]() { BITgetIXY(4); };
+		m_opcodesBITSxy[0x62] = [=]() { BITgetIXY(4); };
+		m_opcodesBITSxy[0x63] = [=]() { BITgetIXY(4); };
+		m_opcodesBITSxy[0x64] = [=]() { BITgetIXY(4); };
+		m_opcodesBITSxy[0x65] = [=]() { BITgetIXY(4); };
+		m_opcodesBITSxy[0x66] = [=]() { BITgetIXY(4); };
+		m_opcodesBITSxy[0x67] = [=]() { BITgetIXY(4); };
+
+		m_opcodesBITSxy[0x68] = [=]() { BITgetIXY(5); };
+		m_opcodesBITSxy[0x69] = [=]() { BITgetIXY(5); };
+		m_opcodesBITSxy[0x6A] = [=]() { BITgetIXY(5); };
+		m_opcodesBITSxy[0x6B] = [=]() { BITgetIXY(5); };
+		m_opcodesBITSxy[0x6C] = [=]() { BITgetIXY(5); };
+		m_opcodesBITSxy[0x6D] = [=]() { BITgetIXY(5); };
+		m_opcodesBITSxy[0x6E] = [=]() { BITgetIXY(5); };
+		m_opcodesBITSxy[0x6F] = [=]() { BITgetIXY(5); };
+
+		m_opcodesBITSxy[0x70] = [=]() { BITgetIXY(6); };
+		m_opcodesBITSxy[0x71] = [=]() { BITgetIXY(6); };
+		m_opcodesBITSxy[0x72] = [=]() { BITgetIXY(6); };
+		m_opcodesBITSxy[0x73] = [=]() { BITgetIXY(6); };
+		m_opcodesBITSxy[0x74] = [=]() { BITgetIXY(6); };
+		m_opcodesBITSxy[0x75] = [=]() { BITgetIXY(6); };
+		m_opcodesBITSxy[0x76] = [=]() { BITgetIXY(6); };
+		m_opcodesBITSxy[0x77] = [=]() { BITgetIXY(6); };
+
+		m_opcodesBITSxy[0x78] = [=]() { BITgetIXY(7); };
+		m_opcodesBITSxy[0x79] = [=]() { BITgetIXY(7); };
+		m_opcodesBITSxy[0x7A] = [=]() { BITgetIXY(7); };
+		m_opcodesBITSxy[0x7B] = [=]() { BITgetIXY(7); };
+		m_opcodesBITSxy[0x7C] = [=]() { BITgetIXY(7); };
+		m_opcodesBITSxy[0x7D] = [=]() { BITgetIXY(7); };
+		m_opcodesBITSxy[0x7E] = [=]() { BITgetIXY(7); };
+		m_opcodesBITSxy[0x7F] = [=]() { BITgetIXY(7); };
+
+		// RES: Clear bit n of (IX+s8), optional working register
+		m_opcodesBITSxy[0x80] = [=]() { BITsetIXY(0, false, m_reg.B); };
+		m_opcodesBITSxy[0x81] = [=]() { BITsetIXY(0, false, m_reg.C); };
+		m_opcodesBITSxy[0x82] = [=]() { BITsetIXY(0, false, m_reg.D); };
+		m_opcodesBITSxy[0x83] = [=]() { BITsetIXY(0, false, m_reg.E); };
+		m_opcodesBITSxy[0x84] = [=]() { BITsetIXY(0, false, m_reg.H); };
+		m_opcodesBITSxy[0x85] = [=]() { BITsetIXY(0, false, m_reg.L); };
+		m_opcodesBITSxy[0x86] = [=]() { BITsetIXY(0, false, m_regDummy); };
+		m_opcodesBITSxy[0x87] = [=]() { BITsetIXY(0, false, m_reg.A); };
+
+		m_opcodesBITSxy[0x88] = [=]() { BITsetIXY(1, false, m_reg.B); };
+		m_opcodesBITSxy[0x89] = [=]() { BITsetIXY(1, false, m_reg.C); };
+		m_opcodesBITSxy[0x8A] = [=]() { BITsetIXY(1, false, m_reg.D); };
+		m_opcodesBITSxy[0x8B] = [=]() { BITsetIXY(1, false, m_reg.E); };
+		m_opcodesBITSxy[0x8C] = [=]() { BITsetIXY(1, false, m_reg.H); };
+		m_opcodesBITSxy[0x8D] = [=]() { BITsetIXY(1, false, m_reg.L); };
+		m_opcodesBITSxy[0x8E] = [=]() { BITsetIXY(1, false, m_regDummy); };
+		m_opcodesBITSxy[0x8F] = [=]() { BITsetIXY(1, false, m_reg.A); };
+
+		m_opcodesBITSxy[0x90] = [=]() { BITsetIXY(2, false, m_reg.B); };
+		m_opcodesBITSxy[0x91] = [=]() { BITsetIXY(2, false, m_reg.C); };
+		m_opcodesBITSxy[0x92] = [=]() { BITsetIXY(2, false, m_reg.D); };
+		m_opcodesBITSxy[0x93] = [=]() { BITsetIXY(2, false, m_reg.E); };
+		m_opcodesBITSxy[0x94] = [=]() { BITsetIXY(2, false, m_reg.H); };
+		m_opcodesBITSxy[0x95] = [=]() { BITsetIXY(2, false, m_reg.L); };
+		m_opcodesBITSxy[0x96] = [=]() { BITsetIXY(2, false, m_regDummy); };
+		m_opcodesBITSxy[0x97] = [=]() { BITsetIXY(2, false, m_reg.A); };
+
+		m_opcodesBITSxy[0x98] = [=]() { BITsetIXY(3, false, m_reg.B); };
+		m_opcodesBITSxy[0x99] = [=]() { BITsetIXY(3, false, m_reg.C); };
+		m_opcodesBITSxy[0x9A] = [=]() { BITsetIXY(3, false, m_reg.D); };
+		m_opcodesBITSxy[0x9B] = [=]() { BITsetIXY(3, false, m_reg.E); };
+		m_opcodesBITSxy[0x9C] = [=]() { BITsetIXY(3, false, m_reg.H); };
+		m_opcodesBITSxy[0x9D] = [=]() { BITsetIXY(3, false, m_reg.L); };
+		m_opcodesBITSxy[0x9E] = [=]() { BITsetIXY(3, false, m_regDummy); };
+		m_opcodesBITSxy[0x9F] = [=]() { BITsetIXY(3, false, m_reg.A); };
+
+		m_opcodesBITSxy[0xA0] = [=]() { BITsetIXY(4, false, m_reg.B); };
+		m_opcodesBITSxy[0xA1] = [=]() { BITsetIXY(4, false, m_reg.C); };
+		m_opcodesBITSxy[0xA2] = [=]() { BITsetIXY(4, false, m_reg.D); };
+		m_opcodesBITSxy[0xA3] = [=]() { BITsetIXY(4, false, m_reg.E); };
+		m_opcodesBITSxy[0xA4] = [=]() { BITsetIXY(4, false, m_reg.H); };
+		m_opcodesBITSxy[0xA5] = [=]() { BITsetIXY(4, false, m_reg.L); };
+		m_opcodesBITSxy[0xA6] = [=]() { BITsetIXY(4, false, m_regDummy); };
+		m_opcodesBITSxy[0xA7] = [=]() { BITsetIXY(4, false, m_reg.A); };
+
+		m_opcodesBITSxy[0xA8] = [=]() { BITsetIXY(5, false, m_reg.B); };
+		m_opcodesBITSxy[0xA9] = [=]() { BITsetIXY(5, false, m_reg.C); };
+		m_opcodesBITSxy[0xAA] = [=]() { BITsetIXY(5, false, m_reg.D); };
+		m_opcodesBITSxy[0xAB] = [=]() { BITsetIXY(5, false, m_reg.E); };
+		m_opcodesBITSxy[0xAC] = [=]() { BITsetIXY(5, false, m_reg.H); };
+		m_opcodesBITSxy[0xAD] = [=]() { BITsetIXY(5, false, m_reg.L); };
+		m_opcodesBITSxy[0xAE] = [=]() { BITsetIXY(5, false, m_regDummy); };
+		m_opcodesBITSxy[0xAF] = [=]() { BITsetIXY(5, false, m_reg.A); };
+
+		m_opcodesBITSxy[0xB0] = [=]() { BITsetIXY(6, false, m_reg.B); };
+		m_opcodesBITSxy[0xB1] = [=]() { BITsetIXY(6, false, m_reg.C); };
+		m_opcodesBITSxy[0xB2] = [=]() { BITsetIXY(6, false, m_reg.D); };
+		m_opcodesBITSxy[0xB3] = [=]() { BITsetIXY(6, false, m_reg.E); };
+		m_opcodesBITSxy[0xB4] = [=]() { BITsetIXY(6, false, m_reg.H); };
+		m_opcodesBITSxy[0xB5] = [=]() { BITsetIXY(6, false, m_reg.L); };
+		m_opcodesBITSxy[0xB6] = [=]() { BITsetIXY(6, false, m_regDummy); };
+		m_opcodesBITSxy[0xB7] = [=]() { BITsetIXY(6, false, m_reg.A); };
+
+		m_opcodesBITSxy[0xB8] = [=]() { BITsetIXY(7, false, m_reg.B); };
+		m_opcodesBITSxy[0xB9] = [=]() { BITsetIXY(7, false, m_reg.C); };
+		m_opcodesBITSxy[0xBA] = [=]() { BITsetIXY(7, false, m_reg.D); };
+		m_opcodesBITSxy[0xBB] = [=]() { BITsetIXY(7, false, m_reg.E); };
+		m_opcodesBITSxy[0xBC] = [=]() { BITsetIXY(7, false, m_reg.H); };
+		m_opcodesBITSxy[0xBD] = [=]() { BITsetIXY(7, false, m_reg.L); };
+		m_opcodesBITSxy[0xBE] = [=]() { BITsetIXY(7, false, m_regDummy); };
+		m_opcodesBITSxy[0xBF] = [=]() { BITsetIXY(7, false, m_reg.A); };
+
+		// SET: Set bit n of (IX+s8), optional working register
+		m_opcodesBITSxy[0xC0] = [=]() { BITsetIXY(0, true, m_reg.B); };
+		m_opcodesBITSxy[0xC1] = [=]() { BITsetIXY(0, true, m_reg.C); };
+		m_opcodesBITSxy[0xC2] = [=]() { BITsetIXY(0, true, m_reg.D); };
+		m_opcodesBITSxy[0xC3] = [=]() { BITsetIXY(0, true, m_reg.E); };
+		m_opcodesBITSxy[0xC4] = [=]() { BITsetIXY(0, true, m_reg.H); };
+		m_opcodesBITSxy[0xC5] = [=]() { BITsetIXY(0, true, m_reg.L); };
+		m_opcodesBITSxy[0xC6] = [=]() { BITsetIXY(0, true, m_regDummy); };
+		m_opcodesBITSxy[0xC7] = [=]() { BITsetIXY(0, true, m_reg.A); };
+
+		m_opcodesBITSxy[0xC8] = [=]() { BITsetIXY(1, true, m_reg.B); };
+		m_opcodesBITSxy[0xC9] = [=]() { BITsetIXY(1, true, m_reg.C); };
+		m_opcodesBITSxy[0xCA] = [=]() { BITsetIXY(1, true, m_reg.D); };
+		m_opcodesBITSxy[0xCB] = [=]() { BITsetIXY(1, true, m_reg.E); };
+		m_opcodesBITSxy[0xCC] = [=]() { BITsetIXY(1, true, m_reg.H); };
+		m_opcodesBITSxy[0xCD] = [=]() { BITsetIXY(1, true, m_reg.L); };
+		m_opcodesBITSxy[0xCE] = [=]() { BITsetIXY(1, true, m_regDummy); };
+		m_opcodesBITSxy[0xCF] = [=]() { BITsetIXY(1, true, m_reg.A); };
+
+		m_opcodesBITSxy[0xD0] = [=]() { BITsetIXY(2, true, m_reg.B); };
+		m_opcodesBITSxy[0xD1] = [=]() { BITsetIXY(2, true, m_reg.C); };
+		m_opcodesBITSxy[0xD2] = [=]() { BITsetIXY(2, true, m_reg.D); };
+		m_opcodesBITSxy[0xD3] = [=]() { BITsetIXY(2, true, m_reg.E); };
+		m_opcodesBITSxy[0xD4] = [=]() { BITsetIXY(2, true, m_reg.H); };
+		m_opcodesBITSxy[0xD5] = [=]() { BITsetIXY(2, true, m_reg.L); };
+		m_opcodesBITSxy[0xD6] = [=]() { BITsetIXY(2, true, m_regDummy); };
+		m_opcodesBITSxy[0xD7] = [=]() { BITsetIXY(2, true, m_reg.A); };
+
+		m_opcodesBITSxy[0xD8] = [=]() { BITsetIXY(3, true, m_reg.B); };
+		m_opcodesBITSxy[0xD9] = [=]() { BITsetIXY(3, true, m_reg.C); };
+		m_opcodesBITSxy[0xDA] = [=]() { BITsetIXY(3, true, m_reg.D); };
+		m_opcodesBITSxy[0xDB] = [=]() { BITsetIXY(3, true, m_reg.E); };
+		m_opcodesBITSxy[0xDC] = [=]() { BITsetIXY(3, true, m_reg.H); };
+		m_opcodesBITSxy[0xDD] = [=]() { BITsetIXY(3, true, m_reg.L); };
+		m_opcodesBITSxy[0xDE] = [=]() { BITsetIXY(3, true, m_regDummy); };
+		m_opcodesBITSxy[0xDF] = [=]() { BITsetIXY(3, true, m_reg.A); };
+
+		m_opcodesBITSxy[0xE0] = [=]() { BITsetIXY(4, true, m_reg.B); };
+		m_opcodesBITSxy[0xE1] = [=]() { BITsetIXY(4, true, m_reg.C); };
+		m_opcodesBITSxy[0xE2] = [=]() { BITsetIXY(4, true, m_reg.D); };
+		m_opcodesBITSxy[0xE3] = [=]() { BITsetIXY(4, true, m_reg.E); };
+		m_opcodesBITSxy[0xE4] = [=]() { BITsetIXY(4, true, m_reg.H); };
+		m_opcodesBITSxy[0xE5] = [=]() { BITsetIXY(4, true, m_reg.L); };
+		m_opcodesBITSxy[0xE6] = [=]() { BITsetIXY(4, true, m_regDummy); };
+		m_opcodesBITSxy[0xE7] = [=]() { BITsetIXY(4, true, m_reg.A); };
+
+		m_opcodesBITSxy[0xE8] = [=]() { BITsetIXY(5, true, m_reg.B); };
+		m_opcodesBITSxy[0xE9] = [=]() { BITsetIXY(5, true, m_reg.C); };
+		m_opcodesBITSxy[0xEA] = [=]() { BITsetIXY(5, true, m_reg.D); };
+		m_opcodesBITSxy[0xEB] = [=]() { BITsetIXY(5, true, m_reg.E); };
+		m_opcodesBITSxy[0xEC] = [=]() { BITsetIXY(5, true, m_reg.H); };
+		m_opcodesBITSxy[0xED] = [=]() { BITsetIXY(5, true, m_reg.L); };
+		m_opcodesBITSxy[0xEE] = [=]() { BITsetIXY(5, true, m_regDummy); };
+		m_opcodesBITSxy[0xEF] = [=]() { BITsetIXY(5, true, m_reg.A); };
+
+		m_opcodesBITSxy[0xF0] = [=]() { BITsetIXY(6, true, m_reg.B); };
+		m_opcodesBITSxy[0xF1] = [=]() { BITsetIXY(6, true, m_reg.C); };
+		m_opcodesBITSxy[0xF2] = [=]() { BITsetIXY(6, true, m_reg.D); };
+		m_opcodesBITSxy[0xF3] = [=]() { BITsetIXY(6, true, m_reg.E); };
+		m_opcodesBITSxy[0xF4] = [=]() { BITsetIXY(6, true, m_reg.H); };
+		m_opcodesBITSxy[0xF5] = [=]() { BITsetIXY(6, true, m_reg.L); };
+		m_opcodesBITSxy[0xF6] = [=]() { BITsetIXY(6, true, m_regDummy); };
+		m_opcodesBITSxy[0xF7] = [=]() { BITsetIXY(6, true, m_reg.A); };
+
+		m_opcodesBITSxy[0xF8] = [=]() { BITsetIXY(7, true, m_reg.B); };
+		m_opcodesBITSxy[0xF9] = [=]() { BITsetIXY(7, true, m_reg.C); };
+		m_opcodesBITSxy[0xFA] = [=]() { BITsetIXY(7, true, m_reg.D); };
+		m_opcodesBITSxy[0xFB] = [=]() { BITsetIXY(7, true, m_reg.E); };
+		m_opcodesBITSxy[0xFC] = [=]() { BITsetIXY(7, true, m_reg.H); };
+		m_opcodesBITSxy[0xFD] = [=]() { BITsetIXY(7, true, m_reg.L); };
+		m_opcodesBITSxy[0xFE] = [=]() { BITsetIXY(7, true, m_regDummy); };
+		m_opcodesBITSxy[0xFF] = [=]() { BITsetIXY(7, true, m_reg.A); };
+	}
+
 	void CPUZ80::InitEXTD()
 	{
 		// All empty opcodes are NOPs
@@ -254,7 +504,6 @@ namespace emul
 		m_opcodesEXTD[0x47] = [=]() { m_regI = m_reg.A; };
 		m_opcodesEXTD[0x4F] = [=]() { m_regR = m_reg.A; };
 
-
 		// Interrupt Mode
 		m_opcodesEXTD[0x46] = [=]() { m_interruptMode = InterruptMode::IM0; };
 		m_opcodesEXTD[0x4E] = [=]() { m_interruptMode = InterruptMode::IM0; }; // Undocumented
@@ -277,45 +526,47 @@ namespace emul
 		m_opcodesEXTD[0x6A] = [=]() { adcHL(GetHL()); }; // HL
 		m_opcodesEXTD[0x7A] = [=]() { adcHL(m_regSP); }; // SP
 
+		// IN r, (C)
+		m_opcodesEXTD[0x40] = [=]() { INc(m_reg.B); };
+		m_opcodesEXTD[0x48] = [=]() { INc(m_reg.C); };
+		m_opcodesEXTD[0x50] = [=]() { INc(m_reg.D); };
+		m_opcodesEXTD[0x58] = [=]() { INc(m_reg.E); };
+		m_opcodesEXTD[0x60] = [=]() { INc(m_reg.H); };
+		m_opcodesEXTD[0x68] = [=]() { INc(m_reg.L); };
+		m_opcodesEXTD[0x70] = [=]() { INc(m_regDummy); };
+		m_opcodesEXTD[0x78] = [=]() { INc(m_reg.A); };
+
 		// TODO
-		m_opcodesEXTD[0x40] = [=]() { NotImplemented("EXTD[0x40]"); };
 		m_opcodesEXTD[0x41] = [=]() { NotImplemented("EXTD[0x41]"); };
 		m_opcodesEXTD[0x44] = [=]() { NotImplemented("EXTD[0x44]"); };
 		m_opcodesEXTD[0x45] = [=]() { NotImplemented("EXTD[0x45]"); };
 
-		m_opcodesEXTD[0x48] = [=]() { NotImplemented("EXTD[0x48]"); };
 		m_opcodesEXTD[0x49] = [=]() { NotImplemented("EXTD[0x49]"); };
 		m_opcodesEXTD[0x4C] = [=]() { NotImplemented("EXTD[0x4C]"); };
 		m_opcodesEXTD[0x4D] = [=]() { NotImplemented("EXTD[0x4D]"); };
 
-		m_opcodesEXTD[0x50] = [=]() { NotImplemented("EXTD[0x50]"); };
 		m_opcodesEXTD[0x51] = [=]() { NotImplemented("EXTD[0x51]"); };
 		m_opcodesEXTD[0x54] = [=]() { NotImplemented("EXTD[0x54]"); };
 		m_opcodesEXTD[0x55] = [=]() { NotImplemented("EXTD[0x55]"); };
 
-		m_opcodesEXTD[0x58] = [=]() { NotImplemented("EXTD[0x58]"); };
 		m_opcodesEXTD[0x59] = [=]() { NotImplemented("EXTD[0x59]"); };
 		m_opcodesEXTD[0x5C] = [=]() { NotImplemented("EXTD[0x5C]"); };
 		m_opcodesEXTD[0x5D] = [=]() { NotImplemented("EXTD[0x5D]"); };
 
-		m_opcodesEXTD[0x60] = [=]() { NotImplemented("EXTD[0x60]"); };
 		m_opcodesEXTD[0x61] = [=]() { NotImplemented("EXTD[0x61]"); };
 		m_opcodesEXTD[0x64] = [=]() { NotImplemented("EXTD[0x64]"); };
 		m_opcodesEXTD[0x65] = [=]() { NotImplemented("EXTD[0x65]"); };
 		m_opcodesEXTD[0x67] = [=]() { NotImplemented("EXTD[0x67]"); };
 
-		m_opcodesEXTD[0x68] = [=]() { NotImplemented("EXTD[0x68]"); };
 		m_opcodesEXTD[0x69] = [=]() { NotImplemented("EXTD[0x69]"); };
 		m_opcodesEXTD[0x6C] = [=]() { NotImplemented("EXTD[0x6C]"); };
 		m_opcodesEXTD[0x6D] = [=]() { NotImplemented("EXTD[0x6D]"); };
 		m_opcodesEXTD[0x6F] = [=]() { NotImplemented("EXTD[0x6F]"); };
 
-		m_opcodesEXTD[0x70] = [=]() { NotImplemented("EXTD[0x70]"); };
 		m_opcodesEXTD[0x71] = [=]() { NotImplemented("EXTD[0x71]"); };
 		m_opcodesEXTD[0x74] = [=]() { NotImplemented("EXTD[0x74]"); };
 		m_opcodesEXTD[0x75] = [=]() { NotImplemented("EXTD[0x75]"); };
 
-		m_opcodesEXTD[0x78] = [=]() { NotImplemented("EXTD[0x78]"); };
 		m_opcodesEXTD[0x79] = [=]() { NotImplemented("EXTD[0x79]"); };
 		m_opcodesEXTD[0x7C] = [=]() { NotImplemented("EXTD[0x7C]"); };
 		m_opcodesEXTD[0x7D] = [=]() { NotImplemented("EXTD[0x7D]"); };
@@ -341,99 +592,128 @@ namespace emul
 		m_opcodesEXTD[0xBB] = [=]() { NotImplemented("EXTD[0xBB]"); };
 	}
 
-	void CPUZ80::InitIX()
+	void CPUZ80::InitIXY()
 	{
-		m_opcodesIX.resize(256);
-		std::fill(m_opcodesIX.begin(), m_opcodesIX.end(), [=]() { NotImplemented("IX"); });
-	}
-
-	void CPUZ80::InitIY()
-	{
-		m_opcodesIY.resize(256);
-		std::fill(m_opcodesIY.begin(), m_opcodesIY.end(), [=]() { NotImplemented("IY"); });
+		m_opcodesIXY.resize(256);
+		std::fill(m_opcodesIXY.begin(), m_opcodesIXY.end(), [=]() { NotImplemented("IXY"); });
 
 		// LOAD
 		// ----------
 
-		// LD IY, i16
-		m_opcodesIY[0x21] = [=]() { m_regIY = FetchWord(); }; 
+		// LD IXY, i16
+		m_opcodesIXY[0x21] = [=]() { *m_currIdx = FetchWord(); };
 
-		// LD (i16), IY
-		m_opcodesIY[0x22] = [=]() { m_memory.Write16(FetchWord(), m_regIY); };
+		// LD (i16), IXY
+		m_opcodesIXY[0x22] = [=]() { m_memory.Write16(FetchWord(), *m_currIdx); };
 
-		// LD IY(h), i8 (Undocumented)
-		m_opcodesIY[0x26] = [=]() { SetHByte(m_regIY, FetchByte()); };
+		// LD IXY(h), i8 (Undocumented)
+		m_opcodesIXY[0x26] = [=]() { SetHByte(*m_currIdx, FetchByte()); };
 
-		// LD IY, (i16)
-		m_opcodesIY[0x2A] = [=]() { m_regIY = m_memory.Read16(FetchWord()); };
+		// LD IXY, (i16)
+		m_opcodesIXY[0x2A] = [=]() { *m_currIdx = m_memory.Read16(FetchWord()); };
 
-		// LD IY(l), i8 (Undocumented)
-		m_opcodesIY[0x2E] = [=]() { SetLByte(m_regIY, FetchByte()); };
+		// LD IXY(l), i8 (Undocumented)
+		m_opcodesIXY[0x2E] = [=]() { SetLByte(*m_currIdx, FetchByte()); };
 
-		// LD (IY+i8), i8 
-		m_opcodesIY[0x36] = [=]() { loadImm8toIdx(m_regIY); };
+		// LD (IXY+s8), i8 
+		m_opcodesIXY[0x36] = [=]() { loadImm8toIdx(*m_currIdx); };
 
-		// LD r, IY(h) (Undocumented)
-		m_opcodesIY[0x44] = [=]() { m_reg.B = GetHByte(m_regIY); }; 
-		m_opcodesIY[0x4C] = [=]() { m_reg.C = GetHByte(m_regIY); };
-		m_opcodesIY[0x54] = [=]() { m_reg.D = GetHByte(m_regIY); };
-		m_opcodesIY[0x5C] = [=]() { m_reg.E = GetHByte(m_regIY); };
-		m_opcodesIY[0x64] = [=]() { SetHByte(m_regIY, GetHByte(m_regIY)); }; // NOP+NOP equivalent
-		m_opcodesIY[0x6C] = [=]() { SetHByte(m_regIY, GetLByte(m_regIY)); };
-		m_opcodesIY[0x7C] = [=]() { m_reg.A = GetHByte(m_regIY); };
 
-		// LD r, IY(l) (Undocumented)
-		m_opcodesIY[0x45] = [=]() { m_reg.B = GetLByte(m_regIY); };
-		m_opcodesIY[0x4D] = [=]() { m_reg.C = GetLByte(m_regIY); };
-		m_opcodesIY[0x55] = [=]() { m_reg.D = GetLByte(m_regIY); };
-		m_opcodesIY[0x5D] = [=]() { m_reg.E = GetLByte(m_regIY); };
-		m_opcodesIY[0x65] = [=]() { SetLByte(m_regIY, GetHByte(m_regIY)); }; 
-		m_opcodesIY[0x6D] = [=]() { SetLByte(m_regIY, GetLByte(m_regIY)); }; // NOP+NOP equivalent
-		m_opcodesIY[0x7D] = [=]() { m_reg.A = GetLByte(m_regIY); };
+		// LD r, IXY(h) (Undocumented)
+		m_opcodesIXY[0x44] = [=]() { m_reg.B = GetHByte(*m_currIdx); };
+		m_opcodesIXY[0x4C] = [=]() { m_reg.C = GetHByte(*m_currIdx); };
+		m_opcodesIXY[0x54] = [=]() { m_reg.D = GetHByte(*m_currIdx); };
+		m_opcodesIXY[0x5C] = [=]() { m_reg.E = GetHByte(*m_currIdx); };
+		m_opcodesIXY[0x64] = [=]() { SetHByte(*m_currIdx, GetHByte(*m_currIdx)); }; // NOP+NOP equivalent
+		m_opcodesIXY[0x6C] = [=]() { SetHByte(*m_currIdx, GetLByte(*m_currIdx)); };
+		m_opcodesIXY[0x7C] = [=]() { m_reg.A = GetHByte(*m_currIdx); };
 
-		// ADD|ADC|SUB|SBC|AND|XOR|OR|CP A, IY(h|l) (Undocumented)
-		m_opcodesIY[0x84] = [=]() { add(GetHByte(m_regIY)); }; // ADD IY(h)
-		m_opcodesIY[0x85] = [=]() { add(GetLByte(m_regIY)); }; // ADD IY(l)
+		// LD r, IXY(l) (Undocumented)
+		m_opcodesIXY[0x45] = [=]() { m_reg.B = GetLByte(*m_currIdx); };
+		m_opcodesIXY[0x4D] = [=]() { m_reg.C = GetLByte(*m_currIdx); };
+		m_opcodesIXY[0x55] = [=]() { m_reg.D = GetLByte(*m_currIdx); };
+		m_opcodesIXY[0x5D] = [=]() { m_reg.E = GetLByte(*m_currIdx); };
+		m_opcodesIXY[0x65] = [=]() { SetLByte(*m_currIdx, GetHByte(*m_currIdx)); };
+		m_opcodesIXY[0x6D] = [=]() { SetLByte(*m_currIdx, GetLByte(*m_currIdx)); }; // NOP+NOP equivalent
+		m_opcodesIXY[0x7D] = [=]() { m_reg.A = GetLByte(*m_currIdx); };
 
-		m_opcodesIY[0x8C] = [=]() { add(GetHByte(m_regIY), GetFlag(FLAG_CY)); }; // ADC IY(h)
-		m_opcodesIY[0x8D] = [=]() { add(GetLByte(m_regIY), GetFlag(FLAG_CY)); }; // ADC IY(l)
+		// LD r, (IXY+s8)
+		m_opcodesIXY[0x46] = [=]() { m_reg.B = ReadMemIdx(FetchByte()); };
+		m_opcodesIXY[0x4E] = [=]() { m_reg.C = ReadMemIdx(FetchByte()); };
+		m_opcodesIXY[0x56] = [=]() { m_reg.D = ReadMemIdx(FetchByte()); };
+		m_opcodesIXY[0x5E] = [=]() { m_reg.E = ReadMemIdx(FetchByte()); };
+		m_opcodesIXY[0x66] = [=]() { SetHByte(*m_currIdx, ReadMemIdx(FetchByte())); }; // NOP+NOP equivalent
+		m_opcodesIXY[0x6E] = [=]() { SetHByte(*m_currIdx, ReadMemIdx(FetchByte())); };
+		m_opcodesIXY[0x7E] = [=]() { m_reg.A = ReadMemIdx(FetchByte()); };
 
-		m_opcodesIY[0x94] = [=]() { sub(GetHByte(m_regIY)); }; // SUB IY(h)
-		m_opcodesIY[0x95] = [=]() { sub(GetLByte(m_regIY)); }; // SUB IY(l)
+		// LD IXY(h), r (Undocumented)
+		m_opcodesIXY[0x60] = [=]() { SetHByte(*m_currIdx, m_reg.B); };
+		m_opcodesIXY[0x61] = [=]() { SetHByte(*m_currIdx, m_reg.D); };
+		m_opcodesIXY[0x62] = [=]() { SetHByte(*m_currIdx, m_reg.D); };
+		m_opcodesIXY[0x63] = [=]() { SetHByte(*m_currIdx, m_reg.E); };
+		m_opcodesIXY[0x67] = [=]() { SetHByte(*m_currIdx, m_reg.A); };
 
-		m_opcodesIY[0x9C] = [=]() { sub(GetHByte(m_regIY), GetFlag(FLAG_CY)); }; // SBC IY(h)
-		m_opcodesIY[0x9D] = [=]() { sub(GetLByte(m_regIY), GetFlag(FLAG_CY)); }; // SBC IY(l)
+		// LD IXY(l), r (Undocumented)
+		m_opcodesIXY[0x68] = [=]() { SetLByte(*m_currIdx, m_reg.B); };
+		m_opcodesIXY[0x69] = [=]() { SetLByte(*m_currIdx, m_reg.D); };
+		m_opcodesIXY[0x6A] = [=]() { SetLByte(*m_currIdx, m_reg.D); };
+		m_opcodesIXY[0x6B] = [=]() { SetLByte(*m_currIdx, m_reg.E); };
+		m_opcodesIXY[0x6F] = [=]() { SetLByte(*m_currIdx, m_reg.A); };
 
-		m_opcodesIY[0xA4] = [=]() { ana(GetHByte(m_regIY)); }; // AND IY(h)
-		m_opcodesIY[0xA5] = [=]() { ana(GetLByte(m_regIY)); }; // AND IY(l)
+		// ADD|ADC|SUB|SBC|AND|XOR|OR|CP A, IXY(h|l) (Undocumented)
+		m_opcodesIXY[0x84] = [=]() { add(GetHByte(*m_currIdx)); }; // ADD IXY(h)
+		m_opcodesIXY[0x85] = [=]() { add(GetLByte(*m_currIdx)); }; // ADD IXY(l)
 
-		m_opcodesIY[0xAC] = [=]() { xra(GetHByte(m_regIY)); }; // XOR IY(h)
-		m_opcodesIY[0xAD] = [=]() { xra(GetLByte(m_regIY)); }; // XOR IY(l)
+		m_opcodesIXY[0x8C] = [=]() { add(GetHByte(*m_currIdx), GetFlag(FLAG_CY)); }; // ADC IXY(h)
+		m_opcodesIXY[0x8D] = [=]() { add(GetLByte(*m_currIdx), GetFlag(FLAG_CY)); }; // ADC IXY(l)
 
-		m_opcodesIY[0xB4] = [=]() { ora(GetHByte(m_regIY)); }; // OR IY(h)
-		m_opcodesIY[0xB5] = [=]() { ora(GetLByte(m_regIY)); }; // OR IY(l)
+		m_opcodesIXY[0x94] = [=]() { sub(GetHByte(*m_currIdx)); }; // SUB IXY(h)
+		m_opcodesIXY[0x95] = [=]() { sub(GetLByte(*m_currIdx)); }; // SUB IXY(l)
 
-		m_opcodesIY[0xBC] = [=]() { cmp(GetHByte(m_regIY)); }; // CMP IY(h)
-		m_opcodesIY[0xBD] = [=]() { cmp(GetLByte(m_regIY)); }; // CMP IY(l)
+		m_opcodesIXY[0x9C] = [=]() { sub(GetHByte(*m_currIdx), GetFlag(FLAG_CY)); }; // SBC IXY(h)
+		m_opcodesIXY[0x9D] = [=]() { sub(GetLByte(*m_currIdx), GetFlag(FLAG_CY)); }; // SBC IXY(l)
+
+		m_opcodesIXY[0xA4] = [=]() { ana(GetHByte(*m_currIdx)); }; // AND IXY(h)
+		m_opcodesIXY[0xA5] = [=]() { ana(GetLByte(*m_currIdx)); }; // AND IXY(l)
+
+		m_opcodesIXY[0xAC] = [=]() { xra(GetHByte(*m_currIdx)); }; // XOR IXY(h)
+		m_opcodesIXY[0xAD] = [=]() { xra(GetLByte(*m_currIdx)); }; // XOR IXY(l)
+
+		m_opcodesIXY[0xB4] = [=]() { ora(GetHByte(*m_currIdx)); }; // OR IXY(h)
+		m_opcodesIXY[0xB5] = [=]() { ora(GetLByte(*m_currIdx)); }; // OR IXY(l)
+
+		m_opcodesIXY[0xBC] = [=]() { cmp(GetHByte(*m_currIdx)); }; // CMP IXY(h)
+		m_opcodesIXY[0xBD] = [=]() { cmp(GetLByte(*m_currIdx)); }; // CMP IXY(l)
  
-		// ADD|ADC|SUB|SBC|AND|XOR|OR|CP A, (IY+i8)
-		m_opcodesIY[0x86] = [=]() { add(ReadMemIdx(m_regIY)); }; // ADD
-		m_opcodesIY[0x8E] = [=]() { add(ReadMemIdx(m_regIY), GetFlag(FLAG_CY)); }; // ADC
+		// ADD|ADC|SUB|SBC|AND|XOR|OR|CP A, (IXY+s8)
+		m_opcodesIXY[0x86] = [=]() { add(ReadMemIdx(FetchByte())); }; // ADD
+		m_opcodesIXY[0x8E] = [=]() { add(ReadMemIdx(FetchByte()), GetFlag(FLAG_CY)); }; // ADC
 
-		m_opcodesIY[0x96] = [=]() { sub(ReadMemIdx(m_regIY)); }; // SUB
-		m_opcodesIY[0x9E] = [=]() { sub(ReadMemIdx(m_regIY), GetFlag(FLAG_CY)); }; // SBC
+		m_opcodesIXY[0x96] = [=]() { sub(ReadMemIdx(FetchByte())); }; // SUB
+		m_opcodesIXY[0x9E] = [=]() { sub(ReadMemIdx(FetchByte()), GetFlag(FLAG_CY)); }; // SBC
 
-		m_opcodesIY[0xA6] = [=]() { ana(ReadMemIdx(m_regIY)); }; // AND
-		m_opcodesIY[0xAE] = [=]() { xra(ReadMemIdx(m_regIY)); }; // XOR
+		m_opcodesIXY[0xA6] = [=]() { ana(ReadMemIdx(FetchByte())); }; // AND
+		m_opcodesIXY[0xAE] = [=]() { xra(ReadMemIdx(FetchByte())); }; // XOR
 
-		m_opcodesIY[0xB6] = [=]() { ora(ReadMemIdx(m_regIY)); }; // OR
-		m_opcodesIY[0xBE] = [=]() { cmp(ReadMemIdx(m_regIY)); }; // CMP
+		m_opcodesIXY[0xB6] = [=]() { ora(ReadMemIdx(FetchByte())); }; // OR
+		m_opcodesIXY[0xBE] = [=]() { cmp(ReadMemIdx(FetchByte())); }; // CMP
+
+		// IXY Bit instructions 
+		m_opcodesIXY[0xCB] = [=]() { BITSxy(); };
 	}
 
-	BYTE CPUZ80::ReadMemIdx(WORD base)
+	BYTE CPUZ80::ReadMemIdx(BYTE offset)
 	{
-		base += FetchByte(); // TODO: sign extension?
+		WORD base = *m_currIdx;
+		base += Widen(offset);
 		return m_memory.Read8(base);
+	}
+
+	void CPUZ80::WriteMemIdx(BYTE offset, BYTE value)
+	{
+		WORD base = *m_currIdx;
+		base += Widen(offset);
+		m_memory.Write8(base, value);
 	}
 
 	void CPUZ80::MEMop(std::function<void(CPUZ80*, BYTE& dest)> func)
@@ -445,7 +725,7 @@ namespace emul
 
 	void CPUZ80::loadImm8toIdx(WORD base)
 	{
-		base += FetchByte(); // TODO: sign extension?
+		base += Widen(FetchByte());
 		BYTE imm = FetchByte();
 		m_memory.Write8(base, imm);
 	}
@@ -558,22 +838,36 @@ namespace emul
 		exec(m_opcodesBITS, op2);
 	}
 
+	void CPUZ80::BITSxy()
+	{
+		m_currOffset = FetchByte();
+		BYTE op2 = FetchByte();
+		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP4, op2);
+		exec(m_opcodesBITSxy, op2);
+	}
+
 	void CPUZ80::EXTD(BYTE op2)
 	{
 		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP2, op2);
 		exec(m_opcodesEXTD, op2);
 	}
 
-	void CPUZ80::IX(BYTE op2)
+	void CPUZ80::IXY(BYTE op2)
 	{
 		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP3, op2);
-		exec(m_opcodesIX, op2);
+		exec(m_opcodesIXY, op2);
 	}
 
-	void CPUZ80::IY(BYTE op2)
+	void CPUZ80::RLC(BYTE& dest)
 	{
-		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP4, op2);
-		exec(m_opcodesIY, op2);
+		bool msb = GetBit(dest, 7);
+
+		dest = (dest << 1);
+		dest |= (msb ? 1 : 0);
+
+		AdjustBaseFlags(dest);
+		SetFlag(FLAG_H, false);
+		SetFlag(FLAG_CY, msb);
 	}
 
 	void CPUZ80::RL(BYTE& dest)
@@ -581,7 +875,7 @@ namespace emul
 		bool msb = GetBit(dest, 7);
 
 		dest = (dest << 1);
-		dest |= (msb ? 1 : 0);
+		dest |= (GetFlag(FLAG_CY) ? 1 : 0);
 
 		AdjustBaseFlags(dest);
 		SetFlag(FLAG_H, false);
@@ -595,9 +889,24 @@ namespace emul
 		SetFlag(FLAG_Z, !GetBit(src, bit));
 	}
 
+	void CPUZ80::BITgetIXY(BYTE bit)
+	{
+		BYTE src = ReadMemIdx(m_currOffset);
+		AdjustBaseFlags(src);
+		SetFlag(FLAG_H, true);
+		SetFlag(FLAG_Z, !GetBit(src, bit));
+	}
+
 	void CPUZ80::BITset(BYTE bit, bool set, BYTE& dest)
 	{
 		SetBit(dest, bit, set);
+	}
+
+	void CPUZ80::BITsetIXY(BYTE bit, bool set, BYTE& dest)
+	{
+		dest = ReadMemIdx(m_currOffset);
+		SetBit(dest, bit, set);
+		WriteMemIdx(m_currOffset, dest);
 	}
 
 	void CPUZ80::BITsetM(BYTE bit, bool set)
@@ -605,5 +914,11 @@ namespace emul
 		BYTE temp = ReadMem();
 		BITset(bit, set, temp);
 		WriteMem(temp);
+	}
+
+	void CPUZ80::INc(BYTE& dest)
+	{
+		In(GetBC(), dest);
+		AdjustBaseFlags(dest);
 	}
 }

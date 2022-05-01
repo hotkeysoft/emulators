@@ -103,6 +103,16 @@ namespace emul
 		WriteValueNibble(m_cpuZ80->m_interruptMode, m_cpu->GetInfo().GetCoord("IM"));
 		WriteValueNibble(m_cpuZ80->m_iff1, m_cpu->GetInfo().GetCoord("IFF1"));
 		WriteValueNibble(m_cpuZ80->m_iff1, m_cpu->GetInfo().GetCoord("IFF2"));
+
+		static Coord coord = m_cpu->GetInfo().GetCoord("EI");
+		if (m_cpuZ80->m_interruptsEnabled)
+		{
+			m_console.WriteAt(coord.x, coord.y, "EI", 2, 15);
+		}
+		else
+		{
+			m_console.WriteAt(coord.x, coord.y, "DI", 2, 8);
+		}
 	}
 
 	std::string ToHex(DWORD val)

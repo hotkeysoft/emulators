@@ -12,7 +12,7 @@ namespace emul
 	ComputerZ80::ComputerZ80() :
 		Logger("Z80"),
 		Computer(m_memory),
-		m_baseRAM("RAM", 0x8000, emul::MemoryType::RAM),
+		m_baseRAM("RAM", 0x4000, emul::MemoryType::RAM),
 		m_rom("ROM", 0x1000, emul::MemoryType::ROM)
 	{
 	}
@@ -27,6 +27,7 @@ namespace emul
 		m_memory.Allocate(&m_rom, 0);
 
 		m_memory.Allocate(&m_baseRAM, 0x4000);
+		m_memory.MapWindow(0x4000, 0xC000, 0x4000);
 	}
 
 	bool ComputerZ80::Step()
