@@ -72,6 +72,13 @@ namespace emul
 		void adcHL(WORD src);
 		void sbcHL(WORD src);
 
+		virtual void add(BYTE src, bool carry = false) override;
+		virtual void sub(BYTE src, bool borrow = false) override;
+		virtual BYTE cmp(BYTE src) override;
+
+		virtual void inc(BYTE& reg) override;
+		virtual void dec(BYTE& reg) override;
+
 		void NotImplemented(const char* opStr);
 
 		// Opcodes

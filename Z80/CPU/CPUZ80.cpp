@@ -817,6 +817,60 @@ namespace emul
 		SetFlag(FLAG_N, true);
 	}
 
+	void CPUZ80::add(BYTE src, bool carry)
+	{
+		BYTE oldA = m_reg.A;
+		CPU8080::add(src, carry);
+		
+		// TODO: Improve this
+		// Set Overflow flag
+		// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative), 
+		// then overflow occurs if and only if the result has the opposite sign. 
+		// Overflow never occurs when adding operands with different signs. 
+		SetFlag(FLAG_PV, (GetMSB(oldA) == GetMSB(src)) && (GetMSB(m_reg.A) != GetMSB(src)));
+	}
+
+	void CPUZ80::sub(BYTE src, bool borrow)
+	{
+		BYTE oldA = m_reg.A;
+		CPU8080::sub(src, borrow);
+
+		// TODO: Improve this
+		// Set Overflow flag
+		// If 2 Two's Complement numbers are subtracted, and their signs are different, 
+		// then overflow occurs if and only if the result has the same sign as what is being subtracted.
+		SetFlag(FLAG_PV, (GetMSB(oldA) != GetMSB(src)) && (GetMSB(m_reg.A) == GetMSB(src)));
+	}
+
+	BYTE CPUZ80::cmp(BYTE src)
+	{
+		BYTE oldA = m_reg.A;
+		BYTE res = CPU8080::cmp(src);
+
+		// TODO: Improve this
+		// Set Overflow flag
+		// If 2 Two's Complement numbers are subtracted, and their signs are different, 
+		// then overflow occurs if and only if the result has the same sign as what is being subtracted.
+		SetFlag(FLAG_PV, (GetMSB(oldA) != GetMSB(src)) && (GetMSB(res) == GetMSB(src)));
+		return res;
+	}
+
+	void CPUZ80::inc(BYTE& reg)
+	{
+		BYTE before = reg;
+		CPU8080::inc(reg);
+		// Set Overflow flag
+		SetFlag(FLAG_PV, GetMSB(before) != GetMSB(reg));
+	}
+
+	void CPUZ80::dec(BYTE& reg)
+	{
+		BYTE before = reg;
+		CPU8080::dec(reg);
+		// Set Overflow flag
+		SetFlag(FLAG_PV, GetMSB(before) != GetMSB(reg));
+	}
+
 	void CPUZ80::EXAF()
 	{
 		NotImplemented("EXAF");

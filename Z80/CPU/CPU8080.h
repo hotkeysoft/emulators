@@ -97,6 +97,7 @@ namespace emul
 
 		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; };
 		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); };
+		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
 
 		BYTE dummy = 0;
 
@@ -124,13 +125,15 @@ namespace emul
 		void pushPC();
 		void pop(BYTE& h, BYTE& l);
 		void popPC();
-		void add(BYTE src, bool carry = false);
-		void sub(BYTE src, bool borrow = false);
+		virtual void add(BYTE src, bool carry = false);
+		virtual void sub(BYTE src, bool borrow = false);
 		void dad(WORD value);
 		void ana(BYTE src);
 		void xra(BYTE src);
 		void ora(BYTE src);
-		void cmp(BYTE src);
+		virtual BYTE cmp(BYTE src);
+		virtual void inc(BYTE& reg);
+		virtual void dec(BYTE& reg);
 
 		void AdjustParity(BYTE data);
 		void AdjustSign(BYTE data);
@@ -162,8 +165,6 @@ namespace emul
 		void RST(BYTE rst);
 
 		// Increment and Decrement
-		void INRr(BYTE& reg);
-		void DCRr(BYTE& reg);
 		void INRm();
 		void DCRm();
 		void INX(BYTE& h, BYTE& l);

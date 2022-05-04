@@ -271,13 +271,13 @@ namespace emul
 		// INR r (Increment Register)
 		// (r) <- (r) + 1
 		// Note: CY not affected
-		m_opcodes[0004] = [=]() { INRr(m_reg.B); }; // B
-		m_opcodes[0014] = [=]() { INRr(m_reg.C); }; // C
-		m_opcodes[0024] = [=]() { INRr(m_reg.D); }; // D
-		m_opcodes[0034] = [=]() { INRr(m_reg.E); }; // E
-		m_opcodes[0044] = [=]() { INRr(m_reg.H); }; // H
-		m_opcodes[0054] = [=]() { INRr(m_reg.L); }; // L
-		m_opcodes[0074] = [=]() { INRr(m_reg.A); }; // A
+		m_opcodes[0004] = [=]() { inc(m_reg.B); }; // B
+		m_opcodes[0014] = [=]() { inc(m_reg.C); }; // C
+		m_opcodes[0024] = [=]() { inc(m_reg.D); }; // D
+		m_opcodes[0034] = [=]() { inc(m_reg.E); }; // E
+		m_opcodes[0044] = [=]() { inc(m_reg.H); }; // H
+		m_opcodes[0054] = [=]() { inc(m_reg.L); }; // L
+		m_opcodes[0074] = [=]() { inc(m_reg.A); }; // A
 
 		// INR M (Increment Memory)
 		// ((H)(L)) <- ((H)(L)) + 1
@@ -287,13 +287,13 @@ namespace emul
 		// DCR r (Decrement Register)
 		// (r) <- (r) - 1
 		// Note: CY not affected
-		m_opcodes[0005] = [=]() { DCRr(m_reg.B); }; // B
-		m_opcodes[0015] = [=]() { DCRr(m_reg.C); }; // C
-		m_opcodes[0025] = [=]() { DCRr(m_reg.D); }; // D
-		m_opcodes[0035] = [=]() { DCRr(m_reg.E); }; // E
-		m_opcodes[0045] = [=]() { DCRr(m_reg.H); }; // H
-		m_opcodes[0055] = [=]() { DCRr(m_reg.L); }; // L
-		m_opcodes[0075] = [=]() { DCRr(m_reg.A); }; // A
+		m_opcodes[0005] = [=]() { dec(m_reg.B); }; // B
+		m_opcodes[0015] = [=]() { dec(m_reg.C); }; // C
+		m_opcodes[0025] = [=]() { dec(m_reg.D); }; // D
+		m_opcodes[0035] = [=]() { dec(m_reg.E); }; // E
+		m_opcodes[0045] = [=]() { dec(m_reg.H); }; // H
+		m_opcodes[0055] = [=]() { dec(m_reg.L); }; // L
+		m_opcodes[0075] = [=]() { dec(m_reg.A); }; // A
 	
 		// DCR M (Decrement Memory)
 		// ((H)(L)) <- ((H)(L)) - 1
@@ -472,7 +472,7 @@ namespace emul
 		// CMC (Complement carry)
 		// (CY) <- /(CY)
 		// Note: No other flags are affected
-		m_opcodes[0077] = [=]() { SetFlag(FLAG_CY, !GetFlag(FLAG_CY)); };
+		m_opcodes[0077] = [=]() { ComplementFlag(FLAG_CY); };
 	
 		// STC (Set Carry)
 		// (CY) <- 1
@@ -953,7 +953,7 @@ namespace emul
 		m_programCounter = (rst << 3);
 	}
 
-	void CPU8080::INRr(BYTE& reg)
+	void CPU8080::inc(BYTE& reg)
 	{
 		reg++;
 
@@ -961,32 +961,26 @@ namespace emul
 		SetFlag(FLAG_AC, (reg & 0x0F) == 0);
 	}
 
-	void CPU8080::DCRr(BYTE& reg)
+	void CPU8080::dec(BYTE& reg)
 	{
 		reg--;
 
 		AdjustBaseFlags(reg);
-		SetFlag(FLAG_AC, (reg & 0x0F) != 0x0F);
+		SetFlag(FLAG_AC, (reg & 0x0F) == 0x0F);
 	}
 
 	void CPU8080::INRm()
 	{
 		BYTE value = ReadMem();
-		value++;
+		inc(value);
 		WriteMem(value);
-
-		AdjustBaseFlags(value);
-		SetFlag(FLAG_AC, (value & 0x0F) == 0);
 	}
 
 	void CPU8080::DCRm()
 	{
 		BYTE value = ReadMem();
-		value--;
+		dec(value);
 		WriteMem(value);
-
-		AdjustBaseFlags(value);
-		SetFlag(FLAG_AC, (value & 0x0F) != 0x0F);
 	}
 
 	void CPU8080::INX(BYTE& h, BYTE& l)
@@ -1060,7 +1054,7 @@ namespace emul
 		m_reg.A &= src;
 
 		AdjustBaseFlags(m_reg.A);
-		SetFlag(FLAG_AC, true);				// Must confirm
+		SetFlag(FLAG_AC, true);
 		SetFlag(FLAG_CY, false);
 	}
 
@@ -1082,7 +1076,7 @@ namespace emul
 		SetFlag(FLAG_CY, false);
 	}
 
-	void CPU8080::cmp(BYTE src)
+	BYTE CPU8080::cmp(BYTE src)
 	{
 		// AC flag
 		char loNibble = (m_reg.A & 0x0F) - (src & 0x0F);
@@ -1092,6 +1086,7 @@ namespace emul
 		SetFlag(FLAG_CY, (temp < 0));
 		SetFlag(FLAG_AC, !(loNibble < 0));
 		AdjustBaseFlags(temp);
+		return temp;
 	}
 
 	void CPU8080::RLC()
