@@ -27,13 +27,15 @@ namespace emul
 		virtual void Reset();
 		void Run();
 		virtual bool Step();
+		virtual void Halt() { m_state = CPUState::HALT; }
 
 		uint32_t GetInstructionTicks() const { return m_opTicks; }
 
-	protected:
 		enum class CPUState { STOP, RUN, STEP, HALT };
+		CPUState GetState() const { return m_state; }
 
-		CPUState m_state;
+	protected:
+		CPUState m_state = CPUState::STOP;
 		Memory& m_memory;
 
 		uint32_t m_opTicks = 0;

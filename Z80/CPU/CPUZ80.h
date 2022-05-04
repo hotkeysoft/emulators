@@ -14,6 +14,11 @@ namespace emul
 
 		virtual const std::string GetID() const override { return "z80"; };
 
+		virtual void Exec(BYTE opcode) override;
+		virtual void Halt() override;
+
+		BYTE GetRefreshCounter() const { return m_regR; }
+
 	protected:
 		CPUZ80(cpuInfo::CPUType type, Memory& memory, Interrupts& interrupts);
 
@@ -51,6 +56,8 @@ namespace emul
 
 		// Refresh counter
 		BYTE m_regR = 0;
+		// Bit 7 is left untouched
+		void REFRESH() { bool b7 = GetBit(m_regR, 7); ++m_regR; SetBit(m_regR, 7, b7); }
 
 		// Interrupt flip-flops
 		bool m_iff1 = false;

@@ -18,6 +18,18 @@ namespace emul
 		FLAG_RESERVED_OFF = (FLAG)0;
 	}
 
+	void CPUZ80::Exec(BYTE opcode)
+	{
+		CPU8080::Exec(opcode);
+		REFRESH();
+	}
+
+	void CPUZ80::Halt()
+	{
+		CPU8080::Halt();
+		REFRESH();
+	}
+
 	void CPUZ80::Reset()
 	{
 		CPU8080::Reset();
@@ -738,10 +750,6 @@ namespace emul
 			m_programCounter = address;
 			TICKT3();
 		}
-		else
-		{
-			int a = 1;
-		}
 	}
 
 	void CPUZ80::exec(OpcodeTable& table, BYTE opcode)
@@ -890,6 +898,7 @@ namespace emul
 	{
 		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP1, op2);
 		exec(m_opcodesBITS, op2);
+		REFRESH();
 	}
 
 	void CPUZ80::BITSxy()
@@ -904,12 +913,14 @@ namespace emul
 	{
 		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP2, op2);
 		exec(m_opcodesEXTD, op2);
+		REFRESH();
 	}
 
 	void CPUZ80::IXY(BYTE op2)
 	{
 		m_currTiming = &m_info.GetSubOpcodeTiming(Opcode::MULTI::GRP3, op2);
 		exec(m_opcodesIXY, op2);
+		REFRESH();
 	}
 
 	void CPUZ80::RLC(BYTE& dest)

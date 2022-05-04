@@ -6,7 +6,6 @@ namespace emul
 {
 	CPU::CPU(size_t addressBits, Memory& memory) : 
 		Logger("CPU"), 
-		m_state(CPUState::STOP),
 		m_memory(memory)
 	{
 	}

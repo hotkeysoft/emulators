@@ -638,7 +638,7 @@ namespace emul
 		m_opcodes[0363] = [=]() { m_interruptsEnabled = false; };
 
 		// HLT (Halt)
-		m_opcodes[0166] = [=]() { HLT(); };
+		m_opcodes[0166] = [=]() { Halt(); };
 
 		// NOP (No op)
 		m_opcodes[0000] = [=]() { };
@@ -706,16 +706,24 @@ namespace emul
 
 	bool CPU8080::Step()
 	{
-		if (!CPU::Step())
-			return false;
+		bool ret = true;
+		if (m_state != CPUState::HALT)
+		{
+			ret = CPU::Step();
+		}
 
-		// Check for interrupts
-		if (m_interruptsEnabled)
+		if (m_state == CPUState::HALT)
+		{
+			Halt();
+			m_opTicks = 1;
+			ret = true;
+		}
+		else if (ret && m_interruptsEnabled)
 		{
 			Interrupt();
 		}
 
-		return true;
+		return ret;
 	}
 
 	void CPU8080::Dump()
@@ -766,6 +774,7 @@ namespace emul
 			return;
 		}
 
+		m_state = CPUState::RUN;
 		m_interruptsEnabled = false;
 		pushPC();
 
@@ -1144,11 +1153,5 @@ namespace emul
 
 	void CPU8080::NOP()
 	{
-	}
-
-	void CPU8080::HLT()
-	{
-		LogPrintf(LOG_INFO, "HLT");
-		m_state = CPUState::STOP;
 	}
 }

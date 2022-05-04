@@ -182,7 +182,6 @@ namespace emul
 		// Control
 		void EI();
 		void NOP();
-		void HLT();
 
 		friend class Monitor8080;
 	};
