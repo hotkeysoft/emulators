@@ -637,7 +637,7 @@ namespace emul
 		m_opcodes[0363] = [=]() { DI(); };
 
 		// HLT (Halt)
-		m_opcodes[0166] = [=]() { Halt(); };
+		m_opcodes[0166] = [=]() { --m_programCounter; Halt(); };
 
 		// NOP (No op)
 		m_opcodes[0000] = [=]() { };
@@ -717,7 +717,8 @@ namespace emul
 			m_opTicks = 1;
 			ret = true;
 		}
-		else if (ret)
+		
+		if (ret)
 		{
 			Interrupt();
 		}

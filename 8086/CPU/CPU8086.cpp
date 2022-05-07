@@ -771,7 +771,8 @@ namespace emul
 			m_opTicks = 1;
 			ret = true;
 		} 
-		else if (ret && m_irqPending != -1)
+		
+		if (ret && m_irqPending != -1)
 		{
 			assert(!inSegOverride);
 			TICKMISC(MiscTiming::IRQ);
