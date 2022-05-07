@@ -6,15 +6,14 @@ using cpuInfo::CPUType;
 
 namespace emul
 {
-	CPU8080::CPU8080(Memory& memory, Interrupts& interrupts) : CPU8080(CPUType::i8080, memory, interrupts)
+	CPU8080::CPU8080(Memory& memory) : CPU8080(CPUType::i8080, memory)
 	{
 	}
 
 
-	CPU8080::CPU8080(cpuInfo::CPUType type, Memory& memory, Interrupts& interrupts) :
+	CPU8080::CPU8080(cpuInfo::CPUType type, Memory& memory) :
 		CPU(CPU8080_ADDRESS_BITS, memory),
 		m_info(type),
-		m_interrupts(interrupts),
 		Logger("CPU8080")
 	{
 		try
@@ -635,7 +634,7 @@ namespace emul
 		// The interrupt ststem is disabled immediately following
 		// the execution of the DI instruction.  Interrupts are
 		// not recognized during the DI instruction
-		m_opcodes[0363] = [=]() { m_interruptsEnabled = false; };
+		m_opcodes[0363] = [=]() { DI(); };
 
 		// HLT (Halt)
 		m_opcodes[0166] = [=]() { Halt(); };
@@ -718,7 +717,7 @@ namespace emul
 			m_opTicks = 1;
 			ret = true;
 		}
-		else if (ret && m_interruptsEnabled)
+		else if (ret)
 		{
 			Interrupt();
 		}
@@ -768,32 +767,12 @@ namespace emul
 
 	void CPU8080::Interrupt()
 	{
-		Interrupts::IntType type = m_interrupts.GetType();
-		if (type == Interrupts::IntType::NONE)
+		if (m_interruptsEnabled)
 		{
 			return;
 		}
 
-		m_state = CPUState::RUN;
-		m_interruptsEnabled = false;
-		pushPC();
-
-		switch (type)
-		{
-		case Interrupts::IntType::OPCODE:
-			//TODO: Untested
-			--m_programCounter; // Undo Exec() increment of program counter
-			Exec(m_interrupts.GetOpcode());
-			break;
-
-		case Interrupts::IntType::VECTOR:
-			pushPC();
-			m_interruptsEnabled = false;
-			m_programCounter = m_interrupts.GetVector();
-			break;
-		}
-
-		m_interrupts.Acknowledge();
+		// TODO: Not implemented
 	}
 
 	void CPU8080::AdjustBaseFlags(BYTE val)
@@ -1149,6 +1128,11 @@ namespace emul
 	void CPU8080::EI()
 	{
 		m_interruptsEnabled = true; // TODO: Should happen after next instruction execution
+	}
+
+	void CPU8080::DI()
+	{
+		m_interruptsEnabled = false;
 	}
 
 	void CPU8080::NOP()

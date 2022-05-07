@@ -6,7 +6,7 @@ namespace emul
 	class CPUZ80 : public CPU8080
 	{
 	public:
-		CPUZ80(Memory& memory, Interrupts& interrupts);
+		CPUZ80(Memory& memory);
 
 		virtual void Init() override;
 
@@ -20,7 +20,7 @@ namespace emul
 		BYTE GetRefreshCounter() const { return m_regR; }
 
 	protected:
-		CPUZ80(cpuInfo::CPUType type, Memory& memory, Interrupts& interrupts);
+		CPUZ80(cpuInfo::CPUType type, Memory& memory);
 
 		enum FLAGZ80 : BYTE
 		{
@@ -62,6 +62,7 @@ namespace emul
 		// Interrupt flip-flops
 		bool m_iff1 = false;
 		bool m_iff2 = false;
+		virtual void Interrupt() override;
 
 		// Interrupt mode
 		enum InterruptMode {IM0 = 0, IM1, IM2 } m_interruptMode = InterruptMode::IM0;
@@ -102,6 +103,8 @@ namespace emul
 		OpcodeTable m_opcodesEXTD;
 		OpcodeTable m_opcodesIXY;
 
+		void LDAri(BYTE src);
+
 		void RL(BYTE& dest);
 		void RLC(BYTE& dest);
 
@@ -112,6 +115,9 @@ namespace emul
 		void BITsetM(BYTE bit, bool set);
 
 		void INc(BYTE& dest);
+
+		virtual void DI() override;
+		virtual void EI() override;
 
 		friend class MonitorZ80;
 	};

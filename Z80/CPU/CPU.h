@@ -13,6 +13,7 @@ namespace emul
 		CPUCallbackFunc onRet;
 	};
 
+	enum class CPUState { STOP, RUN, STEP, HALT };
 	class CPU : virtual public Logger
 	{
 	public:
@@ -31,7 +32,6 @@ namespace emul
 
 		uint32_t GetInstructionTicks() const { return m_opTicks; }
 
-		enum class CPUState { STOP, RUN, STEP, HALT };
 		CPUState GetState() const { return m_state; }
 
 	protected:

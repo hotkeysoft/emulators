@@ -36,8 +36,8 @@ namespace emul
 	{
 		switch (type)
 		{
-		case CPUType::i8080: m_cpu = new CPU8080(m_memory, m_interrupts); break;
-		case CPUType::z80: m_cpu = new CPUZ80(m_memory, m_interrupts); break;
+		case CPUType::i8080: m_cpu = new CPU8080(m_memory); break;
+		case CPUType::z80: m_cpu = new CPUZ80(m_memory); break;
 		default:
 			LogPrintf(LOG_ERROR, "CPUType not supported");
 			throw std::exception("CPUType not supported");

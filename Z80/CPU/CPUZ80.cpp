@@ -6,13 +6,13 @@ using cpuInfo::CPUType;
 
 namespace emul
 {
-	CPUZ80::CPUZ80(Memory& memory, Interrupts& interrupts) : CPUZ80(CPUType::z80, memory, interrupts)
+	CPUZ80::CPUZ80(Memory& memory) : CPUZ80(CPUType::z80, memory)
 	{
 	}
 
-	CPUZ80::CPUZ80(cpuInfo::CPUType type, Memory& memory, Interrupts& interrupts) :
+	CPUZ80::CPUZ80(cpuInfo::CPUType type, Memory& memory) :
 		Logger("Z80"),
-		CPU8080(type, memory, interrupts)
+		CPU8080(type, memory)
 	{
 		FLAG_RESERVED_ON = (FLAG)0;
 		FLAG_RESERVED_OFF = (FLAG)0;
@@ -46,6 +46,13 @@ namespace emul
 		m_interruptMode = InterruptMode::IM0;
 
 		ClearFlags(m_regAlt.flags);
+	}
+
+	void CPUZ80::Interrupt()
+	{
+		// Process NMI
+
+		// Process INT
 	}
 
 	void CPUZ80::Init()
@@ -509,8 +516,8 @@ namespace emul
 		m_opcodesEXTD[0x7B] = [=]() { m_regSP = m_memory.Read16(FetchWord()); };
 
 		// LD A, R|I
-		m_opcodesEXTD[0x57] = [=]() { m_reg.A = m_regI; };
-		m_opcodesEXTD[0x5F] = [=]() { m_reg.A = m_regR; };
+		m_opcodesEXTD[0x57] = [=]() { LDAri(m_regI); };
+		m_opcodesEXTD[0x5F] = [=]() { LDAri(m_regR); };
 
 		// LD R|I, A
 		m_opcodesEXTD[0x47] = [=]() { m_regI = m_reg.A; };
@@ -923,6 +930,13 @@ namespace emul
 		REFRESH();
 	}
 
+	void CPUZ80::LDAri(BYTE src)
+	{
+		m_reg.A = src;
+		AdjustBaseFlags(m_reg.A);
+		SetFlag(FLAG_PV, m_iff2);
+	}
+
 	void CPUZ80::RLC(BYTE& dest)
 	{
 		bool msb = GetBit(dest, 7);
@@ -985,5 +999,16 @@ namespace emul
 	{
 		In(GetBC(), dest);
 		AdjustBaseFlags(dest);
+	}
+
+	void CPUZ80::DI()
+	{
+		m_iff1 = false;
+		m_iff2 = false;
+	}
+	void CPUZ80::EI()
+	{
+		m_iff1 = true;
+		m_iff2 = true;
 	}
 }

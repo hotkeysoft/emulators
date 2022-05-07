@@ -4,7 +4,6 @@
 #include "../Serializable.h"
 #include "PortConnector.h"
 #include "CPUInfo.h"
-#include "Interrupts.h"
 
 #undef IN
 #undef OUT
@@ -16,7 +15,7 @@ namespace emul
 	class CPU8080 : public CPU, public Serializable, public PortConnector
 	{
 	public:
-		CPU8080(Memory& memory, Interrupts& interrupts);
+		CPU8080(Memory& memory);
 		virtual ~CPU8080();
 
 		virtual void Init();
@@ -35,13 +34,12 @@ namespace emul
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
-
 		// emul::Serializable
 		virtual void Serialize(json& to) {} // TODO
 		virtual void Deserialize(const json& from) {} // TODO
 
 	protected:
-		CPU8080(cpuInfo::CPUType type, Memory& memory, Interrupts& interrupts);
+		CPU8080(cpuInfo::CPUType type, Memory& memory);
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
@@ -55,8 +53,8 @@ namespace emul
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_opcode = 0;
 
-		Interrupts& m_interrupts;
 		bool m_interruptsEnabled = false;
+		virtual void Interrupt();
 
 		enum FLAG : BYTE
 		{
@@ -104,8 +102,6 @@ namespace emul
 		// Helper functions
 		BYTE FetchByte();
 		WORD FetchWord();
-
-		void Interrupt();
 
 		WORD GetBC() const { return MakeWord(m_reg.B, m_reg.C); };
 		WORD GetDE() const { return MakeWord(m_reg.D, m_reg.E); };
@@ -180,7 +176,8 @@ namespace emul
 		void DAA();
 
 		// Control
-		void EI();
+		virtual void DI();
+		virtual void EI();
 		void NOP();
 
 		friend class Monitor8080;

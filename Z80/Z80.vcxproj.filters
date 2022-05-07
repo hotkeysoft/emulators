@@ -114,12 +114,6 @@
     <ClInclude Include="CPU\CPU8080.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="CPU\Interrupts.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="CPU\InterruptSource.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
     <ClInclude Include="CPU\CPUZ80.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
@@ -127,9 +121,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Computer8080.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CPU\Interrupts8080.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ComputerZ80.h">
@@ -195,9 +186,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Computer8080.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CPU\Interrupts8080.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ComputerZ80.cpp">

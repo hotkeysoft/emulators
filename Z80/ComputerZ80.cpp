@@ -40,7 +40,19 @@ namespace emul
 		static uint32_t cpuTicks = 0;	
 		cpuTicks += GetCPU().GetInstructionTicks();
 
+		// Interrupt when A6 = 0
+		// 
+		// Interrupts are only enabled during Display File processing.
+		// An interrupt signals the end of a row
+
 		++g_ticks;
+		// Currently "executing" the Display File area
+		if (GetBit(GetCPU().GetCurrentAddress(), 15) && (GetCPU().GetState() != CPUState::HALT))
+		{
+			LogPrintf(LOG_INFO, "DisplayFile");
+		}
+
+
 
 		return true;
 	}
