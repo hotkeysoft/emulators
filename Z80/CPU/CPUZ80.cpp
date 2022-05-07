@@ -44,6 +44,9 @@ namespace emul
 		m_iff1 = false;
 		m_iff2 = false;
 
+		m_regI = 0;
+		m_regR = 0;
+
 		m_interruptMode = InterruptMode::IM0;
 
 		ClearFlags(m_regAlt.flags);
@@ -54,16 +57,31 @@ namespace emul
 		// Process NMI
 		if (m_nmiLatch.IsLatched())
 		{
+			if (m_state == CPUState::HALT)
+			{
+				++m_programCounter;
+			}
 			m_nmiLatch.ResetLatch();
 			pushPC();
-			m_iff2 = m_iff1;
+			m_iff1 = false;
 			m_programCounter = 0x0066;
 			REFRESH();
 			TICKMISC(MiscTiming::TRAP);
+			m_state = CPUState::RUN;
 		}
 		else if (m_iff1 && m_intLatch.IsLatched()) // Process INT
 		{
+			LogPrintf(LOG_WARNING, "INT");
+			if (m_state == CPUState::HALT)
+			{
+				++m_programCounter;
+			}
+
+			// TODO: INT is level triggered (not edge)
 			m_intLatch.ResetLatch();
+
+			DI();
+			pushPC();
 
 			switch (m_interruptMode)
 			{
@@ -72,18 +90,17 @@ namespace emul
 				throw std::exception("InterruptMode::IM0 not implemented");
 				break;
 			case InterruptMode::IM1:
-				LogPrintf(LOG_ERROR, "InterruptMode::IM1 not implemented");
-				throw std::exception("InterruptMode::IM1 not implemented");
+				m_programCounter = 0x0038;
 				break;
 			case InterruptMode::IM2:
 				LogPrintf(LOG_ERROR, "InterruptMode::IM2 not implemented");
 				throw std::exception("InterruptMode::IM2 not implemented");
 				break;
-
 			}
 
 			REFRESH();
 			TICKMISC(MiscTiming::IRQ);
+			m_state = CPUState::RUN;
 		}	
 	}
 
