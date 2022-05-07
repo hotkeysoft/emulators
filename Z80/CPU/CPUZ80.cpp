@@ -3,6 +3,7 @@
 
 using cpuInfo::Opcode;
 using cpuInfo::CPUType;
+using cpuInfo::MiscTiming;
 
 namespace emul
 {
@@ -51,8 +52,39 @@ namespace emul
 	void CPUZ80::Interrupt()
 	{
 		// Process NMI
+		if (m_nmiLatch.IsLatched())
+		{
+			m_nmiLatch.ResetLatch();
+			pushPC();
+			m_iff2 = m_iff1;
+			m_programCounter = 0x0066;
+			REFRESH();
+			TICKMISC(MiscTiming::TRAP);
+		}
+		else if (m_iff1 && m_intLatch.IsLatched()) // Process INT
+		{
+			m_intLatch.ResetLatch();
 
-		// Process INT
+			switch (m_interruptMode)
+			{
+			case InterruptMode::IM0:
+				LogPrintf(LOG_ERROR, "InterruptMode::IM0 not implemented");
+				throw std::exception("InterruptMode::IM0 not implemented");
+				break;
+			case InterruptMode::IM1:
+				LogPrintf(LOG_ERROR, "InterruptMode::IM1 not implemented");
+				throw std::exception("InterruptMode::IM1 not implemented");
+				break;
+			case InterruptMode::IM2:
+				LogPrintf(LOG_ERROR, "InterruptMode::IM2 not implemented");
+				throw std::exception("InterruptMode::IM2 not implemented");
+				break;
+
+			}
+
+			REFRESH();
+			TICKMISC(MiscTiming::IRQ);
+		}	
 	}
 
 	void CPUZ80::Init()

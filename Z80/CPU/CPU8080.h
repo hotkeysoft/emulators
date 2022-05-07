@@ -44,6 +44,7 @@ namespace emul
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
+		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc)[0]); }
 
 		using OpcodeTable = std::vector<std::function<void()>>;
 		OpcodeTable m_opcodes;

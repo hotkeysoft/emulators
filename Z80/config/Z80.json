@@ -1123,7 +1123,11 @@
       { "name": "SET 7, ({r16}+{i8}), L",    "timing": [23] },
       { "name": "SET 7, ({r16}+{i8})",       "timing": [23] },
       { "name": "SET 7, ({r16}+{i8}), A",    "timing": [23] }
-    ]
+    ],
+    "misc": [
+      { "name": "TRAP",                 "timing": [11] },
+      { "name": "IRQ",                  "timing": [13] }
+    ]    
   },
   "monitor": {
     "ANSIFile": "Z80.ANS",

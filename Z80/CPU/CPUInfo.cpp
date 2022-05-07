@@ -57,14 +57,15 @@ namespace cpuInfo
 			BuildSubOpcodes(i, m_config["cpu"][grpName]);
 		}
 
-		int miscCount = 0;
-		if (m_config["cpu"].contains("misc.count"))
+		if (m_config["cpu"].contains("misc"))
 		{
-			if (m_config["cpu"]["misc.count"] != (int)MiscTiming::_COUNT)
+			size_t miscCount = m_config["cpu"]["misc"].size();
+
+			if (miscCount > (int)MiscTiming::_COUNT)
 			{
-				throw std::exception("misc timing list incomplete");
+				throw std::exception("misc timing list too big");
 			}
-			for (int i = 0; i < (int)MiscTiming::_COUNT; ++i)
+			for (int i = 0; i < miscCount; ++i)
 			{
 				m_miscTiming[i] = BuildTiming(m_config["cpu"]["misc"][i]);
 			}

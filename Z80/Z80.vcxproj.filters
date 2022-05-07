@@ -129,6 +129,9 @@
     <ClInclude Include="IO\MonitorZ80.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="EdgeDetectLatch.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp">

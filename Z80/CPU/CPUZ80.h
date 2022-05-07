@@ -1,5 +1,6 @@
 #pragma once
 #include "CPU8080.h"
+#include "EdgeDetectLatch.h"
 
 namespace emul
 {
@@ -18,6 +19,11 @@ namespace emul
 		virtual void Halt() override;
 
 		BYTE GetRefreshCounter() const { return m_regR; }
+
+		// Positive logic
+		void SetNMI(bool value) { m_nmiLatch.Set(value); }
+		// Positive logic
+		void SetINT(bool value) { m_intLatch.Set(value); }
 
 	protected:
 		CPUZ80(cpuInfo::CPUType type, Memory& memory);
@@ -60,6 +66,9 @@ namespace emul
 		void REFRESH() { bool b7 = GetBit(m_regR, 7); ++m_regR; SetBit(m_regR, 7, b7); }
 
 		// Interrupt flip-flops
+		hscommon::EdgeDetectLatch m_nmiLatch;
+		hscommon::EdgeDetectLatch m_intLatch;
+
 		bool m_iff1 = false;
 		bool m_iff2 = false;
 		virtual void Interrupt() override;
