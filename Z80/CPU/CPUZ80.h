@@ -123,6 +123,11 @@ namespace emul
 		void RL(BYTE& dest);
 		void RLC(BYTE& dest);
 
+		void RR(BYTE& dest);
+		void RRC(BYTE& dest);
+
+		void SRA(BYTE& dest);
+
 		void BITget(BYTE bit, BYTE src);
 		void BITgetIXY(BYTE bit);
 		void BITset(BYTE bit, bool set, BYTE& dest);

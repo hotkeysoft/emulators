@@ -150,7 +150,7 @@ namespace emul
 		m_opcodesBITS.resize(256);
 		std::fill(m_opcodesBITS.begin(), m_opcodesBITS.end(), [=]() { NotImplemented("BITS"); });
 
-		// Rotate Left through carry
+		// 8-bit rotation to the left
 		m_opcodesBITS[0x00] = [=]() { RLC(m_reg.B); };
 		m_opcodesBITS[0x01] = [=]() { RLC(m_reg.C); };
 		m_opcodesBITS[0x02] = [=]() { RLC(m_reg.D); };
@@ -160,7 +160,17 @@ namespace emul
 		//m_opcodesBITS[0x06] = [=]() { MEMop(&CPUZ80::RLC); };
 		m_opcodesBITS[0x07] = [=]() { RLC(m_reg.A); };
 
-		// Rotate Left
+		// 8-bit rotation to the right
+		m_opcodesBITS[0x08] = [=]() { RRC(m_reg.B); };
+		m_opcodesBITS[0x09] = [=]() { RRC(m_reg.C); };
+		m_opcodesBITS[0x0A] = [=]() { RRC(m_reg.D); };
+		m_opcodesBITS[0x0B] = [=]() { RRC(m_reg.E); };
+		m_opcodesBITS[0x0C] = [=]() { RRC(m_reg.H); };
+		m_opcodesBITS[0x0D] = [=]() { RRC(m_reg.L); };
+		//m_opcodesBITS[0x0E] = [=]() { MEMop(&CPUZ80::RRC); };
+		m_opcodesBITS[0x0F] = [=]() { RRC(m_reg.A); };
+
+		// 9-bit rotation to the left
 		m_opcodesBITS[0x10] = [=]() { RL(m_reg.B); };
 		m_opcodesBITS[0x11] = [=]() { RL(m_reg.C); };
 		m_opcodesBITS[0x12] = [=]() { RL(m_reg.D); };
@@ -169,6 +179,26 @@ namespace emul
 		m_opcodesBITS[0x15] = [=]() { RL(m_reg.L); };
 		//m_opcodesBITS[0x16] = [=]() { MEMop(&CPUZ80::RL); };
 		m_opcodesBITS[0x17] = [=]() { RL(m_reg.A); };
+
+		// 9-bit rotation to the right
+		m_opcodesBITS[0x18] = [=]() { RR(m_reg.B); };
+		m_opcodesBITS[0x19] = [=]() { RR(m_reg.C); };
+		m_opcodesBITS[0x1A] = [=]() { RR(m_reg.D); };
+		m_opcodesBITS[0x1B] = [=]() { RR(m_reg.E); };
+		m_opcodesBITS[0x1C] = [=]() { RR(m_reg.H); };
+		m_opcodesBITS[0x1D] = [=]() { RR(m_reg.L); };
+		//m_opcodesBITS[0x1E] = [=]() { MEMop(&CPUZ80::RR); };
+		m_opcodesBITS[0x1F] = [=]() { RR(m_reg.A); };
+
+		// Arithmetic Shift Right 1 bit
+		m_opcodesBITS[0x28] = [=]() { SRA(m_reg.B); };
+		m_opcodesBITS[0x29] = [=]() { SRA(m_reg.C); };
+		m_opcodesBITS[0x2A] = [=]() { SRA(m_reg.D); };
+		m_opcodesBITS[0x2B] = [=]() { SRA(m_reg.E); };
+		m_opcodesBITS[0x2C] = [=]() { SRA(m_reg.H); };
+		m_opcodesBITS[0x2D] = [=]() { SRA(m_reg.L); };
+		//m_opcodesBITS[0x2E] = [=]() { MEMop(&CPUZ80::SRA); };
+		m_opcodesBITS[0x2F] = [=]() { SRA(m_reg.A); };
 
 		// BIT: Test bit n and set Z flag
 		m_opcodesBITS[0x40] = [=]() { BITget(0, m_reg.B); };
@@ -998,24 +1028,68 @@ namespace emul
 		SetFlag(FLAG_PV, m_iff2);
 	}
 
+	// 8-bit rotation to the left. The bit leaving on the left is copied into the carry, and to bit 0.
 	void CPUZ80::RLC(BYTE& dest)
 	{
-		bool msb = GetBit(dest, 7);
+		bool msb = GetMSB(dest);
 
-		dest = (dest << 1);
-		dest |= (msb ? 1 : 0);
+		dest <<= 1;
+		SetBit(dest, 0, msb);
 
 		AdjustBaseFlags(dest);
 		SetFlag(FLAG_H, false);
 		SetFlag(FLAG_CY, msb);
 	}
 
+	// 9-bit rotation to the left. 
+	// The carry value is put into 0th bit of the register, and the leaving 7th bit is put into the carry.
 	void CPUZ80::RL(BYTE& dest)
 	{
-		bool msb = GetBit(dest, 7);
+		bool msb = GetMSB(dest);
 
-		dest = (dest << 1);
-		dest |= (GetFlag(FLAG_CY) ? 1 : 0);
+		dest <<= 1;
+		SetBit(dest, 0, GetFlag(FLAG_CY));
+
+		AdjustBaseFlags(dest);
+		SetFlag(FLAG_H, false);
+		SetFlag(FLAG_CY, msb);
+	}
+
+	// 8-bit rotation to the right. the bit leaving on the right is copied into the carry, and into bit 7.
+	void CPUZ80::RRC(BYTE& dest)
+	{
+		bool lsb = GetLSB(dest);
+
+		dest >>= 1;
+		SetBit(dest, 7, lsb);
+
+		AdjustBaseFlags(dest);
+		SetFlag(FLAG_H, false);
+		SetFlag(FLAG_CY, lsb);
+	}
+
+	// 9-bit rotation to the right. 
+	// The carry is copied into bit 7, and the bit leaving on the right is copied into the carry.
+	void CPUZ80::RR(BYTE& dest)
+	{
+		bool lsb = GetLSB(dest);
+
+		dest >>= 1;
+		SetBit(dest, 7, GetFlag(FLAG_CY));
+
+		AdjustBaseFlags(dest);
+		SetFlag(FLAG_H, false);
+		SetFlag(FLAG_CY, lsb);
+	}
+
+	// Arithmetic shift right 1 bit, bit 0 goes to carry flag, bit 7 remains unchanged.
+	void CPUZ80::SRA(BYTE& dest)
+	{
+		bool lsb = GetLSB(dest);
+		bool msb = GetMSB(dest);
+		dest >>= 1;
+
+		SetBit(dest, 7, msb);
 
 		AdjustBaseFlags(dest);
 		SetFlag(FLAG_H, false);
