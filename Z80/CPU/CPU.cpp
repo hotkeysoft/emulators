@@ -32,10 +32,9 @@ namespace emul
 
 			// Fetch opcode
 			m_state = CPUState::RUN;
-			unsigned char opcode = m_memory.Read8(GetCurrentAddress());
 			
 			// Execute instruction
-			Exec(opcode);
+			Exec(FetchByte());
 		}
 		catch (std::exception e)
 		{	
@@ -46,4 +45,13 @@ namespace emul
 
 		return (m_state == CPUState::RUN);
 	}
+
+	WORD CPU::FetchWord()
+	{
+		BYTE l = FetchByte();
+		BYTE h = FetchByte();
+
+		return MakeWord(h, l);
+	}
+
 }

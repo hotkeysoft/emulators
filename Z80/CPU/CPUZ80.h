@@ -25,8 +25,13 @@ namespace emul
 		// Positive logic
 		void SetINT(bool value) { m_intLatch.Set(value); }
 
+		// This is needed only for the ZX80/81: Disconnects the data bus so the CPU sees NOPs
+		void EnableDataBus(bool enable) { m_dataBusEnable = enable; }
+
 	protected:
 		CPUZ80(cpuInfo::CPUType type, Memory& memory);
+
+		virtual BYTE FetchByte() override { BYTE op = CPU8080::FetchByte();  return m_dataBusEnable ? op : 0; }
 
 		enum FLAGZ80 : BYTE
 		{
@@ -50,6 +55,7 @@ namespace emul
 		void InitBITS();
 		void InitBITSxy();
 
+		bool m_dataBusEnable = true;
 		Registers m_regAlt;
 		WORD m_regIX = 0;
 		WORD m_regIY = 0;
@@ -122,6 +128,9 @@ namespace emul
 		void BITset(BYTE bit, bool set, BYTE& dest);
 		void BITsetIXY(BYTE bit, bool set, BYTE& altDest);
 		void BITsetM(BYTE bit, bool set);
+
+		void INCXY(BYTE offset);
+		void DECXY(BYTE offset);
 
 		void INc(BYTE& dest);
 

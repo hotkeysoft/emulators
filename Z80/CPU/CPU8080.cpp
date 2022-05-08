@@ -619,11 +619,11 @@ namespace emul
 
 		// IN port (Input)
 		// (A) <- (data)
-		m_opcodes[0333] = [=]() { In(FetchByte(), m_reg.A); };
+		m_opcodes[0333] = [=]() { m_ioRequest = true; In(FetchByte(), m_reg.A); };
 
 		// OUT port (Output)
 		// (data) <- (A)
-		m_opcodes[0323] = [=]() { Out(FetchByte(), m_reg.A); };
+		m_opcodes[0323] = [=]() { m_ioRequest = true; Out(FetchByte(), m_reg.A); };
 
 		// EI (Enable Interrupts)
 		// The interrupt system is enabled following the execution
@@ -671,6 +671,10 @@ namespace emul
 		m_regSP = 0;
 		m_programCounter = 0;
 
+		m_ioRequest = false;
+		m_interruptAcknowledge = false;
+		m_interruptsEnabled = false;
+
 		ClearFlags(m_reg.flags);
 	}
 
@@ -691,16 +695,6 @@ namespace emul
 		BYTE b = m_memory.Read8(GetCurrentAddress());
 		++m_programCounter;
 		return b;
-	}
-
-	WORD CPU8080::FetchWord()
-	{
-		BYTE l = m_memory.Read8(GetCurrentAddress());
-		++m_programCounter;
-		BYTE h = m_memory.Read8(GetCurrentAddress());
-		++m_programCounter;
-
-		return MakeWord(h, l);
 	}
 
 	bool CPU8080::Step()
@@ -744,7 +738,9 @@ namespace emul
 
 	void CPU8080::Exec(BYTE opcode)
 	{
-		++m_programCounter;
+		// Reset control lines
+		m_interruptAcknowledge = false;
+		m_ioRequest = false;
 
 		m_opcode = opcode;
 		m_currTiming = &m_info.GetOpcodeTiming(opcode);
@@ -770,6 +766,7 @@ namespace emul
 	{
 		if (m_interruptsEnabled)
 		{
+			m_interruptAcknowledge = true;
 			return;
 		}
 

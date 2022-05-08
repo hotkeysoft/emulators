@@ -35,6 +35,9 @@ namespace emul
 		CPUState GetState() const { return m_state; }
 
 	protected:
+		virtual BYTE FetchByte() = 0;
+		virtual WORD FetchWord();
+
 		CPUState m_state = CPUState::STOP;
 		Memory& m_memory;
 

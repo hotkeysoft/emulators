@@ -49,6 +49,8 @@ namespace emul
 
 		m_interruptMode = InterruptMode::IM0;
 
+		m_dataBusEnable = true;
+
 		ClearFlags(m_regAlt.flags);
 	}
 
@@ -57,10 +59,13 @@ namespace emul
 		// Process NMI
 		if (m_nmiLatch.IsLatched())
 		{
+			LogPrintf(LOG_DEBUG, "NMI");
+			m_interruptAcknowledge = true;
 			if (m_state == CPUState::HALT)
 			{
 				++m_programCounter;
 			}
+			
 			m_nmiLatch.ResetLatch();
 			pushPC();
 			m_iff1 = false;
@@ -71,7 +76,8 @@ namespace emul
 		}
 		else if (m_iff1 && m_intLatch.IsLatched()) // Process INT
 		{
-			LogPrintf(LOG_WARNING, "INT");
+			LogPrintf(LOG_DEBUG, "INT");
+			m_interruptAcknowledge = true;
 			if (m_state == CPUState::HALT)
 			{
 				++m_programCounter;
@@ -130,8 +136,8 @@ namespace emul
 
 		// Replace IN/OUT Opcodes with Z80 version
 		// On Z80, IN/OUT put reg A value in A8..A15
-		m_opcodes[0333] = [=]() { In(MakeWord(m_reg.A, FetchByte()), m_reg.A); };
-		m_opcodes[0323] = [=]() { Out(MakeWord(m_reg.A, FetchByte()), m_reg.A); };
+		m_opcodes[0333] = [=]() { m_ioRequest = true; In(MakeWord(m_reg.A, FetchByte()), m_reg.A); };
+		m_opcodes[0323] = [=]() { m_ioRequest = true; Out(MakeWord(m_reg.A, FetchByte()), m_reg.A); };
 
 		InitBITS(); // Bit instructions (Prefix 0xCB)
 		InitBITSxy(); // Bit instructions, indexed (Prefix 0xDDCF, 0xFDCB)
@@ -683,6 +689,12 @@ namespace emul
 		// LD IXY(l), i8 (Undocumented)
 		m_opcodesIXY[0x2E] = [=]() { SetLByte(*m_currIdx, FetchByte()); };
 
+		// INC (IXY+s8)
+		m_opcodesIXY[0x34] = [=]() { INCXY(FetchByte()); };
+
+		// DEC (IXY+s8)
+		m_opcodesIXY[0x35] = [=]() { DECXY(FetchByte()); };
+
 		// LD (IXY+s8), i8 
 		m_opcodesIXY[0x36] = [=]() { loadImm8toIdx(*m_currIdx); };
 
@@ -1044,8 +1056,23 @@ namespace emul
 		WriteMem(temp);
 	}
 
+	void CPUZ80::INCXY(BYTE offset)
+	{
+		BYTE temp = ReadMemIdx(offset);
+		inc(temp);
+		WriteMemIdx(offset, temp);
+	}
+
+	void CPUZ80::DECXY(BYTE offset)
+	{
+		BYTE temp = ReadMemIdx(offset);
+		dec(temp);
+		WriteMemIdx(offset, temp);
+	}
+
 	void CPUZ80::INc(BYTE& dest)
 	{
+		m_ioRequest = true;
 		In(GetBC(), dest);
 		AdjustBaseFlags(dest);
 	}

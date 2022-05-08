@@ -34,6 +34,14 @@ namespace emul
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
+		// Pseudo-control lines
+
+		// Set after an IO Operation (in/out port)
+		bool IsIORequest() const { return m_ioRequest; }
+
+		// Set after servicing an interrupt
+		bool IsInterruptAcknowledge() const { return m_interruptAcknowledge; }
+
 		// emul::Serializable
 		virtual void Serialize(json& to) {} // TODO
 		virtual void Deserialize(const json& from) {} // TODO
@@ -54,6 +62,9 @@ namespace emul
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_opcode = 0;
 
+		bool m_ioRequest = false;
+
+		bool m_interruptAcknowledge = false;
 		bool m_interruptsEnabled = false;
 		virtual void Interrupt();
 
@@ -100,9 +111,7 @@ namespace emul
 
 		BYTE dummy = 0;
 
-		// Helper functions
-		BYTE FetchByte();
-		WORD FetchWord();
+		virtual BYTE FetchByte() override;
 
 		WORD GetBC() const { return MakeWord(m_reg.B, m_reg.C); };
 		WORD GetDE() const { return MakeWord(m_reg.D, m_reg.E); };
