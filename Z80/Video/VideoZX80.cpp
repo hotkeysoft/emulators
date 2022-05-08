@@ -28,6 +28,12 @@ namespace video
 			color |= (m_rowCounter << 13);
 			DrawBackground(32, color);
 		}
+
+		if (IsDisplayArea() && (m_fbCurrY > 0))
+		{
+			//LogPrintf(LOG_ERROR, "DrawChar, x=%d, y=%d", m_fbCurrX, m_fbCurrY);
+			DrawChar();
+		}
 	}
 
 	SDL_Rect VideoZX80::GetDisplayRect(BYTE border, WORD xMultiplier) const
@@ -59,25 +65,21 @@ namespace video
 		m_vSync = set;
 	}
 
-	void VideoZX80::LatchCurrentChar(BYTE ch)
+	void VideoZX80::DrawChar()
 	{
-		if (ch == 0)
-		{
-			return;
-		}
-
-		bool invert = GetBit(ch, 7);
-		SetBit(ch, 7, false);
-
-		ADDRESS charROM = 0x0E00 + (ch * 8) + m_rowCounter;
-		// TODO: This is a big shortcut
-		m_currentChar = m_memory->Read8(charROM);
-
 		for (int i = 7; i >= 0; --i)
 		{
-			bool set = GetBit(m_currentChar, i) ^ invert;
+			bool set = GetBit(m_currentChar, i) ^ m_invert;
 			uint32_t color = set ? 0xFFFFFFFF : 0;
 			DrawPixel(color);
 		}
+	}
+	void VideoZX80::LatchCurrentChar(BYTE ch)
+	{
+		m_invert = GetBit(ch, 7);
+		SetBit(ch, 7, false);
+
+		ADDRESS charROM = 0x0E00 + (ch * 8) + m_rowCounter;
+		m_currentChar = m_memory->Read8(charROM);
 	}
 }

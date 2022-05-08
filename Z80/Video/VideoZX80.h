@@ -27,7 +27,10 @@ namespace video
         void LatchCurrentChar(BYTE ch);
 
     protected:
+        void DrawChar();
+
         BYTE m_currentChar = 0;
+        bool m_invert = false;
 
         bool m_vSync = false;
 
