@@ -120,6 +120,9 @@ namespace emul
 
 		void LDAri(BYTE src);
 
+		void LDD();
+		void LDDR();
+
 		void RL(BYTE& dest);
 		void RLC(BYTE& dest);
 

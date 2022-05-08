@@ -640,6 +640,13 @@ namespace emul
 		m_opcodesEXTD[0x70] = [=]() { INc(m_regDummy); };
 		m_opcodesEXTD[0x78] = [=]() { INc(m_reg.A); };
 
+		// LDD
+		m_opcodesEXTD[0xA8] = [=]() { LDD(); };
+
+		// LDDR
+		m_opcodesEXTD[0xB8] = [=]() { LDDR(); };
+
+
 		// TODO
 		m_opcodesEXTD[0x41] = [=]() { NotImplemented("EXTD[0x41]"); };
 		m_opcodesEXTD[0x44] = [=]() { NotImplemented("EXTD[0x44]"); };
@@ -680,7 +687,6 @@ namespace emul
 		m_opcodesEXTD[0xA2] = [=]() { NotImplemented("EXTD[0xA2]"); };
 		m_opcodesEXTD[0xA3] = [=]() { NotImplemented("EXTD[0xA3]"); };
 
-		m_opcodesEXTD[0xA8] = [=]() { NotImplemented("EXTD[0xA8]"); };
 		m_opcodesEXTD[0xA9] = [=]() { NotImplemented("EXTD[0xA9]"); };
 		m_opcodesEXTD[0xAA] = [=]() { NotImplemented("EXTD[0xAA]"); };
 		m_opcodesEXTD[0xAB] = [=]() { NotImplemented("EXTD[0xAB]"); };
@@ -690,7 +696,6 @@ namespace emul
 		m_opcodesEXTD[0xB2] = [=]() { NotImplemented("EXTD[0xB2]"); };
 		m_opcodesEXTD[0xB3] = [=]() { NotImplemented("EXTD[0xB3]"); };
 
-		m_opcodesEXTD[0xB8] = [=]() { NotImplemented("EXTD[0xB8]"); };
 		m_opcodesEXTD[0xB9] = [=]() { NotImplemented("EXTD[0xB9]"); };
 		m_opcodesEXTD[0xBA] = [=]() { NotImplemented("EXTD[0xBA]"); };
 		m_opcodesEXTD[0xBB] = [=]() { NotImplemented("EXTD[0xBB]"); };
@@ -1026,6 +1031,44 @@ namespace emul
 		m_reg.A = src;
 		AdjustBaseFlags(m_reg.A);
 		SetFlag(FLAG_PV, m_iff2);
+	}
+
+	// From "The Undocumented Z80 Documented":
+	// The LDI/LDIR/LDD/LDDR instructions affect the flags in a strange way. At every
+	// iteration, a byte is copied.Take that byteand add the value of register A to it.
+	// Call that value n.Now, the flags are :
+	//	- YF flag A copy of bit 1 of n.
+	//	- HF flag Always reset.
+	//	- XF flag A copy of bit 3 of n.
+	//	- PV flag Set if BC not 0.
+	//	- SF, ZF, CF flags These flags are unchanged
+
+
+	// Does a sort of "LD (DE),(HL)", then decrements DE, HL, and BC.
+	void CPUZ80::LDD()
+	{
+		BYTE src = ReadMem();
+		m_memory.Write8(GetDE(), src);
+
+		DCX(m_reg.D, m_reg.E);
+		DCX(m_reg.H, m_reg.L);
+		DCX(m_reg.B, m_reg.C);
+
+		// Now for the flags, see comments above
+		BYTE n = m_reg.A + src;
+
+		SetFlag(FLAG_F5, GetBit(n, 1));
+		SetFlag(FLAG_H, false);
+		SetFlag(FLAG_F3, GetBit(n, 3));
+		SetFlag(FLAG_N, false);
+		SetFlag(FLAG_PV, GetBC() != 0);
+	}
+
+	// Repeats the instruction LDD until BC=0
+	void CPUZ80::LDDR()
+	{
+		LDD();
+		jumpRelIF(GetFlag(FLAG_PV), -2);
 	}
 
 	// 8-bit rotation to the left. The bit leaving on the left is copied into the carry, and to bit 0.
