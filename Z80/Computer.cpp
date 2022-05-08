@@ -51,6 +51,13 @@ namespace emul
 		PortConnector::Clear();
 	}
 
+	void Computer::InitVideo(video::Video* video)
+	{
+		assert(video);
+		m_video = video;
+		m_video->Init(&m_memory, nullptr);
+	}
+
 	void Computer::Serialize(json& to)
 	{
 		json computer;

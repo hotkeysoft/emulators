@@ -45,6 +45,7 @@
     <ClInclude Include="UI\MainWindow.h" />
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\VideoEvents.h" />
+    <ClInclude Include="Video\VideoZX80.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Logger.cpp" />
@@ -73,6 +74,7 @@
     </ClCompile>
     <ClCompile Include="UI\MainWindow.cpp" />
     <ClCompile Include="Video\Video.cpp" />
+    <ClCompile Include="Video\VideoZX80.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8080.ANS">

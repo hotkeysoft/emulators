@@ -132,6 +132,9 @@
     <ClInclude Include="EdgeDetectLatch.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="Video\VideoZX80.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp">
@@ -196,6 +199,9 @@
     </ClCompile>
     <ClCompile Include="IO\MonitorZ80.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\VideoZX80.cpp">
+      <Filter>Source Files\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

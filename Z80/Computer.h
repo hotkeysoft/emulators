@@ -22,6 +22,8 @@ namespace emul
 
 		virtual void Init(WORD baseRAM) = 0;
 
+		void InitVideo(video::Video* video);
+
 		virtual bool Step() { return m_cpu->Step(); }
 
 		virtual void Reset() { m_cpu->Reset(); }

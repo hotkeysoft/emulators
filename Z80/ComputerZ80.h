@@ -1,9 +1,12 @@
 #pragma once
 
 #include "Computer.h"
+#include "Video/VideoZX80.h"
 
 namespace emul
 {
+	class CPUZ80;
+
 	class ComputerZ80 : public Computer
 	{
 	public:
@@ -16,8 +19,15 @@ namespace emul
 
 		virtual bool Step() override;
 
+		CPUZ80& GetCPU() const { return *((CPUZ80*)m_cpu); }
+		video::VideoZX80& GetVideo() { return *((video::VideoZX80*)m_video); }
+
 	protected:
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;
+
+		void EndVSync(BYTE);
+		BYTE ReadKeyboard();
+
 	};
 }

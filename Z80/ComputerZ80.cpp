@@ -3,6 +3,8 @@
 #include "ComputerZ80.h"
 #include "Config.h"
 #include "IO/Console.h"
+#include "CPU/CPUZ80.h"
+#include "Video/VideoZX80.h"
 
 using cfg::CONFIG;
 using cpuInfo::CPUType;
@@ -28,6 +30,20 @@ namespace emul
 
 		m_memory.Allocate(&m_baseRAM, 0x4000);
 		m_memory.MapWindow(0x4000, 0xC000, 0x4000);
+
+		// TODO: Should be any output port
+		Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
+
+		Connect(0xFEFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+		Connect(0xFDFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+		Connect(0xFBFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+		Connect(0xF7FE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+		Connect(0xEFFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+		Connect(0xDFFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+		Connect(0xBFFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+		Connect(0x7FFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+
+		InitVideo(new video::VideoZX80());
 	}
 
 	bool ComputerZ80::Step()
@@ -44,16 +60,56 @@ namespace emul
 		// 
 		// Interrupts are only enabled during Display File processing.
 		// An interrupt signals the end of a row
+		// 
+		// We check the Refresh Counter value directly here because, unlike
+		// on a real Z80, its value never appears on GetCurrentAddress()
+		// (somewhat equivalent of the address bus)
+		GetCPU().SetINT(!GetBit(GetCPU().GetRefreshCounter(), 6));
 
-		++g_ticks;
-		// Currently "executing" the Display File area
-		if (GetBit(GetCPU().GetCurrentAddress(), 15) && (GetCPU().GetState() != CPUState::HALT))
+		// HSync starts on interrupt acknowledge (or io request, on the cpu they are on the same pin)
+		if (GetCPU().IsInterruptAcknowledge() || GetCPU().IsIORequest())
 		{
-			LogPrintf(LOG_INFO, "DisplayFile");
+			GetVideo().HSync();
 		}
 
+		++g_ticks;
 
+		ADDRESS curr = GetCPU().GetCurrentAddress();
+
+		// Currently "executing" the Display File area
+		if (GetBit(curr, 15) && (GetCPU().GetState() != CPUState::HALT))
+		{
+			BYTE data = m_memory.Read8(curr);
+			// Character data (bit 6 = 0) are shown as to NOPs to the CPU
+			if (!GetBit(data, 6))
+			{
+				GetCPU().EnableDataBus(false);
+				GetVideo().LatchCurrentChar(data);
+			}
+			else
+			{
+				GetCPU().EnableDataBus(true);
+				GetVideo().LatchCurrentChar(0);
+			}			
+		}
+
+		GetVideo().Tick();
 
 		return true;
+	}
+
+	void ComputerZ80::EndVSync(BYTE)
+	{
+		GetVideo().VSync(false);
+	}
+
+	BYTE ComputerZ80::ReadKeyboard()
+	{
+		BYTE row = GetHByte(GetCurrentPort());
+		//LogPrintf(LOG_WARNING, "Read Keyboard row %02x", row);
+
+		GetVideo().VSync(true);
+
+		return 0xFF;
 	}
 }
