@@ -50,7 +50,7 @@ namespace emul
 		(int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_cpu->GetAddress(m_segOff, MemAccess::WRITE), value);
 	}
 
-	CPU8086::CPU8086(Memory& memory) : CPU8086(CPUType::i80186, memory)
+	CPU8086::CPU8086(Memory& memory) : CPU8086(CPUType::i8086, memory)
 	{
 	}
 
