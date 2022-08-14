@@ -22,8 +22,8 @@ namespace ui
 		{ SecondsInDay, "hour" },
 		{ SecondsInWeek, "day" },
 		{ SecondsInMonth, "week" },
-		{ SecondsInYear, "months" },
-		{ std::numeric_limits<int>::max(), "years"}
+		{ SecondsInYear, "month" },
+		{ std::numeric_limits<int>::max(), "year"}
 	};
 
 	TimeFormatter::TimeFormatter(time_t t) : m_time(t)
