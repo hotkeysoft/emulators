@@ -278,7 +278,7 @@
     </ClCompile>
     <ClCompile Include="CPU\CPU80286.cpp">
       <Filter>Source Files\CPU</Filter>
-    </ClCompile>      
+    </ClCompile>
     <ClCompile Include="Sound\DeviceSAA1099.cpp">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
@@ -299,6 +299,9 @@
     </ClCompile>
     <ClCompile Include="IO\DeviceKeyboardAT.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound\DeviceSoundSource.cpp">
+      <Filter>Source Files\Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -553,6 +556,9 @@
     </ClInclude>
     <ClInclude Include="IO\DeviceKeyboardAT.h">
       <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound\DeviceSoundSource.h">
+      <Filter>Header Files\Sound</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

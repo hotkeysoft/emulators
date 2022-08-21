@@ -4,6 +4,7 @@
 #include "Sound/DevicePCSpeaker.h"
 #include "Sound/DeviceSN76489.h"
 #include "Sound/DeviceGameBlaster.h"
+#include "Sound/DeviceSoundSource.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardXT.h"
 
@@ -35,6 +36,9 @@ namespace emul
 
 		cms::DeviceGameBlaster m_gameBlaster;
 		bool isSoundGameBlaster = false;
+
+		dss::DeviceSoundSource m_soundDSS;
+		bool isSoundDSS = false;
 
 		kbd::DeviceKeyboardXT m_keyboard;
 	};

@@ -7,6 +7,7 @@
 #include "Hardware/Device146818.h"
 #include "Hardware/DevicePOSTCard.h"
 #include "Sound/DeviceGameBlaster.h"
+#include "Sound/DeviceSoundSource.h"
 
 namespace emul
 {
@@ -46,6 +47,9 @@ namespace emul
 
 		cms::DeviceGameBlaster m_gameBlaster;
 		bool isSoundGameBlaster = false;
+
+		dss::DeviceSoundSource m_soundDSS;
+		bool isSoundDSS = false;
 
 		BYTE ReadHDDStatus() { return 0; }
 		void WriteHDDReg(BYTE value) { m_tempHDD = value; }

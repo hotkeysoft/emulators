@@ -44,7 +44,8 @@ namespace emul
 		m_biosF000("BIOS0", 0x8000, emul::MemoryType::ROM),
 		m_biosF800("BIOS1", 0x8000, emul::MemoryType::ROM),
 		m_soundPCjr(0xC0, SOUND_CLK),
-		m_gameBlaster(0x220)
+		m_gameBlaster(0x220),
+		m_soundDSS(0x378, PIT_CLK)
 	{
 	}
 
@@ -102,6 +103,12 @@ namespace emul
 			m_gameBlaster.EnableLog(CONFIG().GetLogLevel("sound.cms"));
 			m_gameBlaster.Init();
 			isSoundGameBlaster = true;
+		}
+		else if (soundModule == "dss" || soundModule == "covox")
+		{
+			m_soundDSS.EnableLog(CONFIG().GetLogLevel("sound.dss"));
+			m_soundDSS.Init();
+			isSoundDSS = true;
 		}
 
 		int floppyCount = 0;
@@ -236,6 +243,11 @@ namespace emul
 
 				saa1099::OutputData out = m_gameBlaster.GetOutput();
 				if (!m_turbo) m_pcSpeaker.Tick(out.left * 10, out.right * 10);
+			}
+			else if (isSoundDSS)
+			{
+				m_soundDSS.Tick();
+				if (!m_turbo) m_pcSpeaker.Tick(m_soundDSS.GetOutput());
 			}
 			else // PC Speaker only
 			{
