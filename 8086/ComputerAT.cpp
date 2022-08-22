@@ -293,7 +293,7 @@ namespace emul
 			else if (isSoundDSS)
 			{
 				m_soundDSS.Tick();
-				if (!m_turbo) m_pcSpeaker.Tick(m_soundDSS.GetOutput());
+				if (!m_turbo) m_pcSpeaker.Tick(m_soundDSS.GetOutput() * 40);
 			}
 			else // PC Speaker only
 			{
