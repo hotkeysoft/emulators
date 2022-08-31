@@ -336,7 +336,7 @@ namespace emul
 		//    is set, 6 is added to the most significant 4 bits of
 		//    the accumulator.
 		// Note: All flags are adjusted
-		m_opcodes[0047] = [=]() { DAA(); }; // TODO: Not implemented
+		m_opcodes[0047] = [=]() { DAA(); };
 
 		// -------------------
 		// 3. Logical Group
@@ -1031,8 +1031,8 @@ namespace emul
 		m_reg.A = (BYTE)temp;
 
 		AdjustBaseFlags(m_reg.A);
-		SetFlag(FLAG_CY, (temp < 0));
-		SetFlag(FLAG_AC, !(loNibble < 0));
+		SetFlag(FLAG_CY, (temp > 0xFF));
+		SetFlag(FLAG_AC, (loNibble > 0x0F));
 	}
 
 	void CPU8080::ana(BYTE src)
@@ -1119,8 +1119,19 @@ namespace emul
 
 	void CPU8080::DAA()
 	{
-		// TODO
-		LogPrintf(LOG_WARNING, "DAA: Not implemented");
+		if (GetFlag(FLAG_AC) || ((m_reg.A & 15) > 9))
+		{
+			m_reg.A += 6;
+			SetFlag(FLAG_AC, true);
+		}
+
+		if (GetFlag(FLAG_CY) || m_reg.A > 0x9F)
+		{
+			m_reg.A += 0x60;
+			SetFlag(FLAG_CY, true);
+		}
+
+		AdjustBaseFlags(m_reg.A);
 	}
 
 	void CPU8080::EI()

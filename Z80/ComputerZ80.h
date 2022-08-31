@@ -26,6 +26,7 @@ namespace emul
 		video::VideoZX80& GetVideo() { return *((video::VideoZX80*)m_video); }
 
 		void PrintChar(BYTE value);
+		void DummyOut(BYTE value) {}
 
 	protected:
 		emul::MemoryBlock m_baseRAM;

@@ -25,16 +25,15 @@ namespace emul
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
-		//m_rom.LoadFromFile("");
-		//m_memory.Allocate(&m_rom, 0);
-
 		std::vector<BYTE> bootstrap = { 0x31, 0xff, 0xff, 0xc3, 0x00, 0x80 };
+
 		static MemoryBlock bootstrapROM("bootstrap", bootstrap, MemoryType::ROM);
 		m_memory.Allocate(&bootstrapROM, 0);
 
 		m_baseRAM.LoadFromFile("P:/Projects/z80/z80test/src/z80doc.out");
 		m_memory.Allocate(&m_baseRAM, 32768);
 
+		Connect(0xFE, static_cast<PortConnector::OUTFunction>(&ComputerZ80::DummyOut));
 		Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::PrintChar));
 
 		InitVideo(new video::VideoZX80());
@@ -51,7 +50,7 @@ namespace emul
 		}
 		else if (value < 32)
 		{
-			putc('?', stderr);
+			putc(' ', stderr);
 		}
 		else
 		{

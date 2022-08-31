@@ -116,8 +116,21 @@ namespace emul
 
 		m_opcodes[0010] = [=]() { EXAF(); }; // 0x08
 
+
 		// DJNZ rel8 - Decrement B, jump relative if non zero
 		m_opcodes[0020] = [=]() { jumpRelIF(--m_reg.B, FetchByte()); }; // 0x10
+
+		// DAA (Decimal Adjust Accumulator)
+		m_opcodes[0047] = [=]() { DAA(); SetFlag(FLAG_N, false); };
+
+		// CPL (Complement accumulator)
+		m_opcodes[0057] = [=]() { m_reg.A = ~m_reg.A; SetFlag(FLAG_H, true); SetFlag(FLAG_N, true); };
+
+		// SCF (Set Carry)
+		m_opcodes[0067] = [=]() { SetFlag(FLAG_CY, true); SetFlag(FLAG_H, false); SetFlag(FLAG_N, false); };
+
+		// CCF (Complement carry)
+		m_opcodes[0077] = [=]() { ComplementFlag(FLAG_CY); ComplementFlag(FLAG_N); SetFlag(FLAG_N, false); };
 
 		// Jump Relative
 		m_opcodes[0030] = [=]() { jumpRelIF(true, FetchByte()); };
@@ -640,49 +653,55 @@ namespace emul
 		m_opcodesEXTD[0x70] = [=]() { INc(m_regDummy); };
 		m_opcodesEXTD[0x78] = [=]() { INc(m_reg.A); };
 
+		// NEG
+		m_opcodesEXTD[0x44] = [=]() { NEG(); };
+		m_opcodesEXTD[0x4C] = [=]() { NEG(); }; // Undocumented
+		m_opcodesEXTD[0x54] = [=]() { NEG(); }; // Undocumented
+		m_opcodesEXTD[0x5C] = [=]() { NEG(); }; // Undocumented
+		m_opcodesEXTD[0x64] = [=]() { NEG(); }; // Undocumented
+		m_opcodesEXTD[0x6C] = [=]() { NEG(); }; // Undocumented
+		m_opcodesEXTD[0x74] = [=]() { NEG(); }; // Undocumented
+		m_opcodesEXTD[0x7C] = [=]() { NEG(); }; // Undocumented
+
+		// LDI
+		m_opcodesEXTD[0xA0] = [=]() { LDI(); };
+
 		// LDD
 		m_opcodesEXTD[0xA8] = [=]() { LDD(); };
+
+		// LDIR
+		m_opcodesEXTD[0xB0] = [=]() { LDIR(); };
 
 		// LDDR
 		m_opcodesEXTD[0xB8] = [=]() { LDDR(); };
 
-
 		// TODO
 		m_opcodesEXTD[0x41] = [=]() { NotImplemented("EXTD[0x41]"); };
-		m_opcodesEXTD[0x44] = [=]() { NotImplemented("EXTD[0x44]"); };
 		m_opcodesEXTD[0x45] = [=]() { NotImplemented("EXTD[0x45]"); };
 
 		m_opcodesEXTD[0x49] = [=]() { NotImplemented("EXTD[0x49]"); };
-		m_opcodesEXTD[0x4C] = [=]() { NotImplemented("EXTD[0x4C]"); };
 		m_opcodesEXTD[0x4D] = [=]() { NotImplemented("EXTD[0x4D]"); };
 
 		m_opcodesEXTD[0x51] = [=]() { NotImplemented("EXTD[0x51]"); };
-		m_opcodesEXTD[0x54] = [=]() { NotImplemented("EXTD[0x54]"); };
 		m_opcodesEXTD[0x55] = [=]() { NotImplemented("EXTD[0x55]"); };
 
 		m_opcodesEXTD[0x59] = [=]() { NotImplemented("EXTD[0x59]"); };
-		m_opcodesEXTD[0x5C] = [=]() { NotImplemented("EXTD[0x5C]"); };
 		m_opcodesEXTD[0x5D] = [=]() { NotImplemented("EXTD[0x5D]"); };
 
 		m_opcodesEXTD[0x61] = [=]() { NotImplemented("EXTD[0x61]"); };
-		m_opcodesEXTD[0x64] = [=]() { NotImplemented("EXTD[0x64]"); };
 		m_opcodesEXTD[0x65] = [=]() { NotImplemented("EXTD[0x65]"); };
 		m_opcodesEXTD[0x67] = [=]() { NotImplemented("EXTD[0x67]"); };
 
 		m_opcodesEXTD[0x69] = [=]() { NotImplemented("EXTD[0x69]"); };
-		m_opcodesEXTD[0x6C] = [=]() { NotImplemented("EXTD[0x6C]"); };
 		m_opcodesEXTD[0x6D] = [=]() { NotImplemented("EXTD[0x6D]"); };
 		m_opcodesEXTD[0x6F] = [=]() { NotImplemented("EXTD[0x6F]"); };
 
 		m_opcodesEXTD[0x71] = [=]() { NotImplemented("EXTD[0x71]"); };
-		m_opcodesEXTD[0x74] = [=]() { NotImplemented("EXTD[0x74]"); };
 		m_opcodesEXTD[0x75] = [=]() { NotImplemented("EXTD[0x75]"); };
 
 		m_opcodesEXTD[0x79] = [=]() { NotImplemented("EXTD[0x79]"); };
-		m_opcodesEXTD[0x7C] = [=]() { NotImplemented("EXTD[0x7C]"); };
 		m_opcodesEXTD[0x7D] = [=]() { NotImplemented("EXTD[0x7D]"); };
 
-		m_opcodesEXTD[0xA0] = [=]() { NotImplemented("EXTD[0xA0]"); };
 		m_opcodesEXTD[0xA1] = [=]() { NotImplemented("EXTD[0xA1]"); };
 		m_opcodesEXTD[0xA2] = [=]() { NotImplemented("EXTD[0xA2]"); };
 		m_opcodesEXTD[0xA3] = [=]() { NotImplemented("EXTD[0xA3]"); };
@@ -691,7 +710,6 @@ namespace emul
 		m_opcodesEXTD[0xAA] = [=]() { NotImplemented("EXTD[0xAA]"); };
 		m_opcodesEXTD[0xAB] = [=]() { NotImplemented("EXTD[0xAB]"); };
 
-		m_opcodesEXTD[0xB0] = [=]() { NotImplemented("EXTD[0xB0]"); };
 		m_opcodesEXTD[0xB1] = [=]() { NotImplemented("EXTD[0xB1]"); };
 		m_opcodesEXTD[0xB2] = [=]() { NotImplemented("EXTD[0xB2]"); };
 		m_opcodesEXTD[0xB3] = [=]() { NotImplemented("EXTD[0xB3]"); };
@@ -970,6 +988,7 @@ namespace emul
 		// If 2 Two's Complement numbers are subtracted, and their signs are different, 
 		// then overflow occurs if and only if the result has the same sign as what is being subtracted.
 		SetFlag(FLAG_PV, (GetMSB(oldA) != GetMSB(src)) && (GetMSB(m_reg.A) == GetMSB(src)));
+		SetFlag(FLAG_N, true);
 	}
 
 	BYTE CPUZ80::cmp(BYTE src)
@@ -982,6 +1001,7 @@ namespace emul
 		// If 2 Two's Complement numbers are subtracted, and their signs are different, 
 		// then overflow occurs if and only if the result has the same sign as what is being subtracted.
 		SetFlag(FLAG_PV, (GetMSB(oldA) != GetMSB(src)) && (GetMSB(res) == GetMSB(src)));
+		SetFlag(FLAG_N, true);
 		return res;
 	}
 
@@ -1003,7 +1023,8 @@ namespace emul
 
 	void CPUZ80::EXAF()
 	{
-		NotImplemented("EXAF");
+		Swap(m_reg.A, m_regAlt.A);
+		Swap(m_reg.flags, m_regAlt.flags);
 	}
 
 	void CPUZ80::EXX()
@@ -1054,14 +1075,41 @@ namespace emul
 
 	// From "The Undocumented Z80 Documented":
 	// The LDI/LDIR/LDD/LDDR instructions affect the flags in a strange way. At every
-	// iteration, a byte is copied.Take that byteand add the value of register A to it.
-	// Call that value n.Now, the flags are :
+	// iteration, a byte is copied.Take that byte and add the value of register A to it.
+	// Call that value n. Now, the flags are :
 	//	- YF flag A copy of bit 1 of n.
 	//	- HF flag Always reset.
 	//	- XF flag A copy of bit 3 of n.
 	//	- PV flag Set if BC not 0.
 	//	- SF, ZF, CF flags These flags are unchanged
 
+
+	// Does a sort of "LD (DE),(HL)", then increments DE, HL, and decrements BC.
+	void CPUZ80::LDI()
+	{
+		BYTE src = ReadMem();
+		m_memory.Write8(GetDE(), src);
+
+		INX(m_reg.D, m_reg.E);
+		INX(m_reg.H, m_reg.L);
+		DCX(m_reg.B, m_reg.C);
+
+		// Now for the flags, see comments above
+		BYTE n = m_reg.A + src;
+
+		SetFlag(FLAG_F5, GetBit(n, 1));
+		SetFlag(FLAG_H, false);
+		SetFlag(FLAG_F3, GetBit(n, 3));
+		SetFlag(FLAG_N, false);
+		SetFlag(FLAG_PV, GetBC() != 0);
+	}
+
+	// Repeats the instruction LDD until BC=0
+	void CPUZ80::LDIR()
+	{
+		LDI();
+		jumpRelIF(GetFlag(FLAG_PV), -2);
+	}
 
 	// Does a sort of "LD (DE),(HL)", then decrements DE, HL, and BC.
 	void CPUZ80::LDD()
@@ -1088,6 +1136,15 @@ namespace emul
 	{
 		LDD();
 		jumpRelIF(GetFlag(FLAG_PV), -2);
+	}
+
+	// The contents of A are negated (two's complement). Operation is the same as subtracting A from zero.
+	void CPUZ80::NEG()
+	{
+		BYTE oldA = m_reg.A;
+		m_reg.A = 0;
+		sub(oldA);
+		SetFlag(FLAG_N, true);
 	}
 
 	// 8-bit rotation to the left. The bit leaving on the left is copied into the carry, and to bit 0.

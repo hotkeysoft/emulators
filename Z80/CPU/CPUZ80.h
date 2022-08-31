@@ -51,6 +51,7 @@ namespace emul
 
 		bool GetFlag(FLAGZ80 f) { return (m_reg.flags & f) ? true : false; };
 		void SetFlag(FLAGZ80 f, bool v) { SetBitMask(m_reg.flags, f, v); };
+		void ComplementFlag(FLAGZ80 f) { m_reg.flags ^= f; }
 		virtual void AdjustBaseFlags(BYTE val) override;
 		void AdjustBaseFlags(WORD val);
 
@@ -128,8 +129,13 @@ namespace emul
 
 		void LDAri(BYTE src);
 
+		void LDI();
+		void LDIR();
+
 		void LDD();
 		void LDDR();
+
+		void NEG();
 
 		void RL(BYTE& dest);
 		void RLC(BYTE& dest);
