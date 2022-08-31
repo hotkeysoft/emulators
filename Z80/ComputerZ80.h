@@ -25,6 +25,8 @@ namespace emul
 		// TODO: Temporary, put generic video
 		video::VideoZX80& GetVideo() { return *((video::VideoZX80*)m_video); }
 
+		void PrintChar(BYTE value);
+
 	protected:
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;

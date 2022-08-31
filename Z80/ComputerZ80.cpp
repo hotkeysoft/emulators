@@ -35,11 +35,28 @@ namespace emul
 		m_baseRAM.LoadFromFile("P:/Projects/z80/z80test/src/z80doc.out");
 		m_memory.Allocate(&m_baseRAM, 32768);
 
-		//Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
+		Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::PrintChar));
 
 		InitVideo(new video::VideoZX80());
 
 		InitInputs(6000000);
+	}
+
+	void ComputerZ80::PrintChar(BYTE value)
+	{
+		if (value == 13)
+		{
+			putc('\r', stderr);
+			putc('\n', stderr);
+		}
+		else if (value < 32)
+		{
+			putc('?', stderr);
+		}
+		else
+		{
+			putc(value, stderr);
+		}
 	}
 
 	bool ComputerZ80::Step()
