@@ -1,32 +1,37 @@
 #pragma once
 
 #include "Computer.h"
-#include "IO/InputEvents.h"
 #include "Video/VideoZX80.h"
+#include "IO/InputEvents.h"
+#include "IO/DeviceKeyboardZX80.h"
 
 namespace emul
 {
 	class CPUZ80;
 
-	class ComputerZ80 : public Computer
+	class ComputerZX80 : public Computer
 	{
 	public:
-		ComputerZ80();
+		ComputerZX80();
 
-		virtual std::string_view GetName() const override { return "Z80"; };
-		virtual std::string_view GetID() const override { return "z80"; };
+		virtual std::string_view GetName() const override { return "ZX80"; };
+		virtual std::string_view GetID() const override { return "zx80"; };
 
 		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;
 
 		CPUZ80& GetCPU() const { return *((CPUZ80*)m_cpu); }
-
-		// TODO: Temporary, put generic video
 		video::VideoZX80& GetVideo() { return *((video::VideoZX80*)m_video); }
 
 	protected:
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;
+
+		void EndVSync(BYTE);
+		BYTE ReadKeyboard();
+
+		kbd::DeviceKeyboardZX80 m_keyboard;
+
 	};
 }

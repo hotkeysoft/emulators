@@ -27,6 +27,7 @@
     <ClInclude Include="Computer.h" />
     <ClInclude Include="Computer8080.h" />
     <ClInclude Include="ComputerZ80.h" />
+    <ClInclude Include="ComputerZX80.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="CPU\CPU.h" />
     <ClInclude Include="CPU\CPU8080.h" />
@@ -54,6 +55,7 @@
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="Computer8080.cpp" />
     <ClCompile Include="ComputerZ80.cpp" />
+    <ClCompile Include="ComputerZX80.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="CPU\CPU.cpp" />
     <ClCompile Include="CPU\CPU8080.cpp" />

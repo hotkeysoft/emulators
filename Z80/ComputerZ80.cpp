@@ -14,7 +14,7 @@ namespace emul
 	ComputerZ80::ComputerZ80() :
 		Logger("Z80"),
 		Computer(m_memory),
-		m_baseRAM("RAM", 0x4000, emul::MemoryType::RAM),
+		m_baseRAM("RAM", 0x8000, emul::MemoryType::RAM),
 		m_rom("ROM", 0x1000, emul::MemoryType::ROM)
 	{
 	}
@@ -25,32 +25,21 @@ namespace emul
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
-		m_rom.LoadFromFile("data/z80/zx80rom.bin");
-		m_memory.Allocate(&m_rom, 0);
+		//m_rom.LoadFromFile("");
+		//m_memory.Allocate(&m_rom, 0);
 
-		m_memory.Allocate(&m_baseRAM, 0x4000);
-		m_memory.MapWindow(0x4000, 0xC000, 0x4000);
+		std::vector<BYTE> bootstrap = { 0x31, 0xff, 0xff, 0xc3, 0x00, 0x80 };
+		static MemoryBlock bootstrapROM("bootstrap", bootstrap, MemoryType::ROM);
+		m_memory.Allocate(&bootstrapROM, 0);
 
-		// TODO: Should be any output port
-		Connect(0x00FF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
-		Connect(0x0FFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
-		Connect(0x07FF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
-		Connect(0x03FF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
-		Connect(0x01FF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
+		m_baseRAM.LoadFromFile("P:/Projects/z80/z80test/src/z80doc.out");
+		m_memory.Allocate(&m_baseRAM, 32768);
 
-		Connect(0xFEFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
-		Connect(0xFDFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
-		Connect(0xFBFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
-		Connect(0xF7FE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
-		Connect(0xEFFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
-		Connect(0xDFFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
-		Connect(0xBFFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
-		Connect(0x7FFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
+		//Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
 
 		InitVideo(new video::VideoZX80());
 
 		InitInputs(6000000);
-		GetInputs().InitKeyboard(&m_keyboard);
 	}
 
 	bool ComputerZ80::Step()
@@ -63,22 +52,6 @@ namespace emul
 		static uint32_t cpuTicks = 0;	
 		cpuTicks += GetCPU().GetInstructionTicks();
 
-		// Interrupt when A6 = 0
-		// 
-		// Interrupts are only enabled during Display File processing.
-		// An interrupt signals the end of a row
-		// 
-		// We check the Refresh Counter value directly here because, unlike
-		// on a real Z80, its value never appears on GetCurrentAddress()
-		// (somewhat equivalent of the address bus)
-		GetCPU().SetINT(!GetBit(GetCPU().GetRefreshCounter(), 6));
-
-		// HSync starts on interrupt acknowledge (or io request, on the cpu they are on the same pin)
-		if (GetCPU().IsInterruptAcknowledge() || GetCPU().IsIORequest())
-		{
-			GetVideo().HSync();
-		}
-
 		++g_ticks;
 
 		GetInputs().Tick();
@@ -87,53 +60,14 @@ namespace emul
 			return false;
 		}
 
-		ADDRESS curr = GetCPU().GetCurrentAddress();
-
-		// Currently "executing" the Display File area
-		if (GetBit(curr, 15) && (GetCPU().GetState() != CPUState::HALT))
+		GetInputs().Tick();
+		if (GetInputs().IsQuit())
 		{
-			BYTE data = m_memory.Read8(curr);
-			// Character data (bit 6 = 0) are shown as to NOPs to the CPU
-			if (!GetBit(data, 6))
-			{
-				GetCPU().EnableDataBus(false);
-				GetVideo().LatchCurrentChar(data);
-			}
-			else
-			{
-				GetCPU().EnableDataBus(true);
-				GetVideo().LatchCurrentChar(0);
-			}
+			return false;
 		}
 
 		GetVideo().Tick();
 
 		return true;
-	}
-
-	void ComputerZ80::EndVSync(BYTE)
-	{
-		GetVideo().VSync(false);
-	}
-
-	BYTE ComputerZ80::ReadKeyboard()
-	{
-		BYTE row = GetHByte(GetCurrentPort());
-		BYTE data = ~m_keyboard.GetRowData(row);
-
-		// debug, force shift + V
-		//if (row == 0xFE)
-		//{
-		//	if (g_ticks > 1000000 && g_ticks < 2000000) {
-		//					SetBit(data, 0, false);
-		//					SetBit(data, 4, false);
-		//	}
-		//}
-		//LogPrintf(LOG_WARNING, "Read Keyboard row %02x ["PRINTF_BIN_PATTERN_INT8"]", row, PRINTF_BYTE_TO_BIN_INT8(data));
-
-
-		GetVideo().VSync(true);
-
-		return data;
 	}
 }

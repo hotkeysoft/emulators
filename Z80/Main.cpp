@@ -10,6 +10,7 @@
 
 #include "Computer8080.h"
 #include "ComputerZ80.h"
+#include "ComputerZX80.h"
 
 #include "Config.h"
 #include "Sound/Sound.h"
@@ -130,6 +131,10 @@ Computer* CreateComputer(std::string arch)
 	else if (arch == "z80")
 	{
 		computer = new emul::ComputerZ80();
+	}
+	else if (arch == "zx80")
+	{
+		computer = new emul::ComputerZX80();
 	}
 
 	return computer;

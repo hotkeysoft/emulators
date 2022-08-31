@@ -123,9 +123,6 @@
     <ClInclude Include="Computer8080.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ComputerZ80.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="IO\MonitorZ80.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
@@ -140,6 +137,12 @@
     </ClInclude>
     <ClInclude Include="IO\DeviceKeyboardZX80.h">
       <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputerZX80.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputerZ80.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -200,9 +203,6 @@
     <ClCompile Include="Computer8080.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ComputerZ80.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IO\MonitorZ80.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
@@ -211,6 +211,12 @@
     </ClCompile>
     <ClCompile Include="IO\InputEvents.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerZX80.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerZ80.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
