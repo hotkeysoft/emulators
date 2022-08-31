@@ -2,6 +2,8 @@
 
 #include "Computer.h"
 #include "Video/VideoZX80.h"
+#include "IO/InputEvents.h"
+#include "IO/DeviceKeyboardZX80.h"
 
 namespace emul
 {
@@ -28,6 +30,8 @@ namespace emul
 
 		void EndVSync(BYTE);
 		BYTE ReadKeyboard();
+
+		kbd::DeviceKeyboardZX80 m_keyboard;
 
 	};
 }

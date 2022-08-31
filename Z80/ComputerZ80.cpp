@@ -32,7 +32,11 @@ namespace emul
 		m_memory.MapWindow(0x4000, 0xC000, 0x4000);
 
 		// TODO: Should be any output port
-		Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
+		Connect(0x00FF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
+		Connect(0x0FFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
+		Connect(0x07FF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
+		Connect(0x03FF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
+		Connect(0x01FF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::EndVSync));
 
 		Connect(0xFEFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
 		Connect(0xFDFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
@@ -44,6 +48,9 @@ namespace emul
 		Connect(0x7FFE, static_cast<PortConnector::INFunction>(&ComputerZ80::ReadKeyboard));
 
 		InitVideo(new video::VideoZX80());
+
+		InitInputs(6000000);
+		GetInputs().InitKeyboard(&m_keyboard);
 	}
 
 	bool ComputerZ80::Step()
@@ -74,6 +81,12 @@ namespace emul
 
 		++g_ticks;
 
+		GetInputs().Tick();
+		if (GetInputs().IsQuit())
+		{
+			return false;
+		}
+
 		ADDRESS curr = GetCPU().GetCurrentAddress();
 
 		// Currently "executing" the Display File area
@@ -90,7 +103,7 @@ namespace emul
 			{
 				GetCPU().EnableDataBus(true);
 				GetVideo().LatchCurrentChar(0);
-			}			
+			}
 		}
 
 		GetVideo().Tick();
@@ -106,10 +119,21 @@ namespace emul
 	BYTE ComputerZ80::ReadKeyboard()
 	{
 		BYTE row = GetHByte(GetCurrentPort());
-		//LogPrintf(LOG_WARNING, "Read Keyboard row %02x", row);
+		BYTE data = ~m_keyboard.GetRowData(row);
+
+		// debug, force shift + V
+		//if (row == 0xFE)
+		//{
+		//	if (g_ticks > 1000000 && g_ticks < 2000000) {
+		//					SetBit(data, 0, false);
+		//					SetBit(data, 4, false);
+		//	}
+		//}
+		//LogPrintf(LOG_WARNING, "Read Keyboard row %02x ["PRINTF_BIN_PATTERN_INT8"]", row, PRINTF_BYTE_TO_BIN_INT8(data));
+
 
 		GetVideo().VSync(true);
 
-		return 0xFF;
+		return data;
 	}
 }

@@ -37,6 +37,8 @@
     <ClInclude Include="CPU\PortConnector.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="IO\Console.h" />
+    <ClInclude Include="IO\DeviceKeyboardZX80.h" />
+    <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor8080.h" />
     <ClInclude Include="IO\MonitorZ80.h" />
     <ClInclude Include="Serializable.h" />
@@ -61,6 +63,7 @@
     <ClCompile Include="CPU\MemoryBlock.cpp" />
     <ClCompile Include="CPU\PortConnector.cpp" />
     <ClCompile Include="IO\Console.cpp" />
+    <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor8080.cpp" />
     <ClCompile Include="IO\MonitorZ80.cpp" />
     <ClCompile Include="Main.cpp" />

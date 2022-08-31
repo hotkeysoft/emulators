@@ -10,6 +10,8 @@
 
 using emul::WORD;
 
+namespace events { class InputEvents; }
+
 namespace emul
 {
 	class Computer : public Serializable, public PortConnector
@@ -33,6 +35,7 @@ namespace emul
 		CPU8080& GetCPU() const { return *m_cpu; }
 		Memory& GetMemory() { return m_memory; }
 		video::Video& GetVideo() { return *m_video; }
+		events::InputEvents& GetInputs() { return *m_inputs; }
 
 		virtual void Reboot();
 		void SetTurbo(bool turbo) { m_turbo = turbo; }
@@ -45,11 +48,13 @@ namespace emul
 		Computer(Memory& memory);
 
 		virtual void Init(cpuInfo::CPUType cpu, WORD baseRAM);
+		virtual void InitInputs(size_t clockSpeedHz);
 
 		Memory m_memory;
 
 		emul::CPU8080* m_cpu = nullptr;
 		video::Video* m_video = nullptr;
+		events::InputEvents* m_inputs = nullptr;
 
 		bool m_turbo = false;
 	};

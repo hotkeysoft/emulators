@@ -2,6 +2,7 @@
 #include "Computer.h"
 #include "Config.h"
 #include "CPU/CPUZ80.h"
+#include "IO/InputEvents.h"
 
 #include <assert.h>
 #include <fstream>
@@ -18,6 +19,7 @@ namespace emul
 
 	Computer::~Computer()
 	{
+		delete m_inputs;
 		delete m_video;
 		delete m_cpu;
 	}
@@ -49,6 +51,13 @@ namespace emul
 		m_memory.Init(m_cpu->GetAddressBits());
 
 		PortConnector::Clear();
+	}
+
+	void Computer::InitInputs(size_t clockSpeedHz)
+	{
+		m_inputs = new events::InputEvents(clockSpeedHz);
+		m_inputs->Init();
+		m_inputs->EnableLog(CONFIG().GetLogLevel("inputs"));
 	}
 
 	void Computer::InitVideo(video::Video* video)

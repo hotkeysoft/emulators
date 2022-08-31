@@ -102,6 +102,9 @@ namespace emul
 		virtual void inc(BYTE& reg) override;
 		virtual void dec(BYTE& reg) override;
 
+		void push(WORD src);
+		void pop(WORD& dest);
+
 		void NotImplemented(const char* opStr);
 
 		// Opcodes

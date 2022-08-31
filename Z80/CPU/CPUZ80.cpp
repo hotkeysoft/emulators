@@ -815,6 +815,12 @@ namespace emul
 
 		// IXY Bit instructions 
 		m_opcodesIXY[0xCB] = [=]() { BITSxy(); };
+
+		// POP IXY
+		m_opcodesIXY[0xE1] = [=]() { pop(*m_currIdx); };
+
+		// PUSH IXY
+		m_opcodesIXY[0xE5] = [=]() { push(*m_currIdx); };
 	}
 
 	BYTE CPUZ80::ReadMemIdx(BYTE offset)
@@ -895,6 +901,19 @@ namespace emul
 	{
 		LogPrintf(LOG_ERROR, "[%s] not implemented @ 0x%04X", opStr, m_programCounter);
 		throw std::exception("Not implemented");
+	}
+
+	void CPUZ80::push(WORD src)
+	{
+		CPU8080::push(GetHByte(src), GetLByte(src));
+	}
+
+	void CPUZ80::pop(WORD& dest)
+	{
+		BYTE h, l;
+		CPU8080::pop(h, l);
+		SetHByte(dest, h);
+		SetLByte(dest, l);
 	}
 
 	void CPUZ80::adcHL(WORD src)
