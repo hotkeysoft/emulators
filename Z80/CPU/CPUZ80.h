@@ -28,6 +28,10 @@ namespace emul
 		// This is needed only for the ZX80/81: Disconnects the data bus so the CPU sees NOPs
 		void EnableDataBus(bool enable) { m_dataBusEnable = enable; }
 
+		// On the Z80, IN/OUT puts reg A or B value in A8..A15
+		// This can be used in IO handlers
+		BYTE GetIOHighAddress() const { return m_ioHighAddress; }
+
 	protected:
 		CPUZ80(cpuInfo::CPUType type, Memory& memory);
 
@@ -56,6 +60,7 @@ namespace emul
 		void InitBITSxy();
 
 		bool m_dataBusEnable = true;
+		BYTE m_ioHighAddress = 0;
 		Registers m_regAlt;
 		WORD m_regIX = 0;
 		WORD m_regIY = 0;

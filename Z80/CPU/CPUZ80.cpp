@@ -136,8 +136,8 @@ namespace emul
 
 		// Replace IN/OUT Opcodes with Z80 version
 		// On Z80, IN/OUT put reg A value in A8..A15
-		m_opcodes[0333] = [=]() { m_ioRequest = true; In(MakeWord(m_reg.A, FetchByte()), m_reg.A); };
-		m_opcodes[0323] = [=]() { m_ioRequest = true; Out(MakeWord(m_reg.A, FetchByte()), m_reg.A); };
+		m_opcodes[0333] = [=]() { m_ioRequest = true; m_ioHighAddress = m_reg.A;  In(FetchByte(), m_reg.A); };
+		m_opcodes[0323] = [=]() { m_ioRequest = true; m_ioHighAddress = m_reg.A;  Out(FetchByte(), m_reg.A); };
 
 		InitBITS(); // Bit instructions (Prefix 0xCB)
 		InitBITSxy(); // Bit instructions, indexed (Prefix 0xDDCF, 0xFDCB)
@@ -1209,7 +1209,8 @@ namespace emul
 	void CPUZ80::INc(BYTE& dest)
 	{
 		m_ioRequest = true;
-		In(GetBC(), dest);
+		m_ioHighAddress = m_reg.B;
+		In(m_reg.C, dest);
 		AdjustBaseFlags(dest);
 	}
 

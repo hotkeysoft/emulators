@@ -32,20 +32,16 @@ namespace emul
 		m_memory.MapWindow(0x4000, 0xC000, 0x4000);
 
 		// TODO: Should be any output port
-		Connect(0x00FF, static_cast<PortConnector::OUTFunction>(&ComputerZX80::EndVSync));
-		Connect(0x0FFF, static_cast<PortConnector::OUTFunction>(&ComputerZX80::EndVSync));
-		Connect(0x07FF, static_cast<PortConnector::OUTFunction>(&ComputerZX80::EndVSync));
-		Connect(0x03FF, static_cast<PortConnector::OUTFunction>(&ComputerZX80::EndVSync));
-		Connect(0x01FF, static_cast<PortConnector::OUTFunction>(&ComputerZX80::EndVSync));
+		Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZX80::EndVSync));
 
-		Connect(0xFEFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFDFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFBFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xF7FE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xEFFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xDFFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xBFFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0x7FFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
 
 		InitVideo(new video::VideoZX80());
 
@@ -118,7 +114,7 @@ namespace emul
 
 	BYTE ComputerZX80::ReadKeyboard()
 	{
-		BYTE row = GetHByte(GetCurrentPort());
+		BYTE row = GetCPU().GetIOHighAddress();
 		BYTE data = ~m_keyboard.GetRowData(row);
 
 		// debug, force shift + V
