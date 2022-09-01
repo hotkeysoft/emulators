@@ -1065,14 +1065,14 @@ namespace emul
 	BYTE CPU8080::cmp(BYTE src)
 	{
 		// AC flag
-		char loNibble = (m_reg.A & 0x0F) - (src & 0x0F);
+		BYTE loNibble = (m_reg.A & 0x0F) - (src & 0x0F);
 
-		int temp = m_reg.A - src;
+		WORD temp = m_reg.A - src;
 
-		SetFlag(FLAG_CY, (temp < 0));
-		SetFlag(FLAG_AC, !(loNibble < 0));
-		AdjustBaseFlags(temp);
-		return temp;
+		AdjustBaseFlags((BYTE)temp);
+		SetFlag(FLAG_CY, (temp > 0xFF));
+		SetFlag(FLAG_AC, (loNibble > 0x0F));
+		return (BYTE)temp;
 	}
 
 	void CPU8080::RLC()
