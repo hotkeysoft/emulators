@@ -37,6 +37,7 @@
     <ClInclude Include="CPU\Memory.h" />
     <ClInclude Include="CPU\MemoryBlock.h" />
     <ClInclude Include="CPU\PortConnector.h" />
+    <ClInclude Include="CPU\test\daa.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="IO\Console.h" />
     <ClInclude Include="IO\DeviceKeyboardZX80.h" />

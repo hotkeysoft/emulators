@@ -1019,9 +1019,9 @@ namespace emul
 	void CPU8080::sub(BYTE src, bool borrow)
 	{
 		// AC flag
-		char loNibble = (m_reg.A & 0x0F) - (src & 0x0F);
+		BYTE loNibble = (m_reg.A & 0x0F) - (src & 0x0F);
 
-		int temp = m_reg.A - src;
+		WORD temp = m_reg.A - src;
 		if (borrow)
 		{
 			temp--;
@@ -1119,13 +1119,14 @@ namespace emul
 
 	void CPU8080::DAA()
 	{
-		if (GetFlag(FLAG_AC) || ((m_reg.A & 15) > 9))
+		BYTE a = m_reg.A;
+		if (GetFlag(FLAG_AC) || ((a & 0x0F) > 9))
 		{
 			m_reg.A += 6;
 			SetFlag(FLAG_AC, true);
 		}
 
-		if (GetFlag(FLAG_CY) || m_reg.A > 0x9F)
+		if (GetFlag(FLAG_CY) || (a > 0x9F))
 		{
 			m_reg.A += 0x60;
 			SetFlag(FLAG_CY, true);

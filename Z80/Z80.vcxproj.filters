@@ -52,6 +52,9 @@
     <Filter Include="Source Files\UI">
       <UniqueIdentifier>{d241b389-ac40-4b6d-a3ee-3e9b5b0ffa67}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\CPU\test">
+      <UniqueIdentifier>{b9c13943-8c72-417e-b94f-9c7b72757c84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -146,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="CPU\CPUZ80Test.h">
       <Filter>Header Files\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="CPU\test\daa.h">
+      <Filter>Header Files\CPU\test</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

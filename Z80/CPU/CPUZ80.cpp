@@ -127,7 +127,7 @@ namespace emul
 		m_opcodes[0067] = [=]() { SetFlag(FLAG_CY, true); SetFlag(FLAG_H, false); SetFlag(FLAG_N, false); };
 
 		// CCF (Complement carry)
-		m_opcodes[0077] = [=]() { ComplementFlag(FLAG_CY); ComplementFlag(FLAG_N); SetFlag(FLAG_N, false); };
+		m_opcodes[0077] = [=]() { SetFlag(FLAG_H, GetFlag(FLAG_CY)); ComplementFlag(FLAG_CY); SetFlag(FLAG_N, false); };
 
 		// Jump Relative
 		m_opcodes[0030] = [=]() { jumpRelIF(true, FetchByte()); };
@@ -1270,7 +1270,37 @@ namespace emul
 
 	void CPUZ80::DAA()
 	{
-		CPU8080::DAA(); //TODO
+		BYTE adjust = 0;
+		bool carry = GetFlag(FLAG_CY);
+		if (GetFlag(FLAG_H) || ((m_reg.A & 0x0F) > 9))
+		{
+			adjust |= 0x06;
+			SetFlag(FLAG_H, true);
+		}
+
+		if (GetFlag(FLAG_CY) || ((m_reg.A > 0x99)))
+		{
+			adjust |= 0x60;
+			carry = true;
+		}
+
+		bool neg = GetFlag(FLAG_N);
+		if (neg)
+		{
+			//BYTE temp = (m_reg.A & 0x0F) - (adjust & 0x0F);
+			//SetFlag(FLAG_H, temp > 0x0F);
+
+			//m_reg.A -= adjust;
+			sub(adjust);
+			
+		}
+		else
+		{
+			add(adjust);
+		}
+		AdjustBaseFlags(m_reg.A);
+		SetFlag(FLAG_N, neg);
+		SetFlag(FLAG_CY, carry);
 	}
 
 	void CPUZ80::DI()

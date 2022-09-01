@@ -28,11 +28,10 @@
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
 
-#define CPU_TEST
+//#define CPU_TEST
 
 #ifdef CPU_TEST
 #include "CPU/CPUZ80Test.h"
-//#include "Main.h"
 #endif
 
 namespace fs = std::filesystem;
