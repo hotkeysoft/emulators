@@ -137,17 +137,35 @@ namespace emul
 
 		void NEG();
 
-		void RL(BYTE& dest, bool adjustBaseFlags = true);
-		void RLC(BYTE& dest, bool adjustBaseFlags = true);
+		void RLA() { rl(m_reg.A, false); }
+		void RLCA() { rlc(m_reg.A, false); }
 
-		void RR(BYTE& dest, bool adjustBaseFlags = true);
-		void RRC(BYTE& dest, bool adjustBaseFlags = true);
+		void RRA() { rr(m_reg.A, false); }
+		void RRCA() { rrc(m_reg.A, false); }
+
+		void RL(BYTE& dest) { rl(dest); }
+		void RLC(BYTE& dest) { rlc(dest); }
+
+		void RR(BYTE& dest) { rr(dest); }
+		void RRC(BYTE& dest) { rrc(dest); }
+
+		void rl(BYTE& dest, bool adjustBaseFlags = true);
+		void rlc(BYTE& dest, bool adjustBaseFlags = true);
+
+		void rr(BYTE& dest, bool adjustBaseFlags = true);
+		void rrc(BYTE& dest, bool adjustBaseFlags = true);
 
 		void RLD();
 		void RRD();
 
-		void SLA(BYTE& dest, bool bit0);
-		void SRA(BYTE& dest, bool clearBit7);
+		void SLA(BYTE& dest) { sla(dest, false); }
+		void SLL(BYTE& dest) { sla(dest, true); }
+
+		void SRA(BYTE& dest) { sra(dest, false); }
+		void SRL(BYTE& dest) { sra(dest, true); }
+
+		void sla(BYTE& dest, bool bit0);
+		void sra(BYTE& dest, bool clearBit7);
 
 		void BITget(BYTE bit, BYTE src);
 		void BITgetIXY(BYTE bit);

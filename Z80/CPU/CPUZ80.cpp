@@ -117,10 +117,10 @@ namespace emul
 		m_opcodes[0010] = [=]() { EXAF(); }; // 0x08
 
 		// RLCA, RRCA, RLA, RRA don't adjust 'base' flags P/V, S and Z
-		m_opcodes[0007] = [=]() { RLC(m_reg.A, false); };
-		m_opcodes[0017] = [=]() { RRC(m_reg.A, false); };
-		m_opcodes[0027] = [=]() { RL(m_reg.A, false); };
-		m_opcodes[0037] = [=]() { RR(m_reg.A, false); };
+		m_opcodes[0007] = [=]() { RLCA(); };
+		m_opcodes[0017] = [=]() { RRCA(); };
+		m_opcodes[0027] = [=]() { RLA(); };
+		m_opcodes[0037] = [=]() { RRA(); };
 
 		// DJNZ rel8 - Decrement B, jump relative if non zero
 		m_opcodes[0020] = [=]() { jumpRelIF(--m_reg.B, FetchByte()); }; // 0x10
@@ -172,7 +172,7 @@ namespace emul
 		m_opcodesBITS[0x03] = [=]() { RLC(m_reg.E); };
 		m_opcodesBITS[0x04] = [=]() { RLC(m_reg.H); };
 		m_opcodesBITS[0x05] = [=]() { RLC(m_reg.L); };
-		//m_opcodesBITS[0x06] = [=]() { MEMop(&CPUZ80::RLC); };
+		m_opcodesBITS[0x06] = [=]() { MEMop(&CPUZ80::RLC); };
 		m_opcodesBITS[0x07] = [=]() { RLC(m_reg.A); };
 
 		// 8-bit rotation to the right
@@ -182,7 +182,7 @@ namespace emul
 		m_opcodesBITS[0x0B] = [=]() { RRC(m_reg.E); };
 		m_opcodesBITS[0x0C] = [=]() { RRC(m_reg.H); };
 		m_opcodesBITS[0x0D] = [=]() { RRC(m_reg.L); };
-		//m_opcodesBITS[0x0E] = [=]() { MEMop(&CPUZ80::RRC); };
+		m_opcodesBITS[0x0E] = [=]() { MEMop(&CPUZ80::RRC); };
 		m_opcodesBITS[0x0F] = [=]() { RRC(m_reg.A); };
 
 		// 9-bit rotation to the left
@@ -192,7 +192,7 @@ namespace emul
 		m_opcodesBITS[0x13] = [=]() { RL(m_reg.E); };
 		m_opcodesBITS[0x14] = [=]() { RL(m_reg.H); };
 		m_opcodesBITS[0x15] = [=]() { RL(m_reg.L); };
-		//m_opcodesBITS[0x16] = [=]() { MEMop(&CPUZ80::RL); };
+		m_opcodesBITS[0x16] = [=]() { MEMop(&CPUZ80::RL); };
 		m_opcodesBITS[0x17] = [=]() { RL(m_reg.A); };
 
 		// 9-bit rotation to the right
@@ -202,48 +202,49 @@ namespace emul
 		m_opcodesBITS[0x1B] = [=]() { RR(m_reg.E); };
 		m_opcodesBITS[0x1C] = [=]() { RR(m_reg.H); };
 		m_opcodesBITS[0x1D] = [=]() { RR(m_reg.L); };
-		//m_opcodesBITS[0x1E] = [=]() { MEMop(&CPUZ80::RR); };
+		m_opcodesBITS[0x1E] = [=]() { MEMop(&CPUZ80::RR); };
 		m_opcodesBITS[0x1F] = [=]() { RR(m_reg.A); };
 
 		// Arithmetic Shift Right 1 bit
-		m_opcodesBITS[0x20] = [=]() { SLA(m_reg.B, false); };
-		m_opcodesBITS[0x21] = [=]() { SLA(m_reg.C, false); };
-		m_opcodesBITS[0x22] = [=]() { SLA(m_reg.D, false); };
-		m_opcodesBITS[0x23] = [=]() { SLA(m_reg.E, false); };
-		m_opcodesBITS[0x24] = [=]() { SLA(m_reg.H, false); };
-		m_opcodesBITS[0x25] = [=]() { SLA(m_reg.L, false); };
-		//m_opcodesBITS[0x26] = [=]() { MEMop(&CPUZ80::SLA, false); };
-		m_opcodesBITS[0x27] = [=]() { SLA(m_reg.A, false); };
+		m_opcodesBITS[0x20] = [=]() { SLA(m_reg.B); };
+		m_opcodesBITS[0x21] = [=]() { SLA(m_reg.C); };
+		m_opcodesBITS[0x22] = [=]() { SLA(m_reg.D); };
+		m_opcodesBITS[0x23] = [=]() { SLA(m_reg.E); };
+		m_opcodesBITS[0x24] = [=]() { SLA(m_reg.H); };
+		m_opcodesBITS[0x25] = [=]() { SLA(m_reg.L); };
+		m_opcodesBITS[0x26] = [=]() { MEMop(&CPUZ80::SLA); };
+		m_opcodesBITS[0x27] = [=]() { SLA(m_reg.A); };
 
 		// Arithmetic Shift Right 1 bit
-		m_opcodesBITS[0x28] = [=]() { SRA(m_reg.B, false); };
-		m_opcodesBITS[0x29] = [=]() { SRA(m_reg.C, false); };
-		m_opcodesBITS[0x2A] = [=]() { SRA(m_reg.D, false); };
-		m_opcodesBITS[0x2B] = [=]() { SRA(m_reg.E, false); };
-		m_opcodesBITS[0x2C] = [=]() { SRA(m_reg.H, false); };
-		m_opcodesBITS[0x2D] = [=]() { SRA(m_reg.L, false); };
-		//m_opcodesBITS[0x2E] = [=]() { MEMop(&CPUZ80::SRA, false); };
-		m_opcodesBITS[0x2F] = [=]() { SRA(m_reg.A, false); };
+		m_opcodesBITS[0x28] = [=]() { SRA(m_reg.B); };
+		m_opcodesBITS[0x29] = [=]() { SRA(m_reg.C); };
+		m_opcodesBITS[0x2A] = [=]() { SRA(m_reg.D); };
+		m_opcodesBITS[0x2B] = [=]() { SRA(m_reg.E); };
+		m_opcodesBITS[0x2C] = [=]() { SRA(m_reg.H); };
+		m_opcodesBITS[0x2D] = [=]() { SRA(m_reg.L); };
+		m_opcodesBITS[0x2E] = [=]() { MEMop(&CPUZ80::SRA); };
+		m_opcodesBITS[0x2F] = [=]() { SRA(m_reg.A); };
 
 		// SLL/SL1: Undocumented, SLA but set low bit to 1
-		m_opcodesBITS[0x30] = [=]() { SLA(m_reg.B, true); };
-		m_opcodesBITS[0x31] = [=]() { SLA(m_reg.C, true); };
-		m_opcodesBITS[0x32] = [=]() { SLA(m_reg.D, true); };
-		m_opcodesBITS[0x33] = [=]() { SLA(m_reg.E, true); };
-		m_opcodesBITS[0x34] = [=]() { SLA(m_reg.H, true); };
-		m_opcodesBITS[0x35] = [=]() { SLA(m_reg.L, true); };
-		//m_opcodesBITS[0x36] = [=]() { MEMop(&CPUZ80::SLA, true); };
-		m_opcodesBITS[0x37] = [=]() { SLA(m_reg.A, true); };
+		m_opcodesBITS[0x30] = [=]() { SLL(m_reg.B); };
+		m_opcodesBITS[0x31] = [=]() { SLL(m_reg.C); };
+		m_opcodesBITS[0x32] = [=]() { SLL(m_reg.D); };
+		m_opcodesBITS[0x33] = [=]() { SLL(m_reg.E); };
+		m_opcodesBITS[0x34] = [=]() { SLL(m_reg.H); };
+		m_opcodesBITS[0x35] = [=]() { SLL(m_reg.L); };
+		m_opcodesBITS[0x36] = [=]() { MEMop(&CPUZ80::SLL); };
+		m_opcodesBITS[0x37] = [=]() { SLL(m_reg.A); };
+
 
 		// SRL: Arithmetic Shift Right 1 bit, clear bit 7
-		m_opcodesBITS[0x38] = [=]() { SRA(m_reg.B, true); };
-		m_opcodesBITS[0x39] = [=]() { SRA(m_reg.C, true); };
-		m_opcodesBITS[0x3A] = [=]() { SRA(m_reg.D, true); };
-		m_opcodesBITS[0x3B] = [=]() { SRA(m_reg.E, true); };
-		m_opcodesBITS[0x3C] = [=]() { SRA(m_reg.H, true); };
-		m_opcodesBITS[0x3D] = [=]() { SRA(m_reg.L, true); };
-		//m_opcodesBITS[0x3E] = [=]() { MEMop(&CPUZ80::SRA, true); };
-		m_opcodesBITS[0x3F] = [=]() { SRA(m_reg.A, true); };
+		m_opcodesBITS[0x38] = [=]() { SRL(m_reg.B); };
+		m_opcodesBITS[0x39] = [=]() { SRL(m_reg.C); };
+		m_opcodesBITS[0x3A] = [=]() { SRL(m_reg.D); };
+		m_opcodesBITS[0x3B] = [=]() { SRL(m_reg.E); };
+		m_opcodesBITS[0x3C] = [=]() { SRL(m_reg.H); };
+		m_opcodesBITS[0x3D] = [=]() { SRL(m_reg.L); };
+		m_opcodesBITS[0x3E] = [=]() { MEMop(&CPUZ80::SRL); };
+		m_opcodesBITS[0x3F] = [=]() { SRL(m_reg.A); };
 
 		// BIT: Test bit n and set Z flag
 		m_opcodesBITS[0x40] = [=]() { BITget(0, m_reg.B); };
@@ -927,7 +928,7 @@ namespace emul
 		}
 		catch (std::exception e)
 		{
-			LogPrintf(LOG_ERROR, "CPU: Exception at address 0x%04X! Stopping CPU", m_programCounter);
+			LogPrintf(LOG_ERROR, "CPU: Exception at address 0x%04X, subopcode 0x%02X! Stopping CPU", m_programCounter, opcode);
 			m_state = CPUState::STOP;
 		}
 	}
@@ -953,7 +954,7 @@ namespace emul
 
 	void CPUZ80::NotImplemented(const char* opStr)
 	{
-		LogPrintf(LOG_ERROR, "[%s] not implemented @ 0x%04X", opStr, m_programCounter);
+		LogPrintf(LOG_ERROR, "[%s][0x%02X] not implemented @ 0x%04X", opStr, m_opcode, m_programCounter);
 		throw std::exception("Not implemented");
 	}
 
@@ -1187,7 +1188,7 @@ namespace emul
 	// which don't modify P/V, S and Z
 
 	// 8-bit rotation to the left. The bit leaving on the left is copied into the carry, and to bit 0.
-	void CPUZ80::RLC(BYTE& dest, bool adjustBaseFlags)
+	void CPUZ80::rlc(BYTE& dest, bool adjustBaseFlags)
 	{
 		bool msb = GetMSB(dest);
 
@@ -1208,7 +1209,7 @@ namespace emul
 
 	// 9-bit rotation to the left. 
 	// The carry value is put into 0th bit of the register, and the leaving 7th bit is put into the carry.
-	void CPUZ80::RL(BYTE& dest, bool adjustBaseFlags)
+	void CPUZ80::rl(BYTE& dest, bool adjustBaseFlags)
 	{
 		bool msb = GetMSB(dest);
 
@@ -1228,7 +1229,7 @@ namespace emul
 	}
 
 	// 8-bit rotation to the right. the bit leaving on the right is copied into the carry, and into bit 7.
-	void CPUZ80::RRC(BYTE& dest, bool adjustBaseFlags)
+	void CPUZ80::rrc(BYTE& dest, bool adjustBaseFlags)
 	{
 		bool lsb = GetLSB(dest);
 
@@ -1249,7 +1250,7 @@ namespace emul
 
 	// 9-bit rotation to the right. 
 	// The carry is copied into bit 7, and the bit leaving on the right is copied into the carry.
-	void CPUZ80::RR(BYTE& dest, bool adjustBaseFlags)
+	void CPUZ80::rr(BYTE& dest, bool adjustBaseFlags)
 	{
 		bool lsb = GetLSB(dest);
 
@@ -1269,7 +1270,7 @@ namespace emul
 	}
 
 	// Arithmetic shift left 1 bit, bit 7 goes to carry flag, bit 0 is set to bit0.
-	void CPUZ80::SLA(BYTE& dest, bool bit0)
+	void CPUZ80::sla(BYTE& dest, bool bit0)
 	{
 		bool msb = GetMSB(dest);
 		dest <<= 1;
@@ -1282,7 +1283,7 @@ namespace emul
 	}
 
 	// Arithmetic shift right 1 bit, bit 0 goes to carry flag, bit 7 remains unchanged.
-	void CPUZ80::SRA(BYTE& dest, bool clearBit7)
+	void CPUZ80::sra(BYTE& dest, bool clearBit7)
 	{
 		bool lsb = GetLSB(dest);
 		bool msb = GetMSB(dest);
