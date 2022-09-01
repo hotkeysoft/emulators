@@ -235,7 +235,6 @@ namespace emul
 		m_opcodesBITS[0x36] = [=]() { MEMop(&CPUZ80::SLL); };
 		m_opcodesBITS[0x37] = [=]() { SLL(m_reg.A); };
 
-
 		// SRL: Arithmetic Shift Right 1 bit, clear bit 7
 		m_opcodesBITS[0x38] = [=]() { SRL(m_reg.B); };
 		m_opcodesBITS[0x39] = [=]() { SRL(m_reg.C); };
@@ -398,15 +397,85 @@ namespace emul
 		m_opcodesBITSxy.resize(256);
 		std::fill(m_opcodesBITSxy.begin(), m_opcodesBITSxy.end(), [=]() { NotImplemented("BITSxy"); });
 
-		// Rotate Left
-		//m_opcodesBITSxy[0x10] = [=]() { RL(m_reg.B); };
-		//m_opcodesBITSxy[0x11] = [=]() { RL(m_reg.C); };
-		//m_opcodesBITSxy[0x12] = [=]() { RL(m_reg.D); };
-		//m_opcodesBITSxy[0x13] = [=]() { RL(m_reg.E); };
-		//m_opcodesBITSxy[0x14] = [=]() { RL(m_reg.H); };
-		//m_opcodesBITSxy[0x15] = [=]() { RL(m_reg.L); };
-		////m_opcodesBITSxy[0x16] = [=]() { MEMop(&CPUZ80::RL); };
-		//m_opcodesBITSxy[0x17] = [=]() { RL(m_reg.A); };
+		// 8-bit rotation to the left
+		m_opcodesBITSxy[0x00] = [=]() { IDXop(&CPUZ80::RLC, m_reg.B); };
+		m_opcodesBITSxy[0x01] = [=]() { IDXop(&CPUZ80::RLC, m_reg.C); };
+		m_opcodesBITSxy[0x02] = [=]() { IDXop(&CPUZ80::RLC, m_reg.D); };
+		m_opcodesBITSxy[0x03] = [=]() { IDXop(&CPUZ80::RLC, m_reg.E); };
+		m_opcodesBITSxy[0x04] = [=]() { IDXop(&CPUZ80::RLC, m_reg.H); };
+		m_opcodesBITSxy[0x05] = [=]() { IDXop(&CPUZ80::RLC, m_reg.L); };
+		m_opcodesBITSxy[0x06] = [=]() { IDXop(&CPUZ80::RLC); };
+		m_opcodesBITSxy[0x07] = [=]() { IDXop(&CPUZ80::RLC, m_reg.A); };
+
+		// 8-bit rotation to the right
+		m_opcodesBITSxy[0x08] = [=]() { IDXop(&CPUZ80::RRC, m_reg.B); };
+		m_opcodesBITSxy[0x09] = [=]() { IDXop(&CPUZ80::RRC, m_reg.C); };
+		m_opcodesBITSxy[0x0A] = [=]() { IDXop(&CPUZ80::RRC, m_reg.D); };
+		m_opcodesBITSxy[0x0B] = [=]() { IDXop(&CPUZ80::RRC, m_reg.E); };
+		m_opcodesBITSxy[0x0C] = [=]() { IDXop(&CPUZ80::RRC, m_reg.H); };
+		m_opcodesBITSxy[0x0D] = [=]() { IDXop(&CPUZ80::RRC, m_reg.L); };
+		m_opcodesBITSxy[0x0E] = [=]() { IDXop(&CPUZ80::RRC); };
+		m_opcodesBITSxy[0x0F] = [=]() { IDXop(&CPUZ80::RRC, m_reg.A); };
+
+		// 9-bit rotation to the left
+		m_opcodesBITSxy[0x10] = [=]() { IDXop(&CPUZ80::RL, m_reg.B); };
+		m_opcodesBITSxy[0x11] = [=]() { IDXop(&CPUZ80::RL, m_reg.C); };
+		m_opcodesBITSxy[0x12] = [=]() { IDXop(&CPUZ80::RL, m_reg.D); };
+		m_opcodesBITSxy[0x13] = [=]() { IDXop(&CPUZ80::RL, m_reg.E); };
+		m_opcodesBITSxy[0x14] = [=]() { IDXop(&CPUZ80::RL, m_reg.H); };
+		m_opcodesBITSxy[0x15] = [=]() { IDXop(&CPUZ80::RL, m_reg.L); };
+		m_opcodesBITSxy[0x16] = [=]() { IDXop(&CPUZ80::RL); };
+		m_opcodesBITSxy[0x17] = [=]() { IDXop(&CPUZ80::RL, m_reg.A); };
+
+		// 9-bit rotation to the right
+		m_opcodesBITSxy[0x18] = [=]() { IDXop(&CPUZ80::RR, m_reg.B); };
+		m_opcodesBITSxy[0x19] = [=]() { IDXop(&CPUZ80::RR, m_reg.C); };
+		m_opcodesBITSxy[0x1A] = [=]() { IDXop(&CPUZ80::RR, m_reg.D); };
+		m_opcodesBITSxy[0x1B] = [=]() { IDXop(&CPUZ80::RR, m_reg.E); };
+		m_opcodesBITSxy[0x1C] = [=]() { IDXop(&CPUZ80::RR, m_reg.H); };
+		m_opcodesBITSxy[0x1D] = [=]() { IDXop(&CPUZ80::RR, m_reg.L); };
+		m_opcodesBITSxy[0x1E] = [=]() { IDXop(&CPUZ80::RR); };
+		m_opcodesBITSxy[0x1F] = [=]() { IDXop(&CPUZ80::RR, m_reg.A); };
+
+		// Arithmetic Shift Right 1 bit
+		m_opcodesBITSxy[0x20] = [=]() { IDXop(&CPUZ80::SLA, m_reg.B); };
+		m_opcodesBITSxy[0x21] = [=]() { IDXop(&CPUZ80::SLA, m_reg.C); };
+		m_opcodesBITSxy[0x22] = [=]() { IDXop(&CPUZ80::SLA, m_reg.D); };
+		m_opcodesBITSxy[0x23] = [=]() { IDXop(&CPUZ80::SLA, m_reg.E); };
+		m_opcodesBITSxy[0x24] = [=]() { IDXop(&CPUZ80::SLA, m_reg.H); };
+		m_opcodesBITSxy[0x25] = [=]() { IDXop(&CPUZ80::SLA, m_reg.L); };
+		m_opcodesBITSxy[0x26] = [=]() { IDXop(&CPUZ80::SLA); };
+		m_opcodesBITSxy[0x27] = [=]() { IDXop(&CPUZ80::SLA, m_reg.A); };
+
+		// Arithmetic Shift Right 1 bit
+		m_opcodesBITSxy[0x28] = [=]() { IDXop(&CPUZ80::SRA, m_reg.B); };
+		m_opcodesBITSxy[0x29] = [=]() { IDXop(&CPUZ80::SRA, m_reg.C); };
+		m_opcodesBITSxy[0x2A] = [=]() { IDXop(&CPUZ80::SRA, m_reg.D); };
+		m_opcodesBITSxy[0x2B] = [=]() { IDXop(&CPUZ80::SRA, m_reg.E); };
+		m_opcodesBITSxy[0x2C] = [=]() { IDXop(&CPUZ80::SRA, m_reg.H); };
+		m_opcodesBITSxy[0x2D] = [=]() { IDXop(&CPUZ80::SRA, m_reg.L); };
+		m_opcodesBITSxy[0x2E] = [=]() { IDXop(&CPUZ80::SRA); };
+		m_opcodesBITSxy[0x2F] = [=]() { IDXop(&CPUZ80::SRA, m_reg.A); };
+
+		// SLL/SL1: Undocumented, SLA but set low bit to 1
+		m_opcodesBITSxy[0x30] = [=]() { IDXop(&CPUZ80::SLL, m_reg.B); };
+		m_opcodesBITSxy[0x31] = [=]() { IDXop(&CPUZ80::SLL, m_reg.C); };
+		m_opcodesBITSxy[0x32] = [=]() { IDXop(&CPUZ80::SLL, m_reg.D); };
+		m_opcodesBITSxy[0x33] = [=]() { IDXop(&CPUZ80::SLL, m_reg.E); };
+		m_opcodesBITSxy[0x34] = [=]() { IDXop(&CPUZ80::SLL, m_reg.H); };
+		m_opcodesBITSxy[0x35] = [=]() { IDXop(&CPUZ80::SLL, m_reg.L); };
+		m_opcodesBITSxy[0x36] = [=]() { IDXop(&CPUZ80::SLL); };
+		m_opcodesBITSxy[0x37] = [=]() { IDXop(&CPUZ80::SLL, m_reg.A); };
+
+		// SRL: Arithmetic Shift Right 1 bit, clear bit 7
+		m_opcodesBITSxy[0x38] = [=]() { IDXop(&CPUZ80::SRL, m_reg.B); };
+		m_opcodesBITSxy[0x39] = [=]() { IDXop(&CPUZ80::SRL, m_reg.C); };
+		m_opcodesBITSxy[0x3A] = [=]() { IDXop(&CPUZ80::SRL, m_reg.D); };
+		m_opcodesBITSxy[0x3B] = [=]() { IDXop(&CPUZ80::SRL, m_reg.E); };
+		m_opcodesBITSxy[0x3C] = [=]() { IDXop(&CPUZ80::SRL, m_reg.H); };
+		m_opcodesBITSxy[0x3D] = [=]() { IDXop(&CPUZ80::SRL, m_reg.L); };
+		m_opcodesBITSxy[0x3E] = [=]() { IDXop(&CPUZ80::SRL); };
+		m_opcodesBITSxy[0x3F] = [=]() { IDXop(&CPUZ80::SRL, m_reg.A); };
 
 		// BIT: Test bit n of (IX+s8) and set Z flag
 		m_opcodesBITSxy[0x40] = [=]() { BITgetIXY(0); };
@@ -890,6 +959,20 @@ namespace emul
 		WORD base = *m_currIdx;
 		base += Widen(offset);
 		m_memory.Write8(base, value);
+	}
+
+	void CPUZ80::IDXop(std::function<void(CPUZ80*, BYTE& dest)> func)
+	{
+		BYTE temp = ReadMemIdx(m_currOffset);
+		func(this, temp);
+		WriteMemIdx(m_currOffset, temp);
+	}
+
+	void CPUZ80::IDXop(std::function<void(CPUZ80*, BYTE& dest)> func, BYTE& reg)
+	{
+		reg = ReadMemIdx(m_currOffset);
+		func(this, reg);
+		WriteMemIdx(m_currOffset, reg);
 	}
 
 	void CPUZ80::MEMop(std::function<void(CPUZ80*, BYTE& dest)> func)
