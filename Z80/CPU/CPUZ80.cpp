@@ -120,9 +120,6 @@ namespace emul
 		// DJNZ rel8 - Decrement B, jump relative if non zero
 		m_opcodes[0020] = [=]() { jumpRelIF(--m_reg.B, FetchByte()); }; // 0x10
 
-		// DAA (Decimal Adjust Accumulator)
-		m_opcodes[0047] = [=]() { DAA(); SetFlag(FLAG_N, false); };
-
 		// CPL (Complement accumulator)
 		m_opcodes[0057] = [=]() { m_reg.A = ~m_reg.A; SetFlag(FLAG_H, true); SetFlag(FLAG_N, true); };
 
@@ -1269,6 +1266,11 @@ namespace emul
 		m_ioHighAddress = m_reg.B;
 		In(m_reg.C, dest);
 		AdjustBaseFlags(dest);
+	}
+
+	void CPUZ80::DAA()
+	{
+		CPU8080::DAA(); //TODO
 	}
 
 	void CPUZ80::DI()

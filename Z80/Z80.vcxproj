@@ -33,6 +33,7 @@
     <ClInclude Include="CPU\CPU8080.h" />
     <ClInclude Include="CPU\CPUInfo.h" />
     <ClInclude Include="CPU\CPUZ80.h" />
+    <ClInclude Include="CPU\CPUZ80Test.h" />
     <ClInclude Include="CPU\Memory.h" />
     <ClInclude Include="CPU\MemoryBlock.h" />
     <ClInclude Include="CPU\PortConnector.h" />
@@ -61,6 +62,7 @@
     <ClCompile Include="CPU\CPU8080.cpp" />
     <ClCompile Include="CPU\CPUInfo.cpp" />
     <ClCompile Include="CPU\CPUZ80.cpp" />
+    <ClCompile Include="CPU\CPUZ80Test.cpp" />
     <ClCompile Include="CPU\Memory.cpp" />
     <ClCompile Include="CPU\MemoryBlock.cpp" />
     <ClCompile Include="CPU\PortConnector.cpp" />

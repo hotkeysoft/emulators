@@ -28,6 +28,13 @@
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
 
+#define CPU_TEST
+
+#ifdef CPU_TEST
+#include "CPU/CPUZ80Test.h"
+//#include "Main.h"
+#endif
+
 namespace fs = std::filesystem;
 
 using cfg::CONFIG;
@@ -333,6 +340,18 @@ int main(int argc, char* args[])
 			fprintf(stderr, "Set Monitor Custom Memory View to [0x%04X]\n", customMemoryView);
 		}
 	}
+
+#ifdef CPU_TEST
+	{
+		emul::Memory mem;
+		emul::CPUZ80Test testCPU(mem);
+		testCPU.Test();
+
+		fprintf(stderr, "Press any key to continue\n");
+		_getch();
+		return 0;
+	}
+#endif
 
 	MAINWND().Init();
 	InitSound();

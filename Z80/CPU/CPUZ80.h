@@ -156,6 +156,8 @@ namespace emul
 
 		void INc(BYTE& dest);
 
+		virtual void DAA() override;
+
 		virtual void DI() override;
 		virtual void EI() override;
 

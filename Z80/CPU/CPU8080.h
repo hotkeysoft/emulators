@@ -183,7 +183,7 @@ namespace emul
 		void RAR();
 
 		// Specials
-		void DAA();
+		virtual void DAA();
 
 		// Control
 		virtual void DI();
