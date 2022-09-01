@@ -324,6 +324,79 @@ namespace emul
 		m_opcodesBITS[0x7E] = [=]() { BITget(7, ReadMem()); };
 		m_opcodesBITS[0x7F] = [=]() { BITget(7, m_reg.A); };
 
+		// RES: Reset bit n
+		m_opcodesBITS[0x80] = [=]() { BITset(0, false, m_reg.B); };
+		m_opcodesBITS[0x81] = [=]() { BITset(0, false, m_reg.C); };
+		m_opcodesBITS[0x82] = [=]() { BITset(0, false, m_reg.D); };
+		m_opcodesBITS[0x83] = [=]() { BITset(0, false, m_reg.E); };
+		m_opcodesBITS[0x84] = [=]() { BITset(0, false, m_reg.H); };
+		m_opcodesBITS[0x85] = [=]() { BITset(0, false, m_reg.L); };
+		m_opcodesBITS[0x86] = [=]() { BITsetM(0, false); };
+		m_opcodesBITS[0x87] = [=]() { BITset(0, false, m_reg.A); };
+
+		m_opcodesBITS[0x88] = [=]() { BITset(1, false, m_reg.B); };
+		m_opcodesBITS[0x89] = [=]() { BITset(1, false, m_reg.C); };
+		m_opcodesBITS[0x8A] = [=]() { BITset(1, false, m_reg.D); };
+		m_opcodesBITS[0x8B] = [=]() { BITset(1, false, m_reg.E); };
+		m_opcodesBITS[0x8C] = [=]() { BITset(1, false, m_reg.H); };
+		m_opcodesBITS[0x8D] = [=]() { BITset(1, false, m_reg.L); };
+		m_opcodesBITS[0x8E] = [=]() { BITsetM(1, false); };
+		m_opcodesBITS[0x8F] = [=]() { BITset(1, false, m_reg.A); };
+
+		m_opcodesBITS[0x90] = [=]() { BITset(2, false, m_reg.B); };
+		m_opcodesBITS[0x91] = [=]() { BITset(2, false, m_reg.C); };
+		m_opcodesBITS[0x92] = [=]() { BITset(2, false, m_reg.D); };
+		m_opcodesBITS[0x93] = [=]() { BITset(2, false, m_reg.E); };
+		m_opcodesBITS[0x94] = [=]() { BITset(2, false, m_reg.H); };
+		m_opcodesBITS[0x95] = [=]() { BITset(2, false, m_reg.L); };
+		m_opcodesBITS[0x96] = [=]() { BITsetM(2, false); };
+		m_opcodesBITS[0x97] = [=]() { BITset(2, false, m_reg.A); };
+
+		m_opcodesBITS[0x98] = [=]() { BITset(3, false, m_reg.B); };
+		m_opcodesBITS[0x99] = [=]() { BITset(3, false, m_reg.C); };
+		m_opcodesBITS[0x9A] = [=]() { BITset(3, false, m_reg.D); };
+		m_opcodesBITS[0x9B] = [=]() { BITset(3, false, m_reg.E); };
+		m_opcodesBITS[0x9C] = [=]() { BITset(3, false, m_reg.H); };
+		m_opcodesBITS[0x9D] = [=]() { BITset(3, false, m_reg.L); };
+		m_opcodesBITS[0x9E] = [=]() { BITsetM(3, false); };
+		m_opcodesBITS[0x9F] = [=]() { BITset(3, false, m_reg.A); };
+
+		m_opcodesBITS[0xA0] = [=]() { BITset(4, false, m_reg.B); };
+		m_opcodesBITS[0xA1] = [=]() { BITset(4, false, m_reg.C); };
+		m_opcodesBITS[0xA2] = [=]() { BITset(4, false, m_reg.D); };
+		m_opcodesBITS[0xA3] = [=]() { BITset(4, false, m_reg.E); };
+		m_opcodesBITS[0xA4] = [=]() { BITset(4, false, m_reg.H); };
+		m_opcodesBITS[0xA5] = [=]() { BITset(4, false, m_reg.L); };
+		m_opcodesBITS[0xA6] = [=]() { BITsetM(4, false); };
+		m_opcodesBITS[0xA7] = [=]() { BITset(4, false, m_reg.A); };
+
+		m_opcodesBITS[0xA8] = [=]() { BITset(5, false, m_reg.B); };
+		m_opcodesBITS[0xA9] = [=]() { BITset(5, false, m_reg.C); };
+		m_opcodesBITS[0xAA] = [=]() { BITset(5, false, m_reg.D); };
+		m_opcodesBITS[0xAB] = [=]() { BITset(5, false, m_reg.E); };
+		m_opcodesBITS[0xAC] = [=]() { BITset(5, false, m_reg.H); };
+		m_opcodesBITS[0xAD] = [=]() { BITset(5, false, m_reg.L); };
+		m_opcodesBITS[0xAE] = [=]() { BITsetM(5, false); };
+		m_opcodesBITS[0xAF] = [=]() { BITset(5, false, m_reg.A); };
+
+		m_opcodesBITS[0xB0] = [=]() { BITset(6, false, m_reg.B); };
+		m_opcodesBITS[0xB1] = [=]() { BITset(6, false, m_reg.C); };
+		m_opcodesBITS[0xB2] = [=]() { BITset(6, false, m_reg.D); };
+		m_opcodesBITS[0xB3] = [=]() { BITset(6, false, m_reg.E); };
+		m_opcodesBITS[0xB4] = [=]() { BITset(6, false, m_reg.H); };
+		m_opcodesBITS[0xB5] = [=]() { BITset(6, false, m_reg.L); };
+		m_opcodesBITS[0xB6] = [=]() { BITsetM(6, false); };
+		m_opcodesBITS[0xB7] = [=]() { BITset(6, false, m_reg.A); };
+
+		m_opcodesBITS[0xB8] = [=]() { BITset(7, false, m_reg.B); };
+		m_opcodesBITS[0xB9] = [=]() { BITset(7, false, m_reg.C); };
+		m_opcodesBITS[0xBA] = [=]() { BITset(7, false, m_reg.D); };
+		m_opcodesBITS[0xBB] = [=]() { BITset(7, false, m_reg.E); };
+		m_opcodesBITS[0xBC] = [=]() { BITset(7, false, m_reg.H); };
+		m_opcodesBITS[0xBD] = [=]() { BITset(7, false, m_reg.L); };
+		m_opcodesBITS[0xBE] = [=]() { BITsetM(7, false); };
+		m_opcodesBITS[0xBF] = [=]() { BITset(7, false, m_reg.A); };
+
 		// SET: Set bit n
 		m_opcodesBITS[0xC0] = [=]() { BITset(0, true, m_reg.B); };
 		m_opcodesBITS[0xC1] = [=]() { BITset(0, true, m_reg.C); };
@@ -1463,17 +1536,17 @@ namespace emul
 
 	void CPUZ80::BITget(BYTE bit, BYTE src)
 	{
+		src &= (1 << bit);
 		AdjustBaseFlags(src);
 		SetFlag(FLAG_H, true);
-		SetFlag(FLAG_Z, !GetBit(src, bit));
 	}
 
 	void CPUZ80::BITgetIXY(BYTE bit)
 	{
 		BYTE src = ReadMemIdx(m_currOffset);
+		src &= (1 << bit);
 		AdjustBaseFlags(src);
 		SetFlag(FLAG_H, true);
-		SetFlag(FLAG_Z, !GetBit(src, bit));
 	}
 
 	void CPUZ80::BITset(BYTE bit, bool set, BYTE& dest)
