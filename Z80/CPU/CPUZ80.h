@@ -137,11 +137,14 @@ namespace emul
 
 		void NEG();
 
-		void RL(BYTE& dest);
-		void RLC(BYTE& dest);
+		void RL(BYTE& dest, bool adjustBaseFlags = true);
+		void RLC(BYTE& dest, bool adjustBaseFlags = true);
 
-		void RR(BYTE& dest);
-		void RRC(BYTE& dest);
+		void RR(BYTE& dest, bool adjustBaseFlags = true);
+		void RRC(BYTE& dest, bool adjustBaseFlags = true);
+
+		void RLD();
+		void RRD();
 
 		void SRA(BYTE& dest);
 

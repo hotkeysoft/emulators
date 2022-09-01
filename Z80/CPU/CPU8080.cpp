@@ -1077,62 +1077,63 @@ namespace emul
 
 	void CPU8080::RLC()
 	{
-		bool msb = (m_reg.A & 128);
+		bool msb = GetMSB(m_reg.A);
 
-		m_reg.A = (m_reg.A << 1);
-		m_reg.A |= (msb ? 1 : 0);
+		m_reg.A <<= 1;
+		SetBit(m_reg.A, 0, msb);
 
 		SetFlag(FLAG_CY, msb);
 	}
 
 	void CPU8080::RRC()
 	{
-		bool lsb = (m_reg.A & 1);
+		bool lsb = GetLSB(m_reg.A);
 
-		m_reg.A = (m_reg.A >> 1);
-		m_reg.A &= ~128;
-		m_reg.A |= (lsb ? 128 : 0);
+		m_reg.A >>= 1;
+		SetBit(m_reg.A, 7, lsb);
 
 		SetFlag(FLAG_CY, lsb);
 	}
 
 	void CPU8080::RAL()
 	{
-		bool msb = (m_reg.A & 128);
+		bool msb = GetMSB(m_reg.A);
 
-		m_reg.A = (m_reg.A << 1);
-		m_reg.A |= (GetFlag(FLAG_CY) ? 1 : 0);
+		m_reg.A <<= 1;
+		SetBit(m_reg.A, 0, GetFlag(FLAG_CY));
 
 		SetFlag(FLAG_CY, msb);
 	}
 
 	void CPU8080::RAR()
 	{
-		bool lsb = (m_reg.A & 1);
+		bool lsb = GetLSB(m_reg.A);
 
-		m_reg.A = (m_reg.A >> 1);
-		m_reg.A &= ~128;
-		m_reg.A |= (GetFlag(FLAG_CY) ? 128 : 0);
+		m_reg.A >>= 1;
+		SetBit(m_reg.A, 7, GetFlag(FLAG_CY));
 
 		SetFlag(FLAG_CY, lsb);
 	}
 
 	void CPU8080::DAA()
 	{
-		BYTE a = m_reg.A;
-		if (GetFlag(FLAG_AC) || ((a & 0x0F) > 9))
+		BYTE adjust = 0;
+		bool carry = GetFlag(FLAG_CY);
+		if (GetFlag(FLAG_AC) || ((m_reg.A & 0x0F) > 9))
 		{
-			m_reg.A += 6;
+			adjust |= 0x06;
 			SetFlag(FLAG_AC, true);
 		}
 
-		if (GetFlag(FLAG_CY) || (a > 0x9F))
+		if (GetFlag(FLAG_CY) || (m_reg.A > 0x99))
 		{
-			m_reg.A += 0x60;
-			SetFlag(FLAG_CY, true);
+			adjust |= 0x60;
+			carry = true;
 		}
 
+		add(adjust);
 		AdjustBaseFlags(m_reg.A);
+		SetFlag(FLAG_CY, carry);
 	}
 
 	void CPU8080::EI()

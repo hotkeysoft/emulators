@@ -116,6 +116,11 @@ namespace emul
 
 		m_opcodes[0010] = [=]() { EXAF(); }; // 0x08
 
+		// RLCA, RRCA, RLA, RRA don't adjust 'base' flags P/V, S and Z
+		m_opcodes[0007] = [=]() { RLC(m_reg.A, false); };
+		m_opcodes[0017] = [=]() { RRC(m_reg.A, false); };
+		m_opcodes[0027] = [=]() { RL(m_reg.A, false); };
+		m_opcodes[0037] = [=]() { RR(m_reg.A, false); };
 
 		// DJNZ rel8 - Decrement B, jump relative if non zero
 		m_opcodes[0020] = [=]() { jumpRelIF(--m_reg.B, FetchByte()); }; // 0x10
@@ -660,6 +665,12 @@ namespace emul
 		m_opcodesEXTD[0x74] = [=]() { NEG(); }; // Undocumented
 		m_opcodesEXTD[0x7C] = [=]() { NEG(); }; // Undocumented
 
+		// RLD
+		m_opcodesEXTD[0x6F] = [=]() { RLD(); };
+
+		// RRD
+		m_opcodesEXTD[0x67] = [=]() { RRD(); };
+
 		// LDI
 		m_opcodesEXTD[0xA0] = [=]() { LDI(); };
 
@@ -687,11 +698,9 @@ namespace emul
 
 		m_opcodesEXTD[0x61] = [=]() { NotImplemented("EXTD[0x61]"); };
 		m_opcodesEXTD[0x65] = [=]() { NotImplemented("EXTD[0x65]"); };
-		m_opcodesEXTD[0x67] = [=]() { NotImplemented("EXTD[0x67]"); };
 
 		m_opcodesEXTD[0x69] = [=]() { NotImplemented("EXTD[0x69]"); };
 		m_opcodesEXTD[0x6D] = [=]() { NotImplemented("EXTD[0x6D]"); };
-		m_opcodesEXTD[0x6F] = [=]() { NotImplemented("EXTD[0x6F]"); };
 
 		m_opcodesEXTD[0x71] = [=]() { NotImplemented("EXTD[0x71]"); };
 		m_opcodesEXTD[0x75] = [=]() { NotImplemented("EXTD[0x75]"); };
@@ -1144,56 +1153,87 @@ namespace emul
 		SetFlag(FLAG_N, true);
 	}
 
+	// RLC/RL/RRC/RR: The 'adjustBaseFlags' flag is for the RLCA/RLA/RRCA/RRA versions
+	// which don't modify P/V, S and Z
+
 	// 8-bit rotation to the left. The bit leaving on the left is copied into the carry, and to bit 0.
-	void CPUZ80::RLC(BYTE& dest)
+	void CPUZ80::RLC(BYTE& dest, bool adjustBaseFlags)
 	{
 		bool msb = GetMSB(dest);
 
 		dest <<= 1;
 		SetBit(dest, 0, msb);
 
-		AdjustBaseFlags(dest);
+		if (adjustBaseFlags)
+		{
+			AdjustBaseFlags(dest);
+		}
+		else
+		{
+			SetFlag(FLAG_N, false);
+		}
 		SetFlag(FLAG_H, false);
 		SetFlag(FLAG_CY, msb);
 	}
 
 	// 9-bit rotation to the left. 
 	// The carry value is put into 0th bit of the register, and the leaving 7th bit is put into the carry.
-	void CPUZ80::RL(BYTE& dest)
+	void CPUZ80::RL(BYTE& dest, bool adjustBaseFlags)
 	{
 		bool msb = GetMSB(dest);
 
 		dest <<= 1;
 		SetBit(dest, 0, GetFlag(FLAG_CY));
 
-		AdjustBaseFlags(dest);
+		if (adjustBaseFlags)
+		{
+			AdjustBaseFlags(dest);
+		}
+		else
+		{
+			SetFlag(FLAG_N, false);
+		}
 		SetFlag(FLAG_H, false);
 		SetFlag(FLAG_CY, msb);
 	}
 
 	// 8-bit rotation to the right. the bit leaving on the right is copied into the carry, and into bit 7.
-	void CPUZ80::RRC(BYTE& dest)
+	void CPUZ80::RRC(BYTE& dest, bool adjustBaseFlags)
 	{
 		bool lsb = GetLSB(dest);
 
 		dest >>= 1;
 		SetBit(dest, 7, lsb);
 
-		AdjustBaseFlags(dest);
+		if (adjustBaseFlags)
+		{
+			AdjustBaseFlags(dest);
+		}
+		else
+		{
+			SetFlag(FLAG_N, false);
+		}
 		SetFlag(FLAG_H, false);
 		SetFlag(FLAG_CY, lsb);
 	}
 
 	// 9-bit rotation to the right. 
 	// The carry is copied into bit 7, and the bit leaving on the right is copied into the carry.
-	void CPUZ80::RR(BYTE& dest)
+	void CPUZ80::RR(BYTE& dest, bool adjustBaseFlags)
 	{
 		bool lsb = GetLSB(dest);
 
 		dest >>= 1;
 		SetBit(dest, 7, GetFlag(FLAG_CY));
 
-		AdjustBaseFlags(dest);
+		if (adjustBaseFlags)
+		{
+			AdjustBaseFlags(dest);
+		}
+		else
+		{
+			SetFlag(FLAG_N, false);
+		}
 		SetFlag(FLAG_H, false);
 		SetFlag(FLAG_CY, lsb);
 	}
@@ -1278,7 +1318,7 @@ namespace emul
 			SetFlag(FLAG_H, true);
 		}
 
-		if (GetFlag(FLAG_CY) || ((m_reg.A > 0x99)))
+		if (GetFlag(FLAG_CY) || (m_reg.A > 0x99))
 		{
 			adjust |= 0x60;
 			carry = true;
@@ -1287,10 +1327,6 @@ namespace emul
 		bool neg = GetFlag(FLAG_N);
 		if (neg)
 		{
-			//BYTE temp = (m_reg.A & 0x0F) - (adjust & 0x0F);
-			//SetFlag(FLAG_H, temp > 0x0F);
-
-			//m_reg.A -= adjust;
 			sub(adjust);
 			
 		}
@@ -1302,6 +1338,80 @@ namespace emul
 		SetFlag(FLAG_N, neg);
 		SetFlag(FLAG_CY, carry);
 	}
+
+	// Rotates left a 12 bit value A[3:0]|(HL)[7:0]
+	// High nibble of A is preserved
+	// 
+	// (h/l are high/low nibbles of 8 bit value)
+	// |  Ah  |  Al  | MEMh | MEMl |
+	// | xxxx | xxxx | xxxx | xxxx |
+	// | [4]  | [4]  |     [8]     |
+	// | [4]  | [       12       ] |
+	// 
+	// Before RLD:
+	// | mmmm | nnnn | oooo | pppp |
+	// After RLD:
+	// | mmmm | oooo | pppp | nnnn |
+	// 
+	// Before RLD
+	// A = 0x1234
+	// (HL) = 0x5678
+	// After RLD:
+	// A = 0x1256
+	// (HL) = 0x7834
+	void CPUZ80::RLD()
+	{
+		WORD temp = (WORD)ReadMem();
+
+		// Move (HL) left 4 bits
+		temp <<= 4;
+
+		// Rotate A low nibble to end
+		temp |= (m_reg.A & 0x0F);
+
+		// Put A high nibble at the top
+		temp |= ((m_reg.A & 0xF0) << 8);
+
+		// Put back in A and (HL)
+		m_reg.A = GetHByte(temp);
+		WriteMem(GetLByte(temp));
+
+		AdjustBaseFlags(m_reg.A);
+		SetFlag(FLAG_H, false);
+	}
+
+	// Same as RLD, but rotation is to the right
+	// A = 0x1234
+	// (HL) = 0x5678
+	// After RRD:
+	// A = 0x1278
+	// (HL) = 0x3456
+	void CPUZ80::RRD()
+	{
+		// [0][0][Mh][Ml]
+		WORD temp = (WORD)ReadMem();
+		// [Ah][Al][Mh][Ml]
+		SetHByte(temp, m_reg.A);
+
+		// Keep [Ml]
+		BYTE lowNibble = temp & 0x0F;
+
+		// [0][Ah][Al][Mh]
+		temp >>= 4;
+
+		// (HL)=[Al][Mh]
+		WriteMem(GetLByte(temp));
+
+		// Clear A low nibble
+		m_reg.A &= 0xF0;
+
+		// Put Ml in A low nibble
+		m_reg.A |= lowNibble;
+
+		AdjustBaseFlags(m_reg.A);
+		SetFlag(FLAG_H, false);
+	}
+
 
 	void CPUZ80::DI()
 	{
