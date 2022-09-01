@@ -206,14 +206,44 @@ namespace emul
 		m_opcodesBITS[0x1F] = [=]() { RR(m_reg.A); };
 
 		// Arithmetic Shift Right 1 bit
-		m_opcodesBITS[0x28] = [=]() { SRA(m_reg.B); };
-		m_opcodesBITS[0x29] = [=]() { SRA(m_reg.C); };
-		m_opcodesBITS[0x2A] = [=]() { SRA(m_reg.D); };
-		m_opcodesBITS[0x2B] = [=]() { SRA(m_reg.E); };
-		m_opcodesBITS[0x2C] = [=]() { SRA(m_reg.H); };
-		m_opcodesBITS[0x2D] = [=]() { SRA(m_reg.L); };
-		//m_opcodesBITS[0x2E] = [=]() { MEMop(&CPUZ80::SRA); };
-		m_opcodesBITS[0x2F] = [=]() { SRA(m_reg.A); };
+		m_opcodesBITS[0x20] = [=]() { SLA(m_reg.B, false); };
+		m_opcodesBITS[0x21] = [=]() { SLA(m_reg.C, false); };
+		m_opcodesBITS[0x22] = [=]() { SLA(m_reg.D, false); };
+		m_opcodesBITS[0x23] = [=]() { SLA(m_reg.E, false); };
+		m_opcodesBITS[0x24] = [=]() { SLA(m_reg.H, false); };
+		m_opcodesBITS[0x25] = [=]() { SLA(m_reg.L, false); };
+		//m_opcodesBITS[0x26] = [=]() { MEMop(&CPUZ80::SLA, false); };
+		m_opcodesBITS[0x27] = [=]() { SLA(m_reg.A, false); };
+
+		// Arithmetic Shift Right 1 bit
+		m_opcodesBITS[0x28] = [=]() { SRA(m_reg.B, false); };
+		m_opcodesBITS[0x29] = [=]() { SRA(m_reg.C, false); };
+		m_opcodesBITS[0x2A] = [=]() { SRA(m_reg.D, false); };
+		m_opcodesBITS[0x2B] = [=]() { SRA(m_reg.E, false); };
+		m_opcodesBITS[0x2C] = [=]() { SRA(m_reg.H, false); };
+		m_opcodesBITS[0x2D] = [=]() { SRA(m_reg.L, false); };
+		//m_opcodesBITS[0x2E] = [=]() { MEMop(&CPUZ80::SRA, false); };
+		m_opcodesBITS[0x2F] = [=]() { SRA(m_reg.A, false); };
+
+		// SLL/SL1: Undocumented, SLA but set low bit to 1
+		m_opcodesBITS[0x30] = [=]() { SLA(m_reg.B, true); };
+		m_opcodesBITS[0x31] = [=]() { SLA(m_reg.C, true); };
+		m_opcodesBITS[0x32] = [=]() { SLA(m_reg.D, true); };
+		m_opcodesBITS[0x33] = [=]() { SLA(m_reg.E, true); };
+		m_opcodesBITS[0x34] = [=]() { SLA(m_reg.H, true); };
+		m_opcodesBITS[0x35] = [=]() { SLA(m_reg.L, true); };
+		//m_opcodesBITS[0x36] = [=]() { MEMop(&CPUZ80::SLA, true); };
+		m_opcodesBITS[0x37] = [=]() { SLA(m_reg.A, true); };
+
+		// SRL: Arithmetic Shift Right 1 bit, clear bit 7
+		m_opcodesBITS[0x38] = [=]() { SRA(m_reg.B, true); };
+		m_opcodesBITS[0x39] = [=]() { SRA(m_reg.C, true); };
+		m_opcodesBITS[0x3A] = [=]() { SRA(m_reg.D, true); };
+		m_opcodesBITS[0x3B] = [=]() { SRA(m_reg.E, true); };
+		m_opcodesBITS[0x3C] = [=]() { SRA(m_reg.H, true); };
+		m_opcodesBITS[0x3D] = [=]() { SRA(m_reg.L, true); };
+		//m_opcodesBITS[0x3E] = [=]() { MEMop(&CPUZ80::SRA, true); };
+		m_opcodesBITS[0x3F] = [=]() { SRA(m_reg.A, true); };
 
 		// BIT: Test bit n and set Z flag
 		m_opcodesBITS[0x40] = [=]() { BITget(0, m_reg.B); };
@@ -1238,18 +1268,31 @@ namespace emul
 		SetFlag(FLAG_CY, lsb);
 	}
 
+	// Arithmetic shift left 1 bit, bit 7 goes to carry flag, bit 0 is set to bit0.
+	void CPUZ80::SLA(BYTE& dest, bool bit0)
+	{
+		bool msb = GetMSB(dest);
+		dest <<= 1;
+
+		SetBit(dest, 0, bit0);
+
+		AdjustBaseFlags(dest);
+		SetFlag(FLAG_H, false);
+		SetFlag(FLAG_CY, msb);
+	}
+
 	// Arithmetic shift right 1 bit, bit 0 goes to carry flag, bit 7 remains unchanged.
-	void CPUZ80::SRA(BYTE& dest)
+	void CPUZ80::SRA(BYTE& dest, bool clearBit7)
 	{
 		bool lsb = GetLSB(dest);
 		bool msb = GetMSB(dest);
 		dest >>= 1;
 
-		SetBit(dest, 7, msb);
+		SetBit(dest, 7, clearBit7 ? 0 : msb);
 
 		AdjustBaseFlags(dest);
 		SetFlag(FLAG_H, false);
-		SetFlag(FLAG_CY, msb);
+		SetFlag(FLAG_CY, lsb);
 	}
 
 	void CPUZ80::BITget(BYTE bit, BYTE src)

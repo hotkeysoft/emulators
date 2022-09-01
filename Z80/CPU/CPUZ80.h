@@ -146,7 +146,8 @@ namespace emul
 		void RLD();
 		void RRD();
 
-		void SRA(BYTE& dest);
+		void SLA(BYTE& dest, bool bit0);
+		void SRA(BYTE& dest, bool clearBit7);
 
 		void BITget(BYTE bit, BYTE src);
 		void BITgetIXY(BYTE bit);
