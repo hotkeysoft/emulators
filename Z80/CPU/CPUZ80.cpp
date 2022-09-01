@@ -116,6 +116,12 @@ namespace emul
 
 		m_opcodes[0010] = [=]() { EXAF(); }; // 0x08
 
+		// ADD HL, RR (16 bit)
+		m_opcodes[0011] = [=]() { addHL(GetBC()); }; // BC
+		m_opcodes[0031] = [=]() { addHL(GetDE()); }; // DE
+		m_opcodes[0051] = [=]() { addHL(GetHL()); }; // HL
+		m_opcodes[0071] = [=]() { addHL(m_regSP); }; // SP
+
 		// RLCA, RRCA, RLA, RRA don't adjust 'base' flags P/V, S and Z
 		m_opcodes[0007] = [=]() { RLCA(); };
 		m_opcodes[0017] = [=]() { RRCA(); };
@@ -833,17 +839,44 @@ namespace emul
 		// LOAD
 		// ----------
 
+		// ADD IXY, BC
+		m_opcodesIXY[0x09] = [=]() { addIXY(GetBC()); };
+
+		// ADD IXY, DE
+		m_opcodesIXY[0x19] = [=]() { addIXY(GetDE()); };
+
 		// LD IXY, i16
 		m_opcodesIXY[0x21] = [=]() { *m_currIdx = FetchWord(); };
 
 		// LD (i16), IXY
 		m_opcodesIXY[0x22] = [=]() { m_memory.Write16(FetchWord(), *m_currIdx); };
 
+		// INC IXY
+		m_opcodesIXY[0x23] = [=]() { ++(*m_currIdx); };
+
+		// INC IXY(h) (Undocumented)
+		m_opcodesIXY[0x24] = [=]() { inc(GetIdxH()); };
+
+		// DEC IXY(h) (Undocumented)
+		m_opcodesIXY[0x25] = [=]() { dec(GetIdxH()); };
+
 		// LD IXY(h), i8 (Undocumented)
 		m_opcodesIXY[0x26] = [=]() { SetHByte(*m_currIdx, FetchByte()); };
 
+		// ADD IXY, IXY
+		m_opcodesIXY[0x29] = [=]() { addIXY(*m_currIdx); };
+
 		// LD IXY, (i16)
 		m_opcodesIXY[0x2A] = [=]() { *m_currIdx = m_memory.Read16(FetchWord()); };
+
+		// DEC IXY
+		m_opcodesIXY[0x2B] = [=]() { --(*m_currIdx); };
+
+		// INC IXY(l) (Undocumented)
+		m_opcodesIXY[0x2C] = [=]() { inc(GetIdxL()); };
+
+		// DEC IXY(l) (Undocumented)
+		m_opcodesIXY[0x2D] = [=]() { dec(GetIdxL()); };
 
 		// LD IXY(l), i8 (Undocumented)
 		m_opcodesIXY[0x2E] = [=]() { SetLByte(*m_currIdx, FetchByte()); };
@@ -857,6 +890,8 @@ namespace emul
 		// LD (IXY+s8), i8 
 		m_opcodesIXY[0x36] = [=]() { loadImm8toIdx(*m_currIdx); };
 
+		// ADD IXY, SP
+		m_opcodesIXY[0x39] = [=]() { addIXY(m_regSP); };
 
 		// LD r, IXY(h) (Undocumented)
 		m_opcodesIXY[0x44] = [=]() { m_reg.B = GetHByte(*m_currIdx); };
@@ -1054,19 +1089,64 @@ namespace emul
 		SetLByte(dest, l);
 	}
 
+
+	void CPUZ80::addHL(WORD src)
+	{
+		// Sign, zero and overflow are unaffected, so save them 
+		bool savedFlagS = GetFlag(FLAG_S);
+		bool savedFlagZ = GetFlag(FLAG_Z);
+		bool savedFlagPV = GetFlag(FLAG_PV);
+
+		WORD dest = GetHL();
+		add16(dest, src);
+		SetHL(dest);
+
+		// Restore flags
+		SetFlag(FLAG_S, savedFlagS);
+		SetFlag(FLAG_Z, savedFlagZ);
+		SetFlag(FLAG_PV, savedFlagPV);
+	}
+
 	void CPUZ80::adcHL(WORD src)
 	{
-		DWORD temp = GetHL() + src;
-		if (GetFlag(FLAG_CY))
-		{
-			temp++;
-		}
+		WORD dest = GetHL();
+		add16(dest, src, GetFlag(FLAG_CY));
+		SetHL(dest);
+		SetFlag(FLAG_Z, dest == 0);
+	}
 
-		SetHL(temp);
+	void CPUZ80::addIXY(WORD src)
+	{
+		// Sign, zero and overflow are unaffected, so save them 
+		bool savedFlagS = GetFlag(FLAG_S);
+		bool savedFlagZ = GetFlag(FLAG_Z);
+		bool savedFlagPV = GetFlag(FLAG_PV);
 
-		AdjustBaseFlags((WORD)temp);
-		SetFlag(FLAG_CY, (temp > 0xFFFF));
-		SetFlag(FLAG_PV, false); // TODO: Overflow 
+		add16(*m_currIdx, src);
+
+		// Restore flags
+		SetFlag(FLAG_S, savedFlagS);
+		SetFlag(FLAG_Z, savedFlagZ);
+		SetFlag(FLAG_PV, savedFlagPV);
+	}
+
+	void CPUZ80::add16(WORD& dest, WORD src, bool carry)
+	{
+		// add operations are done on A register, save it and restore at the end
+		BYTE savedA = m_reg.A;
+
+		// Low byte
+		m_reg.A = GetLByte(dest);
+		add(GetLByte(src), carry);
+		SetLByte(dest, m_reg.A);
+
+		// High byte
+		m_reg.A = GetHByte(dest);
+		add(GetHByte(src), GetFlag(FLAG_CY));
+		SetHByte(dest, m_reg.A);
+
+		// Restore A register
+		m_reg.A = savedA;
 	}
 
 	void CPUZ80::sbcHL(WORD src)
@@ -1128,9 +1208,10 @@ namespace emul
 	void CPUZ80::inc(BYTE& reg)
 	{
 		BYTE before = reg;
+		bool beforeH = GetBit(reg, 3);
 		CPU8080::inc(reg);
 		// Set Overflow flag
-		SetFlag(FLAG_PV, GetMSB(before) != GetMSB(reg));
+		SetFlag(FLAG_PV, !GetMSB(before) && GetMSB(reg));
 	}
 
 	void CPUZ80::dec(BYTE& reg)
@@ -1138,7 +1219,8 @@ namespace emul
 		BYTE before = reg;
 		CPU8080::dec(reg);
 		// Set Overflow flag
-		SetFlag(FLAG_PV, GetMSB(before) != GetMSB(reg));
+		SetFlag(FLAG_PV, GetMSB(before) && !GetMSB(reg));
+		SetFlag(FLAG_N, true);
 	}
 
 	void CPUZ80::EXAF()

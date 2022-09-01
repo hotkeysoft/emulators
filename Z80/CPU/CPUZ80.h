@@ -100,6 +100,13 @@ namespace emul
 		
 		void loadImm8toIdx(WORD base);
 
+		BYTE& GetIdxH() { return *(((BYTE*)m_currIdx) + 1); }
+		BYTE& GetIdxL() { return *((BYTE*)m_currIdx); }
+
+		void addHL(WORD src);
+		void addIXY(WORD src);
+		void add16(WORD& dest, WORD src, bool carry = false);
+
 		void adcHL(WORD src);
 		void sbcHL(WORD src);
 
