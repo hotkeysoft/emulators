@@ -310,35 +310,15 @@ int main(int argc, char* args[])
 	}
 
 	bool breakpointEnabled = false;
-	emul::ADDRESS breakpoint;
-	std::string breakpointStr = CONFIG().GetValueStr("monitor", "breakpoint");
-	if (breakpointStr.size())
+	emul::ADDRESS breakpoint = CONFIG().GetValueDWORD("monitor", "breakpoint", 0xFFFFFFFF);
+	if (breakpoint <= 0xFFFF)
 	{
-		breakpoint = std::stoul(breakpointStr, nullptr, 0);
-		if (breakpoint < 0 || breakpoint > 0xFFFF)
-		{
-			fprintf(stderr, "Unable to decode breakpoint value [%s]\n", breakpointStr.c_str());
-		}
-		else
-		{
-			breakpointEnabled = true;
-			fprintf(stderr, "Set Breakpoint to [0x%04X]\n", breakpoint);
-		}
+		breakpointEnabled = true;
+		fprintf(stderr, "Set Breakpoint to [0x%04X]\n", breakpoint);
 	}
 
-	std::string memViewStr = CONFIG().GetValueStr("monitor", "custommem");
-	if (memViewStr.size())
-	{
-		customMemoryView = std::stoul(memViewStr, nullptr, 0);
-		if (customMemoryView < 0 || customMemoryView > 0xFFFF)
-		{
-			fprintf(stderr, "Unable to decode Custom Memory View value [%s]\n", memViewStr.c_str());
-		}
-		else
-		{
-			fprintf(stderr, "Set Monitor Custom Memory View to [0x%04X]\n", customMemoryView);
-		}
-	}
+	emul::ADDRESS customMemoryView = CONFIG().GetValueWORD("monitor", "custommem", 0);
+	fprintf(stderr, "Set Monitor Custom Memory View to [0x%04X]\n", customMemoryView);
 
 #ifdef CPU_TEST
 	{
