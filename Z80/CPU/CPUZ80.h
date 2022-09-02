@@ -197,6 +197,10 @@ namespace emul
 		void INc(BYTE& dest);
 		void OUTc(BYTE& dest);
 
+		void RETN();
+
+		void EXSPIXY();
+
 		virtual void DAA() override;
 
 		virtual void DI() override;
