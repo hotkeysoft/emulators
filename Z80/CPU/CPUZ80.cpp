@@ -839,18 +839,29 @@ namespace emul
 
 	void CPUZ80::sbcHL(WORD src)
 	{
-		int temp = GetHL() - src;
-		if (GetFlag(FLAG_CY))
-		{
-			temp--;
-		}
+		WORD dest = GetHL();
+		sub16(dest, src, GetFlag(FLAG_CY));
+		SetHL(dest);
+		SetFlag(FLAG_Z, dest == 0);
+	}
 
-		SetHL(temp);
+	void CPUZ80::sub16(WORD& dest, WORD src, bool borrow)
+	{
+		// add operations are done on A register, save it and restore at the end
+		BYTE savedA = m_reg.A;
 
-		AdjustBaseFlags((WORD)temp);
-		SetFlag(FLAG_CY, (temp < 0));	
-		SetFlag(FLAG_PV, false); // TODO: Overflow 
-		SetFlag(FLAG_N, true);
+		// Low byte
+		m_reg.A = GetLByte(dest);
+		sub(GetLByte(src), borrow);
+		SetLByte(dest, m_reg.A);
+
+		// High byte
+		m_reg.A = GetHByte(dest);
+		sub(GetHByte(src), GetFlag(FLAG_CY));
+		SetHByte(dest, m_reg.A);
+
+		// Restore A register
+		m_reg.A = savedA;
 	}
 
 	void CPUZ80::add(BYTE src, bool carry)

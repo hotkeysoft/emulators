@@ -108,6 +108,7 @@ namespace emul
 
 		void adcHL(WORD src);
 		void sbcHL(WORD src);
+		void sub16(WORD& dest, WORD src, bool borrow = false);
 
 		virtual void add(BYTE src, bool carry = false) override;
 		virtual void sub(BYTE src, bool borrow = false) override;
