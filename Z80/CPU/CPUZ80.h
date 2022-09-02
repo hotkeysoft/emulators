@@ -91,7 +91,6 @@ namespace emul
 		// Helper functions
 		BYTE ReadMemIdx(BYTE offset);
 		void WriteMemIdx(BYTE offset, BYTE value);
-		void IDXop(std::function<void(CPUZ80*, BYTE& dest)> func);
 		void IDXop(std::function<void(CPUZ80*, BYTE& dest)> func, BYTE& reg);
 		void MEMop(std::function<void(CPUZ80*, BYTE& dest)> func);
 
