@@ -35,15 +35,18 @@ namespace emul
 		Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZX80::EndVSync));
 
 		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
-		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
 
-		InitVideo(new video::VideoZX80());
+		// TODO, depends if code is shared with zx81
+		const char* arch = "zx80";
+
+		video::VideoZX80* video = new video::VideoZX80();
+
+		DWORD backgroundRGB = CONFIG().GetValueDWORD(arch, "video.bg", video->GetDefaultBackground());
+		DWORD foregroundRGB = CONFIG().GetValueDWORD(arch, "video.fg", video->GetDefaultForeground());
+
+		video->SetBackground(backgroundRGB);
+		video->SetForeground(foregroundRGB);
+		InitVideo(video); // Takes ownership
 
 		InitInputs(6000000);
 		GetInputs().InitKeyboard(&m_keyboard);

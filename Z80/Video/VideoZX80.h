@@ -26,11 +26,21 @@ namespace video
 
         void LatchCurrentChar(BYTE ch);
 
+        DWORD GetDefaultBackground() const { return 0xFFD3D3D3; }
+        DWORD GetDefaultForeground() const { return 0xFF282828; }
+
+        void SetBackground(DWORD rgb) { m_background = rgb | 0xFF000000; }
+        void SetForeground(DWORD rgb) { m_foreground = rgb | 0xFF000000; }
+
     protected:
         void DrawChar();
 
         BYTE m_currentChar = 0;
-        bool m_invert = false;
+        bool m_invertChar = false;
+
+        // "Colors"
+        DWORD m_background = GetDefaultBackground();
+        DWORD m_foreground = GetDefaultForeground();
 
         bool m_vSync = false;
 

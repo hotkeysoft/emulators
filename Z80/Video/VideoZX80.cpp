@@ -17,16 +17,13 @@ namespace video
 		InitFrameBuffer(720, 480);
 	}
 
-
 	void VideoZX80::Tick()
 	{
 		if (m_hSync && (--m_hSyncCounter == 0))
 		{
 			m_hSync = false;
 
-			uint32_t color = 0xFF000000;
-			color |= (m_rowCounter << 13);
-			DrawBackground(32, color);
+			DrawBackground(32, m_background);
 		}
 
 		if (IsDisplayArea() && (m_fbCurrY > 0))
@@ -69,14 +66,14 @@ namespace video
 	{
 		for (int i = 7; i >= 0; --i)
 		{
-			bool set = GetBit(m_currentChar, i) ^ m_invert;
-			uint32_t color = set ? 0xFFFFFFFF : 0;
+			bool set = GetBit(m_currentChar, i) ^ m_invertChar;
+			uint32_t color = set ? m_foreground : m_background;
 			DrawPixel(color);
 		}
 	}
 	void VideoZX80::LatchCurrentChar(BYTE ch)
 	{
-		m_invert = GetBit(ch, 7);
+		m_invertChar = GetBit(ch, 7);
 		SetBit(ch, 7, false);
 
 		ADDRESS charROM = 0x0E00 + (ch * 8) + m_rowCounter;
