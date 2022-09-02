@@ -139,11 +139,16 @@ namespace emul
 		void LDAri(BYTE src);
 
 		void LDI();
-		void CPI();
-		void INI();
 		void LDD();
+
+		void CPI();
 		void CPD();
+
+		void INI();
 		void IND();
+
+		void OUTI();
+		void OUTD();
 
 		void rep(std::function<void(CPUZ80*)> func, bool checkZ = false);
 		void repz(std::function<void(CPUZ80*)> func);
@@ -190,6 +195,7 @@ namespace emul
 		void DECXY(BYTE offset);
 
 		void INc(BYTE& dest);
+		void OUTc(BYTE& dest);
 
 		virtual void DAA() override;
 

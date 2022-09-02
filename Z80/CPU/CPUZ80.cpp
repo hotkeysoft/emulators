@@ -834,6 +834,16 @@ namespace emul
 		m_opcodesEXTD[0x70] = [=]() { INc(m_regDummy); };
 		m_opcodesEXTD[0x78] = [=]() { INc(m_reg.A); };
 
+		// OUT (C), r
+		m_opcodesEXTD[0x41] = [=]() { OUTc(m_reg.B); };
+		m_opcodesEXTD[0x49] = [=]() { OUTc(m_reg.C); };
+		m_opcodesEXTD[0x51] = [=]() { OUTc(m_reg.D); };
+		m_opcodesEXTD[0x59] = [=]() { OUTc(m_reg.E); };
+		m_opcodesEXTD[0x61] = [=]() { OUTc(m_reg.H); };
+		m_opcodesEXTD[0x69] = [=]() { OUTc(m_reg.L); };
+		m_opcodesEXTD[0x71] = [=]() { OUTc(m_regDummy); };
+		m_opcodesEXTD[0x79] = [=]() { OUTc(m_reg.A); };
+
 		// NEG
 		m_opcodesEXTD[0x44] = [=]() { NEG(); };
 		m_opcodesEXTD[0x4C] = [=]() { NEG(); }; // Undocumented
@@ -844,80 +854,39 @@ namespace emul
 		m_opcodesEXTD[0x74] = [=]() { NEG(); }; // Undocumented
 		m_opcodesEXTD[0x7C] = [=]() { NEG(); }; // Undocumented
 
-		// RLD
 		m_opcodesEXTD[0x6F] = [=]() { RLD(); };
-
-		// RRD
 		m_opcodesEXTD[0x67] = [=]() { RRD(); };
 
-		// LDI
 		m_opcodesEXTD[0xA0] = [=]() { LDI(); };
-
-		// CPI
 		m_opcodesEXTD[0xA1] = [=]() { CPI(); };
-
-		// INI
 		m_opcodesEXTD[0xA2] = [=]() { INI(); };
+		m_opcodesEXTD[0xA3] = [=]() { OUTI(); };
 
-		// LDD
 		m_opcodesEXTD[0xA8] = [=]() { LDD(); };
-
-		// CPD
 		m_opcodesEXTD[0xA9] = [=]() { CPD(); };
-
-		// IND
 		m_opcodesEXTD[0xAA] = [=]() { IND(); };
+		m_opcodesEXTD[0xAB] = [=]() { OUTD(); };
 
-		// LDIR
-		m_opcodesEXTD[0xB0] = [=]() { rep(&CPUZ80::LDI); };
+		m_opcodesEXTD[0xB0] = [=]() { rep(&CPUZ80::LDI); }; // LDIR
+		m_opcodesEXTD[0xB1] = [=]() { rep(&CPUZ80::CPI, true); }; // CPIR
+		m_opcodesEXTD[0xB2] = [=]() { repz(&CPUZ80::INI); }; // INIR
+		m_opcodesEXTD[0xB3] = [=]() { repz(&CPUZ80::OUTI); }; // OTIR
 
-		// CPIR
-		m_opcodesEXTD[0xB1] = [=]() { rep(&CPUZ80::CPI, true); };
-
-		// INIR
-		m_opcodesEXTD[0xB2] = [=]() { repz(&CPUZ80::INI); };
-
-		// LDDR
-		m_opcodesEXTD[0xB8] = [=]() { rep(&CPUZ80::LDD); };
-
-		// CPDR
-		m_opcodesEXTD[0xB9] = [=]() { rep(&CPUZ80::CPD, true); };
-
-		// INDR
-		m_opcodesEXTD[0xBA] = [=]() { repz(&CPUZ80::IND); };
+		m_opcodesEXTD[0xB8] = [=]() { rep(&CPUZ80::LDD); }; // LDDR
+		m_opcodesEXTD[0xB9] = [=]() { rep(&CPUZ80::CPD, true); }; // CPDR
+		m_opcodesEXTD[0xBA] = [=]() { repz(&CPUZ80::IND); }; // INDR
+		m_opcodesEXTD[0xBB] = [=]() { repz(&CPUZ80::OUTD); }; // OTR
 
 		// TODO
-		m_opcodesEXTD[0x41] = [=]() { NotImplemented("EXTD[0x41]"); };
 		m_opcodesEXTD[0x45] = [=]() { NotImplemented("EXTD[0x45]"); };
-
-		m_opcodesEXTD[0x49] = [=]() { NotImplemented("EXTD[0x49]"); };
-		m_opcodesEXTD[0x4D] = [=]() { NotImplemented("EXTD[0x4D]"); };
-
-		m_opcodesEXTD[0x51] = [=]() { NotImplemented("EXTD[0x51]"); };
 		m_opcodesEXTD[0x55] = [=]() { NotImplemented("EXTD[0x55]"); };
-
-		m_opcodesEXTD[0x59] = [=]() { NotImplemented("EXTD[0x59]"); };
-		m_opcodesEXTD[0x5D] = [=]() { NotImplemented("EXTD[0x5D]"); };
-
-		m_opcodesEXTD[0x61] = [=]() { NotImplemented("EXTD[0x61]"); };
 		m_opcodesEXTD[0x65] = [=]() { NotImplemented("EXTD[0x65]"); };
-
-		m_opcodesEXTD[0x69] = [=]() { NotImplemented("EXTD[0x69]"); };
-		m_opcodesEXTD[0x6D] = [=]() { NotImplemented("EXTD[0x6D]"); };
-
-		m_opcodesEXTD[0x71] = [=]() { NotImplemented("EXTD[0x71]"); };
 		m_opcodesEXTD[0x75] = [=]() { NotImplemented("EXTD[0x75]"); };
 
-		m_opcodesEXTD[0x79] = [=]() { NotImplemented("EXTD[0x79]"); };
+		m_opcodesEXTD[0x4D] = [=]() { NotImplemented("EXTD[0x4D]"); };
+		m_opcodesEXTD[0x5D] = [=]() { NotImplemented("EXTD[0x5D]"); };
+		m_opcodesEXTD[0x6D] = [=]() { NotImplemented("EXTD[0x6D]"); };
 		m_opcodesEXTD[0x7D] = [=]() { NotImplemented("EXTD[0x7D]"); };
-
-		m_opcodesEXTD[0xA3] = [=]() { NotImplemented("EXTD[0xA3]"); };
-
-		m_opcodesEXTD[0xAB] = [=]() { NotImplemented("EXTD[0xAB]"); };
-
-		m_opcodesEXTD[0xB3] = [=]() { NotImplemented("EXTD[0xB3]"); };
-
-		m_opcodesEXTD[0xBB] = [=]() { NotImplemented("EXTD[0xBB]"); };
 	}
 
 	void CPUZ80::InitIXY()
@@ -1442,7 +1411,6 @@ namespace emul
 		SetFlag(FLAG_CY, carry);
 	}
 
-	// TODO: Flags are complicated
 	void CPUZ80::INI()
 	{
 		BYTE value;
@@ -1455,12 +1423,33 @@ namespace emul
 		SetFlag(FLAG_N, false);
 	}
 
-	// TODO: Flags are complicated
 	void CPUZ80::IND()
 	{
 		BYTE value;
 		INc(value);
 		WriteMem(value);
+
+		DCX(m_reg.H, m_reg.L);
+		dec(m_reg.B);
+
+		SetFlag(FLAG_N, true);
+	}
+
+	void CPUZ80::OUTI()
+	{
+		BYTE value = ReadMem();
+		OUTc(value);
+
+		INX(m_reg.H, m_reg.L);
+		dec(m_reg.B);
+
+		SetFlag(FLAG_N, false);
+	}
+
+	void CPUZ80::OUTD()
+	{
+		BYTE value = ReadMem();
+		OUTc(value);
 
 		DCX(m_reg.H, m_reg.L);
 		dec(m_reg.B);
@@ -1657,6 +1646,12 @@ namespace emul
 		In(m_reg.C, dest);
 		AdjustBaseFlags(dest);
 		SetFlag(FLAG_H, false);
+	}
+
+	void CPUZ80::OUTc(BYTE& dest)
+	{
+		m_ioHighAddress = m_reg.B;
+		Out(m_reg.C, dest);
 	}
 
 	void CPUZ80::DAA()
