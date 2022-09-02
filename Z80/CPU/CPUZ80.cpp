@@ -853,14 +853,38 @@ namespace emul
 		// LDI
 		m_opcodesEXTD[0xA0] = [=]() { LDI(); };
 
+		// CPI
+		m_opcodesEXTD[0xA1] = [=]() { CPI(); };
+
+		// INI
+		m_opcodesEXTD[0xA2] = [=]() { INI(); };
+
 		// LDD
 		m_opcodesEXTD[0xA8] = [=]() { LDD(); };
 
+		// CPD
+		m_opcodesEXTD[0xA9] = [=]() { CPD(); };
+
+		// IND
+		m_opcodesEXTD[0xAA] = [=]() { IND(); };
+
 		// LDIR
-		m_opcodesEXTD[0xB0] = [=]() { LDIR(); };
+		m_opcodesEXTD[0xB0] = [=]() { rep(&CPUZ80::LDI); };
+
+		// CPIR
+		m_opcodesEXTD[0xB1] = [=]() { rep(&CPUZ80::CPI, true); };
+
+		// INIR
+		m_opcodesEXTD[0xB2] = [=]() { repz(&CPUZ80::INI); };
 
 		// LDDR
-		m_opcodesEXTD[0xB8] = [=]() { LDDR(); };
+		m_opcodesEXTD[0xB8] = [=]() { rep(&CPUZ80::LDD); };
+
+		// CPDR
+		m_opcodesEXTD[0xB9] = [=]() { rep(&CPUZ80::CPD, true); };
+
+		// INDR
+		m_opcodesEXTD[0xBA] = [=]() { repz(&CPUZ80::IND); };
 
 		// TODO
 		m_opcodesEXTD[0x41] = [=]() { NotImplemented("EXTD[0x41]"); };
@@ -887,20 +911,12 @@ namespace emul
 		m_opcodesEXTD[0x79] = [=]() { NotImplemented("EXTD[0x79]"); };
 		m_opcodesEXTD[0x7D] = [=]() { NotImplemented("EXTD[0x7D]"); };
 
-		m_opcodesEXTD[0xA1] = [=]() { NotImplemented("EXTD[0xA1]"); };
-		m_opcodesEXTD[0xA2] = [=]() { NotImplemented("EXTD[0xA2]"); };
 		m_opcodesEXTD[0xA3] = [=]() { NotImplemented("EXTD[0xA3]"); };
 
-		m_opcodesEXTD[0xA9] = [=]() { NotImplemented("EXTD[0xA9]"); };
-		m_opcodesEXTD[0xAA] = [=]() { NotImplemented("EXTD[0xAA]"); };
 		m_opcodesEXTD[0xAB] = [=]() { NotImplemented("EXTD[0xAB]"); };
 
-		m_opcodesEXTD[0xB1] = [=]() { NotImplemented("EXTD[0xB1]"); };
-		m_opcodesEXTD[0xB2] = [=]() { NotImplemented("EXTD[0xB2]"); };
 		m_opcodesEXTD[0xB3] = [=]() { NotImplemented("EXTD[0xB3]"); };
 
-		m_opcodesEXTD[0xB9] = [=]() { NotImplemented("EXTD[0xB9]"); };
-		m_opcodesEXTD[0xBA] = [=]() { NotImplemented("EXTD[0xBA]"); };
 		m_opcodesEXTD[0xBB] = [=]() { NotImplemented("EXTD[0xBB]"); };
 	}
 
@@ -1350,14 +1366,13 @@ namespace emul
 
 	// From "The Undocumented Z80 Documented":
 	// The LDI/LDIR/LDD/LDDR instructions affect the flags in a strange way. At every
-	// iteration, a byte is copied.Take that byte and add the value of register A to it.
+	// iteration, a byte is copied. Take that byte and add the value of register A to it.
 	// Call that value n. Now, the flags are :
 	//	- YF flag A copy of bit 1 of n.
 	//	- HF flag Always reset.
 	//	- XF flag A copy of bit 3 of n.
 	//	- PV flag Set if BC not 0.
 	//	- SF, ZF, CF flags These flags are unchanged
-
 
 	// Does a sort of "LD (DE),(HL)", then increments DE, HL, and decrements BC.
 	void CPUZ80::LDI()
@@ -1377,13 +1392,6 @@ namespace emul
 		SetFlag(FLAG_F3, GetBit(n, 3));
 		SetFlag(FLAG_N, false);
 		SetFlag(FLAG_PV, GetBC() != 0);
-	}
-
-	// Repeats the instruction LDD until BC=0
-	void CPUZ80::LDIR()
-	{
-		LDI();
-		jumpRelIF(GetFlag(FLAG_PV), -2);
 	}
 
 	// Does a sort of "LD (DE),(HL)", then decrements DE, HL, and BC.
@@ -1406,11 +1414,71 @@ namespace emul
 		SetFlag(FLAG_PV, GetBC() != 0);
 	}
 
-	// Repeats the instruction LDD until BC=0
-	void CPUZ80::LDDR()
+	void CPUZ80::CPI()
 	{
-		LDD();
-		jumpRelIF(GetFlag(FLAG_PV), -2);
+		// Carry is preserved
+		bool carry = GetFlag(FLAG_CY);
+		cmp(ReadMem());
+
+		INX(m_reg.H, m_reg.L);
+		DCX(m_reg.B, m_reg.C);
+
+		SetFlag(FLAG_PV, GetBC() != 0);
+		// TODO: FLAG_F5, FLAG_F3
+		SetFlag(FLAG_CY, carry);
+	}
+
+	void CPUZ80::CPD()
+	{
+		// Carry is preserved
+		bool carry = GetFlag(FLAG_CY);
+		cmp(ReadMem());
+
+		DCX(m_reg.H, m_reg.L);
+		DCX(m_reg.B, m_reg.C);
+
+		SetFlag(FLAG_PV, GetBC() != 0);
+		// TODO: FLAG_F5, FLAG_F3
+		SetFlag(FLAG_CY, carry);
+	}
+
+	// TODO: Flags are complicated
+	void CPUZ80::INI()
+	{
+		BYTE value;
+		INc(value);
+		WriteMem(value);
+
+		INX(m_reg.H, m_reg.L);
+		dec(m_reg.B);
+
+		SetFlag(FLAG_N, false);
+	}
+
+	// TODO: Flags are complicated
+	void CPUZ80::IND()
+	{
+		BYTE value;
+		INc(value);
+		WriteMem(value);
+
+		DCX(m_reg.H, m_reg.L);
+		dec(m_reg.B);
+
+		SetFlag(FLAG_N, true);
+	}
+
+	// Repeats an instruction until BC=0 or zero (if checkZ)
+	void CPUZ80::rep(std::function<void(CPUZ80*)> func, bool checkZ)
+	{
+		func(this);
+		jumpRelIF(GetFlag(FLAG_PV) && (!checkZ || !GetFlag(FLAG_Z)), -2);
+	}
+
+	void CPUZ80::repz(std::function<void(CPUZ80*)> func)
+	{
+		func(this);
+		jumpRelIF(!GetFlag(FLAG_Z), -2);
 	}
 
 	// The contents of A are negated (two's complement). Operation is the same as subtracting A from zero.
@@ -1588,6 +1656,7 @@ namespace emul
 		m_ioHighAddress = m_reg.B;
 		In(m_reg.C, dest);
 		AdjustBaseFlags(dest);
+		SetFlag(FLAG_H, false);
 	}
 
 	void CPUZ80::DAA()

@@ -27,6 +27,7 @@ namespace emul
 
 		void PrintChar(BYTE value);
 		void DummyOut(BYTE value) {}
+		BYTE DummyIn() { return 0xBF; }
 
 	protected:
 		emul::MemoryBlock m_baseRAM;

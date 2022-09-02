@@ -139,10 +139,14 @@ namespace emul
 		void LDAri(BYTE src);
 
 		void LDI();
-		void LDIR();
-
+		void CPI();
+		void INI();
 		void LDD();
-		void LDDR();
+		void CPD();
+		void IND();
+
+		void rep(std::function<void(CPUZ80*)> func, bool checkZ = false);
+		void repz(std::function<void(CPUZ80*)> func);
 
 		void NEG();
 

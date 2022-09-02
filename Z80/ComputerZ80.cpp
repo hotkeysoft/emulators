@@ -36,6 +36,8 @@ namespace emul
 		Connect(0xFE, static_cast<PortConnector::OUTFunction>(&ComputerZ80::DummyOut));
 		Connect(0xFF, static_cast<PortConnector::OUTFunction>(&ComputerZ80::PrintChar));
 
+		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZ80::DummyIn));
+
 		InitVideo(new video::VideoZX80());
 
 		InitInputs(6000000);
