@@ -79,6 +79,39 @@ namespace cfg
 		return inipp::get_value(m_config.sections[section], key, ret) ? ret : defaultValue;
 	}
 
+	DWORD Config::GetValueDWORD(const char* section, const char* key, DWORD defaultValue)
+	{
+		assert(section);
+		assert(key);
+		std::string str;
+		if (!inipp::get_value(m_config.sections[section], key, str) || str.empty())
+		{
+			return defaultValue;
+		}
+
+		DWORD val = defaultValue;
+		try
+		{
+			val = std::stoul(str, nullptr, 0);
+		}
+		catch (std::exception)
+		{
+		}
+		return val;
+	}
+
+	WORD Config::GetValueWORD(const char* section, const char* key, WORD defaultValue)
+	{
+		DWORD val = GetValueDWORD(section, key, defaultValue);
+		return (val > 0xFFFF) ? defaultValue : (WORD)val;
+	}
+
+	BYTE Config::GetValueBYTE(const char* section, const char* key, BYTE defaultValue)
+	{
+		DWORD val = GetValueDWORD(section, key, defaultValue);
+		return (val > 0xFF) ? defaultValue : (BYTE)val;
+	}
+
 	float Config::GetValueFloat(const char* section, const char* key, float defaultValue)
 	{
 		assert(section);
