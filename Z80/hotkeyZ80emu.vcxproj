@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\CPU\CPU.h" />
+    <ClInclude Include="..\Common\CPU\CPUCommon.h" />
     <ClInclude Include="..\Common\CPU\Memory.h" />
     <ClInclude Include="..\Common\CPU\MemoryBlock.h" />
     <ClInclude Include="..\Common\inipp.h" />
@@ -27,7 +28,6 @@
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
-    <ClInclude Include="Common.h" />
     <ClInclude Include="Computer.h" />
     <ClInclude Include="Computer8080.h" />
     <ClInclude Include="ComputerZ80.h" />

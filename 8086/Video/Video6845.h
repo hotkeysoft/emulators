@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common.h>
+#include <CPU/CPUCommon.h>
 #include <CPU/Memory.h>
 #include "CRTController6845.h"
 #include "Video.h"

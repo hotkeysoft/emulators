@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include <Common.h>
+#include <CPU/CPUCommon.h>
 #include "CPU80286.h"
 
 using cpuInfo::Opcode;

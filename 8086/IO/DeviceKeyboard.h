@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common.h>
+#include <CPU/CPUCommon.h>
 #include "../CPU/PortConnector.h"
 #include "../Hardware/DevicePPI.h"
 #include "../Hardware/Device8259.h"

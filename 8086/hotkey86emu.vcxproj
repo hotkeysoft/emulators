@@ -252,6 +252,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\CPU\CPU.h" />
+    <ClInclude Include="..\Common\CPU\CPUCommon.h" />
     <ClInclude Include="..\Common\CPU\Memory.h" />
     <ClInclude Include="..\Common\CPU\MemoryBlock.h" />
     <ClInclude Include="..\Common\inipp.h" />
@@ -279,7 +280,6 @@
     <ClInclude Include="UI\MainWindow.h" />
     <ClInclude Include="UI\Overlay.h" />
     <ClInclude Include="Storage\CartridgePCjr.h" />
-    <ClInclude Include="Common.h" />
     <ClInclude Include="Computer.h" />
     <ClInclude Include="ComputerPCjr.h" />
     <ClInclude Include="ComputerTandy.h" />

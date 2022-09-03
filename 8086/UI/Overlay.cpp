@@ -11,7 +11,7 @@
 
 #pragma warning(disable:4251)
 
-#include <Common.h>
+#include <CPU/CPUCommon.h>
 #include <Core/Window.h>
 #include <Core/WindowManager.h>
 #include <Core/ResourceManager.h>

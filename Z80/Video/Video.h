@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common.h>
+#include <CPU/CPUCommon.h>
 #include <Serializable.h>
 #include <CPU/Memory.h>
 #include "../CPU/PortConnector.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common.h>
+#include <CPU/CPUCommon.h>
 #include "DeviceFloppy.h"
 #include <vector>
 #include <deque>

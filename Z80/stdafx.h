@@ -29,7 +29,7 @@
 #include <memory>
 #include <filesystem>
 
-#include <Common.h>
+#include <CPU/CPUCommon.h>
 
 #include <json.hpp>
 #include <inipp.h>

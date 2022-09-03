@@ -1,5 +1,5 @@
 #pragma once
-#include <Common.h>
+#include <CPU/CPUCommon.h>
 #include <Serializable.h>
 #include "../CPU/PortConnector.h"
 #include "VideoEvents.h"

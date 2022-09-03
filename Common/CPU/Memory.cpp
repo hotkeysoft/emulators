@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Memory.h"
+#include <CPU/Memory.h>
 
 namespace fs = std::filesystem;
 
