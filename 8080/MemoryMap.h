@@ -7,7 +7,7 @@ namespace emul
 {
 	struct MemoryMapItem
 	{
-		WORD address;
+		ADDRESS address = 0;
 		std::string label;
 		std::string module;
 	};

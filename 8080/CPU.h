@@ -1,5 +1,5 @@
 #pragma once
-#include "Memory.h"
+#include <CPU/Memory.h>
 #include "MemoryMap.h"
 
 namespace emul

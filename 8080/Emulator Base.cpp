@@ -1,8 +1,8 @@
 // Emulator Base.cpp : Defines the entry point for the console application.
 //
 #include "stdafx.h"
-#include "Memory.h"
-#include "MemoryBlock.h"
+#include <CPU/Memory.h>
+#include <CPU/MemoryBlock.h>
 #include "MemoryMap.h"
 #include "CPU8080.h"
 #include "UART.h"
@@ -66,10 +66,10 @@ WORD hexToWord(const std::string &hexStr)
 		hexToByte(hexStr.substr(2, 2));
 }
 
-void SaveROMBlock(std::vector<emul::MemoryBlock>& out, int addr, std::vector<BYTE>& buffer)
+void SaveROMBlock(emul::MemoryBlock& out, emul::ADDRESS addr, std::vector<BYTE>& buffer)
 {
 	fprintf(stdout, "Saving block 0x%04X-0x%04X, size: %d\n", addr, addr + (int)buffer.size() - 1, (int)buffer.size());
-	out.push_back(emul::MemoryBlock(addr, buffer, emul::ROM));
+	out.Fill(addr, buffer);
 }
 
 // ASLINK map file
@@ -114,7 +114,8 @@ bool readMapFile(const std::string &fileName, emul::MemoryMap &mmap)
 	return true;
 }
 
-bool readIntelHex(const std::string &fileName, std::vector<emul::MemoryBlock> &data)
+// TODO: For now we only support filling-in a preallocated block starting at address 0
+bool readIntelHex(const std::string &fileName, emul::MemoryBlock &data)
 {
 	std::ifstream file(fileName.c_str(), std::ios::in);
 
@@ -203,7 +204,7 @@ abort:
 	return false;
 }
 
-bool readSRecord(const std::string &fileName, std::vector<emul::MemoryBlock> &data)
+bool readSRecord(const std::string &fileName, emul::MemoryBlock& data)
 {
 	std::ifstream file(fileName.c_str(), std::ios::in);
 
@@ -290,15 +291,15 @@ int main(void)
 	Logger::RegisterLogCallback(LogCallback);
 
 	emul::Memory memory;
-	memory.EnableLog(Logger::LOG_OFF);
+	memory.Init(16);
+	memory.EnableLog(Logger::LOG_INFO);
 	emul::MemoryMap mmap;
 	mmap.EnableLog(Logger::LOG_OFF);
 
-	std::vector<emul::MemoryBlock> monitorRom;
-	if (readIntelHex("data/main.ihx", monitorRom))
+	emul::MemoryBlock rom("ROM", 0x8000, emul::MemoryType::ROM);
+	if (readIntelHex("data/main.ihx", rom))
 	{
-		for (int i=0; i<monitorRom.size(); i++)
-			memory.Allocate(&(monitorRom[i]));
+		memory.Allocate(&rom, 0);
 	}
 
 	if (!readMapFile("data/main.map", mmap))
@@ -306,8 +307,8 @@ int main(void)
 		fprintf(stderr, "Error reading map file\n");
 	}
 
-	emul::MemoryBlock buffer_memory(0x8000, 0x8000, emul::RAM);
-	memory.Allocate(&buffer_memory);
+	emul::MemoryBlock buffer_memory("RAM", 0x8000);
+	memory.Allocate(&buffer_memory, 0x8000);
 
 	Timer timer;
 

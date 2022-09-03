@@ -29,12 +29,11 @@
 #include <memory>
 #include <filesystem>
 
-#include <CPU/CPUCommon.h>
-
 #include <json.hpp>
 #include <inipp.h>
 #include <Logger.h>
 #include <StringUtil.h>
+#include <CPU/CPUCommon.h>
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

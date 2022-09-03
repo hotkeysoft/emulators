@@ -29,6 +29,8 @@
 #include <memory>
 #include <filesystem>
 
+#include <json.hpp>
+#include <inipp.h>
 #include <Logger.h>
 #include <StringUtil.h>
 #include <CPU/CPUCommon.h>

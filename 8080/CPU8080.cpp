@@ -688,9 +688,9 @@ namespace emul
 			m_interruptsEnabled = false;
 
 			regSP--;
-			m_memory.Write(regSP, getHByte(m_programCounter));
+			m_memory.Write8(regSP, getHByte(m_programCounter));
 			regSP--;
-			m_memory.Write(regSP, getLByte(m_programCounter));
+			m_memory.Write8(regSP, getLByte(m_programCounter));
 
 			WORD vector;
 
@@ -776,7 +776,7 @@ namespace emul
 
 	void CPU8080::MOVmr(BYTE opcode)
 	{
-		m_memory.Write(getHL(), getRegR(opcode));
+		m_memory.Write8(getHL(), getRegR(opcode));
 
 		m_timeTicks += 7;
 		m_programCounter++;
@@ -785,7 +785,7 @@ namespace emul
 	void CPU8080::MOVrm(BYTE opcode)
 	{
 
-		m_memory.Read(getHL(), getRegL(opcode));
+		getRegL(opcode) = m_memory.Read8(getHL());
 
 		m_timeTicks += 7;
 		m_programCounter++;
@@ -793,7 +793,7 @@ namespace emul
 
 	void CPU8080::MVIr(BYTE opcode)
 	{
-		m_memory.Read(m_programCounter+1, getRegL(opcode));
+		getRegL(opcode) = m_memory.Read8(m_programCounter + 1);
 
 		m_timeTicks += 7;
 		m_programCounter+=2;
@@ -801,9 +801,8 @@ namespace emul
 
 	void CPU8080::MVIm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
-		m_memory.Write(getHL(), value);
+		BYTE value = m_memory.Read8(m_programCounter + 1);
+		m_memory.Write8(getHL(), value);
 
 		m_timeTicks += 10;
 		m_programCounter+=2;
@@ -811,8 +810,8 @@ namespace emul
 
 	void CPU8080::LXIb(BYTE opcode)
 	{
-		m_memory.Read(m_programCounter+1, regC);
-		m_memory.Read(m_programCounter+2, regB);
+		regC = m_memory.Read8(m_programCounter + 1);
+		regB = m_memory.Read8(m_programCounter + 2);
 
 		m_timeTicks += 10;
 		m_programCounter+=3;
@@ -820,8 +819,8 @@ namespace emul
 
 	void CPU8080::LXId(BYTE opcode)
 	{
-		m_memory.Read(m_programCounter+1, regE);
-		m_memory.Read(m_programCounter+2, regD);
+		regE = m_memory.Read8(m_programCounter + 1);
+		regD = m_memory.Read8(m_programCounter + 2);
 
 		m_timeTicks += 10;
 		m_programCounter+=3;
@@ -829,8 +828,8 @@ namespace emul
 
 	void CPU8080::LXIh(BYTE opcode)
 	{
-		m_memory.Read(m_programCounter+1, regL);
-		m_memory.Read(m_programCounter+2, regH);
+		regL = m_memory.Read8(m_programCounter + 1);
+		regH = m_memory.Read8(m_programCounter + 2);
 
 		m_timeTicks += 10;
 		m_programCounter+=3;
@@ -838,7 +837,7 @@ namespace emul
 
 	void CPU8080::STAXb(BYTE opcode)
 	{
-		m_memory.Write(getWord(regB, regC), regA);
+		m_memory.Write8(getWord(regB, regC), regA);
 
 		m_timeTicks += 7;
 		m_programCounter++;
@@ -846,7 +845,7 @@ namespace emul
 
 	void CPU8080::STAXd(BYTE opcode)
 	{
-		m_memory.Write(getWord(regD, regE), regA);
+		m_memory.Write8(getWord(regD, regE), regA);
 
 		m_timeTicks += 7;
 		m_programCounter++;
@@ -854,14 +853,14 @@ namespace emul
 
 	void CPU8080::LDAXb(BYTE opcode)
 	{
-		m_memory.Read(getWord(regB, regC), regA);
+		regA = m_memory.Read8(getWord(regB, regC));
 
 		m_timeTicks += 7;
 		m_programCounter++;
 	}
 	void CPU8080::LDAXd(BYTE opcode)
 	{
-		m_memory.Read(getWord(regD, regE), regA);
+		regA = m_memory.Read8(getWord(regD, regE));
 
 		m_timeTicks += 7;
 		m_programCounter++;
@@ -869,12 +868,10 @@ namespace emul
 
 	void CPU8080::STA(BYTE opcode)
 	{
-		BYTE valH, valL;
+		BYTE valL = m_memory.Read8(m_programCounter + 1);
+		BYTE valH = m_memory.Read8(m_programCounter + 2);
 
-		m_memory.Read(m_programCounter+1, valL);
-		m_memory.Read(m_programCounter+2, valH);
-
-		m_memory.Write(getWord(valH, valL), regA);
+		m_memory.Write8(getWord(valH, valL), regA);
 
 		m_timeTicks += 13;
 		m_programCounter+=3;
@@ -882,12 +879,10 @@ namespace emul
 
 	void CPU8080::LDA(BYTE opcode)
 	{
-		BYTE valH, valL;
+		BYTE valL = m_memory.Read8(m_programCounter + 1);
+		BYTE valH = m_memory.Read8(m_programCounter + 2);
 
-		m_memory.Read(m_programCounter+1, valL);
-		m_memory.Read(m_programCounter+2, valH);
-
-		m_memory.Read(getWord(valH, valL), regA);
+		regA = m_memory.Read8(getWord(valH, valL));
 
 		m_timeTicks += 13;
 		m_programCounter+=3;
@@ -895,13 +890,11 @@ namespace emul
 
 	void CPU8080::SHLD(BYTE opcode)
 	{
-		BYTE valH, valL;
+		BYTE valL = m_memory.Read8(m_programCounter + 1);
+		BYTE valH = m_memory.Read8(m_programCounter + 2);
 
-		m_memory.Read(m_programCounter+1, valL);
-		m_memory.Read(m_programCounter+2, valH);
-
-		m_memory.Write(getWord(valH, valL), regL);
-		m_memory.Write(getWord(valH, valL)+1, regH);
+		m_memory.Write8(getWord(valH, valL), regL);
+		m_memory.Write8(getWord(valH, valL)+1, regH);
 
 		m_timeTicks += 16;
 		m_programCounter+=3;
@@ -909,13 +902,11 @@ namespace emul
 
 	void CPU8080::LHLD(BYTE opcode)
 	{
-		BYTE valH, valL;
+		BYTE valL = m_memory.Read8(m_programCounter + 1);
+		BYTE valH = m_memory.Read8(m_programCounter + 2);
 
-		m_memory.Read(m_programCounter+1, valL);
-		m_memory.Read(m_programCounter+2, valH);
-
-		m_memory.Read(getWord(valH, valL), regL);
-		m_memory.Read(getWord(valH, valL)+1, regH);
+		regL = m_memory.Read8(getWord(valH, valL));
+		regH = m_memory.Read8(getWord(valH, valL)+1);
 
 		m_timeTicks += 16;
 		m_programCounter+=3;
@@ -937,9 +928,9 @@ namespace emul
 	void CPU8080::push(BYTE h, BYTE l)
 	{
 		regSP--;
-		m_memory.Write(regSP, h);
+		m_memory.Write8(regSP, h);
 		regSP--;
-		m_memory.Write(regSP, l);
+		m_memory.Write8(regSP, l);
 
 		m_timeTicks += 12;
 		m_programCounter++;
@@ -967,9 +958,9 @@ namespace emul
 
 	void CPU8080::pop(BYTE &h, BYTE &l)
 	{
-		m_memory.Read(regSP, l);
+		l = m_memory.Read8(regSP);
 		regSP++;
-		m_memory.Read(regSP, h);
+		h = m_memory.Read8(regSP);
 		regSP++;
 
 		m_timeTicks += 12;
@@ -1002,11 +993,11 @@ namespace emul
 
 		oldL = regL; oldH = regH;
 
-		m_memory.Read(regSP, regL);
-		m_memory.Read(regSP+1, regH);
+		regL = m_memory.Read8(regSP);
+		regH = m_memory.Read8(regSP+1);
 
-		m_memory.Write(regSP, oldL);
-		m_memory.Write(regSP+1, oldH);
+		m_memory.Write8(regSP, oldL);
+		m_memory.Write8(regSP+1, oldH);
 
 		m_timeTicks += 16;
 		m_programCounter++;
@@ -1022,10 +1013,8 @@ namespace emul
 
 	void CPU8080::LXIsp(BYTE opcode)
 	{
-		BYTE valH, valL;
-
-		m_memory.Read(m_programCounter+1, valL);
-		m_memory.Read(m_programCounter+2, valH);
+		BYTE valL = m_memory.Read8(m_programCounter + 1);
+		BYTE valH = m_memory.Read8(m_programCounter + 2);
 
 		regSP = getWord(valH, valL);
 
@@ -1053,10 +1042,8 @@ namespace emul
 	{
 		if (condition == true)
 		{
-			BYTE valH, valL;
-
-			m_memory.Read(m_programCounter+1, valL);
-			m_memory.Read(m_programCounter+2, valH);
+			BYTE valL = m_memory.Read8(m_programCounter + 1);
+			BYTE valH = m_memory.Read8(m_programCounter + 2);
 
 			m_timeTicks += timeT;
 			m_programCounter = getWord(valH, valL);
@@ -1124,14 +1111,13 @@ namespace emul
 		if (condition == true)
 		{
 			WORD calledFrom = m_programCounter;
-			BYTE valL, valH;
-			m_memory.Read(m_programCounter+1, valL);
-			m_memory.Read(m_programCounter+2, valH);
+			BYTE valL = m_memory.Read8(m_programCounter + 1);
+			BYTE valH = m_memory.Read8(m_programCounter + 2);
 
 			regSP--;
-			m_memory.Write(regSP, getHByte(m_programCounter+3));
+			m_memory.Write8(regSP, getHByte(m_programCounter+3));
 			regSP--;
-			m_memory.Write(regSP, getLByte(m_programCounter+3));
+			m_memory.Write8(regSP, getLByte(m_programCounter+3));
 
 			m_timeTicks += 18;
 			m_programCounter = getWord(valH, valL);
@@ -1196,10 +1182,8 @@ namespace emul
 		{
 			BYTE valL, valH;
 
-			m_memory.Read(regSP, valL);
-			regSP++;
-			m_memory.Read(regSP, valH);
-			regSP++;
+			valL = m_memory.Read8(regSP++);
+			valH = m_memory.Read8(regSP++);
 
 			m_timeTicks += timeT;
 
@@ -1262,9 +1246,9 @@ namespace emul
 	void CPU8080::RST(BYTE opcode)
 	{
 		regSP--;
-		m_memory.Write(regSP, getHByte(m_programCounter));
+		m_memory.Write8(regSP, getHByte(m_programCounter));
 		regSP--;
-		m_memory.Write(regSP, getLByte(m_programCounter));
+		m_memory.Write8(regSP, getLByte(m_programCounter));
 
 		opcode &= 070;
 
@@ -1302,10 +1286,9 @@ namespace emul
 
 	void CPU8080::INRm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 		value++;
-		m_memory.Write(getHL(), value);
+		m_memory.Write8(getHL(), value);
 
 		adjustParity(value);
 		adjustZero(value);
@@ -1319,9 +1302,9 @@ namespace emul
 	void CPU8080::DCRm(BYTE opcode)
 	{
 		BYTE value;
-		m_memory.Read(getHL(), value);
+		value = m_memory.Read8(getHL());
 		value--;
-		m_memory.Write(getHL(), value);
+		m_memory.Write8(getHL(), value);
 
 		adjustParity(value);
 		adjustZero(value);
@@ -1437,8 +1420,7 @@ namespace emul
 
 	void CPU8080::ADDm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 
 		add(value);
 
@@ -1448,8 +1430,7 @@ namespace emul
 
 	void CPU8080::ADCm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 
 		add(value, getFlag(CY_FLAG));
 
@@ -1459,8 +1440,7 @@ namespace emul
 
 	void CPU8080::ADI(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
+		BYTE value = m_memory.Read8(m_programCounter + 1);
 
 		add(value);
 
@@ -1470,8 +1450,7 @@ namespace emul
 
 	void CPU8080::ACI(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
+		BYTE value = m_memory.Read8(m_programCounter + 1);
 
 		add(value, getFlag(CY_FLAG));
 
@@ -1554,8 +1533,7 @@ namespace emul
 
 	void CPU8080::SUBm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 
 		sub(value);
 
@@ -1565,8 +1543,7 @@ namespace emul
 
 	void CPU8080::SBBm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 
 		sub(value, getFlag(CY_FLAG));
 
@@ -1576,8 +1553,7 @@ namespace emul
 
 	void CPU8080::SUI(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
+		BYTE value = m_memory.Read8(m_programCounter+1);
 
 		sub(value);
 
@@ -1587,8 +1563,7 @@ namespace emul
 
 	void CPU8080::SBI(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
+		BYTE value = m_memory.Read8(m_programCounter + 1);
 
 		sub(value, getFlag(CY_FLAG));
 
@@ -1662,8 +1637,7 @@ namespace emul
 
 	void CPU8080::ANAm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 
 		regA &= value;
 
@@ -1679,8 +1653,7 @@ namespace emul
 
 	void CPU8080::XRAm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 
 		regA ^= value;
 
@@ -1696,8 +1669,7 @@ namespace emul
 
 	void CPU8080::ORAm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 
 		regA |= value;
 
@@ -1713,8 +1685,7 @@ namespace emul
 
 	void CPU8080::CMPm(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(getHL(), value);
+		BYTE value = m_memory.Read8(getHL());
 
 		cmp(value);
 
@@ -1724,8 +1695,7 @@ namespace emul
 
 	void CPU8080::ANI(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
+		BYTE value = m_memory.Read8(m_programCounter + 1);
 
 		regA &= value;
 
@@ -1741,8 +1711,7 @@ namespace emul
 
 	void CPU8080::XRI(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
+		BYTE value = m_memory.Read8(m_programCounter + 1);
 
 		regA ^= value;
 
@@ -1758,8 +1727,7 @@ namespace emul
 
 	void CPU8080::ORI(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
+		BYTE value = m_memory.Read8(m_programCounter + 1);
 
 		regA |= value;
 
@@ -1775,8 +1743,7 @@ namespace emul
 
 	void CPU8080::CPI(BYTE opcode)
 	{
-		BYTE value;
-		m_memory.Read(m_programCounter+1, value);
+		BYTE value = m_memory.Read8(m_programCounter + 1);
 
 		cmp(value);
 
@@ -1872,8 +1839,7 @@ namespace emul
 
 	void CPU8080::IN(BYTE opcode)
 	{
-		BYTE portNb;
-		m_memory.Read(m_programCounter+1, portNb);
+		BYTE portNb = m_memory.Read8(m_programCounter + 1);
 		m_ports.In(portNb, regA);
 
 		m_timeTicks += 10;
@@ -1882,8 +1848,7 @@ namespace emul
 
 	void CPU8080::OUT(BYTE opcode)
 	{
-		BYTE portNb;
-		m_memory.Read(m_programCounter+1, portNb);
+		BYTE portNb = m_memory.Read8(m_programCounter + 1);
 		m_ports.Out(portNb, regA);
 
 		m_timeTicks += 10;

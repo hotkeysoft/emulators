@@ -27,12 +27,6 @@
     <ClCompile Include="Emulator Base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Memory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MemoryBlock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CPU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -60,18 +54,21 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\CPU\Memory.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\MemoryBlock.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Serializable.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CPU8080.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Memory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MemoryBlock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Interrupts.h">
@@ -103,6 +100,24 @@
     </ClInclude>
     <ClInclude Include="..\Common\CPU\CPUCommon.h">
       <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\Memory.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\MemoryBlock.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\inipp.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\json.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Serializable.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StringUtil.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

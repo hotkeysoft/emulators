@@ -20,7 +20,7 @@ namespace emul
 		Alloc(size);
 	}
 
-	MemoryBlock::MemoryBlock(const char* id, const std::vector<BYTE>data, MemoryType type /*=RAM*/) :
+	MemoryBlock::MemoryBlock(const char* id, const RawBlock& data, MemoryType type /*=RAM*/) :
 		MemoryBlock(id, (DWORD)data.size(), type)
 	{
 		memcpy(m_data, &(data[0]), data.size());
@@ -154,6 +154,22 @@ namespace emul
 		{
 			m_data[(2 * i) + (int)oddEven] = tempBuf[i];
 		}
+
+		return true;
+	}
+
+	bool MemoryBlock::Fill(ADDRESS offset, const MemoryBlock::RawBlock& data)
+	{
+		LogPrintf(LOG_INFO, "Fill: filling Raw Block[%04X]@%04X", data.size(), offset);
+
+		if ((offset + data.size()) > m_size)
+		{
+			LogPrintf(LOG_INFO, "Fill: data can't fit in existing block of size [%04X]. Raw Block[%04X]@%04X",
+				m_size, data.size(), offset);
+			return false;
+		}
+
+		memcpy(m_data + offset, &data[0], data.size());
 
 		return true;
 	}

@@ -33,9 +33,8 @@ namespace emul
 		try
 		{
 			// Fetch opcode
-			unsigned char opcode;
+			BYTE opcode = m_memory.Read8(m_programCounter);
 			m_state = RUN;
-			m_memory.Read(m_programCounter, opcode);
 
 			// Execute instruction
 			(this->*m_opcodesTable[opcode])(opcode);
