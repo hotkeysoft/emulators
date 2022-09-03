@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Serializable.h"
-#include "CPU.h"
+#include <Serializable.h>
+#include <CPU/CPU.h>
 #include "CPUInfo.h"
 #include "CPUException.h"
 #include "PortConnector.h"
@@ -23,12 +23,12 @@ namespace emul
 		BX = 2,       // Base
 		CX = 3,       // Count
 		DX = 4,       // Data
-				   
+
 		SP = 5,       // Stack Pointer
 		BP = 6,       // Base Pointer
 		SI = 7,       // Source Index
 		DI = 8,       // Destination Index
-				   
+
 		IP = 9,       // Instruction Pointer
 
 		FLAGS = 10,   // Flags
@@ -38,7 +38,7 @@ namespace emul
 		_T0     = 12, // Temp register
 
 		// Segment Registers
-		// We leave ample space (16 bytes - 8 words) 
+		// We leave ample space (16 bytes - 8 words)
 		// in between for 80286 register cache data
 		// This way, the segment descriptors match with
 		// the legacy segment value
@@ -53,7 +53,7 @@ namespace emul
 		CS = (int)REG16::CS,
 		DS = (int)REG16::DS,
 		SS = (int)REG16::SS,
-		ES = (int)REG16::ES	
+		ES = (int)REG16::ES
 	};
 
 	enum class REG8
@@ -165,7 +165,7 @@ namespace emul
 	{
 	public:
 		Mem16() {}
-		Mem16(const SegmentOffset& segoff) : l(segoff), h(segoff, true) 
+		Mem16(const SegmentOffset& segoff) : l(segoff), h(segoff, true)
 		{
 			if (m_checkAlignment && (segoff.offset == 0xFFFF))
 			{
@@ -248,17 +248,17 @@ namespace emul
 		virtual void Reset(WORD segment, WORD offset);
 
 		void Interrupt(BYTE irq) { m_irqPending = irq; }
-		bool CanInterrupt() 
-		{ 
+		bool CanInterrupt()
+		{
 			if (m_opcode == 0x17)
 			{
-				// POP SS inhibits all interrupts, including NMI, until after 
-				// the execution of the next instruction. This permits a POP SP 
+				// POP SS inhibits all interrupts, including NMI, until after
+				// the execution of the next instruction. This permits a POP SP
 				// instruction to be performed first.
 				// (Possibly 286+ but can't harm)
 				return false;
 			}
-				
+
 			// TODO: last check only if interrupts were disabled previously
 			return GetFlag(FLAG::FLAG_I) && (m_opcode != 0xFB);
 		}
@@ -285,7 +285,7 @@ namespace emul
 			FLAG_R14 = 0x4000, // Reserved, 1
 			FLAG_R15 = 0x8000, // Reserved, 1
 		};
-		
+
 		FLAG FLAG_RESERVED_ON = FLAG(FLAG_R1 | FLAG_R12 | FLAG_R13 | FLAG_R14 | FLAG_R15);
 		FLAG FLAG_RESERVED_OFF = FLAG(FLAG_R3 | FLAG_R5);
 
@@ -349,8 +349,8 @@ namespace emul
 
 		void IndexIncDec(WORD& idx) { GetFlag(FLAG_D) ? --idx : ++idx; }
 
-		BYTE FetchByte();
-		WORD FetchWord();
+		virtual BYTE FetchByte() override;
+		virtual WORD FetchWord() override;
 
 		Mem8 GetModRM8(BYTE modrm);
 		Mem16 GetModRM16(BYTE modrm);

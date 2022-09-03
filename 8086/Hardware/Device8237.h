@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Common.h"
+#include <Common.h>
 #include "../CPU/PortConnector.h"
-#include "../CPU/Memory.h"
+#include <CPU/Memory.h>
 
 using emul::PortConnector;
 using emul::BYTE;

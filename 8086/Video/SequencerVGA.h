@@ -1,6 +1,6 @@
 #pragma once
-#include "../Common.h"
-#include "../Serializable.h"
+#include <Common.h>
+#include <Serializable.h>
 #include "../CPU/PortConnector.h"
 #include "VideoEvents.h"
 
@@ -29,7 +29,7 @@ namespace seq_vga
 		BYTE charMapSelectB = 0;
 
 		struct MemoryMode
-		{			
+		{
 			bool extMemory = false; // 1: allows access to >64k ram
 			bool oddEven = false; // 1: Odd/Even access, 0: sequential
 			bool chain4 = false;  // 1: A1A0 selects plane, 0: sequential

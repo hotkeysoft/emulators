@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Serializable.h"
+#include <Serializable.h>
 #include "../CPU/PortConnector.h"
-#include "../CPU/MemoryBlock.h"
+#include <CPU/MemoryBlock.h>
 
 using emul::PortConnector;
 using emul::WORD;

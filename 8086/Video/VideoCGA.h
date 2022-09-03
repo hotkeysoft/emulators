@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Common.h"
-#include "../CPU/MemoryBlock.h"
+#include <Common.h>
+#include <CPU/MemoryBlock.h>
 #include "Video6845.h"
 
 using emul::WORD;

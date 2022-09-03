@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Common.h"
-#include "../CPU/Memory.h"
+#include <Common.h>
+#include <CPU/Memory.h>
 #include "../CPU/PortConnector.h"
 #include "Video6845.h"
 #include <array>

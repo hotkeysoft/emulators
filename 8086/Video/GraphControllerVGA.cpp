@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
 #include "GraphControllerVGA.h"
-#include "../CPU/MemoryBlock.h"
-#include "../CPU/Memory.h"
+#include <CPU/MemoryBlock.h>
+#include <CPU/Memory.h>
 
 using emul::GetBit;
 
@@ -31,7 +31,7 @@ namespace graph_vga
 	{
 		assert(memory);
 		m_memory = memory;
-		
+
 		assert(vgaRAM);
 		m_vgaRAM = vgaRAM;
 
@@ -255,7 +255,7 @@ namespace graph_vga
 		to["readModeCompare"] = m_data.readModeCompare;
 		to["oddEven"] = m_data.oddEven;
 		to["shiftRegister"] = m_data.shiftRegister;
-		to["color256"] = m_data.color256;		
+		to["color256"] = m_data.color256;
 		to["graphics"] = m_data.graphics;
 		to["chainOddEven"] = m_data.chainOddEven;
 		to["memoryMap"] = m_data.memoryMap;

@@ -10,7 +10,7 @@ namespace emul
 
 	const WORD BlockGranularity = 4096;
 
-	Memory::Memory() : Logger("MEM")	
+	Memory::Memory() : Logger("MEM")
 	{
 	}
 
@@ -23,8 +23,8 @@ namespace emul
 		m_addressBits = addressBits;
 		m_addressMask = (ADDRESS)GetMaxAddress(addressBits);
 
-		LogPrintf(LOG_INFO, "Setting up [%d] bit memory address space mask=["PRINTF_BIN_PATTERN_INT32"]", 
-			addressBits, 
+		LogPrintf(LOG_INFO, "Setting up [%d] bit memory address space mask=["PRINTF_BIN_PATTERN_INT32"]",
+			addressBits,
 			PRINTF_BYTE_TO_BIN_INT32(m_addressMask));
 
 		size_t memSlots = ((uint64_t)1 << addressBits) / BlockGranularity;
@@ -51,7 +51,7 @@ namespace emul
 		{
 			len = block->GetSize();
 		}
-		
+
 		LogPrintf(LOG_INFO, "Request to allocate block [%s] at %X, size = %d bytes", block->GetId().c_str(), base, block->GetSize());
 
 		if (len % BlockGranularity != 0)
@@ -164,7 +164,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "Copying %d slots, base slot = %02Xh -> %02Xh", nbSlots, sourceBaseSlot, windowBaseSlot);
 
 		for (size_t i = 0; i < nbSlots; ++i)
-		{			
+		{
 			MemorySlot slot = m_memory[sourceBaseSlot + i];
 			slot.base += (window - source);
 
@@ -287,7 +287,7 @@ namespace emul
 		json blocks = from["blocks"];
 		for (auto& block : blocks.items())
 		{
-			
+
 			std::string id = block.key();
 			json source = block.value();
 			DWORD size = source["size"];

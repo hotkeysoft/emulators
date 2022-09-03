@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#include "CPU/Memory.h"
-#include "CPU/MemoryBlock.h"
+#include <CPU/Memory.h>
+#include <CPU/MemoryBlock.h>
 #include "IO/Console.h"
 #include "IO/Monitor.h"
 
@@ -192,7 +192,7 @@ json snapshotData;
 fs::path snapshotDir;
 
 // Here we only save some info to be retreived in the main loop.
-// We cannot restore the actual pc here becore we're deep in the 
+// We cannot restore the actual pc here becore we're deep in the
 // computer message handlers. So we set a flag
 // and to the actual restore and new pc creation from the main loop.
 void NewComputerCallback(fs::path dir, json& j)
@@ -209,27 +209,27 @@ void NewComputerCallback(fs::path dir, json& j)
 }
 
 // Restoring a snapshot with a new computer architecture is a bit tricky
-// 
-// To deserialize a pc from json data, you need to have it created 
-// and initialized. 
-// 
+//
+// To deserialize a pc from json data, you need to have it created
+// and initialized.
+//
 // However as soon as you create a new Computer object,
 // you reset some internal static things to point to the new computer object.
-// 
+//
 // Same things happens with port connections, which are global and reset
-// when you initialize the new Computer. 
-// 
-// This means that as soon as you call CreateComputer(), you can *not* use the 
+// when you initialize the new Computer.
+//
+// This means that as soon as you call CreateComputer(), you can *not* use the
 // old Computer object anymore for anything.
-// 
-// This also means that if the deseriaization fails with the new Computer, you can 
+//
+// This also means that if the deseriaization fails with the new Computer, you can
 // not fall back to the previous one. You have to carry on with the new Computer.
 Computer* RestoreNewComputerFromSnapshot()
 {
 	fprintf(stderr, "Restore new computer from snapshot\n");
 	Computer* newPC = nullptr;
 
-	// Until we have created the new pc object, we can bail out and 
+	// Until we have created the new pc object, we can bail out and
 	// continue with the old PC.
 	bool failureIsFatal = false;
 
@@ -323,7 +323,7 @@ int main(int argc, char* args[])
 		else
 		{
 			fprintf(stderr, "Unable to decode SEGMENT:OFFSET value [%s]\n", breakpointStr.c_str());
-		}		
+		}
 	}
 
 	std::string memViewStr = CONFIG().GetValueStr("monitor", "custommem");
@@ -338,7 +338,7 @@ int main(int argc, char* args[])
 		else
 		{
 			fprintf(stderr, "Unable to decode SEGMENT:OFFSET value [%s]\n", memViewStr.c_str());
-		}	
+		}
 	}
 
 #ifdef CPU_TEST
@@ -355,7 +355,7 @@ int main(int argc, char* args[])
 
 	MAINWND().Init();
 	InitSound();
-	
+
 	Overlay overlay;
 	overlay.Init();
 	overlay.SetNewComputerCallback(NewComputerCallback);
@@ -375,7 +375,7 @@ int main(int argc, char* args[])
 
 #if 0
 	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
-	
+
 	testROMF000.LoadFromFile(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\pass\add.bin)");
 	pc->GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
 	pc->Reset(0xF000, 0);
@@ -397,8 +397,8 @@ int main(int argc, char* args[])
 		int cooldown = cooldownFactor;
 
 		while (run)
-		{ 
-			if (breakpointEnabled && 
+		{
+			if (breakpointEnabled &&
 				(pc->GetCPU().GetRegValue(REG16::CS) == breakpoint.segment) &&
 				(pc->GetCPU().GetRegValue(REG16::IP) == breakpoint.offset))
 			{
@@ -435,7 +435,7 @@ int main(int argc, char* args[])
 				cooldown = cooldownFactor;
 
 				// Overlay update
-				// 
+				//
 				// For now this only updates the fdd/hdd LEDs.
 				// The actual GUI is refreshed in a callback above
 				if (showOverlay && !overlay.Update())

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
 #include "GraphControllerEGA.h"
-#include "../CPU/MemoryBlock.h"
-#include "../CPU/Memory.h"
+#include <CPU/MemoryBlock.h>
+#include <CPU/Memory.h>
 
 using emul::GetBit;
 
@@ -30,7 +30,7 @@ namespace graph_ega
 	{
 		assert(memory);
 		m_memory = memory;
-		
+
 		assert(egaRAM);
 		m_egaRAM = egaRAM;
 

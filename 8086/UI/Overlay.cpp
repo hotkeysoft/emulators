@@ -58,7 +58,7 @@ namespace ui
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = parent;
 		ofn.lpstrFile = szFile;
-		// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+		// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
 		// use the contents of szFile to initialize itself.
 		ofn.lpstrFile[0] = '\0';
 		ofn.nMaxFile = sizeof(szFile);
@@ -697,7 +697,7 @@ namespace ui
 			if (currIt == speeds.end())
 			{
 				currIt = speeds.begin();
-			}		
+			}
 		}
 		m_pc->SetCPUSpeed(*currIt);
 		UpdateSpeed();
@@ -778,7 +778,7 @@ namespace ui
 			{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT |
 			SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "No" }
 		};
-		
+
 		SnapshotInfo info(path);
 		info.FromDisk();
 
@@ -802,7 +802,7 @@ namespace ui
 
 		int buttonId;
 		SDL_ShowMessageBox(&data, &buttonId);
-		
+
 		if (buttonId == 1)
 		{
 			LogPrintf(LOG_WARNING, "Delete snapshot, path: %s", path.string().c_str());
@@ -878,7 +878,7 @@ namespace ui
 		}
 		catch (SerializableException e)
 		{
-			// Thrown when hardware configuration is not compatible 
+			// Thrown when hardware configuration is not compatible
 			// (different video card, etc.)
 			// In that case we need to build a whole new PC with the correct
 			// config, but not in here.
@@ -959,7 +959,7 @@ namespace ui
 			LogPrintf(LOG_ERROR, "GetLastSnapshotDirectory: Base directory not set");
 			return;
 		}
-	
+
 		for (auto const& entry : std::filesystem::directory_iterator(path))
 		{
 			if (entry.is_directory())
@@ -1020,7 +1020,7 @@ namespace ui
 	}
 
 	void Overlay::ShowSnapshotWindow()
-	{	
+	{
 		RemoveSnapshotWindow();
 
 		const int nbItems = 16;
@@ -1062,10 +1062,10 @@ namespace ui
 		sprintf(id, "snapshot-%d", index);
 
 		SnapshotWidgetPtr widget = SnapshotWidget::Create(id, MAINWND().GetRenderer(), pos);
-		widget->Init(info, { 
-			RES().FindImage("overlay16", 13), 
-			RES().FindImage("overlay16", 14), 
-			RES().FindImage("overlay16", 15) 
+		widget->Init(info, {
+			RES().FindImage("overlay16", 13),
+			RES().FindImage("overlay16", 14),
+			RES().FindImage("overlay16", 15)
 		});
 		widget->SetText(GetSnapshotName(path).c_str());
 		widget->SetTag((void*)&path);
@@ -1190,7 +1190,7 @@ namespace ui
 		else if (WINMGR().GetCapture() && WINMGR().GetCapture().Target.target->HandleEvent(&e))
 		{
 			handled = true;
-		} 
+		}
 		else if (e.type == SDL_MOUSEMOTION)
 		{
 			Point pt(e.button.x, e.button.y);

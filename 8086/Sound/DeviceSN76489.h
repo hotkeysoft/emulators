@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Serializable.h"
+#include <Serializable.h>
 #include "../CPU/PortConnector.h"
 
 #include <vector>
@@ -94,7 +94,7 @@ namespace sn76489
 
 		void Shift();
 		void ResetShiftRegister() { m_shiftRegister = (1 << (m_shiftRegisterLen - 1)); }
- 
+
 		const BYTE m_shiftRegisterLen = 15;
 		const WORD m_noisePattern = 0b000000000010001;
 		WORD m_shiftRegister;

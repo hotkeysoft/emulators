@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Serializable.h"
+#include <Serializable.h>
 #include "../CPU/PortConnector.h"
 
 using emul::PortConnector;
@@ -191,7 +191,7 @@ namespace saa1099
 			REG_AMPLITUDE_3,
 			REG_AMPLITUDE_4,
 			REG_AMPLITUDE_5,
-			
+
 			REG_FREQENCY_0 = 0x08,
 			REG_FREQENCY_1,
 			REG_FREQENCY_2,
@@ -217,7 +217,7 @@ namespace saa1099
 		} m_currAddress = Address::REG_INVALID;
 
 		void WriteAddress(BYTE value);
-		void WriteData(BYTE value);			
+		void WriteData(BYTE value);
 
 		std::array<VoiceSquare, VOICE_COUNT> m_voices;
 		std::array<VoiceNoise, NOISE_COUNT> m_noise;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CPU80186.h"
-#include "Serializable.h"
+#include <Serializable.h>
 
 namespace emul
 {
@@ -136,11 +136,11 @@ namespace emul
 		virtual size_t GetAddressBits() const { return CPU80286_ADDRESS_BITS; }
 
 		virtual ADDRESS GetAddress(SegmentOffset segoff, MemAccess access = MemAccess::NONE) const override;
-		virtual ADDRESS GetCurrentAddress() const override 
-		{ 
+		virtual ADDRESS GetCurrentAddress() const override
+		{
 			const auto cs = GetSegmentTranslationRegister(SEGREG286::CS);
 			WORD ip = m_reg[REG16::IP];
-			return cs->base + ip; 
+			return cs->base + ip;
 		}
 
 		enum FLAG286 : WORD
@@ -186,7 +186,7 @@ namespace emul
 
 		InterruptDescriptor GetInterruptDescriptor(BYTE interrupt) const;
 
-		SegmentDescriptor LoadSegment(Selector sel) const 
+		SegmentDescriptor LoadSegment(Selector sel) const
 		{
 			return IsProtectedMode() ? (sel.GetTI() ? LoadSegmentLocal(sel) : LoadSegmentGlobal(sel)) : LoadSegmentReal(sel);
 		}
@@ -195,13 +195,13 @@ namespace emul
 		SegmentDescriptor LoadSegmentGlobal(Selector selector) const;
 		SegmentDescriptor LoadSegmentLocal(Selector selector) const;
 
-		const SegmentTranslationRegister* GetSegmentTranslationRegister(SEGREG286 segreg) const 
-		{ 
-			return (SegmentTranslationRegister*)m_reg.GetRawPtr16((size_t)segreg); 
+		const SegmentTranslationRegister* GetSegmentTranslationRegister(SEGREG286 segreg) const
+		{
+			return (SegmentTranslationRegister*)m_reg.GetRawPtr16((size_t)segreg);
 		}
 		SegmentTranslationRegister* GetSegmentTranslationRegister(SEGREG286 segreg)
-		{ 
-			return (SegmentTranslationRegister*)m_reg.GetRawPtr16((size_t)segreg); 
+		{
+			return (SegmentTranslationRegister*)m_reg.GetRawPtr16((size_t)segreg);
 		}
 
 		void LoadTranslationDescriptor(SEGREG286 dest, Selector selector, ADDRESS base);

@@ -55,15 +55,15 @@
     <Filter Include="Header Files\CPU\test">
       <UniqueIdentifier>{b9c13943-8c72-417e-b94f-9c7b72757c84}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\CPU">
+      <UniqueIdentifier>{7f59201c-b6b1-4a48-ae69-20b35db870be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Serializable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
@@ -81,16 +81,7 @@
     <ClInclude Include="..\Common\json.hpp">
       <Filter>3rd Party</Filter>
     </ClInclude>
-    <ClInclude Include="CPU\CPU.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
     <ClInclude Include="CPU\CPUInfo.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="CPU\Memory.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="CPU\MemoryBlock.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
     <ClInclude Include="IO\Console.h">
@@ -153,12 +144,21 @@
     <ClInclude Include="CPU\test\daa.h">
       <Filter>Header Files\CPU\test</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\CPU\CPU.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\Memory.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\MemoryBlock.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Serializable.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Serializable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
@@ -167,16 +167,7 @@
     <ClCompile Include="..\Common\Logger.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="CPU\CPU.cpp">
-      <Filter>Source Files\CPU</Filter>
-    </ClCompile>
     <ClCompile Include="CPU\CPUInfo.cpp">
-      <Filter>Source Files\CPU</Filter>
-    </ClCompile>
-    <ClCompile Include="CPU\Memory.cpp">
-      <Filter>Source Files\CPU</Filter>
-    </ClCompile>
-    <ClCompile Include="CPU\MemoryBlock.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
     <ClCompile Include="CPU\PortConnector.cpp">
@@ -229,6 +220,18 @@
     </ClCompile>
     <ClCompile Include="CPU\CPUZ80Test.cpp">
       <Filter>Source Files\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\CPU.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\Memory.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\MemoryBlock.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Serializable.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

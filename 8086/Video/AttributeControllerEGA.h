@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Common.h"
-#include "../Serializable.h"
+#include <Common.h>
+#include <Serializable.h>
 #include "../CPU/PortConnector.h"
 
 #include <array>
@@ -66,9 +66,9 @@ namespace attr_ega
 		uint32_t GetRGB32Color(BYTE value);
 
 		enum class RegisterMode
-		{ 
-			ADDRESS, 
-			DATA 
+		{
+			ADDRESS,
+			DATA
 		} m_currMode = RegisterMode::ADDRESS;
 
 		enum class AttrControllerAddress
@@ -88,7 +88,7 @@ namespace attr_ega
 		void WriteData(BYTE value);
 
 		ColorMode m_colorMode = ColorMode::RGB4;
-		
+
 		AttrControllerData m_data;
 	};
 }

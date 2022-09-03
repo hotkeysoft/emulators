@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CPU/PortConnector.h"
-#include "../Serializable.h"
+#include <Serializable.h>
 #include <vector>
 #include <deque>
 

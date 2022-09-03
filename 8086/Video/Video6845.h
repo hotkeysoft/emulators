@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Common.h"
-#include "../CPU/Memory.h"
+#include <Common.h>
+#include <CPU/Memory.h>
 #include "CRTController6845.h"
 #include "Video.h"
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Serializable.h"
+#include <Serializable.h>
 #include "../CPU/PortConnector.h"
-#include "../CPU/MemoryBlock.h"
+#include <CPU/MemoryBlock.h>
 #include "VideoEvents.h"
 
 using emul::PortConnector;
@@ -191,7 +191,7 @@ namespace crtc_ega
 		bool IsBlink8() const { return m_blink8; }
 		bool IsBlink16() const { return m_blink16; }
 
-		WORD GetMemoryAddress() const { 
+		WORD GetMemoryAddress() const {
 			WORD address = m_data.memoryAddress;
 
 			if (!m_config.byteAddressMode)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include <Common.h>
 #include "../CPU/PortConnector.h"
 #include "Device8255.h"
 
@@ -38,7 +38,7 @@ namespace ppi
 			SW_FLOPPY_L =    0x40, // SW7
 			SW_FLOPPY_H =    0x80, // SW8
 		};
-	
+
 		virtual void Reset() override;
 
 		// Amount of memory on system board

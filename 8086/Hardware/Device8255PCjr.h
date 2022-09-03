@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include <Common.h>
 #include "../CPU/PortConnector.h"
 #include "Device8255.h"
 
@@ -36,9 +36,9 @@ namespace ppi
 		bool GetCassetteMotorRelay() const { return (m_portBData & 0x18) == 0; }
 
 		bool GetTimer2Gate() const { return m_portBData & 1; }
-		void SetTimer2Output(bool value) 
-		{ 
-			m_timer2Out = value; 
+		void SetTimer2Output(bool value)
+		{
+			m_timer2Out = value;
 			// When the cassette motor relay is off,
 			// timer 2 output is looped back to cassette data bit
 			if (!GetCassetteMotorRelay())

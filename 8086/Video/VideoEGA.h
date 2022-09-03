@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Common.h"
-#include "../CPU/MemoryBlock.h"
+#include <Common.h>
+#include <CPU/MemoryBlock.h>
 #include "Video.h"
 #include "CRTControllerEGA.h"
 #include "GraphControllerEGA.h"
@@ -36,7 +36,7 @@ namespace video
 
 		virtual void Reset() override;
 		virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false) override;
-		virtual void Tick() override;	
+		virtual void Tick() override;
 
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
@@ -89,7 +89,7 @@ namespace video
 		void WriteFeatureControlRegister(BYTE value);
 		BYTE ReadStatusRegister0();
 		BYTE ReadStatusRegister1();
-	
+
 		// Sequencer
 		seq_ega::Sequencer m_sequencer;
 

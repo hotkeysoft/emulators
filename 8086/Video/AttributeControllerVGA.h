@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Common.h"
-#include "../Serializable.h"
+#include <Common.h>
+#include <Serializable.h>
 #include "../CPU/PortConnector.h"
 
 #include <array>
@@ -63,7 +63,7 @@ namespace attr_vga
 
 		void ResetMode() { m_currMode = RegisterMode::ADDRESS; }
 
-		BYTE GetColor(BYTE index) const { 
+		BYTE GetColor(BYTE index) const {
 			m_lastDot = (m_data.palette[index & 15] | GetColor67());
 			if (m_data.p4p5Select)
 			{
@@ -89,9 +89,9 @@ namespace attr_vga
 		BYTE GetColor45() const { return (m_data.colorSelect << 4) & 0b00110000; }
 
 		enum class RegisterMode
-		{ 
-			ADDRESS, 
-			DATA 
+		{
+			ADDRESS,
+			DATA
 		} m_currMode = RegisterMode::ADDRESS;
 
 		enum class AttrControllerAddress
@@ -112,7 +112,7 @@ namespace attr_vga
 		BYTE ReadAddress();
 		BYTE ReadData();
 		void WriteData(BYTE value);
-		
+
 		AttrControllerData m_data;
 	};
 }

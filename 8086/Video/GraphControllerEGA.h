@@ -1,6 +1,6 @@
 #pragma once
-#include "../Common.h"
-#include "../Serializable.h"
+#include <Common.h>
+#include <Serializable.h>
 #include "../CPU/PortConnector.h"
 #include "VideoEvents.h"
 

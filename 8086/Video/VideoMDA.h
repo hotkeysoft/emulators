@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Common.h"
-#include "../CPU/MemoryBlock.h"
-#include "../CPU/Memory.h"
+#include <Common.h>
+#include <CPU/MemoryBlock.h>
+#include <CPU/Memory.h>
 #include "Video6845.h"
 
 using emul::WORD;

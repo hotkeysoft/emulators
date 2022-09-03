@@ -108,7 +108,7 @@ namespace emul
 			return false;
 		}
 
-		size_t bytesRead = fread(m_data+offset, sizeof(BYTE), m_size-offset, f);
+		size_t bytesRead = fread(m_data + offset, sizeof(BYTE), m_size - offset, f);
 		if (bytesRead < 1)
 		{
 			LogPrintf(LOG_ERROR, "LoadBinary: error reading binary file");
@@ -149,7 +149,7 @@ namespace emul
 		}
 		fclose(f);
 
-		// 
+		//
 		for (auto i = 0; i < halfSize; ++i)
 		{
 			m_data[(2 * i) + (int)oddEven] = tempBuf[i];
@@ -175,7 +175,7 @@ namespace emul
 		}
 
 		len = std::min(len, m_size - offset);
-		size_t bytesWritten = fwrite(m_data+offset, sizeof(char), len, f);
+		size_t bytesWritten = fwrite(m_data + offset, sizeof(char), len, f);
 		if (bytesWritten != len)
 		{
 			LogPrintf(LOG_ERROR, "Dump: error writing binary file");
@@ -189,5 +189,4 @@ namespace emul
 		fclose(f);
 		return true;
 	}
-
 }

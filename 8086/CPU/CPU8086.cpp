@@ -41,12 +41,12 @@ namespace emul
 
 	BYTE GetOP2(BYTE op2) { return (op2 >> 3) & 7; }
 
-	BYTE Mem8::Read() const 
-	{ 
-		return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_cpu->GetAddress(m_segOff, MemAccess::READ)); 
+	BYTE Mem8::Read() const
+	{
+		return (int)m_reg8 ? m_registers->Read8(m_reg8) : m_memory->Read8(m_cpu->GetAddress(m_segOff, MemAccess::READ));
 	}
-	void Mem8::Write(BYTE value) 
-	{ 
+	void Mem8::Write(BYTE value)
+	{
 		(int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_cpu->GetAddress(m_segOff, MemAccess::WRITE), value);
 	}
 
@@ -54,8 +54,8 @@ namespace emul
 	{
 	}
 
-	CPU8086::CPU8086(cpuInfo::CPUType type, Memory& memory) : 
-		CPU(CPU8086_ADDRESS_BITS, memory), 
+	CPU8086::CPU8086(cpuInfo::CPUType type, Memory& memory) :
+		CPU(CPU8086_ADDRESS_BITS, memory),
 		m_info(type),
 		Logger("CPU8086")
 	{
@@ -646,7 +646,7 @@ namespace emul
 		// AAD
 		m_opcodes[0xD5] = [=]() { AAD(FetchByte()); };
 
-		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
+		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags.
 		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
 		m_opcodes[0xD6] = [=]() { SALC(); };
 
@@ -765,13 +765,13 @@ namespace emul
 				ret = CPU::Step();
 			}
 		}
-		
+
 		if (m_state == CPUState::HALT)
 		{
 			m_opTicks = 1;
 			ret = true;
-		} 
-		
+		}
+
 		if (ret && m_irqPending != -1)
 		{
 			assert(!inSegOverride);
@@ -790,13 +790,11 @@ namespace emul
 
 		bool trap = GetFlag(FLAG_T);
 
-		++m_reg[REG16::IP];
-
 		// Disable override after next instruction
 		bool clearSegOverride = inSegOverride;
 
 		m_currTiming = &m_info.GetOpcodeTiming(opcode);
-		
+
 		try
 		{
 			// Fetch the function corresponding to the opcode and run it
@@ -1115,7 +1113,7 @@ namespace emul
 			m_regMem = REGMEM::REG;
 			return GetReg16(modrm);
 		case 0x00: // NO DISP (or DIRECT)
-			if ((modrm & 7) == 6) // Direct 
+			if ((modrm & 7) == 6) // Direct
 			{
 				direct = true;
 				displacement = FetchWord();
@@ -1251,7 +1249,7 @@ namespace emul
 		LogPrintf(LOG_WARNING, "HLT");
 		m_state = CPUState::HALT;
 	}
-	
+
 	void CPU8086::CALLNear(WORD offset)
 	{
 		LogPrintf(LOG_DEBUG, "CALLNear Byte offset %02X", offset);
@@ -1465,7 +1463,7 @@ namespace emul
 	}
 
 	void CPU8086::JMPif(bool cond)
-	{	
+	{
 		LogPrintf(LOG_DEBUG, "JMPif %d", cond);
 		BYTE offset = FetchByte();
 		if (cond)
@@ -1512,7 +1510,7 @@ namespace emul
 				SetFlag(FLAG_C, carry);
 				break;
 			case 4: // SHL/SAL
-			case 6: // Undocumented 
+			case 6: // Undocumented
 				LogPrintf(LOG_DEBUG, "SHIFTROT8 SHL");
 				SetFlag(FLAG_C, GetMSB(work));
 				work <<= 1;
@@ -1565,7 +1563,7 @@ namespace emul
 		Mem8 dest = GetModRM8(op2);
 		BYTE work = dest.Read();
 		work = _SHIFTROT8(work, op2, count);
-		dest.Write(work);		
+		dest.Write(work);
 	}
 
 	WORD CPU8086::_SHIFTROT16(WORD work, BYTE op2, BYTE count)
@@ -1602,7 +1600,7 @@ namespace emul
 				SetFlag(FLAG_C, carry);
 				break;
 			case 4: // SHL/SAL
-			case 6: // Undocumented 
+			case 6: // Undocumented
 				LogPrintf(LOG_DEBUG, "SHIFTROT16 SHL");
 				SetFlag(FLAG_C, GetMSB(work));
 				work <<= 1;
@@ -1679,14 +1677,14 @@ namespace emul
 		// TODO: improve this
 		if (func == rawAdd8 || func == rawAdc8)
 		{
-			// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative), 
-			// then overflow occurs if and only if the result has the opposite sign. 
-			// Overflow never occurs when adding operands with different signs. 
+			// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative),
+			// then overflow occurs if and only if the result has the opposite sign.
+			// Overflow never occurs when adding operands with different signs.
 			SetFlag(FLAG_O, (GetMSB(source) == GetMSB(before)) && (GetMSB(afterB) != GetMSB(source)));
 		}
 		else if (func == rawSub8 || func == rawCmp8 || func == rawSbb8)
 		{
-			// If 2 Two's Complement numbers are subtracted, and their signs are different, 
+			// If 2 Two's Complement numbers are subtracted, and their signs are different,
 			// then overflow occurs if and only if the result has the same sign as what is being subtracted.
 			SetFlag(FLAG_O, (GetMSB(source) != GetMSB(before)) && (GetMSB(afterB) == GetMSB(source)));
 		}
@@ -1721,14 +1719,14 @@ namespace emul
 		// TODO: improve this
 		if (func == rawAdd16 || func == rawAdc16)
 		{
-			// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative), 
-			// then overflow occurs if and only if the result has the opposite sign. 
-			// Overflow never occurs when adding operands with different signs. 
+			// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative),
+			// then overflow occurs if and only if the result has the opposite sign.
+			// Overflow never occurs when adding operands with different signs.
 			SetFlag(FLAG_O, (GetMSB(source) == GetMSB(before)) && (GetMSB(before) != GetMSB(afterW)));
 		}
 		else if (func == rawSub16 || func == rawCmp16 || func == rawSbb16)
 		{
-			// If 2 Two's Complement numbers are subtracted, and their signs are different, 
+			// If 2 Two's Complement numbers are subtracted, and their signs are different,
 			// then overflow occurs if and only if the result has the same sign as what is being subtracted.
 			SetFlag(FLAG_O, (GetMSB(source) != GetMSB(before)) && (GetMSB(afterW) == GetMSB(source)));
 		}
@@ -2162,7 +2160,7 @@ namespace emul
 
 	void CPU8086::POPF()
 	{
-		WORD flags = POP(); 
+		WORD flags = POP();
 		SetFlags(flags);
 	}
 
@@ -2171,7 +2169,7 @@ namespace emul
 		LogPrintf(LOG_DEBUG, "LODS8");
 
 		if (PreREP())
-		{	
+		{
 			m_reg[REG8::AL] = m_memory.Read8(GetAddress(SegmentOffset(inSegOverride ? segOverride : SEGREG::DS, m_reg[REG16::SI])));
 			IndexIncDec(m_reg[REG16::SI]);
 		}
@@ -2368,7 +2366,7 @@ namespace emul
 		--m_reg[REG16::CX];
 		LogPrintf(LOG_DEBUG, "PostRep, cx=%04X", m_reg[REG16::CX]);
 		if (!checkZ || (GetFlag(FLAG_Z) == repZ))
-		{ 
+		{
 			m_reg[REG16::IP] = m_reg[REG16::_REP_IP];
 		}
 		else
@@ -2394,13 +2392,13 @@ namespace emul
 		if (interrupt == 0x16)
 		{
 			LogPrintf(LOG_DEBUG, "Waiting for keyboard input");
-		} 
+		}
 		else  if (interrupt == 0x10)
 		{
 			LogPrintf(LOG_DEBUG, "VIDEO");
 #if 0
 			char ch = (m_reg[REG8::AL] < 32) ? '.' : (char)m_reg[REG8::AL];
-			
+
 			switch (m_reg[REG8::AH])
 			{
 			case 0x00: LogPrintf(LOG_ERROR, "INT10: 0x00 - Set video mode [%02X]", m_reg[REG8::AL]); break;
@@ -2454,7 +2452,7 @@ namespace emul
 
 #if 0
 			switch (m_reg[REG8::AH])
-			{				
+			{
 			case 0x09: LogPrintf(LOG_ERROR, "INT21: 0x09 - Print String @[%04X:%04X]", m_reg[REG16::DS], m_reg[REG16::DX]); break;
 			case 0x0A: LogPrintf(LOG_ERROR, "INT21: 0x0A - Buffered input"); break;
 			case 0x0E: LogPrintf(LOG_ERROR, "INT21: 0x0E - Select Disk dl=%02X", m_reg[REG8::DL]); break;
@@ -2479,7 +2477,7 @@ namespace emul
 
 		SetFlag(FLAG_T, false);
 		CLI();
-		
+
 		ADDRESS interruptAddress = interrupt * 4;
 		m_reg[REG16::CS] = m_memory.Read16(interruptAddress + 2);
 		m_reg[REG16::IP] = m_memory.Read16(interruptAddress);
@@ -2537,7 +2535,7 @@ namespace emul
 
 		// Target register -> offset
 		regMem.dest.Write(regMem.source.Read());
-		
+
 		// Read segment
 		regMem.source.Increment();
 		m_reg[(REG16)dest] = regMem.source.Read();
@@ -2555,7 +2553,7 @@ namespace emul
 	void CPU8086::AAA()
 	{
 		LogPrintf(LOG_DEBUG, "AAA");
-		
+
 		if (GetFlag(FLAG_A) || ((m_reg[REG8::AL] & 15) > 9))
 		{
 			++m_reg[REG8::AH];
@@ -2692,7 +2690,7 @@ namespace emul
 			// Register is not a valid source
 			throw CPUException(CPUExceptionType::EX_UNDEFINED_OPCODE);
 		case 0x00: // NO DISP (or DIRECT)
-			if ((modregrm & 7) == 6) // Direct 
+			if ((modregrm & 7) == 6) // Direct
 			{
 				direct = true;
 				displacement = FetchWord();
@@ -2723,7 +2721,7 @@ namespace emul
 
 	void CPU8086::SALC()
 	{
-		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags. 
+		// Undocumented, Performs an operation equivalent to SBB AL,AL, but without modifying any flags.
 		// In other words, AL will be set to 0xFF or 0x00, depending on whether CF is set or clear.
 		m_reg[REG8::AL] = GetFlag(FLAG_C) ? 0xFF : 0;
 	}
@@ -2807,10 +2805,10 @@ namespace emul
 		segment = WORD(seg);
 		offset = WORD(off);
 
-		return ((ret == 2) && 
-			(seg >=0) && 
-			(seg <=0xFFFF) && 
-			(off >=0) && 
+		return ((ret == 2) &&
+			(seg >=0) &&
+			(seg <=0xFFFF) &&
+			(off >=0) &&
 			(off <=0xFFFF));
 	}
 

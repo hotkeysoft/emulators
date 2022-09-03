@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include <Common.h>
 #include "DeviceFloppy.h"
 #include <vector>
 #include <deque>
@@ -34,7 +34,7 @@ namespace fdc
 		virtual void SetInterruptPending() override { m_interruptPending = m_dor.irqDMAEnabled; }
 
 		enum DOR
-		{			
+		{
 			TC    = 0x40, // Set = FDC Terminal Count
 			MOTB  = 0x20, // Set to turn drive 1's motor ON
 			MOTA  = 0x10, // Set to turn drive 0's motor ON

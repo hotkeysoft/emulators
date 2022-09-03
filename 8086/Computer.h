@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CPU/CPU8086.h"
-#include "CPU/Memory.h"
+#include <CPU/Memory.h>
 #include "Hardware/DeviceDMAPageRegister.h"
 #include "Sound/DevicePCSpeaker.h"
 #include "Video/Video.h"
-#include "Serializable.h"
+#include <Serializable.h>
 
 #include <set>
 
@@ -69,7 +69,7 @@ namespace emul
 		virtual void Reset() { m_cpu->Reset(); }
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
-		
+
 		CPU8086& GetCPU() const { return *m_cpu; }
 		Memory& GetMemory() { return m_memory; }
 		beeper::DevicePCSpeaker& GetSound() { return m_pcSpeaker; } // TODO: Sound interface

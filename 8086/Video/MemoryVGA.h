@@ -1,6 +1,6 @@
 #pragma once
-#include "../CPU/MemoryBlock.h"
-#include "../Serializable.h"
+#include <CPU/MemoryBlock.h>
+#include <Serializable.h>
 
 #include <array>
 
@@ -59,7 +59,7 @@ namespace memory_vga
 
 		const emul::DWORD m_planeSize;
 		const emul::ADDRESS m_planeAddressMask;
-		
+
 		MemoryBlock m_planes[4];
 		std::array<BYTE, 4> m_dataLatches = { 0, 0, 0, 0 };
 

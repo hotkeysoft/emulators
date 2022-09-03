@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../Serializable.h"
+#include <Serializable.h>
 #include "DevicePPI.h"
 
 // Microcontroller that manages communication with the keyboard (AT version)
-// 
+//
 // It also partially replicates the 8255 ports on the XT
 // Finally it allows some low level hardware manipulations
 // such as handling the A20 line or resetting the CPU
@@ -103,7 +103,7 @@ namespace ppi
 
 		Command m_activeCommand = Command::CMD_NONE;
 		// true if active command needs parameter in input buffer
-		bool m_commandParameter = false; 
+		bool m_commandParameter = false;
 
 		// Configuration Swiches on motherboard
 		struct Switches

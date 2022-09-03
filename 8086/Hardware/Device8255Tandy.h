@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include <Common.h>
 #include "../CPU/PortConnector.h"
 #include "Device8255.h"
 
@@ -23,9 +23,9 @@ namespace ppi
 		Device8255Tandy& operator=(Device8255Tandy&&) = delete;
 
 		bool GetTimer2Gate() const { return m_portBData & 1; }
-		void SetTimer2Output(bool value) 
-		{ 
-			m_timer2Out = value; 
+		void SetTimer2Output(bool value)
+		{
+			m_timer2Out = value;
 		}
 
 		bool IsKeyboardBusy() const { return emul::GetBit(m_portBData, 7); }

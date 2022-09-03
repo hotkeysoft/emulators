@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CPU.h"
-#include "../Serializable.h"
+#include <CPU/CPU.h>
+#include <Serializable.h>
 #include "PortConnector.h"
 #include "CPUInfo.h"
 

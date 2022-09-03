@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Common.h"
+#include <Common.h>
 #include "../CPU/PortConnector.h"
-#include "../Serializable.h"
+#include <Serializable.h>
 
 using emul::PortConnector;
 using emul::BYTE;

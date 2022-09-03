@@ -1,10 +1,10 @@
 #pragma once
 
 #include "CPU/CPU8080.h"
-#include "CPU/Memory.h"
+#include <CPU/Memory.h>
 
 #include "Video/Video.h"
-#include "Serializable.h"
+#include <Serializable.h>
 
 #include <set>
 
@@ -31,7 +31,7 @@ namespace emul
 		virtual void Reset() { m_cpu->Reset(); }
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
-		
+
 		CPU8080& GetCPU() const { return *m_cpu; }
 		Memory& GetMemory() { return m_memory; }
 		video::Video& GetVideo() { return *m_video; }

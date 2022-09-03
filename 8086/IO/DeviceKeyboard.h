@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Common.h"
+#include <Common.h>
 #include "../CPU/PortConnector.h"
 #include "../Hardware/DevicePPI.h"
 #include "../Hardware/Device8259.h"
@@ -14,7 +14,7 @@ namespace kbd
 	{
 	public:
 		DeviceKeyboard();
-		virtual ~DeviceKeyboard() {} 
+		virtual ~DeviceKeyboard() {}
 
 		DeviceKeyboard(const DeviceKeyboard&) = delete;
 		DeviceKeyboard& operator=(const DeviceKeyboard&) = delete;

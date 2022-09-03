@@ -64,6 +64,9 @@
     <Filter Include="Header Files\UI">
       <UniqueIdentifier>{196c425d-fd08-439c-aa97-65af9d4dd314}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\CPU">
+      <UniqueIdentifier>{b51a024c-8965-4fce-a77a-e59b309701f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -80,9 +83,6 @@
     </ClCompile>
     <ClCompile Include="Storage\CartridgePCjr.cpp">
       <Filter>Source Files\Storage</Filter>
-    </ClCompile>
-    <ClCompile Include="CPU\CPU.cpp">
-      <Filter>Source Files\CPU</Filter>
     </ClCompile>
     <ClCompile Include="CPU\CPU8086.cpp">
       <Filter>Source Files\CPU</Filter>
@@ -138,12 +138,6 @@
     <ClCompile Include="Sound\DeviceSN76489.cpp">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="CPU\Memory.cpp">
-      <Filter>Source Files\CPU</Filter>
-    </ClCompile>
-    <ClCompile Include="CPU\MemoryBlock.cpp">
-      <Filter>Source Files\CPU</Filter>
-    </ClCompile>
     <ClCompile Include="IO\Console.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
@@ -197,9 +191,6 @@
     </ClCompile>
     <ClCompile Include="Storage\DeviceHardDrive.cpp">
       <Filter>Source Files\Storage</Filter>
-    </ClCompile>
-    <ClCompile Include="Serializable.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UI\Overlay.cpp">
       <Filter>Source Files\UI</Filter>
@@ -303,6 +294,18 @@
     <ClCompile Include="Sound\DeviceSoundSource.cpp">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Serializable.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\CPU.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\Memory.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\MemoryBlock.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -377,9 +380,6 @@
     <ClInclude Include="IO\InputEvents.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="CPU\CPU.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
     <ClInclude Include="CPU\CPU8086.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
@@ -387,12 +387,6 @@
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
     <ClInclude Include="CPU\CPUInfo.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="CPU\Memory.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="CPU\MemoryBlock.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
     <ClInclude Include="CPU\PortConnector.h">
@@ -442,9 +436,6 @@
     </ClInclude>
     <ClInclude Include="IO\Monitor.h">
       <Filter>Header Files\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="Serializable.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UI\Overlay.h">
       <Filter>Header Files\UI</Filter>
@@ -559,6 +550,21 @@
     </ClInclude>
     <ClInclude Include="Sound\DeviceSoundSource.h">
       <Filter>Header Files\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Serializable.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\CPU.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\Memory.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\MemoryBlock.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\DeviceDMAPageRegister.h">
+      <Filter>Header Files\Hardware</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

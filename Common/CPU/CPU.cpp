@@ -4,8 +4,8 @@
 
 namespace emul
 {
-	CPU::CPU(size_t addressBits, Memory& memory) : 
-		Logger("CPU"), 
+	CPU::CPU(size_t addressBits, Memory& memory) :
+		Logger("CPU"),
 		m_memory(memory)
 	{
 	}
@@ -32,12 +32,12 @@ namespace emul
 
 			// Fetch opcode
 			m_state = CPUState::RUN;
-			
+
 			// Execute instruction
 			Exec(FetchByte());
 		}
 		catch (std::exception e)
-		{	
+		{
 			EnableLog(LOG_ERROR);
 			LogPrintf(LOG_ERROR, "Error processing instruction at 0x%04X! [%s] Stopping CPU.\n", GetCurrentAddress(), e.what());
 			m_state = CPUState::STOP;

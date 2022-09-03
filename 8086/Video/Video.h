@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Common.h"
-#include "../Serializable.h"
-#include "../CPU/Memory.h"
+#include <Common.h>
+#include <Serializable.h>
+#include <CPU/Memory.h>
 #include "../CPU/PortConnector.h"
 #include "../IO/InputEvents.h"
 

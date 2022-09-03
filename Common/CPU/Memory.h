@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Serializable.h"
-#include "MemoryBlock.h"
+#include <Serializable.h>
+#include <CPU/MemoryBlock.h>
 #include <vector>
 #include <set>
 

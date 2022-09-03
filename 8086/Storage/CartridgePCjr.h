@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../CPU/MemoryBlock.h"
+#include <CPU/MemoryBlock.h>
 
 using emul::WORD;
 using emul::BYTE;

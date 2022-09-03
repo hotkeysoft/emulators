@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Common.h"
+#include <Common.h>
 #include "CPU80286.h"
 
 using cpuInfo::Opcode;
@@ -51,12 +51,12 @@ namespace emul
 	{
 		static char buf[64];
 		sprintf(buf, "SEL[%s] OFF[%04x] DPL[%d] GATE[%s]",
-			selector.ToString(), offset, GetDPL(), 
+			selector.ToString(), offset, GetDPL(),
 			GetGateType() == GateType::INTERRUPT ? "INT" : "TRP");
 		return buf;
 	}
 
-	CPU80286::CPU80286(Memory& memory) : 
+	CPU80286::CPU80286(Memory& memory) :
 		CPU80186(CPUType::i80286, memory),
 		Logger("CPU80286")
 	{
@@ -274,7 +274,7 @@ namespace emul
 		{
 			throw std::exception("CPU80286::ModeSwitch: Expected jmpfar");
 		}
-		
+
 		WORD offset = FetchWord();
 		WORD segment = FetchWord();
 		// Put IP back where we were
@@ -360,7 +360,7 @@ namespace emul
 		case 1: SIDT(modrm); break; // Store Interrupt Descriptor Table Register
 		case 2: LGDT(modrm); break; //  Load Global Descriptor Table Register
 		case 3: LIDT(modrm); break; //  Load Interrupt Descriptor Table Register
-		case 4: SMSW(modrm); break; // Store Machine Status Word	
+		case 4: SMSW(modrm); break; // Store Machine Status Word
 		case 6: LMSW(modrm); break; //  Load Machine Status Word
 		default:
 			InvalidOpcode();
@@ -380,7 +380,7 @@ namespace emul
 	void CPU80286::STR(Mem16& dest)
 	{
 		LogPrintf(LOG_DEBUG, "STR");
-		
+
 		dest.Write(m_reg[(REG16)SEGREG286::TSS]);
 	}
 
@@ -717,7 +717,7 @@ namespace emul
 	void CPU80286::LOADALL()
 	{
 		LogPrintf(LOG_ERROR, "LOADALL (undocumented) [%04x:%04x]", m_reg[REG16::CS], m_reg[REG16::IP]);
-		
+
 		// Reads at fixed address 800h
 		ADDRESS base = 0x800;
 
@@ -744,7 +744,7 @@ namespace emul
 		LoadTranslationDescriptor(SEGREG286::CS, cs, base + 0x3C);
 		LoadTranslationDescriptor(SEGREG286::SS, ss, base + 0x42);
 		LoadTranslationDescriptor(SEGREG286::DS, ds, base + 0x48);
-		
+
 		// GDT
 		{
 			ADDRESS gdt = base + 0x4E;
@@ -933,7 +933,7 @@ namespace emul
 		case SEGREG286::ES:
 			sd.dest.Write(GetSegmentTranslationRegister(segreg)->selector);
 			break;
-		default: InvalidOpcode(); 
+		default: InvalidOpcode();
 			break;
 		}
 	}
@@ -958,8 +958,8 @@ namespace emul
 		case SEGREG::SS:
 			UpdateTranslationRegister((SEGREG286)segreg, sel, desc);
 			break;
-		default: 
-			InvalidOpcode(); 
+		default:
+			InvalidOpcode();
 			break;
 		}
 	}
@@ -976,8 +976,8 @@ namespace emul
 		case SEGREG::ES:
 			PUSH(m_reg[(REG16)segreg]);
 			break;
-		default: 
-			InvalidOpcode(); 
+		default:
+			InvalidOpcode();
 			break;
 		}
 	}
@@ -997,12 +997,12 @@ namespace emul
 		switch (segreg)
 		{
 		case SEGREG::ES:
-		case SEGREG::DS: 
-		case SEGREG::SS: 
-			UpdateTranslationRegister((SEGREG286)segreg, sel, desc); 
+		case SEGREG::DS:
+		case SEGREG::SS:
+			UpdateTranslationRegister((SEGREG286)segreg, sel, desc);
 			break;
-		default: 
-			InvalidOpcode(); 
+		default:
+			InvalidOpcode();
 			break;
 		}
 	}

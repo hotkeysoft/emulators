@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CPU/PortConnector.h"
-#include "../Serializable.h"
+#include <Serializable.h>
 
 namespace dma
 {
@@ -37,7 +37,7 @@ namespace dma
 		BYTE m_pageMask = 0x0F; // Default for 20 bit address bus
 
 		std::array<BYTE, 16> m_registers = {};
-		
+
 		BYTE ReadRegister();
 		void WriteRegister(BYTE value);
 
