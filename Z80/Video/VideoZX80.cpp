@@ -14,21 +14,13 @@ namespace video
 	void VideoZX80::Init(emul::Memory* memory, const char* charROM, bool forceMono)
 	{
 		Video::Init(memory, charROM, forceMono);
-		InitFrameBuffer(720, 480);
+		InitFrameBuffer(720, 640);
 	}
 
 	void VideoZX80::Tick()
 	{
-		if (m_hSync && (--m_hSyncCounter == 0))
-		{
-			m_hSync = false;
-
-			DrawBackground(32, m_background);
-		}
-
 		if (IsDisplayArea() && (m_fbCurrY > 0))
 		{
-			//LogPrintf(LOG_ERROR, "DrawChar, x=%d, y=%d", m_fbCurrX, m_fbCurrY);
 			DrawChar();
 		}
 	}
@@ -38,14 +30,23 @@ namespace video
 		return SDL_Rect{ 0, 0, 320, 320 };
 	}
 
-	void VideoZX80::HSync()
+	void VideoZX80::HSync(bool set)
 	{
-		NewLine();
-		m_hSync = true;
-		m_hSyncCounter = 8;
+		if (set)
+		{
+			if (!m_hSync)
+			{
+				DrawBackground(8, m_background);
+				NewLine();
+				DrawBackground(8, m_background);
+			}
 
-		++m_rowCounter;
-		m_rowCounter &= 7;
+			m_hSync = true;
+
+			++m_rowCounter;
+			m_rowCounter &= 7;
+		}
+		m_hSync = set;
 	}
 
 	void VideoZX80::VSync(bool set)
@@ -73,6 +74,8 @@ namespace video
 	}
 	void VideoZX80::LatchCurrentChar(BYTE ch)
 	{
+		HSync(false);
+
 		m_invertChar = GetBit(ch, 7);
 		SetBit(ch, 7, false);
 

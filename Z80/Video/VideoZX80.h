@@ -21,7 +21,7 @@ namespace video
         virtual bool IsHSync() const override { return m_hSync; }
         virtual bool IsDisplayArea() const override { return !IsVSync() && !IsHSync(); }
 
-        void HSync();
+        void HSync(bool set = true);
         void VSync(bool set);
 
         void LatchCurrentChar(BYTE ch);
@@ -43,9 +43,7 @@ namespace video
         DWORD m_foreground = GetDefaultForeground();
 
         bool m_vSync = false;
-
         bool m_hSync = false;
-        BYTE m_hSyncCounter = 0;
 
         BYTE m_rowCounter = 0;
     };
