@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Serializable.h>
-#include "../CPU/PortConnector.h"
+#include <CPU/PortConnector.h>
 
 using emul::PortConnector;
 using emul::WORD;

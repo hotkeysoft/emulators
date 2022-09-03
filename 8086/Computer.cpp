@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Computer.h"
-#include "Config.h"
+#include <Config.h>
 #include "CPU/CPU80186.h"
 #include "CPU/CPU80286.h"
 #include "Hardware/Device8167.h"

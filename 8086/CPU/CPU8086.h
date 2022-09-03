@@ -4,7 +4,7 @@
 #include <CPU/CPU.h>
 #include "CPUInfo.h"
 #include "CPUException.h"
-#include "PortConnector.h"
+#include <CPU/PortConnector.h>
 #include <tuple>
 #include <assert.h>
 

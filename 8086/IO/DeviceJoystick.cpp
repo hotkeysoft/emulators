@@ -2,7 +2,7 @@
 
 #include "DeviceKeyboard.h"
 #include "DeviceJoystick.h"
-#include "../Config.h"
+#include <Config.h>
 
 using cfg::CONFIG;
 

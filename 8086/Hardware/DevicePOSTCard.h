@@ -1,21 +1,21 @@
 #pragma once
 
-#include "../CPU/PortConnector.h"
+#include <CPU/PortConnector.h>
 #include "../CPU/CPU8086.h"
-#include "../Config.h"
+#include <Config.h>
 
 namespace post
 {
 	class DevicePOSTCard : public PortConnector
 	{
 	public:
-		DevicePOSTCard(WORD baseAddress) : 
-			Logger("POST"), 
+		DevicePOSTCard(WORD baseAddress) :
+			Logger("POST"),
 			m_baseAddress(baseAddress)
 		{
 		}
 
-		void Init(emul::CPU8086* cpu) 
+		void Init(emul::CPU8086* cpu)
 		{
 			assert(cpu);
 			m_cpu = cpu;

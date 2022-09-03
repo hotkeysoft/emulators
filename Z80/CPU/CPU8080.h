@@ -2,7 +2,7 @@
 
 #include <CPU/CPU.h>
 #include <Serializable.h>
-#include "PortConnector.h"
+#include <CPU/PortConnector.h>
 #include "CPUInfo.h"
 
 #undef IN

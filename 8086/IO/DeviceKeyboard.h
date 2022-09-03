@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CPU/CPUCommon.h>
-#include "../CPU/PortConnector.h"
+#include <CPU/PortConnector.h>
 #include "../Hardware/DevicePPI.h"
 #include "../Hardware/Device8259.h"
 

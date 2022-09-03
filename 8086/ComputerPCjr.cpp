@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "ComputerPCjr.h"
-#include "Config.h"
+#include <Config.h>
 #include "Hardware/Device8254.h"
 #include "Hardware/Device8255PCjr.h"
 #include "IO/DeviceJoystick.h"
@@ -77,7 +77,7 @@ namespace emul
 		m_soundModule.Init();
 
 		InitVideo("pcjr");
-		
+
 		m_biosF000.LoadFromFile("data/PCjr/BIOS_4860_1504036_F000.BIN");
 		m_memory.Allocate(&m_biosF000, emul::S2A(0xF000));
 
@@ -104,7 +104,7 @@ namespace emul
 		{
 			InitFloppy(new fdc::DeviceFloppyPCjr(0xF0, PIT_CLK));
 		}
-		
+
 		m_uart.EnableLog(CONFIG().GetLogLevel("uart"));
 		m_uart.Init();
 
@@ -165,7 +165,7 @@ namespace emul
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 		auto end = start + us;
-		do 
+		do
 		{
 			std::this_thread::yield();
 		} while (std::chrono::high_resolution_clock::now() < end);

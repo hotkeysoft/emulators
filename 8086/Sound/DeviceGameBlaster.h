@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Serializable.h>
-#include "../CPU/PortConnector.h"
+#include <CPU/PortConnector.h>
 #include "DeviceSAA1099.h"
 
 using emul::PortConnector;

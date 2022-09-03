@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "Video.h"
-#include "../Config.h"
+#include <Config.h>
 #include "../UI/MainWindow.h"
 
 #include <SDL.h>

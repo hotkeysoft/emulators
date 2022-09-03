@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Computer.h"
-#include "Config.h"
+#include <Config.h>
 #include "CPU/CPUZ80.h"
 #include "IO/InputEvents.h"
 
@@ -26,7 +26,7 @@ namespace emul
 
 	void Computer::Reboot()
 	{
-		LogPrintf(LOG_WARNING, "Reset");			
+		LogPrintf(LOG_WARNING, "Reset");
 		m_cpu->Reset();
 		m_memory.Clear();
 
@@ -44,7 +44,7 @@ namespace emul
 			LogPrintf(LOG_ERROR, "CPUType not supported");
 			throw std::exception("CPUType not supported");
 		}
-	
+
 		m_cpu->EnableLog(CONFIG().GetLogLevel("cpu"));
 		m_cpu->Init();
 

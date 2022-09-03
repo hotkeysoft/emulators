@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CPU/CPUCommon.h>
-#include "../CPU/PortConnector.h"
+#include <CPU/PortConnector.h>
 #include "Device8255.h"
 
 using emul::PortConnector;

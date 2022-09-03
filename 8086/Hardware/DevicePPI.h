@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../CPU/PortConnector.h"
+#include <CPU/PortConnector.h>
 
 // Base class for various IO peripherals devices (8255, 8042)
 

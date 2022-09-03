@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "Computer8080.h"
-#include "Config.h"
+#include <Config.h>
 #include "IO/Console.h"
 
 using cfg::CONFIG;
@@ -36,7 +36,7 @@ namespace emul
 			return false;
 		}
 
-		static uint32_t cpuTicks = 0;	
+		static uint32_t cpuTicks = 0;
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		++g_ticks;

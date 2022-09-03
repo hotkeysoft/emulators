@@ -3,7 +3,7 @@
 #include <CPU/CPUCommon.h>
 #include <Serializable.h>
 #include <CPU/Memory.h>
-#include "../CPU/PortConnector.h"
+#include <CPU/PortConnector.h>
 
 using emul::PortConnector;
 using emul::WORD;

@@ -3,7 +3,7 @@
 #include "MemoryVGA.h"
 #include "GraphControllerVGA.h"
 #include "SequencerVGA.h"
-#include "../Config.h"
+#include <Config.h>
 
 using emul::ADDRESS;
 using emul::GetBit;
@@ -62,7 +62,7 @@ namespace memory_vga
 
 		const BYTE* newA = m_planes[2].getPtr() + ((size_t)selectA * 16384);
 		const BYTE* newB = m_planes[2].getPtr() + ((size_t)selectB * 16384);
-		
+
 		if (m_charMapA != newA || m_charMapB != newB)
 		{
 			LogPrintf(LOG_INFO, "SelectCharMaps(adjusted for RAM size), A=[%d], B=[%d]", selectA, selectB);
@@ -222,7 +222,7 @@ namespace memory_vga
 							// Rotate
 							toWrite = RotateRight(data, m_graphData->rotateCount);
 						}
-					}				
+					}
 
 					// ALU
 					switch (m_graphData->aluFunction)

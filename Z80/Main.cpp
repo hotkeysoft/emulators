@@ -12,7 +12,7 @@
 #include "ComputerZ80.h"
 #include "ComputerZX80.h"
 
-#include "Config.h"
+#include <Config.h>
 #include "Sound/Sound.h"
 
 #include <conio.h>

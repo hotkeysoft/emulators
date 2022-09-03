@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "ComputerZX80.h"
-#include "Config.h"
+#include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPUZ80.h"
 #include "Video/VideoZX80.h"

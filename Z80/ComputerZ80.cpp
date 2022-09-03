@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "ComputerZ80.h"
-#include "Config.h"
+#include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPUZ80.h"
 #include "Video/VideoZX80.h"
@@ -67,7 +67,7 @@ namespace emul
 			return false;
 		}
 
-		static uint32_t cpuTicks = 0;	
+		static uint32_t cpuTicks = 0;
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		++g_ticks;

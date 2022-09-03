@@ -19,16 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\Config.h" />
     <ClInclude Include="..\Common\CPU\CPU.h" />
     <ClInclude Include="..\Common\CPU\CPUCommon.h" />
     <ClInclude Include="..\Common\CPU\Memory.h" />
     <ClInclude Include="..\Common\CPU\MemoryBlock.h" />
+    <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
-    <ClInclude Include="Computer.h" />
     <ClInclude Include="Computer8080.h" />
     <ClInclude Include="ComputerZ80.h" />
     <ClInclude Include="ComputerZX80.h" />
@@ -37,7 +38,6 @@
     <ClInclude Include="CPU\CPUInfo.h" />
     <ClInclude Include="CPU\CPUZ80.h" />
     <ClInclude Include="CPU\CPUZ80Test.h" />
-    <ClInclude Include="CPU\PortConnector.h" />
     <ClInclude Include="CPU\test\daa.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="IO\Console.h" />
@@ -53,21 +53,21 @@
     <ClInclude Include="Video\VideoZX80.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\Config.cpp" />
     <ClCompile Include="..\Common\CPU\CPU.cpp" />
     <ClCompile Include="..\Common\CPU\Memory.cpp" />
     <ClCompile Include="..\Common\CPU\MemoryBlock.cpp" />
+    <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="Computer8080.cpp" />
     <ClCompile Include="ComputerZ80.cpp" />
     <ClCompile Include="ComputerZX80.cpp" />
-    <ClCompile Include="Config.cpp" />
     <ClCompile Include="CPU\CPU8080.cpp" />
     <ClCompile Include="CPU\CPUInfo.cpp" />
     <ClCompile Include="CPU\CPUZ80.cpp" />
     <ClCompile Include="CPU\CPUZ80Test.cpp" />
-    <ClCompile Include="CPU\PortConnector.cpp" />
     <ClCompile Include="IO\Console.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor8080.cpp" />

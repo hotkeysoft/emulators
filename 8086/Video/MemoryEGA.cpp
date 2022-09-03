@@ -3,7 +3,7 @@
 #include "MemoryEGA.h"
 #include "GraphControllerEGA.h"
 #include "SequencerEGA.h"
-#include "../Config.h"
+#include <Config.h>
 
 using emul::ADDRESS;
 using emul::GetBit;
@@ -35,7 +35,7 @@ namespace memory_ega
 		m_planeSize((DWORD)ramsize / 4),
 		m_planeAddressMask(m_planeSize - 1),
 		m_planes{
-			MemoryBlock("BP0", (DWORD)ramsize / 4), 
+			MemoryBlock("BP0", (DWORD)ramsize / 4),
 			MemoryBlock("BP1", (DWORD)ramsize / 4),
 			MemoryBlock("BP2", (DWORD)ramsize / 4),
 			MemoryBlock("BP3", (DWORD)ramsize / 4)
@@ -77,7 +77,7 @@ namespace memory_ega
 
 		const BYTE* newA = m_planes[2].getPtr() + ((size_t)selectA * 16384);
 		const BYTE* newB = m_planes[2].getPtr() + ((size_t)selectB * 16384);
-		
+
 		if (m_charMapA != newA || m_charMapB != newB)
 		{
 			LogPrintf(LOG_INFO, "SelectCharMaps(adjusted for RAM size), A=[%d], B=[%d]", selectA, selectB);
@@ -110,7 +110,7 @@ namespace memory_ega
 		return true;
 	}
 
-	BYTE MemoryEGA::read(ADDRESS offset) 
+	BYTE MemoryEGA::read(ADDRESS offset)
 	{
 		if (!m_enable)
 			return 0xFF;
@@ -160,7 +160,7 @@ namespace memory_ega
 		}
 	}
 
-	void MemoryEGA::write(ADDRESS offset, BYTE data) 
+	void MemoryEGA::write(ADDRESS offset, BYTE data)
 	{
 		if (!m_enable)
 			return;
@@ -220,7 +220,7 @@ namespace memory_ega
 							// Rotate
 							toWrite = RotateRight(data, m_graphData->rotateCount);
 						}
-					}				
+					}
 
 					// ALU
 					switch (m_graphData->aluFunction)

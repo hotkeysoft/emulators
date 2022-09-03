@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "PortConnector.h"
-#include "../Config.h"
+#include <Config.h>
 
 namespace emul
 {
@@ -17,7 +17,7 @@ namespace emul
 			PortHandler* toDelete = handler;
 			handler = handler->chained;
 			delete (toDelete);
-		}		
+		}
 	}
 
 	void PortConnector::PortHandler::Chain(PortHandler chained)
@@ -47,8 +47,8 @@ namespace emul
 
 	bool PortConnector::Connect(WORD portNb, INFunction inFunc)
 	{
-		LogPrintf(LOG_INFO, "Connect input port 0x%04X", portNb);		
-		
+		LogPrintf(LOG_INFO, "Connect input port 0x%04X", portNb);
+
 		if (m_inputPorts.find(portNb) != m_inputPorts.end())
 		{
 			LogPrintf(LOG_ERROR, "Port already exists");

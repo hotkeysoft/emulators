@@ -165,9 +165,11 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\Config.cpp" />
     <ClCompile Include="..\Common\CPU\CPU.cpp" />
     <ClCompile Include="..\Common\CPU\Memory.cpp" />
     <ClCompile Include="..\Common\CPU\MemoryBlock.cpp" />
+    <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="ComputerAT.cpp" />
@@ -196,7 +198,6 @@
     <ClCompile Include="ComputerPCjr.cpp" />
     <ClCompile Include="ComputerTandy.cpp" />
     <ClCompile Include="ComputerXT.cpp" />
-    <ClCompile Include="Config.cpp" />
     <ClCompile Include="IO\Console.cpp" />
     <ClCompile Include="CPU\CPU8086.cpp" />
     <ClCompile Include="CPU\CPU8086Test.cpp" />
@@ -224,7 +225,6 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor.cpp" />
-    <ClCompile Include="CPU\PortConnector.cpp" />
     <ClCompile Include="UI\SnapshotInfo.cpp" />
     <ClCompile Include="UI\SnapshotWidget.cpp" />
     <ClCompile Include="UI\TimeFormatter.cpp" />
@@ -251,10 +251,12 @@
     <ClCompile Include="Video\VideoVGA.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\Config.h" />
     <ClInclude Include="..\Common\CPU\CPU.h" />
     <ClInclude Include="..\Common\CPU\CPUCommon.h" />
     <ClInclude Include="..\Common\CPU\Memory.h" />
     <ClInclude Include="..\Common\CPU\MemoryBlock.h" />
+    <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
@@ -284,7 +286,6 @@
     <ClInclude Include="ComputerPCjr.h" />
     <ClInclude Include="ComputerTandy.h" />
     <ClInclude Include="ComputerXT.h" />
-    <ClInclude Include="Config.h" />
     <ClInclude Include="IO\Console.h" />
     <ClInclude Include="CPU\CPU8086.h" />
     <ClInclude Include="CPU\CPU8086Test.h" />
@@ -311,7 +312,6 @@
     <ClInclude Include="Sound\DeviceSN76489.h" />
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor.h" />
-    <ClInclude Include="CPU\PortConnector.h" />
     <ClInclude Include="UI\SnapshotInfo.h" />
     <ClInclude Include="UI\SnapshotWidget.h" />
     <ClInclude Include="UI\TimeFormatter.h" />

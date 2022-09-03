@@ -5,7 +5,7 @@
 #include "TimeFormatter.h"
 #include "SnapshotInfo.h"
 #include "SnapshotWidget.h"
-#include "../Config.h"
+#include <Config.h>
 #include "../Storage/DeviceFloppy.h"
 #include "../Storage/DeviceHardDrive.h"
 

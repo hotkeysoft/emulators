@@ -13,7 +13,7 @@
 #include "ComputerTandy.h"
 #include "ComputerAT.h"
 
-#include "Config.h"
+#include <Config.h>
 #include "Sound/Sound.h"
 
 #include <conio.h>

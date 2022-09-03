@@ -87,9 +87,6 @@
     <ClInclude Include="IO\Monitor8080.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="CPU\PortConnector.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
     <ClInclude Include="Video\Video.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
@@ -107,9 +104,6 @@
     </ClInclude>
     <ClInclude Include="CPU\CPUZ80.h">
       <Filter>Header Files\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="Computer.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Computer8080.h">
       <Filter>Header Files</Filter>
@@ -156,11 +150,14 @@
     <ClInclude Include="..\Common\CPU\CPUCommon.h">
       <Filter>Common\CPU</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\CPU\PortConnector.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Config.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Config.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -168,9 +165,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="CPU\CPUInfo.cpp">
-      <Filter>Source Files\CPU</Filter>
-    </ClCompile>
-    <ClCompile Include="CPU\PortConnector.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
     <ClCompile Include="Sound\Sound.cpp">
@@ -231,6 +225,12 @@
       <Filter>Common\CPU</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\Serializable.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\PortConnector.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Config.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "ComputerXT.h"
-#include "Config.h"
+#include <Config.h>
 #include "IO/Console.h"
 #include "Hardware/Device8237.h"
 #include "Hardware/Device8254.h"

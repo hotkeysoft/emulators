@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "VideoEGA.h"
-#include "../Config.h"
+#include <Config.h>
 
 using cfg::CONFIG;
 
@@ -147,15 +147,15 @@ namespace video
 	}
 
 	void VideoEGA::OnChangeMode()
-	{	
+	{
 		m_crtc.SetCharWidth(m_sequencer.GetData().clockingMode.charWidth);
 
 		if (m_sequencer.GetData().memoryMode.alpha)
-		{			
+		{
 			SetMode(m_attrController.GetData().monochrome ? "textMDA" : "text");
 		}
 		else
-		{			
+		{
 			SetMode(m_graphController.GetData().shiftRegister ? "graphCGA4" : "graph");
 		}
 	}
@@ -209,7 +209,7 @@ namespace video
 	{
 		BeginFrame();
 		const struct SequencerData& seq = m_sequencer.GetData();
-		m_egaRAM.SelectCharMaps(seq.charMapSelectA, seq.charMapSelectA);		
+		m_egaRAM.SelectCharMaps(seq.charMapSelectA, seq.charMapSelectA);
 		m_newPelPanning = m_attrController.GetData().hPelPanning;
 	}
 
@@ -278,7 +278,7 @@ namespace video
 			break;
 		}
 
-		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cVIDEO %cPAGEBIT %cHSYNCPOL %cVSYNCPOL CLK[%s]]",			
+		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cVIDEO %cPAGEBIT %cHSYNCPOL %cVSYNCPOL CLK[%s]]",
 			m_misc.color ? ' ' : '/',
 			m_misc.enableRAM ? ' ' : '/',
 			!m_misc.disableVideo ? ' ' : '/',
@@ -326,12 +326,12 @@ namespace video
 		return value;
 	}
 
-	BYTE VideoEGA::ReadStatusRegister1() 
+	BYTE VideoEGA::ReadStatusRegister1()
 	{
 		m_attrController.ResetMode();
 
 		// Bit0: 1:Display cpu access enabled (vsync | hsync)
-		// 
+		//
 		// Light pen, not implemented
 		// Bit1: 1:Light pen trigger set
 		// Bit2: 1:Light pen switch off, 0: switch on
@@ -571,7 +571,7 @@ namespace video
 
 			for (int i = startBit; i >= endBit; --i)
 			{
-				BYTE color = 
+				BYTE color =
 					(GetBit(pixData[0], i) << 0) |
 					(GetBit(pixData[1], i) << 1) |
 					(GetBit(pixData[2], i) << 2) |
@@ -586,7 +586,7 @@ namespace video
 			}
 		}
 		else
-		{		
+		{
 			DrawBackground(8);
 		}
 	}

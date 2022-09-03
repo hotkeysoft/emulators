@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "VideoVGA.h"
-#include "../Config.h"
+#include <Config.h>
 
 using cfg::CONFIG;
 
@@ -62,7 +62,7 @@ namespace video
 		AddMode("graphCGA4", (DrawFunc)&VideoVGA::DrawGraphModeCGA4, (AddressFunc)&VideoVGA::GetBaseAddress, (ColorFunc)&VideoVGA::GetIndexedColor);
 		AddMode("graph256", (DrawFunc)&VideoVGA::DrawGraphMode256, (AddressFunc)&VideoVGA::GetBaseAddress, (ColorFunc)&VideoVGA::GetColor256);
 		SetMode("text");
-	
+
 		m_sequencer.Init();
 		m_sequencer.SetVidEventHandler(this);
 
@@ -202,7 +202,7 @@ namespace video
 	void VideoVGA::OnChangeMode()
 	{
 		m_crtc.SetCharWidth(m_sequencer.GetData().clockingMode.charWidth);
-				
+
 		if (!m_attrController.GetData().graphics)
 		{
 			SetMode(m_attrController.GetData().monochrome ? "textMDA" : "text");
@@ -214,7 +214,7 @@ namespace video
 		}
 		else
 		{
-			
+
 			SetMode(m_graphController.GetData().shiftRegister ? "graphCGA4" : "graph");
 		}
 	}
@@ -323,7 +323,7 @@ namespace video
 
 		m_setup.enable = GetBit(value, 3);
 		m_setup.setupMode = GetBit(value, 4);
-		LogPrintf(LOG_WARNING, "WriteSetupRegister [%cSETUP %cENABLE]", 
+		LogPrintf(LOG_WARNING, "WriteSetupRegister [%cSETUP %cENABLE]",
 			m_setup.setupMode ? ' ' : '/',
 			m_setup.enable ? ' ' : '/');
 
@@ -407,7 +407,7 @@ namespace video
 			break;
 		}
 
-		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cPAGEBIT %cHSYNCPOL %cVSYNCPOL CLK[%s]]",			
+		LogPrintf(Logger::LOG_INFO, "WriteMiscRegister [%cCOLOR %cRAM %cPAGEBIT %cHSYNCPOL %cVSYNCPOL CLK[%s]]",
 			m_misc.color ? ' ' : '/',
 			m_misc.enableRAM ? ' ' : '/',
 			m_misc.pageHigh ? ' ' : '/',
@@ -443,7 +443,7 @@ namespace video
 
 		value =
 			(sense << 4) |
-			(1 << 5) | 
+			(1 << 5) |
 			(1 << 6) |
 			(m_crtc.IsInterruptPending() << 7);
 
@@ -452,12 +452,12 @@ namespace video
 		return value;
 	}
 
-	BYTE VideoVGA::ReadStatusRegister1() 
+	BYTE VideoVGA::ReadStatusRegister1()
 	{
 		m_attrController.ResetMode();
 
 		// Bit0: 1:Display cpu access enabled (vsync | hsync)
-		// 
+		//
 		// Light pen, not implemented
 		// Bit1: 1:Light pen trigger set
 		// Bit2: 1:Light pen switch off, 0: switch on
@@ -713,7 +713,7 @@ namespace video
 
 			for (int i = startBit; i >= 0; --i)
 			{
-				BYTE color = 
+				BYTE color =
 					(GetBit(pixData[0], i) << 0) |
 					(GetBit(pixData[1], i) << 1) |
 					(GetBit(pixData[2], i) << 2) |
@@ -728,7 +728,7 @@ namespace video
 			}
 		}
 		else
-		{		
+		{
 			DrawBackground(8);
 		}
 	}

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "Video.h"
-#include "../Config.h"
+#include <Config.h>
 #include "../UI/MainWindow.h"
 #include "../UI/Overlay.h"
 
@@ -255,7 +255,7 @@ namespace video
 		if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED)
 		{
 			LogPrintf(LOG_INFO, "Resize: %d x %d", e.window.data1, e.window.data2);
-			
+
 			MAINWND().SetSize({ e.window.data1, e.window.data2 });
 			UpdateTargetRect();
 		}

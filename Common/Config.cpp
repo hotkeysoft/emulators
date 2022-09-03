@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Config.h"
+#include <Config.h>
 
 namespace cfg
 {

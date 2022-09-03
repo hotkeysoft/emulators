@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "MainWindow.h"
-#include "../Config.h"
+#include <Config.h>
 
 #include <SDL.h>
 
@@ -30,7 +30,7 @@ namespace ui
 		if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 		{
 			LogPrintf(LOG_INFO, "SDL Init Subsystem [Video]");
-			if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) 
+			if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
 			{
 				LogPrintf(LOG_ERROR, "Error initializing video subsystem: %s", SDL_GetError());
 				return false;
@@ -60,7 +60,7 @@ namespace ui
 
 		LogPrintf(LOG_INFO, "Render Scale Quality: %s", filtering.c_str());
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, filtering.c_str());
-		
+
 		return true;
 	}
 }

@@ -2,7 +2,7 @@
 
 #include <CPU/CPUCommon.h>
 #include <CPU/Memory.h>
-#include "../CPU/PortConnector.h"
+#include <CPU/PortConnector.h>
 #include "Video6845.h"
 #include <array>
 
