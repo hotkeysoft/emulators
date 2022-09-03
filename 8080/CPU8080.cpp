@@ -3,8 +3,8 @@
 
 namespace emul
 {
-	CPU8080::CPU8080(Memory & memory, MemoryMap &mmap, Interrupts & interrupts)
-		:	CPU(memory, mmap), Logger("CPU8088"), m_interrupts(interrupts), m_interruptsEnabled(false)
+	CPU8080::CPU8080(Memory & memory, Interrupts & interrupts)
+		:	CPU(memory), Logger("CPU8088"), m_interrupts(interrupts), m_interruptsEnabled(false)
 	{
 		// -------------------
 		// 1. Data Transfer Group
@@ -1121,8 +1121,6 @@ namespace emul
 
 			m_timeTicks += 18;
 			m_programCounter = getWord(valH, valL);
-
-			OnCall(calledFrom, m_programCounter);
 		}
 		else
 		{
@@ -1187,9 +1185,7 @@ namespace emul
 
 			m_timeTicks += timeT;
 
-			WORD returnTo = getWord(valH, valL);
-			OnReturn(returnTo - 3);
-			m_programCounter = returnTo;
+			m_programCounter = getWord(valH, valL);
 		}
 		else
 		{

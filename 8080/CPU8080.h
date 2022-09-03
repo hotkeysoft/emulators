@@ -7,13 +7,12 @@
 
 namespace emul
 {
-
 	class CPU8080 : public CPU
 	{
 	public:
 		enum InterruptSource { TRAP = 0, RST75, RST65, RST55 /*TODO INTR/INTA not implemented*/ };
 
-		CPU8080(Memory& memory, MemoryMap& mmap, Interrupts& interrupts);
+		CPU8080(Memory& memory, Interrupts& interrupts);
 		virtual ~CPU8080();
 
 		void AddDevice(PortConnector& ports);

@@ -3,7 +3,6 @@
 #include "stdafx.h"
 #include <CPU/Memory.h>
 #include <CPU/MemoryBlock.h>
-#include "MemoryMap.h"
 #include "CPU8080.h"
 #include "UART.h"
 #include <vector>
@@ -73,46 +72,46 @@ void SaveROMBlock(emul::MemoryBlock& out, emul::ADDRESS addr, std::vector<BYTE>&
 }
 
 // ASLINK map file
-bool readMapFile(const std::string &fileName, emul::MemoryMap &mmap)
-{
-	std::ifstream file(fileName.c_str(), std::ios::in);
-
-	if (!file)
-	{
-		std::cerr << "Error opening file: " << fileName << std::endl;
-		return false;
-	}
-
-	int lastAddr = -1;
-	int items = 0;
-	std::vector<BYTE> currBuffer;
-
-	while (file)
-	{
-		std::string line;
-		std::getline(file, line);
-
-		if (!file)
-			break;
-
-		// Lines with map info start with 10 spaces ("          ")
-		size_t pos = line.find_first_not_of(' ');
-		if (pos != 10)
-		{
-			continue;
-		}
-
-		std::istringstream is(line);
-		emul::MemoryMapItem item;
-		is >> std::hex >> item.address >> item.label >> item.module;
-
-		mmap.Add(item);
-		++items;
-	}
-	std::cout << "MemoryMap: Added " << items << " labels" << std::endl;
-
-	return true;
-}
+//bool readMapFile(const std::string &fileName, emul::MemoryMap &mmap)
+//{
+//	std::ifstream file(fileName.c_str(), std::ios::in);
+//
+//	if (!file)
+//	{
+//		std::cerr << "Error opening file: " << fileName << std::endl;
+//		return false;
+//	}
+//
+//	int lastAddr = -1;
+//	int items = 0;
+//	std::vector<BYTE> currBuffer;
+//
+//	while (file)
+//	{
+//		std::string line;
+//		std::getline(file, line);
+//
+//		if (!file)
+//			break;
+//
+//		// Lines with map info start with 10 spaces ("          ")
+//		size_t pos = line.find_first_not_of(' ');
+//		if (pos != 10)
+//		{
+//			continue;
+//		}
+//
+//		std::istringstream is(line);
+//		emul::MemoryMapItem item;
+//		is >> std::hex >> item.address >> item.label >> item.module;
+//
+//		mmap.Add(item);
+//		++items;
+//	}
+//	std::cout << "MemoryMap: Added " << items << " labels" << std::endl;
+//
+//	return true;
+//}
 
 // TODO: For now we only support filling-in a preallocated block starting at address 0
 bool readIntelHex(const std::string &fileName, emul::MemoryBlock &data)
@@ -293,18 +292,11 @@ int main(void)
 	emul::Memory memory;
 	memory.Init(16);
 	memory.EnableLog(Logger::LOG_INFO);
-	emul::MemoryMap mmap;
-	mmap.EnableLog(Logger::LOG_OFF);
 
 	emul::MemoryBlock rom("ROM", 0x8000, emul::MemoryType::ROM);
 	if (readIntelHex("data/main.ihx", rom))
 	{
 		memory.Allocate(&rom, 0);
-	}
-
-	if (!readMapFile("data/main.map", mmap))
-	{
-		fprintf(stderr, "Error reading map file\n");
 	}
 
 	emul::MemoryBlock buffer_memory("RAM", 0x8000);
@@ -320,9 +312,15 @@ int main(void)
 	interrupts.Allocate(emul::CPU8080::RST65, &uart);
 	interrupts.Allocate(emul::CPU8080::TRAP, &timer);
 
-	emul::CPU8080 cpu(memory, mmap, interrupts);
+	emul::CPU8080 cpu(memory, interrupts);
+	//cpu.GetMemoryMap().EnableLog(Logger::LOG_OFF);
 
-	cpu.AddWatch("EXECUTE", onCall, onRet);
+	//if (!readMapFile("data/main.map", cpu.GetMemoryMap()))
+	//{
+	//	fprintf(stderr, "Error reading map file\n");
+	//}
+
+	//cpu.AddWatch("EXECUTE", onCall, onRet);
 
 	cpu.AddDevice(uart);
 	cpu.Reset();

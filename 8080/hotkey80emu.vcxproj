@@ -141,7 +141,6 @@
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="Console.cpp" />
-    <ClCompile Include="MemoryMap.cpp" />
     <ClCompile Include="PortAggregator.cpp" />
     <ClCompile Include="PortConnector.cpp" />
     <ClCompile Include="CPU.cpp" />
@@ -166,7 +165,6 @@
     <ClInclude Include="..\Common\Serializable.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="Console.h" />
-    <ClInclude Include="MemoryMap.h" />
     <ClInclude Include="PortAggregator.h" />
     <ClInclude Include="PortConnector.h" />
     <ClInclude Include="CPU.h" />

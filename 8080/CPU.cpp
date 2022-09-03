@@ -3,7 +3,7 @@
 
 namespace emul
 {
-	CPU::CPU(Memory& memory, MemoryMap& mmap) : Logger("CPU"), m_memory(memory), m_mmap(mmap)
+	CPU::CPU(Memory& memory) : Logger("CPU"), m_memory(memory)
 	{
 		for (int i = 0; i < 256; i++)
 		{
@@ -85,72 +85,5 @@ namespace emul
 		}
 
 		return (parity != 0);
-	}
-
-	void CPU::AddWatch(WORD address, CPUCallbackFunc onCall, CPUCallbackFunc onRet)
-	{
-		LogPrintf(LOG_INFO, "Adding watch at address 0x%04X", address);
-		WatchItem item;
-		item.addr = address;
-		item.onCall = onCall;
-		item.onRet = onRet;
-		m_callWatches[address] = item;
-	}
-	void CPU::AddWatch(const char* label, CPUCallbackFunc onCall, CPUCallbackFunc onRet)
-	{
-		MemoryMapItem* item = m_mmap.Get(label);
-		if (item)
-		{
-			AddWatch(item->address, onCall, onRet);
-		}
-		else
-		{
-			LogPrintf(LOG_WARNING, "AddWatch: Undefined label %s", label);
-		}
-	}
-	void CPU::RemoveWatch(WORD address)
-	{
-		LogPrintf(LOG_INFO, "Removing watch at address 0x%04X", address);
-		m_callWatches.erase(address);
-		m_returnWatches.erase(address);
-	}
-	void CPU::RemoveWatch(const char* label)
-	{
-		MemoryMapItem* item = m_mmap.Get(label);
-		if (item)
-		{
-			RemoveWatch(item->address);
-		}
-		else
-		{
-			LogPrintf(LOG_WARNING, "RemoveWatch: Undefined label %s", label);
-		}
-	}
-
-	void CPU::OnCall(WORD caller, WORD target)
-	{
-		auto it = m_callWatches.find(target);
-		if (it != m_callWatches.end())
-		{
-			WatchItem& item = it->second;
-			if (item.onCall)
-			{
-				m_returnWatches[caller] = item;
-				item.onCall(this, target);
-			}
-		}
-	}
-	void CPU::OnReturn(WORD address)
-	{
-		auto it = m_returnWatches.find(address);
-		if (it != m_returnWatches.end())
-		{
-			WatchItem& item = it->second;
-			if (item.onRet)
-			{
-				item.onRet(this, address);
-			}
-			m_returnWatches.erase(it);
-		}
 	}
 }
