@@ -3,19 +3,22 @@
 #include "InterruptSource.h"
 #include <list>
 
-const int MAXINTERRUPT = 16;
-
-class Interrupts : public Logger
+namespace emul
 {
-public:
-	Interrupts();
-	virtual ~Interrupts();
+	const int MAXINTERRUPT = 16;
 
-	bool Allocate(BYTE intNb, InterruptSource *intSource);
-	bool Free(InterruptSource *intSource);
+	class Interrupts : public Logger
+	{
+	public:
+		Interrupts();
+		virtual ~Interrupts();
 
-	bool IsInterrupting(BYTE intNb);
+		bool Allocate(BYTE intNb, InterruptSource* intSource);
+		bool Free(InterruptSource* intSource);
 
-private:
-	InterruptSource* m_interrupts[MAXINTERRUPT];
-};
+		bool IsInterrupting(BYTE intNb);
+
+	private:
+		InterruptSource* m_interrupts[MAXINTERRUPT];
+	};
+}

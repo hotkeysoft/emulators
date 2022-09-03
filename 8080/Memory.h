@@ -3,26 +3,29 @@
 #include "MemoryBlock.h"
 #include <list>
 
-typedef std::list<MemoryBlock *> MemoryListType;
-
-class Memory : public Logger
+namespace emul
 {
-public:
-	Memory();
-	virtual ~Memory();
+	typedef std::list<MemoryBlock*> MemoryListType;
 
-	bool Allocate(MemoryBlock *block);
-	bool Free(MemoryBlock *block);
+	class Memory : public Logger
+	{
+	public:
+		Memory();
+		virtual ~Memory();
 
-	void Read(WORD address, BYTE &value);
-	void Write(WORD address, BYTE value);
+		bool Allocate(MemoryBlock* block);
+		bool Free(MemoryBlock* block);
 
-private:
-	MemoryListType m_memory;
+		void Read(WORD address, BYTE& value);
+		void Write(WORD address, BYTE value);
 
-	MemoryBlock *FindBlock(WORD address);
-	MemoryBlock *FindOverlap(const MemoryBlock *block);
+	private:
+		MemoryListType m_memory;
 
-	MemoryBlock *m_currBlock;
-	WORD m_currMin, m_currMax;
-};
+		MemoryBlock* FindBlock(WORD address);
+		MemoryBlock* FindOverlap(const MemoryBlock* block);
+
+		MemoryBlock* m_currBlock;
+		WORD m_currMin, m_currMax;
+	};
+}

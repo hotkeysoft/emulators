@@ -1,5 +1,5 @@
 #pragma once
-#include "Common.h"
+#include <CPU/CPUCommon.h>
 
 #include "windows.h"
 #include "wincon.h"
@@ -38,7 +38,7 @@ private:
 	void Delete();
 	void Tab();
 	void InsertLine();
-	
+
 	bool m_inControlSequence;
 	int m_controlSequenceLength;
 	int m_currControlArg;

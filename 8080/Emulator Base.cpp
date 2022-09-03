@@ -10,7 +10,7 @@
 
 #include <Windows.h>
 
-class Timer : public InterruptSource
+class Timer : public emul::InterruptSource
 {
 public:
 	Timer() : Logger("TIMER") {}
@@ -25,7 +25,7 @@ public:
 		}
 
 		DWORD delta = ticks - m_start;
-		if (delta > 100) 
+		if (delta > 100)
 		{
 			m_start = ticks;
 			return true;
@@ -66,14 +66,14 @@ WORD hexToWord(const std::string &hexStr)
 		hexToByte(hexStr.substr(2, 2));
 }
 
-void SaveROMBlock(std::vector<MemoryBlock> &out, int addr, std::vector<BYTE> &buffer)
+void SaveROMBlock(std::vector<emul::MemoryBlock>& out, int addr, std::vector<BYTE>& buffer)
 {
 	fprintf(stdout, "Saving block 0x%04X-0x%04X, size: %d\n", addr, addr + (int)buffer.size() - 1, (int)buffer.size());
-	out.push_back(MemoryBlock(addr, buffer, ROM));
+	out.push_back(emul::MemoryBlock(addr, buffer, emul::ROM));
 }
 
 // ASLINK map file
-bool readMapFile(const std::string &fileName, MemoryMap &mmap)
+bool readMapFile(const std::string &fileName, emul::MemoryMap &mmap)
 {
 	std::ifstream file(fileName.c_str(), std::ios::in);
 
@@ -103,7 +103,7 @@ bool readMapFile(const std::string &fileName, MemoryMap &mmap)
 		}
 
 		std::istringstream is(line);
-		MemoryMapItem item;
+		emul::MemoryMapItem item;
 		is >> std::hex >> item.address >> item.label >> item.module;
 
 		mmap.Add(item);
@@ -114,7 +114,7 @@ bool readMapFile(const std::string &fileName, MemoryMap &mmap)
 	return true;
 }
 
-bool readIntelHex(const std::string &fileName, std::vector<MemoryBlock> &data)
+bool readIntelHex(const std::string &fileName, std::vector<emul::MemoryBlock> &data)
 {
 	std::ifstream file(fileName.c_str(), std::ios::in);
 
@@ -163,7 +163,7 @@ bool readIntelHex(const std::string &fileName, std::vector<MemoryBlock> &data)
 		{
 			std::cerr << "Unexpected record type" << std::endl;
 			goto abort;
-		}	
+		}
 
 		if (lastAddr + currBuffer.size() != blockAddr)	// new block
 		{
@@ -174,7 +174,7 @@ bool readIntelHex(const std::string &fileName, std::vector<MemoryBlock> &data)
 			lastAddr = blockAddr;
 			currBuffer.clear();
 		}
-		
+
 		BYTE sum = 0;
 		for (int i = 0; i<nbBytes + 4; i++)
 		{
@@ -203,7 +203,7 @@ abort:
 	return false;
 }
 
-bool readSRecord(const std::string &fileName, std::vector<MemoryBlock> &data)
+bool readSRecord(const std::string &fileName, std::vector<emul::MemoryBlock> &data)
 {
 	std::ifstream file(fileName.c_str(), std::ios::in);
 
@@ -221,7 +221,7 @@ bool readSRecord(const std::string &fileName, std::vector<MemoryBlock> &data)
 		std::string temp;
 		std::getline(file, temp);
 
-		if (!file) 
+		if (!file)
 			break;
 
 		if (temp[0] != 'S')	// Lines should begin with S
@@ -257,7 +257,7 @@ bool readSRecord(const std::string &fileName, std::vector<MemoryBlock> &data)
 			lastAddr = blockAddr;
 			currBuffer.clear();
 		}
-		
+
 		for (int i=0; i<nbBytes; i++)
 		{
 			currBuffer.push_back(hexToByte(temp.substr(i*2+8,2)));
@@ -275,12 +275,12 @@ abort:
 
 unsigned long elapsed;
 
-void onCall(CPU* cpu, WORD addr)
+void onCall(emul::CPU* cpu, emul::WORD addr)
 {
 	elapsed = cpu->getTime();
 }
 
-void onRet(CPU* cpu, WORD addr)
+void onRet(emul::CPU* cpu, emul::WORD addr)
 {
 	fprintf(stderr, "\tELAPSED: %ul\n", cpu->getTime()-elapsed);
 }
@@ -289,12 +289,12 @@ int main(void)
 {
 	Logger::RegisterLogCallback(LogCallback);
 
-	Memory memory;
+	emul::Memory memory;
 	memory.EnableLog(Logger::LOG_OFF);
-	MemoryMap mmap;
+	emul::MemoryMap mmap;
 	mmap.EnableLog(Logger::LOG_OFF);
 
-	std::vector<MemoryBlock> monitorRom;
+	std::vector<emul::MemoryBlock> monitorRom;
 	if (readIntelHex("data/main.ihx", monitorRom))
 	{
 		for (int i=0; i<monitorRom.size(); i++)
@@ -306,20 +306,20 @@ int main(void)
 		fprintf(stderr, "Error reading map file\n");
 	}
 
-	MemoryBlock buffer_memory(0x8000, 0x8000, RAM);
+	emul::MemoryBlock buffer_memory(0x8000, 0x8000, emul::RAM);
 	memory.Allocate(&buffer_memory);
 
 	Timer timer;
 
-	UART uart(0x60);
+	emul::UART uart(0x60);
 	uart.Init();
 	uart.EnableLog(Logger::LOG_OFF);
 
-	Interrupts interrupts;
-	interrupts.Allocate(CPU8080::RST65, &uart);
-	interrupts.Allocate(CPU8080::TRAP, &timer);
+	emul::Interrupts interrupts;
+	interrupts.Allocate(emul::CPU8080::RST65, &uart);
+	interrupts.Allocate(emul::CPU8080::TRAP, &timer);
 
-	CPU8080 cpu(memory, mmap, interrupts);
+	emul::CPU8080 cpu(memory, mmap, interrupts);
 
 	cpu.AddWatch("EXECUTE", onCall, onRet);
 

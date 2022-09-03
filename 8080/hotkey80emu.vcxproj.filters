@@ -16,6 +16,9 @@
     <Filter Include="Common">
       <UniqueIdentifier>{409684cb-dc0c-4132-b14a-aa2f944a03d3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\CPU">
+      <UniqueIdentifier>{cdd60e41-f5c0-423a-9e51-6db907f6b26b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CPU8080.cpp">
@@ -92,14 +95,14 @@
     <ClInclude Include="MemoryMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\Logger.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\CPUCommon.h">
+      <Filter>Common\CPU</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

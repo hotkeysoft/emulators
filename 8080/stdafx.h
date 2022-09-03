@@ -4,19 +4,33 @@
 //
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#include "targetver.h"
+
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+#define new DBG_NEW
+#endif
 
 #include <stdio.h>
-#include <cstdarg>
-#include <fstream>
+#include <string.h>
+#include <stdarg.h>
 #include <conio.h>
+#include <exception>
+#include <cassert>
+#include <cstdint>
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <time.h>
+#include <stdexcept>
+#include <memory>
+#include <filesystem>
 
-#include "Common.h"
-#include "../Common/Logger.h"
+#include <Logger.h>
+#include <StringUtil.h>
+#include <CPU/CPUCommon.h>
 
-
+#define WIN32_LEAN_AND_MEAN

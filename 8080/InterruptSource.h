@@ -1,11 +1,13 @@
 #pragma once
 
-class InterruptSource : virtual public Logger
+namespace emul
 {
-public:
-	InterruptSource() {}
-	virtual ~InterruptSource() {}
+	class InterruptSource : virtual public Logger
+	{
+	public:
+		InterruptSource() {}
+		virtual ~InterruptSource() {}
 
-	virtual bool IsInterrupting() = 0;
-};
-
+		virtual bool IsInterrupting() = 0;
+	};
+}
