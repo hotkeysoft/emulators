@@ -41,7 +41,7 @@ namespace cpuInfo
 
 	enum class OpcodeTimingType {
 		BASE = 0, // Base number of ticks for instructions
-		MEM,      // Ticks when operand is memory         
+		MEM,      // Ticks when operand is memory
 		T3,       // Extra timing info for some opcodes (conditionals, jumps, 16 bits overhead, etc.)
 		T4,       // ""
 
@@ -55,7 +55,8 @@ namespace cpuInfo
 		short x; short y; short w; short h;
 	};
 
-	enum class CPUType { i8080, i8085, z80 };
+	// TODO: Remove
+	enum class CPUType { i8080, i8085, z80, i8086, i80186, i80286 };
 
 	class CPUInfo
 	{
@@ -92,10 +93,14 @@ namespace cpuInfo
 
 		using CPUMap = std::map<CPUType, CPUData>;
 
+		// TODO: Remove
 		const CPUMap m_cpus = {
 			{ CPUType::i8080, { "i8080", "8080.json" } },
 			{ CPUType::i8085, { "i8085", "8085.json" } },
-			{ CPUType::z80, { "z80", "z80.json" } }
+			{ CPUType::z80, { "z80", "z80.json" } },
+			{ CPUType::i8086, { "i8086", "8086.json" } },
+			{ CPUType::i80186, { "i80186", "80186.json" } },
+			{ CPUType::i80286, { "i80286", "80286.json" } }
 		};
 
 		CPUType m_model;
@@ -109,11 +114,13 @@ namespace cpuInfo
 		void BuildSubOpcodes(int index, const json& opcodes);
 		OpcodeTiming BuildTiming(const json& opcode) const;
 
-		Opcode m_opcodes[256];
-		std::string m_subOpcodes[(int)Opcode::MULTI::_COUNT][256];
+		static const size_t MAX_OPCODE = 0xFF;
 
-		OpcodeTiming m_timing[256];
-		OpcodeTiming m_subTiming[(int)Opcode::MULTI::_COUNT][256];
+		Opcode m_opcodes[MAX_OPCODE + 1];
+		std::string m_subOpcodes[(int)Opcode::MULTI::_COUNT][MAX_OPCODE + 1];
+
+		OpcodeTiming m_timing[MAX_OPCODE + 1];
+		OpcodeTiming m_subTiming[(int)Opcode::MULTI::_COUNT][MAX_OPCODE + 1];
 		OpcodeTiming m_miscTiming[(int)MiscTiming::_COUNT];
 	};
 }

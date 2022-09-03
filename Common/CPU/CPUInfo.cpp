@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "CPUInfo.h"
+#include <CPU/CPUInfo.h>
 
 namespace cpuInfo
 {
@@ -20,23 +20,28 @@ namespace cpuInfo
 	void CPUInfo::LoadConfig()
 	{
 		std::ifstream configFile("config/" + std::string(m_configFile));
-		if (configFile) 
+		if (configFile)
 		{
 			configFile >> m_config;
 		}
-		else 
+		else
 		{
 			throw std::exception("file not found");
 		}
 
-		if (m_config["cpu"]["opcodes"].size() != 256) 
+		if (!m_config["cpu"].contains("opcodes"))
 		{
-			throw std::exception("opcode list incomplete");
-		}	
+			throw std::exception("missing [opcodes] array");
+		}
 		BuildOpcodes(m_config["cpu"]["opcodes"]);
 
-		int groupCount = m_config["cpu"]["opcodes.grp"];
-		if ((groupCount < 1) || (groupCount > (int)Opcode::MULTI::_COUNT))
+		int groupCount = 0;
+		if (m_config["cpu"].contains("opcodes.grp"))
+		{
+			groupCount = m_config["cpu"]["opcodes.grp"];
+		}
+
+		if (groupCount > (int)Opcode::MULTI::_COUNT)
 		{
 			throw std::exception("invalid opcode.grp count");
 		}
@@ -45,51 +50,145 @@ namespace cpuInfo
 		{
 			char grpName[32];
 			sprintf(grpName, "opcodes.grp%d", i + 1);
-			if (m_config["cpu"][grpName].size() != 8)
+			if (!m_config["cpu"].contains(grpName))
 			{
-				throw std::exception("opcode.grp# list incomplete");
+				throw std::exception("opcode.grp# list missing");
 			}
 			BuildSubOpcodes(i, m_config["cpu"][grpName]);
 		}
 
-		if (m_config["cpu"]["misc"].size() != (int)MiscTiming::_COUNT)
+		if (m_config["cpu"].contains("misc"))
 		{
-			throw std::exception("misc timing list incomplete");
-		}
-		for (int i = 0; i < (int)MiscTiming::_COUNT; ++i)
-		{
-			m_miscTiming[i] = BuildTiming(m_config["cpu"]["misc"][i]);
+			size_t miscCount = m_config["cpu"]["misc"].size();
+
+			if (miscCount > (int)MiscTiming::_COUNT)
+			{
+				throw std::exception("misc timing list too big");
+			}
+			for (int i = 0; i < miscCount; ++i)
+			{
+				m_miscTiming[i] = BuildTiming(m_config["cpu"]["misc"][i]);
+			}
 		}
 	}
 
 	void CPUInfo::BuildOpcodes(const json& opcodes)
 	{
-		for (int i = 0; i < 256; ++i)
+		// Trivial case is an array of 256 opcodes. However, to account for holes
+		// and other weirdness, it is possible to specify a new index (int or hex string e.g. "0x12")
+		// so that the count jumps to the new value and continue loading opcodes linearly from there.
+
+		// First fill in the array so we don't have empty holes
+		for (int i = 0; i <= MAX_OPCODE; ++i)
 		{
-			m_opcodes[i] = BuildOpcode(opcodes[i]["name"]);
-			m_timing[i] = BuildTiming(opcodes[i]);
+			char buf[16];
+			sprintf(buf, "DB 0x%02X", i);
+			m_opcodes[i] = BuildOpcode(buf);
+			m_timing[i] = OpcodeTiming {};
+		}
+
+		size_t opcode = 0;
+		for (const json& curr : opcodes)
+		{
+			if (opcode > MAX_OPCODE)
+			{
+				throw std::exception("BuildOpcodes: index > MAX_OPCODE");
+			}
+
+			if (curr.is_number_integer()) // new index (integer)
+			{
+				int newIndex = curr;
+				if (newIndex < 0 || newIndex > MAX_OPCODE)
+				{
+					throw std::exception("BuildOpcodes: Invalid index");
+				}
+				opcode = newIndex;
+			}
+			else if (curr.is_string()) // new index (string)
+			{
+				int newIndex = std::stoul((const std::string&)curr, nullptr, 0);
+				if (newIndex < 0 || newIndex > MAX_OPCODE)
+				{
+					throw std::exception("BuildOpcodes: Invalid index");
+				}
+				opcode = newIndex;
+			}
+			else if (curr.is_object()) // opcode data
+			{
+				m_opcodes[opcode] = BuildOpcode(curr["name"]);
+				m_timing[opcode] = BuildTiming(curr);
+				++opcode;
+			}
+			else
+			{
+				throw std::exception("BuildOpcodes: Invalid value");
+			}
 		}
 	}
 
 	void CPUInfo::BuildSubOpcodes(int index, const json& opcodes)
 	{
-		for (int i = 0; i < 8; ++i)
+		// First fill in the array so we don't have empty holes
+		for (int i = 0; i <= MAX_OPCODE; ++i)
 		{
-			m_subOpcodes[index][i] = opcodes[i]["name"];
-			m_subTiming[index][i] = BuildTiming(opcodes[i]);
+			char buf[16];
+			sprintf(buf, "DB 0x%02X", i);
+			m_subOpcodes[index][i] = buf;
+			// All undefined sub opcodes are equivalent to 2xNOP
+			m_subTiming[index][i] = OpcodeTiming{ 8, 0, 0, 0 };
+		}
+
+		// TODO: Code duplication w/BuildOpcodes
+		BYTE opcode = 0;
+		for (const json& curr : opcodes)
+		{
+			if (opcode > MAX_OPCODE)
+			{
+				throw std::exception("BuildOpcodes: index > MAX_OPCODE");
+			}
+
+
+			if (curr.is_number_integer()) // new index (integer)
+			{
+				int newIndex = curr;
+				if (newIndex < 0 || newIndex > MAX_OPCODE)
+				{
+					throw std::exception("BuildSubOpcodes: Invalid index");
+				}
+				opcode = newIndex;
+			}
+			else if (curr.is_string()) // new index (string)
+			{
+				int newIndex = std::stoul((const std::string&)curr, nullptr, 16);
+				if (newIndex < 0 || newIndex > MAX_OPCODE)
+				{
+					throw std::exception("BuildOpcodes: Invalid index");
+				}
+				opcode = newIndex;
+			}
+			else if (curr.is_object()) // opcode data
+			{
+				m_subOpcodes[index][opcode] = curr["name"];
+				m_subTiming[index][opcode] = BuildTiming(curr);
+				++opcode;
+			}
+			else
+			{
+				throw std::exception("BuildSubOpcodes: Invalid value");
+			}
 		}
 	}
 
 	OpcodeTiming CPUInfo::BuildTiming(const json& opcode) const
 	{
-		OpcodeTiming timing = { 1, 0, 0, 0 };
+		OpcodeTiming timing = { 4, 0, 0, 0 };
 		if (!opcode.contains("timing"))
 		{
 			return timing;
 		}
 
 		const json& jsonTiming = opcode["timing"];
-		if (!jsonTiming.is_array() || jsonTiming.size() < 1 || jsonTiming.size() > 4)
+		if (!jsonTiming.is_array() || jsonTiming.size() < 1 || jsonTiming.size() > (int)OpcodeTimingType::_COUNT)
 		{
 			throw std::exception("invalid timing array");
 		}
@@ -147,10 +246,22 @@ namespace cpuInfo
 		else if (ret.i16) ret.imm = Opcode::IMM::W16;
 		else if (ret.i32) ret.imm = Opcode::IMM::W32;
 		else ret.imm = Opcode::IMM::NONE;
+
 		// Special case: I16/I8 (ENTER)
 		if (ret.i8 && ret.i16)
 		{
 			ret.imm = Opcode::IMM::W16W8;
+		}
+		// Check for double i8
+		if (ret.i8)
+		{
+			// Skip over first one
+			std::string::size_type pos = text.find("{i8}");
+			pos = text.find("{i8}", pos + 1);
+			if (pos != std::string::npos)
+			{
+				ret.imm = Opcode::IMM::W8W8;
+			}
 		}
 
 		if (ret.sr) ret.modRegRm = Opcode::MODREGRM::SR;
@@ -163,7 +274,7 @@ namespace cpuInfo
 
 	const std::string CPUInfo::GetSubOpcodeStr(const Opcode& parent, BYTE op2) const
 	{
-		if (parent.multi == Opcode::MULTI::NONE || op2 > 7)
+		if (parent.multi == Opcode::MULTI::NONE)
 		{
 			return "{err}";
 		}

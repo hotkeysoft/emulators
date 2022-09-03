@@ -3,7 +3,7 @@
 #include "Console.h"
 #include "Monitor8080.h"
 #include <CPU/Memory.h>
-#include "../CPU/CPUInfo.h"
+#include <CPU/CPUInfo.h>
 
 namespace emul
 {

@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp" />
     <ClCompile Include="..\Common\CPU\CPU.cpp" />
+    <ClCompile Include="..\Common\CPU\CPUInfo.cpp" />
     <ClCompile Include="..\Common\CPU\Memory.cpp" />
     <ClCompile Include="..\Common\CPU\MemoryBlock.cpp" />
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
@@ -201,7 +202,6 @@
     <ClCompile Include="IO\Console.cpp" />
     <ClCompile Include="CPU\CPU8086.cpp" />
     <ClCompile Include="CPU\CPU8086Test.cpp" />
-    <ClCompile Include="CPU\CPUInfo.cpp" />
     <ClCompile Include="Hardware\Device8237.cpp" />
     <ClCompile Include="Hardware\Device8250.cpp" />
     <ClCompile Include="Hardware\Device8254.cpp" />
@@ -254,6 +254,7 @@
     <ClInclude Include="..\Common\Config.h" />
     <ClInclude Include="..\Common\CPU\CPU.h" />
     <ClInclude Include="..\Common\CPU\CPUCommon.h" />
+    <ClInclude Include="..\Common\CPU\CPUInfo.h" />
     <ClInclude Include="..\Common\CPU\Memory.h" />
     <ClInclude Include="..\Common\CPU\MemoryBlock.h" />
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
@@ -289,7 +290,6 @@
     <ClInclude Include="IO\Console.h" />
     <ClInclude Include="CPU\CPU8086.h" />
     <ClInclude Include="CPU\CPU8086Test.h" />
-    <ClInclude Include="CPU\CPUInfo.h" />
     <ClInclude Include="Hardware\Device8237.h" />
     <ClInclude Include="Hardware\Device8250.h" />
     <ClInclude Include="Hardware\Device8254.h" />

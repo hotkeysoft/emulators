@@ -90,9 +90,6 @@
     <ClCompile Include="CPU\CPU8086Test.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="CPU\CPUInfo.cpp">
-      <Filter>Source Files\CPU</Filter>
-    </ClCompile>
     <ClCompile Include="Hardware\Device8237.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
@@ -306,6 +303,9 @@
     <ClCompile Include="..\Common\CPU\PortConnector.cpp">
       <Filter>Common\CPU</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\CPU\CPUInfo.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h">
@@ -381,9 +381,6 @@
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
     <ClInclude Include="CPU\CPU8086Test.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="CPU\CPUInfo.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
     <ClInclude Include="Storage\CartridgePCjr.h">
@@ -564,6 +561,9 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\CPU\PortConnector.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\CPUInfo.h">
       <Filter>Common\CPU</Filter>
     </ClInclude>
   </ItemGroup>

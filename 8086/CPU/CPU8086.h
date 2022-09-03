@@ -2,9 +2,9 @@
 
 #include <Serializable.h>
 #include <CPU/CPU.h>
-#include "CPUInfo.h"
-#include "CPUException.h"
+#include <CPU/CPUInfo.h>
 #include <CPU/PortConnector.h>
+#include "CPUException.h"
 #include <tuple>
 #include <assert.h>
 

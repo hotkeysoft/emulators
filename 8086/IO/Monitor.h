@@ -2,8 +2,8 @@
 
 #include "Console.h"
 #include <CPU/Memory.h>
+#include <CPU/CPUInfo.h>
 #include "../CPU/CPU8086.h"
-#include "../CPU/CPUInfo.h"
 
 namespace emul
 {

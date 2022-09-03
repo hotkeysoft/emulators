@@ -1,9 +1,9 @@
 #pragma once
 
-#include <CPU/CPU.h>
 #include <Serializable.h>
+#include <CPU/CPU.h>
 #include <CPU/PortConnector.h>
-#include "CPUInfo.h"
+#include <CPU/CPUInfo.h>
 
 #undef IN
 #undef OUT

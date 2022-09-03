@@ -78,9 +78,6 @@
     <ClInclude Include="..\Common\json.hpp">
       <Filter>3rd Party</Filter>
     </ClInclude>
-    <ClInclude Include="CPU\CPUInfo.h">
-      <Filter>Header Files\CPU</Filter>
-    </ClInclude>
     <ClInclude Include="IO\Console.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
@@ -156,6 +153,9 @@
     <ClInclude Include="..\Common\Config.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\CPU\CPUInfo.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -163,9 +163,6 @@
     </ClCompile>
     <ClCompile Include="..\Common\Logger.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="CPU\CPUInfo.cpp">
-      <Filter>Source Files\CPU</Filter>
     </ClCompile>
     <ClCompile Include="Sound\Sound.cpp">
       <Filter>Source Files\Sound</Filter>
@@ -232,6 +229,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\Config.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\CPUInfo.cpp">
+      <Filter>Common\CPU</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
