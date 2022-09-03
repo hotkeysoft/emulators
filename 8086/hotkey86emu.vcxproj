@@ -22,7 +22,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{0b9b0876-30dd-4326-ae50-53d9f9d98db6}</ProjectGuid>
-    <RootNamespace>EmulatorBase</RootNamespace>
+    <RootNamespace>hotkey86emu</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>hotkey86emu</ProjectName>
   </PropertyGroup>
@@ -352,12 +352,12 @@
     <None Include="TODO.md" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\overlay16.png" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CoreUI\CoreUI.vcxproj">
       <Project>{83e70e1a-f130-4da9-a8cb-cbd10a5821a0}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="res\overlay16.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

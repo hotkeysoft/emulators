@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{B70DD2FD-1B0A-4F88-B98D-8203FBE72D7E}</ProjectGuid>
-    <RootNamespace>EmulatorBase</RootNamespace>
+    <RootNamespace>hotkey80emu</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>hotkey80emu</ProjectName>
   </PropertyGroup>

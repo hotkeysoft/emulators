@@ -107,11 +107,16 @@
       <DeploymentContent>true</DeploymentContent>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CoreUI\CoreUI.vcxproj">
+      <Project>{83e70e1a-f130-4da9-a8cb-cbd10a5821a0}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{8a0e5078-f4ab-47ac-873d-061b8e4deece}</ProjectGuid>
-    <RootNamespace>Z80</RootNamespace>
+    <RootNamespace>hotkeyZ80emu</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
