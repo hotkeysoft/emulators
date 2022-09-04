@@ -55,13 +55,12 @@ namespace cpuInfo
 		short x; short y; short w; short h;
 	};
 
-	// TODO: Remove
-	enum class CPUType { i8080, i8085, z80, i8086, i80186, i80286 };
-
-	class CPUInfo
+	class CPUInfo : public Logger
 	{
 	public:
-		CPUInfo(CPUType model);
+		// CPU Model e.g. "8080", "z80", "80286"
+		// The config will be retrieved from file "{cpuid}.json"
+		CPUInfo(const char* cpuid);
 
 		CPUInfo() = delete;
 		CPUInfo(const CPUInfo&) = delete;
@@ -69,10 +68,8 @@ namespace cpuInfo
 		CPUInfo(CPUInfo&&) = delete;
 		CPUInfo& operator=(CPUInfo&&) = delete;
 
-		std::string GetName() const { return m_name; }
+		const char* GetId() const { return m_id.c_str(); }
 		void LoadConfig();
-
-		CPUType GetModel() const { return m_model; }
 
 		std::string GetANSIFile() const;
 		Coord GetCoord(const char* label) const;
@@ -85,26 +82,7 @@ namespace cpuInfo
 		const OpcodeTiming& GetMiscTiming(MiscTiming timing) const { return m_miscTiming[(int)timing]; }
 
 	protected:
-		struct CPUData
-		{
-			const char* name;
-			const char* configFile;
-		};
-
-		using CPUMap = std::map<CPUType, CPUData>;
-
-		// TODO: Remove
-		const CPUMap m_cpus = {
-			{ CPUType::i8080, { "i8080", "8080.json" } },
-			{ CPUType::i8085, { "i8085", "8085.json" } },
-			{ CPUType::z80, { "z80", "z80.json" } },
-			{ CPUType::i8086, { "i8086", "8086.json" } },
-			{ CPUType::i80186, { "i80186", "80186.json" } },
-			{ CPUType::i80286, { "i80286", "80286.json" } }
-		};
-
-		CPUType m_model;
-		std::string m_name;
+		std::string m_id;
 		std::string m_configFile;
 
 		json m_config;

@@ -11,7 +11,6 @@
 #include <thread>
 
 using cfg::CONFIG;
-using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -46,7 +45,7 @@ namespace emul
 
 	void ComputerPCjr::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUType::i8086, baseRAM);
+		Computer::Init(CPUID_8086, baseRAM);
 
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 3));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));

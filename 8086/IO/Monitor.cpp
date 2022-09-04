@@ -92,7 +92,7 @@ namespace emul
 	{
 		std::string ansiFile = m_cpu->GetInfo().GetANSIFile();
 
-		if (ansiFile.size()) 
+		if (ansiFile.size())
 		{
 			m_console.WriteBuffer(ansiFile.c_str(), ansiFile.size());
 		}
@@ -136,7 +136,7 @@ namespace emul
 	{
 		static Coord cpuId = m_cpu->GetInfo().GetCoord("CPUID");
 		std::ostringstream os;
-		os << std::setw(cpuId.w) << m_cpu->GetInfo().GetName();
+		os << std::setw(cpuId.w) << m_cpu->GetInfo().GetId();
 		m_console.WriteAt(cpuId.x, cpuId.y, os.str().c_str());
 	}
 
@@ -184,7 +184,7 @@ namespace emul
 		m_console.WriteAttrAt(ramDSSI.x, ramDSSI.y, (m_ramMode == RAMMode::DSSI) ? highlight : regular, ramDSSI.w);
 		m_console.WriteAttrAt(ramESDI.x, ramESDI.y, (m_ramMode == RAMMode::ESDI) ? highlight : regular, ramESDI.w);
 		m_console.WriteAttrAt(ramSTACK.x, ramSTACK.y, (m_ramMode == RAMMode::STACK) ? highlight : regular, ramSTACK.w);
-		
+
 		{
 			static char buf[32];
 			sprintf(buf, " CUSTOM:%s", m_customMemView.ToString());
@@ -284,7 +284,7 @@ namespace emul
 		}
 
 		WORD adjustedOffset = (offset / bytesPerLine) * bytesPerLine;
-		
+
 		// Check for end of segment
 		if (((DWORD)adjustedOffset + bytesTotal) >= 0x10000)
 		{
@@ -294,7 +294,7 @@ namespace emul
 		{
 			adjustedOffset -= bytesPerLine; // Show one row before when possible
 		}
-		
+
 		ADDRESS curr = S2A(segment, offset);
 		ADDRESS data = S2A(segment, adjustedOffset);
 		for (int y = 0; y < hexPos.h; ++y)
@@ -361,7 +361,7 @@ namespace emul
 		}
 	}
 
-	bool replace(std::string& str, const std::string& from, const std::string& to) 
+	bool replace(std::string& str, const std::string& from, const std::string& to)
 	{
 		size_t start = str.find(from);
 		if (start == std::string::npos)
@@ -382,7 +382,7 @@ namespace emul
 		Opcode instr = m_cpu->GetInfo().GetOpcode(data);
 		std::string text = instr.text;
 
-		// Group 6 are weird, sub command in 2nd byte, 
+		// Group 6 are weird, sub command in 2nd byte,
 		// modrm in 3rd byte with possible sub-sub command
 		if (instr.multi == Opcode::MULTI::GRP6)
 		{

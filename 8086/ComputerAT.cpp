@@ -13,7 +13,6 @@
 #include "Storage/DeviceHardDrive.h"
 
 using cfg::CONFIG;
-using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -62,7 +61,7 @@ namespace emul
 
 	void ComputerAT::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUType::i80286, baseRAM);
+		Computer::Init(CPUID_80286, baseRAM);
 
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 7));
 
@@ -184,7 +183,7 @@ namespace emul
 			LogPrintf(LOG_WARNING, "Setting maximum memory size to 2MB");
 		}
 
-		// TODO. 
+		// TODO.
 		// If requested <= 1M, allocate 640 + extra (above 1M)
 		// If not, allocate first meg low (640K allocated) + other megs high
 		WORD highRAM = 0;

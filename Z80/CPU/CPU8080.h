@@ -28,7 +28,7 @@ namespace emul
 
 		virtual void Exec(BYTE opcode) override;
 
-		virtual const std::string GetID() const override { return "8080"; };
+		virtual const std::string GetID() const override { return m_info.GetId(); };
 		virtual size_t GetAddressBits() const override { return CPU8080_ADDRESS_BITS; };
 		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter; }
 
@@ -47,7 +47,7 @@ namespace emul
 		virtual void Deserialize(const json& from) {} // TODO
 
 	protected:
-		CPU8080(cpuInfo::CPUType type, Memory& memory);
+		CPU8080(const char* cpuid, Memory& memory);
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)

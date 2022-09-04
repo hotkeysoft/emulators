@@ -33,7 +33,7 @@ namespace emul
 		BYTE GetIOHighAddress() const { return m_ioHighAddress; }
 
 	protected:
-		CPUZ80(cpuInfo::CPUType type, Memory& memory);
+		CPUZ80(const char* cpuid, Memory& memory);
 
 		virtual BYTE FetchByte() override { BYTE op = CPU8080::FetchByte();  return m_dataBusEnable ? op : 0; }
 
@@ -42,7 +42,7 @@ namespace emul
 			FLAG_S = 128, // Sign
 			FLAG_Z = 64,  // Zero
 			FLAG_F5 = 32, // undocumented flag - Copy of bit 5
-			FLAG_H = 16,  // Half Carry 
+			FLAG_H = 16,  // Half Carry
 			FLAG_F3 = 8,  // undocumented flag - Copy of bit 3
 			FLAG_PV = 4,  // Parity/Overflow
 			FLAG_N = 2,   // Subtract - Set if the last operation was a subtraction
@@ -96,7 +96,7 @@ namespace emul
 
 		void jumpRelIF(bool condition, BYTE offset);
 		void exec(OpcodeTable& table, BYTE opcode);
-		
+
 		void loadImm8toIdx(WORD base);
 
 		BYTE& GetIdxH() { return *(((BYTE*)m_currIdx) + 1); }

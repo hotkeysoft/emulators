@@ -5,12 +5,11 @@
 #include "IO/Console.h"
 
 using cfg::CONFIG;
-using cpuInfo::CPUType;
 
 namespace emul
 {
 	Computer8080::Computer8080() :
-		Logger("8080"),
+		Logger("Computer8080"),
 		Computer(m_memory),
 		m_baseRAM("RAM", 0x8000, emul::MemoryType::RAM),
 		m_rom("ROM", 0x8000, emul::MemoryType::ROM)
@@ -19,7 +18,7 @@ namespace emul
 
 	void Computer8080::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUType::i8080, baseRAM);
+		Computer::Init(CPUID_8080, baseRAM);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 

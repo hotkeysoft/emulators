@@ -2,19 +2,18 @@
 #include "CPU8080.h"
 
 using cpuInfo::Opcode;
-using cpuInfo::CPUType;
 
 namespace emul
 {
-	CPU8080::CPU8080(Memory& memory) : CPU8080(CPUType::i8080, memory)
+	CPU8080::CPU8080(Memory& memory) : CPU8080("8080", memory)
 	{
 	}
 
 
-	CPU8080::CPU8080(cpuInfo::CPUType type, Memory& memory) :
+	CPU8080::CPU8080(const char* cpuid, Memory& memory) :
 		CPU(CPU8080_ADDRESS_BITS, memory),
-		m_info(type),
-		Logger("CPU8080")
+		m_info(cpuid),
+		Logger(cpuid)
 	{
 		try
 		{
@@ -70,7 +69,7 @@ namespace emul
 		m_opcodes[0125] = [=]() { m_reg.D = m_reg.L; }; // D,L
 		m_opcodes[0127] = [=]() { m_reg.D = m_reg.A; }; // D,A
 
-		// Destination E	
+		// Destination E
 		m_opcodes[0130] = [=]() { m_reg.E = m_reg.B; }; // E,B
 		m_opcodes[0131] = [=]() { m_reg.E = m_reg.C; }; // E,C
 		m_opcodes[0132] = [=]() { m_reg.E = m_reg.D; }; // E,D
@@ -78,7 +77,7 @@ namespace emul
 		m_opcodes[0134] = [=]() { m_reg.E = m_reg.H; }; // E,H
 		m_opcodes[0135] = [=]() { m_reg.E = m_reg.L; }; // E,L
 		m_opcodes[0137] = [=]() { m_reg.E = m_reg.A; }; // E,A
-	
+
 		// Destination H
 		m_opcodes[0140] = [=]() { m_reg.H = m_reg.B; }; // H,B
 		m_opcodes[0141] = [=]() { m_reg.H = m_reg.C; }; // H,C
@@ -168,14 +167,14 @@ namespace emul
 
 		// LDAX rp (Load accumulator indirect)
 		// (A) <- ((rp))
-		// Note: only register pairs rp=B (B and C) or rp=D (D and E) 
+		// Note: only register pairs rp=B (B and C) or rp=D (D and E)
 		// may be specified.
 		m_opcodes[0012] = [=]() { LDAXb(); };
 		m_opcodes[0032] = [=]() { LDAXd(); };
 
 		// STAX rp (Store accumulator indirect)
 		// ((rp) <- (A)
-		// Note: only register pairs rp=B (B and C) or rp=D (D and E) 
+		// Note: only register pairs rp=B (B and C) or rp=D (D and E)
 		// may be specified.
 		m_opcodes[0002] = [=]() { STAXb(); };
 		m_opcodes[0022] = [=]() { STAXd(); };
@@ -184,7 +183,7 @@ namespace emul
 		// (H) <- (D)
 		// (L) <- (E)
 		m_opcodes[0353] = [=]() { XCHG(); };
-	
+
 		// -------------------
 		// 2. Arithmetic group
 
@@ -293,7 +292,7 @@ namespace emul
 		m_opcodes[0045] = [=]() { dec(m_reg.H); }; // H
 		m_opcodes[0055] = [=]() { dec(m_reg.L); }; // L
 		m_opcodes[0075] = [=]() { dec(m_reg.A); }; // A
-	
+
 		// DCR M (Decrement Memory)
 		// ((H)(L)) <- ((H)(L)) - 1
 		// Note: CY not affected
@@ -325,13 +324,13 @@ namespace emul
 
 		// DAA (Decimal Adjust Accumulator)
 		// The eight-bit number in the accumulator is adjusted to
-		// form two four-bit Binary-Coded-Decimal digits by the 
+		// form two four-bit Binary-Coded-Decimal digits by the
 		// following process:
 		//
-		// 1. If the value of the least significant 4 bits of the 
+		// 1. If the value of the least significant 4 bits of the
 		//    accumulator is greater than 9 or if the AC flag is set,
 		//    6 is added to the accumulator.
-		// 2. If the value of the most significant 4 bits of the 
+		// 2. If the value of the most significant 4 bits of the
 		//    accumulator is now greater than 9, *or* if the CY flag
 		//    is set, 6 is added to the most significant 4 bits of
 		//    the accumulator.
@@ -348,7 +347,7 @@ namespace emul
 		// ANA r (AND Register)
 		// (A) <- (A) and (r)
 		// Note: The CY flag is cleared and the AC is set (8085)
-		// The CY flag is cleared and AC is set to the ORing of 
+		// The CY flag is cleared and AC is set to the ORing of
 		// bits 3 of the operands (8080)
 		m_opcodes[0240] = [=]() { ana(m_reg.B); };	// B
 		m_opcodes[0241] = [=]() { ana(m_reg.C); };	// C
@@ -472,7 +471,7 @@ namespace emul
 		// (CY) <- /(CY)
 		// Note: No other flags are affected
 		m_opcodes[0077] = [=]() { ComplementFlag(FLAG_CY); };
-	
+
 		// STC (Set Carry)
 		// (CY) <- 1
 		// Note: No other flags are affected
@@ -627,7 +626,7 @@ namespace emul
 
 		// EI (Enable Interrupts)
 		// The interrupt system is enabled following the execution
-		// of the next instruction. 
+		// of the next instruction.
 		m_opcodes[0373] = [=]() { EI(); };
 
 		// DI (Disable Interrupts)
@@ -679,7 +678,7 @@ namespace emul
 	}
 
 	void CPU8080::ClearFlags(BYTE& flags)
-	{	
+	{
 		flags = FLAG_RESERVED_ON;
 	}
 
@@ -711,7 +710,7 @@ namespace emul
 			m_opTicks = 1;
 			ret = true;
 		}
-		
+
 		if (ret)
 		{
 			Interrupt();
@@ -848,7 +847,7 @@ namespace emul
 		BYTE oldH, oldL;
 
 		oldL = m_reg.L; oldH = m_reg.H;
-	
+
 		m_reg.L = m_reg.E; m_reg.H = m_reg.D;
 		m_reg.E = oldL; m_reg.D = oldH;
 	}
@@ -882,10 +881,10 @@ namespace emul
 		BYTE oldH, oldL;
 
 		oldL = m_reg.L; oldH = m_reg.H;
-	
+
 		m_reg.L = m_memory.Read8(m_regSP);
 		m_reg.H = m_memory.Read8(m_regSP+1);
-	
+
 		m_memory.Write8(m_regSP, oldL);
 		m_memory.Write8(m_regSP+1, oldH);
 	}

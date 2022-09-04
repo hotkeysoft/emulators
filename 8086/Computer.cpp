@@ -25,7 +25,6 @@
 #include <assert.h>
 #include <fstream>
 
-using cpuInfo::CPUType;
 using memory_ega::RAMSIZE;
 using cfg::CONFIG;
 
@@ -71,7 +70,7 @@ namespace emul
 	{
 		if (hard)
 		{
-			LogPrintf(LOG_WARNING, "HARD Reset");			
+			LogPrintf(LOG_WARNING, "HARD Reset");
 			m_cpu->Reset();
 			m_memory.Clear();
 
@@ -87,7 +86,7 @@ namespace emul
 		}
 	}
 
-	void Computer::Init(CPUType type, WORD baseram)
+	void Computer::Init(const char* cpuid, WORD baseram)
 	{
 		int cpuOverride = CONFIG().GetValueInt32("core", "cpu");
 		switch (cpuOverride)
@@ -98,32 +97,31 @@ namespace emul
 		case 86:
 		case 8086:
 			LogPrintf(LOG_WARNING, "CPU override [8086]");
-			type = CPUType::i8086;
+			cpuid = CPUID_8086;
 			break;
 		case 186:
 		case 80186:
 			LogPrintf(LOG_WARNING, "CPU override [80186]");
-			type = CPUType::i80186;
+			cpuid = CPUID_80186;
 			break;
 		case 286:
 		case 80286:
 			LogPrintf(LOG_WARNING, "CPU override [80286]");
-			type = CPUType::i80286;
+			cpuid = CPUID_80286;
 			break;
 		default:
 			LogPrintf(LOG_WARNING, "Unknown cpu override [%d]", cpuOverride);
 		}
 
-		switch (type)
+		if (cpuid == CPUID_8086) m_cpu = new CPU8086(m_memory);
+		else if (cpuid == CPUID_80186) m_cpu = new CPU80186(m_memory);
+		else if (cpuid == CPUID_80286) m_cpu = new CPU80286(m_memory);
+		else
 		{
-		case CPUType::i8086: m_cpu = new CPU8086(m_memory); break;
-		case CPUType::i80186: m_cpu = new CPU80186(m_memory); break;
-		case CPUType::i80286: m_cpu = new CPU80286(m_memory); break;
-		default:
-			LogPrintf(LOG_ERROR, "CPUType not supported");
+			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
 			throw std::exception("CPUType not supported");
 		}
-	
+
 		m_cpu->EnableLog(CONFIG().GetLogLevel("cpu"));
 		m_cpu->Init();
 
@@ -178,7 +176,7 @@ namespace emul
 			{
 				egaMode = "ega";
 			}
-			
+
 			RAMSIZE ramSize;
 			if (ramSizeStr == "64")
 			{

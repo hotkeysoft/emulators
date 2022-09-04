@@ -4,7 +4,6 @@
 
 using cpuInfo::Opcode;
 using cpuInfo::MiscTiming;
-using cpuInfo::CPUType;
 using cpuInfo::OpcodeTimingType;
 
 namespace emul
@@ -50,14 +49,14 @@ namespace emul
 		(int)m_reg8 ? m_registers->Write8(m_reg8, value) : m_memory->Write8(m_cpu->GetAddress(m_segOff, MemAccess::WRITE), value);
 	}
 
-	CPU8086::CPU8086(Memory& memory) : CPU8086(CPUType::i8086, memory)
+	CPU8086::CPU8086(Memory& memory) : CPU8086("8086", memory)
 	{
 	}
 
-	CPU8086::CPU8086(cpuInfo::CPUType type, Memory& memory) :
+	CPU8086::CPU8086(const char* cpuid, Memory& memory) :
 		CPU(CPU8086_ADDRESS_BITS, memory),
-		m_info(type),
-		Logger("CPU8086")
+		m_info(cpuid),
+		Logger(cpuid)
 	{
 		Mem8::Init(this, &memory, &m_reg);
 		Mem16::Init(&memory, &m_reg);

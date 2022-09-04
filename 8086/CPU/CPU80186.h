@@ -12,9 +12,7 @@ namespace emul
 		virtual void Init() override;
 
 	protected:
-		CPU80186(cpuInfo::CPUType type, Memory& memory);
-
-		virtual const std::string GetID() const override { return "80186"; }
+		CPU80186(const char* cpuid, Memory& memory);
 
 		virtual void CPUExceptionHandler(CPUException e) override;
 

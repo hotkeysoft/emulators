@@ -232,7 +232,7 @@ namespace emul
 
 		virtual void Init();
 
-		virtual const std::string GetID() const override { return "8086"; }
+		virtual const std::string GetID() const override { return m_info.GetId(); }
 		virtual size_t GetAddressBits() const { return CPU8086_ADDRESS_BITS; }
 		virtual ADDRESS GetAddress(SegmentOffset segoff, MemAccess = MemAccess::NONE) const { return S2A(GetRegValue(segoff.segment), segoff.offset); }
 		virtual ADDRESS GetCurrentAddress() const { return S2A(m_reg[REG16::CS], m_reg[REG16::IP]); }
@@ -306,7 +306,7 @@ namespace emul
 		BYTE GetRegValue(REG8 reg) const { return m_reg[reg]; }
 
 	protected:
-		CPU8086(cpuInfo::CPUType type, Memory& memory);
+		CPU8086(const char* cpuid, Memory& memory);
 
 		// Fetch the timing for the reg (base) or mem variant.
 		// If not applicable, this has no impact since timing[base] == timing[mem]

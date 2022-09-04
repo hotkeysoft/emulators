@@ -1,20 +1,25 @@
 #include "stdafx.h"
 
 #include <CPU/CPUInfo.h>
+#include <regex>
 
 namespace cpuInfo
 {
-	CPUInfo::CPUInfo(CPUType model) :
-		m_model(model)
+	CPUInfo::CPUInfo(const char* cpuid) : Logger("CPUInfo")
 	{
-		const auto& cpu = m_cpus.find(model);
-		if (cpu == m_cpus.end())
-		{
-			throw std::exception("cpu model not found");
-		}
+		m_id = cpuid ? cpuid : "";
 
-		m_name = cpu->second.name;
-		m_configFile = cpu->second.configFile;
+		const std::regex validCPUName(R"(^[\w\-]+$)");
+
+		if (!std::regex_match(m_id, validCPUName))
+		{
+			LogPrintf(LOG_ERROR, "Invalid CPUID: [%s]", m_id.c_str());
+			m_configFile = "{INVALID_CPUID}";
+		}
+		else
+		{
+			m_configFile = m_id + ".json";
+		}
 	}
 
 	void CPUInfo::LoadConfig()
@@ -26,7 +31,8 @@ namespace cpuInfo
 		}
 		else
 		{
-			throw std::exception("file not found");
+			LogPrintf(LOG_ERROR, "Config File not found: [%s]", m_configFile.c_str());
+			throw std::exception("Config File not found");
 		}
 
 		if (!m_config["cpu"].contains("opcodes"))
@@ -63,7 +69,8 @@ namespace cpuInfo
 
 			if (miscCount > (int)MiscTiming::_COUNT)
 			{
-				throw std::exception("misc timing list too big");
+				LogPrintf(LOG_ERROR, "MISC timing list too large: [%d>%d]", miscCount, (int)MiscTiming::_COUNT);
+				throw std::exception("misc timing list too large");
 			}
 			for (int i = 0; i < miscCount; ++i)
 			{
@@ -146,7 +153,6 @@ namespace cpuInfo
 			{
 				throw std::exception("BuildOpcodes: index > MAX_OPCODE");
 			}
-
 
 			if (curr.is_number_integer()) // new index (integer)
 			{
@@ -304,7 +310,8 @@ namespace cpuInfo
 		std::string fileName = m_config["monitor"]["ANSIFile"].get<std::string>();
 
 		std::string ansiFileData;
-		std::ifstream ansiFile("config/" + std::string(fileName));
+		std::string ansiFileName = "config/" + std::string(fileName);
+		std::ifstream ansiFile(ansiFileName);
 		if (ansiFile)
 		{
 			std::ostringstream ss;
@@ -313,6 +320,7 @@ namespace cpuInfo
 		}
 		else
 		{
+			LogPrintf(LOG_ERROR, "GetANSIFile: File not found [%s]", ansiFileName.c_str());
 			throw std::exception("file not found");
 		}
 	}

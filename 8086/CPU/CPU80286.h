@@ -132,7 +132,6 @@ namespace emul
 
 		virtual void Reset() override;
 
-		virtual const std::string GetID() const override { return "80286"; }
 		virtual size_t GetAddressBits() const { return CPU80286_ADDRESS_BITS; }
 
 		virtual ADDRESS GetAddress(SegmentOffset segoff, MemAccess access = MemAccess::NONE) const override;
@@ -158,6 +157,8 @@ namespace emul
 		virtual void Deserialize(const json& from) override;
 
 	protected:
+		CPU80286(const char* cpuid, Memory& memory);
+
 		virtual void CPUExceptionHandler(CPUException e) override;
 
 		bool IsProtectedMode() const { return GetMSW(MSW_PE); }

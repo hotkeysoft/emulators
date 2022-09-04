@@ -1,8 +1,8 @@
 {
   "cpu": {
-  	"opcodes.grp": 5,
+    "opcodes.grp": 5,
     "opcodes": [
-			{ "name": "ADD {rm8}, {r8}",			     "timing": [3, 10] },
+      { "name": "ADD {rm8}, {r8}",           "timing": [3, 10] },
       { "name": "ADD {rm16}, {r16}",         "timing": [3, 10] },
       { "name": "ADD {r8}, {rm8}",           "timing": [3, 10] },
       { "name": "ADD {r16}, {rm16}",         "timing": [3, 10] },
@@ -351,7 +351,7 @@
     ]
   },
   "monitor": {
-    "ANSIFile": "8086.ANS",
+    "ANSIFile": "8086.ans",
     "coords": {
         "AH": {"x":6, "y":2, "w":2}, "AL": {"x":9, "y":2, "w":2},
         "BH": {"x":6, "y":3, "w":2}, "BL": {"x":9, "y":3, "w":2},
@@ -367,8 +367,8 @@
         "CS": {"x":6, "y":9, "w":4}, "IP": {"x":15, "y":9, "w":4},
         "SS": {"x":6, "y":10, "w":4}, "SP": {"x":15, "y":10, "w":4},
 
-				"TICKS": {"x":8, "y":12, "w":4},
-				"CPUID": {"x":14, "y":12, "w":6},
+        "TICKS": {"x":8, "y":12, "w":4},
+        "CPUID": {"x":14, "y":12, "w":6},
 
         "FLAGS": {"x":8, "y":13, "w":12},
 

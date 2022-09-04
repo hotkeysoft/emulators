@@ -2,18 +2,17 @@
 #include "CPUZ80.h"
 
 using cpuInfo::Opcode;
-using cpuInfo::CPUType;
 using cpuInfo::MiscTiming;
 
 namespace emul
 {
-	CPUZ80::CPUZ80(Memory& memory) : CPUZ80(CPUType::z80, memory)
+	CPUZ80::CPUZ80(Memory& memory) : CPUZ80("z80", memory)
 	{
 	}
 
-	CPUZ80::CPUZ80(cpuInfo::CPUType type, Memory& memory) :
-		Logger("Z80"),
-		CPU8080(type, memory)
+	CPUZ80::CPUZ80(const char* cpuid, Memory& memory) :
+		Logger(cpuid),
+		CPU8080(cpuid, memory)
 	{
 		FLAG_RESERVED_ON = (FLAG)0;
 		FLAG_RESERVED_OFF = (FLAG)0;
@@ -65,7 +64,7 @@ namespace emul
 			{
 				++m_programCounter;
 			}
-			
+
 			m_nmiLatch.ResetLatch();
 			pushPC();
 			m_iff1 = false;
@@ -107,7 +106,7 @@ namespace emul
 			REFRESH();
 			TICKMISC(MiscTiming::IRQ);
 			m_state = CPUState::RUN;
-		}	
+		}
 	}
 
 	void CPUZ80::Init()
@@ -533,7 +532,7 @@ namespace emul
 		// DEC (IXY+s8)
 		m_opcodesIXY[0x35] = [=]() { DECXY(FetchByte()); };
 
-		// LD (IXY+s8), i8 
+		// LD (IXY+s8), i8
 		m_opcodesIXY[0x36] = [=]() { loadImm8toIdx(*m_currIdx); };
 
 		// ADD IXY, SP
@@ -644,7 +643,7 @@ namespace emul
 
 		m_opcodesIXY[0xBC] = [=]() { cmp(GetHByte(*m_currIdx)); }; // CMP IXY(h)
 		m_opcodesIXY[0xBD] = [=]() { cmp(GetLByte(*m_currIdx)); }; // CMP IXY(l)
- 
+
 		// ADD|ADC|SUB|SBC|AND|XOR|OR|CP A, (IXY+s8)
 		m_opcodesIXY[0x86] = [=]() { add(ReadMemIdx(FetchByte())); }; // ADD
 		m_opcodesIXY[0x8E] = [=]() { add(ReadMemIdx(FetchByte()), GetFlag(FLAG_CY)); }; // ADC
@@ -658,7 +657,7 @@ namespace emul
 		m_opcodesIXY[0xB6] = [=]() { ora(ReadMemIdx(FetchByte())); }; // OR
 		m_opcodesIXY[0xBE] = [=]() { cmp(ReadMemIdx(FetchByte())); }; // CMP
 
-		// IXY Bit instructions 
+		// IXY Bit instructions
 		m_opcodesIXY[0xCB] = [=]() { BITSxy(); };
 
 		// POP IXY
@@ -743,7 +742,7 @@ namespace emul
 	{
 		SetFlag(FLAG_Z, (val == 0));
 		SetFlag(FLAG_F3, GetBit(val, 3));
-		SetFlag(FLAG_F5, GetBit(val, 5));	
+		SetFlag(FLAG_F5, GetBit(val, 5));
 		SetFlag(FLAG_S, GetBit(val, 7));
 		SetFlag(FLAG_PV, IsParityEven(val));
 		SetFlag(FLAG_N, false);
@@ -780,7 +779,7 @@ namespace emul
 
 	void CPUZ80::addHL(WORD src)
 	{
-		// Sign, zero and overflow are unaffected, so save them 
+		// Sign, zero and overflow are unaffected, so save them
 		bool savedFlagS = GetFlag(FLAG_S);
 		bool savedFlagZ = GetFlag(FLAG_Z);
 		bool savedFlagPV = GetFlag(FLAG_PV);
@@ -805,7 +804,7 @@ namespace emul
 
 	void CPUZ80::addIXY(WORD src)
 	{
-		// Sign, zero and overflow are unaffected, so save them 
+		// Sign, zero and overflow are unaffected, so save them
 		bool savedFlagS = GetFlag(FLAG_S);
 		bool savedFlagZ = GetFlag(FLAG_Z);
 		bool savedFlagPV = GetFlag(FLAG_PV);
@@ -868,12 +867,12 @@ namespace emul
 	{
 		BYTE oldA = m_reg.A;
 		CPU8080::add(src, carry);
-		
+
 		// TODO: Improve this
 		// Set Overflow flag
-		// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative), 
-		// then overflow occurs if and only if the result has the opposite sign. 
-		// Overflow never occurs when adding operands with different signs. 
+		// If 2 Two's Complement numbers are added, and they both have the same sign (both positive or both negative),
+		// then overflow occurs if and only if the result has the opposite sign.
+		// Overflow never occurs when adding operands with different signs.
 		SetFlag(FLAG_PV, (GetMSB(oldA) == GetMSB(src)) && (GetMSB(m_reg.A) != GetMSB(src)));
 	}
 
@@ -884,7 +883,7 @@ namespace emul
 
 		// TODO: Improve this
 		// Set Overflow flag
-		// If 2 Two's Complement numbers are subtracted, and their signs are different, 
+		// If 2 Two's Complement numbers are subtracted, and their signs are different,
 		// then overflow occurs if and only if the result has the same sign as what is being subtracted.
 		SetFlag(FLAG_PV, (GetMSB(oldA) != GetMSB(src)) && (GetMSB(m_reg.A) == GetMSB(src)));
 		SetFlag(FLAG_N, true);
@@ -897,7 +896,7 @@ namespace emul
 
 		// TODO: Improve this
 		// Set Overflow flag
-		// If 2 Two's Complement numbers are subtracted, and their signs are different, 
+		// If 2 Two's Complement numbers are subtracted, and their signs are different,
 		// then overflow occurs if and only if the result has the same sign as what is being subtracted.
 		SetFlag(FLAG_PV, (GetMSB(oldA) != GetMSB(src)) && (GetMSB(res) == GetMSB(src)));
 		SetFlag(FLAG_N, true);
@@ -1144,7 +1143,7 @@ namespace emul
 		SetFlag(FLAG_CY, msb);
 	}
 
-	// 9-bit rotation to the left. 
+	// 9-bit rotation to the left.
 	// The carry value is put into 0th bit of the register, and the leaving 7th bit is put into the carry.
 	void CPUZ80::rl(BYTE& dest, bool adjustBaseFlags)
 	{
@@ -1185,7 +1184,7 @@ namespace emul
 		SetFlag(FLAG_CY, lsb);
 	}
 
-	// 9-bit rotation to the right. 
+	// 9-bit rotation to the right.
 	// The carry is copied into bit 7, and the bit leaving on the right is copied into the carry.
 	void CPUZ80::rr(BYTE& dest, bool adjustBaseFlags)
 	{
@@ -1316,7 +1315,7 @@ namespace emul
 		if (neg)
 		{
 			sub(adjust);
-			
+
 		}
 		else
 		{
@@ -1329,18 +1328,18 @@ namespace emul
 
 	// Rotates left a 12 bit value A[3:0]|(HL)[7:0]
 	// High nibble of A is preserved
-	// 
+	//
 	// (h/l are high/low nibbles of 8 bit value)
 	// |  Ah  |  Al  | MEMh | MEMl |
 	// | xxxx | xxxx | xxxx | xxxx |
 	// | [4]  | [4]  |     [8]     |
 	// | [4]  | [       12       ] |
-	// 
+	//
 	// Before RLD:
 	// | mmmm | nnnn | oooo | pppp |
 	// After RLD:
 	// | mmmm | oooo | pppp | nnnn |
-	// 
+	//
 	// Before RLD
 	// A = 0x1234
 	// (HL) = 0x5678

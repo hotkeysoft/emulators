@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <fstream>
 
-using cpuInfo::CPUType;
 using cfg::CONFIG;
 
 namespace emul
@@ -34,14 +33,13 @@ namespace emul
 		m_video->Reset();
 	}
 
-	void Computer::Init(CPUType type, WORD baseram)
+	void Computer::Init(const char* cpuid, WORD baseram)
 	{
-		switch (type)
+		if (cpuid == CPUID_8080) m_cpu = new CPU8080(m_memory);
+		else if (cpuid == CPUID_Z80) m_cpu = new CPUZ80(m_memory);
+		else
 		{
-		case CPUType::i8080: m_cpu = new CPU8080(m_memory); break;
-		case CPUType::z80: m_cpu = new CPUZ80(m_memory); break;
-		default:
-			LogPrintf(LOG_ERROR, "CPUType not supported");
+			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
 			throw std::exception("CPUType not supported");
 		}
 

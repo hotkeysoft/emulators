@@ -7,7 +7,6 @@
 #include "Video/VideoZX80.h"
 
 using cfg::CONFIG;
-using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -21,7 +20,7 @@ namespace emul
 
 	void ComputerZX80::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUType::z80, baseRAM);
+		Computer::Init(CPUID_Z80, baseRAM);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 

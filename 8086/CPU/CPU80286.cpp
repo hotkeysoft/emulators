@@ -4,7 +4,6 @@
 
 using cpuInfo::Opcode;
 using cpuInfo::MiscTiming;
-using cpuInfo::CPUType;
 using cpuInfo::OpcodeTimingType;
 
 using emul::GetLByte;
@@ -56,9 +55,13 @@ namespace emul
 		return buf;
 	}
 
-	CPU80286::CPU80286(Memory& memory) :
-		CPU80186(CPUType::i80286, memory),
-		Logger("CPU80286")
+	CPU80286::CPU80286(Memory& memory) : CPU80286("80286", memory)
+	{
+	}
+
+	CPU80286::CPU80286(const char* cpuid, Memory& memory) :
+		CPU80186(cpuid, memory),
+		Logger(cpuid)
 	{
 	}
 

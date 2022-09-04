@@ -14,7 +14,6 @@
 #include <thread>
 
 using cfg::CONFIG;
-using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -51,7 +50,7 @@ namespace emul
 
 	void ComputerXT::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUType::i8086, baseRAM);
+		Computer::Init(CPUID_8086, baseRAM);
 
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 8));
@@ -170,7 +169,7 @@ namespace emul
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 		auto end = start + us;
-		do 
+		do
 		{
 			std::this_thread::yield();
 		} while (std::chrono::high_resolution_clock::now() < end);
@@ -183,7 +182,7 @@ namespace emul
 
 		if (m_pic->InterruptPending() && GetCPU().CanInterrupt())
 		{
-			m_pic->InterruptAcknowledge(); 
+			m_pic->InterruptAcknowledge();
 			LogPrintf(LOG_DEBUG, "[%zu] IRQ %d", g_ticks, m_pic->GetPendingInterrupt() - 8);
 			GetCPU().Interrupt(m_pic->GetPendingInterrupt());
 			return true;
@@ -196,7 +195,7 @@ namespace emul
 			}
 		}
 
-		static uint32_t cpuTicks = 0;	
+		static uint32_t cpuTicks = 0;
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		ppi::Device8255XT* ppi = (ppi::Device8255XT*)m_ppi;

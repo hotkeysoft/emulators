@@ -17,6 +17,9 @@ namespace emul
 	class Computer : public Serializable, public PortConnector
 	{
 	public:
+		const char* CPUID_8080 = "8080";
+		const char* CPUID_Z80 = "z80";
+
 		virtual ~Computer();
 
 		virtual std::string_view GetName() const = 0;
@@ -47,7 +50,7 @@ namespace emul
 	protected:
 		Computer(Memory& memory);
 
-		virtual void Init(cpuInfo::CPUType cpu, WORD baseRAM);
+		virtual void Init(const char* cpuid, WORD baseRAM);
 		virtual void InitInputs(size_t clockSpeedHz);
 
 		Memory m_memory;

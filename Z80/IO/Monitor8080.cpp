@@ -92,7 +92,7 @@ namespace emul
 	{
 		std::string ansiFile = m_cpu->GetInfo().GetANSIFile();
 
-		if (ansiFile.size()) 
+		if (ansiFile.size())
 		{
 			m_console.WriteBuffer(ansiFile.c_str(), ansiFile.size());
 		}
@@ -144,7 +144,7 @@ namespace emul
 	{
 		static Coord cpuId = m_cpu->GetInfo().GetCoord("CPUID");
 		std::ostringstream os;
-		os << std::setw(cpuId.w) << m_cpu->GetInfo().GetName();
+		os << std::setw(cpuId.w) << m_cpu->GetInfo().GetId();
 		m_console.WriteAt(cpuId.x, cpuId.y, os.str().c_str());
 	}
 
@@ -192,7 +192,7 @@ namespace emul
 		m_console.WriteAttrAt(ramHL.x, ramHL.y, (m_ramMode == RAMMode::HL) ? highlight : regular, ramHL.w);
 		m_console.WriteAttrAt(ramPC.x, ramPC.y, (m_ramMode == RAMMode::PC) ? highlight : regular, ramHL.w);
 		m_console.WriteAttrAt(ramSTACK.x, ramSTACK.y, (m_ramMode == RAMMode::SP) ? highlight : regular, ramSTACK.w);
-		
+
 		{
 			static char buf[32];
 			sprintf(buf, " CUSTOM:%04X", m_customMemView);
@@ -215,7 +215,7 @@ namespace emul
 		WriteValueHex(m_cpu->m_reg.L, m_cpu->GetInfo().GetCoord("L"));
 
 		WriteValueHex(m_cpu->m_reg.flags, m_cpu->GetInfo().GetCoord("F"));
-			
+
 		WriteValueHex((WORD)m_cpu->m_regSP, m_cpu->GetInfo().GetCoord("SP"));
 		WriteValueHex((WORD)m_cpu->GetCurrentAddress(), m_cpu->GetInfo().GetCoord("PC"));
 	}
@@ -257,7 +257,7 @@ namespace emul
 		case RAMMode::PC:
 			return  m_cpu->GetCurrentAddress();
 		case RAMMode::CUSTOM:
-		default: 
+		default:
 			return m_customMemView;
 		}
 	}
@@ -274,7 +274,7 @@ namespace emul
 		WORD offset = GetRAMBase();
 
 		WORD adjustedOffset = (offset / bytesPerLine) * bytesPerLine;
-		
+
 		// Check for end of segment
 		if (((DWORD)adjustedOffset + bytesTotal) >= 0x10000)
 		{
@@ -284,7 +284,7 @@ namespace emul
 		{
 			adjustedOffset -= bytesPerLine; // Show one row before when possible
 		}
-		
+
 		ADDRESS curr = offset;
 		ADDRESS data = adjustedOffset;
 		for (int y = 0; y < hexPos.h; ++y)

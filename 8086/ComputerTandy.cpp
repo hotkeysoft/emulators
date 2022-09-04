@@ -13,7 +13,6 @@
 #include <thread>
 
 using cfg::CONFIG;
-using cpuInfo::CPUType;
 
 namespace emul
 {
@@ -47,7 +46,7 @@ namespace emul
 
 	void ComputerTandy::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUType::i8086, baseRAM);
+		Computer::Init(CPUID_8086, baseRAM);
 
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 4));
 		AddCPUSpeed(CPUSpeed(PIT_CLK, 8));
@@ -57,7 +56,7 @@ namespace emul
 		LogPrintf(LOG_INFO, "UART Clock: [%zu]", UART_CLK);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
-		
+
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
 		InitPIC(new pic::Device8259(0x20));
@@ -167,7 +166,7 @@ namespace emul
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 		auto end = start + us;
-		do 
+		do
 		{
 			std::this_thread::yield();
 		} while (std::chrono::high_resolution_clock::now() < end);
