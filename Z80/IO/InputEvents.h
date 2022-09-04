@@ -40,7 +40,7 @@ namespace events
 	class InputEvents : public Logger
 	{
 	public:
-		InputEvents(size_t clockSpeedHz);
+		InputEvents(size_t clockSpeedHz, size_t pollingHz = 60);
 		~InputEvents();
 
 		InputEvents() = delete;

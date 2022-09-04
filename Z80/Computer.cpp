@@ -51,9 +51,9 @@ namespace emul
 		PortConnector::Clear();
 	}
 
-	void Computer::InitInputs(size_t clockSpeedHz)
+	void Computer::InitInputs(size_t clockSpeedHz, size_t pollingHz)
 	{
-		m_inputs = new events::InputEvents(clockSpeedHz);
+		m_inputs = new events::InputEvents(clockSpeedHz, pollingHz);
 		m_inputs->Init();
 		m_inputs->EnableLog(CONFIG().GetLogLevel("inputs"));
 	}

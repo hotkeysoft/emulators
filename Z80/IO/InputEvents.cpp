@@ -59,13 +59,12 @@ namespace events
 	};
 
 	// Process events at 60Hz
-	InputEvents::InputEvents(size_t clockSpeedHz) :
+	InputEvents::InputEvents(size_t clockSpeedHz, size_t pollingHz) :
 		Logger("INPUT"),
-		m_pollRate(clockSpeedHz / 60),
+		m_pollRate(clockSpeedHz / pollingHz),
 		m_cooldown(m_pollRate),
 		m_keyMap(&s_keyMapZX80)
 	{
-
 	}
 
 	InputEvents::~InputEvents()
