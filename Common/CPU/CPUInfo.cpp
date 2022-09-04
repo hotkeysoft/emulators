@@ -7,6 +7,8 @@ namespace cpuInfo
 {
 	CPUInfo::CPUInfo(const char* cpuid) : Logger("CPUInfo")
 	{
+		EnableLog(LOG_WARNING);
+
 		m_id = cpuid ? cpuid : "";
 
 		const std::regex validCPUName(R"(^[\w\-]+$)");
@@ -63,6 +65,7 @@ namespace cpuInfo
 			BuildSubOpcodes(i, m_config["cpu"][grpName]);
 		}
 
+		// Misc timing table
 		if (m_config["cpu"].contains("misc"))
 		{
 			size_t miscCount = m_config["cpu"]["misc"].size();
@@ -75,56 +78,95 @@ namespace cpuInfo
 			for (int i = 0; i < miscCount; ++i)
 			{
 				m_miscTiming[i] = BuildTiming(m_config["cpu"]["misc"][i]);
+				LogPrintf(LOG_DEBUG, "MISC Timing[%d]: %s", i, GetTimingString(m_miscTiming[i]).c_str());
 			}
+		}
+
+		// Default timings
+		if (m_config["cpu"].contains("opcodes.timing"))
+		{
+			m_defaultOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.timing"]);
+			LogPrintf(LOG_INFO, "Default Opcode timing: %s", GetTimingString(m_defaultOpcodeTiming).c_str());
+			m_defaultSubOpcodeTiming = m_defaultOpcodeTiming;
+		}
+
+		if (m_config["cpu"].contains("opcodes.timing"))
+		{
+			m_defaultSubOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.grp.timing"]);
+			LogPrintf(LOG_INFO, "Default Subopcode timing: %s", GetTimingString(m_defaultSubOpcodeTiming).c_str());
 		}
 	}
 
 	void CPUInfo::BuildOpcodes(const json& opcodes)
 	{
-		// Trivial case is an array of 256 opcodes. However, to account for holes
-		// and other weirdness, it is possible to specify a new index (int or hex string e.g. "0x12")
-		// so that the count jumps to the new value and continue loading opcodes linearly from there.
+		LogPrintf(LOG_INFO, "BuildOpcodes");
 
 		// First fill in the array so we don't have empty holes
 		for (int i = 0; i <= MAX_OPCODE; ++i)
 		{
 			char buf[16];
 			sprintf(buf, "DB 0x%02X", i);
-			m_opcodes[i] = BuildOpcode(buf);
-			m_timing[i] = OpcodeTiming {};
+			m_opcodes[i] = buf;
+			m_timing[i] = m_defaultOpcodeTiming;
 		}
 
-		size_t opcode = 0;
+		AddOpcodes(opcodes, m_opcodes, m_timing);
+	}
+
+	void CPUInfo::BuildSubOpcodes(int index, const json& opcodes)
+	{
+		LogPrintf(LOG_INFO, "BuildSubOpcodes[%d]", index);
+
+		// First fill in the array so we don't have empty holes
+		for (int i = 0; i <= MAX_OPCODE; ++i)
+		{
+			char buf[16];
+			sprintf(buf, "DB 0x%02X", i);
+			m_subOpcodes[index][i] = buf;
+			m_subTiming[index][i] = m_defaultSubOpcodeTiming;
+		}
+
+		AddOpcodes(opcodes, m_subOpcodes[index], m_subTiming[index]);
+	}
+
+	void CPUInfo::AddOpcodes(const json& opcodes, Opcode opcodeTable[], OpcodeTiming timingTable[])
+	{
+		// Trivial case is an array of 256 opcodes. However, to account for holes
+		// and other weirdness, it is possible to specify a new index (int or hex string e.g. "0x12")
+		// so that the count jumps to the new value and continue loading opcodes linearly from there.
+		size_t opcodeIndex = 0;
 		for (const json& curr : opcodes)
 		{
-			if (opcode > MAX_OPCODE)
+			if (opcodeIndex < 0 || opcodeIndex > MAX_OPCODE)
 			{
-				throw std::exception("BuildOpcodes: index > MAX_OPCODE");
+				LogPrintf(LOG_ERROR, "BuildOpcodes: invalid index [%d]", opcodeIndex);
+				throw std::exception("BuildOpcodes: invalid index");
 			}
 
 			if (curr.is_number_integer()) // new index (integer)
 			{
-				int newIndex = curr;
-				if (newIndex < 0 || newIndex > MAX_OPCODE)
-				{
-					throw std::exception("BuildOpcodes: Invalid index");
-				}
-				opcode = newIndex;
+				opcodeIndex = curr;
+				LogPrintf(LOG_DEBUG, "Set New Index [%02X]", opcodeIndex);
 			}
 			else if (curr.is_string()) // new index (string)
 			{
-				int newIndex = std::stoul((const std::string&)curr, nullptr, 0);
-				if (newIndex < 0 || newIndex > MAX_OPCODE)
-				{
-					throw std::exception("BuildOpcodes: Invalid index");
-				}
-				opcode = newIndex;
+				opcodeIndex = std::stoul((const std::string&)curr, nullptr, 0);
+				LogPrintf(LOG_DEBUG, "Set New Index [%02X]", opcodeIndex);
 			}
 			else if (curr.is_object()) // opcode data
 			{
-				m_opcodes[opcode] = BuildOpcode(curr["name"]);
-				m_timing[opcode] = BuildTiming(curr);
-				++opcode;
+				Opcode opcode = BuildOpcode(curr["name"]);
+				opcodeTable[opcodeIndex] = opcode;
+
+				OpcodeTiming timing = BuildTiming(curr);
+				timingTable[opcodeIndex] = timing;
+
+				LogPrintf(LOG_DEBUG, "\tOpcode[%02X]: [%-32s], Timing: %s",
+					opcodeIndex,
+					opcode.text.c_str(),
+					GetTimingString(timing).c_str());
+
+				++opcodeIndex;
 			}
 			else
 			{
@@ -133,75 +175,42 @@ namespace cpuInfo
 		}
 	}
 
-	void CPUInfo::BuildSubOpcodes(int index, const json& opcodes)
+	std::string CPUInfo::GetTimingString(const OpcodeTiming& timing) const
 	{
-		// First fill in the array so we don't have empty holes
-		for (int i = 0; i <= MAX_OPCODE; ++i)
-		{
-			char buf[16];
-			sprintf(buf, "DB 0x%02X", i);
-			m_subOpcodes[index][i] = buf;
-			// All undefined sub opcodes are equivalent to 2xNOP
-			m_subTiming[index][i] = OpcodeTiming{ 8, 0, 0, 0 };
-		}
+		std::ostringstream os;
+		os << "[ ";
 
-		// TODO: Code duplication w/BuildOpcodes
-		BYTE opcode = 0;
-		for (const json& curr : opcodes)
+		for (auto t : timing)
 		{
-			if (opcode > MAX_OPCODE)
-			{
-				throw std::exception("BuildOpcodes: index > MAX_OPCODE");
-			}
-
-			if (curr.is_number_integer()) // new index (integer)
-			{
-				int newIndex = curr;
-				if (newIndex < 0 || newIndex > MAX_OPCODE)
-				{
-					throw std::exception("BuildSubOpcodes: Invalid index");
-				}
-				opcode = newIndex;
-			}
-			else if (curr.is_string()) // new index (string)
-			{
-				int newIndex = std::stoul((const std::string&)curr, nullptr, 16);
-				if (newIndex < 0 || newIndex > MAX_OPCODE)
-				{
-					throw std::exception("BuildOpcodes: Invalid index");
-				}
-				opcode = newIndex;
-			}
-			else if (curr.is_object()) // opcode data
-			{
-				m_subOpcodes[index][opcode] = curr["name"];
-				m_subTiming[index][opcode] = BuildTiming(curr);
-				++opcode;
-			}
-			else
-			{
-				throw std::exception("BuildSubOpcodes: Invalid value");
-			}
+			os << std::setw(3) << (int)t << ' ';
 		}
+		os << ']';
+		return os.str();
 	}
 
 	OpcodeTiming CPUInfo::BuildTiming(const json& opcode) const
 	{
-		OpcodeTiming timing = { 4, 0, 0, 0 };
+		OpcodeTiming timing = m_defaultOpcodeTiming;
 		if (!opcode.contains("timing"))
 		{
 			return timing;
 		}
 
 		const json& jsonTiming = opcode["timing"];
-		if (!jsonTiming.is_array() || jsonTiming.size() < 1 || jsonTiming.size() > (int)OpcodeTimingType::_COUNT)
+		return BuildTimingDirect(jsonTiming);
+	}
+
+	OpcodeTiming CPUInfo::BuildTimingDirect(const json& timingArray) const
+	{
+		OpcodeTiming timing = m_defaultOpcodeTiming;
+		if (!timingArray.is_array() || timingArray.size() < 1 || timingArray.size() > (int)OpcodeTimingType::_COUNT)
 		{
 			throw std::exception("invalid timing array");
 		}
 
-		for (int i = 0; i < jsonTiming.size(); ++i)
+		for (int i = 0; i < timingArray.size(); ++i)
 		{
-			timing[i] = jsonTiming[i];
+			timing[i] = timingArray[i];
 		}
 
 		// Copy base to mem if not set
@@ -253,7 +262,7 @@ namespace cpuInfo
 		else if (ret.i32) ret.imm = Opcode::IMM::W32;
 		else ret.imm = Opcode::IMM::NONE;
 
-		// Special case: I16/I8 (ENTER)
+		// Special case: I16/I8 (8088 ENTER)
 		if (ret.i8 && ret.i16)
 		{
 			ret.imm = Opcode::IMM::W16W8;
@@ -286,7 +295,7 @@ namespace cpuInfo
 		}
 		else
 		{
-			return m_subOpcodes[(int)parent.multi][op2];
+			return m_subOpcodes[(int)parent.multi][op2].text;
 		}
 	}
 
@@ -298,7 +307,7 @@ namespace cpuInfo
 		}
 		else
 		{
-			std::string subOpcodeText = m_subOpcodes[(int)parent.multi][op2];
+			std::string subOpcodeText = m_subOpcodes[(int)parent.multi][op2].text;
 
 			// There may be another level of indirection
 			return BuildOpcode(subOpcodeText);

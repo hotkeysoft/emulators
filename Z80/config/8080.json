@@ -1,5 +1,6 @@
 {
   "cpu": {
+    "opcodes.timing": [4],
     "opcodes": [
       { "name": "NOP",          "timing": [4] },
       { "name": "LXI B, {i16}", "timing": [10] },

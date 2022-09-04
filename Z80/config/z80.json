@@ -1,5 +1,7 @@
 {
   "cpu": {
+    "opcodes.timing": [4],
+    "opcodes.grp.timing": [8],
     "opcodes.grp": 4,
     "opcodes": [
       { "name": "NOP",            "timing": [4] },

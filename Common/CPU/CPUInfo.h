@@ -23,6 +23,10 @@ namespace cpuInfo
 
 	struct Opcode
 	{
+		Opcode() {}
+		Opcode(const char* text) : text(text) {}
+		Opcode(const std::string& str) : text(text) {}
+
 		std::string text;
 
 		bool rm8 = false;
@@ -91,11 +95,17 @@ namespace cpuInfo
 		Opcode BuildOpcode(std::string opcocode) const;
 		void BuildSubOpcodes(int index, const json& opcodes);
 		OpcodeTiming BuildTiming(const json& opcode) const;
+		OpcodeTiming BuildTimingDirect(const json& timingArray) const;
+		void AddOpcodes(const json& opcodes, Opcode opcodeTable[], OpcodeTiming timingTable[]);
+		std::string GetTimingString(const OpcodeTiming& timing) const;
 
 		static const size_t MAX_OPCODE = 0xFF;
 
 		Opcode m_opcodes[MAX_OPCODE + 1];
-		std::string m_subOpcodes[(int)Opcode::MULTI::_COUNT][MAX_OPCODE + 1];
+		Opcode m_subOpcodes[(int)Opcode::MULTI::_COUNT][MAX_OPCODE + 1];
+
+		OpcodeTiming m_defaultOpcodeTiming = { 1, 0, 0, 0 };
+		OpcodeTiming m_defaultSubOpcodeTiming = { 1, 0, 0, 0 };
 
 		OpcodeTiming m_timing[MAX_OPCODE + 1];
 		OpcodeTiming m_subTiming[(int)Opcode::MULTI::_COUNT][MAX_OPCODE + 1];
