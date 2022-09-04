@@ -11,6 +11,7 @@
 #include "Computer8080.h"
 #include "ComputerZ80.h"
 #include "ComputerZX80.h"
+#include "ComputerZXSpectrum.h"
 
 #include <Config.h>
 #include <Sound/Sound.h>
@@ -142,7 +143,10 @@ Computer* CreateComputer(std::string arch)
 	{
 		computer = new emul::ComputerZX80();
 	}
-
+	else if (arch == "zxspectrum")
+	{
+		computer = new emul::ComputerZXSpectrum();
+	}
 	return computer;
 }
 

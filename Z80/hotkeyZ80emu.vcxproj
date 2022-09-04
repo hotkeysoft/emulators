@@ -36,6 +36,7 @@
     <ClInclude Include="Computer8080.h" />
     <ClInclude Include="ComputerZ80.h" />
     <ClInclude Include="ComputerZX80.h" />
+    <ClInclude Include="ComputerZXSpectrum.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="CPU\CPU8080.h" />
     <ClInclude Include="CPU\CPUZ80.h" />
@@ -67,6 +68,7 @@
     <ClCompile Include="Computer8080.cpp" />
     <ClCompile Include="ComputerZ80.cpp" />
     <ClCompile Include="ComputerZX80.cpp" />
+    <ClCompile Include="ComputerZXSpectrum.cpp" />
     <ClCompile Include="CPU\CPU8080.cpp" />
     <ClCompile Include="CPU\CPUZ80.cpp" />
     <ClCompile Include="CPU\CPUZ80Test.cpp" />
