@@ -153,6 +153,9 @@
     <ClInclude Include="ComputerZXSpectrum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Video\VideoZXSpectrum.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
     <ClInclude Include="..\Common\IO\Console.h">
       <Filter>Common\IO</Filter>
     </ClInclude>
@@ -232,6 +235,9 @@
     </ClCompile>
     <ClCompile Include="ComputerZXSpectrum.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\VideoZXSpectrum.cpp">
+      <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\IO\Console.cpp">
       <Filter>Common\IO</Filter>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Computer.h"
-#include "Video/VideoZX80.h"
+#include "Video/VideoZXSpectrum.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardZX80.h"
 
@@ -22,7 +22,9 @@ namespace emul
 		virtual bool Step() override;
 
 		CPUZ80& GetCPU() const { return *((CPUZ80*)m_cpu); }
-		video::VideoZX80& GetVideo() { return *((video::VideoZX80*)m_video); }
+		video::VideoZXSpectrum& GetVideo() { return *((video::VideoZXSpectrum*)m_video); }
+
+		void WriteULA(BYTE value);
 
 	protected:
 		emul::MemoryBlock m_baseRAM;

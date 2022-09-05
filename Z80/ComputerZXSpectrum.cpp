@@ -4,12 +4,24 @@
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPUZ80.h"
-#include "Video/VideoZX80.h"
+#include "Video/VideoZXSpectrum.h"
 
 using cfg::CONFIG;
 
 namespace emul
 {
+	// TODO
+	const size_t MAIN_CLK = 14000000; // 14 MHz Main crystal
+	const size_t PIXEL_CLK = MAIN_CLK / 2;
+	const size_t CPU_CLK = PIXEL_CLK / 2;
+
+	// TODO: ULA
+	// Every 20ms, generate interrupt
+	// For now base on CPU clock
+	const size_t RTC_CLK = 50; // 50Hz
+	const size_t RTC_RATE = CPU_CLK / RTC_CLK;
+
+
 	ComputerZXSpectrum::ComputerZXSpectrum() :
 		Logger("ZXSpectrum"),
 		Computer(m_memory),
@@ -34,9 +46,15 @@ namespace emul
 
 		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZXSpectrum::ReadKeyboard));
 
+		// Officially 0xFE, but in fact all even ports
+		for (int i = 0; i < 128; ++i)
+		{
+			Connect(i << 1, static_cast<PortConnector::OUTFunction>(&ComputerZXSpectrum::WriteULA));
+		}
+
 		const char* arch = "spectrum";
 
-		video::VideoZX80* video = new video::VideoZX80();
+		video::VideoZXSpectrum* video = new video::VideoZXSpectrum();
 
 		//DWORD backgroundRGB = CONFIG().GetValueDWORD(arch, "video.bg", video->GetDefaultBackground());
 		//DWORD foregroundRGB = CONFIG().GetValueDWORD(arch, "video.fg", video->GetDefaultForeground());
@@ -45,12 +63,7 @@ namespace emul
 		//video->SetForeground(foregroundRGB);
 		InitVideo(video); // Takes ownership
 
-		// TODO
-		const size_t MAIN_CLK = 14000000; // Main crystal
-		const size_t PIXEL_CLK = MAIN_CLK / 2;
-		const size_t CPU_CLK = PIXEL_CLK / 2;
-
-		InitInputs(CPU_CLK, 50);
+		InitInputs(CPU_CLK, RTC_CLK);
 		GetInputs().InitKeyboard(&m_keyboard);
 	}
 
@@ -61,20 +74,40 @@ namespace emul
 			return false;
 		}
 
-		static uint32_t cpuTicks = 0;
-		cpuTicks += GetCPU().GetInstructionTicks();
+		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
-		++g_ticks;
-
-		GetInputs().Tick();
-		if (GetInputs().IsQuit())
+		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
-			return false;
+			++g_ticks;
+
+			GetVideo().Tick();
+			GetVideo().Tick();
+
+
+			// Generate an interrupt every RTC_CLK (50Hz)
+			static size_t rtcDelay = RTC_RATE;
+			GetCPU().SetINT(rtcDelay == RTC_RATE);
+			if (--rtcDelay == 0)
+			{
+				GetVideo().VSync();
+
+				// Reset Counter
+				rtcDelay = RTC_RATE;
+			}
+
+			GetInputs().Tick();
+			if (GetInputs().IsQuit())
+			{
+				return false;
+			}
 		}
 
-		GetVideo().Tick();
-
 		return true;
+	}
+
+	void ComputerZXSpectrum::WriteULA(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "WriteULA, value = %02X", value);
 	}
 
 	BYTE ComputerZXSpectrum::ReadKeyboard()

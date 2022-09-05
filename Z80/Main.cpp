@@ -321,7 +321,7 @@ int main(int argc, char* args[])
 		fprintf(stderr, "Set Breakpoint to [0x%04X]\n", breakpoint);
 	}
 
-	emul::ADDRESS customMemoryView = CONFIG().GetValueWORD("monitor", "custommem", 0);
+	customMemoryView = CONFIG().GetValueWORD("monitor", "custommem", 0);
 	fprintf(stderr, "Set Monitor Custom Memory View to [0x%04X]\n", customMemoryView);
 
 #ifdef CPU_TEST
@@ -472,7 +472,15 @@ int main(int argc, char* args[])
 						case FKEY + 2:
 						case FKEY + 3:
 						case FKEY + 4:
+							break;
 						case FKEY + 5:
+						{
+							char buf[128];
+							sprintf(buf, "dump/memdump_%zu.bin", time(nullptr));
+							fprintf(stderr, "Dump RAM to %s\n", buf);
+							pc->GetMemory().Dump(0x4000, 0x4000, buf);
+							break;
+						}
 						case FKEY + 6:
 						case FKEY + 7:
 						case FKEY + 8:

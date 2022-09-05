@@ -52,6 +52,7 @@
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\VideoEvents.h" />
     <ClInclude Include="Video\VideoZX80.h" />
+    <ClInclude Include="Video\VideoZXSpectrum.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp" />
@@ -85,6 +86,7 @@
     <ClCompile Include="UI\MainWindow.cpp" />
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\VideoZX80.cpp" />
+    <ClCompile Include="Video\VideoZXSpectrum.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8080.ANS">

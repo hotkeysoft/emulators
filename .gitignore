@@ -10,4 +10,7 @@ x64
 /8086/*.img
 /8086/dump
 /8086/snapshots
+/Z80/*.bin
+/Z80/dump
+/Z80/snapshots
 *.backup
