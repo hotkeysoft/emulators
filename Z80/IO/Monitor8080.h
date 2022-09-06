@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Console.h"
+#include <IO/Console.h>
 #include <CPU/Memory.h>
 #include <CPU/CPUInfo.h>
 

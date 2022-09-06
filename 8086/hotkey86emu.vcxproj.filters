@@ -67,6 +67,9 @@
     <Filter Include="Common\CPU">
       <UniqueIdentifier>{b51a024c-8965-4fce-a77a-e59b309701f9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\IO">
+      <UniqueIdentifier>{08025c1f-fd2f-4256-9296-7391ac8ec138}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -134,9 +137,6 @@
     </ClCompile>
     <ClCompile Include="Sound\DeviceSN76489.cpp">
       <Filter>Source Files\Sound</Filter>
-    </ClCompile>
-    <ClCompile Include="IO\Console.cpp">
-      <Filter>Source Files\IO</Filter>
     </ClCompile>
     <ClCompile Include="Video\VideoCGA.cpp">
       <Filter>Source Files\Video</Filter>
@@ -306,6 +306,9 @@
     <ClCompile Include="..\Common\CPU\CPUInfo.cpp">
       <Filter>Common\CPU</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\IO\Console.cpp">
+      <Filter>Common\IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h">
@@ -361,9 +364,6 @@
     </ClInclude>
     <ClInclude Include="Video\VideoCGA.h">
       <Filter>Header Files\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="IO\Console.h">
-      <Filter>Header Files\IO</Filter>
     </ClInclude>
     <ClInclude Include="IO\DeviceKeyboard.h">
       <Filter>Header Files\IO</Filter>
@@ -565,6 +565,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\CPU\CPUInfo.h">
       <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\IO\Console.h">
+      <Filter>Common\IO</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

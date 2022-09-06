@@ -11,7 +11,7 @@ Console::~Console()
 {
 }
 
-void Console::Init(short columns, short fontSize) 
+void Console::Init(short columns, short fontSize)
 {
 	m_hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -140,8 +140,8 @@ void Console::MoveBlockY(short x, short y, short w, short h, short newY)
 	COORD bufferSize{ w, h };
 	COORD bufferCoord{ 0, 0 };
 
-	ReadConsoleOutput(m_hConsole, 
-		&buffer[0], 
+	ReadConsoleOutput(m_hConsole,
+		&buffer[0],
 		bufferSize,
 		bufferCoord,
 		&src);

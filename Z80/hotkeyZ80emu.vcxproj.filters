@@ -58,6 +58,9 @@
     <Filter Include="Common\CPU">
       <UniqueIdentifier>{7f59201c-b6b1-4a48-ae69-20b35db870be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\IO">
+      <UniqueIdentifier>{4e894c8f-05b5-4ee0-b434-f0cd109e86bf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -77,9 +80,6 @@
     </ClInclude>
     <ClInclude Include="..\Common\json.hpp">
       <Filter>3rd Party</Filter>
-    </ClInclude>
-    <ClInclude Include="IO\Console.h">
-      <Filter>Header Files\IO</Filter>
     </ClInclude>
     <ClInclude Include="IO\Monitor8080.h">
       <Filter>Header Files\IO</Filter>
@@ -156,6 +156,9 @@
     <ClInclude Include="..\Common\CPU\CPUInfo.h">
       <Filter>Common\CPU</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\IO\Console.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -168,9 +171,6 @@
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
     <ClCompile Include="IO\Monitor8080.cpp">
-      <Filter>Source Files\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="IO\Console.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
     <ClCompile Include="Video\Video.cpp">
@@ -232,6 +232,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\CPU\CPUInfo.cpp">
       <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\IO\Console.cpp">
+      <Filter>Common\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

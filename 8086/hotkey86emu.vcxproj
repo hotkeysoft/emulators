@@ -171,6 +171,7 @@
     <ClCompile Include="..\Common\CPU\Memory.cpp" />
     <ClCompile Include="..\Common\CPU\MemoryBlock.cpp" />
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
+    <ClCompile Include="..\Common\IO\Console.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="ComputerAT.cpp" />
@@ -199,7 +200,6 @@
     <ClCompile Include="ComputerPCjr.cpp" />
     <ClCompile Include="ComputerTandy.cpp" />
     <ClCompile Include="ComputerXT.cpp" />
-    <ClCompile Include="IO\Console.cpp" />
     <ClCompile Include="CPU\CPU8086.cpp" />
     <ClCompile Include="CPU\CPU8086Test.cpp" />
     <ClCompile Include="Hardware\Device8237.cpp" />
@@ -259,6 +259,7 @@
     <ClInclude Include="..\Common\CPU\MemoryBlock.h" />
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\inipp.h" />
+    <ClInclude Include="..\Common\IO\Console.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />
@@ -287,7 +288,6 @@
     <ClInclude Include="ComputerPCjr.h" />
     <ClInclude Include="ComputerTandy.h" />
     <ClInclude Include="ComputerXT.h" />
-    <ClInclude Include="IO\Console.h" />
     <ClInclude Include="CPU\CPU8086.h" />
     <ClInclude Include="CPU\CPU8086Test.h" />
     <ClInclude Include="Hardware\Device8237.h" />
