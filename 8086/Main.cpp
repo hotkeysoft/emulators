@@ -14,7 +14,7 @@
 #include "ComputerAT.h"
 
 #include <Config.h>
-#include "Sound/Sound.h"
+#include <Sound/Sound.h>
 
 #include <conio.h>
 #include <vector>

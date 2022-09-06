@@ -28,17 +28,11 @@
     <Filter Include="Header Files\IO">
       <UniqueIdentifier>{1f08f00c-9a7f-402f-b296-819480658596}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Sound">
-      <UniqueIdentifier>{1d54938d-9843-4ef7-a345-f384c9ec08ff}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Video">
       <UniqueIdentifier>{ff7f47fd-f67e-4971-8c5a-8636afaa2d17}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\CPU">
       <UniqueIdentifier>{4bbc57f0-c69c-4581-a49a-e908c72f86de}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Sound">
-      <UniqueIdentifier>{7dbb5043-5f8a-4913-b1d2-9c106d1c79f3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Video">
       <UniqueIdentifier>{05277315-8af1-4a78-bdc9-bd0a618e6991}</UniqueIdentifier>
@@ -60,6 +54,9 @@
     </Filter>
     <Filter Include="Common\IO">
       <UniqueIdentifier>{4e894c8f-05b5-4ee0-b434-f0cd109e86bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Sound">
+      <UniqueIdentifier>{24cb6e53-251b-476c-8e7a-28226a24b983}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -89,9 +86,6 @@
     </ClInclude>
     <ClInclude Include="Video\VideoEvents.h">
       <Filter>Header Files\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="Sound\Sound.h">
-      <Filter>Header Files\Sound</Filter>
     </ClInclude>
     <ClInclude Include="UI\MainWindow.h">
       <Filter>Header Files\UI</Filter>
@@ -159,6 +153,9 @@
     <ClInclude Include="..\Common\IO\Console.h">
       <Filter>Common\IO</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Sound\Sound.h">
+      <Filter>Common\Sound</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -166,9 +163,6 @@
     </ClCompile>
     <ClCompile Include="..\Common\Logger.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="Sound\Sound.cpp">
-      <Filter>Source Files\Sound</Filter>
     </ClCompile>
     <ClCompile Include="IO\Monitor8080.cpp">
       <Filter>Source Files\IO</Filter>
@@ -235,6 +229,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\IO\Console.cpp">
       <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Sound\Sound.cpp">
+      <Filter>Common\Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

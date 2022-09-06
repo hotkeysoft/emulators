@@ -174,6 +174,7 @@
     <ClCompile Include="..\Common\IO\Console.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
+    <ClCompile Include="..\Common\Sound\Sound.cpp" />
     <ClCompile Include="ComputerAT.cpp" />
     <ClCompile Include="CPU\CPU80186.cpp" />
     <ClCompile Include="CPU\CPU80286.cpp" />
@@ -186,7 +187,6 @@
     <ClCompile Include="Sound\DeviceGameBlaster.cpp" />
     <ClCompile Include="Sound\DeviceSAA1099.cpp" />
     <ClCompile Include="Sound\DeviceSoundSource.cpp" />
-    <ClCompile Include="Sound\Sound.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -263,6 +263,7 @@
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />
+    <ClInclude Include="..\Common\Sound\Sound.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="ComputerAT.h" />
     <ClInclude Include="CPU\CPU80186.h" />
@@ -279,7 +280,6 @@
     <ClInclude Include="Sound\DeviceGameBlaster.h" />
     <ClInclude Include="Sound\DeviceSAA1099.h" />
     <ClInclude Include="Sound\DeviceSoundSource.h" />
-    <ClInclude Include="Sound\Sound.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UI\MainWindow.h" />
     <ClInclude Include="UI\Overlay.h" />

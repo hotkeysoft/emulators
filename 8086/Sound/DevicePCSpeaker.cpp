@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
+#include <Sound/Sound.h>
 #include "DevicePCSpeaker.h"
 #include "../Hardware/Device8254.h"
 #include "../Hardware/Device8255.h"
-#include "Sound.h"
 
 using sound::SOUND;
 

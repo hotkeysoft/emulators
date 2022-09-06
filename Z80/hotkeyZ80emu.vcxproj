@@ -31,6 +31,7 @@
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />
+    <ClInclude Include="..\Common\Sound\Sound.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="Computer8080.h" />
     <ClInclude Include="ComputerZ80.h" />
@@ -45,7 +46,6 @@
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor8080.h" />
     <ClInclude Include="IO\MonitorZ80.h" />
-    <ClInclude Include="Sound\Sound.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UI\MainWindow.h" />
     <ClInclude Include="Video\Video.h" />
@@ -62,6 +62,7 @@
     <ClCompile Include="..\Common\IO\Console.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
+    <ClCompile Include="..\Common\Sound\Sound.cpp" />
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="Computer8080.cpp" />
     <ClCompile Include="ComputerZ80.cpp" />
@@ -73,7 +74,6 @@
     <ClCompile Include="IO\Monitor8080.cpp" />
     <ClCompile Include="IO\MonitorZ80.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Sound\Sound.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
