@@ -29,7 +29,7 @@ namespace video
 		if ((m_pixelClock % 224) == 0)
 		{
 			NewLine();
-			DrawBackground(32, 0x00000000);
+			DrawBackground(32, m_palette0[m_border]);
 
 			m_hSync = false;
 			++m_currY;
@@ -57,7 +57,7 @@ namespace video
 		}
 		else
 		{
-			DrawBackground(2, 0x00000000);
+			DrawBackground(2, m_palette0[m_border]);
 		}
 
 		m_currX += 2;
@@ -72,7 +72,6 @@ namespace video
 		UpdateBaseAddress();
 		m_pixelClock = 0;
 		m_currX = 0;
-		//LogPrintf(LOG_DEBUG, "VSync");
 	}
 
 	SDL_Rect VideoZXSpectrum::GetDisplayRect(BYTE border, WORD xMultiplier) const

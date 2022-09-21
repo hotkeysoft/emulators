@@ -55,12 +55,6 @@ namespace emul
 		const char* arch = "spectrum";
 
 		video::VideoZXSpectrum* video = new video::VideoZXSpectrum();
-
-		//DWORD backgroundRGB = CONFIG().GetValueDWORD(arch, "video.bg", video->GetDefaultBackground());
-		//DWORD foregroundRGB = CONFIG().GetValueDWORD(arch, "video.fg", video->GetDefaultForeground());
-
-		//video->SetBackground(backgroundRGB);
-		//video->SetForeground(foregroundRGB);
 		InitVideo(video); // Takes ownership
 
 		InitInputs(CPU_CLK, RTC_CLK);
@@ -82,7 +76,6 @@ namespace emul
 
 			GetVideo().Tick();
 			GetVideo().Tick();
-
 
 			// Generate an interrupt every RTC_CLK (50Hz)
 			static size_t rtcDelay = RTC_RATE;
@@ -107,7 +100,11 @@ namespace emul
 
 	void ComputerZXSpectrum::WriteULA(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WriteULA, value = %02X", value);
+		LogPrintf(LOG_DEBUG, "WriteULA, value = %02X", value);
+		GetVideo().SetBorder(value & 0b111);
+
+		m_earOutput = GetBit(value, 4);
+		m_micOutput = GetBit(value, 3);
 	}
 
 	BYTE ComputerZXSpectrum::ReadKeyboard()

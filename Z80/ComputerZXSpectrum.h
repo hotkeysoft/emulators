@@ -30,6 +30,9 @@ namespace emul
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;
 
+		bool m_earOutput;
+		bool m_micOutput;
+
 		BYTE ReadKeyboard();
 
 		kbd::DeviceKeyboardZX80 m_keyboard;
