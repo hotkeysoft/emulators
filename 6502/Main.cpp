@@ -8,6 +8,7 @@
 #include "UI/MainWindow.h"
 
 #include "Computer6502.h"
+#include "ComputerPET2001.h"
 
 #include <Config.h>
 #include <Sound/Sound.h>
@@ -130,6 +131,10 @@ Computer* CreateComputer(std::string arch)
 	if (arch == "6502")
 	{
 		computer = new emul::Computer6502();
+	}
+	if (arch == "pet" || arch == "pet2001")
+	{
+		computer = new emul::ComputerPET2001();
 	}
 	return computer;
 }

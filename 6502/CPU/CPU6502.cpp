@@ -37,6 +37,134 @@ namespace emul
 		std::fill(m_opcodes.begin(), m_opcodes.end(), [=]() { UnknownOpcode(); });
 
 
+		// Logical and Arithmetic Commands
+
+		// ORA
+		m_opcodes[0x09] = [=]() { UnknownOpcode(); }; // imm
+		m_opcodes[0x05] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0x15] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0x01] = [=]() { UnknownOpcode(); }; // izx
+		m_opcodes[0x11] = [=]() { UnknownOpcode(); }; // izy
+		m_opcodes[0x0D] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0x1D] = [=]() { UnknownOpcode(); }; // abx
+		m_opcodes[0x19] = [=]() { UnknownOpcode(); }; // aby
+
+		// AND
+		m_opcodes[0x29] = [=]() { UnknownOpcode(); }; // imm
+		m_opcodes[0x25] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0x35] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0x21] = [=]() { UnknownOpcode(); }; // izx
+		m_opcodes[0x31] = [=]() { UnknownOpcode(); }; // izy
+		m_opcodes[0x2D] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0x3D] = [=]() { UnknownOpcode(); }; // abx
+		m_opcodes[0x39] = [=]() { UnknownOpcode(); }; // aby
+
+		// EOR
+		m_opcodes[0x49] = [=]() { UnknownOpcode(); }; // imm
+		m_opcodes[0x45] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0x55] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0x41] = [=]() { UnknownOpcode(); }; // izx
+		m_opcodes[0x51] = [=]() { UnknownOpcode(); }; // izy
+		m_opcodes[0x4D] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0x5D] = [=]() { UnknownOpcode(); }; // abx
+		m_opcodes[0x59] = [=]() { UnknownOpcode(); }; // aby
+
+		// ADC
+		m_opcodes[0x69] = [=]() { UnknownOpcode(); }; // imm
+		m_opcodes[0x65] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0x75] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0x61] = [=]() { UnknownOpcode(); }; // izx
+		m_opcodes[0x71] = [=]() { UnknownOpcode(); }; // izy
+		m_opcodes[0x6D] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0x7D] = [=]() { UnknownOpcode(); }; // abx
+		m_opcodes[0x79] = [=]() { UnknownOpcode(); }; // aby
+
+		// SBC
+		m_opcodes[0xE9] = [=]() { UnknownOpcode(); }; // imm
+		m_opcodes[0xE5] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0xF5] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0xE1] = [=]() { UnknownOpcode(); }; // izx
+		m_opcodes[0xF1] = [=]() { UnknownOpcode(); }; // izy
+		m_opcodes[0xED] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0xFD] = [=]() { UnknownOpcode(); }; // abx
+		m_opcodes[0xF9] = [=]() { UnknownOpcode(); }; // aby
+
+		// CMP
+		m_opcodes[0xC9] = [=]() { UnknownOpcode(); }; // imm
+		m_opcodes[0xC5] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0xD5] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0xC1] = [=]() { UnknownOpcode(); }; // izx
+		m_opcodes[0xD1] = [=]() { UnknownOpcode(); }; // izy
+		m_opcodes[0xCD] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0xDD] = [=]() { UnknownOpcode(); }; // abx
+		m_opcodes[0xD9] = [=]() { UnknownOpcode(); }; // aby
+
+		// CPX
+		m_opcodes[0xE0] = [=]() { UnknownOpcode(); }; // imm
+		m_opcodes[0xE4] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0xEC] = [=]() { UnknownOpcode(); }; // abs
+
+		// CPY
+		m_opcodes[0xC0] = [=]() { UnknownOpcode(); }; // imm
+		m_opcodes[0xC4] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0xCC] = [=]() { UnknownOpcode(); }; // abs
+
+		// DEC
+		m_opcodes[0xC6] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0xD6] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0xCE] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0xDE] = [=]() { UnknownOpcode(); }; // abx
+
+		// DEX
+		m_opcodes[0xCA] = [=]() { UnknownOpcode(); }; // imp
+
+		// DEY
+		m_opcodes[0x88] = [=]() { UnknownOpcode(); }; // imp
+
+		// INC
+		m_opcodes[0xE6] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0xF6] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0xEE] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0xFE] = [=]() { UnknownOpcode(); }; // abx
+
+		// INX
+		m_opcodes[0xE8] = [=]() { UnknownOpcode(); }; // imp
+
+		// INY
+		m_opcodes[0xC8] = [=]() { UnknownOpcode(); }; // imp
+
+		// ASL
+		m_opcodes[0x0A] = [=]() { UnknownOpcode(); }; // imp
+		m_opcodes[0x06] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0x16] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0x0E] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0x1E] = [=]() { UnknownOpcode(); }; // abx
+
+		// ROL
+		m_opcodes[0x2A] = [=]() { UnknownOpcode(); }; // imp
+		m_opcodes[0x26] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0x36] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0x2E] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0x3E] = [=]() { UnknownOpcode(); }; // abx
+
+		// LSR
+		m_opcodes[0x4A] = [=]() { UnknownOpcode(); }; // imp
+		m_opcodes[0x46] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0x56] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0x4E] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0x5E] = [=]() { UnknownOpcode(); }; // abx
+
+		// ROR
+		m_opcodes[0x6A] = [=]() { UnknownOpcode(); }; // imp
+		m_opcodes[0x66] = [=]() { UnknownOpcode(); }; // zp
+		m_opcodes[0x76] = [=]() { UnknownOpcode(); }; // zpx
+		m_opcodes[0x6E] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0x7E] = [=]() { UnknownOpcode(); }; // abx
+
+		// Move Commands
+
+
+
 		//m_opcodes[0x00] = [=]() { };
 	}
 
@@ -49,19 +177,11 @@ namespace emul
 		CPU::Reset();
 
 		m_reg.A = 0;
-		m_reg.B = 0;
-		m_reg.C = 0;
-		m_reg.D = 0;
-		m_reg.E = 0;
-		m_reg.H = 0;
-		m_reg.L = 0;
+		m_reg.X = 0;
+		m_reg.Y = 0;
+		m_reg.SP = 0;
 
-		m_regSP = 0;
-		m_programCounter = 0;
-
-		m_ioRequest = false;
-		m_interruptAcknowledge = false;
-		m_interruptsEnabled = false;
+		m_programCounter = ADDR_RESET;
 
 		ClearFlags(m_reg.flags);
 	}
@@ -73,7 +193,6 @@ namespace emul
 
 	void CPU6502::SetFlags(BYTE f)
 	{
-		SetBitMask(f, FLAG_RESERVED_OFF, false);
 		SetBitMask(f, FLAG_RESERVED_ON, true);
 		m_reg.flags = f;
 	}
@@ -82,6 +201,7 @@ namespace emul
 	{
 		BYTE b = m_memory.Read8(GetCurrentAddress());
 		++m_programCounter;
+		m_programCounter &= 0xFFFF;
 		return b;
 	}
 
@@ -110,11 +230,12 @@ namespace emul
 
 	void CPU6502::Dump()
 	{
-		LogPrintf(LOG_DEBUG, "AF = %02X %02X\tCY = %c", m_reg.A, m_reg.flags, GetFlag(FLAG_CY)?'1':'0');
-		LogPrintf(LOG_DEBUG, "BC = %02X %02X\tP  = %c", m_reg.B, m_reg.C, GetFlag(FLAG_P)?'1':'0');
-		LogPrintf(LOG_DEBUG, "DE = %02X %02X\tAC = %c", m_reg.D, m_reg.E, GetFlag(FLAG_AC)?'1':'0');
-		LogPrintf(LOG_DEBUG, "HL = %02X %02X\tZ  = %c", m_reg.H, m_reg.L, GetFlag(FLAG_Z)?'1':'0');
-		LogPrintf(LOG_DEBUG, "SP = %04X   \tS  = %c", m_regSP, GetFlag(FLAG_S)?'1':'0');
+		LogPrintf(LOG_DEBUG, "A = %02X", m_reg.A);
+		LogPrintf(LOG_DEBUG, "X = %02X", m_reg.X);
+		LogPrintf(LOG_DEBUG, "Y = %02X", m_reg.Y);
+		LogPrintf(LOG_DEBUG, "Flags NV-BDIZC");
+		LogPrintf(LOG_DEBUG, "      "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(m_reg.flags));
+		LogPrintf(LOG_DEBUG, "SP = %04X", m_reg.SP);
 		LogPrintf(LOG_DEBUG, "PC = %04X", m_programCounter);
 		LogPrintf(LOG_DEBUG, "");
 	}
@@ -122,14 +243,11 @@ namespace emul
 	void CPU6502::UnknownOpcode()
 	{
 		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X", m_opcode, m_programCounter);
+		throw std::exception("Unknown opcode");
 	}
 
 	void CPU6502::Exec(BYTE opcode)
 	{
-		// Reset control lines
-		m_interruptAcknowledge = false;
-		m_ioRequest = false;
-
 		m_opcode = opcode;
 		m_currTiming = &m_info.GetOpcodeTiming(opcode);
 
@@ -154,8 +272,6 @@ namespace emul
 	{
 		if (m_interruptsEnabled)
 		{
-			m_interruptAcknowledge = true;
-			return;
 		}
 
 		// TODO: Not implemented
@@ -163,9 +279,6 @@ namespace emul
 
 	void CPU6502::AdjustBaseFlags(BYTE val)
 	{
-		SetFlag(FLAG_Z, (val == 0));
-		SetFlag(FLAG_S, GetBit(val, 7));
-		SetFlag(FLAG_P, IsParityEven(val));
 	}
 
 }

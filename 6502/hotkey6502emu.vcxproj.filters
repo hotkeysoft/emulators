@@ -126,6 +126,9 @@
     <ClInclude Include="Computer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ComputerPET2001.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -187,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\Sound\Sound.cpp">
       <Filter>Common\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerPET2001.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

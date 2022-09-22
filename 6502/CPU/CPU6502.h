@@ -47,12 +47,18 @@ namespace emul
 		virtual void Deserialize(const json& from) {} // TODO
 
 	protected:
+
 		CPU6502(const char* cpuid, Memory& memory);
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
 		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc)[0]); }
+
+		// Hardware vectors
+		const ADDRESS ADDR_NMI = 0xFFFA;
+		const ADDRESS ADDR_RESET = 0xFFFC;
+		const ADDRESS ADDR_IRQ = 0xFFFE;
 
 		using OpcodeTable = std::vector<std::function<void()>>;
 		OpcodeTable m_opcodes;
@@ -70,18 +76,17 @@ namespace emul
 
 		enum FLAG : BYTE
 		{
-			FLAG_S		= 128,
-			FLAG_Z		= 64,
-			_FLAG_R5	= 32,
-			FLAG_AC		= 16,
-			_FLAG_R3	= 8,
-			FLAG_P		= 4,
-			_FLAG_R1	= 2,
-			FLAG_CY		= 1
+			FLAG_N		= 128, // 1 when result is negative
+			FLAG_V		= 64,  // 1 on signed overflow
+			_FLAG_R5	= 32,  // 1
+			FLAG_B		= 16,  // 1 when interrupt was caused by a BRK
+			FLAG_D		= 8,   // 1 when CPU is in BCD mode
+			FLAG_I		= 4,   // 1 when IRQ is disabled
+			FLAG_Z		= 2,   // 1 when result is 0
+			FLAG_C		= 1    // 1 on unsigned overflow
 		};
 
-		FLAG FLAG_RESERVED_ON = FLAG(_FLAG_R1);
-		FLAG FLAG_RESERVED_OFF = FLAG(_FLAG_R3 | _FLAG_R5);
+		FLAG FLAG_RESERVED_ON = FLAG(_FLAG_R5);
 
 		ADDRESS m_programCounter = 0;
 
@@ -90,17 +95,11 @@ namespace emul
 			BYTE A = 0;
 			BYTE flags = 0;
 
-			BYTE B = 0;
-			BYTE C = 0;
+			BYTE X = 0;
+			BYTE Y = 0;
 
-			BYTE D = 0;
-			BYTE E = 0;
-
-			BYTE H = 0;
-			BYTE L = 0;
+			WORD SP = 0;
 		} m_reg;
-
-		WORD m_regSP = 0;
 
 		void ClearFlags(BYTE& flags);
 		void SetFlags(BYTE f);
@@ -113,16 +112,8 @@ namespace emul
 
 		virtual BYTE FetchByte() override;
 
-		WORD GetBC() const { return MakeWord(m_reg.B, m_reg.C); };
-		WORD GetDE() const { return MakeWord(m_reg.D, m_reg.E); };
-		WORD GetHL() const { return MakeWord(m_reg.H, m_reg.L); };
-
-		void SetBC(WORD val) { m_reg.B = GetHByte(val); m_reg.C = GetLByte(val); }
-		void SetDE(WORD val) { m_reg.D = GetHByte(val); m_reg.E = GetLByte(val); }
-		void SetHL(WORD val) { m_reg.H = GetHByte(val); m_reg.L = GetLByte(val); }
-
-		BYTE ReadMem() const { return m_memory.Read8(GetHL()); }
-		void WriteMem(BYTE value) { m_memory.Write8(GetHL(), value); }
+		//BYTE ReadMem() const { return m_memory.Read8(GetHL()); }
+		//void WriteMem(BYTE value) { m_memory.Write8(GetHL(), value); }
 
 		virtual void AdjustBaseFlags(BYTE val);
 

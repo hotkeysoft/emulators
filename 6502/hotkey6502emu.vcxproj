@@ -35,6 +35,7 @@
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="Computer.h" />
     <ClInclude Include="Computer6502.h" />
+    <ClInclude Include="ComputerPET2001.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="CPU\CPU6502.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
@@ -56,6 +57,7 @@
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="Computer6502.cpp" />
+    <ClCompile Include="ComputerPET2001.cpp" />
     <ClCompile Include="CPU\CPU6502.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor6502.cpp" />
