@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{7587a590-80d0-4e2b-8542-a3f69cccbc45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rd Party">
+      <UniqueIdentifier>{1a215ba4-0f3a-445a-927d-c6ccf2f47b7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="config">
+      <UniqueIdentifier>{537a59af-279f-4d29-9067-1e0d305f560c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\CPU">
+      <UniqueIdentifier>{e5882df9-65d5-4888-80ea-e116bdfce791}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\IO">
+      <UniqueIdentifier>{1f08f00c-9a7f-402f-b296-819480658596}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\CPU">
+      <UniqueIdentifier>{4bbc57f0-c69c-4581-a49a-e908c72f86de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\IO">
+      <UniqueIdentifier>{90eafa35-4cc9-499c-ad14-b830248ccdca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{7b4716c4-7b3a-43a4-b330-d0b5c5f6c200}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{d241b389-ac40-4b6d-a3ee-3e9b5b0ffa67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\CPU">
+      <UniqueIdentifier>{7f59201c-b6b1-4a48-ae69-20b35db870be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\IO">
+      <UniqueIdentifier>{4e894c8f-05b5-4ee0-b434-f0cd109e86bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Sound">
+      <UniqueIdentifier>{24cb6e53-251b-476c-8e7a-28226a24b983}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Logger.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StringUtil.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\inipp.h">
+      <Filter>3rd Party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\json.hpp">
+      <Filter>3rd Party</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\Monitor6502.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\MainWindow.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="CPU\CPU6502.h">
+      <Filter>Header Files\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="Computer6502.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\Monitor6502.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="EdgeDetectLatch.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\InputEvents.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Computer6502.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\CPU.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\Memory.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\MemoryBlock.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Serializable.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\CPUCommon.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\PortConnector.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Config.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\CPUInfo.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\IO\Console.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Sound\Sound.h">
+      <Filter>Common\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="Computer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Logger.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\Monitor6502.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\MainWindow.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="CPU\CPU6502.cpp">
+      <Filter>Source Files\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="Computer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Computer6502.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\Monitor6502.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\InputEvents.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Computer6502.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\CPU.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\Memory.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\MemoryBlock.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Serializable.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\PortConnector.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Config.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\CPUInfo.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\IO\Console.cpp">
+      <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Sound\Sound.cpp">
+      <Filter>Common\Sound</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SDLPath.props" />
+    <None Include="config\config.ini">
+      <Filter>config</Filter>
+    </None>
+    <None Include="config\6502.ans">
+      <Filter>config</Filter>
+    </None>
+    <None Include="config\6502.json">
+      <Filter>config</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\overlay16.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
