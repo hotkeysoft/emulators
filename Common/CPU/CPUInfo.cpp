@@ -90,7 +90,7 @@ namespace cpuInfo
 			m_defaultSubOpcodeTiming = m_defaultOpcodeTiming;
 		}
 
-		if (m_config["cpu"].contains("opcodes.timing"))
+		if (m_config["cpu"].contains("opcodes.grp.timing"))
 		{
 			m_defaultSubOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.grp.timing"]);
 			LogPrintf(LOG_INFO, "Default Subopcode timing: %s", GetTimingString(m_defaultSubOpcodeTiming).c_str());
