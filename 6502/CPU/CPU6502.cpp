@@ -36,8 +36,9 @@ namespace emul
 		m_opcodes.resize(256);
 		std::fill(m_opcodes.begin(), m_opcodes.end(), [=]() { UnknownOpcode(); });
 
-
+		// ------------------------------
 		// Logical and Arithmetic Commands
+		// ------------------------------
 
 		// ORA
 		m_opcodes[0x09] = [=]() { UnknownOpcode(); }; // imm
@@ -109,36 +110,36 @@ namespace emul
 		m_opcodes[0xC4] = [=]() { UnknownOpcode(); }; // zp
 		m_opcodes[0xCC] = [=]() { UnknownOpcode(); }; // abs
 
-		// DEC
-		m_opcodes[0xC6] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0xD6] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0xCE] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0xDE] = [=]() { UnknownOpcode(); }; // abx
+		// DEC {adr}:={adr}-1, NZ
+		m_opcodes[0xC6] = [=]() { MEMop(&CPU6502::DEC, GetZP()); }; // zp
+		m_opcodes[0xD6] = [=]() { MEMop(&CPU6502::DEC, GetZPX()); }; // zpx
+		m_opcodes[0xCE] = [=]() { MEMop(&CPU6502::DEC, GetABS()); }; // abs
+		m_opcodes[0xDE] = [=]() { MEMop(&CPU6502::DEC, GetABSX()); }; // abx
 
-		// DEX
-		m_opcodes[0xCA] = [=]() { UnknownOpcode(); }; // imp
+		// DEX X:=X-1, NZ
+		m_opcodes[0xCA] = [=]() { DEC(m_reg.X); }; // imp
 
-		// DEY
-		m_opcodes[0x88] = [=]() { UnknownOpcode(); }; // imp
+		// DEY Y:=Y-1, NZ
+		m_opcodes[0x88] = [=]() { DEC(m_reg.Y); }; // imp
 
-		// INC
-		m_opcodes[0xE6] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0xF6] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0xEE] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0xFE] = [=]() { UnknownOpcode(); }; // abx
+		// INC {adr}:={adr}+1, NZ
+		m_opcodes[0xE6] = [=]() { MEMop(&CPU6502::INC, GetZP());  }; // zp
+		m_opcodes[0xF6] = [=]() { MEMop(&CPU6502::INC, GetZPX()); }; // zpx
+		m_opcodes[0xEE] = [=]() { MEMop(&CPU6502::INC, GetABS()); }; // abs
+		m_opcodes[0xFE] = [=]() { MEMop(&CPU6502::INC, GetABSX()); }; // abx
 
-		// INX
-		m_opcodes[0xE8] = [=]() { UnknownOpcode(); }; // imp
+		// INX X:=X+1, NZ
+		m_opcodes[0xE8] = [=]() { INC(m_reg.X); }; // imp
 
-		// INY
-		m_opcodes[0xC8] = [=]() { UnknownOpcode(); }; // imp
+		// INY Y:=Y+1, NZ
+		m_opcodes[0xC8] = [=]() { INC(m_reg.Y); }; // imp
 
-		// ASL
-		m_opcodes[0x0A] = [=]() { UnknownOpcode(); }; // imp
-		m_opcodes[0x06] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0x16] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0x0E] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0x1E] = [=]() { UnknownOpcode(); }; // abx
+		// ASL {adr}:={adr}*2, NZC
+		m_opcodes[0x0A] = [=]() { ASL(m_reg.A); }; // imp
+		m_opcodes[0x06] = [=]() { MEMop(&CPU6502::ASL, GetZP()); }; // zp
+		m_opcodes[0x16] = [=]() { MEMop(&CPU6502::ASL, GetZPX()); }; // zpx
+		m_opcodes[0x0E] = [=]() { MEMop(&CPU6502::ASL, GetABS()); }; // abs
+		m_opcodes[0x1E] = [=]() { MEMop(&CPU6502::ASL, GetABSX()); }; // abx
 
 		// ROL
 		m_opcodes[0x2A] = [=]() { UnknownOpcode(); }; // imp
@@ -161,13 +162,109 @@ namespace emul
 		m_opcodes[0x6E] = [=]() { UnknownOpcode(); }; // abs
 		m_opcodes[0x7E] = [=]() { UnknownOpcode(); }; // abx
 
+		// ------------------------------
 		// Move Commands
+		// ------------------------------
 
+		// LDA A:={adr}, NZ
+		m_opcodes[0xA9] = [=]() { LD(m_reg.A, FetchByte()); }; // imm
+		m_opcodes[0xA5] = [=]() { LDmem(m_reg.A, GetZP()); }; // zp
+		m_opcodes[0xB5] = [=]() { LDmem(m_reg.A, GetZPX()); }; // zpx
+		m_opcodes[0xA1] = [=]() { LDmem(m_reg.A, GetINDX()); }; // izx
+		m_opcodes[0xB1] = [=]() { LDmem(m_reg.A, GetINDY()); }; // izy
+		m_opcodes[0xAD] = [=]() { LDmem(m_reg.A, GetABS()); }; // abs
+		m_opcodes[0xBD] = [=]() { LDmem(m_reg.A, GetABSX()); }; // abx
+		m_opcodes[0xB9] = [=]() { LDmem(m_reg.A, GetABSY()); }; // aby
 
+		// STA {adr}:=A
+		m_opcodes[0x85] = [=]() { STmem(GetZP(), m_reg.A); }; // zp
+		m_opcodes[0x95] = [=]() { STmem(GetZPX(), m_reg.A); }; // zpx
+		m_opcodes[0x81] = [=]() { STmem(GetINDX(), m_reg.A); }; // izx
+		m_opcodes[0x91] = [=]() { STmem(GetINDY(), m_reg.A); }; // izy
+		m_opcodes[0x8D] = [=]() { STmem(GetABS(), m_reg.A); }; // abs
+		m_opcodes[0x9D] = [=]() { STmem(GetABSX(), m_reg.A); }; // abx
+		m_opcodes[0x99] = [=]() { STmem(GetABSY(), m_reg.A); }; // aby
+
+		// LDX X:={adr}, NZ
+		m_opcodes[0xA2] = [=]() { LD(m_reg.X, FetchByte()); }; // imm
+		m_opcodes[0xA6] = [=]() { LDmem(m_reg.X, GetZP()); }; // zp
+		m_opcodes[0xB6] = [=]() { LDmem(m_reg.X, GetZPY()); }; // zpy
+		m_opcodes[0xAE] = [=]() { LDmem(m_reg.X, GetABS()); }; // abs
+		m_opcodes[0xBE] = [=]() { LDmem(m_reg.X, GetABSY()); }; // aby
+
+		// STX {adr}:=X
+		m_opcodes[0x86] = [=]() { STmem(GetZP(), m_reg.X); }; // zp
+		m_opcodes[0x96] = [=]() { STmem(GetZPY(), m_reg.X); }; // zpy
+		m_opcodes[0x8E] = [=]() { STmem(GetABS(), m_reg.X); }; // abs
+
+		// LDY X:={adr}, NZ
+		m_opcodes[0xA0] = [=]() { LD(m_reg.Y, FetchByte()); }; // imm
+		m_opcodes[0xA4] = [=]() { LDmem(m_reg.Y, GetZP()); }; // zp
+		m_opcodes[0xB4] = [=]() { LDmem(m_reg.Y, GetZPX()); }; // zpx
+		m_opcodes[0xAC] = [=]() { LDmem(m_reg.Y, GetABS()); }; // abs
+		m_opcodes[0xBC] = [=]() { LDmem(m_reg.Y, GetABSX()); }; // abx
+
+		// STY {adr}:=X
+		m_opcodes[0x84] = [=]() { STmem(GetZP(), m_reg.Y);  }; // zp
+		m_opcodes[0x94] = [=]() { STmem(GetZPX(), m_reg.Y);  }; // zpx
+		m_opcodes[0x8C] = [=]() { STmem(GetABS(), m_reg.Y); }; // abs
+
+		// TAX X:=A, XZ
+		m_opcodes[0xAA] = [=]() { LD(m_reg.X, m_reg.A); }; // imp
+
+		// TXA A:=X, NZ
+		m_opcodes[0x8A] = [=]() { LD(m_reg.A, m_reg.X); }; // imp
+
+		// TAY Y:=A, NZ
+		m_opcodes[0xA8] = [=]() { LD(m_reg.Y, m_reg.A); }; // imp
+
+		// TYA A:=Y, NZ
+		m_opcodes[0x98] = [=]() { LD(m_reg.A, m_reg.Y); }; // imp
+
+		// TSX X:=S, NZ
+		m_opcodes[0xBA] = [=]() { LD(m_reg.X, m_reg.SP); }; // imp
+
+		// TXS S:=X
+		m_opcodes[0x9A] = [=]() { m_reg.SP = m_reg.X; }; // imp
+
+		// PLA A:=+(S), NZ
+		m_opcodes[0x68] = [=]() { UnknownOpcode(); }; // imp
+
+		// PHA (S):=A
+		m_opcodes[0x48] = [=]() { UnknownOpcode(); }; // imp
+
+		// PLP P:=+(S), NVDIZC
+		m_opcodes[0x28] = [=]() { UnknownOpcode(); }; // imp
+
+		// PHP (S)-:=P
+		m_opcodes[0x08] = [=]() { UnknownOpcode(); }; // imp
+
+		// ------------------------------
 		// Jump Commands
+		// ------------------------------
 
+		m_opcodes[0x10] = [=]() { BRANCHif(GetFlag(FLAG_N) == false); }; // BPL
+		m_opcodes[0x30] = [=]() { BRANCHif(GetFlag(FLAG_N) == true);  }; // BMI
+		m_opcodes[0x50] = [=]() { BRANCHif(GetFlag(FLAG_V) == false); }; // BVC
+		m_opcodes[0x70] = [=]() { BRANCHif(GetFlag(FLAG_V) == true);  }; // BVS
+		m_opcodes[0x90] = [=]() { BRANCHif(GetFlag(FLAG_C) == false); }; // BCC
+		m_opcodes[0xB0] = [=]() { BRANCHif(GetFlag(FLAG_C) == true);  }; // BCS
+		m_opcodes[0xD0] = [=]() { BRANCHif(GetFlag(FLAG_Z) == false); }; // BNE
+		m_opcodes[0xF0] = [=]() { BRANCHif(GetFlag(FLAG_Z) == true);  }; // BEQ
 
+		// JSR (S)-:=PC, PC:={adr}
+		m_opcodes[0x20] = [=]() { JSR(FetchWord()); };
+
+		// RTS PC:=+(S)
+		m_opcodes[0x60] = [=]() { RTS(); };
+
+		// BIT N:=b7, V:=b6, Z:=A&{adr}
+		m_opcodes[0x24] = [=]() { BIT(GetZP()); }; // zp
+		m_opcodes[0x2C] = [=]() { BIT(GetABS()); }; // abs
+
+		// ------------------------------
 		// Flag Commands
+		// ------------------------------
 
 		// CARRY
 		m_opcodes[0x18] = [=]() { SetFlag(FLAG_C, false); }; // CLC
@@ -302,8 +399,132 @@ namespace emul
 		// TODO: Not implemented
 	}
 
-	void CPU6502::AdjustBaseFlags(BYTE val)
+	// Address of data is ZP(n+X, n+X+1)
+	ADDRESS CPU6502::GetINDX()
 	{
+		ADDRESS addr = FetchByte() + m_reg.X;
+
+		// Cast to BYTE to wrap around in zero page in case we cross a page boundary
+		BYTE l = m_memory.Read8(BYTE(addr));
+		BYTE h = m_memory.Read8(BYTE(addr + 1));
+		return MakeWord(h, l);
+	}
+
+	// Address of data is Y + address at ZP(n, n+1)
+	ADDRESS CPU6502::GetINDY()
+	{
+		ADDRESS addr = FetchByte();
+
+		// Cast to BYTE to wrap around in zero page in case we cross a page boundary
+		BYTE l = m_memory.Read8(BYTE(addr));
+		BYTE h = m_memory.Read8(BYTE(addr + 1));
+
+		return MakeWord(h, l) + m_reg.Y;
+	}
+
+	void CPU6502::MEMop(std::function<void(CPU6502*, BYTE&)> func, ADDRESS dest)
+	{
+		BYTE temp = m_memory.Read8(dest);
+		func(this, temp);
+		m_memory.Write8(dest, temp);
+	}
+
+	void CPU6502::AdjustNZ(BYTE val)
+	{
+		SetFlag(FLAG_N, GetBit(val, 7));
+		SetFlag(FLAG_Z, val == 0);
+	}
+
+	void CPU6502::PUSH(BYTE val)
+	{
+		m_memory.Write8(GetSP(), val);
+		m_reg.SP--;
+	}
+	BYTE CPU6502::POP()
+	{
+		m_reg.SP++;
+		return m_memory.Read8(GetSP());
+	}
+
+	void CPU6502::LD(BYTE& dest, BYTE src)
+	{
+		dest = src;
+		AdjustNZ(dest);
+	}
+
+	void CPU6502::LDmem(BYTE& dest, ADDRESS src)
+	{
+		dest = m_memory.Read8(src);
+		AdjustNZ(dest);
+	}
+
+	void CPU6502::STmem(ADDRESS dest, BYTE src)
+	{
+		m_memory.Write8(dest, src);
+	}
+
+	void CPU6502::BRANCHif(bool cond)
+	{
+		// Sign expansion of relative address
+		WORD rel = Widen(FetchByte());
+
+		if (cond)
+		{
+			m_programCounter += rel;
+		}
+	}
+
+	void CPU6502::JSR(WORD dest)
+	{
+		PUSH(GetHByte(m_programCounter - 1));
+		PUSH(GetLByte(m_programCounter - 1));
+		m_programCounter = dest;
+	}
+
+	void CPU6502::RTS()
+	{
+		BYTE l = POP();
+		BYTE h = POP();
+		m_programCounter = MakeWord(h, l);
+		++m_programCounter;
+	}
+
+	void CPU6502::BIT(ADDRESS src)
+	{
+		BYTE val = m_memory.Read8(src);
+
+		SetFlag(FLAG_N, GetBit(val, 7));
+		SetFlag(FLAG_V, GetBit(val, 6));
+
+		val &= m_reg.A;
+		SetFlag(FLAG_Z, val == 0);
+	}
+
+	void CPU6502::INC(BYTE& dest)
+	{
+		++dest;
+		AdjustNZ(dest);
+	}
+	void CPU6502::DEC(BYTE& dest)
+	{
+		--dest;
+		AdjustNZ(dest);
+	}
+
+	void CPU6502::ASL(BYTE& dest)
+	{
+		SetFlag(FLAG_C, GetBit(dest, 7));
+		dest <<= 1;
+		AdjustNZ(dest);
+	}
+
+	void CPU6502::ROL(BYTE& dest)
+	{
+		bool carry = GetFlag(FLAG_C);
+		SetFlag(FLAG_C, GetBit(dest, 7));
+		dest <<= 1;
+		SetBit(dest, 0, carry);
+		AdjustNZ(dest);
 	}
 
 }

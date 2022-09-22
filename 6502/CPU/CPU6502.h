@@ -112,14 +112,47 @@ namespace emul
 
 		BYTE dummy = 0;
 
+		void MEMop(std::function<void(CPU6502*, BYTE&)> func, ADDRESS dest);
+
 		virtual BYTE FetchByte() override;
 
-		//BYTE ReadMem() const { return m_memory.Read8(GetHL()); }
-		//void WriteMem(BYTE value) { m_memory.Write8(GetHL(), value); }
+		// Addressing Modes
+		// ----------------
 
-		virtual void AdjustBaseFlags(BYTE val);
+		// Zero Page
+		ADDRESS GetZP() { return FetchByte(); }
+		ADDRESS GetZPX() { return (BYTE)(FetchByte() + m_reg.X); }
+		ADDRESS GetZPY() { return (BYTE)(FetchByte() + m_reg.Y); }
+
+		// Absolute
+		ADDRESS GetABS() { return FetchWord(); }
+		ADDRESS GetABSX() { return (WORD)(FetchWord() + m_reg.X); }
+		ADDRESS GetABSY() { return (WORD)(FetchWord() + m_reg.Y); }
+
+		// Indirect
+		ADDRESS GetINDX();
+		ADDRESS GetINDY();
+
+		void AdjustNZ(BYTE val);
 
 		// Opcodes
+		void PUSH(BYTE val);
+		BYTE POP();
+
+		void LD(BYTE& dest, BYTE src);
+		void LDmem(BYTE& dest, ADDRESS src);
+		void STmem(ADDRESS dest, BYTE src);
+
+		void BRANCHif(bool cond);
+		void JSR(WORD dest);
+		void RTS();
+
+		void BIT(ADDRESS src);
+
+		void INC(BYTE& dest);
+		void DEC(BYTE& dest);
+		void ASL(BYTE& dest);
+		void ROL(BYTE& dest);
 
 		friend class Monitor6502;
 	};
