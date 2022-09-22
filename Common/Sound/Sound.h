@@ -23,6 +23,9 @@ namespace sound
 		bool Init(WORD bufferSampleFrames = 1024);
 		void Cleanup();
 
+		// Used for synchronization, set the interval at which Play() is called
+		void SetBaseClock(int freq);
+
 		void StreamToFile(bool stream, const char* outFile = nullptr);
 
 		const SDL_AudioSpec& GetAudioSpec() const { return m_audioSpec; }
@@ -45,8 +48,6 @@ namespace sound
 		Sound();
 		WORD m_bufferSize;
 
-		uint16_t PeriodToSamples(float period);
-
 		void InitSDLAudio();
 
 		void AddSample(int16_t s) { m_bufStaging[m_bufStagingPos++] = s; }
@@ -61,6 +62,9 @@ namespace sound
 		size_t m_bufStagingPos = 0;
 
 		FILE* m_outputFile = nullptr;
+
+		const int PLAYBACK_FREQUENCY = 44100;
+		int m_freqDivider = 1;
 
 		bool m_muted = false;
 		int m_masterVolume = SDL_MIX_MAXVOLUME; // 0..128

@@ -10,10 +10,10 @@
 #include "IO/DeviceSerialMouse.h"
 #include "Storage/DeviceFloppyXT.h"
 #include "Storage/DeviceHardDrive.h"
-
-#include <thread>
+#include <Sound/Sound.h>
 
 using cfg::CONFIG;
+using sound::SOUND;
 
 namespace emul
 {
@@ -66,8 +66,10 @@ namespace emul
 		InitPIC(new pic::Device8259(0x20));
 		InitPPI(new ppi::Device8255XT(0x60));
 		InitDMA(new dma::Device8237(0x00, m_memory));
-		InitSound();
 		InitRTC();
+
+		InitSound();
+		SOUND().SetBaseClock(PIT_CLK);
 
 		m_dma1->GetChannel(0).EnableLog(LOG_OFF);
 
@@ -163,16 +165,6 @@ namespace emul
 		m_baseRAM.Alloc(baseRAM * 1024);
 		m_baseRAM.Clear();
 		m_memory.Allocate(&m_baseRAM, 0);
-	}
-
-	static void little_sleep(std::chrono::microseconds us)
-	{
-		auto start = std::chrono::high_resolution_clock::now();
-		auto end = start + us;
-		do
-		{
-			std::this_thread::yield();
-		} while (std::chrono::high_resolution_clock::now() < end);
 	}
 
 	bool ComputerXT::Step()

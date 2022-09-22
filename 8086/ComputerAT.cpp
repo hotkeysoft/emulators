@@ -11,8 +11,10 @@
 #include "IO/DeviceSerialMouse.h"
 #include "Storage/DeviceFloppyXT.h"
 #include "Storage/DeviceHardDrive.h"
+#include <Sound/Sound.h>
 
 using cfg::CONFIG;
+using sound::SOUND;
 
 namespace emul
 {
@@ -20,11 +22,9 @@ namespace emul
 
 	static const size_t UART_CLK_DIVIDER = 8;
 	static const size_t PIT_CLK_DIVIDER = 12;
-	static const size_t SOUND_CLK_DIVIDER = 4;
 
 	static const size_t UART_CLK = MAIN_CLK / UART_CLK_DIVIDER;
 	static const size_t PIT_CLK = MAIN_CLK / PIT_CLK_DIVIDER;
-	static const size_t SOUND_CLK = MAIN_CLK / SOUND_CLK_DIVIDER;
 
 	enum SCREENWIDTH { COLS40 = 40, COLS80 = 80 };
 	const SCREENWIDTH screenWidth = COLS80;
@@ -76,6 +76,7 @@ namespace emul
 		InitPPI(new ppi::Device8042AT(0x60));
 		InitDMA(new dma::Device8237("dma1", 0x00, m_memory), new dma::Device8237("dma2", 0xC0, m_memory));
 		InitSound();
+		SOUND().SetBaseClock(PIT_CLK);
 
 		m_picSecondary.EnableLog(CONFIG().GetLogLevel("pic"));
 		m_picSecondary.Init();

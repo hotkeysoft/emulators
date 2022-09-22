@@ -7,10 +7,10 @@
 #include "IO/DeviceJoystick.h"
 #include "Video/VideoPCjr.h"
 #include "Storage/DeviceFloppyPCjr.h"
-
-#include <thread>
+#include <Sound/Sound.h>
 
 using cfg::CONFIG;
+using sound::SOUND;
 
 namespace emul
 {
@@ -71,6 +71,7 @@ namespace emul
 		}
 
 		InitSound();
+		SOUND().SetBaseClock(PIT_CLK);
 
 		m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.pcjr"));
 		m_soundModule.Init();
@@ -158,16 +159,6 @@ namespace emul
 			m_extraRAM.Clear();
 			m_memory.Allocate(&m_extraRAM, 0x20000);
 		}
-	}
-
-	static void little_sleep(std::chrono::microseconds us)
-	{
-		auto start = std::chrono::high_resolution_clock::now();
-		auto end = start + us;
-		do
-		{
-			std::this_thread::yield();
-		} while (std::chrono::high_resolution_clock::now() < end);
 	}
 
 	bool ComputerPCjr::Step()

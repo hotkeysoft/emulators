@@ -9,10 +9,10 @@
 #include "Storage/DeviceHardDrive.h"
 #include "Storage/DeviceFloppyTandy.h"
 #include "Video/VideoTandy.h"
-
-#include <thread>
+#include <Sound/Sound.h>
 
 using cfg::CONFIG;
+using sound::SOUND;
 
 namespace emul
 {
@@ -62,8 +62,10 @@ namespace emul
 		InitPIC(new pic::Device8259(0x20));
 		InitPPI(new ppi::Device8255Tandy(0x60));
 		InitDMA(new dma::Device8237(0x00, m_memory));
-		InitSound();
 		InitRTC();
+
+		InitSound();
+		SOUND().SetBaseClock(PIT_CLK);
 
 		m_soundModule.EnableLog(CONFIG().GetLogLevel("sound.pcjr"));
 		m_soundModule.Init();
@@ -160,16 +162,6 @@ namespace emul
 		// Notify video module
 		video::VideoTandy* video = (video::VideoTandy*)m_video;
 		video->SetRAMBase(m_ramBase);
-	}
-
-	static void little_sleep(std::chrono::microseconds us)
-	{
-		auto start = std::chrono::high_resolution_clock::now();
-		auto end = start + us;
-		do
-		{
-			std::this_thread::yield();
-		} while (std::chrono::high_resolution_clock::now() < end);
 	}
 
 	bool ComputerTandy::Step()

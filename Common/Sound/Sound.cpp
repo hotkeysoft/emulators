@@ -87,10 +87,27 @@ namespace sound
 		return true;
 	}
 
+	void Sound::SetBaseClock(int freq)
+	{
+		// PLAYBACK_FREQUENCY
+		LogPrintf(LOG_INFO, "SetBaseClock: %dHz", freq);
+
+		m_freqDivider = freq / PLAYBACK_FREQUENCY;
+
+		if (m_freqDivider < 1)
+		{
+			LogPrintf(LOG_ERROR, "Invalid clock divider");
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "Sample Clock Divider: %d", m_freqDivider);
+		}
+	}
+
 	void Sound::InitSDLAudio()
 	{
 		SDL_AudioSpec want;
-		want.freq = 44100;
+		want.freq = PLAYBACK_FREQUENCY;
 		want.format = AUDIO_S16;
 		want.channels = 2; // Stereo
 		want.samples = m_bufferSize;
@@ -157,15 +174,13 @@ namespace sound
 		static int sample = 0;
 		static int32_t avg = 0;
 
-		// temp hack, "average" 27 samples
-		// possibly 4 incoming channels + this one, max possible value = 255*5 = 34425
-		// could clip with 4 channels + pc speaker full blast but very unlikely
 		if (m_outputFile) fputc(data, m_outputFile);
+
+		// temp hack, "average" n samples
 		avg += data;
 		++sample;
-		if (sample == 27)
+		if (sample == m_freqDivider)
 		{
-			//LogPrintf(LOG_INFO, "pos: %d", m_bufStagingPos);
 			if (IsStagingFull())
 			{
 				MoveToPlayingBuffer();
@@ -174,7 +189,7 @@ namespace sound
 			// Crude synchronization
 			while (IsStagingFull()) { std::this_thread::yield(); };
 
-			avg /= 27;
+			avg /= m_freqDivider;
 			AddSample(m_muted ? 0 : avg); // Left
 			AddSample(m_muted ? 0 : avg); // Right
 
@@ -189,18 +204,17 @@ namespace sound
 		static int32_t avgL = 0;
 		static int32_t avgR = 0;
 
-		// temp hack, "average" 27 samples
-		// possibly 4 incoming channels + this one, max possible value = 255*5 = 34425
-		// could clip with 4 channels + pc speaker full blast but very unlikely
 		if (m_outputFile)
 		{
 			fputc(left, m_outputFile);
 			fputc(right, m_outputFile);
 		}
+
+		// temp hack, "average" n samples
 		avgL += left;
 		avgR += right;
 		++sample;
-		if (sample == 27)
+		if (sample == m_freqDivider)
 		{
 			if (IsStagingFull())
 			{
@@ -210,8 +224,8 @@ namespace sound
 			// Crude synchronization
 			while (IsStagingFull()) { std::this_thread::yield(); };
 
-			AddSample(m_muted ? 0 : (avgL / 27));
-			AddSample(m_muted ? 0 : (avgR / 27));
+			AddSample(m_muted ? 0 : (avgL / m_freqDivider));
+			AddSample(m_muted ? 0 : (avgR / m_freqDivider));
 
 			avgL = 0;
 			avgR = 0;
