@@ -214,7 +214,7 @@ namespace emul
 
 		WriteValueHex(m_cpu->m_reg.flags, m_cpu->GetInfo().GetCoord("F"));
 
-		WriteValueHex((WORD)m_cpu->m_reg.SP, m_cpu->GetInfo().GetCoord("SP"));
+		WriteValueHex((WORD)m_cpu->GetSP(), m_cpu->GetInfo().GetCoord("SP"));
 		WriteValueHex((WORD)m_cpu->GetCurrentAddress(), m_cpu->GetInfo().GetCoord("PC"));
 	}
 
@@ -253,7 +253,7 @@ namespace emul
 		case RAMMode::Y:
 			return m_cpu->m_reg.Y << 8;
 		case RAMMode::SP:
-			return  m_cpu->m_reg.SP;
+			return  m_cpu->GetSP();
 		case RAMMode::PC:
 			return  m_cpu->GetCurrentAddress();
 		case RAMMode::CUSTOM:
@@ -375,7 +375,7 @@ namespace emul
 			BYTE imm8 = m_memory->Read8(++address);
 			decoded.AddRaw(imm8);
 
-			sprintf(buf, "0%Xh", imm8);
+			sprintf(buf, "$%02X", imm8);
 			Replace(text, "{i8}", buf);
 			break;
 		}
@@ -385,7 +385,7 @@ namespace emul
 			++address;
 			decoded.AddRaw(imm16);
 
-			sprintf(buf, "0%Xh", imm16);
+			sprintf(buf, "$%04X", imm16);
 			Replace(text, "{i16}", buf);
 			break;
 		}

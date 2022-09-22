@@ -164,8 +164,28 @@ namespace emul
 		// Move Commands
 
 
+		// Jump Commands
 
-		//m_opcodes[0x00] = [=]() { };
+
+		// Flag Commands
+
+		// CARRY
+		m_opcodes[0x18] = [=]() { SetFlag(FLAG_C, false); }; // CLC
+		m_opcodes[0x38] = [=]() { SetFlag(FLAG_C, true); };  // SEC
+
+		// DECIMAL
+		m_opcodes[0xD8] = [=]() { SetFlag(FLAG_D, false); }; // CLD
+		m_opcodes[0xF8] = [=]() { SetFlag(FLAG_D, true); };  // SED
+
+		// INTERRUPT
+		m_opcodes[0x58] = [=]() { SetFlag(FLAG_I, false); }; // CLI
+		m_opcodes[0x78] = [=]() { SetFlag(FLAG_I, true); };  // SEI
+
+		// OVERFLOW
+		m_opcodes[0xB8] = [=]() { SetFlag(FLAG_V, false); }; // CLV
+
+		// NOP
+		m_opcodes[0xEA] = [=]() { }; // NOP
 	}
 
 	CPU6502::~CPU6502()
@@ -176,12 +196,16 @@ namespace emul
 	{
 		CPU::Reset();
 
+		// TODO: Check if values are reset
 		m_reg.A = 0;
 		m_reg.X = 0;
 		m_reg.Y = 0;
 		m_reg.SP = 0;
 
-		m_programCounter = ADDR_RESET;
+		// Read reset vector
+		ADDRESS resetVector = m_memory.Read16(ADDR_RESET);
+		LogPrintf(LOG_INFO, "Reset vector: %04X", resetVector);
+		m_programCounter = resetVector;
 
 		ClearFlags(m_reg.flags);
 	}
@@ -230,19 +254,20 @@ namespace emul
 
 	void CPU6502::Dump()
 	{
-		LogPrintf(LOG_DEBUG, "A = %02X", m_reg.A);
-		LogPrintf(LOG_DEBUG, "X = %02X", m_reg.X);
-		LogPrintf(LOG_DEBUG, "Y = %02X", m_reg.Y);
-		LogPrintf(LOG_DEBUG, "Flags NV-BDIZC");
-		LogPrintf(LOG_DEBUG, "      "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(m_reg.flags));
-		LogPrintf(LOG_DEBUG, "SP = %04X", m_reg.SP);
-		LogPrintf(LOG_DEBUG, "PC = %04X", m_programCounter);
-		LogPrintf(LOG_DEBUG, "");
+		LogPrintf(LOG_ERROR, "A = %02X", m_reg.A);
+		LogPrintf(LOG_ERROR, "X = %02X", m_reg.X);
+		LogPrintf(LOG_ERROR, "Y = %02X", m_reg.Y);
+		LogPrintf(LOG_ERROR, "Flags NV-BDIZC");
+		LogPrintf(LOG_ERROR, "      "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(m_reg.flags));
+		LogPrintf(LOG_ERROR, "SP = %04X", m_reg.SP);
+		LogPrintf(LOG_ERROR, "PC = %04X", m_programCounter);
+		LogPrintf(LOG_ERROR, "");
 	}
 
 	void CPU6502::UnknownOpcode()
 	{
 		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X", m_opcode, m_programCounter);
+		Dump();
 		throw std::exception("Unknown opcode");
 	}
 

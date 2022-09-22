@@ -98,7 +98,7 @@ namespace emul
 			BYTE X = 0;
 			BYTE Y = 0;
 
-			WORD SP = 0;
+			BYTE SP = 0;
 		} m_reg;
 
 		void ClearFlags(BYTE& flags);
@@ -107,6 +107,8 @@ namespace emul
 		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; };
 		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); };
 		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
+
+		WORD GetSP() const { return m_reg.SP | 0x0100; }
 
 		BYTE dummy = 0;
 
