@@ -16,7 +16,8 @@ namespace emul
 		m_romC000("ROMC0000", 0x1000, emul::MemoryType::ROM),
 		m_romD000("ROMD0000", 0x1000, emul::MemoryType::ROM),
 		m_romE000("ROME0000", 0x0800, emul::MemoryType::ROM),
-		m_romF000("ROMF0000", 0x1000, emul::MemoryType::ROM)
+		m_romF000("ROMF0000", 0x1000, emul::MemoryType::ROM),
+		m_videoRAM("VID", 0x0400)
 	{
 	}
 
@@ -37,6 +38,11 @@ namespace emul
 		m_memory.Allocate(&m_romF000, 0xF000);
 
 		m_memory.Allocate(&m_baseRAM, 0);
+
+		m_memory.Allocate(&m_videoRAM, 0x8000);
+		m_memory.MapWindow(0x8000, 0x8400, 0x0400);
+		m_memory.MapWindow(0x8000, 0x8800, 0x0400);
+		m_memory.MapWindow(0x8000, 0x8C00, 0x0400);
 
 		InitInputs(6000000);
 	}

@@ -28,5 +28,7 @@ namespace emul
 		emul::MemoryBlock m_romE000;
 		emul::MemoryBlock m_romF000;
 
+		emul::MemoryBlock m_videoRAM;
+
 	};
 }
