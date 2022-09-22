@@ -5,6 +5,7 @@ Emulators for 8080-, Z80 and TMS1000-family CPUs
 - Z80 (wip) **(NEW)**
   - CPU Mostly complete, passes standard test suite
   - Barebones ZX80 emulation
+  - Barebones ZX Spectrum emulation
 - 8086: 8086/8088/80186/80286 Emulator + IBM PC components (work in progress)
   - Most opcodes implemented + some undocumented
   - Timing / sync between clocked components
