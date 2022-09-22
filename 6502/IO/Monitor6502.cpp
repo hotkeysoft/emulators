@@ -171,11 +171,10 @@ namespace emul
 	{
 		switch (m_ramMode)
 		{
-		case RAMMode::X: m_ramMode = RAMMode::Y; break;
-		case RAMMode::Y: m_ramMode = RAMMode::SP; break;
+		case RAMMode::ZP: m_ramMode = RAMMode::SP; break;
 		case RAMMode::SP: m_ramMode = RAMMode::PC; break;
 		case RAMMode::PC: m_ramMode = RAMMode::CUSTOM; break;
-		case RAMMode::CUSTOM: m_ramMode = RAMMode::X; break;
+		case RAMMode::CUSTOM: m_ramMode = RAMMode::ZP; break;
 		}
 
 		UpdateRAMMode();
@@ -185,14 +184,12 @@ namespace emul
 	{
 		const WORD highlight = (3 << 4) | 14;
 		const WORD regular = (0 << 4) | 8;
-		static Coord ramX = m_cpu->GetInfo().GetCoord("ram.X");
-		static Coord ramY = m_cpu->GetInfo().GetCoord("ram.Y");
+		static Coord ramZP = m_cpu->GetInfo().GetCoord("ram.ZP");
 		static Coord ramPC = m_cpu->GetInfo().GetCoord("ram.PC");
 		static Coord ramSTACK = m_cpu->GetInfo().GetCoord("ram.SP");
 		static Coord ramCustom = m_cpu->GetInfo().GetCoord("ram.CUSTOM");
 
-		m_console.WriteAttrAt(ramX.x, ramX.y, (m_ramMode == RAMMode::X) ? highlight : regular, ramX.w);
-		m_console.WriteAttrAt(ramY.x, ramY.y, (m_ramMode == RAMMode::Y) ? highlight : regular, ramY.w);
+		m_console.WriteAttrAt(ramZP.x, ramZP.y, (m_ramMode == RAMMode::ZP) ? highlight : regular, ramZP.w);
 		m_console.WriteAttrAt(ramPC.x, ramPC.y, (m_ramMode == RAMMode::PC) ? highlight : regular, ramPC.w);
 		m_console.WriteAttrAt(ramSTACK.x, ramSTACK.y, (m_ramMode == RAMMode::SP) ? highlight : regular, ramSTACK.w);
 
@@ -211,8 +208,6 @@ namespace emul
 		WriteValueHex(m_cpu->m_reg.A, m_cpu->GetInfo().GetCoord("A"));
 		WriteValueHex(m_cpu->m_reg.X, m_cpu->GetInfo().GetCoord("X"));
 		WriteValueHex(m_cpu->m_reg.Y, m_cpu->GetInfo().GetCoord("Y"));
-
-		WriteValueHex(m_cpu->m_reg.flags, m_cpu->GetInfo().GetCoord("F"));
 
 		WriteValueHex((WORD)m_cpu->GetSP(), m_cpu->GetInfo().GetCoord("SP"));
 		WriteValueHex((WORD)m_cpu->GetCurrentAddress(), m_cpu->GetInfo().GetCoord("PC"));
@@ -248,10 +243,8 @@ namespace emul
 	{
 		switch (m_ramMode)
 		{
-		case RAMMode::X:
-			return m_cpu->m_reg.X << 8;
-		case RAMMode::Y:
-			return m_cpu->m_reg.Y << 8;
+		case RAMMode::ZP:
+			return 0;
 		case RAMMode::SP:
 			return  m_cpu->GetSP();
 		case RAMMode::PC:
