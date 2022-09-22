@@ -5,8 +5,10 @@
 #include "IO/Console.h"
 #include "CPU/CPUZ80.h"
 #include "Video/VideoZXSpectrum.h"
+#include <Sound/Sound.h>
 
 using cfg::CONFIG;
+using sound::SOUND;
 
 namespace emul
 {
@@ -52,13 +54,13 @@ namespace emul
 			Connect(i << 1, static_cast<PortConnector::OUTFunction>(&ComputerZXSpectrum::WriteULA));
 		}
 
-		const char* arch = "spectrum";
-
 		video::VideoZXSpectrum* video = new video::VideoZXSpectrum();
 		InitVideo(video); // Takes ownership
 
 		InitInputs(CPU_CLK, RTC_CLK);
 		GetInputs().InitKeyboard(&m_keyboard);
+
+		SOUND().SetBaseClock(CPU_CLK);
 	}
 
 	bool ComputerZXSpectrum::Step()
@@ -86,6 +88,11 @@ namespace emul
 
 				// Reset Counter
 				rtcDelay = RTC_RATE;
+			}
+
+			if (!m_turbo)
+			{
+				SOUND().PlayMono(m_earOutput << 8);
 			}
 
 			GetInputs().Tick();
