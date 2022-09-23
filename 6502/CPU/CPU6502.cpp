@@ -40,81 +40,81 @@ namespace emul
 		// Logical and Arithmetic Commands
 		// ------------------------------
 
-		// ORA
-		m_opcodes[0x09] = [=]() { UnknownOpcode(); }; // imm
-		m_opcodes[0x05] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0x15] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0x01] = [=]() { UnknownOpcode(); }; // izx
-		m_opcodes[0x11] = [=]() { UnknownOpcode(); }; // izy
-		m_opcodes[0x0D] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0x1D] = [=]() { UnknownOpcode(); }; // abx
-		m_opcodes[0x19] = [=]() { UnknownOpcode(); }; // aby
+		// ORA A:=A or {adr}, NZ
+		m_opcodes[0x09] = [=]() { ORA(FetchByte()); }; // imm
+		m_opcodes[0x05] = [=]() { MEMopR(&CPU6502::ORA, GetZP()); }; // zp
+		m_opcodes[0x15] = [=]() { MEMopR(&CPU6502::ORA, GetZPX()); }; // zpx
+		m_opcodes[0x01] = [=]() { MEMopR(&CPU6502::ORA, GetINDX()); }; // izx
+		m_opcodes[0x11] = [=]() { MEMopR(&CPU6502::ORA, GetINDY()); }; // izy
+		m_opcodes[0x0D] = [=]() { MEMopR(&CPU6502::ORA, GetABS()); }; // abs
+		m_opcodes[0x1D] = [=]() { MEMopR(&CPU6502::ORA, GetABSX()); }; // abx
+		m_opcodes[0x19] = [=]() { MEMopR(&CPU6502::ORA, GetABSY()); }; // aby
 
-		// AND
-		m_opcodes[0x29] = [=]() { UnknownOpcode(); }; // imm
-		m_opcodes[0x25] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0x35] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0x21] = [=]() { UnknownOpcode(); }; // izx
-		m_opcodes[0x31] = [=]() { UnknownOpcode(); }; // izy
-		m_opcodes[0x2D] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0x3D] = [=]() { UnknownOpcode(); }; // abx
-		m_opcodes[0x39] = [=]() { UnknownOpcode(); }; // aby
+		// AND A:=A and {adr}, NZ
+		m_opcodes[0x29] = [=]() { AND(FetchByte()); }; // imm
+		m_opcodes[0x25] = [=]() { MEMopR(&CPU6502::AND, GetZP()); }; // zp
+		m_opcodes[0x35] = [=]() { MEMopR(&CPU6502::AND, GetZPX()); }; // zpx
+		m_opcodes[0x21] = [=]() { MEMopR(&CPU6502::AND, GetINDX()); }; // izx
+		m_opcodes[0x31] = [=]() { MEMopR(&CPU6502::AND, GetINDY()); }; // izy
+		m_opcodes[0x2D] = [=]() { MEMopR(&CPU6502::AND, GetABS()); }; // abs
+		m_opcodes[0x3D] = [=]() { MEMopR(&CPU6502::AND, GetABSX()); }; // abx
+		m_opcodes[0x39] = [=]() { MEMopR(&CPU6502::AND, GetABSY()); }; // aby
 
-		// EOR
-		m_opcodes[0x49] = [=]() { UnknownOpcode(); }; // imm
-		m_opcodes[0x45] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0x55] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0x41] = [=]() { UnknownOpcode(); }; // izx
-		m_opcodes[0x51] = [=]() { UnknownOpcode(); }; // izy
-		m_opcodes[0x4D] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0x5D] = [=]() { UnknownOpcode(); }; // abx
-		m_opcodes[0x59] = [=]() { UnknownOpcode(); }; // aby
+		// EOR A:=A xor {adr}, NZ
+		m_opcodes[0x49] = [=]() { EOR(FetchByte()); }; // imm
+		m_opcodes[0x45] = [=]() { MEMopR(&CPU6502::EOR, GetZP()); }; // zp
+		m_opcodes[0x55] = [=]() { MEMopR(&CPU6502::EOR, GetZPX()); }; // zpx
+		m_opcodes[0x41] = [=]() { MEMopR(&CPU6502::EOR, GetINDX()); }; // izx
+		m_opcodes[0x51] = [=]() { MEMopR(&CPU6502::EOR, GetINDY()); }; // izy
+		m_opcodes[0x4D] = [=]() { MEMopR(&CPU6502::EOR, GetABS()); }; // abs
+		m_opcodes[0x5D] = [=]() { MEMopR(&CPU6502::EOR, GetABSX()); }; // abx
+		m_opcodes[0x59] = [=]() { MEMopR(&CPU6502::EOR, GetABSY()); }; // aby
 
-		// ADC
-		m_opcodes[0x69] = [=]() { UnknownOpcode(); }; // imm
-		m_opcodes[0x65] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0x75] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0x61] = [=]() { UnknownOpcode(); }; // izx
-		m_opcodes[0x71] = [=]() { UnknownOpcode(); }; // izy
-		m_opcodes[0x6D] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0x7D] = [=]() { UnknownOpcode(); }; // abx
-		m_opcodes[0x79] = [=]() { UnknownOpcode(); }; // aby
+		// ADC A:=A + {adr}, NVZC
+		m_opcodes[0x69] = [=]() { ADC(FetchByte()); }; // imm
+		m_opcodes[0x65] = [=]() { MEMopR(&CPU6502::ADC, GetZP()); }; // zp
+		m_opcodes[0x75] = [=]() { MEMopR(&CPU6502::ADC, GetZPX()); }; // zpx
+		m_opcodes[0x61] = [=]() { MEMopR(&CPU6502::ADC, GetINDX()); }; // izx
+		m_opcodes[0x71] = [=]() { MEMopR(&CPU6502::ADC, GetINDY()); }; // izy
+		m_opcodes[0x6D] = [=]() { MEMopR(&CPU6502::ADC, GetABS()); }; // abs
+		m_opcodes[0x7D] = [=]() { MEMopR(&CPU6502::ADC, GetABSX()); }; // abx
+		m_opcodes[0x79] = [=]() { MEMopR(&CPU6502::ADC, GetABSY()); }; // aby
 
-		// SBC
-		m_opcodes[0xE9] = [=]() { UnknownOpcode(); }; // imm
-		m_opcodes[0xE5] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0xF5] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0xE1] = [=]() { UnknownOpcode(); }; // izx
-		m_opcodes[0xF1] = [=]() { UnknownOpcode(); }; // izy
-		m_opcodes[0xED] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0xFD] = [=]() { UnknownOpcode(); }; // abx
-		m_opcodes[0xF9] = [=]() { UnknownOpcode(); }; // aby
+		// SBC A:=A - {adr}, NVZC
+		m_opcodes[0xE9] = [=]() { SBC(FetchByte()); }; // imm
+		m_opcodes[0xE5] = [=]() { MEMopR(&CPU6502::SBC, GetZP()); }; // zp
+		m_opcodes[0xF5] = [=]() { MEMopR(&CPU6502::SBC, GetZPX()); }; // zpx
+		m_opcodes[0xE1] = [=]() { MEMopR(&CPU6502::SBC, GetINDX()); }; // izx
+		m_opcodes[0xF1] = [=]() { MEMopR(&CPU6502::SBC, GetINDY()); }; // izy
+		m_opcodes[0xED] = [=]() { MEMopR(&CPU6502::SBC, GetABS()); }; // abs
+		m_opcodes[0xFD] = [=]() { MEMopR(&CPU6502::SBC, GetABSX()); }; // abx
+		m_opcodes[0xF9] = [=]() { MEMopR(&CPU6502::SBC, GetABSY()); }; // aby
 
-		// CMP
-		m_opcodes[0xC9] = [=]() { UnknownOpcode(); }; // imm
-		m_opcodes[0xC5] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0xD5] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0xC1] = [=]() { UnknownOpcode(); }; // izx
-		m_opcodes[0xD1] = [=]() { UnknownOpcode(); }; // izy
-		m_opcodes[0xCD] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0xDD] = [=]() { UnknownOpcode(); }; // abx
-		m_opcodes[0xD9] = [=]() { UnknownOpcode(); }; // aby
+		// CMP A - {adr}, NZC
+		m_opcodes[0xC9] = [=]() { CMPA(FetchByte()); }; // imm
+		m_opcodes[0xC5] = [=]() { MEMopR(&CPU6502::CMPA, GetZP()); }; // zp
+		m_opcodes[0xD5] = [=]() { MEMopR(&CPU6502::CMPA, GetZPX()); }; // zpx
+		m_opcodes[0xC1] = [=]() { MEMopR(&CPU6502::CMPA, GetINDX()); }; // izx
+		m_opcodes[0xD1] = [=]() { MEMopR(&CPU6502::CMPA, GetINDY()); }; // izy
+		m_opcodes[0xCD] = [=]() { MEMopR(&CPU6502::CMPA, GetABS()); }; // abs
+		m_opcodes[0xDD] = [=]() { MEMopR(&CPU6502::CMPA, GetABSX()); }; // abx
+		m_opcodes[0xD9] = [=]() { MEMopR(&CPU6502::CMPA, GetABSY()); }; // aby
 
 		// CPX
-		m_opcodes[0xE0] = [=]() { UnknownOpcode(); }; // imm
-		m_opcodes[0xE4] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0xEC] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0xE0] = [=]() { CMPX(FetchByte()); }; // imm
+		m_opcodes[0xE4] = [=]() { MEMopR(&CPU6502::CMPX, GetZP()); }; // zp
+		m_opcodes[0xEC] = [=]() { MEMopR(&CPU6502::CMPX, GetABS()); }; // abs
 
 		// CPY
-		m_opcodes[0xC0] = [=]() { UnknownOpcode(); }; // imm
-		m_opcodes[0xC4] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0xCC] = [=]() { UnknownOpcode(); }; // abs
+		m_opcodes[0xC0] = [=]() { CMPY(FetchByte()); }; // imm
+		m_opcodes[0xC4] = [=]() { MEMopR(&CPU6502::CMPY, GetZP()); }; // zp
+		m_opcodes[0xCC] = [=]() { MEMopR(&CPU6502::CMPY, GetABS()); }; // abs
 
 		// DEC {adr}:={adr}-1, NZ
-		m_opcodes[0xC6] = [=]() { MEMop(&CPU6502::DEC, GetZP()); }; // zp
-		m_opcodes[0xD6] = [=]() { MEMop(&CPU6502::DEC, GetZPX()); }; // zpx
-		m_opcodes[0xCE] = [=]() { MEMop(&CPU6502::DEC, GetABS()); }; // abs
-		m_opcodes[0xDE] = [=]() { MEMop(&CPU6502::DEC, GetABSX()); }; // abx
+		m_opcodes[0xC6] = [=]() { MEMopRMW(&CPU6502::DEC, GetZP()); }; // zp
+		m_opcodes[0xD6] = [=]() { MEMopRMW(&CPU6502::DEC, GetZPX()); }; // zpx
+		m_opcodes[0xCE] = [=]() { MEMopRMW(&CPU6502::DEC, GetABS()); }; // abs
+		m_opcodes[0xDE] = [=]() { MEMopRMW(&CPU6502::DEC, GetABSX()); }; // abx
 
 		// DEX X:=X-1, NZ
 		m_opcodes[0xCA] = [=]() { DEC(m_reg.X); }; // imp
@@ -123,10 +123,10 @@ namespace emul
 		m_opcodes[0x88] = [=]() { DEC(m_reg.Y); }; // imp
 
 		// INC {adr}:={adr}+1, NZ
-		m_opcodes[0xE6] = [=]() { MEMop(&CPU6502::INC, GetZP());  }; // zp
-		m_opcodes[0xF6] = [=]() { MEMop(&CPU6502::INC, GetZPX()); }; // zpx
-		m_opcodes[0xEE] = [=]() { MEMop(&CPU6502::INC, GetABS()); }; // abs
-		m_opcodes[0xFE] = [=]() { MEMop(&CPU6502::INC, GetABSX()); }; // abx
+		m_opcodes[0xE6] = [=]() { MEMopRMW(&CPU6502::INC, GetZP());  }; // zp
+		m_opcodes[0xF6] = [=]() { MEMopRMW(&CPU6502::INC, GetZPX()); }; // zpx
+		m_opcodes[0xEE] = [=]() { MEMopRMW(&CPU6502::INC, GetABS()); }; // abs
+		m_opcodes[0xFE] = [=]() { MEMopRMW(&CPU6502::INC, GetABSX()); }; // abx
 
 		// INX X:=X+1, NZ
 		m_opcodes[0xE8] = [=]() { INC(m_reg.X); }; // imp
@@ -136,10 +136,10 @@ namespace emul
 
 		// ASL {adr}:={adr}*2, NZC
 		m_opcodes[0x0A] = [=]() { ASL(m_reg.A); }; // imp
-		m_opcodes[0x06] = [=]() { MEMop(&CPU6502::ASL, GetZP()); }; // zp
-		m_opcodes[0x16] = [=]() { MEMop(&CPU6502::ASL, GetZPX()); }; // zpx
-		m_opcodes[0x0E] = [=]() { MEMop(&CPU6502::ASL, GetABS()); }; // abs
-		m_opcodes[0x1E] = [=]() { MEMop(&CPU6502::ASL, GetABSX()); }; // abx
+		m_opcodes[0x06] = [=]() { MEMopRMW(&CPU6502::ASL, GetZP()); }; // zp
+		m_opcodes[0x16] = [=]() { MEMopRMW(&CPU6502::ASL, GetZPX()); }; // zpx
+		m_opcodes[0x0E] = [=]() { MEMopRMW(&CPU6502::ASL, GetABS()); }; // abs
+		m_opcodes[0x1E] = [=]() { MEMopRMW(&CPU6502::ASL, GetABSX()); }; // abx
 
 		// ROL
 		m_opcodes[0x2A] = [=]() { UnknownOpcode(); }; // imp
@@ -407,6 +407,7 @@ namespace emul
 		// Cast to BYTE to wrap around in zero page in case we cross a page boundary
 		BYTE l = m_memory.Read8(BYTE(addr));
 		BYTE h = m_memory.Read8(BYTE(addr + 1));
+
 		return MakeWord(h, l);
 	}
 
@@ -419,14 +420,21 @@ namespace emul
 		BYTE l = m_memory.Read8(BYTE(addr));
 		BYTE h = m_memory.Read8(BYTE(addr + 1));
 
+		// TODO: 1 cycle penalty for boundary crossing
 		return MakeWord(h, l) + m_reg.Y;
 	}
 
-	void CPU6502::MEMop(std::function<void(CPU6502*, BYTE&)> func, ADDRESS dest)
+	void CPU6502::MEMopRMW(std::function<void(CPU6502*, BYTE&)> func, ADDRESS dest)
 	{
 		BYTE temp = m_memory.Read8(dest);
 		func(this, temp);
 		m_memory.Write8(dest, temp);
+	}
+
+	void CPU6502::MEMopR(std::function<void(CPU6502*, BYTE)> func, ADDRESS oper)
+	{
+		BYTE temp = m_memory.Read8(oper);
+		func(this, oper);
 	}
 
 	void CPU6502::AdjustNZ(BYTE val)
@@ -498,6 +506,57 @@ namespace emul
 
 		val &= m_reg.A;
 		SetFlag(FLAG_Z, val == 0);
+	}
+
+	void CPU6502::ORA(BYTE oper)
+	{
+		m_reg.A |= oper;
+		AdjustNZ(m_reg.A);
+
+	}
+	void CPU6502::AND(BYTE oper)
+	{
+		m_reg.A &= oper;
+		AdjustNZ(m_reg.A);
+	}
+	void CPU6502::EOR(BYTE oper)
+	{
+		m_reg.A ^= oper;
+		AdjustNZ(m_reg.A);
+	}
+	void CPU6502::ADC(BYTE oper)
+	{
+		BYTE oldA = m_reg.A;
+		WORD temp = oldA + oper;
+		if (GetFlag(FLAG_C))
+			++temp;
+
+		m_reg.A = (BYTE)temp;
+
+		AdjustNZ(m_reg.A);
+		SetFlag(FLAG_C, (temp > 0xFF));
+		SetFlag(FLAG_V, (GetMSB(oldA) == GetMSB(oper)) && (GetMSB(m_reg.A) != GetMSB(oper)));
+	}
+	void CPU6502::SBC(BYTE oper)
+	{
+		BYTE oldA = m_reg.A;
+		WORD temp = m_reg.A - oper;
+		if (GetFlag(FLAG_C))
+			temp--;
+
+		m_reg.A = (BYTE)temp;
+
+		AdjustNZ(m_reg.A);
+		SetFlag(FLAG_C, (temp > 0xFF));
+		SetFlag(FLAG_V, (GetMSB(oldA) != GetMSB(oper)) && (GetMSB(m_reg.A) == GetMSB(oper)));
+	}
+
+	void CPU6502::cmp(BYTE reg, BYTE oper)
+	{
+		WORD temp = reg - oper;
+
+		AdjustNZ((BYTE)temp);
+		SetFlag(FLAG_C, (temp > 0xFF));
 	}
 
 	void CPU6502::INC(BYTE& dest)

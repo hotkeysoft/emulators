@@ -112,7 +112,11 @@ namespace emul
 
 		BYTE dummy = 0;
 
-		void MEMop(std::function<void(CPU6502*, BYTE&)> func, ADDRESS dest);
+		// Memory operation Read-Modify-Write
+		void MEMopRMW(std::function<void(CPU6502*, BYTE&)> func, ADDRESS dest);
+
+		// Memory operation Read
+		void MEMopR(std::function<void(CPU6502*, BYTE)> func, ADDRESS oper);
 
 		virtual BYTE FetchByte() override;
 
@@ -126,6 +130,7 @@ namespace emul
 
 		// Absolute
 		ADDRESS GetABS() { return FetchWord(); }
+		// TODO: 1 cycle penalty for boundary crossing
 		ADDRESS GetABSX() { return (WORD)(FetchWord() + m_reg.X); }
 		ADDRESS GetABSY() { return (WORD)(FetchWord() + m_reg.Y); }
 
@@ -148,6 +153,17 @@ namespace emul
 		void RTS();
 
 		void BIT(ADDRESS src);
+
+		void ORA(BYTE oper);
+		void AND(BYTE oper);
+		void EOR(BYTE oper);
+		void ADC(BYTE oper);
+		void SBC(BYTE oper);
+
+		void cmp(BYTE reg, BYTE oper);
+		void CMPA(BYTE oper) { cmp(m_reg.A, oper); }
+		void CMPX(BYTE oper) { cmp(m_reg.X, oper); }
+		void CMPY(BYTE oper) { cmp(m_reg.Y, oper); }
 
 		void INC(BYTE& dest);
 		void DEC(BYTE& dest);
