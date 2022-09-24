@@ -26,7 +26,9 @@ namespace emul
 		handler->chained = new IOHandler(chained);
 	}
 
-	IOConnector::IOConnector() : Logger("IO")
+	IOConnector::IOConnector(WORD deviceIOMask) :
+		Logger("IO"),
+		m_deviceIOMask(deviceIOMask)
 	{
 	}
 

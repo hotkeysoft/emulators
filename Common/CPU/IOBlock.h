@@ -16,7 +16,16 @@ namespace emul
 		virtual BYTE read(ADDRESS offset) override;
 		virtual void write(ADDRESS offset, BYTE data) override;
 
-		void AddDevice(IOConnector& device, ADDRESS mask);
+		// mask and maskBits allows partial address decoding
+		// mask     = b01000000 and
+		// maskBits = b01100000 are equivalent to
+		//            (x10xxxxx) (where 'x' are 'don't care').
+		// Device will be activated for all addresses that match:
+		// 1[10]00000, 0[10]10000, etc.
+		//
+		// If maskBits is not set, this is equivalent of having mask = maskBits.
+		// So only the 1 in the mask will be used to activate the device.
+		void AddDevice(IOConnector& device, WORD mask, WORD maskBits = 0);
 
 	protected:
 		using IOHandlers = std::vector<IOConnector::IOHandler*>;

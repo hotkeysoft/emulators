@@ -8,7 +8,7 @@ namespace emul
 	class IOConnector : virtual public Logger
 	{
 	public:
-		IOConnector();
+		IOConnector(WORD deviceMask);
 		virtual ~IOConnector();
 
 		typedef void (IOConnector::* WRITEFunction)(BYTE);
@@ -50,12 +50,15 @@ namespace emul
 		bool IORead(WORD address, BYTE& value);
 		bool IOWrite(WORD address, BYTE value);
 
+		WORD GetDeviceIOMask() const { return m_deviceIOMask; }
+
 	protected:
 		bool Connect(WORD address, READFunction readFunc);
 		bool Connect(WORD address, WRITEFunction writeFunc, bool share = false);
 
 		IOWriteMap m_writeMap;
 		IOReadMap m_readMap;
+		WORD m_deviceIOMask;
 
 		friend class IOBlock;
 	};

@@ -13,10 +13,9 @@ namespace via
 	class Device6522 : public IOConnector
 	{
 	public:
-		Device6522();
+		Device6522(const char* id = "via");
 		virtual ~Device6522() {}
 
-		//Device6522() = delete;
 		Device6522(const Device6522&) = delete;
 		Device6522& operator=(const Device6522&) = delete;
 		Device6522(Device6522&&) = delete;
@@ -24,9 +23,9 @@ namespace via
 
 		virtual void Init();
 
-	protected:
-		// Reg 0-3: IO ports
+		virtual void Reset();
 
+	protected:
 		// 0 - ORB/IRB: Output/Input Register B
 		BYTE ReadIRB();
 		void WriteORB(BYTE value);

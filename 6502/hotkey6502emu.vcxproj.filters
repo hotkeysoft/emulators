@@ -147,6 +147,9 @@
     <ClInclude Include="Hardware\Device6522.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\Device6520.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -222,6 +225,9 @@
       <Filter>Common\CPU</Filter>
     </ClCompile>
     <ClCompile Include="Hardware\Device6522.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device6520.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>

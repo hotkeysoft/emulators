@@ -13,7 +13,7 @@ namespace emul
 {
 	Computer::Computer(Memory& memory) :
 		Logger("Computer"),
-		m_memory(1024)
+		m_memory(256)
 	{
 	}
 

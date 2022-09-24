@@ -2,6 +2,9 @@
 
 #include "Computer.h"
 #include "IO/InputEvents.h"
+#include <CPU/IOBlock.h>
+#include "Hardware/Device6522.h"
+#include "Hardware/Device6520.h"
 
 namespace emul
 {
@@ -17,6 +20,8 @@ namespace emul
 
 		virtual void Init(WORD baseRAM) override;
 
+		virtual void Reset() override;
+
 		virtual bool Step() override;
 
 		CPU6502& GetCPU() const { return *((CPU6502*)m_cpu); }
@@ -30,5 +35,10 @@ namespace emul
 
 		emul::MemoryBlock m_videoRAM;
 
+		emul::IOBlock m_ioE800;
+
+		pia::Device6520 m_pia1;
+		pia::Device6520 m_pia2;
+		via::Device6522 m_via;
 	};
 }

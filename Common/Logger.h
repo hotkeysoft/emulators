@@ -18,6 +18,8 @@ public:
 	static void RegisterLogCallback(void(*)(const char *));
 
 protected:
+	const char* GetModuleID() const { return m_moduleID.c_str(); }
+
 	inline bool IsLog(SEVERITY sev) const { return sev >= m_minSeverity; }
 	void _LogPrintf(SEVERITY, const char *, ...) const;
 

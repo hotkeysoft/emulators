@@ -17,7 +17,10 @@ namespace emul
 		m_romD000("ROMD0000", 0x1000, emul::MemoryType::ROM),
 		m_romE000("ROME0000", 0x0800, emul::MemoryType::ROM),
 		m_romF000("ROMF0000", 0x1000, emul::MemoryType::ROM),
-		m_videoRAM("VID", 0x0400)
+		m_videoRAM("VID", 0x0400),
+		m_ioE800("IO", 0x0100),
+		m_pia1("pia1"),
+		m_pia2("pia2")
 	{
 	}
 
@@ -44,8 +47,41 @@ namespace emul
 		m_memory.MapWindow(0x8000, 0x8800, 0x0400);
 		m_memory.MapWindow(0x8000, 0x8C00, 0x0400);
 
+		m_memory.Allocate(&m_ioE800, 0xE800);
+		// TODO: No copy on board #4 to leave room at 0xE900-0xEFFF for nationalized keyboard mappings
+		for (WORD b = 0xE900; b < 0xF000; b += 0x100)
+		{
+			m_memory.MapWindow(0xE800, b, 0x0100);
+		}
+
+		//m_ioE800.EnableLog(LOG_DEBUG);
+
+		// PIA1 @ E8[10]
+		m_pia1.Init();
+		// Incomplete decoding, will also select at 3x, 5x, 7x etc
+		m_ioE800.AddDevice(m_pia1, 0x10);
+
+		// PIA2 @ E8[20]
+		m_pia2.Init();
+		// Incomplete decoding, will also select at 3x, 6x, 7x, Ax, Bx, etc
+		m_ioE800.AddDevice(m_pia2, 0x20);
+
+		// VIA @ E8[40]
+		m_via.Init();
+		// Incomplete decoding, will also select at 5x-7x, Cx-Fx
+		m_ioE800.AddDevice(m_via, 0x40);
+
 		InitInputs(6000000);
 	}
+
+	void ComputerPET2001::Reset()
+	{
+		Computer::Reset();
+		m_pia1.Reset();
+		m_pia2.Reset();
+		m_via.Reset();
+	}
+
 
 	bool ComputerPET2001::Step()
 	{

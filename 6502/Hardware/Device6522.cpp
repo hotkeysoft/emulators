@@ -4,14 +4,16 @@
 
 namespace via
 {
-
-	Device6522::Device6522() :
-		Logger("via")
+	Device6522::Device6522(const char* id) :
+		Logger(id),
+		IOConnector(0x0F) // Addresses 0-F are decoded by device
 	{
 	}
 
 	void Device6522::Init()
 	{
+		Reset();
+
 		Connect(0x0, static_cast<IOConnector::READFunction>(&Device6522::ReadIRB));
 		Connect(0x1, static_cast<IOConnector::READFunction>(&Device6522::ReadIRA));
 		Connect(0x2, static_cast<IOConnector::READFunction>(&Device6522::ReadDDRB));
@@ -45,6 +47,11 @@ namespace via
 		Connect(0xD, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteIFR));
 		Connect(0xE, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteIER));
 		Connect(0xF, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteORANoHandshake));
+	}
+
+	void Device6522::Reset()
+	{
+
 	}
 
 	// 0 - ORB/IRB: Output/Input Register B

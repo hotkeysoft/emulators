@@ -42,6 +42,7 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="CPU\CPU6502.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
+    <ClInclude Include="Hardware\Device6520.h" />
     <ClInclude Include="Hardware\Device6522.h" />
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor6502.h" />
@@ -66,6 +67,7 @@
     <ClCompile Include="Computer6502.cpp" />
     <ClCompile Include="ComputerPET2001.cpp" />
     <ClCompile Include="CPU\CPU6502.cpp" />
+    <ClCompile Include="Hardware\Device6520.cpp" />
     <ClCompile Include="Hardware\Device6522.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor6502.cpp" />
