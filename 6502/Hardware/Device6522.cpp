@@ -4,8 +4,8 @@
 
 namespace via
 {
-	Device6522::Device6522(const char* id) :
-		Logger(id),
+	Device6522::Device6522(std::string id) :
+		Logger(id.c_str()),
 		IOConnector(0x0F) // Addresses 0-F are decoded by device
 	{
 	}

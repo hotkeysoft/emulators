@@ -56,6 +56,9 @@ namespace emul
 		bool Connect(WORD address, READFunction readFunc);
 		bool Connect(WORD address, WRITEFunction writeFunc, bool share = false);
 
+		// Merge our connections with another group (usually used for child objects)
+		void Attach(IOConnector& other);
+
 		IOWriteMap m_writeMap;
 		IOReadMap m_readMap;
 		WORD m_deviceIOMask;

@@ -13,7 +13,7 @@ namespace via
 	class Device6522 : public IOConnector
 	{
 	public:
-		Device6522(const char* id = "via");
+		Device6522(std::string id = "VIA");
 		virtual ~Device6522() {}
 
 		Device6522(const Device6522&) = delete;

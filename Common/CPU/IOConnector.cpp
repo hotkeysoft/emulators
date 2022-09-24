@@ -75,6 +75,13 @@ namespace emul
 		return true;
 	}
 
+	void IOConnector::Attach(IOConnector& other)
+	{
+		// Does *not* handle chaining / already defined
+		m_readMap.merge(other.m_readMap);
+		m_writeMap.merge(other.m_writeMap);
+	}
+
 	bool IOConnector::IORead(WORD address, BYTE& value)
 	{
 		auto it = m_readMap.find(address);

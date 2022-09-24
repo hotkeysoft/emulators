@@ -19,8 +19,8 @@ namespace emul
 		m_romF000("ROMF0000", 0x1000, emul::MemoryType::ROM),
 		m_videoRAM("VID", 0x0400),
 		m_ioE800("IO", 0x0100),
-		m_pia1("pia1"),
-		m_pia2("pia2")
+		m_pia1("PIA1"),
+		m_pia2("PIA2")
 	{
 	}
 
