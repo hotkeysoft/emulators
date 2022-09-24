@@ -136,6 +136,7 @@ Computer* CreateComputer(std::string arch)
 	{
 		computer = new emul::ComputerPET2001();
 	}
+
 	return computer;
 }
 

@@ -49,6 +49,12 @@
     <Filter Include="Common\Sound">
       <UniqueIdentifier>{24cb6e53-251b-476c-8e7a-28226a24b983}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Hardware">
+      <UniqueIdentifier>{dfc1a063-d245-42a8-b8e6-8ebdd8f6da3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Hardware">
+      <UniqueIdentifier>{1b9c5724-209a-4242-94b5-539d71118a9c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -132,6 +138,15 @@
     <ClInclude Include="..\Common\CPU\MemoryBlockBase.h">
       <Filter>Common\CPU</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\CPU\IOBlock.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\IOConnector.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device6522.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -199,6 +214,15 @@
     </ClCompile>
     <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp">
       <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\IOBlock.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\IOConnector.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device6522.cpp">
+      <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

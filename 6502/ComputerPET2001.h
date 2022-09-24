@@ -5,7 +5,7 @@
 
 namespace emul
 {
-	class CPUZ80;
+	class CPU6502;
 
 	class ComputerPET2001 : public Computer
 	{

@@ -51,7 +51,7 @@ namespace emul
 
 		bool In(WORD port, BYTE& value);
 		bool Out(WORD port, BYTE value);
-	
+
 	protected:
 		bool Connect(WORD portNb, INFunction inFunc);
 		bool Connect(WORD portNb, OUTFunction outFunc, bool share = false);
