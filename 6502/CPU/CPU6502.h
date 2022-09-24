@@ -135,6 +135,7 @@ namespace emul
 		ADDRESS GetABSY() { return (WORD)(FetchWord() + m_reg.Y); }
 
 		// Indirect
+		ADDRESS GetIND();
 		ADDRESS GetINDX();
 		ADDRESS GetINDY();
 
@@ -149,9 +150,9 @@ namespace emul
 		void STmem(ADDRESS dest, BYTE src);
 
 		void BRANCHif(bool cond);
-		void JSR(WORD dest);
+		void JSR(ADDRESS dest);
 		void RTS();
-
+		void JMP(ADDRESS dest);
 		void BIT(ADDRESS src);
 
 		void ORA(BYTE oper);
@@ -169,6 +170,8 @@ namespace emul
 		void DEC(BYTE& dest);
 		void ASL(BYTE& dest);
 		void ROL(BYTE& dest);
+		void LSR(BYTE& dest);
+		void ROR(BYTE& dest);
 
 		friend class Monitor6502;
 	};

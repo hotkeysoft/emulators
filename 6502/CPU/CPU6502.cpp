@@ -141,26 +141,26 @@ namespace emul
 		m_opcodes[0x0E] = [=]() { MEMopRMW(&CPU6502::ASL, GetABS()); }; // abs
 		m_opcodes[0x1E] = [=]() { MEMopRMW(&CPU6502::ASL, GetABSX()); }; // abx
 
-		// ROL
-		m_opcodes[0x2A] = [=]() { UnknownOpcode(); }; // imp
-		m_opcodes[0x26] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0x36] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0x2E] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0x3E] = [=]() { UnknownOpcode(); }; // abx
+		// ROL {adr}:={adr}*2+C, NZC
+		m_opcodes[0x2A] = [=]() { ROL(m_reg.A); }; // imp
+		m_opcodes[0x26] = [=]() { MEMopRMW(&CPU6502::ROL, GetZP()); }; // zp
+		m_opcodes[0x36] = [=]() { MEMopRMW(&CPU6502::ROL, GetZPX()); }; // zpx
+		m_opcodes[0x2E] = [=]() { MEMopRMW(&CPU6502::ROL, GetABS()); }; // abs
+		m_opcodes[0x3E] = [=]() { MEMopRMW(&CPU6502::ROL, GetABSX()); }; // abx
 
-		// LSR
-		m_opcodes[0x4A] = [=]() { UnknownOpcode(); }; // imp
-		m_opcodes[0x46] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0x56] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0x4E] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0x5E] = [=]() { UnknownOpcode(); }; // abx
+		// LSR {adr}:={adr}/2, NZC
+		m_opcodes[0x4A] = [=]() { LSR(m_reg.A); }; // imp
+		m_opcodes[0x46] = [=]() { MEMopRMW(&CPU6502::LSR, GetZP()); }; // zp
+		m_opcodes[0x56] = [=]() { MEMopRMW(&CPU6502::LSR, GetZPX()); }; // zpx
+		m_opcodes[0x4E] = [=]() { MEMopRMW(&CPU6502::LSR, GetABS()); }; // abs
+		m_opcodes[0x5E] = [=]() { MEMopRMW(&CPU6502::LSR, GetABSX()); }; // abx
 
-		// ROR
-		m_opcodes[0x6A] = [=]() { UnknownOpcode(); }; // imp
-		m_opcodes[0x66] = [=]() { UnknownOpcode(); }; // zp
-		m_opcodes[0x76] = [=]() { UnknownOpcode(); }; // zpx
-		m_opcodes[0x6E] = [=]() { UnknownOpcode(); }; // abs
-		m_opcodes[0x7E] = [=]() { UnknownOpcode(); }; // abx
+		// ROR {adr}:={adr}/2+(C*128), NZC
+		m_opcodes[0x6A] = [=]() { ROR(m_reg.A); }; // imp
+		m_opcodes[0x66] = [=]() { MEMopRMW(&CPU6502::ROR, GetZP()); }; // zp
+		m_opcodes[0x76] = [=]() { MEMopRMW(&CPU6502::ROR, GetZPX()); }; // zpx
+		m_opcodes[0x6E] = [=]() { MEMopRMW(&CPU6502::ROR, GetABS()); }; // abs
+		m_opcodes[0x7E] = [=]() { MEMopRMW(&CPU6502::ROR, GetABSX()); }; // abx
 
 		// ------------------------------
 		// Move Commands
@@ -257,6 +257,10 @@ namespace emul
 
 		// RTS PC:=+(S)
 		m_opcodes[0x60] = [=]() { RTS(); };
+
+		// JMP PC:={adr}
+		m_opcodes[0x4C] = [=]() { JMP(GetABS()); }; // abs
+		m_opcodes[0x6C] = [=]() { JMP(GetIND()); }; // ind
 
 		// BIT N:=b7, V:=b6, Z:=A&{adr}
 		m_opcodes[0x24] = [=]() { BIT(GetZP()); }; // zp
@@ -399,6 +403,18 @@ namespace emul
 		// TODO: Not implemented
 	}
 
+	ADDRESS CPU6502::GetIND()
+	{
+		// Indirect mode doesn't handle page boundary crossing, low byte wraps around
+		BYTE lInd = FetchByte();
+		BYTE hInd = FetchByte();
+
+		BYTE l = m_memory.Read8(MakeWord(hInd, lInd));
+		BYTE h = m_memory.Read8(MakeWord(hInd, lInd + 1));
+
+		return MakeWord(h, l);
+	}
+
 	// Address of data is ZP(n+X, n+X+1)
 	ADDRESS CPU6502::GetINDX()
 	{
@@ -482,7 +498,7 @@ namespace emul
 		}
 	}
 
-	void CPU6502::JSR(WORD dest)
+	void CPU6502::JSR(ADDRESS dest)
 	{
 		PUSH(GetHByte(m_programCounter - 1));
 		PUSH(GetLByte(m_programCounter - 1));
@@ -495,6 +511,11 @@ namespace emul
 		BYTE h = POP();
 		m_programCounter = MakeWord(h, l);
 		++m_programCounter;
+	}
+
+	void CPU6502::JMP(ADDRESS dest)
+	{
+		m_programCounter = dest;
 	}
 
 	void CPU6502::BIT(ADDRESS src)
@@ -586,4 +607,19 @@ namespace emul
 		AdjustNZ(dest);
 	}
 
+	void CPU6502::LSR(BYTE& dest)
+	{
+		SetFlag(FLAG_C, GetBit(dest, 0));
+		dest >>= 1;
+		AdjustNZ(dest);
+	}
+
+	void CPU6502::ROR(BYTE& dest)
+	{
+		bool carry = GetFlag(FLAG_C);
+		SetFlag(FLAG_C, GetBit(dest, 0));
+		dest >>= 1;
+		SetBit(dest, 7, carry);
+		AdjustNZ(dest);
+	}
 }
