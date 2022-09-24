@@ -25,6 +25,7 @@
     <ClInclude Include="..\Common\CPU\CPUInfo.h" />
     <ClInclude Include="..\Common\CPU\Memory.h" />
     <ClInclude Include="..\Common\CPU\MemoryBlock.h" />
+    <ClInclude Include="..\Common\CPU\MemoryBlockBase.h" />
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
@@ -50,6 +51,7 @@
     <ClCompile Include="..\Common\CPU\CPUInfo.cpp" />
     <ClCompile Include="..\Common\CPU\Memory.cpp" />
     <ClCompile Include="..\Common\CPU\MemoryBlock.cpp" />
+    <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp" />
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\IO\Console.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />

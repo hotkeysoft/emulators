@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Serializable.h>
+#include <CPU/MemoryBlockBase.h>
 #include <CPU/MemoryBlock.h>
 #include <vector>
 #include <set>
@@ -9,7 +10,7 @@ namespace emul
 {
 	struct MemorySlot
 	{
-		MemoryBlock* block = nullptr;
+		MemoryBlockBase* block = nullptr;
 		ADDRESS base = 0;
 	};
 
@@ -21,8 +22,8 @@ namespace emul
 
 		void Init(size_t addressBits);
 
-		bool Allocate(MemoryBlock* block, ADDRESS base, DWORD len = (DWORD)-1);
-		bool Free(MemoryBlock* block);
+		bool Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len = (DWORD)-1);
+		bool Free(MemoryBlockBase* block);
 
 		bool MapWindow(ADDRESS source, ADDRESS window, DWORD len);
 
@@ -44,7 +45,7 @@ namespace emul
 		ADDRESS GetAddressMask() const { return m_addressMask; }
 
 	protected:
-		MemoryBlock* FindBlock(const char* id) const;
+		MemoryBlockBase* FindBlock(const char* id) const;
 
 		using MemoryBlocks = std::vector<std::tuple<ADDRESS, MemoryBlock>>;
 		void AddROMBlock(MemoryBlocks& out, ADDRESS addr, std::vector<BYTE>& buffer) const;
@@ -56,6 +57,6 @@ namespace emul
 		static WORD s_uninitialized;
 
 		std::vector<MemorySlot> m_memory;
-		std::set<MemoryBlock*> m_blocks;
+		std::set<MemoryBlockBase*> m_blocks;
 	};
 }

@@ -37,7 +37,7 @@ namespace emul
 		}
 	}
 
-	bool Memory::Allocate(MemoryBlock* block, ADDRESS base, DWORD len)
+	bool Memory::Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len)
 	{
 		assert(block);
 
@@ -88,14 +88,14 @@ namespace emul
 		return true;
 	}
 
-	bool Memory::Free(MemoryBlock* block)
+	bool Memory::Free(MemoryBlockBase* block)
 	{
 		LogPrintf(LOG_INFO, "Freeing block [%s]", block->GetId().c_str());
 
 		for (size_t i = 0; i < m_memory.size(); ++i)
 		{
 			MemorySlot& slot = m_memory[i];
-			MemoryBlock* oldBlock = slot.block;
+			MemoryBlockBase* oldBlock = slot.block;
 			if (oldBlock == block)
 			{
 				slot = { nullptr, 0 };
@@ -177,7 +177,7 @@ namespace emul
 	bool Memory::LoadBinary(const char* file, ADDRESS baseAddress)
 	{
 		MemorySlot& slot = m_memory[baseAddress / BlockGranularity];
-		MemoryBlock* block = slot.block;
+		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
 
 		if (!block)
 		{
@@ -192,7 +192,7 @@ namespace emul
 	{
 		address &= m_addressMask;
 		const MemorySlot& slot = m_memory[address / BlockGranularity];
-		MemoryBlock* block = slot.block;
+		MemoryBlockBase* block = slot.block;
 
 		if (block)
 		{
@@ -216,7 +216,7 @@ namespace emul
 	{
 		address &= m_addressMask;
 		const MemorySlot& slot = m_memory[address / BlockGranularity];
-		MemoryBlock* block = slot.block;
+		MemoryBlockBase* block = slot.block;
 
 		if (block)
 		{
@@ -237,7 +237,7 @@ namespace emul
 	void Memory::Dump(ADDRESS start, DWORD len, const char* outFile)
 	{
 		MemorySlot& slot = m_memory[start / BlockGranularity];
-		MemoryBlock* block = slot.block;
+		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
 
 		if (block)
 		{
@@ -249,7 +249,7 @@ namespace emul
 		}
 	}
 
-	MemoryBlock* Memory::FindBlock(const char* id) const
+	MemoryBlockBase* Memory::FindBlock(const char* id) const
 	{
 		for (const auto block : m_blocks)
 		{
@@ -264,18 +264,22 @@ namespace emul
 	void Memory::Serialize(json& to)
 	{
 		json blocks;
-		for (const auto block : m_blocks)
+		for (const auto rawBlock : m_blocks)
 		{
 			json blockJson;
-			blockJson["size"] = block->GetSize();
-			blockJson["type"] = block->GetType();
+			blockJson["size"] = rawBlock->GetSize();
+			blockJson["type"] = rawBlock->GetType();
 
-			std::string fileName = "memory_" + block->GetId() + ".bin";
-			fs::path path = GetSerializationDir();
-			path.append(fileName);
-			block->Dump(0, block->GetSize(), path.string().c_str());
-			blockJson["file"] = fileName;
-
+			// Dump only memory blocks, not io blocks
+			MemoryBlock* block = dynamic_cast<MemoryBlock*>(rawBlock);
+			if (block)
+			{
+				std::string fileName = "memory_" + block->GetId() + ".bin";
+				fs::path path = GetSerializationDir();
+				path.append(fileName);
+				block->Dump(0, block->GetSize(), path.string().c_str());
+				blockJson["file"] = fileName;
+			}
 			blocks[block->GetId()] = blockJson;
 
 		}
@@ -287,33 +291,35 @@ namespace emul
 		json blocks = from["blocks"];
 		for (auto& block : blocks.items())
 		{
-
 			std::string id = block.key();
 			json source = block.value();
 			DWORD size = source["size"];
 			MemoryType type = source["type"];
-			std::string fileName = source["file"];
+			if (type != MemoryType::IO)
+			{
+				std::string fileName = source["file"];
 
-			MemoryBlock* dest = FindBlock(id.c_str());
-			if (!dest)
-			{
-				LogPrintf(LOG_ERROR, "Deserialize: Block not found [%s]", id.c_str());
-				return;
-			}
-			else if (size != dest->GetSize())
-			{
-				LogPrintf(LOG_ERROR, "Deserialize: Block size mismatch [%s]", id.c_str());
-				return;
-			}
-			else if (type != dest->GetType())
-			{
-				LogPrintf(LOG_ERROR, "Deserialize: Block type mismatch [%s]", id.c_str());
-				return;
-			}
+				MemoryBlock* dest = dynamic_cast<MemoryBlock*>(FindBlock(id.c_str()));
+				if (!dest)
+				{
+					LogPrintf(LOG_ERROR, "Deserialize: Block not found [%s]", id.c_str());
+					return;
+				}
+				else if (size != dest->GetSize())
+				{
+					LogPrintf(LOG_ERROR, "Deserialize: Block size mismatch [%s]", id.c_str());
+					return;
+				}
+				else if (type != dest->GetType())
+				{
+					LogPrintf(LOG_ERROR, "Deserialize: Block type mismatch [%s]", id.c_str());
+					return;
+				}
 
-			fs::path path = GetSerializationDir();
-			path.append(fileName);
-			dest->LoadFromFile(path.string().c_str());
+				fs::path path = GetSerializationDir();
+				path.append(fileName);
+				dest->LoadFromFile(path.string().c_str());
+			}
 		}
 	}
 }

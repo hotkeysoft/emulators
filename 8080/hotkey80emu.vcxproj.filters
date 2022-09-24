@@ -60,6 +60,9 @@
     <ClCompile Include="..\Common\Serializable.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
@@ -112,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\StringUtil.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CPU\MemoryBlockBase.h">
+      <Filter>Common\CPU</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

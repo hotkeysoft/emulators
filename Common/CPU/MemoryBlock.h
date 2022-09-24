@@ -1,14 +1,12 @@
 #pragma once
 
 #include <CPU/CPUCommon.h>
+#include <CPU/MemoryBlockBase.h>
 #include <vector>
 
 namespace emul
 {
-	enum class MemoryType { RAM, ROM };
-	enum class OddEven { ODD = 1, EVEN = 0 };
-
-	class MemoryBlock : public Logger
+	class MemoryBlock : public MemoryBlockBase
 	{
 	public:
 		using RawBlock = std::vector<BYTE>;
@@ -20,11 +18,7 @@ namespace emul
 
 		virtual ~MemoryBlock();
 
-		virtual void Clear(BYTE filler = 0);
-
-		const std::string& GetId() const { return m_id; }
-		DWORD GetSize() const { return m_size; };
-		MemoryType GetType() const { return m_type; };
+		virtual void Clear(BYTE filler = 0) override;
 
 		void Alloc(DWORD size);
 
@@ -37,18 +31,12 @@ namespace emul
 		virtual bool Dump(const char* outFile) const { return Dump(0, m_size, outFile); }
 		virtual bool Dump(ADDRESS offset, DWORD len, const char* outFile) const;
 
-		virtual BYTE read(ADDRESS offset);
-		virtual void write(ADDRESS offset, BYTE data);
+		virtual BYTE read(ADDRESS offset) override;
+		virtual void write(ADDRESS offset, BYTE data) override;
 
 		const BYTE* getPtr() const { return m_data; }
 
 	protected:
-		DWORD RoundBlockSize(DWORD size);
-
-		std::string m_id;
-		DWORD m_size = 0;
-		MemoryType m_type;
-
 		BYTE* m_data = nullptr;
 	};
 }

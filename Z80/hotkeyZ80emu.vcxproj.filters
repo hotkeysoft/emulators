@@ -162,6 +162,9 @@
     <ClInclude Include="..\Common\Sound\Sound.h">
       <Filter>Common\Sound</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\CPU\MemoryBlockBase.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -244,6 +247,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\Sound\Sound.cpp">
       <Filter>Common\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp">
+      <Filter>Common\CPU</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

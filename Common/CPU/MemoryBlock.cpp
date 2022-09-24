@@ -8,31 +8,25 @@ namespace emul
 	const WORD BlockGranularity = 4096;
 
 	MemoryBlock::MemoryBlock(const char* id, MemoryType type) :
-		Logger(id),
-		m_id(id ? id : "?"),
-		m_type(type)
+		MemoryBlockBase(id, 0, type)
 	{
-		EnableLog(LOG_WARNING);
 	}
 
-	MemoryBlock::MemoryBlock(const char* id, DWORD size, MemoryType type) : MemoryBlock(id, type)
+	MemoryBlock::MemoryBlock(const char* id, DWORD size, MemoryType type) :
+		MemoryBlockBase(id, size, type)
 	{
 		Alloc(size);
 	}
 
-	MemoryBlock::MemoryBlock(const char* id, const RawBlock& data, MemoryType type /*=RAM*/) :
+	MemoryBlock::MemoryBlock(const char* id, const RawBlock& data, MemoryType type) :
 		MemoryBlock(id, (DWORD)data.size(), type)
 	{
 		memcpy(m_data, &(data[0]), data.size());
 	}
 
 	MemoryBlock::MemoryBlock(const MemoryBlock& block) :
-		Logger("MEMBLK"),
-		m_id(block.m_id),
-		m_size(block.m_size),
-		m_type(block.m_type)
+		MemoryBlockBase(block.m_id.c_str(), block.m_size, block.m_type)
 	{
-		EnableLog(LOG_WARNING);
 		m_data = new BYTE[m_size];
 		memcpy(m_data, block.m_data, m_size);
 	}
@@ -40,16 +34,6 @@ namespace emul
 	MemoryBlock::~MemoryBlock()
 	{
 		delete[] m_data;
-	}
-
-	DWORD MemoryBlock::RoundBlockSize(DWORD size)
-	{
-		DWORD newSize = ((size + BlockGranularity - 1) / BlockGranularity) * BlockGranularity;
-		if (newSize != size)
-		{
-			LogPrintf(Logger::LOG_WARNING, "Rounding block size [%d] -> [%d]", size, newSize);
-		}
-		return newSize;
 	}
 
 	void MemoryBlock::Alloc(DWORD size)
@@ -149,7 +133,6 @@ namespace emul
 		}
 		fclose(f);
 
-		//
 		for (auto i = 0; i < halfSize; ++i)
 		{
 			m_data[(2 * i) + (int)oddEven] = tempBuf[i];
