@@ -23,11 +23,16 @@ namespace emul
 		virtual BYTE read(ADDRESS offset) = 0;
 		virtual void write(ADDRESS offset, BYTE data) = 0;
 
+		static void SetBlockGranularity(WORD blockGranularity);
+
 	protected:
 		DWORD RoundBlockSize(DWORD size);
 
 		std::string m_id;
 		DWORD m_size = 0;
 		MemoryType m_type;
+
+		inline static WORD s_blockGranularity = 1024;
+		const ADDRESS m_maxBlockSize = 1024*1024;
 	};
 }

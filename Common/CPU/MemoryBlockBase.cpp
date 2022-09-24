@@ -4,9 +4,6 @@
 
 namespace emul
 {
-	const DWORD MaxBlockSize = 1024 * 1024;
-	const WORD BlockGranularity = 4096;
-
 	MemoryBlockBase::MemoryBlockBase(const char* id, DWORD size, MemoryType type) :
 		Logger(id),
 		m_id(id ? id : "?"),
@@ -16,9 +13,17 @@ namespace emul
 		EnableLog(LOG_WARNING);
 	}
 
+	void MemoryBlockBase::SetBlockGranularity(WORD blockGranularity)
+	{
+		assert(IsPowerOf2(blockGranularity));
+		assert(blockGranularity >= 8);
+		assert(blockGranularity <= 65536);
+		s_blockGranularity = blockGranularity;
+	}
+
 	DWORD MemoryBlockBase::RoundBlockSize(DWORD size)
 	{
-		DWORD newSize = ((size + BlockGranularity - 1) / BlockGranularity) * BlockGranularity;
+		DWORD newSize = ((size + s_blockGranularity - 1) / s_blockGranularity) * s_blockGranularity;
 		if (newSize != size)
 		{
 			LogPrintf(Logger::LOG_WARNING, "Rounding block size [%d] -> [%d]", size, newSize);

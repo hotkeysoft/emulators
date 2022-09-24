@@ -17,7 +17,10 @@ namespace emul
 	class Memory : public Logger, public Serializable
 	{
 	public:
-		Memory();
+		// Recommended blockGranularity:
+		//  - 1024 for 16 bit memory addresses
+		//  - 4096 for 20-24 bit memory addresses
+		Memory(WORD blockGranularity);
 		virtual ~Memory();
 
 		void Init(size_t addressBits);
@@ -53,6 +56,8 @@ namespace emul
 	private:
 		size_t m_addressBits = 0;
 		ADDRESS m_addressMask = 0;
+
+		const WORD m_blockGranularity;
 
 		static WORD s_uninitialized;
 

@@ -30,7 +30,6 @@ namespace emul
 
 	ComputerPCjr::ComputerPCjr() :
 		Logger("PCjr"),
-		Computer(m_memory),
 		m_base64K("RAM0", 0x10000, emul::MemoryType::RAM),
 		m_ext64K("RAM1", emul::MemoryType::RAM),
 		m_extraRAM("EXTRAM", emul::MemoryType::RAM),

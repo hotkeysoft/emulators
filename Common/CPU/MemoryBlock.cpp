@@ -4,9 +4,6 @@
 
 namespace emul
 {
-	const DWORD MaxBlockSize = 1024 * 1024;
-	const WORD BlockGranularity = 4096;
-
 	MemoryBlock::MemoryBlock(const char* id, MemoryType type) :
 		MemoryBlockBase(id, 0, type)
 	{
@@ -45,7 +42,7 @@ namespace emul
 			m_size = 0;
 		}
 
-		if (size == 0 || size > MaxBlockSize)
+		if (size == 0 || size > m_maxBlockSize)
 		{
 			throw std::exception("Invalid block size");
 		}

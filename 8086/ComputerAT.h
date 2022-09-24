@@ -19,7 +19,7 @@ namespace emul
 
 		virtual std::string_view GetName() const override { return "IBM AT"; };
 		virtual std::string_view GetID() const override { return "at"; };
-	
+
 		virtual void Reset() override;
 		virtual void Init(WORD baseRAM) override;
 

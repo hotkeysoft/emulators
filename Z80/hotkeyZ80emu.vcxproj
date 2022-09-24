@@ -34,6 +34,7 @@
     <ClInclude Include="..\Common\Serializable.h" />
     <ClInclude Include="..\Common\Sound\Sound.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
+    <ClInclude Include="Computer.h" />
     <ClInclude Include="Computer8080.h" />
     <ClInclude Include="ComputerZ80.h" />
     <ClInclude Include="ComputerZX80.h" />

@@ -40,7 +40,6 @@ namespace emul
 
 	ComputerAT::ComputerAT() :
 		Logger("AT"),
-		Computer(m_memory),
 		m_baseRAM("RAM", emul::MemoryType::RAM),
 		m_highRAM("HIGH", emul::MemoryType::RAM),
 		m_biosF000("BIOS", 0x10000, emul::MemoryType::ROM),

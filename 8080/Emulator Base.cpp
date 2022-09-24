@@ -289,7 +289,7 @@ int main(void)
 {
 	Logger::RegisterLogCallback(LogCallback);
 
-	emul::Memory memory;
+	emul::Memory memory(1024);
 	memory.Init(16);
 	memory.EnableLog(Logger::LOG_INFO);
 

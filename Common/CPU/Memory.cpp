@@ -8,10 +8,12 @@ namespace emul
 {
 	WORD Memory::s_uninitialized = 0xF00F;
 
-	const WORD BlockGranularity = 4096;
-
-	Memory::Memory() : Logger("MEM")
+	Memory::Memory(WORD blockGranularity) : Logger("MEM"), m_blockGranularity(blockGranularity)
 	{
+		assert(IsPowerOf2(blockGranularity));
+		assert(blockGranularity >= 8);
+		assert(blockGranularity <= 65536);
+		MemoryBlockBase::SetBlockGranularity(blockGranularity);
 	}
 
 	Memory::~Memory()
@@ -27,8 +29,8 @@ namespace emul
 			addressBits,
 			PRINTF_BYTE_TO_BIN_INT32(m_addressMask));
 
-		size_t memSlots = ((uint64_t)1 << addressBits) / BlockGranularity;
-		LogPrintf(LOG_INFO, "BlockGranularity: %d, Allocating %d memory slots", BlockGranularity, memSlots);
+		size_t memSlots = ((uint64_t)1 << addressBits) / m_blockGranularity;
+		LogPrintf(LOG_INFO, "BlockGranularity: %d, Allocating %d memory slots", m_blockGranularity, memSlots);
 
 		m_memory.reserve(memSlots);
 		for (size_t i = 0; i < memSlots; ++i)
@@ -54,9 +56,9 @@ namespace emul
 
 		LogPrintf(LOG_INFO, "Request to allocate block [%s] at %X, size = %d bytes", block->GetId().c_str(), base, block->GetSize());
 
-		if (len % BlockGranularity != 0)
+		if (len % m_blockGranularity != 0)
 		{
-			LogPrintf(LOG_ERROR, "Block size [%d] is not a multiple of [%d]", len, BlockGranularity);
+			LogPrintf(LOG_ERROR, "Block size [%d] is not a multiple of [%d]", len, m_blockGranularity);
 			return false;
 		}
 
@@ -68,8 +70,8 @@ namespace emul
 			return false;
 		}
 
-		int nbSlots = len / BlockGranularity;
-		int minSlot = base / BlockGranularity;
+		int nbSlots = len / m_blockGranularity;
+		int minSlot = base / m_blockGranularity;
 		LogPrintf(LOG_DEBUG, "Using %d slots, first slot = %02Xh", nbSlots, minSlot);
 
 		for (size_t i = 0; i < nbSlots; ++i)
@@ -124,21 +126,21 @@ namespace emul
 			window, window + len - 1,
 			len);
 
-		if (len % BlockGranularity != 0)
+		if (len % m_blockGranularity != 0)
 		{
-			LogPrintf(LOG_ERROR, "Window size [%d] is not a multiple of [%d]", len, BlockGranularity);
+			LogPrintf(LOG_ERROR, "Window size [%d] is not a multiple of [%d]", len, m_blockGranularity);
 			return false;
 		}
 
-		if (source % BlockGranularity != 0)
+		if (source % m_blockGranularity != 0)
 		{
-			LogPrintf(LOG_ERROR, "Source base address [%d] is not aligned to [%d] bytes boundary", source, BlockGranularity);
+			LogPrintf(LOG_ERROR, "Source base address [%d] is not aligned to [%d] bytes boundary", source, m_blockGranularity);
 			return false;
 		}
 
-		if (window % BlockGranularity != 0)
+		if (window % m_blockGranularity != 0)
 		{
-			LogPrintf(LOG_ERROR, "Window base address [%d] is not aligned to [%d] bytes boundary", window, BlockGranularity);
+			LogPrintf(LOG_ERROR, "Window base address [%d] is not aligned to [%d] bytes boundary", window, m_blockGranularity);
 			return false;
 		}
 
@@ -158,9 +160,9 @@ namespace emul
 			return false;
 		}
 
-		int nbSlots = len / BlockGranularity;
-		int sourceBaseSlot = source / BlockGranularity;
-		int windowBaseSlot = window / BlockGranularity;
+		int nbSlots = len / m_blockGranularity;
+		int sourceBaseSlot = source / m_blockGranularity;
+		int windowBaseSlot = window / m_blockGranularity;
 		LogPrintf(LOG_DEBUG, "Copying %d slots, base slot = %02Xh -> %02Xh", nbSlots, sourceBaseSlot, windowBaseSlot);
 
 		for (size_t i = 0; i < nbSlots; ++i)
@@ -176,7 +178,7 @@ namespace emul
 
 	bool Memory::LoadBinary(const char* file, ADDRESS baseAddress)
 	{
-		MemorySlot& slot = m_memory[baseAddress / BlockGranularity];
+		MemorySlot& slot = m_memory[baseAddress / m_blockGranularity];
 		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
 
 		if (!block)
@@ -191,7 +193,7 @@ namespace emul
 	BYTE Memory::Read8(ADDRESS address) const
 	{
 		address &= m_addressMask;
-		const MemorySlot& slot = m_memory[address / BlockGranularity];
+		const MemorySlot& slot = m_memory[address / m_blockGranularity];
 		MemoryBlockBase* block = slot.block;
 
 		if (block)
@@ -215,7 +217,7 @@ namespace emul
 	void Memory::Write8(ADDRESS address, BYTE value)
 	{
 		address &= m_addressMask;
-		const MemorySlot& slot = m_memory[address / BlockGranularity];
+		const MemorySlot& slot = m_memory[address / m_blockGranularity];
 		MemoryBlockBase* block = slot.block;
 
 		if (block)
@@ -236,7 +238,7 @@ namespace emul
 
 	void Memory::Dump(ADDRESS start, DWORD len, const char* outFile)
 	{
-		MemorySlot& slot = m_memory[start / BlockGranularity];
+		MemorySlot& slot = m_memory[start / m_blockGranularity];
 		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
 
 		if (block)

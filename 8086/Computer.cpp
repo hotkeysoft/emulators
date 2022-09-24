@@ -30,8 +30,9 @@ using cfg::CONFIG;
 
 namespace emul
 {
-	Computer::Computer(Memory& memory) :
+	Computer::Computer() :
 		Logger("PC"),
+		m_memory(4096),
 		m_hddROM("HDD", 8192, MemoryType::ROM),
 		m_dmaPageRegister(0x80)
 	{

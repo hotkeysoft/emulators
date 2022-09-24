@@ -12,7 +12,8 @@ using cfg::CONFIG;
 namespace emul
 {
 	Computer::Computer(Memory& memory) :
-		Logger("Computer")
+		Logger("Computer"),
+		m_memory(1024)
 	{
 	}
 

@@ -100,7 +100,7 @@ namespace emul
 		virtual void Deserialize(const json& from);
 
 	protected:
-		Computer(Memory& memory);
+		Computer();
 
 		virtual void Init(const char* cpuid, WORD baseRAM);
 		virtual void InitVideo(const std::string& defaultMode, const VideoModes& supported = VideoModes());
