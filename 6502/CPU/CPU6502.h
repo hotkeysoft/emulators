@@ -149,6 +149,11 @@ namespace emul
 		void LDmem(BYTE& dest, ADDRESS src);
 		void STmem(ADDRESS dest, BYTE src);
 
+		void PLA();
+		void PHA();
+		void PLP();
+		void PHP();
+
 		void BRANCHif(bool cond);
 		void JSR(ADDRESS dest);
 		void RTS();

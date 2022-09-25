@@ -228,16 +228,16 @@ namespace emul
 		m_opcodes[0x9A] = [=]() { m_reg.SP = m_reg.X; }; // imp
 
 		// PLA A:=+(S), NZ
-		m_opcodes[0x68] = [=]() { UnknownOpcode(); }; // imp
+		m_opcodes[0x68] = [=]() { PLA(); }; // imp
 
 		// PHA (S):=A
-		m_opcodes[0x48] = [=]() { UnknownOpcode(); }; // imp
+		m_opcodes[0x48] = [=]() { PHA(); }; // imp
 
 		// PLP P:=+(S), NVDIZC
-		m_opcodes[0x28] = [=]() { UnknownOpcode(); }; // imp
+		m_opcodes[0x28] = [=]() { PLP(); }; // imp
 
 		// PHP (S)-:=P
-		m_opcodes[0x08] = [=]() { UnknownOpcode(); }; // imp
+		m_opcodes[0x08] = [=]() { PHP(); }; // imp
 
 		// ------------------------------
 		// Jump Commands
@@ -375,6 +375,7 @@ namespace emul
 	void CPU6502::Exec(BYTE opcode)
 	{
 		m_opcode = opcode;
+
 		m_currTiming = &m_info.GetOpcodeTiming(opcode);
 
 		try
@@ -485,6 +486,38 @@ namespace emul
 	void CPU6502::STmem(ADDRESS dest, BYTE src)
 	{
 		m_memory.Write8(dest, src);
+	}
+
+	void CPU6502::PLA()
+	{
+		m_reg.A = POP();
+		AdjustNZ(m_reg.A);
+	}
+
+	void CPU6502::PHA()
+	{
+		PUSH(m_reg.A);
+	}
+
+	void CPU6502::PLP()
+	{
+		// State of B and 5 flags is not changed
+		bool oldR5 = GetFlag(_FLAG_R5);
+		bool oldB = GetFlag(FLAG_B);
+
+		m_reg.flags = POP();
+		SetFlag(_FLAG_R5, oldR5);
+		SetFlag(FLAG_B, oldB);
+	}
+
+	void CPU6502::PHP()
+	{
+		BYTE flags = m_reg.flags;
+
+		// B and R5 are always pushed as set
+		SetBit(flags, _FLAG_R5, true);
+		SetBit(flags, FLAG_B, true);
+		PUSH(flags);
 	}
 
 	void CPU6502::BRANCHif(bool cond)
