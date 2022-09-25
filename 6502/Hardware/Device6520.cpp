@@ -16,17 +16,17 @@ namespace pia
 
 		WORD base = isPortB ? 2 : 0;
 		Connect(base + 0, static_cast<IOConnector::READFunction>(&PIAPort::Read0));
-		Connect(base + 1, static_cast<IOConnector::READFunction>(&PIAPort::ReadCR));
+		Connect(base + 1, static_cast<IOConnector::READFunction>(&PIAPort::ReadControlRegister));
 
 		Connect(base + 0, static_cast<IOConnector::WRITEFunction>(&PIAPort::Write0));
-		Connect(base + 1, static_cast<IOConnector::WRITEFunction>(&PIAPort::WriteCR));
+		Connect(base + 1, static_cast<IOConnector::WRITEFunction>(&PIAPort::WriteControlRegister));
 	}
 
 	void PIAPort::Reset()
 	{
 		DDR = 0;
 		OR = 0;
-		CR = 0;
+		CR.data = 0;
 		ISC = 0;
 		C1 = false;
 		C2 = false;
@@ -36,43 +36,108 @@ namespace pia
 	// 0 - Read PIBA/DDRA
 	BYTE PIAPort::Read0()
 	{
-		LogPrintf(LOG_DEBUG, "Read0");
-		return 0xFF;
+		LogPrintf(LOG_TRACE, "Read0");
+		return CR.GetORSelect() ? ReadPortData() : ReadDataDirectionRegister();
 	}
-	BYTE PIAPort::ReadPIB()
+	BYTE PIAPort::ReadPortData()
 	{
-		LogPrintf(LOG_DEBUG, "ReadPIB");
-		return 0xFF;
+		// Reading the output register resets IRQ1 & IRQ2
+		// of the control register
+		CR.ClearIRQFlags();
+
+		BYTE value = 0;
+		//data = OnReadPortData() //TODO
+
+		// For output pins, mix with output register
+		value &= (~DDR); // Clear output pin data
+		value |= (OR & DDR); // Set output pin data from OR
+
+		LogPrintf(LOG_DEBUG, "Read PortData, value=%02X", value);
+		return value;
 	}
-	BYTE PIAPort::ReadDDR()
+	BYTE PIAPort::ReadDataDirectionRegister()
 	{
-		LogPrintf(LOG_DEBUG, "ReadDDR");
-		return 0xFF;
+		BYTE value = DDR;
+		LogPrintf(LOG_DEBUG, "Read DataDirectionRegister, value=%02X", value);
+		return value;
 	}
 
-	// 0 - Write OR/DDR
+	// 0 - Write OutputRegister/DataDirectionRegister
 	void PIAPort::Write0(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "Write0, value=%02x", value);
+		LogPrintf(LOG_TRACE, "Write0, value=%02x", value);
+		CR.GetORSelect() ? WriteOutputRegister(value) : WriteDataDirectionRegister(value);
 	}
-	void PIAPort::WriteOR(BYTE value)
+	void PIAPort::WriteOutputRegister(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteOR, value=%02x", value);
+		LogPrintf(LOG_DEBUG, "Write OutputRegister, value=%02X", value);
 	}
-	void PIAPort::WriteDDR(BYTE value)
+	void PIAPort::WriteDataDirectionRegister(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteDDR, value=%02x", value);
+		LogPrintf(LOG_DEBUG, "Write DataDirectionRegister, value=%02X", value);
+		DDR = value;
+		LogPrintf(LOG_INFO, "Set DataDirection:");
+		for (int i = 7; i >= 0; --i)
+		{
+			LogPrintf(LOG_INFO, " PIN %d: %s", i, (GetDataDirection(i) == DataDirection::INPUT) ? "IN" : "OUT");
+		}
 	}
 
-	// 1 - Read/Write CR
-	BYTE PIAPort::ReadCR()
+	// 1 - Read/Write ControlRegister
+	BYTE PIAPort::ReadControlRegister()
 	{
-		LogPrintf(LOG_DEBUG, "ReadCR");
-		return 0xFF;
+		BYTE value = CR.data;
+		LogPrintf(LOG_TRACE, "Read ControlRegister, value=%02X", value);
+
+		// The most common reason to read this is for irq status
+		LogPrintf(LOG_DEBUG, "Read ControlRegister [%cIRQ1] [%cIRQ2]",
+			CR.GetIRQ1Flag() ? ' ' : '/',
+			CR.GetIRQ2Flag() ? ' ' : '/');
+
+		if (IsLog(LOG_TRACE))
+		{
+			LogPrintf(LOG_DEBUG, "Read ControlRegister:");
+			LogControlRegister();
+		}
+
+		return value;
 	}
-	void PIAPort::WriteCR(BYTE value)
+	void PIAPort::WriteControlRegister(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteCR, value=%02x", value);
+		LogPrintf(LOG_DEBUG, "WriteControlRegister, value=%02X", value);
+		CR.data = value;
+
+		if (IsLog(LOG_INFO))
+		{
+			LogPrintf(LOG_INFO, "Set ControlRegister:");
+			LogControlRegister();
+		}
+	}
+
+	void PIAPort::LogControlRegister()
+	{
+		LogPrintf(LOG_INFO, " IRQ1 flag: %d", CR.GetIRQ1Flag());
+		LogPrintf(LOG_INFO, " IRQ2 flag: %d", CR.GetIRQ2Flag());
+
+		if (CR.GetC2OutputMode())
+		{
+			LogPrintf(LOG_INFO, " C2 pin: OUT");
+			LogPrintf(LOG_INFO, " C2 output ctrl : %d", CR.GetC2OutputControl());
+			LogPrintf(LOG_INFO, " C2 restore ctrl: %d", CR.GetC2RestoreControl());
+
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, " C2 pin: IN");
+			LogPrintf(LOG_INFO, " IRQ2 pos transition    : %d", CR.GetIRQ2PositiveTransition());
+			LogPrintf(LOG_INFO, " CPU IRQ Enable for IRQ2: %d", CR.GetCPUIRQEnableForIRQ2());
+		}
+
+		LogPrintf(LOG_INFO, " DDR/Output Select      : %s", CR.GetORSelect() ? "OUTPUT" : "DIRECTION");
+
+		LogPrintf(LOG_INFO, " IRQ1 pos transition    : %d", CR.GetIRQ1PositiveTransition());
+		LogPrintf(LOG_INFO, " CPU IRQ Enable for IRQ1: %d", CR.GetCPUIRQEnableForIRQ1());
+
 	}
 
 	Device6520::Device6520(std::string id) :

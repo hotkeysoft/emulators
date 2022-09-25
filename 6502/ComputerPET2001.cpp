@@ -101,6 +101,16 @@ namespace emul
 			return false;
 		}
 
+		// Temporary fake screen retrace
+		const int refreshCounterInterval = 100000;
+		static int refreshCounter = refreshCounterInterval;
+		if (--refreshCounter == 0)
+		{
+			LogPrintf(LOG_WARNING, "Fake VSYNC");
+			m_pia1.GetPortB().SetC1(true);
+			refreshCounter = refreshCounterInterval;
+		}
+
 		return true;
 	}
 }
