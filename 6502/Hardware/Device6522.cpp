@@ -2,11 +2,112 @@
 
 #include "Device6522.h"
 
+using emul::GetMSB;
+
 namespace via
 {
-	Device6522::Device6522(std::string id) :
+
+	VIAPort::VIAPort(std::string id) :
 		Logger(id.c_str()),
 		IOConnector(0x0F) // Addresses 0-F are decoded by device
+	{
+	}
+
+	void VIAPort::Init(bool isPortB)
+	{
+		Reset();
+
+		WORD base = isPortB ? 2 : 0;
+		Connect(base + 0, static_cast<IOConnector::READFunction>(&VIAPort::ReadInputRegister));
+		Connect(base + 0, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteOutputRegister));
+
+		Connect(base + 1, static_cast<IOConnector::READFunction>(&VIAPort::ReadDataDirectionRegister));
+		Connect(base + 1, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteDataDirectionRegister));
+
+		if (!isPortB)
+		{
+			Connect(0xF, static_cast<IOConnector::READFunction>(&VIAPort::ReadInputRegisterNoHandshake));
+			Connect(0xF, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteOutputRegisterNoHandshake));
+		}
+	}
+
+	void VIAPort::Reset()
+	{
+		DDR = 0;
+		OR = 0;
+		C1 = false;
+		C2 = false;
+	}
+
+	BYTE VIAPort::ReadInputRegister()
+	{
+		BYTE value = 0xFF;
+		//data = OnReadPortData() //TODO
+
+		// For output pins, mix with output register
+		value &= (~DDR); // Clear output pin data
+		value |= (OR & DDR); // Set output pin data from OR
+
+		LogPrintf(LOG_DEBUG, "Read InputRegister, value=%02X", value);
+		return value;
+	}
+	void VIAPort::WriteOutputRegister(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write OutputRegister, value=%02X", value);
+		OR = value;
+	}
+
+	BYTE VIAPort::ReadInputRegisterNoHandshake()
+	{
+		LogPrintf(LOG_DEBUG, "Read InputRegisterNoHandshake");
+		// TODO
+		return ReadInputRegister();
+	}
+	void VIAPort::WriteOutputRegisterNoHandshake(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write OutputRegisterNoHandshake, value=%02X", value);
+		// TODO
+		WriteOutputRegister(value);
+	}
+
+	BYTE VIAPort::ReadDataDirectionRegister()
+	{
+		BYTE value = DDR;
+		LogPrintf(LOG_DEBUG, "Read DataDirectionRegister, value=%02X", value);
+		return value;
+	}
+	void VIAPort::WriteDataDirectionRegister(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "Write DataDirectionRegister, value=%02X", value);
+		DDR = value;
+		LogPrintf(LOG_INFO, "Set DataDirection:");
+		for (int i = 7; i >= 0; --i)
+		{
+			LogPrintf(LOG_INFO, " PIN %d: %s", i, (GetDataDirection(i) == DataDirection::INPUT) ? "IN" : "OUT");
+		}
+	}
+
+	const char* Device6522::PeripheralControl::GetOperationStr(PCROperation op) const
+	{
+		switch (op)
+		{
+		case PeripheralControl::IN_NEG_EDGE:     return "INPUT, Negative active edge";
+		case PeripheralControl::IN_NEG_EDGE_INT: return "INPUT, Negative active edge, Independent interrupt";
+		case PeripheralControl::IN_POS_EDGE:     return "INPUT, Positive active edge";
+		case PeripheralControl::IN_POS_EDGE_INT: return "INPUT, Positive active edge, Independent interrupt";
+		case PeripheralControl::OUT_HANDSHAKE:   return "OUTPUT, Handshake";
+		case PeripheralControl::OUT_PULSE:       return "OUTPUT, Pulse";
+		case PeripheralControl::OUT_LOW:         return "OUTPUT, LOW";
+		case PeripheralControl::OUT_HIGH:        return "OUTPUT, HIGH";
+		default: throw std::exception("Not possible");
+		}
+	}
+
+	Device6522::Device6522(std::string id) :
+		Logger(id.c_str()),
+		IOConnector(0x0F), // Addresses 0-F are decoded by device
+		m_portA(id + ".A"),
+		m_portB(id + ".B")
 	{
 	}
 
@@ -14,10 +115,13 @@ namespace via
 	{
 		Reset();
 
-		Connect(0x0, static_cast<IOConnector::READFunction>(&Device6522::ReadIRB));
-		Connect(0x1, static_cast<IOConnector::READFunction>(&Device6522::ReadIRA));
-		Connect(0x2, static_cast<IOConnector::READFunction>(&Device6522::ReadDDRB));
-		Connect(0x3, static_cast<IOConnector::READFunction>(&Device6522::ReadDDRA));
+		m_portA.Init(false);
+		m_portB.Init(true);
+
+		// Attach connections made in children objects
+		Attach(m_portA);
+		Attach(m_portB);
+
 		Connect(0x4, static_cast<IOConnector::READFunction>(&Device6522::ReadT1CounterL));
 		Connect(0x5, static_cast<IOConnector::READFunction>(&Device6522::ReadT1CounterH));
 		Connect(0x6, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchesL));
@@ -29,12 +133,7 @@ namespace via
 		Connect(0xC, static_cast<IOConnector::READFunction>(&Device6522::ReadPCR));
 		Connect(0xD, static_cast<IOConnector::READFunction>(&Device6522::ReadIFR));
 		Connect(0xE, static_cast<IOConnector::READFunction>(&Device6522::ReadIER));
-		Connect(0xF, static_cast<IOConnector::READFunction>(&Device6522::ReadIRANoHandshake));
 
-		Connect(0x0, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteORB));
-		Connect(0x1, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteORA));
-		Connect(0x2, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteDDRB));
-		Connect(0x3, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteDDRA));
 		Connect(0x4, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchesL));
 		Connect(0x5, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1CounterH));
 		Connect(0x6, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchesL));
@@ -46,56 +145,14 @@ namespace via
 		Connect(0xC, static_cast<IOConnector::WRITEFunction>(&Device6522::WritePCR));
 		Connect(0xD, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteIFR));
 		Connect(0xE, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteIER));
-		Connect(0xF, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteORANoHandshake));
 	}
 
 	void Device6522::Reset()
 	{
+		m_portA.Reset();
+		m_portB.Reset();
 
-	}
-
-	// 0 - ORB/IRB: Output/Input Register B
-	BYTE Device6522::ReadIRB()
-	{
-		LogPrintf(LOG_DEBUG, "ReadIRB");
-		return 0xFF;
-	}
-	void Device6522::WriteORB(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "WriteORB, value=%02X", value);
-	}
-
-	// 1 - ORA/IRA: Output/Input Register A
-	BYTE Device6522::ReadIRA()
-	{
-		LogPrintf(LOG_DEBUG, "ReadIRA");
-		return 0xFF;
-	}
-	void Device6522::WriteORA(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "WriteORA, value=%02X", value);
-	}
-
-	// 2 - DDRB: Data Direction Register B
-	BYTE Device6522::ReadDDRB()
-	{
-		LogPrintf(LOG_DEBUG, "ReadDDRB");
-		return 0xFF;
-	}
-	void Device6522::WriteDDRB(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "WriteDDRB, value=%02X", value);
-	}
-
-	// 3 - DDRA: Data Direction Register A
-	BYTE Device6522::ReadDDRA()
-	{
-		LogPrintf(LOG_DEBUG, "ReadDDRA");
-		return 0xFF;
-	}
-	void Device6522::WriteDDRA(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "WriteDDRA, value=%02X", value);
+		IER.Clear();
 	}
 
 	// 4 - T1C-L: T1 Low-Order Counter
@@ -185,12 +242,21 @@ namespace via
 	// C - PCR: Peripheral Control Register
 	BYTE Device6522::ReadPCR()
 	{
-		LogPrintf(LOG_DEBUG, "ReadPCR");
-		return 0xFF;
+		bool value = PCR.data;
+		LogPrintf(LOG_DEBUG, "ReadPCR, value=%02X", value);
+		return value;
 	}
 	void Device6522::WritePCR(BYTE value)
 	{
+		PCR.data = value;
 		LogPrintf(LOG_DEBUG, "WritePCR, value=%02X", value);
+
+		LogPrintf(LOG_INFO, "Write Peripheral Control Register");
+		LogPrintf(LOG_INFO, " CA1 Interrupt active edge: %s", PCR.GetCA1InterruptActiveEdge() == PeripheralControl::NEG_EDGE ? "NEG" : "POS");
+		LogPrintf(LOG_INFO, " CA2 Operation: %s", PCR.GetOperationStr(PCR.GetCA2Operation()));
+
+		LogPrintf(LOG_INFO, " CB1 Interrupt active edge: %s", PCR.GetCB1InterruptActiveEdge() == PeripheralControl::NEG_EDGE ? "NEG" : "POS");
+		LogPrintf(LOG_INFO, " CB2 Operation: %s", PCR.GetOperationStr(PCR.GetCB2Operation()));
 	}
 
 	// D - IFR: Interrupt Flag Register
@@ -207,22 +273,23 @@ namespace via
 	// E - IER: Interrupt Enable Register
 	BYTE Device6522::ReadIER()
 	{
-		LogPrintf(LOG_DEBUG, "ReadIER");
-		return 0xFF;
+		BYTE value = IER.data;
+		LogPrintf(LOG_DEBUG, "ReadIER, value=%02X", value);
+		return value;
 	}
 	void Device6522::WriteIER(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "WriteIER, value=%02X", value);
-	}
+		IER.Set(value);
 
-	// F - ORA/IRA: Same as reg 1 with no handshake
-	BYTE Device6522::ReadIRANoHandshake()
-	{
-		LogPrintf(LOG_DEBUG, "ReadIRANoHandshake");
-		return 0xFF;
-	}
-	void Device6522::WriteORANoHandshake(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "WriteORANoHandshake, value=%02X", value);
+		LogPrintf(LOG_INFO, "Set Interrupt Register Mask [%cTI1 %cTI2 %cCB1 %cCB2 %cSR %cCA1 %cCA2]",
+			(IER.IsInterruptEnabled(InterruptEnable::TIMER1) ? ' ' : '/'),
+			(IER.IsInterruptEnabled(InterruptEnable::TIMER2) ? ' ' : '/'),
+			(IER.IsInterruptEnabled(InterruptEnable::CB1) ? ' ' : '/'),
+			(IER.IsInterruptEnabled(InterruptEnable::CB2) ? ' ' : '/'),
+			(IER.IsInterruptEnabled(InterruptEnable::SR) ? ' ' : '/'),
+			(IER.IsInterruptEnabled(InterruptEnable::CA1) ? ' ' : '/'),
+			(IER.IsInterruptEnabled(InterruptEnable::CA2) ? ' ' : '/')
+		);
 	}
 }

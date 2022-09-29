@@ -9,7 +9,51 @@ using emul::WORD;
 
 namespace via
 {
-	// 6522 VIA
+	class VIAPort : public IOConnector
+	{
+	public:
+		VIAPort(std::string id);
+
+		void Init(bool isPortB);
+
+		void Reset();
+
+		enum DataDirection { INPUT = 0, OUTPUT = 1 };
+
+	protected:
+		// CPU IO Access
+		// -------------
+
+		// 0 - Read InputRegister (IR)
+		BYTE ReadInputRegister();
+		// 0 - Write OutputRegister (OR)
+		void WriteOutputRegister(BYTE value);
+
+		// 1 - Read/Write DataDirectionRegister (DDR)
+		BYTE ReadDataDirectionRegister();
+		void WriteDataDirectionRegister(BYTE value);
+
+		// F - Port A: ORA/IRA with no handshake
+		BYTE ReadInputRegisterNoHandshake();
+		void WriteOutputRegisterNoHandshake(BYTE value);
+
+		// Registers
+		// ---------
+
+		// Data direction register
+		BYTE DDR = 0;
+		DataDirection GetDataDirection(int pin) { return (DataDirection)emul::GetBit(DDR, pin); }
+
+		// Output Register
+		BYTE OR = 0; // Output register, set by CPU
+
+		// Input line
+		bool C1 = false;
+
+		// Input/output line
+		bool C2 = false;
+	};
+
 	class Device6522 : public IOConnector
 	{
 	public:
@@ -25,23 +69,10 @@ namespace via
 
 		virtual void Reset();
 
+		VIAPort& GetPortA() { return m_portA; }
+		VIAPort& GetPortB() { return m_portB; }
+
 	protected:
-		// 0 - ORB/IRB: Output/Input Register B
-		BYTE ReadIRB();
-		void WriteORB(BYTE value);
-
-		// 1 - ORA/IRA: Output/Input Register A
-		BYTE ReadIRA();
-		void WriteORA(BYTE value);
-
-		// 2 - DDRB: Data Direction Register B
-		BYTE ReadDDRB();
-		void WriteDDRB(BYTE value);
-
-		// 3 - DDRA: Data Direction Register A
-		BYTE ReadDDRA();
-		void WriteDDRA(BYTE value);
-
 		// 4 - T1C-L: T1 Low-Order Counter
 		BYTE ReadT1CounterL();
 
@@ -85,8 +116,57 @@ namespace via
 		BYTE ReadIER();
 		void WriteIER(BYTE value);
 
-		// F - ORA/IRA: Same as reg 1 with no handshake
-		BYTE ReadIRANoHandshake();
-		void WriteORANoHandshake(BYTE value);
+	protected:
+
+		struct InterruptEnable
+		{
+			// Interrupt Enable Register
+			BYTE data = 0;
+
+			// Interrupt Enable Register helpers
+			void Clear() { data = 0; }
+			void Set(BYTE value)
+			{
+				bool set = emul::GetMSB(value);
+				emul::SetBitMask(data, value, set);
+				data |= 0x80;
+			};
+
+			enum IERFlag { CA2, CA1, SR, CB2, CB1, TIMER2, TIMER1 };
+			bool IsInterruptEnabled(IERFlag flag) const { return emul::GetBit(data, (int)flag); }
+
+		} IER;
+
+		struct PeripheralControl
+		{
+			// Peripheral Control Register
+			BYTE data = 0;
+
+			// Peripheral Control Register helpers
+			void Clear() { data = 0; }
+
+			enum PCROperation {
+				IN_NEG_EDGE = 0,
+				IN_NEG_EDGE_INT,
+				IN_POS_EDGE,
+				IN_POS_EDGE_INT,
+				OUT_HANDSHAKE,
+				OUT_PULSE,
+				OUT_LOW,
+				OUT_HIGH
+			};
+			enum ActiveEdge { NEG_EDGE, POS_EDGE };
+
+			ActiveEdge GetCA1InterruptActiveEdge() const { return (ActiveEdge)emul::GetBit(data, 0); }
+			ActiveEdge GetCB1InterruptActiveEdge() const { return (ActiveEdge)emul::GetBit(data, 4); }
+
+			PCROperation GetCA2Operation() const { return (PCROperation)((data >> 1) & 7); }
+			PCROperation GetCB2Operation() const { return (PCROperation)((data >> 5) & 7); }
+
+			const char* GetOperationStr(PCROperation op) const;
+		} PCR;
+
+		VIAPort m_portA;
+		VIAPort m_portB;
 	};
 }

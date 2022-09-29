@@ -10,7 +10,7 @@ namespace pia
 	{
 	}
 
-	void PIAPort::Init(Device6520* parent, bool isPortB)
+	void PIAPort::Init(bool isPortB)
 	{
 		Reset();
 
@@ -45,7 +45,7 @@ namespace pia
 		// of the control register
 		CR.ClearIRQFlags();
 
-		BYTE value = 0;
+		BYTE value = 0xFF;
 		//data = OnReadPortData() //TODO
 
 		// For output pins, mix with output register
@@ -71,6 +71,7 @@ namespace pia
 	void PIAPort::WriteOutputRegister(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "Write OutputRegister, value=%02X", value);
+		OR = value;
 	}
 	void PIAPort::WriteDataDirectionRegister(BYTE value)
 	{
@@ -152,8 +153,8 @@ namespace pia
 	{
 		Reset();
 
-		m_portA.Init(this, false);
-		m_portB.Init(this, true);
+		m_portA.Init(false);
+		m_portB.Init(true);
 
 		// Attach connections made in children objects
 		Attach(m_portA);

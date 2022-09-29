@@ -9,14 +9,12 @@ using emul::WORD;
 
 namespace pia
 {
-	class Device6520;
-
 	class PIAPort : public IOConnector
 	{
 	public:
 		PIAPort(std::string id);
 
-		void Init(Device6520* parent, bool isPortB);
+		void Init(bool isPortB);
 
 		void Reset();
 
