@@ -160,6 +160,8 @@ namespace emul
 		void RTS();
 		void JMP(ADDRESS dest);
 		void BIT(ADDRESS src);
+		void BRK();
+		void RTI();
 
 		void ORA(BYTE oper);
 		void AND(BYTE oper);

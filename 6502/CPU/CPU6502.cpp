@@ -252,6 +252,12 @@ namespace emul
 		m_opcodes[0xD0] = [=]() { BRANCHif(GetFlag(FLAG_Z) == false); }; // BNE
 		m_opcodes[0xF0] = [=]() { BRANCHif(GetFlag(FLAG_Z) == true);  }; // BEQ
 
+		// BRK (S)-:=PC,P PC:=($FFFE)
+		m_opcodes[0x00] = [=]() { BRK(); };
+
+		// RTI P,PC:=+(S)
+		m_opcodes[0x40] = [=]() { RTI(); };
+
 		// JSR (S)-:=PC, PC:={adr}
 		m_opcodes[0x20] = [=]() { JSR(FetchWord()); };
 
@@ -565,6 +571,35 @@ namespace emul
 
 		val &= m_reg.A;
 		SetFlag(FLAG_Z, val == 0);
+	}
+
+	void CPU6502::BRK()
+	{
+		FetchByte(); // Ignore padding byte
+
+		// Push return address
+		PUSH(GetHByte(m_programCounter));
+		PUSH(GetLByte(m_programCounter));
+
+		// Push flags
+		PHP();
+
+		SetFlag(FLAG_B, true);
+		SetFlag(FLAG_I, true);
+
+		ADDRESS irqVector = m_memory.Read16(ADDR_IRQ);
+		LogPrintf(LOG_DEBUG, "IRQ vector: %04X", irqVector);
+		m_programCounter = irqVector;
+	}
+	void CPU6502::RTI()
+	{
+		// Restore flags
+		PLP();
+
+		// Restore return address
+		BYTE l = POP();
+		BYTE h = POP();
+		m_programCounter = MakeWord(h, l);
 	}
 
 	void CPU6502::ORA(BYTE oper)
