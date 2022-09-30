@@ -35,7 +35,7 @@ namespace emul
 		//static MemoryBlock bootstrapROM("bootstrap", bootstrap, MemoryType::ROM);
 		//m_memory.Allocate(&bootstrapROM, 0xFF00);
 
-		m_baseRAM.LoadFromFile("P:/Projects/6502/6502_65C02_functional_tests/bin_files/6502_functional_test.bin");
+		m_baseRAM.LoadFromFile("P:/Projects/6502/6502_65C02_functional_tests/6502_functional_test.bin");
 		m_memory.Allocate(&m_baseRAM, 0);
 
 		InitInputs(6000000);
