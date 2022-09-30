@@ -4,6 +4,7 @@ x64
 .vs
 *.user
 *.bak
+*.backup
 *.log
 /8086/*.bin
 /8086/data/*.txt
@@ -13,4 +14,6 @@ x64
 /Z80/*.bin
 /Z80/dump
 /Z80/snapshots
-*.backup
+/6502/*.bin
+/6502/dump
+/6502/snapshots

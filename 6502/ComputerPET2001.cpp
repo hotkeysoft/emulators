@@ -104,11 +104,20 @@ namespace emul
 		// Temporary fake screen retrace
 		const int refreshCounterInterval = 100000;
 		static int refreshCounter = refreshCounterInterval;
-		if (--refreshCounter == 0)
+
+		--refreshCounter;
+		if (refreshCounter == 1000)
 		{
-			LogPrintf(LOG_WARNING, "Fake VSYNC");
+			LogPrintf(LOG_WARNING, "Fake VSYNC BEGIN");
 			m_pia1.GetPortB().SetC1(true);
+			m_via.SetRetraceIn(true);
+		}
+		else if (refreshCounter == 0)
+		{
+			LogPrintf(LOG_WARNING, "Fake VSYNC END");
 			refreshCounter = refreshCounterInterval;
+			m_pia1.GetPortB().SetC1(false);
+			m_via.SetRetraceIn(false);
 		}
 
 		return true;

@@ -17,12 +17,12 @@ namespace via
 	{
 		Reset();
 
-		WORD base = isPortB ? 2 : 0;
-		Connect(base + 0, static_cast<IOConnector::READFunction>(&VIAPort::ReadInputRegister));
-		Connect(base + 0, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteOutputRegister));
+		WORD offset = isPortB ? 0 : 1;
+		Connect(0 + offset, static_cast<IOConnector::READFunction>(&VIAPort::ReadInputRegister));
+		Connect(0 + offset, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteOutputRegister));
 
-		Connect(base + 1, static_cast<IOConnector::READFunction>(&VIAPort::ReadDataDirectionRegister));
-		Connect(base + 1, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteDataDirectionRegister));
+		Connect(2 + offset, static_cast<IOConnector::READFunction>(&VIAPort::ReadDataDirectionRegister));
+		Connect(2 + offset, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteDataDirectionRegister));
 
 		if (!isPortB)
 		{
@@ -35,14 +35,14 @@ namespace via
 	{
 		DDR = 0;
 		OR = 0;
+		IR = 0xFF; // TODO: Assume pullups for now
 		C1 = false;
 		C2 = false;
 	}
 
 	BYTE VIAPort::ReadInputRegister()
 	{
-		BYTE value = 0xFF;
-		//data = OnReadPortData() //TODO
+		BYTE value = IR;
 
 		// For output pins, mix with output register
 		value &= (~DDR); // Clear output pin data

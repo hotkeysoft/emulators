@@ -20,6 +20,9 @@ namespace via
 
 		enum DataDirection { INPUT = 0, OUTPUT = 1 };
 
+		BYTE GetOutput() const { return OR; }
+		void SetInputBit(BYTE bit, bool set) { emul::SetBit(IR, bit, set); }
+
 	protected:
 		// CPU IO Access
 		// -------------
@@ -29,7 +32,7 @@ namespace via
 		// 0 - Write OutputRegister (OR)
 		void WriteOutputRegister(BYTE value);
 
-		// 1 - Read/Write DataDirectionRegister (DDR)
+		// 2 - Read/Write DataDirectionRegister (DDR)
 		BYTE ReadDataDirectionRegister();
 		void WriteDataDirectionRegister(BYTE value);
 
@@ -46,6 +49,9 @@ namespace via
 
 		// Output Register
 		BYTE OR = 0; // Output register, set by CPU
+
+		// Input Register
+		BYTE IR = 0; // Input set by hardware
 
 		// Input line
 		bool C1 = false;

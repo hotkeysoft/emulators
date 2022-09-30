@@ -464,7 +464,7 @@ int main(int argc, char* args[])
 							char buf[128];
 							sprintf(buf, "dump/memdump_%zu.bin", time(nullptr));
 							fprintf(stderr, "Dump RAM to %s\n", buf);
-							pc->GetMemory().Dump(0x4000, 0x4000, buf);
+							pc->GetMemory().Dump(0x8000, 0x0400, buf);
 							break;
 						}
 						case FKEY + 6:
