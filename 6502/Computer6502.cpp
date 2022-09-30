@@ -12,9 +12,14 @@ namespace emul
 	Computer6502::Computer6502() :
 		Logger("Computer6502"),
 		Computer(m_memory),
-		m_baseRAM("RAM", 0x8000, emul::MemoryType::RAM),
-		m_rom("ROM", 0x1000, emul::MemoryType::ROM)
+		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM)
 	{
+	}
+
+	void Computer6502::Reset()
+	{
+		Computer::Reset();
+		GetCPU().Reset(0x400); // Override reset vector for tests
 	}
 
 	void Computer6502::Init(WORD baseRAM)
@@ -23,17 +28,15 @@ namespace emul
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
-		std::vector<BYTE> bootstrap = { 0x31, 0xff, 0xff, 0xc3, 0x00, 0x80 };
+		std::vector<BYTE> bootstrap;
+		bootstrap.resize(0x100);
+		// = { 0x31, 0xff, 0xff, 0xc3, 0x00, 0x80 };
 
-		static MemoryBlock bootstrapROM("bootstrap", bootstrap, MemoryType::ROM);
-		m_memory.Allocate(&bootstrapROM, 0);
+		//static MemoryBlock bootstrapROM("bootstrap", bootstrap, MemoryType::ROM);
+		//m_memory.Allocate(&bootstrapROM, 0xFF00);
 
-		m_baseRAM.LoadFromFile("P:/Projects/6502/6502test/src/6502doc.out");
-		m_memory.Allocate(&m_baseRAM, 32768);
-
-		Connect(0xFE, static_cast<PortConnector::OUTFunction>(&Computer6502::DummyOut));
-
-		Connect(0xFE, static_cast<PortConnector::INFunction>(&Computer6502::DummyIn));
+		m_baseRAM.LoadFromFile("P:/Projects/6502/6502_65C02_functional_tests/bin_files/6502_functional_test.bin");
+		m_memory.Allocate(&m_baseRAM, 0);
 
 		InitInputs(6000000);
 	}
@@ -49,12 +52,6 @@ namespace emul
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		++g_ticks;
-
-		GetInputs().Tick();
-		if (GetInputs().IsQuit())
-		{
-			return false;
-		}
 
 		GetInputs().Tick();
 		if (GetInputs().IsQuit())

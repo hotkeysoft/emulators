@@ -311,6 +311,12 @@ namespace emul
 		ClearFlags(m_reg.flags);
 	}
 
+	void CPU6502::Reset(ADDRESS overrideAddress)
+	{
+		Reset();
+		m_programCounter = overrideAddress;
+	}
+
 	void CPU6502::ClearFlags(BYTE& flags)
 	{
 		flags = FLAG_RESERVED_ON;
@@ -451,7 +457,7 @@ namespace emul
 	void CPU6502::MEMopR(std::function<void(CPU6502*, BYTE)> func, ADDRESS oper)
 	{
 		BYTE temp = m_memory.Read8(oper);
-		func(this, oper);
+		func(this, temp);
 	}
 
 	void CPU6502::AdjustNZ(BYTE val)
@@ -515,8 +521,7 @@ namespace emul
 		BYTE flags = m_reg.flags;
 
 		// B and R5 are always pushed as set
-		SetBit(flags, _FLAG_R5, true);
-		SetBit(flags, FLAG_B, true);
+		flags |= (_FLAG_R5 | FLAG_B);
 		PUSH(flags);
 	}
 
@@ -595,13 +600,13 @@ namespace emul
 	{
 		BYTE oldA = m_reg.A;
 		WORD temp = m_reg.A - oper;
-		if (GetFlag(FLAG_C))
+		if (!GetFlag(FLAG_C))
 			temp--;
 
 		m_reg.A = (BYTE)temp;
 
 		AdjustNZ(m_reg.A);
-		SetFlag(FLAG_C, (temp > 0xFF));
+		SetFlag(FLAG_C, !(temp > 0xFF));
 		SetFlag(FLAG_V, (GetMSB(oldA) != GetMSB(oper)) && (GetMSB(m_reg.A) == GetMSB(oper)));
 	}
 
@@ -610,7 +615,7 @@ namespace emul
 		WORD temp = reg - oper;
 
 		AdjustNZ((BYTE)temp);
-		SetFlag(FLAG_C, (temp > 0xFF));
+		SetFlag(FLAG_C, !(temp > 0xFF));
 	}
 
 	void CPU6502::INC(BYTE& dest)

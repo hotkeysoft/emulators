@@ -16,6 +16,7 @@ namespace emul
 		virtual std::string_view GetID() const override { return "6502"; };
 
 		virtual void Init(WORD baseRAM) override;
+		virtual void Reset() override;
 
 		virtual bool Step() override;
 
@@ -26,6 +27,5 @@ namespace emul
 
 	protected:
 		emul::MemoryBlock m_baseRAM;
-		emul::MemoryBlock m_rom;
 	};
 }

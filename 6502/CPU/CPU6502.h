@@ -23,6 +23,7 @@ namespace emul
 		void Dump();
 
 		virtual void Reset();
+		virtual void Reset(ADDRESS overrideAddress);
 
 		virtual bool Step();
 
