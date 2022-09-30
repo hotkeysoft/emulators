@@ -35,6 +35,11 @@ namespace emul
 		m_romE000.LoadFromFile("data/PET/PET2001/EDIT1-E000.bin");
 		m_romF000.LoadFromFile("data/PET/PET2001/KERNAL1-F000.bin");
 
+		//m_romC000.LoadFromFile("data/PET/PET2001/BASIC2-C000.bin");
+		//m_romD000.LoadFromFile("data/PET/PET2001/BASIC2-D000.bin");
+		//m_romE000.LoadFromFile("data/PET/PET2001/EDIT2-E000-n.bin");
+		//m_romF000.LoadFromFile("data/PET/PET2001/KERNAL2-F000.bin");
+
 		m_memory.Allocate(&m_romC000, 0xC000);
 		m_memory.Allocate(&m_romD000, 0xD000);
 		m_memory.Allocate(&m_romE000, 0xE000);
@@ -108,13 +113,13 @@ namespace emul
 		--refreshCounter;
 		if (refreshCounter == 1000)
 		{
-			LogPrintf(LOG_WARNING, "Fake VSYNC BEGIN");
+			LogPrintf(LOG_DEBUG, "Fake VSYNC BEGIN");
 			m_pia1.GetPortB().SetC1(true);
 			m_via.SetRetraceIn(true);
 		}
 		else if (refreshCounter == 0)
 		{
-			LogPrintf(LOG_WARNING, "Fake VSYNC END");
+			LogPrintf(LOG_DEBUG, "Fake VSYNC END");
 			refreshCounter = refreshCounterInterval;
 			m_pia1.GetPortB().SetC1(false);
 			m_via.SetRetraceIn(false);

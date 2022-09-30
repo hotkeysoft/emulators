@@ -3,7 +3,7 @@
 #include "Computer.h"
 #include "IO/InputEvents.h"
 #include <CPU/IOBlock.h>
-#include "Hardware/Device6522.h"
+#include "Hardware/Device6522PET.h"
 #include "Hardware/Device6520.h"
 
 namespace emul
@@ -39,6 +39,6 @@ namespace emul
 
 		pia::Device6520 m_pia1;
 		pia::Device6520 m_pia2;
-		via::Device6522 m_via;
+		via::Device6522PET m_via;
 	};
 }
