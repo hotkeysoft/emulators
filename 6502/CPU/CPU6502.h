@@ -166,6 +166,9 @@ namespace emul
 		void ORA(BYTE oper);
 		void AND(BYTE oper);
 		void EOR(BYTE oper);
+		BYTE addSubBinary(BYTE oper, bool carry);
+		BYTE addBCD(BYTE oper, bool carry);
+		BYTE subBCD(BYTE oper, bool carry);
 		void ADC(BYTE oper);
 		void SBC(BYTE oper);
 

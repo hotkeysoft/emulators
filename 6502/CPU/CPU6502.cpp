@@ -618,31 +618,106 @@ namespace emul
 		m_reg.A ^= oper;
 		AdjustNZ(m_reg.A);
 	}
-	void CPU6502::ADC(BYTE oper)
+
+	BYTE CPU6502::addSubBinary(BYTE oper, bool carry)
 	{
 		BYTE oldA = m_reg.A;
 		WORD temp = oldA + oper;
-		if (GetFlag(FLAG_C))
+		if (carry)
 			++temp;
 
-		m_reg.A = (BYTE)temp;
+		BYTE ret = (BYTE)temp;
 
-		AdjustNZ(m_reg.A);
+		AdjustNZ(ret);
 		SetFlag(FLAG_C, (temp > 0xFF));
-		SetFlag(FLAG_V, (GetMSB(oldA) == GetMSB(oper)) && (GetMSB(m_reg.A) != GetMSB(oper)));
+		SetFlag(FLAG_V, (GetMSB(oldA) == GetMSB(oper)) && (GetMSB(ret) != GetMSB(oper)));
+		return ret;
+	}
+
+	BYTE CPU6502::addBCD(BYTE oper, bool carry)
+	{
+		BYTE oldA = m_reg.A;
+
+		BYTE loNibble = (m_reg.A & 0x0F) + (oper & 0x0F) + (carry ? 1 : 0);
+		BYTE hiNibble = (m_reg.A >> 4) + (oper >> 4);
+
+		// Zero is set like in binary addition
+		SetFlag(FLAG_Z, ((loNibble | hiNibble) & 0x0F) == 0);
+
+		// Low nibble BCD adjust
+		if (loNibble > 9)
+		{
+			loNibble += 6;
+		}
+
+		// Add low nibble carry
+		if (loNibble > 0x0F)
+		{
+			++hiNibble;
+		}
+
+		// negative and overflow flags are set at this point
+		bool msbResult = GetBit(hiNibble, 3);
+		SetFlag(FLAG_N, msbResult);
+		SetFlag(FLAG_V, (GetMSB(oldA) == GetMSB(oper)) && (msbResult != GetMSB(oper)));
+
+		// High nibble BCD adjust
+		if (hiNibble > 9)
+		{
+			hiNibble += 6;
+		}
+
+		// Carry set at this point
+		SetFlag(FLAG_C, (hiNibble > 0x0F));
+
+		// Combine nibbles
+		BYTE ret = (hiNibble << 4) | (loNibble & 0x0F);
+		return ret;
+	}
+
+	BYTE CPU6502::subBCD(BYTE oper, bool carry)
+	{
+		// Flags are set like binary mode, so do binary substraction first and ignore the result
+		addSubBinary(~oper, carry);
+
+		BYTE oldA = m_reg.A;
+
+		BYTE loNibble = (m_reg.A & 0x0F) - (oper & 0x0F) - (carry ? 0 : 1);
+
+		// Low nibble BCD adjust
+		if (loNibble > 15)
+		{
+			loNibble -= 6;
+		}
+
+		BYTE hiNibble = (m_reg.A >> 4) - (oper >> 4);
+
+		// Add low nibble carry
+		if (loNibble > 0x0F)
+		{
+			--hiNibble;
+		}
+
+		// High nibble BCD adjust
+		if (hiNibble > 15)
+		{
+			hiNibble -= 6;
+		}
+
+		// Combine nibbles
+		BYTE ret = (hiNibble << 4) | (loNibble & 0x0F);
+		return ret;
+	}
+
+	void CPU6502::ADC(BYTE oper)
+	{
+		bool carry = GetFlag(FLAG_C);
+		m_reg.A = GetFlag(FLAG_D) ? addBCD(oper, carry) : addSubBinary(oper, carry);
 	}
 	void CPU6502::SBC(BYTE oper)
 	{
-		BYTE oldA = m_reg.A;
-		WORD temp = m_reg.A - oper;
-		if (!GetFlag(FLAG_C))
-			temp--;
-
-		m_reg.A = (BYTE)temp;
-
-		AdjustNZ(m_reg.A);
-		SetFlag(FLAG_C, !(temp > 0xFF));
-		SetFlag(FLAG_V, (GetMSB(oldA) != GetMSB(oper)) && (GetMSB(m_reg.A) == GetMSB(oper)));
+		bool carry = GetFlag(FLAG_C);
+		m_reg.A = GetFlag(FLAG_D) ? subBCD(oper, carry) : addSubBinary(~oper, carry);
 	}
 
 	void CPU6502::cmp(BYTE reg, BYTE oper)
