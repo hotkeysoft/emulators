@@ -117,12 +117,20 @@ namespace emul
 			m_pia1.GetPortB().SetC1(true);
 			m_via.SetRetraceIn(true);
 		}
+		else if (refreshCounter == 1)
+		{
+			// TODO: Comes from the PIA, fake it for now
+			GetCPU().SetIRQ(true);
+		}
 		else if (refreshCounter == 0)
 		{
 			LogPrintf(LOG_DEBUG, "Fake VSYNC END");
 			refreshCounter = refreshCounterInterval;
 			m_pia1.GetPortB().SetC1(false);
 			m_via.SetRetraceIn(false);
+
+			// TODO: Comes from the PIA, fake it for now
+			GetCPU().SetIRQ(false);
 		}
 
 		return true;
