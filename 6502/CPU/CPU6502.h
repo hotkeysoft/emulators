@@ -35,13 +35,9 @@ namespace emul
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
-		// Pseudo-control lines
-
-		// Set after an IO Operation (in/out port)
-		bool IsIORequest() const { return m_ioRequest; }
-
-		// Set after servicing an interrupt
-		bool IsInterruptAcknowledge() const { return m_interruptAcknowledge; }
+		// Interrupts
+		void SetIRQ(bool irq) { m_irq = irq; }
+		void SetNMI(bool nmi) { m_nmi = nmi; }
 
 		// emul::Serializable
 		virtual void Serialize(json& to) {} // TODO
@@ -69,10 +65,8 @@ namespace emul
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_opcode = 0;
 
-		bool m_ioRequest = false;
-
-		bool m_interruptAcknowledge = false;
-		bool m_interruptsEnabled = false;
+		bool m_irq = false;
+		bool m_nmi = false;
 		virtual void Interrupt();
 
 		enum FLAG : BYTE

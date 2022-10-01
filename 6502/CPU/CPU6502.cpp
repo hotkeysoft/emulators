@@ -309,6 +309,9 @@ namespace emul
 		m_reg.Y = 0;
 		m_reg.SP = 0;
 
+		m_irq = false;
+		m_nmi = false;
+
 		// Read reset vector
 		ADDRESS resetVector = m_memory.Read16(ADDR_RESET);
 		LogPrintf(LOG_INFO, "Reset vector: %04X", resetVector);
@@ -409,11 +412,20 @@ namespace emul
 
 	void CPU6502::Interrupt()
 	{
-		if (m_interruptsEnabled)
+		// TODO: NMI is edge sensitive, NMI is level sensitive
+		if (m_nmi || (m_irq && !GetFlag(FLAG_I)))
 		{
-		}
+			LogPrintf(LOG_DEBUG, "Interrupt");
 
-		// TODO: Not implemented
+			PUSH(GetHByte(m_programCounter));
+			PUSH(GetLByte(m_programCounter));
+			PUSH(m_reg.flags | _FLAG_R5);
+
+			SetFlag(FLAG_I, true);
+
+			ADDRESS irqVector = m_memory.Read16(ADDR_IRQ);
+			m_programCounter = irqVector;
+		}
 	}
 
 	ADDRESS CPU6502::GetIND()
