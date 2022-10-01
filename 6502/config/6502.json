@@ -97,7 +97,7 @@
       { "name": "ADC #{i8}"         },
       { "name": "ROR A"             },
       "0x6C",
-      { "name": "JMP ({i8})"       },
+      { "name": "JMP ({i16})"       },
       { "name": "ADC {i16}"         },
       { "name": "ROR {i16}"         },
 
