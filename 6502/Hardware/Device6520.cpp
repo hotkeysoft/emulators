@@ -12,8 +12,11 @@ namespace pia
 	{
 	}
 
-	void PIAPort::Init(bool isPortB)
+	void PIAPort::Init(Device6520* parent, bool isPortB)
 	{
+		assert(parent);
+		m_parent = parent;
+
 		Reset();
 
 		WORD base = isPortB ? 2 : 0;
@@ -28,6 +31,7 @@ namespace pia
 	{
 		DDR = 0;
 		OR = 0;
+		IR = 0xFF; // TODO: Assume pullups for now
 		CR.data = 0;
 		ISC = 0;
 		C1 = false;
@@ -48,8 +52,8 @@ namespace pia
 		// of the control register
 		CR.ClearIRQFlags();
 
-		BYTE value = 0xFF;
-		//data = OnReadPortData() //TODO
+		m_parent->OnReadPort(this);
+		BYTE value = IR;
 
 		// For output pins, mix with output register
 		value &= (~DDR); // Clear output pin data
@@ -161,8 +165,8 @@ namespace pia
 	{
 		Reset();
 
-		m_portA.Init(false);
-		m_portB.Init(true);
+		m_portA.Init(this, false);
+		m_portB.Init(this, true);
 
 		// Attach connections made in children objects
 		Attach(m_portA);

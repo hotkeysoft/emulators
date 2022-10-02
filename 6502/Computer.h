@@ -46,7 +46,7 @@ namespace emul
 		Computer(Memory& memory);
 
 		virtual void Init(const char* cpuid, WORD baseRAM);
-		virtual void InitInputs(size_t clockSpeedHz, size_t pollingHz = 60);
+		virtual void InitInputs(size_t clockSpeedHz, size_t pollInterval);
 
 		Memory m_memory;
 

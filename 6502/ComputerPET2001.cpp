@@ -9,6 +9,13 @@ using cfg::CONFIG;
 
 namespace emul
 {
+	const size_t MAIN_CLK = 16000000; // 16 MHz Main crystal
+	const size_t PIXEL_CLK = MAIN_CLK / 2;
+	const size_t CPU_CLK = PIXEL_CLK / 8;
+
+	// Poll each frame
+	const size_t SCAN_RATE = (262 * 64);
+
 	ComputerPET2001::ComputerPET2001() :
 		Logger("PET2001"),
 		Computer(m_memory),
@@ -35,7 +42,9 @@ namespace emul
 		InitROM();
 		InitVideo();
 		InitIO();
-		InitInputs(6000000);
+
+		InitInputs(CPU_CLK, SCAN_RATE);
+		GetInputs().InitKeyboard(&m_keyboard);
 	}
 
 	void ComputerPET2001::InitModel()
@@ -131,7 +140,7 @@ namespace emul
 
 		// PIA1 @ E8[10]
 		m_pia1.EnableLog(CONFIG().GetLogLevel("pet.pia1"));
-		m_pia1.Init();
+		m_pia1.Init(&m_keyboard);
 		// Incomplete decoding, will also select at 3x, 5x, 7x etc
 		m_ioE800.AddDevice(m_pia1, 0x10);
 
@@ -201,12 +210,8 @@ namespace emul
 		bool blank = m_video.IsVSync();
 		if (blank != oldBlank)
 		{
-			LogPrintf(LOG_DEBUG, "VSYNC %d->%d", oldBlank, blank);
-
 			// TODO: Invert?
-			m_pia1.GetPortB().SetC1(blank);
-
-			LogPrintf(LOG_DEBUG, "IRQB: %d", m_pia1.GetIRQB());
+			m_pia1.SetScreenRetrace(blank);
 
 			m_via.SetRetraceIn(blank);
 			oldBlank = blank;

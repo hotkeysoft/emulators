@@ -43,8 +43,10 @@
     <ClInclude Include="CPU\CPU6502.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="Hardware\Device6520.h" />
+    <ClInclude Include="Hardware\Device6520PET_PIA1.h" />
     <ClInclude Include="Hardware\Device6522.h" />
     <ClInclude Include="Hardware\Device6522PET.h" />
+    <ClInclude Include="IO\DeviceKeyboardPET2001.h" />
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor6502.h" />
     <ClInclude Include="stdafx.h" />
@@ -72,8 +74,8 @@
     <ClCompile Include="ComputerPET2001.cpp" />
     <ClCompile Include="CPU\CPU6502.cpp" />
     <ClCompile Include="Hardware\Device6520.cpp" />
+    <ClCompile Include="Hardware\Device6520PET_PIA1.cpp" />
     <ClCompile Include="Hardware\Device6522.cpp" />
-    <ClCompile Include="Hardware\Device6522PET.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor6502.cpp" />
     <ClCompile Include="Main.cpp" />

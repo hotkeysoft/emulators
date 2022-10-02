@@ -168,6 +168,12 @@
     <ClInclude Include="EdgeDetectLatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IO\DeviceKeyboardPET2001.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device6520PET_PIA1.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -248,14 +254,14 @@
     <ClCompile Include="Hardware\Device6520.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Hardware\Device6522PET.cpp">
-      <Filter>Source Files\Hardware</Filter>
-    </ClCompile>
     <ClCompile Include="Video\VideoPET2001.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="Video\Video.cpp">
       <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device6520PET_PIA1.cpp">
+      <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

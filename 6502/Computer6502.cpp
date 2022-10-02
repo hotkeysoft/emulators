@@ -38,7 +38,7 @@ namespace emul
 		m_baseRAM.LoadFromFile("P:/Projects/6502/6502_65C02_functional_tests/6502_functional_test.bin");
 		m_memory.Allocate(&m_baseRAM, 0);
 
-		InitInputs(6000000);
+		InitInputs(1000000, 100000);
 	}
 
 	bool Computer6502::Step()

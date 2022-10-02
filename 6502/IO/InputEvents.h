@@ -4,6 +4,7 @@
 
 #include <map>
 #include <vector>
+#include "DeviceKeyboardPET2001.h"
 
 using emul::BYTE;
 
@@ -39,7 +40,7 @@ namespace events
 	class InputEvents : public Logger
 	{
 	public:
-		InputEvents(size_t clockSpeedHz, size_t pollingHz = 60);
+		InputEvents(size_t clockSpeedHz, size_t pollInterval);
 		~InputEvents();
 
 		InputEvents() = delete;
@@ -49,20 +50,25 @@ namespace events
 		InputEvents& operator=(InputEvents&&) = delete;
 
 		void Init();
+		void InitKeyboard(kbd::DeviceKeyboardPET2001* kbd);
 
 		void AddEventHandler(EventHandler* handler) { m_handlers.push_back(handler); }
+
+		kbd::DeviceKeyboardPET2001* GetKeyboard() const { return m_keyboard; }
 
 		void Tick();
 
 		bool IsQuit() { return m_quit; }
 
 	protected:
-		const size_t m_pollRate;
-		size_t m_cooldown = m_pollRate;
+		const size_t m_clockSpeedHz;
+		const size_t m_pollInterval;
+		size_t m_cooldown;
 
 		void InputKey(SDL_KeyboardEvent& evt);
 		bool m_quit = false;
 
+		kbd::DeviceKeyboardPET2001* m_keyboard = nullptr;
 		KeyMap* m_keyMap = nullptr;
 
 		std::vector<EventHandler*> m_handlers;

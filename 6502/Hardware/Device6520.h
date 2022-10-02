@@ -10,16 +10,21 @@ using emul::WORD;
 
 namespace pia
 {
+	class Device6520;
+
 	class PIAPort : public IOConnector
 	{
 	public:
 		PIAPort(std::string id);
 
-		void Init(bool isPortB);
+		void Init(Device6520* parent, bool isPortB);
 
 		void Reset();
 
 		enum DataDirection {INPUT = 0, OUTPUT = 1};
+
+		bool GetC1() const { return CR.IRQ1Latch.IsLatched(); }
+		bool GetC2() const { return CR.IRQ2Latch.IsLatched(); }
 
 		void SetC1(bool set)
 		{
@@ -37,7 +42,12 @@ namespace pia
 				(CR.GetCPUIRQEnableForIRQ2() && CR.IRQ2Latch.IsLatched());
 		}
 
+		BYTE GetOutput() const { return OR; }
+		void SetInputBit(BYTE bit, bool set) { emul::SetBit(IR, bit, set); }
+		void SetInput(BYTE data) { IR = data; }
+
 	protected:
+		Device6520* m_parent = nullptr;
 		// CPU IO Access
 		// -------------
 
@@ -64,6 +74,9 @@ namespace pia
 
 		// Output Register
 		BYTE OR = 0; // Output register, set by CPU
+
+		// Input Register
+		BYTE IR = 0; // Input set by hardware
 
 		struct ControlRegister
 		{
@@ -134,7 +147,10 @@ namespace pia
 		bool GetIRQA() const { return m_portA.GetIRQ(); }
 		bool GetIRQB() const { return m_portB.GetIRQ(); }
 
+		virtual void OnReadPort(PIAPort* src) {};
+
 	protected:
+
 		PIAPort m_portA;
 		PIAPort m_portB;
 	};

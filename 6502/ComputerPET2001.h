@@ -5,7 +5,9 @@
 #include <CPU/IOBlock.h>
 #include "Hardware/Device6522PET.h"
 #include "Hardware/Device6520.h"
+#include "Hardware/Device6520PET_PIA1.h"
 #include "Video/VideoPET2001.h"
+#include "IO/DeviceKeyboardPET2001.h"
 
 namespace emul
 {
@@ -48,10 +50,12 @@ namespace emul
 
 		emul::IOBlock m_ioE800;
 
-		pia::Device6520 m_pia1;
+		pia::Device6520PET_PIA1 m_pia1;
 		pia::Device6520 m_pia2;
 		via::Device6522PET m_via;
 
 		video::VideoPET2001 m_video;
+
+		kbd::DeviceKeyboardPET2001 m_keyboard;
 	};
 }
