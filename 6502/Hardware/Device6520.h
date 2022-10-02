@@ -2,6 +2,7 @@
 
 #include <CPU/CPUCommon.h>
 #include <CPU/IOConnector.h>
+#include "../EdgeDetectLatch.h"
 
 using emul::IOConnector;
 using emul::BYTE;
@@ -20,9 +21,21 @@ namespace pia
 
 		enum DataDirection {INPUT = 0, OUTPUT = 1};
 
-		//TODO: Temporary
-		void SetC1(bool set) { emul::SetBit(CR.data, 7, set); }
-		void SetC2(bool set) {  emul::SetBit(CR.data, 6, set); }
+		void SetC1(bool set)
+		{
+			CR.IRQ1Latch.Set(set);
+		}
+
+		void SetC2(bool set)
+		{
+			CR.IRQ2Latch.Set(set);
+		}
+
+		bool GetIRQ() const {
+			return
+				(CR.GetCPUIRQEnableForIRQ1() && CR.IRQ1Latch.IsLatched()) ||
+				(CR.GetCPUIRQEnableForIRQ2() && CR.IRQ2Latch.IsLatched());
+		}
 
 	protected:
 		// CPU IO Access
@@ -59,10 +72,9 @@ namespace pia
 
 			// Control Registers helpers
 
-			bool GetIRQ1Flag() const { return emul::GetBit(data, 7); }
-			bool GetIRQ2Flag() const { return GetC2OutputMode() ? 0 : emul::GetBit(data, 6); }
-			void ClearIRQFlags() { data &= 0b00111111; }
-			// Read-only?
+			bool GetIRQ1Flag() const { return IRQ1Latch.IsLatched(); }
+			bool GetIRQ2Flag() const { return GetC2OutputMode() ? 0 : IRQ2Latch.IsLatched(); }
+			void ClearIRQFlags() { IRQ1Latch.ResetLatch(); IRQ2Latch.ResetLatch(); }
 
 			// 0: C2 is an input pin, 1: C2 is an output pin
 			bool GetC2OutputMode() const { return emul::GetBit(data, 5); }
@@ -81,9 +93,11 @@ namespace pia
 			// CPUIRQ/IRQ1 Control
 			bool GetIRQ1PositiveTransition() const { return emul::GetBit(data, 1); }
 			bool GetCPUIRQEnableForIRQ1() const { return emul::GetBit(data, 0); }
+
+			hscommon::EdgeDetectLatch IRQ1Latch;
+			hscommon::EdgeDetectLatch IRQ2Latch;
 		} CR;
 		void LogControlRegister();
-
 
 		// Interrupt status control
 		BYTE ISC = 0;
@@ -116,6 +130,9 @@ namespace pia
 
 		PIAPort& GetPortA() { return m_portA; }
 		PIAPort& GetPortB() { return m_portB; }
+
+		bool GetIRQA() const { return m_portA.GetIRQ(); }
+		bool GetIRQB() const { return m_portB.GetIRQ(); }
 
 	protected:
 		PIAPort m_portA;

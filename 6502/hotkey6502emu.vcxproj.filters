@@ -96,9 +96,6 @@
     <ClInclude Include="IO\Monitor6502.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
-    <ClInclude Include="EdgeDetectLatch.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="IO\InputEvents.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
@@ -167,6 +164,9 @@
     </ClInclude>
     <ClInclude Include="Video\VideoPET2001.h">
       <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="EdgeDetectLatch.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

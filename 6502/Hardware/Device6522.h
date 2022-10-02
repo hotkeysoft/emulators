@@ -78,6 +78,8 @@ namespace via
 		VIAPort& GetPortA() { return m_portA; }
 		VIAPort& GetPortB() { return m_portB; }
 
+		bool GetIRQ() const { return false; } // TODO
+
 	protected:
 		// 4 - T1C-L: T1 Low-Order Counter
 		BYTE ReadT1CounterL();

@@ -109,33 +109,28 @@ namespace emul
 		}
 
 		m_video.Tick();
+		static bool oldBlank = false;
 
-		// Temporary fake screen retrace
-		const int refreshCounterInterval = 100000;
-		static int refreshCounter = refreshCounterInterval;
+		bool blank = m_video.IsVSync();
+		if (blank != oldBlank)
+		{
+			LogPrintf(LOG_WARNING, "VSYNC %d->%d", oldBlank, blank);
+			m_pia1.GetPortB().SetC1(blank);
 
-		--refreshCounter;
-		if (refreshCounter == 1000)
-		{
-			LogPrintf(LOG_DEBUG, "Fake VSYNC BEGIN");
-			m_pia1.GetPortB().SetC1(true);
-			m_via.SetRetraceIn(true);
-		}
-		else if (refreshCounter == 1)
-		{
-			// TODO: Comes from the PIA, fake it for now
-			GetCPU().SetIRQ(true);
-		}
-		else if (refreshCounter == 0)
-		{
-			LogPrintf(LOG_DEBUG, "Fake VSYNC END");
-			refreshCounter = refreshCounterInterval;
-			m_pia1.GetPortB().SetC1(false);
-			m_via.SetRetraceIn(false);
+			LogPrintf(LOG_WARNING, "IRQB: %d", blank);
+			m_pia1.GetIRQB();
 
-			// TODO: Comes from the PIA, fake it for now
-			GetCPU().SetIRQ(false);
+			m_via.SetRetraceIn(blank);
+			oldBlank = blank;
 		}
+
+		// All IRQ lines are connected together (wire-OR)
+		GetCPU().SetIRQ(
+			m_pia1.GetIRQA() ||
+			m_pia1.GetIRQB() ||
+			m_pia2.GetIRQA() ||
+			m_pia2.GetIRQB() ||
+			m_via.GetIRQ());
 
 		return true;
 	}

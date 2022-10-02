@@ -2,6 +2,8 @@
 
 #include "Device6520.h"
 
+using hscommon::EdgeDetectLatch;
+
 namespace pia
 {
 	PIAPort::PIAPort(std::string id) :
@@ -31,6 +33,7 @@ namespace pia
 		C1 = false;
 		C2 = false;
 		IRQ = false;
+		CR.ClearIRQFlags();
 	}
 
 	// 0 - Read PIBA/DDRA
@@ -87,7 +90,9 @@ namespace pia
 	// 1 - Read/Write ControlRegister
 	BYTE PIAPort::ReadControlRegister()
 	{
-		BYTE value = CR.data;
+		BYTE value = CR.data |
+			(CR.GetIRQ2Flag() << 6) |
+			(CR.GetIRQ1Flag() << 7);
 		LogPrintf(LOG_TRACE, "Read ControlRegister, value=%02X", value);
 
 		// The most common reason to read this is for irq status
@@ -106,13 +111,16 @@ namespace pia
 	void PIAPort::WriteControlRegister(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "WriteControlRegister, value=%02X", value);
-		CR.data = value;
+		CR.data = value & 0b00111111;
 
 		if (IsLog(LOG_INFO))
 		{
 			LogPrintf(LOG_INFO, "Set ControlRegister:");
 			LogControlRegister();
 		}
+
+		CR.IRQ1Latch.SetTrigger(CR.GetIRQ1PositiveTransition() ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE);
+		CR.IRQ2Latch.SetTrigger(CR.GetIRQ2PositiveTransition() ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE );
 	}
 
 	void PIAPort::LogControlRegister()
