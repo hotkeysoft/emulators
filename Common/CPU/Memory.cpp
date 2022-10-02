@@ -282,7 +282,7 @@ namespace emul
 				block->Dump(0, block->GetSize(), path.string().c_str());
 				blockJson["file"] = fileName;
 			}
-			blocks[block->GetId()] = blockJson;
+			blocks[rawBlock->GetId()] = blockJson;
 
 		}
 		to["blocks"] = blocks;
