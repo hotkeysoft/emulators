@@ -37,6 +37,20 @@ namespace cpuInfo
 			throw std::exception("Config File not found");
 		}
 
+		// Default timings
+		if (m_config["cpu"].contains("opcodes.timing"))
+		{
+			m_defaultOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.timing"]);
+			LogPrintf(LOG_INFO, "Default Opcode timing: %s", GetTimingString(m_defaultOpcodeTiming).c_str());
+			m_defaultSubOpcodeTiming = m_defaultOpcodeTiming;
+		}
+
+		if (m_config["cpu"].contains("opcodes.grp.timing"))
+		{
+			m_defaultSubOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.grp.timing"]);
+			LogPrintf(LOG_INFO, "Default Subopcode timing: %s", GetTimingString(m_defaultSubOpcodeTiming).c_str());
+		}
+
 		if (!m_config["cpu"].contains("opcodes"))
 		{
 			throw std::exception("missing [opcodes] array");
@@ -80,20 +94,6 @@ namespace cpuInfo
 				m_miscTiming[i] = BuildTiming(m_config["cpu"]["misc"][i]);
 				LogPrintf(LOG_DEBUG, "MISC Timing[%d]: %s", i, GetTimingString(m_miscTiming[i]).c_str());
 			}
-		}
-
-		// Default timings
-		if (m_config["cpu"].contains("opcodes.timing"))
-		{
-			m_defaultOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.timing"]);
-			LogPrintf(LOG_INFO, "Default Opcode timing: %s", GetTimingString(m_defaultOpcodeTiming).c_str());
-			m_defaultSubOpcodeTiming = m_defaultOpcodeTiming;
-		}
-
-		if (m_config["cpu"].contains("opcodes.grp.timing"))
-		{
-			m_defaultSubOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.grp.timing"]);
-			LogPrintf(LOG_INFO, "Default Subopcode timing: %s", GetTimingString(m_defaultSubOpcodeTiming).c_str());
 		}
 	}
 
