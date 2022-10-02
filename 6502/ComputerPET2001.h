@@ -20,14 +20,24 @@ namespace emul
 		virtual std::string_view GetID() const override { return "pet2001"; };
 
 		virtual void Init(WORD baseRAM) override;
-
 		virtual void Reset() override;
-
 		virtual bool Step() override;
 
 		CPU6502& GetCPU() const { return *((CPU6502*)m_cpu); }
 
 	protected:
+		void InitRAM(emul::WORD baseRAM);
+		void InitModel();
+		void InitROM();
+		void InitVideo();
+		void InitIO();
+
+		enum class Model { BASIC1, BASIC1p, BASIC2n, BASIC2p };
+		Model m_model = Model::BASIC1p;
+
+		const std::string m_basePathROM = "data/PET/PET2001/";
+		std::string m_charROM = m_basePathROM;
+
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_romC000;
 		emul::MemoryBlock m_romD000;

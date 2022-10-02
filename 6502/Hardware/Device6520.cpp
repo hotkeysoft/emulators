@@ -174,4 +174,11 @@ namespace pia
 		m_portA.Reset();
 		m_portB.Reset();
 	}
+
+	void Device6520::EnableLog(SEVERITY minSev)
+	{
+		Logger::EnableLog(minSev);
+		m_portA.EnableLog(minSev);
+		m_portB.EnableLog(minSev);
+	}
 }

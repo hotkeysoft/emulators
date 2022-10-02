@@ -125,8 +125,8 @@ namespace pia
 		Device6520& operator=(Device6520&&) = delete;
 
 		virtual void Init();
-
 		virtual void Reset();
+		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		PIAPort& GetPortA() { return m_portA; }
 		PIAPort& GetPortB() { return m_portB; }

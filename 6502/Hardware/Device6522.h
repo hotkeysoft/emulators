@@ -72,8 +72,8 @@ namespace via
 		Device6522& operator=(Device6522&&) = delete;
 
 		virtual void Init();
-
 		virtual void Reset();
+		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
 		VIAPort& GetPortA() { return m_portA; }
 		VIAPort& GetPortB() { return m_portB; }

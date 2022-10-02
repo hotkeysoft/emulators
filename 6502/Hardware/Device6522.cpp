@@ -292,4 +292,11 @@ namespace via
 			(IER.IsInterruptEnabled(InterruptEnable::CA2) ? ' ' : '/')
 		);
 	}
+
+	void Device6522::EnableLog(SEVERITY minSev)
+	{
+		Logger::EnableLog(minSev);
+		m_portA.EnableLog(minSev);
+		m_portB.EnableLog(minSev);
+	}
 }
