@@ -32,7 +32,13 @@ namespace video
 	const uint32_t AlphaMonoGreenPalette[16] =
 	{
 		0xFF000000, 0xFF020A00, 0xFF1D7700, 0xFF218400, 0xFF082300, 0xFF0B2D00, 0xFF186000, 0xFF2AA800,
-		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
+		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41FF00
+	};
+
+	const uint32_t AlphaMonoAmberPalette[16] =
+	{
+		0xFF000000, 0xFF551400, 0xFF792400, 0xFF862C00, 0xFFAE4900, 0xFFBE5500, 0xFFE37100, 0xFFEF7900,
+		0xFFB24D00, 0xFFCB5D00, 0xFFEB7900, 0xFFF37D00, 0xFFFF9E04, 0xFFFFAA10, 0xFFFFDB30, 0xFFFFE334
 	};
 
 	Video::Video()
@@ -109,7 +115,7 @@ namespace video
 		else if (monit == "monoamber")
 		{
 			m_monitor = MonitorType::MONO_AMBER;
-			m_monitorPalette = AlphaMonoGreyPalette; // TODO
+			m_monitorPalette = AlphaMonoAmberPalette;
 			LogPrintf(LOG_INFO, "Monitor: Monochrome (amber)");
 		}
 		else if (monit == "monogreen")
