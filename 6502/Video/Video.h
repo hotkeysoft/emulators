@@ -4,6 +4,7 @@
 #include <Serializable.h>
 #include <CPU/Memory.h>
 #include <CPU/PortConnector.h>
+#include "../IO/InputEvents.h"
 
 using emul::PortConnector;
 using emul::WORD;
@@ -24,7 +25,7 @@ namespace video
 		virtual void Render() = 0;
 	};
 
-	class Video : public PortConnector, public emul::Serializable
+	class Video : public PortConnector, public emul::Serializable, public events::EventHandler
 	{
 	public:
 		Video();
@@ -61,6 +62,9 @@ namespace video
 		virtual bool IsVSync() const = 0;
 		virtual bool IsHSync() const = 0;
 		virtual bool IsDisplayArea() const = 0;
+
+		// events::EventHandler
+		virtual bool HandleEvent(SDL_Event& e) override;
 
 	protected:
 		enum class MonitorType

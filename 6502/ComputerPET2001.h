@@ -54,8 +54,6 @@ namespace emul
 		pia::Device6520 m_pia2;
 		via::Device6522PET m_via;
 
-		video::VideoPET2001 m_video;
-
 		kbd::DeviceKeyboardPET2001 m_keyboard;
 	};
 }

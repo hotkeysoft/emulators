@@ -3,6 +3,7 @@
 #include "Video.h"
 #include <Config.h>
 #include "../UI/MainWindow.h"
+#include "../UI/Overlay.h"
 
 #include <SDL.h>
 
@@ -14,6 +15,7 @@
 using cfg::CONFIG;
 using ui::MAINWND;
 using ui::WindowSize;
+using ui::Overlay;
 
 namespace video
 {
@@ -167,7 +169,7 @@ namespace video
 
 		if (++frames == 60)
 		{
-			LogPrintf(Logger::LOG_INFO, "60 frames");
+			LogPrintf(Logger::LOG_WARNING, "60 frames");
 			frames = 0;
 		}
 	}
@@ -233,7 +235,7 @@ namespace video
 		const double targetRatio = 4 / 3.;
 
 		const auto& size = MAINWND().GetSize();
-		SDL_Rect rect{ 0, 0, size.w, size.h /*- Overlay::GetOverlayHeight()*/ };
+		SDL_Rect rect{ 0, 0, size.w, size.h - Overlay::GetOverlayHeight() };
 
 		float windowRatio = rect.w / (float)rect.h;
 
@@ -251,6 +253,19 @@ namespace video
 		}
 
 		m_targetRect = rect;
+	}
+
+	// events::EventHandler
+	bool Video::HandleEvent(SDL_Event& e)
+	{
+		if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED)
+		{
+			LogPrintf(LOG_INFO, "Resize: %d x %d", e.window.data1, e.window.data2);
+
+			MAINWND().SetSize({ e.window.data1, e.window.data2 });
+			UpdateTargetRect();
+		}
+		return false; // Leave it unhandled if others are interested
 	}
 
 	void Video::Serialize(json& to)

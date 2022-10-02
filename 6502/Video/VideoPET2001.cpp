@@ -41,7 +41,7 @@ namespace video
 			m_currRow = m_currY % CHAR_HEIGHT;
 		}
 
-		if (m_currY == BOTTOM_BORDER)
+		if ((m_currY == BOTTOM_BORDER) && (m_currX == 0))
 		{
 			RenderFrame();
 			BeginFrame();

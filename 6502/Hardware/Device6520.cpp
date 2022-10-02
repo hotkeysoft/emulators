@@ -33,11 +33,10 @@ namespace pia
 		OR = 0;
 		IR = 0xFF; // TODO: Assume pullups for now
 		CR.data = 0;
+		CR.ClearIRQFlags();
 		ISC = 0;
 		C1 = false;
 		C2 = false;
-		IRQ = false;
-		CR.ClearIRQFlags();
 	}
 
 	// 0 - Read PIBA/DDRA

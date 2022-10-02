@@ -21,13 +21,14 @@ namespace emul
 	{
 		delete m_inputs;
 		delete m_cpu;
+		delete m_video;
 	}
 
 	void Computer::Reboot()
 	{
 		LogPrintf(LOG_WARNING, "Reset");
 		m_cpu->Reset();
-		m_memory.Clear();
+		Reset();
 	}
 
 	void Computer::Init(const char* cpuid, WORD baseram)

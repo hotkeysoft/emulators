@@ -4,8 +4,10 @@
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPU6502.h"
+#include <Sound/Sound.h>
 
 using cfg::CONFIG;
+using sound::SOUND;
 
 namespace emul
 {
@@ -45,6 +47,8 @@ namespace emul
 
 		InitInputs(CPU_CLK, SCAN_RATE);
 		GetInputs().InitKeyboard(&m_keyboard);
+
+		SOUND().SetBaseClock(CPU_CLK);
 	}
 
 	void ComputerPET2001::InitModel()
@@ -120,8 +124,9 @@ namespace emul
 
 	void ComputerPET2001::InitVideo()
 	{
-		m_video.EnableLog(CONFIG().GetLogLevel("video"));
-		m_video.Init(&m_memory, m_charROM.c_str());
+		m_video = new video::VideoPET2001();
+		m_video->EnableLog(CONFIG().GetLogLevel("video"));
+		m_video->Init(&m_memory, m_charROM.c_str());
 
 		m_memory.Allocate(&m_videoRAM, 0x8000);
 		m_memory.MapWindow(0x8000, 0x8400, 0x0400);
@@ -184,6 +189,7 @@ namespace emul
 		m_pia1.Reset();
 		m_pia2.Reset();
 		m_via.Reset();
+		m_keyboard.Reset();
 	}
 
 	bool ComputerPET2001::Step()
@@ -201,7 +207,7 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				//SOUND().PlayMono(m_earOutput << 8);
+				SOUND().PlayMono(0);
 			}
 
 			GetInputs().Tick();
@@ -210,10 +216,10 @@ namespace emul
 				return false;
 			}
 
-			m_video.Tick();
+			m_video->Tick();
 			static bool oldBlank = false;
 
-			bool blank = m_video.IsVSync();
+			bool blank = m_video->IsVSync();
 			if (blank != oldBlank)
 			{
 				// TODO: Invert?

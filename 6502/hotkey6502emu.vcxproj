@@ -51,6 +51,10 @@
     <ClInclude Include="IO\Monitor6502.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UI\MainWindow.h" />
+    <ClInclude Include="UI\Overlay.h" />
+    <ClInclude Include="UI\SnapshotInfo.h" />
+    <ClInclude Include="UI\SnapshotWidget.h" />
+    <ClInclude Include="UI\TimeFormatter.h" />
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\VideoEvents.h" />
     <ClInclude Include="Video\VideoPET2001.h" />
@@ -86,6 +90,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="UI\MainWindow.cpp" />
+    <ClCompile Include="UI\Overlay.cpp" />
+    <ClCompile Include="UI\SnapshotInfo.cpp" />
+    <ClCompile Include="UI\SnapshotWidget.cpp" />
+    <ClCompile Include="UI\TimeFormatter.cpp" />
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\VideoPET2001.cpp" />
   </ItemGroup>

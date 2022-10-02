@@ -6,6 +6,7 @@
 #include "IO/Monitor6502.h"
 
 #include "UI/MainWindow.h"
+#include "UI/Overlay.h"
 
 #include "Computer6502.h"
 #include "ComputerPET2001.h"
@@ -38,6 +39,7 @@ using cfg::CONFIG;
 using emul::Computer;
 using sound::SOUND;
 using ui::MAINWND;
+using ui::Overlay;
 
 size_t emul::g_ticks = 0;
 
@@ -140,7 +142,7 @@ Computer* CreateComputer(std::string arch)
 	return computer;
 }
 
-void InitPC(Computer* pc, /*Overlay& overlay, */bool reset = true)
+void InitPC(Computer* pc, Overlay& overlay, bool reset = true)
 {
 	pc->EnableLog(CONFIG().GetLogLevel("computer"));
 	if (reset)
@@ -162,11 +164,11 @@ void InitPC(Computer* pc, /*Overlay& overlay, */bool reset = true)
 
 	monitor->Init(pc->GetCPU(), pc->GetMemory());
 
-//	overlay.SetPC(pc);
-//
-//	pc->GetVideo().AddRenderer(&overlay);
-//	pc->GetInputs().AddEventHandler(&overlay);
-//	pc->GetInputs().AddEventHandler(&(pc->GetVideo())); // Window resize events
+	overlay.SetPC(pc);
+
+	pc->GetVideo().AddRenderer(&overlay);
+	pc->GetInputs().AddEventHandler(&overlay);
+	pc->GetInputs().AddEventHandler(&(pc->GetVideo())); // Window resize events
 }
 
 void InitLeakCheck()
@@ -325,9 +327,9 @@ int main(int argc, char* args[])
 	MAINWND().Init();
 	InitSound();
 
-	//Overlay overlay;
-	//overlay.Init();
-	//overlay.SetNewComputerCallback(NewComputerCallback);
+	Overlay overlay;
+	overlay.Init();
+	overlay.SetNewComputerCallback(NewComputerCallback);
 	bool showOverlay = true;
 
 	std::string arch = CONFIG().GetValueStr("core", "arch");
@@ -340,7 +342,7 @@ int main(int argc, char* args[])
 
 	int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 640);
 	pc->Init(baseRAM);
-	InitPC(pc/*, overlay*/);
+	InitPC(pc, overlay);
 
 #if 0
 	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
@@ -404,10 +406,10 @@ int main(int argc, char* args[])
 				//
 				// For now this only updates the fdd/hdd LEDs.
 				// The actual GUI is refreshed in a callback above
-				//if (showOverlay && !overlay.Update())
-				//{
-				//	break;
-				//}
+				if (showOverlay && !overlay.Update())
+				{
+					break;
+				}
 
 				if (mode != Mode::MONITOR && _kbhit())
 				{
@@ -453,7 +455,7 @@ int main(int argc, char* args[])
 						case FKEY + 1:
 							showOverlay = !showOverlay;
 							fprintf(stderr, "%s Overlay\n", showOverlay ? "Show" : "Hide");
-							//overlay.Show(showOverlay);
+							overlay.Show(showOverlay);
 							break;
 						case FKEY + 2:
 						case FKEY + 3:
@@ -520,16 +522,16 @@ int main(int argc, char* args[])
 					}
 				}
 
-				//if (restoreSnapshot)
-				//{
-				//	Computer* newPC = RestoreNewComputerFromSnapshot();
-				//	if (newPC)
-				//	{
-				//		delete pc;
-				//		pc = newPC;
-				//		InitPC(pc, overlay, false);
-				//	}
-				//}
+				if (restoreSnapshot)
+				{
+					Computer* newPC = RestoreNewComputerFromSnapshot();
+					if (newPC)
+					{
+						delete pc;
+						pc = newPC;
+						InitPC(pc, overlay, false);
+					}
+				}
 			}
 		}
 	}

@@ -2,9 +2,8 @@
 
 #include "CPU/CPU6502.h"
 #include <CPU/Memory.h>
-
 #include <Serializable.h>
-
+#include "Video/Video.h"
 #include <set>
 
 using emul::WORD;
@@ -34,6 +33,7 @@ namespace emul
 		CPU6502& GetCPU() const { return *m_cpu; }
 		Memory& GetMemory() { return m_memory; }
 		events::InputEvents& GetInputs() { return *m_inputs; }
+		video::Video& GetVideo() { return *m_video; }
 
 		virtual void Reboot();
 		void SetTurbo(bool turbo) { m_turbo = turbo; }
@@ -52,6 +52,7 @@ namespace emul
 
 		emul::CPU6502* m_cpu = nullptr;
 		events::InputEvents* m_inputs = nullptr;
+		video::Video* m_video = nullptr;
 
 		bool m_turbo = false;
 	};

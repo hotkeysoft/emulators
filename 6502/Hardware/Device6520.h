@@ -121,8 +121,6 @@ namespace pia
 		// Input/output line
 		bool C2 = false;
 
-		// IRQ line to CPU
-		bool IRQ = false;
 	};
 
 	// 6520 PIA
