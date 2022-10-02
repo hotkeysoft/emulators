@@ -193,37 +193,44 @@ namespace emul
 			return false;
 		}
 
-		static uint32_t cpuTicks = 0;
-		cpuTicks += GetCPU().GetInstructionTicks();
+		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
-		++g_ticks;
-
-		GetInputs().Tick();
-		if (GetInputs().IsQuit())
+		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
-			return false;
+			++g_ticks;
+
+			if (!m_turbo)
+			{
+				//SOUND().PlayMono(m_earOutput << 8);
+			}
+
+			GetInputs().Tick();
+			if (GetInputs().IsQuit())
+			{
+				return false;
+			}
+
+			m_video.Tick();
+			static bool oldBlank = false;
+
+			bool blank = m_video.IsVSync();
+			if (blank != oldBlank)
+			{
+				// TODO: Invert?
+				m_pia1.SetScreenRetrace(blank);
+
+				m_via.SetRetraceIn(blank);
+				oldBlank = blank;
+			}
+
+			// All IRQ lines are connected together (wire-OR)
+			GetCPU().SetIRQ(
+				m_pia1.GetIRQA() ||
+				m_pia1.GetIRQB() ||
+				m_pia2.GetIRQA() ||
+				m_pia2.GetIRQB() ||
+				m_via.GetIRQ());
 		}
-
-		m_video.Tick();
-		static bool oldBlank = false;
-
-		bool blank = m_video.IsVSync();
-		if (blank != oldBlank)
-		{
-			// TODO: Invert?
-			m_pia1.SetScreenRetrace(blank);
-
-			m_via.SetRetraceIn(blank);
-			oldBlank = blank;
-		}
-
-		// All IRQ lines are connected together (wire-OR)
-		GetCPU().SetIRQ(
-			m_pia1.GetIRQA() ||
-			m_pia1.GetIRQB() ||
-			m_pia2.GetIRQA() ||
-			m_pia2.GetIRQB() ||
-			m_via.GetIRQ());
 
 		return true;
 	}

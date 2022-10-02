@@ -50,7 +50,8 @@ namespace emul
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
-		inline void TICKMISC(cpuInfo::MiscTiming misc) { CPU::TICK(m_info.GetMiscTiming(misc)[0]); }
+		inline void TICKPAGE() { CPU::TICK(1); } // Page crossing penalty
+		inline void TICKINT() { CPU::TICK(m_info.GetMiscTiming(cpuInfo::MiscTiming::TRAP)[0]); }
 
 		// Hardware vectors
 		const ADDRESS ADDR_NMI = 0xFFFA;
@@ -104,6 +105,8 @@ namespace emul
 		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
 
 		WORD GetSP() const { return m_reg.SP | 0x0100; }
+
+		BYTE GetPage(ADDRESS addr) const { return emul::GetHByte(addr); }
 
 		BYTE dummy = 0;
 

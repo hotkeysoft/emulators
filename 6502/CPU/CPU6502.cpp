@@ -425,6 +425,7 @@ namespace emul
 
 			ADDRESS irqVector = m_memory.Read16(ADDR_IRQ);
 			m_programCounter = irqVector;
+			TICKINT();
 		}
 	}
 
@@ -551,6 +552,7 @@ namespace emul
 		if (cond)
 		{
 			m_programCounter += rel;
+			TICKT3(); // Branching penalty
 		}
 	}
 
