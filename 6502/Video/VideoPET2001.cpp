@@ -6,17 +6,10 @@ using emul::SetBit;
 
 namespace video
 {
-	const uint32_t vSyncHeight = 64; // Lines
-	const uint32_t vDisplayed = 192; // Lines
-
-	const uint32_t hSyncWidth = 96; // Ticks
-	const uint32_t hDisplayed = 128; // Ticks
-
 	VideoPET2001::VideoPET2001() :
 		Logger("vidPET2001"),
 		m_charROM("char", 0x0800, emul::MemoryType::ROM)
 	{
-
 	}
 
 	void VideoPET2001::Init(emul::Memory* memory, const char* charROM, bool forceMono)
@@ -24,7 +17,7 @@ namespace video
 		assert(charROM);
 
 		Video::Init(memory, charROM, forceMono);
-		InitFrameBuffer(640, 300);
+		InitFrameBuffer(H_TOTAL_PX, V_TOTAL);
 
 		m_charROM.LoadFromFile(charROM);
 
@@ -35,20 +28,26 @@ namespace video
 	void VideoPET2001::Tick()
 	{
 		++m_currX;
-		if (m_currX == H_TOTAL)
+
+		if (m_currX == RIGHT_BORDER)
 		{
 			NewLine();
+		}
+		else if (m_currX == H_TOTAL)
+		{
 			++m_currY;
 			m_currX = 0;
-			m_currChar = CHAR_BASE + (H_DISPLAY * (m_currY / 8));
-			m_currRow = m_currY % 8;
+			m_currChar = CHAR_BASE + (H_DISPLAY * (m_currY / CHAR_HEIGHT));
+			m_currRow = m_currY % CHAR_HEIGHT;
 		}
 
-		if (m_currY == V_TOTAL)
+		if (m_currY == BOTTOM_BORDER)
 		{
 			RenderFrame();
 			BeginFrame();
-
+		}
+		else if (m_currY == V_TOTAL)
+		{
 			m_currY = 0;
 			m_currX = 0;
 			m_currRow = 0;
@@ -62,14 +61,20 @@ namespace video
 		}
 		else
 		{
-			DrawBackground(8, 0xFF123456);
+			DrawBackground(8, m_bgColor);
 		}
 	}
 
 	SDL_Rect VideoPET2001::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
 		// TODO
-		return SDL_Rect{ 0, 0, 512, 262 };
+		const uint32_t tempBorder = 8;
+		return SDL_Rect{
+			LEFT_BORDER_PX - tempBorder,
+			TOP_BORDER - tempBorder,
+			H_DISPLAY_PX + (2 * tempBorder),
+			V_DISPLAY + (2 * tempBorder)
+		};
 	}
 
 	void VideoPET2001::DrawChar()
@@ -78,9 +83,9 @@ namespace video
 		bool reverse = GetBit(ch, 7);
 		SetBit(ch, 7, 0);
 
-		BYTE pixels = m_charROM.read((ch * 8) + m_currRow);
+		BYTE pixels = m_charROM.read((ch * CHAR_HEIGHT) + m_currRow);
 
-		for (int i = 0; i < 8; ++i)
+		for (int i = 0; i < CHAR_WIDTH; ++i)
 		{
 			DrawPixel((GetBit(pixels, 7-i) ^ reverse )? m_fgColor : m_bgColor);
 		}

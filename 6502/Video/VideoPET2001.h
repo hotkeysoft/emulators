@@ -26,13 +26,6 @@ namespace video
         virtual bool IsDisplayArea() const override { return !IsVSync() && !IsHSync(); }
 
     protected:
-        // PET has a purely character display, 40x25 = 1000 characters
-        // 1K RAM buffer @ 0x8000
-        const ADDRESS CHAR_BASE = 0x8000;
-        ADDRESS m_currChar = CHAR_BASE;
-
-        emul::MemoryBlock m_charROM;
-
         // I don't know the real timings so this'll have to do for now.
         // DOT Clock it 8MHz, CPU Clock is 1MHz. Tick() is called at CPU clock rate (1MHz)
         // so we draw 8 pixels for each tick.
@@ -41,14 +34,37 @@ namespace video
         // with 200 lines in display area (25 characters * 8 pixels height + 62 lines blank+vsync)
         // 64 * 262 = 16768 ticks / frame
         // @1MHz we get 59.64 frames / second.
-        const uint32_t V_TOTAL = 262;
-        const uint32_t V_DISPLAY = 200;
-        const uint32_t H_TOTAL = 64;
-        const uint32_t H_DISPLAY = 40;
 
-        // Split borders evenly at top and bottom
-        const uint32_t H_BORDER = (H_TOTAL - H_DISPLAY / 2);
-        const uint32_t V_BORDER = (V_TOTAL - V_DISPLAY / 2);
+        // Pixels per character
+        static const uint32_t CHAR_WIDTH = 8;
+        static const uint32_t CHAR_HEIGHT = 8;
+
+        // Number of lines displayed
+        static const uint32_t V_DISPLAY = 200;
+        // Total number of lines (including borders)
+        static const uint32_t V_TOTAL = 262;
+
+        // Number of characters per line (displayed)
+        static const uint32_t H_DISPLAY = 40;
+        static const uint32_t H_DISPLAY_PX = H_DISPLAY * CHAR_WIDTH;
+
+        // Total number of characters per line (including borders)
+        static const uint32_t H_TOTAL = 64;
+        static const uint32_t H_TOTAL_PX = H_TOTAL * CHAR_WIDTH;
+
+        // Split borders evenly on both sides
+        static const uint32_t LEFT_BORDER = (H_TOTAL - H_DISPLAY) / 2;
+        static const uint32_t LEFT_BORDER_PX = LEFT_BORDER * CHAR_WIDTH;
+        static const uint32_t TOP_BORDER = (V_TOTAL - V_DISPLAY) / 2;
+        static const uint32_t RIGHT_BORDER = (H_DISPLAY + H_TOTAL) / 2;
+        static const uint32_t BOTTOM_BORDER = (V_DISPLAY + V_TOTAL) / 2;
+
+        // PET has a purely character display, 40x25 = 1000 characters
+        // 1K RAM buffer @ 0x8000
+        const ADDRESS CHAR_BASE = 0x8000;
+        ADDRESS m_currChar = CHAR_BASE;
+
+        emul::MemoryBlock m_charROM;
 
         void DrawChar();
 
