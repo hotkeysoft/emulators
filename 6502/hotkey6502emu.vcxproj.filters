@@ -55,6 +55,12 @@
     <Filter Include="Source Files\Hardware">
       <UniqueIdentifier>{1b9c5724-209a-4242-94b5-539d71118a9c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Video">
+      <UniqueIdentifier>{06d8e0b1-373e-40b6-9299-a413697baba8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Video">
+      <UniqueIdentifier>{68168dbc-2c44-41d9-9a9c-0c5ca5541e1e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -153,6 +159,15 @@
     <ClInclude Include="Hardware\Device6522PET.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="Video\Video.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\VideoEvents.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\VideoPET2001.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -235,6 +250,12 @@
     </ClCompile>
     <ClCompile Include="Hardware\Device6522PET.cpp">
       <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\VideoPET2001.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\Video.cpp">
+      <Filter>Source Files\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

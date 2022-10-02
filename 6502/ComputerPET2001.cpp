@@ -77,6 +77,8 @@ namespace emul
 		m_ioE800.AddDevice(m_via, 0x40);
 
 		InitInputs(6000000);
+
+		m_video.Init(&m_memory, "data/PET/PET2001/CHAR1.bin");
 	}
 
 	void ComputerPET2001::Reset()
@@ -105,6 +107,8 @@ namespace emul
 		{
 			return false;
 		}
+
+		m_video.Tick();
 
 		// Temporary fake screen retrace
 		const int refreshCounterInterval = 100000;

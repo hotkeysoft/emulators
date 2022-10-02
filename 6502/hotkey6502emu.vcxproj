@@ -49,6 +49,9 @@
     <ClInclude Include="IO\Monitor6502.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UI\MainWindow.h" />
+    <ClInclude Include="Video\Video.h" />
+    <ClInclude Include="Video\VideoEvents.h" />
+    <ClInclude Include="Video\VideoPET2001.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp" />
@@ -81,6 +84,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="UI\MainWindow.cpp" />
+    <ClCompile Include="Video\Video.cpp" />
+    <ClCompile Include="Video\VideoPET2001.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config\6502.ans">
