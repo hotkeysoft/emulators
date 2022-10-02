@@ -52,6 +52,9 @@ namespace video
 
         void DrawChar();
 
+        uint32_t m_bgColor = 0xFF000000;
+        uint32_t m_fgColor = 0xFFFFFFFF;
+
         uint32_t m_currX = 0;
         uint32_t m_currY = 0;
         BYTE m_currRow = 0;

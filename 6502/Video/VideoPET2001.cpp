@@ -27,6 +27,9 @@ namespace video
 		InitFrameBuffer(640, 300);
 
 		m_charROM.LoadFromFile(charROM);
+
+		m_bgColor = GetMonitorPalette()[0];
+		m_fgColor = GetMonitorPalette()[15];
 	}
 
 	void VideoPET2001::Tick()
@@ -79,7 +82,7 @@ namespace video
 
 		for (int i = 0; i < 8; ++i)
 		{
-			DrawPixel((GetBit(pixels, 7-i) ^ reverse )? 0xFFFFFFFF : 0xFF000000);
+			DrawPixel((GetBit(pixels, 7-i) ^ reverse )? m_fgColor : m_bgColor);
 		}
 	}
 }
