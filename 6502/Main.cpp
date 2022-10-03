@@ -476,7 +476,18 @@ int main(int argc, char* args[])
 						case FKEY + 6:
 						case FKEY + 7:
 						case FKEY + 8:
+							break;
+						// Press key on tape 1
 						case FKEY + 9:
+						{
+							// Ugly temporary thing
+							emul::ComputerPET2001* pet = dynamic_cast<emul::ComputerPET2001*>(pc);
+							if (pet)
+							{
+								pet->SetCassetteSense(1, true);
+							}
+							break;
+						}
 						case FKEY + 10:
 							break;
 						default:

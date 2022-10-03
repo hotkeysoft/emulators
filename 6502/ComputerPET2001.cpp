@@ -194,6 +194,21 @@ namespace emul
 		m_keyboard.Reset();
 	}
 
+	void ComputerPET2001::SetCassetteSense(int id, bool set)
+	{
+		switch (id)
+		{
+		case 1:
+			m_pia1.SetCassetteSense1In(set);
+			break;
+		case 2:
+			m_pia1.SetCassetteSense2In(set);
+			break;
+		default:
+			LogPrintf(LOG_ERROR, "Invalid drive id: %d", id);
+		}
+	}
+
 	bool ComputerPET2001::Step()
 	{
 		if (!Computer::Step())
@@ -209,7 +224,7 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(0);
+				SOUND().PlayMono(m_via.GetCassetteDataOut() ? 16384 : 0);
 			}
 
 			GetInputs().Tick();
@@ -220,7 +235,6 @@ namespace emul
 
 			m_video->Tick();
 			static bool oldBlank = false;
-
 			bool blank = m_video->IsVSync();
 			if (blank != oldBlank)
 			{
@@ -230,6 +244,8 @@ namespace emul
 				m_via.SetRetraceIn(blank);
 				oldBlank = blank;
 			}
+
+			m_via.Tick();
 
 			// All IRQ lines are connected together (wire-OR)
 			GetCPU().SetIRQ(

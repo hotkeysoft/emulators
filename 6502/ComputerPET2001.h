@@ -27,6 +27,8 @@ namespace emul
 
 		CPU6502& GetCPU() const { return *((CPU6502*)m_cpu); }
 
+		void SetCassetteSense(int id, bool set);
+
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
