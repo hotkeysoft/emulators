@@ -6,6 +6,21 @@ using emul::GetMSB;
 
 namespace via
 {
+	static const char* GetC2OperationStr(C2Operation op)
+	{
+		switch (op)
+		{
+		case C2Operation::IN_NEG_EDGE:     return "INPUT, Negative active edge";
+		case C2Operation::IN_NEG_EDGE_INT: return "INPUT, Negative active edge, Independent interrupt";
+		case C2Operation::IN_POS_EDGE:     return "INPUT, Positive active edge";
+		case C2Operation::IN_POS_EDGE_INT: return "INPUT, Positive active edge, Independent interrupt";
+		case C2Operation::OUT_HANDSHAKE:   return "OUTPUT, Handshake";
+		case C2Operation::OUT_PULSE:       return "OUTPUT, Pulse";
+		case C2Operation::OUT_LOW:         return "OUTPUT, LOW";
+		case C2Operation::OUT_HIGH:        return "OUTPUT, HIGH";
+		default: throw std::exception("Not possible");
+		}
+	}
 
 	VIAPort::VIAPort(std::string id) :
 		Logger(id.c_str()),
@@ -87,6 +102,30 @@ namespace via
 		}
 	}
 
+	void VIAPort::SetC2Operation(C2Operation op)
+	{
+		// CA2 Operation
+		switch (op)
+		{
+		case C2Operation::OUT_LOW:
+			C2 = false;
+			break;
+		case C2Operation::OUT_HIGH:
+			C2 = true;
+			break;
+
+		case C2Operation::IN_NEG_EDGE:
+		case C2Operation::IN_NEG_EDGE_INT:
+		case C2Operation::IN_POS_EDGE:
+		case C2Operation::IN_POS_EDGE_INT:
+		case C2Operation::OUT_HANDSHAKE:
+		case C2Operation::OUT_PULSE:
+		default:
+			LogPrintf(LOG_ERROR, "CA2 Operation Not supported: %s", GetC2OperationStr(op));
+			break;
+		}
+	}
+
 	void VIAPort::Serialize(json& to)
 	{
 		to["DDR"] = DDR;
@@ -103,22 +142,6 @@ namespace via
 		OR = from["OR"];
 		C1 = from["C1"];
 		C2 = from["C2"];
-	}
-
-	const char* Device6522::PeripheralControl::GetOperationStr(PCROperation op) const
-	{
-		switch (op)
-		{
-		case PeripheralControl::IN_NEG_EDGE:     return "INPUT, Negative active edge";
-		case PeripheralControl::IN_NEG_EDGE_INT: return "INPUT, Negative active edge, Independent interrupt";
-		case PeripheralControl::IN_POS_EDGE:     return "INPUT, Positive active edge";
-		case PeripheralControl::IN_POS_EDGE_INT: return "INPUT, Positive active edge, Independent interrupt";
-		case PeripheralControl::OUT_HANDSHAKE:   return "OUTPUT, Handshake";
-		case PeripheralControl::OUT_PULSE:       return "OUTPUT, Pulse";
-		case PeripheralControl::OUT_LOW:         return "OUTPUT, LOW";
-		case PeripheralControl::OUT_HIGH:        return "OUTPUT, HIGH";
-		default: throw std::exception("Not possible");
-		}
 	}
 
 	Device6522::Device6522(std::string id) :
@@ -270,11 +293,14 @@ namespace via
 		LogPrintf(LOG_DEBUG, "WritePCR, value=%02X", value);
 
 		LogPrintf(LOG_INFO, "Write Peripheral Control Register");
-		LogPrintf(LOG_INFO, " CA1 Interrupt active edge: %s", PCR.GetCA1InterruptActiveEdge() == PeripheralControl::NEG_EDGE ? "NEG" : "POS");
-		LogPrintf(LOG_INFO, " CA2 Operation: %s", PCR.GetOperationStr(PCR.GetCA2Operation()));
+		LogPrintf(LOG_INFO, " CA1 Interrupt active edge: %s", PCR.GetCA1InterruptActiveEdge() == ActiveEdge::NEG_EDGE ? "NEG" : "POS");
+		LogPrintf(LOG_INFO, " CA2 Operation: %s", GetC2OperationStr(PCR.GetCA2Operation()));
 
-		LogPrintf(LOG_INFO, " CB1 Interrupt active edge: %s", PCR.GetCB1InterruptActiveEdge() == PeripheralControl::NEG_EDGE ? "NEG" : "POS");
-		LogPrintf(LOG_INFO, " CB2 Operation: %s", PCR.GetOperationStr(PCR.GetCB2Operation()));
+		LogPrintf(LOG_INFO, " CB1 Interrupt active edge: %s", PCR.GetCB1InterruptActiveEdge() == ActiveEdge::NEG_EDGE ? "NEG" : "POS");
+		LogPrintf(LOG_INFO, " CB2 Operation: %s", GetC2OperationStr(PCR.GetCB2Operation()));
+
+		m_portA.SetC2Operation(PCR.GetCA2Operation());
+		m_portB.SetC2Operation(PCR.GetCB2Operation());
 	}
 
 	// D - IFR: Interrupt Flag Register

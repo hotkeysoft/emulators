@@ -1,6 +1,11 @@
 #pragma once
 #include "Video.h"
 
+namespace via
+{
+    class Device6522PET;
+}
+
 namespace video
 {
     class VideoPET2001 : public Video
@@ -9,6 +14,7 @@ namespace video
         VideoPET2001();
 
         virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);
+        void SetVIA(via::Device6522PET* via) { m_via = via; }
 
         virtual const std::string GetID() const override { return "pet2001"; }
         virtual void Tick() override;
@@ -26,6 +32,9 @@ namespace video
         virtual bool IsDisplayArea() const override { return !IsVSync() && !IsHSync(); }
 
     protected:
+        via::Device6522PET* m_via = nullptr;
+        bool m_graphics = false;
+
         // I don't know the real timings so this'll have to do for now.
         // DOT Clock it 8MHz, CPU Clock is 1MHz. Tick() is called at CPU clock rate (1MHz)
         // so we draw 8 pixels for each tick.

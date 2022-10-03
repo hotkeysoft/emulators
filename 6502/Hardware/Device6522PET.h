@@ -8,6 +8,9 @@ namespace via
 	public:
 		Device6522PET(std::string id = "VIA") : Device6522(id), Logger(id.c_str()) {}
 
+		// CA2
+		bool GetGraphicsMode() const { return m_portA.GetC2(); }
+
 		// Port B Inputs
 		void SetDAVIn(bool set) { m_portB.SetInputBit(7, !set); }
 		void SetNRFDIn(bool set) { m_portB.SetInputBit(6, !set); }

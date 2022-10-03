@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "VideoPET2001.h"
+#include "../Hardware/Device6522PET.h"
 
 using emul::GetBit;
 using emul::SetBit;
@@ -45,6 +46,13 @@ namespace video
 		{
 			RenderFrame();
 			BeginFrame();
+
+			// Only check for switching character set once per frame
+			// because lazy
+			if (m_via)
+			{
+				m_graphics = m_via->GetGraphicsMode();
+			}
 		}
 		else if (m_currY == V_TOTAL)
 		{
@@ -80,10 +88,11 @@ namespace video
 	void VideoPET2001::DrawChar()
 	{
 		BYTE ch = m_memory->Read8(m_currChar);
-		bool reverse = GetBit(ch, 7);
+		const bool reverse = GetBit(ch, 7);
 		SetBit(ch, 7, 0);
 
-		BYTE pixels = m_charROM.read((ch * CHAR_HEIGHT) + m_currRow);
+		const WORD charROMAddress = (m_graphics ? 0x0400 : 0) | (ch * CHAR_HEIGHT) + m_currRow;
+		const BYTE pixels = m_charROM.read(charROMAddress);
 
 		for (int i = 0; i < CHAR_WIDTH; ++i)
 		{

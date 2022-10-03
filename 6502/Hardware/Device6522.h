@@ -10,6 +10,19 @@ using emul::WORD;
 
 namespace via
 {
+
+	enum class C2Operation {
+		IN_NEG_EDGE = 0,
+		IN_NEG_EDGE_INT,
+		IN_POS_EDGE,
+		IN_POS_EDGE_INT,
+		OUT_HANDSHAKE,
+		OUT_PULSE,
+		OUT_LOW,
+		OUT_HIGH
+	};
+	enum class ActiveEdge { NEG_EDGE, POS_EDGE };
+
 	class VIAPort : public IOConnector, public emul::Serializable
 	{
 	public:
@@ -27,6 +40,11 @@ namespace via
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
+
+		bool GetC1() const { return C1; }
+		bool GetC2() const { return C2; }
+
+		void SetC2Operation(C2Operation op);
 
 	protected:
 		// CPU IO Access
@@ -160,25 +178,11 @@ namespace via
 			// Peripheral Control Register helpers
 			void Clear() { data = 0; }
 
-			enum PCROperation {
-				IN_NEG_EDGE = 0,
-				IN_NEG_EDGE_INT,
-				IN_POS_EDGE,
-				IN_POS_EDGE_INT,
-				OUT_HANDSHAKE,
-				OUT_PULSE,
-				OUT_LOW,
-				OUT_HIGH
-			};
-			enum ActiveEdge { NEG_EDGE, POS_EDGE };
-
 			ActiveEdge GetCA1InterruptActiveEdge() const { return (ActiveEdge)emul::GetBit(data, 0); }
 			ActiveEdge GetCB1InterruptActiveEdge() const { return (ActiveEdge)emul::GetBit(data, 4); }
 
-			PCROperation GetCA2Operation() const { return (PCROperation)((data >> 1) & 7); }
-			PCROperation GetCB2Operation() const { return (PCROperation)((data >> 5) & 7); }
-
-			const char* GetOperationStr(PCROperation op) const;
+			C2Operation GetCA2Operation() const { return (C2Operation)((data >> 1) & 7); }
+			C2Operation GetCB2Operation() const { return (C2Operation)((data >> 5) & 7); }
 		} PCR;
 
 		VIAPort m_portA;

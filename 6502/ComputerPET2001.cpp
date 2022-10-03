@@ -124,9 +124,11 @@ namespace emul
 
 	void ComputerPET2001::InitVideo()
 	{
-		m_video = new video::VideoPET2001();
-		m_video->EnableLog(CONFIG().GetLogLevel("video"));
-		m_video->Init(&m_memory, m_charROM.c_str());
+		video::VideoPET2001* video = new video::VideoPET2001();
+		video->EnableLog(CONFIG().GetLogLevel("video"));
+		video->Init(&m_memory, m_charROM.c_str());
+		video->SetVIA(&m_via);
+		m_video = video;
 
 		m_memory.Allocate(&m_videoRAM, 0x8000);
 		m_memory.MapWindow(0x8000, 0x8400, 0x0400);
