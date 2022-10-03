@@ -121,7 +121,7 @@ namespace via
 		case C2Operation::OUT_HANDSHAKE:
 		case C2Operation::OUT_PULSE:
 		default:
-			LogPrintf(LOG_ERROR, "CA2 Operation Not supported: %s", GetC2OperationStr(op));
+			LogPrintf(LOG_ERROR, "C2 Operation Not supported: %s", GetC2OperationStr(op));
 			break;
 		}
 	}
@@ -190,109 +190,206 @@ namespace via
 
 	void Device6522::Reset()
 	{
+		LogPrintf(LOG_INFO, "Reset");
+		m_interrupt.Clear();
+		UpdateIER();
+		UpdateIFR();
+
+		PCR.Clear();
+		UpdatePCR();
+
+		ACR.Clear();
+		UpdateACR();
+
+		TIMER2.Reset();
+
 		m_portA.Reset();
 		m_portB.Reset();
-
-		IER.Clear();
 	}
 
 	// 4 - T1C-L: T1 Low-Order Counter
 	BYTE Device6522::ReadT1CounterL()
 	{
-		LogPrintf(LOG_DEBUG, "ReadT1CounterL");
+		LogPrintf(LOG_WARNING, "ReadT1CounterL (Not implemented)");
 		return 0xFF;
 	}
 
 	// 5 - T1C-H: T1 High-Order Counter
 	BYTE Device6522::ReadT1CounterH()
 	{
-		LogPrintf(LOG_DEBUG, "ReadT1CounterH");
+		LogPrintf(LOG_WARNING, "ReadT1CounterH (Not implemented)");
 		return 0xFF;
 	}
 	void Device6522::WriteT1CounterH(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteT1CounterH, value=%02X", value);
+		LogPrintf(LOG_WARNING, "WriteT1CounterH, value=%02X (Not implemented)", value);
 	}
 
 	// 6 - T1L-L: T1 Low-Order Latches
 	BYTE Device6522::ReadT1LatchesL()
 	{
-		LogPrintf(LOG_DEBUG, "ReadT1LatchesL");
+		LogPrintf(LOG_WARNING, "ReadT1LatchesL (Not implemented)");
 		return 0xFF;
 	}
 	void Device6522::WriteT1LatchesL(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteT1LatchesL, value=%02X", value);
+		LogPrintf(LOG_WARNING, "WriteT1LatchesL, value=%02X (Not implemented)", value);
 	}
 
 	// 7 - T1L-H: T1 High-Order Latches
 	BYTE Device6522::ReadT1LatchesH()
 	{
-		LogPrintf(LOG_DEBUG, "ReadT1LatchesH");
+		LogPrintf(LOG_WARNING, "ReadT1LatchesH (Not implemented)");
 		return 0xFF;
 	}
 	void Device6522::WriteT1LatchesH(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteT1LatchesH, value=%02X", value);
+		LogPrintf(LOG_WARNING, "WriteT1LatchesH, value=%02X (Not implemented)", value);
 	}
 
 	// 8 - T2C-L: T2 Low-Order Counter
 	BYTE Device6522::ReadT2CounterL()
 	{
-		LogPrintf(LOG_DEBUG, "ReadT2CounterL");
-		return 0xFF;
+		BYTE value = TIMER2.GetCounterLow();
+
+		// Reading this register resets the Timer2 interrupt flag
+		m_interrupt.ClearInterrupt(InterruptFlag::TIMER2);
+
+		LogPrintf(LOG_DEBUG, "ReadT2CounterL, value=%02X", value);
+		return value;
 	}
 	void Device6522::WriteT2LatchesL(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "WriteT2LatchesL, value=%02X", value);
+		TIMER2.SetCounterLowLatch(value);
 	}
 
 	// 9 - T2C-H: T2 High-Order Counter
 	BYTE Device6522::ReadT2CounterH()
 	{
-		LogPrintf(LOG_DEBUG, "ReadT2CounterH");
-		return 0xFF;
+		BYTE value = TIMER2.GetCounterHigh();
+		LogPrintf(LOG_DEBUG, "ReadT2CounterH, value=%02X", value);
+		return value;
 	}
 	void Device6522::WriteT2CounterH(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "WriteT2CounterH, value=%02X", value);
+
+		// Writing this register resets the Timer2 interrupt flag
+		m_interrupt.ClearInterrupt(InterruptFlag::TIMER2);
+
+		TIMER2.SetCounterHigh(value);
 	}
 
 	// A - SR: Shift Register
 	BYTE Device6522::ReadSR()
 	{
-		LogPrintf(LOG_DEBUG, "ReadSR");
+		LogPrintf(LOG_WARNING, "ReadSR (Not implemented)");
 		return 0xFF;
 	}
 	void Device6522::WriteSR(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteSR, value=%02X", value);
+		LogPrintf(LOG_WARNING, "WriteSR, value=%02X (Not implemented)", value);
 	}
 
 	// B - ACR: Auxiliary Control Register
 	BYTE Device6522::ReadACR()
 	{
-		LogPrintf(LOG_DEBUG, "ReadACR");
-		return 0xFF;
+		BYTE value = ACR.Get();
+		LogPrintf(LOG_DEBUG, "ReadACR, value=%02X", value);
+		return value;
 	}
 	void Device6522::WriteACR(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "WriteACR, value=%02X", value);
+		ACR.Set(value);
+		UpdateACR();
 	}
 
 	// C - PCR: Peripheral Control Register
 	BYTE Device6522::ReadPCR()
 	{
-		bool value = PCR.data;
+		BYTE value = PCR.Get();
 		LogPrintf(LOG_DEBUG, "ReadPCR, value=%02X", value);
 		return value;
 	}
 	void Device6522::WritePCR(BYTE value)
 	{
-		PCR.data = value;
 		LogPrintf(LOG_DEBUG, "WritePCR, value=%02X", value);
+		PCR.Set(value);
+		UpdatePCR();
+	}
 
-		LogPrintf(LOG_INFO, "Write Peripheral Control Register");
+	// D - IFR: Interrupt Flag Register
+	BYTE Device6522::ReadIFR()
+	{
+		BYTE value = m_interrupt.GetIFR();
+		LogPrintf(LOG_DEBUG, "ReadIFR, value=%02X", value);
+		return value;
+	}
+	void Device6522::WriteIFR(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "WriteIFR, value=%02X", value);
+		m_interrupt.SetIFR(value);
+		UpdateIFR();
+	}
+
+	// E - IER: Interrupt Enable Register
+	BYTE Device6522::ReadIER()
+	{
+		BYTE value = m_interrupt.GetIER();
+		LogPrintf(LOG_DEBUG, "ReadIER, value=%02X", value);
+		return value;
+	}
+	void Device6522::WriteIER(BYTE value)
+	{
+		LogPrintf(LOG_DEBUG, "WriteIER, value=%02X", value);
+		m_interrupt.SetIER(value);
+		UpdateIER();
+	}
+
+	void Device6522::UpdateACR()
+	{
+		LogPrintf(LOG_INFO, "Auxiliary Control Register");
+		LogPrintf(LOG_INFO, " T1 Output on PB7: %d", ACR.GetPB7TimerOutput());
+		LogPrintf(LOG_INFO, " T1 Mode         : %s", ACR.GetTimer1Mode() == AuxControl::T1Mode::CONTINUOUS ? "CONTINUOUS" : "ONE SHOT");
+		LogPrintf(LOG_INFO, " T2 Mode         : %s", ACR.GetTimer2Mode() == AuxControl::T2Mode::TIMED_INTERRUPT ? "INTERRUPT" : "PULSE PB6");
+
+		LogPrintf(LOG_INFO, " Shift Reg Mode  : %d", ACR.GetShiftRegisterMode());
+
+		LogPrintf(LOG_INFO, " PortA Latching  : %d", ACR.GetPortALatchingEnabled());
+		LogPrintf(LOG_INFO, " PortB Latching  : %d", ACR.GetPortBLatchingEnabled());
+
+		// Not much implemented atm
+		if (ACR.GetPB7TimerOutput())
+		{
+			LogPrintf(LOG_WARNING, "ACR: T1 Output on PB7 not implemented");
+		}
+		if (ACR.GetTimer1Mode() == AuxControl::T1Mode::CONTINUOUS)
+		{
+			LogPrintf(LOG_WARNING, "ACR: T1 Continuous not implemented");
+		}
+		if (ACR.GetTimer2Mode() == AuxControl::T2Mode::PULSE_PB6)
+		{
+			LogPrintf(LOG_WARNING, "ACR: T2 Pulse Mode not implemented");
+		}
+		if (ACR.GetShiftRegisterMode() != AuxControl::SRMode::DISABLED)
+		{
+			LogPrintf(LOG_WARNING, "ACR: Shift Register not implemented");
+		}
+		if (ACR.GetPortALatchingEnabled())
+		{
+			LogPrintf(LOG_WARNING, "ACR: Port A Latching not implemented");
+		}
+		if (ACR.GetPortBLatchingEnabled())
+		{
+			LogPrintf(LOG_WARNING, "ACR: Port B Latching not implemented");
+		}
+	}
+
+	void Device6522::UpdatePCR()
+	{
+		LogPrintf(LOG_INFO, "Update Peripheral Control Register");
 		LogPrintf(LOG_INFO, " CA1 Interrupt active edge: %s", PCR.GetCA1InterruptActiveEdge() == ActiveEdge::NEG_EDGE ? "NEG" : "POS");
 		LogPrintf(LOG_INFO, " CA2 Operation: %s", GetC2OperationStr(PCR.GetCA2Operation()));
 
@@ -303,38 +400,72 @@ namespace via
 		m_portB.SetC2Operation(PCR.GetCB2Operation());
 	}
 
-	// D - IFR: Interrupt Flag Register
-	BYTE Device6522::ReadIFR()
+	void Device6522::UpdateIER()
 	{
-		LogPrintf(LOG_DEBUG, "ReadIFR");
-		return 0xFF;
-	}
-	void Device6522::WriteIFR(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "WriteIFR, value=%02X", value);
-}
-
-	// E - IER: Interrupt Enable Register
-	BYTE Device6522::ReadIER()
-	{
-		BYTE value = IER.data;
-		LogPrintf(LOG_DEBUG, "ReadIER, value=%02X", value);
-		return value;
-	}
-	void Device6522::WriteIER(BYTE value)
-	{
-		LogPrintf(LOG_DEBUG, "WriteIER, value=%02X", value);
-		IER.Set(value);
-
-		LogPrintf(LOG_INFO, "Set Interrupt Register Mask [%cTI1 %cTI2 %cCB1 %cCB2 %cSR %cCA1 %cCA2]",
-			(IER.IsInterruptEnabled(InterruptEnable::TIMER1) ? ' ' : '/'),
-			(IER.IsInterruptEnabled(InterruptEnable::TIMER2) ? ' ' : '/'),
-			(IER.IsInterruptEnabled(InterruptEnable::CB1) ? ' ' : '/'),
-			(IER.IsInterruptEnabled(InterruptEnable::CB2) ? ' ' : '/'),
-			(IER.IsInterruptEnabled(InterruptEnable::SR) ? ' ' : '/'),
-			(IER.IsInterruptEnabled(InterruptEnable::CA1) ? ' ' : '/'),
-			(IER.IsInterruptEnabled(InterruptEnable::CA2) ? ' ' : '/')
+		LogPrintf(LOG_INFO, "Interrupt Register Mask [%cTI1 %cTI2 %cCB1 %cCB2 %cSR %cCA1 %cCA2]",
+			(m_interrupt.IsInterruptEnabled(InterruptFlag::TIMER1) ? ' ' : '/'),
+			(m_interrupt.IsInterruptEnabled(InterruptFlag::TIMER2) ? ' ' : '/'),
+			(m_interrupt.IsInterruptEnabled(InterruptFlag::CB1) ? ' ' : '/'),
+			(m_interrupt.IsInterruptEnabled(InterruptFlag::CB2) ? ' ' : '/'),
+			(m_interrupt.IsInterruptEnabled(InterruptFlag::SR) ? ' ' : '/'),
+			(m_interrupt.IsInterruptEnabled(InterruptFlag::CA1) ? ' ' : '/'),
+			(m_interrupt.IsInterruptEnabled(InterruptFlag::CA2) ? ' ' : '/')
 		);
+	}
+
+	void Device6522::UpdateIFR()
+	{
+		LogPrintf(LOG_INFO, "Interrupt Flag     [%cANY %cTI1 %cTI2 %cCB1 %cCB2 %cSR %cCA1 %cCA2]",
+			(m_interrupt.IsInterruptSet(InterruptFlag::ANY) ? ' ' : '/'),
+			(m_interrupt.IsInterruptSet(InterruptFlag::TIMER1) ? ' ' : '/'),
+			(m_interrupt.IsInterruptSet(InterruptFlag::TIMER2) ? ' ' : '/'),
+			(m_interrupt.IsInterruptSet(InterruptFlag::CB1) ? ' ' : '/'),
+			(m_interrupt.IsInterruptSet(InterruptFlag::CB2) ? ' ' : '/'),
+			(m_interrupt.IsInterruptSet(InterruptFlag::SR) ? ' ' : '/'),
+			(m_interrupt.IsInterruptSet(InterruptFlag::CA1) ? ' ' : '/'),
+			(m_interrupt.IsInterruptSet(InterruptFlag::CA2) ? ' ' : '/')
+		);
+	}
+
+	void Device6522::Timer2::Reset()
+	{
+		m_armed = false;
+		m_latch = 0;
+		m_counter = 0;
+	}
+
+	bool Device6522::Timer2::Tick()
+	{
+		bool ret = false;
+		--m_counter;
+		if (m_counter == 0)
+		{
+			m_counter = m_latch;
+			ret = m_armed; // Triggers interrupt only once
+			m_armed = false;
+		}
+
+		return ret;
+	}
+
+	void Device6522::Timer2::SetCounterHigh(BYTE value)
+	{
+		emul::SetHByte(m_latch, value);
+		m_counter = m_latch;
+		m_armed = true;
+	}
+
+	void Device6522::Timer2::Serialize(json& to)
+	{
+		to["latch"] = m_latch;
+		to["armed"] = m_armed;
+		to["counter"] = m_counter;
+	}
+	void Device6522::Timer2::Deserialize(const json& from)
+	{
+		m_latch = from["latch"];
+		m_armed = from["armed"];
+		m_counter = from["counter"];
 	}
 
 	void Device6522::EnableLog(SEVERITY minSev)
@@ -344,13 +475,36 @@ namespace via
 		m_portB.EnableLog(minSev);
 	}
 
+	BYTE Device6522::Interrupt::GetIFR() const
+	{
+		BYTE ifr = (m_interruptFlags & m_interruptEnable);
+		bool any = (ifr != 0);
+		emul::SetBit(ifr, 7, any);
+		return ifr;
+	}
+
+	void Device6522::Interrupt::Serialize(json& to)
+	{
+		to["IER"] = m_interruptEnable;
+		to["IFR"] = m_interruptFlags;
+	}
+	void Device6522::Interrupt::Deserialize(const json& from)
+	{
+		m_interruptEnable = from["IER"];
+		m_interruptFlags = from["IFR"];
+	}
+
 	void Device6522::Serialize(json& to)
 	{
 		m_portA.Serialize(to["portA"]);
 		m_portB.Serialize(to["portB"]);
 
-		to["PCR"] = PCR.data;
-		to["IER"] = IER.data;
+		TIMER2.Serialize(to["timer2"]);
+
+		m_interrupt.Serialize(to["interrupt"]);
+
+		to["PCR"] = PCR.Get();
+		to["ACR"] = ACR.Get();
 	}
 
 	void Device6522::Deserialize(const json& from)
@@ -358,8 +512,15 @@ namespace via
 		m_portA.Deserialize(from["portA"]);
 		m_portB.Deserialize(from["portB"]);
 
-		PCR.data = from["PCR"];
-		IER.data = from["IER"];
+		TIMER2.Deserialize(from["timer2"]);
 
+		m_interrupt.Deserialize(from["interrupt"]);
+		UpdateIER();
+		UpdateIFR();
+
+		PCR.Set(from["PCR"]);
+		UpdatePCR();
+		ACR.Set(from["ACR"]);
+		UpdateACR();
 	}
 }

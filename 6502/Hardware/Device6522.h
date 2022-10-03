@@ -10,7 +10,6 @@ using emul::WORD;
 
 namespace via
 {
-
 	enum class C2Operation {
 		IN_NEG_EDGE = 0,
 		IN_NEG_EDGE_INT,
@@ -22,6 +21,7 @@ namespace via
 		OUT_HIGH
 	};
 	enum class ActiveEdge { NEG_EDGE, POS_EDGE };
+	enum class InterruptFlag { CA2, CA1, SR, CB2, CB1, TIMER2, TIMER1, ANY };
 
 	class VIAPort : public IOConnector, public emul::Serializable
 	{
@@ -101,7 +101,16 @@ namespace via
 		VIAPort& GetPortA() { return m_portA; }
 		VIAPort& GetPortB() { return m_portB; }
 
-		bool GetIRQ() const { return false; } // TODO
+		bool GetIRQ() const { return m_interrupt.IsIRQ(); }
+
+		void Tick()
+		{
+			if (TIMER2.Tick())
+			{
+				LogPrintf(LOG_DEBUG, "Timer2 triggered");
+				m_interrupt.SetInterrupt(InterruptFlag::TIMER2);
+			}
+		}
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -151,39 +160,115 @@ namespace via
 		BYTE ReadIER();
 		void WriteIER(BYTE value);
 
-		struct InterruptEnable
+		struct Interrupt : emul::Serializable
 		{
-			// Interrupt Enable Register
-			BYTE data = 0;
+			// Interrupt Flag Register helpers
+			void Clear() { m_interruptEnable = 0; m_interruptFlags = 0; }
+			BYTE GetIER() const { return m_interruptEnable | 0x80; }
+			BYTE GetIFR() const;
 
-			// Interrupt Enable Register helpers
-			void Clear() { data = 0; }
-			void Set(BYTE value)
+			void SetInterrupt(InterruptFlag flag) { emul::SetBit(m_interruptFlags, (int)flag, true); }
+			void ClearInterrupt(InterruptFlag flag) { emul::SetBit(m_interruptFlags, (int)flag, false); }
+
+			bool IsInterruptEnabled(InterruptFlag flag) const { return emul::GetBit(m_interruptEnable, (int)flag); }
+			bool IsInterruptSet(InterruptFlag flag) const { return emul::GetBit(GetIFR(), (int)flag); }
+
+			bool IsIRQ() const { return (m_interruptEnable & m_interruptFlags) != 0; }
+
+			// Clears interrupt flag for set bits
+			void SetIFR(BYTE value)
+			{
+				emul::SetBit(value, 7, false);
+				emul::SetBitMask(m_interruptFlags, value, false);
+			};
+			void SetIER(BYTE value)
 			{
 				bool set = emul::GetMSB(value);
-				emul::SetBitMask(data, value, set);
-				data |= 0x80;
+				emul::SetBitMask(m_interruptEnable, value, set);
+				emul::SetBit(m_interruptEnable, 7, false);
 			};
 
-			enum IERFlag { CA2, CA1, SR, CB2, CB1, TIMER2, TIMER1 };
-			bool IsInterruptEnabled(IERFlag flag) const { return emul::GetBit(data, (int)flag); }
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 
-		} IER;
+		private:
+			BYTE m_interruptEnable = 0;
+			BYTE m_interruptFlags = 0;
+		} m_interrupt;
+		void UpdateIER();
+		void UpdateIFR();
 
 		struct PeripheralControl
 		{
-			// Peripheral Control Register
-			BYTE data = 0;
-
 			// Peripheral Control Register helpers
-			void Clear() { data = 0; }
+			void Clear() { m_data = 0; }
+			BYTE Get() const { return m_data; }
+			void Set(BYTE data) { m_data = data; }
 
-			ActiveEdge GetCA1InterruptActiveEdge() const { return (ActiveEdge)emul::GetBit(data, 0); }
-			ActiveEdge GetCB1InterruptActiveEdge() const { return (ActiveEdge)emul::GetBit(data, 4); }
+			ActiveEdge GetCA1InterruptActiveEdge() const { return (ActiveEdge)emul::GetBit(m_data, 0); }
+			ActiveEdge GetCB1InterruptActiveEdge() const { return (ActiveEdge)emul::GetBit(m_data, 4); }
 
-			C2Operation GetCA2Operation() const { return (C2Operation)((data >> 1) & 7); }
-			C2Operation GetCB2Operation() const { return (C2Operation)((data >> 5) & 7); }
+			C2Operation GetCA2Operation() const { return (C2Operation)((m_data >> 1) & 7); }
+			C2Operation GetCB2Operation() const { return (C2Operation)((m_data >> 5) & 7); }
+
+		private:
+			BYTE m_data = 0;
 		} PCR;
+		void UpdatePCR();
+
+		struct AuxControl
+		{
+			// Auxiliary Control Register helpers
+			void Clear() { m_data = 0; }
+			BYTE Get() const { return m_data; }
+			void Set(BYTE data) { m_data = data; }
+
+			// if false, timer generates IRQ only
+			// if true, timer outputs signal on PB7 (one shot or square wave)
+			bool GetPB7TimerOutput() const { return emul::GetBit(m_data, 7); }
+
+			enum class T1Mode { ONE_SHOT, CONTINUOUS };
+			T1Mode GetTimer1Mode() const { return (T1Mode)emul::GetBit(m_data, 6); }
+
+			enum class T2Mode { TIMED_INTERRUPT, PULSE_PB6 };
+			T2Mode GetTimer2Mode() const { return (T2Mode)emul::GetBit(m_data, 5); }
+
+			enum class SRMode {
+				DISABLED = 0, SHIFT_IN_T2, SHIFT_IN_CLK, SHIFT_IN_EXTCLK,
+				SHIFT_OUT_T2_FREE, SHIFT_OUT_T2, SHIFT_OUT_CLK, SHIFT_OUT_EXTCLK
+			};
+
+			SRMode GetShiftRegisterMode() const { return (SRMode)((m_data >> 2) & 7); }
+
+			bool GetPortBLatchingEnabled() const { return emul::GetBit(m_data, 1); }
+			bool GetPortALatchingEnabled() const { return emul::GetBit(m_data, 0); }
+
+		private:
+			BYTE m_data = 0;
+		} ACR;
+		void UpdateACR();
+
+		struct Timer2 : emul::Serializable
+		{
+			void Reset();
+			bool Tick(); // Returns true when interrupt should be set. TODO: Ugly
+
+			BYTE GetCounterHigh() const { return emul::GetHByte(m_counter); }
+			BYTE GetCounterLow() const { return emul::GetHByte(m_counter); }
+
+			void SetCounterLowLatch(BYTE value) { emul::SetLByte(m_latch, value); }
+			void SetCounterHigh(BYTE);
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
+
+		private:
+			bool m_armed = false;
+			WORD m_latch = 0;
+			WORD m_counter = 0;
+		} TIMER2;
 
 		VIAPort m_portA;
 		VIAPort m_portB;
