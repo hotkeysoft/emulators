@@ -64,6 +64,7 @@ namespace emul
 
 		m_cpu->Serialize(to["cpu"]);
 		m_memory.Serialize(to["memory"]);
+		m_video->Serialize(to["video"]);
 	}
 
 	void Computer::Deserialize(const json& from)
@@ -76,5 +77,6 @@ namespace emul
 
 		m_cpu->Deserialize(from["cpu"]);
 		m_memory.Deserialize(from["memory"]);
+		m_video->Deserialize(from["video"]);
 	}
 }

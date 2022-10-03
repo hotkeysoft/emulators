@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Serializable.h>
 #include <CPU/CPUCommon.h>
 #include <CPU/IOConnector.h>
 #include "../EdgeDetectLatch.h"
@@ -12,7 +13,7 @@ namespace pia
 {
 	class Device6520;
 
-	class PIAPort : public IOConnector
+	class PIAPort : public IOConnector, public emul::Serializable
 	{
 	public:
 		PIAPort(std::string id);
@@ -46,6 +47,10 @@ namespace pia
 		void SetInputBit(BYTE bit, bool set) { emul::SetBit(IR, bit, set); }
 		void SetInput(BYTE data) { IR = data; }
 
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
+
 	protected:
 		Device6520* m_parent = nullptr;
 		// CPU IO Access
@@ -78,7 +83,7 @@ namespace pia
 		// Input Register
 		BYTE IR = 0; // Input set by hardware
 
-		struct ControlRegister
+		struct ControlRegister : emul::Serializable
 		{
 			// Control Register
 			BYTE data = 0;
@@ -109,6 +114,10 @@ namespace pia
 
 			hscommon::EdgeDetectLatch IRQ1Latch;
 			hscommon::EdgeDetectLatch IRQ2Latch;
+
+			// emul::Serializable
+			virtual void Serialize(json& to) override;
+			virtual void Deserialize(const json& from) override;
 		} CR;
 		void LogControlRegister();
 
@@ -120,11 +129,10 @@ namespace pia
 
 		// Input/output line
 		bool C2 = false;
-
 	};
 
 	// 6520 PIA
-	class Device6520 : public IOConnector
+	class Device6520 : public IOConnector, public emul::Serializable
 	{
 	public:
 		Device6520(std::string id = "PIA");
@@ -147,8 +155,11 @@ namespace pia
 
 		virtual void OnReadPort(PIAPort* src) {};
 
-	protected:
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
 
+	protected:
 		PIAPort m_portA;
 		PIAPort m_portB;
 	};

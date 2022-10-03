@@ -240,4 +240,22 @@ namespace emul
 
 		return true;
 	}
+
+	void ComputerPET2001::Serialize(json& to)
+	{
+		Computer::Serialize(to);
+
+		m_pia1.Serialize(to["pia1"]);
+		m_pia2.Serialize(to["pia2"]);
+		m_via.Serialize(to["via"]);
+	}
+
+	void ComputerPET2001::Deserialize(const json& from)
+	{
+		Computer::Deserialize(from);
+
+		m_pia1.Deserialize(from["pia1"]);
+		m_pia2.Deserialize(from["pia2"]);
+		m_via.Deserialize(from["via"]);
+	}
 }

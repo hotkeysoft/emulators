@@ -152,6 +152,41 @@ namespace pia
 
 	}
 
+	void PIAPort::ControlRegister::Serialize(json& to)
+	{
+		to["data"] = data;
+		IRQ1Latch.Serialize(to["IRQ1"]);
+		IRQ2Latch.Serialize(to["IRQ2"]);
+	}
+	void PIAPort::ControlRegister::Deserialize(const json& from)
+	{
+		data = from["data"];
+		IRQ1Latch.Deserialize(from["IRQ1"]);
+		IRQ2Latch.Deserialize(from["IRQ2"]);
+	}
+
+	void PIAPort::Serialize(json& to)
+	{
+		to["DDR"] = DDR;
+		to["IR"] = IR;
+		to["OR"] = OR;
+		to["C1"] = C1;
+		to["C2"] = C2;
+		to["ISC"] = ISC;
+		CR.Serialize(to["CR"]);
+	}
+
+	void PIAPort::Deserialize(const json& from)
+	{
+		DDR = from["DDR"];
+		IR = from["IR"];
+		OR = from["OR"];
+		C1 = from["C1"];
+		C2 = from["C2"];
+		ISC = from["ISC"];
+		CR.Deserialize(from["CR"]);
+	}
+
 	Device6520::Device6520(std::string id) :
 		Logger(id.c_str()),
 		IOConnector(0x03), // Addresses 0-3 are decoded by device
@@ -183,5 +218,17 @@ namespace pia
 		Logger::EnableLog(minSev);
 		m_portA.EnableLog(minSev);
 		m_portB.EnableLog(minSev);
+	}
+
+	void Device6520::Serialize(json& to)
+	{
+		m_portA.Serialize(to["portA"]);
+		m_portB.Serialize(to["portB"]);
+	}
+
+	void Device6520::Deserialize(const json& from)
+	{
+		m_portA.Deserialize(from["portA"]);
+		m_portB.Deserialize(from["portB"]);
 	}
 }

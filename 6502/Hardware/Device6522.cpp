@@ -87,6 +87,24 @@ namespace via
 		}
 	}
 
+	void VIAPort::Serialize(json& to)
+	{
+		to["DDR"] = DDR;
+		to["IR"] = IR;
+		to["OR"] = OR;
+		to["C1"] = C1;
+		to["C2"] = C2;
+	}
+
+	void VIAPort::Deserialize(const json& from)
+	{
+		DDR = from["DDR"];
+		IR = from["IR"];
+		OR = from["OR"];
+		C1 = from["C1"];
+		C2 = from["C2"];
+	}
+
 	const char* Device6522::PeripheralControl::GetOperationStr(PCROperation op) const
 	{
 		switch (op)
@@ -298,5 +316,24 @@ namespace via
 		Logger::EnableLog(minSev);
 		m_portA.EnableLog(minSev);
 		m_portB.EnableLog(minSev);
+	}
+
+	void Device6522::Serialize(json& to)
+	{
+		m_portA.Serialize(to["portA"]);
+		m_portB.Serialize(to["portB"]);
+
+		to["PCR"] = PCR.data;
+		to["IER"] = IER.data;
+	}
+
+	void Device6522::Deserialize(const json& from)
+	{
+		m_portA.Deserialize(from["portA"]);
+		m_portB.Deserialize(from["portB"]);
+
+		PCR.data = from["PCR"];
+		IER.data = from["IER"];
+
 	}
 }

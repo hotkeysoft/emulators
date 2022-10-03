@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Serializable.h>
 #include <CPU/CPUCommon.h>
 #include <CPU/IOConnector.h>
 
@@ -9,7 +10,7 @@ using emul::WORD;
 
 namespace via
 {
-	class VIAPort : public IOConnector
+	class VIAPort : public IOConnector, public emul::Serializable
 	{
 	public:
 		VIAPort(std::string id);
@@ -22,6 +23,10 @@ namespace via
 
 		BYTE GetOutput() const { return OR; }
 		void SetInputBit(BYTE bit, bool set) { emul::SetBit(IR, bit, set); }
+
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 		// CPU IO Access
@@ -60,7 +65,7 @@ namespace via
 		bool C2 = false;
 	};
 
-	class Device6522 : public IOConnector
+	class Device6522 : public IOConnector, public emul::Serializable
 	{
 	public:
 		Device6522(std::string id = "VIA");
@@ -79,6 +84,10 @@ namespace via
 		VIAPort& GetPortB() { return m_portB; }
 
 		bool GetIRQ() const { return false; } // TODO
+
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 		// 4 - T1C-L: T1 Low-Order Counter
@@ -123,8 +132,6 @@ namespace via
 		// E - IER: Interrupt Enable Register
 		BYTE ReadIER();
 		void WriteIER(BYTE value);
-
-	protected:
 
 		struct InterruptEnable
 		{

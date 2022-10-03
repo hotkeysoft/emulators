@@ -40,8 +40,8 @@ namespace emul
 		void SetNMI(bool nmi) { m_nmi = nmi; }
 
 		// emul::Serializable
-		virtual void Serialize(json& to) {} // TODO
-		virtual void Deserialize(const json& from) {} // TODO
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
 
@@ -107,8 +107,6 @@ namespace emul
 		WORD GetSP() const { return m_reg.SP | 0x0100; }
 
 		BYTE GetPage(ADDRESS addr) const { return emul::GetHByte(addr); }
-
-		BYTE dummy = 0;
 
 		// Memory operation Read-Modify-Write
 		void MEMopRMW(std::function<void(CPU6502*, BYTE&)> func, ADDRESS dest);

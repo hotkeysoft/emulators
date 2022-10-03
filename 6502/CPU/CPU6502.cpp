@@ -784,4 +784,29 @@ namespace emul
 		SetBit(dest, 7, carry);
 		AdjustNZ(dest);
 	}
+
+	void CPU6502::Serialize(json& to)
+	{
+		to["opcode"] = m_opcode;
+		to["irq"] = m_irq;
+		to["nmi"] = m_nmi;
+		to["pc"] = m_programCounter;
+		to["a"] = m_reg.A;
+		to["flags"] = m_reg.flags;
+		to["x"] = m_reg.X;
+		to["y"] = m_reg.Y;
+		to["sp"] = m_reg.SP;
+	}
+	void CPU6502::Deserialize(const json& from)
+	{
+		m_opcode = from["opcode"];
+		m_irq = from["irq"];
+		m_nmi = from["nmi"];
+		m_programCounter = from["pc"];
+		m_reg.A = from["a"];
+		m_reg.flags = from["flags"];
+		m_reg.X = from["x"];
+		m_reg.Y = from["y"];
+		m_reg.SP = from["sp"];
+	}
 }

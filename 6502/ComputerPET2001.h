@@ -27,6 +27,10 @@ namespace emul
 
 		CPU6502& GetCPU() const { return *((CPU6502*)m_cpu); }
 
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
+
 	protected:
 		void InitRAM(emul::WORD baseRAM);
 		void InitModel();
