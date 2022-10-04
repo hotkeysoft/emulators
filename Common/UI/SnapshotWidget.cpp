@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include <Widgets/Label.h>
 #include <Widgets/Button.h>
-#include "SnapshotWidget.h"
+#include <UI/SnapshotWidget.h>
 
 using namespace CoreUI;
 
@@ -73,7 +73,7 @@ namespace ui
 	}
 
 	void SnapshotWidget::CreateLabel()
-	{	
+	{
 		std::string id = MakeChildWidgetId("label");
 		m_label = Label::CreateAutoSize(id.c_str(), m_renderer, m_text.c_str(), m_font);
 
@@ -163,7 +163,7 @@ namespace ui
 		}
 		else // Normal mode, draw the label
 		{
-			// Draw and position the label manually because 
+			// Draw and position the label manually because
 			// we draw a 3d border around it
 			Rect labelRect = drawRect;
 			labelRect.x += buttonW;

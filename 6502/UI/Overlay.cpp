@@ -2,9 +2,9 @@
 
 #include <UI/MainWindow.h>
 #include "Overlay.h"
-#include "TimeFormatter.h"
-#include "SnapshotInfo.h"
-#include "SnapshotWidget.h"
+#include <UI/TimeFormatter.h>
+#include <UI/SnapshotInfo.h>
+#include <UI/SnapshotWidget.h>
 #include <Config.h>
 
 #pragma warning(disable:4251)

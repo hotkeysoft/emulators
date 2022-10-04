@@ -177,6 +177,9 @@
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
     <ClCompile Include="..\Common\UI\MainWindow.cpp" />
+    <ClCompile Include="..\Common\UI\SnapshotInfo.cpp" />
+    <ClCompile Include="..\Common\UI\SnapshotWidget.cpp" />
+    <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="ComputerAT.cpp" />
     <ClCompile Include="CPU\CPU80186.cpp" />
@@ -227,9 +230,6 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor.cpp" />
-    <ClCompile Include="UI\SnapshotInfo.cpp" />
-    <ClCompile Include="UI\SnapshotWidget.cpp" />
-    <ClCompile Include="UI\TimeFormatter.cpp" />
     <ClCompile Include="Video\AttributeControllerEGA.cpp" />
     <ClCompile Include="Video\AttributeControllerVGA.cpp" />
     <ClCompile Include="Video\CRTController6845.cpp" />
@@ -269,6 +269,9 @@
     <ClInclude Include="..\Common\Sound\Sound.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="..\Common\UI\MainWindow.h" />
+    <ClInclude Include="..\Common\UI\SnapshotInfo.h" />
+    <ClInclude Include="..\Common\UI\SnapshotWidget.h" />
+    <ClInclude Include="..\Common\UI\TimeFormatter.h" />
     <ClInclude Include="..\Common\Video\Video.h" />
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="ComputerAT.h" />
@@ -317,9 +320,6 @@
     <ClInclude Include="Sound\DeviceSN76489.h" />
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor.h" />
-    <ClInclude Include="UI\SnapshotInfo.h" />
-    <ClInclude Include="UI\SnapshotWidget.h" />
-    <ClInclude Include="UI\TimeFormatter.h" />
     <ClInclude Include="Video\AttributeControllerEGA.h" />
     <ClInclude Include="Video\AttributeControllerVGA.h" />
     <ClInclude Include="Video\CRTController6845.h" />

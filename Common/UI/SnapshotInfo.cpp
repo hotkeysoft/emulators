@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "SnapshotInfo.h"
+#include <UI/SnapshotInfo.h>
 #include "Computer.h"
 
 namespace fs = std::filesystem;
@@ -79,7 +79,7 @@ namespace ui
 		{
 			return false;
 		}
-	
+
 		return true;
 	}
 
@@ -97,7 +97,7 @@ namespace ui
 
 	std::string SnapshotInfo::ToString() const
 	{
-		std::ostringstream os;	
+		std::ostringstream os;
 		os << m_description;
 		if (m_description.size())
 		{

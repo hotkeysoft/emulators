@@ -174,15 +174,6 @@
     <ClInclude Include="UI\Overlay.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\SnapshotInfo.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\SnapshotWidget.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\TimeFormatter.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\UI\MainWindow.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
@@ -194,6 +185,15 @@
     </ClInclude>
     <ClInclude Include="..\Common\Video\VideoEvents.h">
       <Filter>Common\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\UI\SnapshotInfo.h">
+      <Filter>Common\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\UI\SnapshotWidget.h">
+      <Filter>Common\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\UI\TimeFormatter.h">
+      <Filter>Common\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -281,20 +281,20 @@
     <ClCompile Include="UI\Overlay.cpp">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\SnapshotInfo.cpp">
-      <Filter>Source Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\SnapshotWidget.cpp">
-      <Filter>Source Files\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\TimeFormatter.cpp">
-      <Filter>Source Files\UI</Filter>
-    </ClCompile>
     <ClCompile Include="..\Common\UI\MainWindow.cpp">
       <Filter>Common\UI</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\Video\Video.cpp">
       <Filter>Common\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\UI\SnapshotInfo.cpp">
+      <Filter>Common\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\UI\SnapshotWidget.cpp">
+      <Filter>Common\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\UI\TimeFormatter.cpp">
+      <Filter>Common\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
