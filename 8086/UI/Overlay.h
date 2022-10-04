@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Video/Video.h"
+#include <Video/Video.h>
 #include <IO/InputEventHandler.h>
 #include "../IO/DeviceJoystick.h"
 #include "../Computer.h"

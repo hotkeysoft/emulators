@@ -3,7 +3,7 @@
 #include <CPU/CPUCommon.h>
 #include <CPU/Memory.h>
 #include "CRTController6845.h"
-#include "Video.h"
+#include <Video/Video.h>
 
 using emul::WORD;
 using emul::ADDRESS;

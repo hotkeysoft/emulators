@@ -2,7 +2,7 @@
 #include <CPU/CPUCommon.h>
 #include <Serializable.h>
 #include <CPU/PortConnector.h>
-#include "VideoEvents.h"
+#include <Video/VideoEvents.h>
 
 namespace emul
 {

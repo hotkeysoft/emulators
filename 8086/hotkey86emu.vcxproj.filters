@@ -76,6 +76,9 @@
     <Filter Include="Common\UI">
       <UniqueIdentifier>{30fd6754-760d-4fa4-90ca-a1710061c7e6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Video">
+      <UniqueIdentifier>{d806b271-0441-4a6c-a476-3df01bc7db4e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -152,9 +155,6 @@
     </ClCompile>
     <ClCompile Include="IO\Monitor.cpp">
       <Filter>Source Files\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="Video\Video.cpp">
-      <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="Video\VideoMDA.cpp">
       <Filter>Source Files\Video</Filter>
@@ -318,6 +318,9 @@
     <ClCompile Include="..\Common\UI\MainWindow.cpp">
       <Filter>Common\UI</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Video\Video.cpp">
+      <Filter>Common\Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h">
@@ -396,9 +399,6 @@
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
     <ClInclude Include="Video\VideoMDA.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="Video\Video.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="Video\VideoHGC.h">
@@ -497,9 +497,6 @@
     <ClInclude Include="Video\DigitalToAnalogConverterVGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
-    <ClInclude Include="Video\VideoEvents.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
     <ClInclude Include="IO\DeviceSerialMouse.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
@@ -583,6 +580,12 @@
     </ClInclude>
     <ClInclude Include="..\Common\IO\InputEventHandler.h">
       <Filter>Common\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Video\Video.h">
+      <Filter>Common\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Video\VideoEvents.h">
+      <Filter>Common\Video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

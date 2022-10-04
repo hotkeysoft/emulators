@@ -2,14 +2,14 @@
 
 #include <CPU/CPUCommon.h>
 #include <CPU/MemoryBlock.h>
-#include "Video.h"
+#include <Video/Video.h>
+#include <Video/VideoEvents.h>
 #include "CRTControllerVGA.h"
 #include "GraphControllerVGA.h"
 #include "AttributeControllerVGA.h"
 #include "DigitalToAnalogConverterVGA.h"
 #include "SequencerVGA.h"
 #include "MemoryVGA.h"
-#include "VideoEvents.h"
 
 #include <map>
 

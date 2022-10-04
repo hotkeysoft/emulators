@@ -55,6 +55,15 @@
     <Filter Include="Common\UI">
       <UniqueIdentifier>{3e414cb6-cee9-48fa-83cd-1d2623e55592}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Video">
+      <UniqueIdentifier>{3f0c064d-a873-426e-b826-68a865cc4def}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{d3b2a66c-4301-414b-9665-1c6ccfbce399}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{6fcb7943-492a-4feb-9e7a-569d6741c9f2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -77,12 +86,6 @@
     </ClInclude>
     <ClInclude Include="IO\Monitor8080.h">
       <Filter>Header Files\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="Video\Video.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="Video\VideoEvents.h">
-      <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="CPU\CPU8080.h">
       <Filter>Header Files\CPU</Filter>
@@ -168,6 +171,24 @@
     <ClInclude Include="..\Common\IO\InputEventHandler.h">
       <Filter>Common\IO</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Video\Video.h">
+      <Filter>Common\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Video\VideoEvents.h">
+      <Filter>Common\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Overlay.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\SnapshotInfo.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\SnapshotWidget.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\TimeFormatter.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -178,9 +199,6 @@
     </ClCompile>
     <ClCompile Include="IO\Monitor8080.cpp">
       <Filter>Source Files\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="Video\Video.cpp">
-      <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="CPU\CPU8080.cpp">
       <Filter>Source Files\CPU</Filter>
@@ -253,6 +271,21 @@
     </ClCompile>
     <ClCompile Include="..\Common\UI\MainWindow.cpp">
       <Filter>Common\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Video\Video.cpp">
+      <Filter>Common\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Overlay.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\SnapshotInfo.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\SnapshotWidget.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\TimeFormatter.cpp">
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

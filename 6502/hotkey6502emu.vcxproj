@@ -38,6 +38,8 @@
     <ClInclude Include="..\Common\Sound\Sound.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="..\Common\UI\MainWindow.h" />
+    <ClInclude Include="..\Common\Video\Video.h" />
+    <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="Computer.h" />
     <ClInclude Include="Computer6502.h" />
     <ClInclude Include="ComputerPET2001.h" />
@@ -56,8 +58,6 @@
     <ClInclude Include="UI\SnapshotInfo.h" />
     <ClInclude Include="UI\SnapshotWidget.h" />
     <ClInclude Include="UI\TimeFormatter.h" />
-    <ClInclude Include="Video\Video.h" />
-    <ClInclude Include="Video\VideoEvents.h" />
     <ClInclude Include="Video\VideoPET2001.h" />
   </ItemGroup>
   <ItemGroup>
@@ -75,6 +75,7 @@
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
     <ClCompile Include="..\Common\UI\MainWindow.cpp" />
+    <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="Computer6502.cpp" />
     <ClCompile Include="ComputerPET2001.cpp" />
@@ -95,7 +96,6 @@
     <ClCompile Include="UI\SnapshotInfo.cpp" />
     <ClCompile Include="UI\SnapshotWidget.cpp" />
     <ClCompile Include="UI\TimeFormatter.cpp" />
-    <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\VideoPET2001.cpp" />
   </ItemGroup>
   <ItemGroup>

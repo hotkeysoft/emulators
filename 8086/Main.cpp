@@ -353,7 +353,7 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	MAINWND().Init();
+	MAINWND().Init(Overlay::GetOverlayHeight());
 	InitSound();
 
 	Overlay overlay;

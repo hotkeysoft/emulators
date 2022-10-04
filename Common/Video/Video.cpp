@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "Video.h"
+#include <Video/Video.h>
 #include <Config.h>
 #include <UI/MainWindow.h>
-#include "../UI/Overlay.h"
+#include <UI/Overlay.h>
 
 #include <SDL.h>
 
@@ -34,7 +34,7 @@ namespace video
 	const uint32_t AlphaMonoGreenPalette[16] =
 	{
 		0xFF000000, 0xFF020A00, 0xFF1D7700, 0xFF218400, 0xFF082300, 0xFF0B2D00, 0xFF186000, 0xFF2AA800,
-		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41FF00
+		0xFF155400, 0xFF186000, 0xFF33CE00, 0xFF36D800, 0xFF1D7700, 0xFF218400, 0xFF3CF200, 0xFF41ff00
 	};
 
 	const uint32_t AlphaMonoAmberPalette[16] =
@@ -169,7 +169,7 @@ namespace video
 
 		if (++frames == 60)
 		{
-			LogPrintf(Logger::LOG_WARNING, "60 frames");
+			LogPrintf(Logger::LOG_INFO, "60 frames");
 			frames = 0;
 		}
 	}

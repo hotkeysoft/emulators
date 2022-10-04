@@ -64,6 +64,9 @@
     <Filter Include="Common\UI">
       <UniqueIdentifier>{d61993bc-7558-4631-85e1-6df9da67e523}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Video">
+      <UniqueIdentifier>{23e885f2-fa92-4b2f-90fd-5d6455e85b9a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -156,12 +159,6 @@
     <ClInclude Include="Hardware\Device6522PET.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Video\Video.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="Video\VideoEvents.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
     <ClInclude Include="Video\VideoPET2001.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
@@ -191,6 +188,12 @@
     </ClInclude>
     <ClInclude Include="..\Common\IO\InputEventHandler.h">
       <Filter>Common\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Video\Video.h">
+      <Filter>Common\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Video\VideoEvents.h">
+      <Filter>Common\Video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -272,9 +275,6 @@
     <ClCompile Include="Video\VideoPET2001.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="Video\Video.cpp">
-      <Filter>Source Files\Video</Filter>
-    </ClCompile>
     <ClCompile Include="Hardware\Device6520PET_PIA1.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
@@ -292,6 +292,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\UI\MainWindow.cpp">
       <Filter>Common\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Video\Video.cpp">
+      <Filter>Common\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

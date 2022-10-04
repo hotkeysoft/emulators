@@ -3,7 +3,7 @@
 #include <Serializable.h>
 #include <CPU/PortConnector.h>
 #include <CPU/MemoryBlock.h>
-#include "VideoEvents.h"
+#include <Video/VideoEvents.h>
 
 using emul::PortConnector;
 using emul::WORD;

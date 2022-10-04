@@ -2,13 +2,13 @@
 
 #include <CPU/CPUCommon.h>
 #include <CPU/MemoryBlock.h>
-#include "Video.h"
+#include <Video/Video.h>
+#include <Video/VideoEvents.h>
 #include "CRTControllerEGA.h"
 #include "GraphControllerEGA.h"
 #include "AttributeControllerEGA.h"
 #include "SequencerEGA.h"
 #include "MemoryEGA.h"
-#include "VideoEvents.h"
 
 #include <map>
 
