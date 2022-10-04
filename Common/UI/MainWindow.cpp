@@ -1,8 +1,6 @@
 #include "stdafx.h"
-#include "MainWindow.h"
-#include "Overlay.h"
+#include <UI/MainWindow.h>
 #include <Config.h>
-
 #include <SDL.h>
 
 using cfg::CONFIG;
@@ -20,7 +18,7 @@ namespace ui
 		return wnd;
 	}
 
-	bool MainWindow::Init()
+	bool MainWindow::Init(WORD overlayHeight)
 	{
 		EnableLog(CONFIG().GetLogLevel("mainwindow"));
 
@@ -43,7 +41,7 @@ namespace ui
 
 		SDL_CreateWindowAndRenderer(
 			(int)(m_size.w),
-			(int)(m_size.h) + Overlay::GetOverlayHeight(),
+			(int)(m_size.h) + overlayHeight,
 			fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_RESIZABLE,
 			&m_sdlWindow,
 			&m_sdlRenderer);

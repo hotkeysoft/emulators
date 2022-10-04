@@ -61,6 +61,9 @@
     <Filter Include="Source Files\Video">
       <UniqueIdentifier>{68168dbc-2c44-41d9-9a9c-0c5ca5541e1e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\UI">
+      <UniqueIdentifier>{d61993bc-7558-4631-85e1-6df9da67e523}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -83,9 +86,6 @@
     </ClInclude>
     <ClInclude Include="IO\Monitor6502.h">
       <Filter>Header Files\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\MainWindow.h">
-      <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="CPU\CPU6502.h">
       <Filter>Header Files\CPU</Filter>
@@ -186,6 +186,9 @@
     <ClInclude Include="UI\TimeFormatter.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\UI\MainWindow.h">
+      <Filter>Common\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -196,9 +199,6 @@
     </ClCompile>
     <ClCompile Include="IO\Monitor6502.cpp">
       <Filter>Source Files\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\MainWindow.cpp">
-      <Filter>Source Files\UI</Filter>
     </ClCompile>
     <ClCompile Include="CPU\CPU6502.cpp">
       <Filter>Source Files\CPU</Filter>
@@ -286,6 +286,9 @@
     </ClCompile>
     <ClCompile Include="UI\TimeFormatter.cpp">
       <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\UI\MainWindow.cpp">
+      <Filter>Common\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

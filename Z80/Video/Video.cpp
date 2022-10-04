@@ -2,7 +2,7 @@
 
 #include "Video.h"
 #include <Config.h>
-#include "../UI/MainWindow.h"
+#include <UI/MainWindow.h>
 
 #include <SDL.h>
 

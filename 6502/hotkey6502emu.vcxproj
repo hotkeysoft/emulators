@@ -36,6 +36,7 @@
     <ClInclude Include="..\Common\Serializable.h" />
     <ClInclude Include="..\Common\Sound\Sound.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
+    <ClInclude Include="..\Common\UI\MainWindow.h" />
     <ClInclude Include="Computer.h" />
     <ClInclude Include="Computer6502.h" />
     <ClInclude Include="ComputerPET2001.h" />
@@ -50,7 +51,6 @@
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor6502.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="UI\MainWindow.h" />
     <ClInclude Include="UI\Overlay.h" />
     <ClInclude Include="UI\SnapshotInfo.h" />
     <ClInclude Include="UI\SnapshotWidget.h" />
@@ -73,6 +73,7 @@
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
+    <ClCompile Include="..\Common\UI\MainWindow.cpp" />
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="Computer6502.cpp" />
     <ClCompile Include="ComputerPET2001.cpp" />
@@ -89,7 +90,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="UI\MainWindow.cpp" />
     <ClCompile Include="UI\Overlay.cpp" />
     <ClCompile Include="UI\SnapshotInfo.cpp" />
     <ClCompile Include="UI\SnapshotWidget.cpp" />

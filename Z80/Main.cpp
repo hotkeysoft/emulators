@@ -1,20 +1,20 @@
 #include "stdafx.h"
 
+#include <Config.h>
+#include <UI/MainWindow.h>
+#include <Sound/Sound.h>
+
 #include <CPU/Memory.h>
 #include <CPU/MemoryBlock.h>
+
 #include "IO/Console.h"
 #include "IO/Monitor8080.h"
 #include "IO/MonitorZ80.h"
-
-#include "UI/MainWindow.h"
 
 #include "Computer8080.h"
 #include "ComputerZ80.h"
 #include "ComputerZX80.h"
 #include "ComputerZXSpectrum.h"
-
-#include <Config.h>
-#include <Sound/Sound.h>
 
 #include <conio.h>
 #include <vector>

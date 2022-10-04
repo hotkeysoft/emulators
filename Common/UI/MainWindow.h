@@ -5,7 +5,7 @@ struct SDL_Renderer;
 
 namespace ui
 {
-	struct WindowSize 
+	struct WindowSize
 	{
 		int w = 0;
 		int h = 0;
@@ -22,7 +22,7 @@ namespace ui
 
 		static MainWindow& Get();
 
-		bool Init();
+		bool Init(WORD overlayHeight = 0);
 
 		SDL_Window* GetWindow() const { return m_sdlWindow; }
 		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }

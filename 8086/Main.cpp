@@ -1,20 +1,20 @@
 #include "stdafx.h"
 
+#include <Config.h>
+#include <UI/MainWindow.h>
+#include "UI/Overlay.h"
+#include <Sound/Sound.h>
+
 #include <CPU/Memory.h>
 #include <CPU/MemoryBlock.h>
+
 #include "IO/Console.h"
 #include "IO/Monitor.h"
-
-#include "UI/MainWindow.h"
-#include "UI/Overlay.h"
 
 #include "ComputerXT.h"
 #include "ComputerPCjr.h"
 #include "ComputerTandy.h"
 #include "ComputerAT.h"
-
-#include <Config.h>
-#include <Sound/Sound.h>
 
 #include <conio.h>
 #include <vector>

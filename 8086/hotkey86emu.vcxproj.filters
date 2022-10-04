@@ -73,6 +73,9 @@
     <Filter Include="Common\Sound">
       <UniqueIdentifier>{5294222d-94ad-43d4-a8b7-3251a9fa0efe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\UI">
+      <UniqueIdentifier>{30fd6754-760d-4fa4-90ca-a1710061c7e6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -225,9 +228,6 @@
     <ClCompile Include="UI\SnapshotWidget.cpp">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\MainWindow.cpp">
-      <Filter>Source Files\UI</Filter>
-    </ClCompile>
     <ClCompile Include="Video\VideoVGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
@@ -314,6 +314,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp">
       <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\UI\MainWindow.cpp">
+      <Filter>Common\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -473,9 +476,6 @@
     <ClInclude Include="..\Common\StringUtil.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="UI\MainWindow.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="Video\VideoVGA.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
@@ -577,6 +577,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\CPU\MemoryBlockBase.h">
       <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\UI\MainWindow.h">
+      <Filter>Common\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

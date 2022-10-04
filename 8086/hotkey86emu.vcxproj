@@ -176,6 +176,7 @@
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
+    <ClCompile Include="..\Common\UI\MainWindow.cpp" />
     <ClCompile Include="ComputerAT.cpp" />
     <ClCompile Include="CPU\CPU80186.cpp" />
     <ClCompile Include="CPU\CPU80286.cpp" />
@@ -194,7 +195,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="UI\MainWindow.cpp" />
     <ClCompile Include="UI\Overlay.cpp" />
     <ClCompile Include="Storage\CartridgePCjr.cpp" />
     <ClCompile Include="Computer.cpp" />
@@ -267,6 +267,7 @@
     <ClInclude Include="..\Common\Serializable.h" />
     <ClInclude Include="..\Common\Sound\Sound.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
+    <ClInclude Include="..\Common\UI\MainWindow.h" />
     <ClInclude Include="ComputerAT.h" />
     <ClInclude Include="CPU\CPU80186.h" />
     <ClInclude Include="CPU\CPU80286.h" />
@@ -283,7 +284,6 @@
     <ClInclude Include="Sound\DeviceSAA1099.h" />
     <ClInclude Include="Sound\DeviceSoundSource.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="UI\MainWindow.h" />
     <ClInclude Include="UI\Overlay.h" />
     <ClInclude Include="Storage\CartridgePCjr.h" />
     <ClInclude Include="Computer.h" />

@@ -1,18 +1,18 @@
 #include "stdafx.h"
 
+#include <Config.h>
+#include <UI/MainWindow.h>
+#include "UI/Overlay.h"
+#include <Sound/Sound.h>
+
 #include <CPU/Memory.h>
 #include <CPU/MemoryBlock.h>
+
 #include "IO/Console.h"
 #include "IO/Monitor6502.h"
 
-#include "UI/MainWindow.h"
-#include "UI/Overlay.h"
-
 #include "Computer6502.h"
 #include "ComputerPET2001.h"
-
-#include <Config.h>
-#include <Sound/Sound.h>
 
 #include <conio.h>
 #include <vector>

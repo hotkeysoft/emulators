@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "MainWindow.h"
+#include <UI/MainWindow.h>
 #include "Overlay.h"
 #include "TimeFormatter.h"
 #include "SnapshotInfo.h"
