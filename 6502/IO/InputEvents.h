@@ -12,11 +12,7 @@ namespace events
 {
 	enum class KBDMapping { XT, TANDY };
 
-	class EventHandler
-	{
-	public:
-		virtual bool HandleEvent(SDL_Event& e) = 0;
-	};
+	class EventHandler;
 
 	class Key
 	{

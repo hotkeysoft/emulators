@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <IO/InputEventHandler.h>
 #include "InputEvents.h"
 
 #include <SDL.h>

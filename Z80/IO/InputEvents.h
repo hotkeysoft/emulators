@@ -10,13 +10,9 @@ using emul::BYTE;
 
 namespace events
 {
-	enum class KBDMapping { XT, TANDY };
+	class EventHandler;
 
-	class EventHandler
-	{
-	public:
-		virtual bool HandleEvent(SDL_Event& e) = 0;
-	};
+	enum class KBDMapping { XT, TANDY };
 
 	class Key
 	{

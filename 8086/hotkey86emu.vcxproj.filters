@@ -581,6 +581,9 @@
     <ClInclude Include="..\Common\UI\MainWindow.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\IO\InputEventHandler.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config\8086.ANS">

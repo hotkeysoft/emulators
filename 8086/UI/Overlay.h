@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Video/Video.h"
-#include "../IO/InputEvents.h"
+#include <IO/InputEventHandler.h>
 #include "../IO/DeviceJoystick.h"
 #include "../Computer.h"
 #include <CoreUI.h>
@@ -38,7 +38,7 @@ namespace ui
 		// When a snapshot is not compatible with the current pc
 		// we need to rip it out and create the correct one.
 		// This needs to be done in the main main loop at the right time.
-		// (The restore snapshot event is called from an event handler deep in the 
+		// (The restore snapshot event is called from an event handler deep in the
 		// Computer object, so it can't delete itself)
 		void SetNewComputerCallback(NewComputerCallback callback) { m_callback = callback; }
 

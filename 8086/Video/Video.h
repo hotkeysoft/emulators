@@ -4,7 +4,7 @@
 #include <Serializable.h>
 #include <CPU/Memory.h>
 #include <CPU/PortConnector.h>
-#include "../IO/InputEvents.h"
+#include <IO/InputEventHandler.h>
 
 using emul::PortConnector;
 using emul::WORD;

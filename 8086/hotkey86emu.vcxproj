@@ -262,6 +262,7 @@
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
+    <ClInclude Include="..\Common\IO\InputEventHandler.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />

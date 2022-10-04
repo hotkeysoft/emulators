@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <IO/InputEventHandler.h>
 #include "InputEvents.h"
 #include "DeviceKeyboard.h"
 #include "DeviceJoystick.h"
@@ -311,7 +312,7 @@ namespace events
 		{
 			return;
 		}
-		
+
 		if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) == 0)
 		{
 			LogPrintf(LOG_WARNING, "SDL Init Subsystem [Game Controller]");
@@ -341,7 +342,7 @@ namespace events
 			LogPrintf(LOG_DEBUG, "First Game Controller found: %d", ctrlIndex);
 
 			m_gameController = SDL_GameControllerOpen(ctrlIndex);
-			
+
 			if (SDL_GameControllerGetAttached(m_gameController))
 			{
 				m_controllerID = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(m_gameController));

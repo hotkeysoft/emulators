@@ -2,6 +2,7 @@
 
 #include "CPU/CPU8086.h"
 #include <CPU/Memory.h>
+#include "IO/InputEvents.h"
 #include "Hardware/DeviceDMAPageRegister.h"
 #include "Sound/DevicePCSpeaker.h"
 #include "Video/Video.h"
