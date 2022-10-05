@@ -1,5 +1,6 @@
 #pragma once
 #include <CPU/Memory.h>
+#include <Serializable.h>
 
 namespace emul
 {
@@ -14,7 +15,7 @@ namespace emul
 	};
 
 	enum class CPUState { STOP, RUN, STEP, HALT };
-	class CPU : virtual public Logger
+	class CPU : virtual public Logger, public Serializable
 	{
 	public:
 		CPU(size_t addressBits, Memory& memory);
@@ -33,6 +34,10 @@ namespace emul
 		uint32_t GetInstructionTicks() const { return m_opTicks; }
 
 		CPUState GetState() const { return m_state; }
+
+		// emul::Serializable
+		virtual void Serialize(json& to) {};
+		virtual void Deserialize(const json& from) {};
 
 	protected:
 		virtual BYTE FetchByte() = 0;

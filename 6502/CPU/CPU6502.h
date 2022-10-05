@@ -12,7 +12,7 @@ namespace emul
 {
 	static const size_t CPU6502_ADDRESS_BITS = 16;
 
-	class CPU6502 : public CPU, public Serializable, public PortConnector
+	class CPU6502 : public CPU, public PortConnector
 	{
 	public:
 		CPU6502(Memory& memory);

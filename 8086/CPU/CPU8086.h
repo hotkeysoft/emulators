@@ -224,7 +224,7 @@ namespace emul
 	typedef WORD(*RawOpFunc8)(BYTE& dest, const BYTE src, bool);
 	typedef DWORD(*RawOpFunc16)(WORD& dest, const WORD src, bool);
 
-	class CPU8086 : public CPU, public Serializable, public PortConnector
+	class CPU8086 : public CPU, public PortConnector
 	{
 	public:
 		CPU8086(Memory& memory);
