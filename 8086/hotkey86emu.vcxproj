@@ -177,6 +177,7 @@
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
     <ClCompile Include="..\Common\UI\MainWindow.cpp" />
+    <ClCompile Include="..\Common\UI\Overlay.cpp" />
     <ClCompile Include="..\Common\UI\SnapshotInfo.cpp" />
     <ClCompile Include="..\Common\UI\SnapshotWidget.cpp" />
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
@@ -199,7 +200,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="UI\Overlay.cpp" />
     <ClCompile Include="Storage\CartridgePCjr.cpp" />
     <ClCompile Include="Computer.cpp" />
     <ClCompile Include="ComputerPCjr.cpp" />
@@ -230,6 +230,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor.cpp" />
+    <ClCompile Include="UI\OverlayXT.cpp" />
     <ClCompile Include="Video\AttributeControllerEGA.cpp" />
     <ClCompile Include="Video\AttributeControllerVGA.cpp" />
     <ClCompile Include="Video\CRTController6845.cpp" />
@@ -269,6 +270,7 @@
     <ClInclude Include="..\Common\Sound\Sound.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="..\Common\UI\MainWindow.h" />
+    <ClInclude Include="..\Common\UI\Overlay.h" />
     <ClInclude Include="..\Common\UI\SnapshotInfo.h" />
     <ClInclude Include="..\Common\UI\SnapshotWidget.h" />
     <ClInclude Include="..\Common\UI\TimeFormatter.h" />
@@ -290,7 +292,6 @@
     <ClInclude Include="Sound\DeviceSAA1099.h" />
     <ClInclude Include="Sound\DeviceSoundSource.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="UI\Overlay.h" />
     <ClInclude Include="Storage\CartridgePCjr.h" />
     <ClInclude Include="Computer.h" />
     <ClInclude Include="ComputerPCjr.h" />
@@ -320,6 +321,7 @@
     <ClInclude Include="Sound\DeviceSN76489.h" />
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor.h" />
+    <ClInclude Include="UI\OverlayXT.h" />
     <ClInclude Include="Video\AttributeControllerEGA.h" />
     <ClInclude Include="Video\AttributeControllerVGA.h" />
     <ClInclude Include="Video\CRTController6845.h" />

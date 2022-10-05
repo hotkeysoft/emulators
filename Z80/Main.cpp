@@ -2,7 +2,7 @@
 
 #include <Config.h>
 #include <UI/MainWindow.h>
-#include "UI/Overlay.h"
+#include <UI/Overlay.h>
 #include <Sound/Sound.h>
 
 #include <CPU/Memory.h>

@@ -34,12 +34,6 @@
     <Filter Include="Source Files\IO">
       <UniqueIdentifier>{90eafa35-4cc9-499c-ad14-b830248ccdca}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\UI">
-      <UniqueIdentifier>{7b4716c4-7b3a-43a4-b330-d0b5c5f6c200}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\UI">
-      <UniqueIdentifier>{d241b389-ac40-4b6d-a3ee-3e9b5b0ffa67}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common\CPU">
       <UniqueIdentifier>{7f59201c-b6b1-4a48-ae69-20b35db870be}</UniqueIdentifier>
     </Filter>
@@ -171,9 +165,6 @@
     <ClInclude Include="Hardware\Device6520PET_PIA1.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="UI\Overlay.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\UI\MainWindow.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
@@ -193,6 +184,9 @@
       <Filter>Common\UI</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\UI\TimeFormatter.h">
+      <Filter>Common\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\UI\Overlay.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -278,9 +272,6 @@
     <ClCompile Include="Hardware\Device6520PET_PIA1.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="UI\Overlay.cpp">
-      <Filter>Source Files\UI</Filter>
-    </ClCompile>
     <ClCompile Include="..\Common\UI\MainWindow.cpp">
       <Filter>Common\UI</Filter>
     </ClCompile>
@@ -294,6 +285,9 @@
       <Filter>Common\UI</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp">
+      <Filter>Common\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\UI\Overlay.cpp">
       <Filter>Common\UI</Filter>
     </ClCompile>
   </ItemGroup>

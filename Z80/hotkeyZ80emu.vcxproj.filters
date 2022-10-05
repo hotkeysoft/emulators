@@ -58,12 +58,6 @@
     <Filter Include="Common\Video">
       <UniqueIdentifier>{3f0c064d-a873-426e-b826-68a865cc4def}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\UI">
-      <UniqueIdentifier>{d3b2a66c-4301-414b-9665-1c6ccfbce399}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\UI">
-      <UniqueIdentifier>{6fcb7943-492a-4feb-9e7a-569d6741c9f2}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -177,9 +171,6 @@
     <ClInclude Include="..\Common\Video\VideoEvents.h">
       <Filter>Common\Video</Filter>
     </ClInclude>
-    <ClInclude Include="UI\Overlay.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\UI\SnapshotInfo.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
@@ -187,6 +178,9 @@
       <Filter>Common\UI</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\UI\TimeFormatter.h">
+      <Filter>Common\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\UI\Overlay.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -275,9 +269,6 @@
     <ClCompile Include="..\Common\Video\Video.cpp">
       <Filter>Common\Video</Filter>
     </ClCompile>
-    <ClCompile Include="UI\Overlay.cpp">
-      <Filter>Source Files\UI</Filter>
-    </ClCompile>
     <ClCompile Include="..\Common\UI\SnapshotInfo.cpp">
       <Filter>Common\UI</Filter>
     </ClCompile>
@@ -285,6 +276,9 @@
       <Filter>Common\UI</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp">
+      <Filter>Common\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\UI\Overlay.cpp">
       <Filter>Common\UI</Filter>
     </ClCompile>
   </ItemGroup>

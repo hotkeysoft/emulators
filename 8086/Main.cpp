@@ -2,7 +2,7 @@
 
 #include <Config.h>
 #include <UI/MainWindow.h>
-#include "UI/Overlay.h"
+#include "UI/OverlayXT.h"
 #include <Sound/Sound.h>
 
 #include <CPU/Memory.h>
@@ -43,6 +43,7 @@ using emul::REG16;
 using sound::SOUND;
 using ui::MAINWND;
 using ui::Overlay;
+using ui::OverlayXT;
 
 size_t emul::g_ticks = 0;
 
@@ -356,7 +357,7 @@ int main(int argc, char* args[])
 	MAINWND().Init(Overlay::GetOverlayHeight());
 	InitSound();
 
-	Overlay overlay;
+	OverlayXT overlay;
 	overlay.Init();
 	overlay.SetNewComputerCallback(NewComputerCallback);
 	bool showOverlay = true;

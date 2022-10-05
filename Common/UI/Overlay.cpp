@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include <UI/MainWindow.h>
-#include "Overlay.h"
+#include <UI/Overlay.h>
 #include <UI/TimeFormatter.h>
 #include <UI/SnapshotInfo.h>
 #include <UI/SnapshotWidget.h>
@@ -21,8 +21,6 @@
 #include <Widgets/Label.h>
 #include <Widgets/TextBox.h>
 
-#include <commdlg.h>
-
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -38,45 +36,6 @@ using emul::SerializationError;
 
 namespace ui
 {
-	HWND GetHWND()
-	{
-		SDL_SysWMinfo wmInfo;
-		SDL_VERSION(&wmInfo.version);
-		SDL_GetWindowWMInfo(MAINWND().GetWindow(), &wmInfo);
-		return wmInfo.info.win.window;
-	}
-
-	bool SelectFile(fs::path& path, HWND parent)
-	{
-		OPENFILENAMEA ofn;
-		char szFile[1024];
-
-		// Initialize OPENFILENAME
-		ZeroMemory(&ofn, sizeof(ofn));
-		ofn.lStructSize = sizeof(ofn);
-		ofn.hwndOwner = parent;
-		ofn.lpstrFile = szFile;
-		// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
-		// use the contents of szFile to initialize itself.
-		ofn.lpstrFile[0] = '\0';
-		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = "All\0*.*\0Floppy Image\0*.IMG\0";
-		ofn.nFilterIndex = 1;
-		ofn.lpstrFileTitle = NULL;
-		ofn.nMaxFileTitle = 0;
-		ofn.lpstrInitialDir = NULL;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-		// Display the Open dialog box.
-
-		if (!GetOpenFileNameA(&ofn))
-		{
-			return false;
-		}
-		path = szFile;
-		return true;
-	}
-
 	Overlay::Overlay() : Logger("GUI")
 	{
 	}
@@ -144,27 +103,27 @@ namespace ui
 		m_mainWnd = WINMGR().AddWindow("status", toolbarRect, WIN_ACTIVE | WIN_CANMOVE | WIN_CANRESIZE | WIN_NOSCROLL);
 		m_mainWnd->SetMinSize((uint8_t)GetOverlayHeight());
 
-		ToolbarPtr toolbar = Toolbar::CreateAutoSize(ren, "toolbar");
-		toolbar->SetBackgroundColor(Color::C_MED_GREY);
+		m_toolbar = Toolbar::CreateAutoSize(ren, "toolbar");
+		m_toolbar->SetBackgroundColor(Color::C_MED_GREY);
 
-		m_mainWnd->SetToolbar(toolbar);
+		m_mainWnd->SetToolbar(m_toolbar);
 		UpdateTitle();
 
 		// Toolbar section: Reboot
-		ToolbarItemPtr rebootButton = toolbar->AddToolbarItem("reboot", RES().FindImage("overlay16", 11));
+		m_rebootButton = m_toolbar->AddToolbarItem("reboot", RES().FindImage("overlay16", 11));
 
-		toolbar->AddSeparator();
+		m_toolbar->AddSeparator();
 
-		m_turboButton = toolbar->AddToolbarItem("turbo", m_turboOff, "Turbo");
+		m_turboButton = m_toolbar->AddToolbarItem("turbo", m_turboOff, "Turbo");
 		m_turboButton->SetTooltip("Toggle Warp Speed");
 		UpdateTurbo();
 
-		toolbar->AddSeparator();
+		m_toolbar->AddSeparator();
 
 		// Toolbar section: Snapshots
-		ToolbarItemPtr saveSnapshotButton = toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("overlay16", 8));
+		ToolbarItemPtr saveSnapshotButton = m_toolbar->AddToolbarItem("saveSnapshot", RES().FindImage("overlay16", 8));
 		saveSnapshotButton->SetTooltip("Save Computer state to disk");
-		m_loadSnapshotButton = toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("overlay16", 9));
+		m_loadSnapshotButton = m_toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("overlay16", 9));
 		m_loadSnapshotButton->SetTooltip("Restore last saved state from disk\nShift-click for more options");
 
 		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
@@ -178,13 +137,6 @@ namespace ui
 
 	void Overlay::OnClick(WidgetRef widget)
 	{
-		CoreUI::TOOLTIP().Hide();
-
-		if (!m_pc)
-		{
-			return;
-		}
-
 		const std::string& id = widget->GetId();
 
 		if (id == "saveSnapshot")
@@ -247,6 +199,17 @@ namespace ui
 		else
 		{
 			LogPrintf(LOG_WARNING, "OnClick: Unknown button id [%s]", id.c_str());
+		}
+	}
+
+	void Overlay::OnClose(WidgetRef widget)
+	{
+		if (widget->GetId() == "snapshots")
+		{
+			// Abort if we're currently editing one of the snapshots
+			SnapshotWidget::EndEdit();
+			RemoveSnapshotWindow();
+			m_loadSnapshotButton->SetPushed(false);
 		}
 	}
 
@@ -734,19 +697,17 @@ namespace ui
 				WindowRef widget = (WindowRef)e.user.data1;
 
 				widget->Show(false);
-				if (widget->GetId() == "snapshots")
-				{
-					// Abort if we're currently editing one of the snapshots
-					SnapshotWidget::EndEdit();
-					RemoveSnapshotWindow();
-					m_loadSnapshotButton->SetPushed(false);
-				}
+				OnClose(widget);
 				handled = true;
 			}
 		}
 		else if (e.type == toolbarEvent || e.type == buttonEvent)
 		{
-			OnClick((WidgetRef)e.user.data1);
+			if (m_pc)
+			{
+				CoreUI::TOOLTIP().Hide();
+				OnClick((WidgetRef)e.user.data1);
+			}
 		}
 		else if (e.type == timerEvent)
 		{

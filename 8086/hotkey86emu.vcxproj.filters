@@ -189,9 +189,6 @@
     <ClCompile Include="Storage\DeviceHardDrive.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="UI\Overlay.cpp">
-      <Filter>Source Files\UI</Filter>
-    </ClCompile>
     <ClCompile Include="Video\Video6845.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
@@ -321,6 +318,12 @@
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp">
       <Filter>Common\UI</Filter>
     </ClCompile>
+    <ClCompile Include="UI\OverlayXT.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\UI\Overlay.cpp">
+      <Filter>Common\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h">
@@ -433,9 +436,6 @@
     </ClInclude>
     <ClInclude Include="IO\Monitor.h">
       <Filter>Header Files\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\Overlay.h">
-      <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="Video\Video6845.h">
       <Filter>Header Files\Video</Filter>
@@ -585,6 +585,12 @@
       <Filter>Common\UI</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\UI\TimeFormatter.h">
+      <Filter>Common\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\OverlayXT.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\UI\Overlay.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
   </ItemGroup>
