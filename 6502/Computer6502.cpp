@@ -4,6 +4,7 @@
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPU6502.h"
+#include "Video/VideoPET2001.h"
 
 using cfg::CONFIG;
 
@@ -38,6 +39,12 @@ namespace emul
 		m_baseRAM.LoadFromFile("P:/Projects/6502/6502_65C02_functional_tests/6502_functional_test.bin");
 		m_memory.Allocate(&m_baseRAM, 0);
 
+		// Dummy video card
+		video::VideoPET2001* video = new video::VideoPET2001();
+		video->EnableLog(CONFIG().GetLogLevel("video"));
+		video->Init(&m_memory, "");
+		m_video = video;
+
 		InitInputs(1000000, 100000);
 	}
 
@@ -52,6 +59,8 @@ namespace emul
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		++g_ticks;
+
+		m_video->Tick();
 
 		GetInputs().Tick();
 		if (GetInputs().IsQuit())
