@@ -126,6 +126,8 @@ namespace ui
 		m_loadSnapshotButton = m_toolbar->AddToolbarItem("loadSnapshot", RES().FindImage("overlay16", 9));
 		m_loadSnapshotButton->SetTooltip("Restore last saved state from disk\nShift-click for more options");
 
+		m_toolbar->AddSeparator();
+
 		GetSnapshotBaseDirectory(m_snapshotBaseDirectory);
 		LogPrintf(LOG_DEBUG, "Snapshot base directory is [%s]", m_snapshotBaseDirectory.string().c_str());
 		if (!GetLastSnapshotDirectory(m_lastSnapshotDir))

@@ -120,9 +120,14 @@ namespace ui
 	{
 		Overlay::SetPC(pc);
 
+		// Update existing buttons
 		m_rebootButton->SetTooltip("Click for Soft Reboot (CTRL+ATL+DEL)\nShift-Click for Hard Reboot");
+		m_turboButton->SetText(nullptr);
 
-		GetToolbar()->AddSeparator();
+		// Toolbar section: Speed
+		m_speedButton = GetToolbar()->AddToolbarItem("speed", RES().FindImage("overlay16", 6), " 0.00 MHz", "turbo");
+		m_speedButton->SetTooltip("Toggle CPU Speed");
+		UpdateSpeed();
 
 		// Toolbar section: Floppy drives
 		if (m_pc->GetFloppy())
@@ -164,20 +169,13 @@ namespace ui
 			m_hddButton[1] = nullptr;
 		}
 
-		m_turboButton->SetText(nullptr);
-
-		// Toolbar section: Speed
-		m_speedButton = GetToolbar()->AddToolbarItem("speed", RES().FindImage("overlay16", 6), " 0.00 MHz");
-		m_speedButton->SetTooltip("Toggle CPU Speed");
-		UpdateSpeed();
-
 		// Toolbar section: Joystick
 		if (m_pc->GetInputs().GetJoystick())
 		{
-			GetToolbar()->AddSeparator();
-
 			m_joystickButton = GetToolbar()->AddToolbarItem("joystick", RES().FindImage("overlay16", 2));
 			m_joystickButton->SetTooltip("Joystick Configuration");
+
+			GetToolbar()->AddSeparator();
 		}
 		else
 		{
@@ -186,10 +184,10 @@ namespace ui
 
 		if (m_pc->GetInputs().GetMouse())
 		{
-			GetToolbar()->AddSeparator();
-
 			m_mouseButton = GetToolbar()->AddToolbarItem("mouse", m_mouseCaptureOff);
 			m_mouseButton->SetTooltip("Toggle Mouse Capture\nKeyboard: [Scroll Lock] key");
+
+			GetToolbar()->AddSeparator();
 		}
 		else
 		{
