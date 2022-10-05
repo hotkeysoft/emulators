@@ -26,7 +26,7 @@ namespace emul
 
 	ComputerZXSpectrum::ComputerZXSpectrum() :
 		Logger("ZXSpectrum"),
-		Computer(m_memory),
+		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x4000, emul::MemoryType::RAM),
 		m_rom("ROM", 0x4000, emul::MemoryType::ROM)
 	{
@@ -34,7 +34,7 @@ namespace emul
 
 	void ComputerZXSpectrum::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUID_Z80, baseRAM);
+		ComputerBase::Init(CPUID_Z80, baseRAM);
 
 		EnableLog(LOG_DEBUG);
 
@@ -54,18 +54,34 @@ namespace emul
 			Connect(i << 1, static_cast<PortConnector::OUTFunction>(&ComputerZXSpectrum::WriteULA));
 		}
 
-		video::VideoZXSpectrum* video = new video::VideoZXSpectrum();
-		InitVideo(video); // Takes ownership
-
 		InitInputs(CPU_CLK, RTC_CLK);
 		GetInputs().InitKeyboard(&m_keyboard);
 
 		SOUND().SetBaseClock(CPU_CLK);
+		InitVideo();
+	}
+
+	void ComputerZXSpectrum::InitCPU(const char* cpuid)
+	{
+		if (cpuid == CPUID_Z80) m_cpu = new CPUZ80(m_memory);
+		else
+		{
+			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
+			throw std::exception("CPUType not supported");
+		}
+	}
+
+	void ComputerZXSpectrum::InitVideo()
+	{
+		video::VideoZXSpectrum* video = new video::VideoZXSpectrum();
+
+		m_video = video;
+		m_video->Init(&m_memory, nullptr);
 	}
 
 	bool ComputerZXSpectrum::Step()
 	{
-		if (!Computer::Step())
+		if (!ComputerBase::Step())
 		{
 			return false;
 		}

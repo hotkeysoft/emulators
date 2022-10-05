@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Computer.h"
+#include <Computer/ComputerBase.h>
 #include "IO/InputEvents.h"
 #include "Video/VideoZX80.h"
 
@@ -8,7 +8,7 @@ namespace emul
 {
 	class CPUZ80;
 
-	class ComputerZ80 : public Computer
+	class ComputerZ80 : public ComputerBase
 	{
 	public:
 		ComputerZ80();
@@ -30,6 +30,10 @@ namespace emul
 		BYTE DummyIn() { return 0xBF; }
 
 	protected:
+		virtual void InitCPU(const char* cpuid) override;
+
+		void InitVideo();
+
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;
 	};

@@ -258,10 +258,11 @@ namespace events
 	};
 
 	// Process events at 60Hz
-	InputEvents::InputEvents(size_t clockSpeedHz) :
+	InputEvents::InputEvents(size_t clockSpeedHz, size_t pollInterval) :
 		Logger("INPUT"),
-		m_pollRate(clockSpeedHz / 60),
-		m_cooldown(m_pollRate),
+		m_clockSpeedHz(clockSpeedHz),
+		m_pollInterval(pollInterval),
+		m_cooldown(pollInterval),
 		m_keyMap(&s_keyMapXT)
 	{
 
@@ -286,6 +287,10 @@ namespace events
 				LogPrintf(LOG_ERROR, "Error initializing events subsystem: %s", SDL_GetError());
 			}
 		}
+
+		LogPrintf(LOG_INFO, "Clock Frequency: %zi Hz", m_clockSpeedHz);
+		LogPrintf(LOG_INFO, "Poll Interval:   %zi", m_pollInterval);
+		LogPrintf(LOG_INFO, "Poll Frequency:  %.2f Hz", (float)m_clockSpeedHz/(float)m_pollInterval);
 	}
 
 	void InputEvents::InitKeyboard(kbd::DeviceKeyboard* kbd, KBDMapping mapping)
@@ -362,8 +367,6 @@ namespace events
 				m_gameController = nullptr;
 			}
 		}
-
-		LogPrintf(LOG_INFO, "Polling rate: [%zu] ticks", m_pollRate);
 	}
 
 	void InputEvents::InitMouse(mouse::DeviceSerialMouse* mouse)
@@ -398,7 +401,7 @@ namespace events
 			return;
 		}
 
-		m_cooldown = m_pollRate;
+		m_cooldown = m_pollInterval;
 
 		SDL_Event e;
 		while (!m_quit && SDL_PollEvent(&e))

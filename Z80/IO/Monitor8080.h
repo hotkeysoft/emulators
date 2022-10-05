@@ -1,11 +1,13 @@
 #pragma once
 
 #include <IO/Console.h>
+
 #include <CPU/Memory.h>
 #include <CPU/CPUInfo.h>
 
 namespace emul
 {
+	class CPU;
 	class CPU8080;
 
 	enum class MonitorState { RUN, WAIT, EXIT, SWITCH_MODE };
@@ -21,7 +23,7 @@ namespace emul
 		Monitor8080(Monitor8080&&) = delete;
 		Monitor8080& operator=(Monitor8080&&) = delete;
 
-		virtual void Init(CPU8080& cpu, Memory& memory);
+		virtual void Init(CPU* cpu, Memory& memory);
 
 		void SetCustomMemoryView(ADDRESS address) { m_customMemView = address; }
 

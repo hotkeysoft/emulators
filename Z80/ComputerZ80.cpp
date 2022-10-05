@@ -10,9 +10,13 @@ using cfg::CONFIG;
 
 namespace emul
 {
+	const size_t MAIN_CLK = 14000000; // 14 MHz Main crystal
+	const size_t PIXEL_CLK = MAIN_CLK / 2;
+	const size_t CPU_CLK = PIXEL_CLK / 2;
+
 	ComputerZ80::ComputerZ80() :
 		Logger("ComputerZ80"),
-		Computer(m_memory),
+		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x8000, emul::MemoryType::RAM),
 		m_rom("ROM", 0x1000, emul::MemoryType::ROM)
 	{
@@ -20,7 +24,7 @@ namespace emul
 
 	void ComputerZ80::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUID_Z80, baseRAM);
+		ComputerBase::Init(CPUID_Z80, baseRAM);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
@@ -37,9 +41,24 @@ namespace emul
 
 		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZ80::DummyIn));
 
-		InitVideo(new video::VideoZX80());
+		InitInputs(CPU_CLK);
+		InitVideo();
+	}
 
-		InitInputs(6000000);
+	void ComputerZ80::InitCPU(const char* cpuid)
+	{
+		if (cpuid == CPUID_Z80) m_cpu = new CPUZ80(m_memory);
+		else
+		{
+			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
+			throw std::exception("CPUType not supported");
+		}
+	}
+
+	void ComputerZ80::InitVideo()
+	{
+		m_video = new video::VideoZX80();
+		m_video->Init(&m_memory, nullptr);
 	}
 
 	void ComputerZ80::PrintChar(BYTE value)
@@ -61,7 +80,7 @@ namespace emul
 
 	bool ComputerZ80::Step()
 	{
-		if (!Computer::Step())
+		if (!ComputerBase::Step())
 		{
 			return false;
 		}

@@ -7,7 +7,7 @@
 
 namespace emul
 {
-	class CPU8080;
+	class CPU;
 	class CPUZ80;
 
 	class MonitorZ80 : public Monitor8080
@@ -21,7 +21,7 @@ namespace emul
 		MonitorZ80(Monitor8080&&) = delete;
 		MonitorZ80& operator=(Monitor8080&&) = delete;
 
-		virtual void Init(CPU8080& cpu, Memory& memory) override;
+		virtual void Init(CPU* cpu, Memory& memory) override;
 
 	protected:
 		virtual void ToggleRAMMode() override;

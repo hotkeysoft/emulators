@@ -1,7 +1,6 @@
 #include "stdafx.h"
-#include "Computer.h"
+#include <Computer/ComputerBase.h>
 #include <Config.h>
-#include "CPU/CPU6502.h"
 #include "IO/InputEvents.h"
 
 #include <assert.h>
@@ -11,68 +10,82 @@ using cfg::CONFIG;
 
 namespace emul
 {
-	Computer::Computer(Memory& memory) :
+	ComputerBase::ComputerBase(Memory& memory, WORD blockGranularity) :
 		Logger("Computer"),
-		m_memory(256)
+		m_memory(blockGranularity)
 	{
 	}
 
-	Computer::~Computer()
+	ComputerBase::~ComputerBase()
 	{
 		delete m_inputs;
 		delete m_cpu;
 		delete m_video;
 	}
 
-	void Computer::Reboot()
+	void ComputerBase::Reboot()
 	{
 		LogPrintf(LOG_WARNING, "Reset");
 		m_cpu->Reset();
 		Reset();
 	}
 
-	void Computer::Init(const char* cpuid, WORD baseram)
+	void ComputerBase::Init(const char* cpuid, WORD baseram)
 	{
-		if (cpuid == CPUID_6502) m_cpu = new CPU6502(m_memory);
-		else
+		assert(baseram > 0);
+		m_baseRAMSize = baseram;
+
+		InitCPU(cpuid);
+		if (!m_cpu)
 		{
-			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
-			throw std::exception("CPUType not supported");
+			throw std::exception("CPU not set");
 		}
 
 		m_cpu->EnableLog(CONFIG().GetLogLevel("cpu"));
 		m_cpu->Init();
 
-		m_memory.Init(m_cpu->GetAddressBits());
-
 		PortConnector::Clear();
+
+		m_memory.Init(m_cpu->GetAddressBits());
+		m_memory.EnableLog(CONFIG().GetLogLevel("memory"));
 	}
 
-	void Computer::InitInputs(size_t clockSpeedHz, size_t pollInterval)
+	void ComputerBase::InitInputs(size_t clockSpeedHz, size_t pollInterval)
 	{
+		assert(clockSpeedHz > 0);
+		if (pollInterval < 1 || pollInterval >= clockSpeedHz)
+		{
+			pollInterval = clockSpeedHz / 60; // Default 60Hz polling
+		}
 		m_inputs = new events::InputEvents(clockSpeedHz, pollInterval);
 		m_inputs->Init();
 		m_inputs->EnableLog(CONFIG().GetLogLevel("inputs"));
 	}
 
-	void Computer::Serialize(json& to)
+	void ComputerBase::Serialize(json& to)
 	{
 		json computer;
 
 		computer["id"] = GetID();
+		computer["baseram"] = m_baseRAMSize;
 		to["computer"] = computer;
+
 
 		m_cpu->Serialize(to["cpu"]);
 		m_memory.Serialize(to["memory"]);
 		m_video->Serialize(to["video"]);
 	}
 
-	void Computer::Deserialize(const json& from)
+	void ComputerBase::Deserialize(const json& from)
 	{
 		const json& computer = from["computer"];
 		if ((std::string)computer["id"] != GetID())
 		{
 			throw SerializableException("Computer: Architecture is not compatible", SerializationError::COMPAT);
+		}
+		if (computer["baseram"] != m_baseRAMSize)
+		{
+			throw SerializableException("Computer: Base RAM is not compatible", SerializationError::COMPAT);
 		}
 
 		m_cpu->Deserialize(from["cpu"]);

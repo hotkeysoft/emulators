@@ -4,7 +4,7 @@
 
 namespace emul
 {
-	class Computer;
+	class ComputerBase;
 }
 
 namespace ui
@@ -24,7 +24,7 @@ namespace ui
 
 		void SetDescription(const char* desc) { m_description = desc ? desc : ""; }
 
-		void FromPC(emul::Computer* pc);
+		void FromPC(emul::ComputerBase* pc);
 
 		bool FromDisk();
 		bool ToDisk() const;

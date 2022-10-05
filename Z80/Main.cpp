@@ -12,6 +12,7 @@
 #include "IO/Monitor8080.h"
 #include "IO/MonitorZ80.h"
 
+#include <Computer/ComputerBase.h>
 #include "Computer8080.h"
 #include "ComputerZ80.h"
 #include "ComputerZX80.h"
@@ -39,7 +40,7 @@ const short CONSOLE_COLS = 80;
 namespace fs = std::filesystem;
 
 using cfg::CONFIG;
-using emul::Computer;
+using emul::ComputerBase;
 using sound::SOUND;
 using ui::MAINWND;
 using ui::Overlay;
@@ -129,9 +130,9 @@ void InitSound()
 	}
 }
 
-Computer* CreateComputer(std::string arch)
+ComputerBase* CreateComputer(std::string arch)
 {
-	Computer* computer = nullptr;
+	ComputerBase* computer = nullptr;
 
 	if (arch == "8080")
 	{
@@ -152,7 +153,7 @@ Computer* CreateComputer(std::string arch)
 	return computer;
 }
 
-void InitPC(Computer* pc, Overlay& overlay, bool reset = true)
+void InitPC(ComputerBase* pc, Overlay& overlay, bool reset = true)
 {
 	pc->EnableLog(CONFIG().GetLogLevel("computer"));
 	if (reset)
@@ -162,7 +163,7 @@ void InitPC(Computer* pc, Overlay& overlay, bool reset = true)
 
 	delete monitor;
 
-	std::string cpuID = pc->GetCPU().GetID();
+	std::string cpuID = pc->GetCPU()->GetID();
 	if (cpuID == "8080")
 	{
 		monitor = new emul::Monitor8080(console);
@@ -229,10 +230,10 @@ void NewComputerCallback(fs::path dir, json& j)
 //
 // This also means that if the deseriaization fails with the new Computer, you can
 // not fall back to the previous one. You have to carry on with the new Computer.
-Computer* RestoreNewComputerFromSnapshot()
+ComputerBase* RestoreNewComputerFromSnapshot()
 {
 	fprintf(stderr, "Restore new computer from snapshot\n");
-	Computer* newPC = nullptr;
+	ComputerBase* newPC = nullptr;
 
 	// Until we have created the new pc object, we can bail out and
 	// continue with the old PC.
@@ -347,7 +348,7 @@ int main(int argc, char* args[])
 	bool showOverlay = true;
 
 	std::string arch = CONFIG().GetValueStr("core", "arch");
-	Computer* pc = CreateComputer(arch);
+	ComputerBase* pc = CreateComputer(arch);
 	if (!pc)
 	{
 		fprintf(stderr, "Unknown architecture: [core].arch=[%s]", arch.c_str());
@@ -382,7 +383,7 @@ int main(int argc, char* args[])
 		while (run)
 		{
 			if (breakpointEnabled &&
-				(pc->GetCPU().GetCurrentAddress() == breakpoint))
+				(pc->GetCPU()->GetCurrentAddress() == breakpoint))
 			{
 				ShowMonitor();
 				mode = Mode::MONITOR;
@@ -534,7 +535,7 @@ int main(int argc, char* args[])
 
 				if (restoreSnapshot)
 				{
-					Computer* newPC = RestoreNewComputerFromSnapshot();
+					ComputerBase* newPC = RestoreNewComputerFromSnapshot();
 					if (newPC)
 					{
 						delete pc;

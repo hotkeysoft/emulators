@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CPU/CPU6502.h"
+#include <CPU/CPU.h>
 #include <CPU/Memory.h>
 #include <Serializable.h>
 #include "Video/Video.h"
@@ -12,12 +12,10 @@ namespace events { class InputEvents; }
 
 namespace emul
 {
-	class Computer : public Serializable, public PortConnector
+	class ComputerBase : public Serializable, public PortConnector
 	{
 	public:
-		const char* CPUID_6502 = "6502";
-
-		virtual ~Computer();
+		virtual ~ComputerBase();
 
 		virtual std::string_view GetName() const = 0;
 		virtual std::string_view GetID() const = 0;
@@ -28,9 +26,7 @@ namespace emul
 
 		virtual void Reset() { m_cpu->Reset(); }
 
-		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
-
-		CPU6502& GetCPU() const { return *m_cpu; }
+		CPU* GetCPU() const { return m_cpu; }
 		Memory& GetMemory() { return m_memory; }
 		events::InputEvents& GetInputs() { return *m_inputs; }
 		video::Video& GetVideo() { return *m_video; }
@@ -43,14 +39,17 @@ namespace emul
 		virtual void Deserialize(const json& from);
 
 	protected:
-		Computer(Memory& memory);
+		ComputerBase(Memory& memory, WORD blockGranularity = 1024);
 
 		virtual void Init(const char* cpuid, WORD baseRAM);
-		virtual void InitInputs(size_t clockSpeedHz, size_t pollInterval);
+		virtual void InitCPU(const char* cpuID) = 0;
+		virtual void InitInputs(size_t clockSpeedHz, size_t pollInterval = 0);
 
 		Memory m_memory;
 
-		emul::CPU6502* m_cpu = nullptr;
+		WORD m_baseRAMSize = 0;
+
+		emul::CPU* m_cpu = nullptr;
 		events::InputEvents* m_inputs = nullptr;
 		video::Video* m_video = nullptr;
 

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\Computer\ComputerBase.h" />
     <ClInclude Include="..\Common\Config.h" />
     <ClInclude Include="..\Common\CPU\CPU.h" />
     <ClInclude Include="..\Common\CPU\CPUCommon.h" />
@@ -44,7 +45,6 @@
     <ClInclude Include="..\Common\UI\TimeFormatter.h" />
     <ClInclude Include="..\Common\Video\Video.h" />
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
-    <ClInclude Include="Computer.h" />
     <ClInclude Include="Computer6502.h" />
     <ClInclude Include="ComputerPET2001.h" />
     <ClInclude Include="Config.h" />
@@ -61,6 +61,7 @@
     <ClInclude Include="Video\VideoPET2001.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\Computer\ComputerBase.cpp" />
     <ClCompile Include="..\Common\Config.cpp" />
     <ClCompile Include="..\Common\CPU\CPU.cpp" />
     <ClCompile Include="..\Common\CPU\CPUInfo.cpp" />
@@ -80,7 +81,6 @@
     <ClCompile Include="..\Common\UI\SnapshotWidget.cpp" />
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
     <ClCompile Include="..\Common\Video\Video.cpp" />
-    <ClCompile Include="Computer.cpp" />
     <ClCompile Include="Computer6502.cpp" />
     <ClCompile Include="ComputerPET2001.cpp" />
     <ClCompile Include="CPU\CPU6502.cpp" />

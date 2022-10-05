@@ -12,22 +12,20 @@ namespace emul
 {
 	Computer6502::Computer6502() :
 		Logger("Computer6502"),
-		Computer(m_memory),
+		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM)
 	{
 	}
 
 	void Computer6502::Reset()
 	{
-		Computer::Reset();
+		ComputerBase::Reset();
 		GetCPU().Reset(0x400); // Override reset vector for tests
 	}
 
 	void Computer6502::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUID_6502, baseRAM);
-
-		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
+		ComputerBase::Init(emul::CPUID_6502, baseRAM);
 
 		std::vector<BYTE> bootstrap;
 		bootstrap.resize(0x100);
@@ -39,18 +37,32 @@ namespace emul
 		m_baseRAM.LoadFromFile("P:/Projects/6502/6502_65C02_functional_tests/6502_functional_test.bin");
 		m_memory.Allocate(&m_baseRAM, 0);
 
+		InitInputs(1000000, 100000);
+		InitVideo();
+	}
+
+	void Computer6502::InitCPU(const char* cpuid)
+	{
+		if (cpuid == CPUID_6502) m_cpu = new CPU6502(m_memory);
+		else
+		{
+			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
+			throw std::exception("CPUType not supported");
+		}
+	}
+
+	void Computer6502::InitVideo()
+	{
 		// Dummy video card
 		video::VideoPET2001* video = new video::VideoPET2001();
 		video->EnableLog(CONFIG().GetLogLevel("video"));
 		video->Init(&m_memory, "");
 		m_video = video;
-
-		InitInputs(1000000, 100000);
 	}
 
 	bool Computer6502::Step()
 	{
-		if (!Computer::Step())
+		if (!ComputerBase::Step())
 		{
 			return false;
 		}

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include <UI/SnapshotInfo.h>
-#include "Computer.h"
+#include <Computer/ComputerBase.h>
 
 namespace fs = std::filesystem;
 
@@ -20,7 +20,7 @@ namespace ui
 		m_isLoaded = false;
 	}
 
-	void SnapshotInfo::FromPC(emul::Computer* pc)
+	void SnapshotInfo::FromPC(emul::ComputerBase* pc)
 	{
 		assert(pc);
 		Clear();

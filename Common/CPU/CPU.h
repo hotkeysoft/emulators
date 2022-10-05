@@ -26,6 +26,7 @@ namespace emul
 		virtual ADDRESS GetCurrentAddress() const = 0;
 		virtual void Exec(BYTE opcode) = 0;
 
+		virtual void Init() = 0;
 		virtual void Reset();
 		void Run();
 		virtual bool Step();

@@ -31,10 +31,12 @@ namespace ui
 		OverlayXT();
 
 		virtual bool Init() override;
-		virtual void SetPC(emul::Computer* pc);
+		virtual void SetPC(emul::ComputerBase* pc) override;
 		virtual bool Update() override;
 
 	protected:
+		emul::Computer* GetPC() { return (emul::Computer*)m_pc; }
+
 		virtual void OnClick(CoreUI::WidgetRef widget) override;
 		virtual void OnClose(CoreUI::WidgetRef widget) override;
 
@@ -51,7 +53,6 @@ namespace ui
 		void SetTrim();
 
 		void JoystickConfig();
-
 
 		HardDriveLED m_hardDriveLEDs[2];
 

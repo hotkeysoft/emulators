@@ -20,7 +20,7 @@ namespace emul
 
 	ComputerPET2001::ComputerPET2001() :
 		Logger("PET2001"),
-		Computer(m_memory),
+		ComputerBase(m_memory, 256),
 		m_baseRAM("RAM"),
 		m_romC000("ROMC0000", 0x1000, emul::MemoryType::ROM),
 		m_romD000("ROMD0000", 0x1000, emul::MemoryType::ROM),
@@ -35,20 +35,28 @@ namespace emul
 
 	void ComputerPET2001::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUID_6502, baseRAM);
+		ComputerBase::Init(CPUID_6502, baseRAM);
 
-		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
-
-		InitRAM(baseRAM);
 		InitModel();
+		InitRAM(baseRAM);
 		InitROM();
-		InitVideo();
 		InitIO();
+		InitVideo();
 
 		InitInputs(CPU_CLK, SCAN_RATE);
 		GetInputs().InitKeyboard(&m_keyboard);
 
 		SOUND().SetBaseClock(CPU_CLK);
+	}
+
+	void ComputerPET2001::InitCPU(const char* cpuid)
+	{
+		if (cpuid == CPUID_6502) m_cpu = new CPU6502(m_memory);
+		else
+		{
+			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
+			throw std::exception("CPUType not supported");
+		}
 	}
 
 	void ComputerPET2001::InitModel()
@@ -75,13 +83,32 @@ namespace emul
 		}
 	}
 
+	std::string ComputerPET2001::GetCharROMPath()
+	{
+		std::string path = m_basePathROM;
+		switch (m_model)
+		{
+		case Model::BASIC1:
+		case Model::BASIC1p:
+		default:
+			path.append("CHAR1.bin");
+			break;
+		case Model::BASIC2n:
+		case Model::BASIC2p:
+			path.append("CHAR2.bin");
+			break;
+		}
+
+		LogPrintf(LOG_INFO, "Character ROM: %s", path.c_str());
+		return path;
+	}
+
 	void ComputerPET2001::InitROM()
 	{
 		std::string c000 = m_basePathROM;
 		std::string d000 = m_basePathROM;
 		std::string e000 = m_basePathROM;
 		std::string f000 = m_basePathROM;
-		m_charROM = m_basePathROM;
 
 		switch (m_model)
 		{
@@ -92,7 +119,6 @@ namespace emul
 			d000.append("BASIC1-D000.bin");
 			e000.append("EDIT1-E000.bin");
 			f000.append("KERNAL1-F000.bin");
-			m_charROM.append("CHAR1.bin");
 			break;
 		case Model::BASIC2n:
 		case Model::BASIC2p:
@@ -100,7 +126,6 @@ namespace emul
 			d000.append("BASIC2-D000.bin");
 			e000.append((m_model == Model::BASIC2n) ? "EDIT2-E000-n.bin" : "EDIT2-E000-p.bin");
 			f000.append("KERNAL2-F000.bin");
-			m_charROM.append("CHAR2.bin");
 			break;
 		}
 
@@ -109,7 +134,6 @@ namespace emul
 		LogPrintf(LOG_INFO, "  D000: %s", d000.c_str());
 		LogPrintf(LOG_INFO, "  E000: %s", e000.c_str());
 		LogPrintf(LOG_INFO, "  F000: %s", f000.c_str());
-		LogPrintf(LOG_INFO, "  CHAR: %s", m_charROM.c_str());
 
 		m_romC000.LoadFromFile(c000.c_str());
 		m_romD000.LoadFromFile(d000.c_str());
@@ -126,7 +150,7 @@ namespace emul
 	{
 		video::VideoPET2001* video = new video::VideoPET2001();
 		video->EnableLog(CONFIG().GetLogLevel("video"));
-		video->Init(&m_memory, m_charROM.c_str());
+		video->Init(&m_memory, GetCharROMPath().c_str());
 		video->SetVIA(&m_via);
 		m_video = video;
 
@@ -187,7 +211,7 @@ namespace emul
 
 	void ComputerPET2001::Reset()
 	{
-		Computer::Reset();
+		ComputerBase::Reset();
 		m_pia1.Reset();
 		m_pia2.Reset();
 		m_via.Reset();
@@ -211,7 +235,7 @@ namespace emul
 
 	bool ComputerPET2001::Step()
 	{
-		if (!Computer::Step())
+		if (!ComputerBase::Step())
 		{
 			return false;
 		}
@@ -261,7 +285,7 @@ namespace emul
 
 	void ComputerPET2001::Serialize(json& to)
 	{
-		Computer::Serialize(to);
+		ComputerBase::Serialize(to);
 
 		m_pia1.Serialize(to["pia1"]);
 		m_pia2.Serialize(to["pia2"]);
@@ -270,7 +294,7 @@ namespace emul
 
 	void ComputerPET2001::Deserialize(const json& from)
 	{
-		Computer::Deserialize(from);
+		ComputerBase::Deserialize(from);
 
 		m_pia1.Deserialize(from["pia1"]);
 		m_pia2.Deserialize(from["pia2"]);

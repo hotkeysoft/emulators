@@ -19,7 +19,7 @@ namespace emul
 		Monitor(Monitor&&) = delete;
 		Monitor& operator=(Monitor&&) = delete;
 
-		void Init(CPU8086& cpu, Memory& memory);
+		void Init(CPU8086* cpu, Memory& memory);
 
 		void SetCustomMemoryView(RawSegmentOffset segoff) { m_customMemView = segoff; }
 

@@ -11,6 +11,7 @@
 namespace emul
 {
 	static const size_t CPU8080_ADDRESS_BITS = 16;
+	static const char* CPUID_8080 = "8080";
 
 	class CPU8080 : public CPU, public PortConnector
 	{
@@ -28,7 +29,7 @@ namespace emul
 
 		virtual void Exec(BYTE opcode) override;
 
-		virtual const std::string GetID() const override { return m_info.GetId(); };
+		virtual const std::string GetID() const override { return CPUID_8080; };
 		virtual size_t GetAddressBits() const override { return CPU8080_ADDRESS_BITS; };
 		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter; }
 

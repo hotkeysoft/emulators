@@ -4,6 +4,8 @@
 
 namespace emul
 {
+	static const char* CPUID_Z80 = "z80";
+
 	class CPUZ80 : public CPU8080
 	{
 	public:
@@ -13,7 +15,7 @@ namespace emul
 
 		virtual void Reset() override;
 
-		virtual const std::string GetID() const override { return "z80"; };
+		virtual const std::string GetID() const override { return CPUID_Z80; };
 
 		virtual void Exec(BYTE opcode) override;
 		virtual void Halt() override;

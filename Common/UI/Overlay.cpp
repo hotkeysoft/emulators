@@ -68,7 +68,7 @@ namespace ui
 		return true;
 	}
 
-	void Overlay::SetPC(emul::Computer* pc)
+	void Overlay::SetPC(emul::ComputerBase* pc)
 	{
 		if (!pc)
 		{

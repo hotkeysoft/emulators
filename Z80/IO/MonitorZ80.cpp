@@ -8,15 +8,15 @@ using emul::GetBit;
 
 namespace emul
 {
-	MonitorZ80::MonitorZ80(Console& console) : Monitor8080(console)		
+	MonitorZ80::MonitorZ80(Console& console) : Monitor8080(console)
 	{
 	}
 
-	void MonitorZ80::Init(CPU8080& cpu, Memory& memory)
+	void MonitorZ80::Init(CPU* cpu, Memory& memory)
 	{
 		Monitor8080::Init(cpu, memory);
 
-		m_cpuZ80 = dynamic_cast<CPUZ80*>(&cpu);
+		m_cpuZ80 = dynamic_cast<CPUZ80*>(cpu);
 		if (m_cpuZ80 == nullptr)
 		{
 			throw std::exception("MonitorZ80::Init, Expected Z80 CPU");

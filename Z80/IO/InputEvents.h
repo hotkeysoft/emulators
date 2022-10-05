@@ -36,7 +36,7 @@ namespace events
 	class InputEvents : public Logger
 	{
 	public:
-		InputEvents(size_t clockSpeedHz, size_t pollingHz = 60);
+		InputEvents(size_t clockSpeedHz, size_t pollInterval);
 		~InputEvents();
 
 		InputEvents() = delete;
@@ -57,8 +57,9 @@ namespace events
 		bool IsQuit() { return m_quit; }
 
 	protected:
-		const size_t m_pollRate;
-		size_t m_cooldown = m_pollRate;
+		const size_t m_clockSpeedHz;
+		const size_t m_pollInterval;
+		size_t m_cooldown;
 
 		void InputKey(SDL_KeyboardEvent& evt);
 		bool m_quit = false;

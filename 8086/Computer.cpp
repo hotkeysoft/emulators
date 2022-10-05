@@ -31,8 +31,7 @@ using cfg::CONFIG;
 namespace emul
 {
 	Computer::Computer() :
-		Logger("PC"),
-		m_memory(4096),
+		ComputerBase(m_memory, 4096),
 		m_hddROM("HDD", 8192, MemoryType::ROM),
 		m_dmaPageRegister(0x80)
 	{
@@ -40,11 +39,9 @@ namespace emul
 
 	Computer::~Computer()
 	{
-		delete m_inputs;
 		delete m_floppy;
 		delete m_hardDrive;
 		delete m_joystick;
-		delete m_video;
 		delete m_pit;
 		delete m_pic;
 		delete m_ppi;
@@ -52,7 +49,6 @@ namespace emul
 		delete m_dma2;
 		delete m_mouse;
 		delete m_rtc;
-		delete m_cpu;
 	}
 
 	void Computer::AddCPUSpeed(const CPUSpeed& speed)
@@ -114,6 +110,11 @@ namespace emul
 			LogPrintf(LOG_WARNING, "Unknown cpu override [%d]", cpuOverride);
 		}
 
+		ComputerBase::Init(cpuid, baseram);
+	}
+
+	void Computer::InitCPU(const char* cpuid)
+	{
 		if (cpuid == CPUID_8086) m_cpu = new CPU8086(m_memory);
 		else if (cpuid == CPUID_80186) m_cpu = new CPU80186(m_memory);
 		else if (cpuid == CPUID_80286) m_cpu = new CPU80286(m_memory);
@@ -122,14 +123,6 @@ namespace emul
 			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
 			throw std::exception("CPUType not supported");
 		}
-
-		m_cpu->EnableLog(CONFIG().GetLogLevel("cpu"));
-		m_cpu->Init();
-
-		m_memory.Init(m_cpu->GetAddressBits());
-
-		m_baseRAM = baseram;
-		PortConnector::Clear();
 	}
 
 	void Computer::InitVideo(const std::string& defaultMode, const VideoModes& supported)
@@ -283,13 +276,6 @@ namespace emul
 			m_joystick->EnableLog(CONFIG().GetLogLevel("joystick"));
 			m_joystick->Init();
 		}
-	}
-
-	void Computer::InitInputs(size_t clockSpeedHz)
-	{
-		m_inputs = new events::InputEvents(clockSpeedHz);
-		m_inputs->Init();
-		m_inputs->EnableLog(CONFIG().GetLogLevel("inputs"));
 	}
 
 	void Computer::InitMouse(size_t baseClock)
@@ -539,11 +525,7 @@ namespace emul
 
 	void Computer::Serialize(json& to)
 	{
-		json computer;
-
-		computer["id"] = GetID();
-		computer["baseram"] = m_baseRAM;
-		to["computer"] = computer;
+		ComputerBase::Serialize(to);
 
 		m_cpu->Serialize(to["cpu"]);
 		m_memory.Serialize(to["memory"]);
@@ -570,21 +552,10 @@ namespace emul
 
 	void Computer::Deserialize(const json& from)
 	{
-		const json& computer = from["computer"];
-		if ((std::string)computer["id"] != GetID())
-		{
-			throw SerializableException("Computer: Architecture is not compatible", SerializationError::COMPAT);
-		}
-		if (computer["baseram"] != m_baseRAM)
-		{
-			throw SerializableException("Computer: Base RAM is not compatible", SerializationError::COMPAT);
-		}
+		ComputerBase::Deserialize(from);
 
-		m_cpu->Deserialize(from["cpu"]);
-		m_memory.Deserialize(from["memory"]);
 		m_pit->Deserialize(from["pit"]);
 		m_pic->Deserialize(from["pic"]);
-		m_video->Deserialize(from["video"]);
 		m_cpuSpeed.Deserialize(from["speed"]);
 
 		if ((from.contains("floppy") && !m_floppy) ||

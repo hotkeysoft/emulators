@@ -15,9 +15,15 @@ namespace emul
 	{
 	}
 
-	void Monitor8080::Init(CPU8080& cpu, Memory& memory)
+	void Monitor8080::Init(CPU* cpu, Memory& memory)
 	{
-		m_cpu = &cpu;
+		assert(cpu);
+		m_cpu = dynamic_cast<CPU8080*>(cpu);
+		if (m_cpu == nullptr)
+		{
+			throw std::exception("MonitorZ80::Init, Expected Z80 CPU");
+		}
+
 		m_memory = &memory;
 	}
 

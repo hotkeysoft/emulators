@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Computer.h"
+#include "Computer/ComputerBase.h"
 #include "IO/InputEvents.h"
 #include <CPU/IOBlock.h>
 #include "Hardware/Device6522PET.h"
@@ -13,7 +13,7 @@ namespace emul
 {
 	class CPU6502;
 
-	class ComputerPET2001 : public Computer
+	class ComputerPET2001 : public ComputerBase
 	{
 	public:
 		ComputerPET2001();
@@ -34,17 +34,20 @@ namespace emul
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-		void InitRAM(emul::WORD baseRAM);
+		virtual void InitCPU(const char* cpuid) override;
+
 		void InitModel();
+		void InitRAM(emul::WORD baseRAM);
 		void InitROM();
-		void InitVideo();
 		void InitIO();
+		void InitVideo();
+
+		std::string GetCharROMPath();
 
 		enum class Model { BASIC1, BASIC1p, BASIC2n, BASIC2p };
 		Model m_model = Model::BASIC1p;
 
 		const std::string m_basePathROM = "data/PET/PET2001/";
-		std::string m_charROM = m_basePathROM;
 
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_romC000;

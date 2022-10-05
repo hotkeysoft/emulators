@@ -170,10 +170,10 @@ namespace emul
 
 		static bool timer0Out = false;
 
-		if (m_pic->InterruptPending() && GetCPU().CanInterrupt())
+		if (m_pic->InterruptPending() && GetCPU()->CanInterrupt())
 		{
 			m_pic->InterruptAcknowledge();
-			GetCPU().Interrupt(m_pic->GetPendingInterrupt());
+			GetCPU()->Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
 		else if (!Computer::Step())
@@ -182,7 +182,7 @@ namespace emul
 		}
 
 		static uint32_t cpuTicks = 0;
-		cpuTicks += GetCPU().GetInstructionTicks();
+		cpuTicks += GetCPU()->GetInstructionTicks();
 
 		ppi::Device8255Tandy* ppi = (ppi::Device8255Tandy*)m_ppi;
 		video::VideoTandy* video = (video::VideoTandy*)m_video;

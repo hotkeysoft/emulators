@@ -116,9 +116,12 @@ namespace ui
 		return true;
 	}
 
-	void OverlayXT::SetPC(emul::Computer* pc)
+	void OverlayXT::SetPC(emul::ComputerBase* pc)
 	{
 		Overlay::SetPC(pc);
+
+		emul::Computer* pcXT = dynamic_cast<emul::Computer*>(pc);
+		assert(pcXT != nullptr);
 
 		// Update existing buttons
 		m_rebootButton->SetTooltip("Click for Soft Reboot (CTRL+ATL+DEL)\nShift-Click for Hard Reboot");
@@ -130,7 +133,7 @@ namespace ui
 		UpdateSpeed();
 
 		// Toolbar section: Floppy drives
-		if (m_pc->GetFloppy())
+		if (GetPC()->GetFloppy())
 		{
 			m_floppyButton[0] = GetToolbar()->AddToolbarItem("floppy0", m_floppyInactive, "A:");
 			m_ejectButton[0] = GetToolbar()->AddToolbarItem("eject0", RES().FindImage("overlay16", 7));
@@ -153,7 +156,7 @@ namespace ui
 		}
 
 		// Toolbar section: Hard disks
-		if (m_pc->GetHardDrive())
+		if (GetPC()->GetHardDrive())
 		{
 			m_hddButton[0] = GetToolbar()->AddToolbarItem("hdd0", m_hddInactive, "C:");
 			UpdateHardDisk(0);
@@ -230,7 +233,7 @@ namespace ui
 		else if (id == "reboot") // Override parent
 		{
 			// Shift+click = hard reboot
-			m_pc->Reboot(SDL_GetModState() & KMOD_SHIFT);
+			GetPC()->Reboot(SDL_GetModState() & KMOD_SHIFT);
 		}
 		else if (id == "joystick")
 		{
@@ -320,14 +323,14 @@ namespace ui
 		}
 
 		static char speedStr[32];
-		emul::CPUSpeed speed = m_pc->GetCPUSpeed();
+		emul::CPUSpeed speed = GetPC()->GetCPUSpeed();
 		sprintf(speedStr, "%.2fMHz", speed.GetSpeed() / 1000000.0f);
 		m_speedButton->SetText(speedStr);
 	}
 
 	void OverlayXT::UpdateFloppy(BYTE drive)
 	{
-		const auto& image = m_pc->GetFloppy()->GetImageInfo(drive);
+		const auto& image = GetPC()->GetFloppy()->GetImageInfo(drive);
 
 		std::ostringstream os;
 		os << (char)('A'+drive) << ':';
@@ -349,7 +352,7 @@ namespace ui
 
 	void OverlayXT::UpdateHardDisk(BYTE drive)
 	{
-		const auto& image = m_pc->GetHardDrive()->GetImageInfo(drive);
+		const auto& image = GetPC()->GetHardDrive()->GetImageInfo(drive);
 
 		std::ostringstream os;
 		os << (char)('C' + drive) << ':';
@@ -399,19 +402,19 @@ namespace ui
 			return false;
 		}
 
-		if (m_pc->GetFloppy())
+		if (GetPC()->GetFloppy())
 		{
 			for (int i = 0; i < 2; ++i)
 			{
-				m_floppyButton[i]->SetImage(m_pc->GetFloppy()->IsActive(i) ? m_floppyActive : m_floppyInactive);
+				m_floppyButton[i]->SetImage(GetPC()->GetFloppy()->IsActive(i) ? m_floppyActive : m_floppyInactive);
 			}
 		}
 
-		if (m_pc->GetHardDrive())
+		if (GetPC()->GetHardDrive())
 		{
 			for (int i = 0; i < 2; ++i)
 			{
-				m_hardDriveLEDs[i].Update(m_pc->GetHardDrive()->IsActive(i));
+				m_hardDriveLEDs[i].Update(GetPC()->GetHardDrive()->IsActive(i));
 				m_hddButton[i]->SetImage(m_hardDriveLEDs[i].GetStatus() ? m_hddActive : m_hddInactive);
 			}
 		}
@@ -438,7 +441,7 @@ namespace ui
 		os << m_pc->GetName();
 
 		// Display video mode only if non-trivial (e.g skip pcjr)
-		const auto& videoModes = m_pc->GetVideoModes();
+		const auto& videoModes = GetPC()->GetVideoModes();
 		if (videoModes.size() > 1)
 		{
 			os << " [" << m_pc->GetVideo().GetDisplayName() << "]";
@@ -455,7 +458,7 @@ namespace ui
 
 	void OverlayXT::LoadFloppyDiskImage(BYTE drive, bool eject)
 	{
-		if (!m_pc || !m_pc->GetFloppy())
+		if (!GetPC() || !GetPC()->GetFloppy())
 		{
 			return;
 		}
@@ -464,18 +467,18 @@ namespace ui
 
 		if (eject)
 		{
-			m_pc->GetFloppy()->ClearDiskImage(drive);
+			GetPC()->GetFloppy()->ClearDiskImage(drive);
 		}
 		else if (SelectFile(diskImage, GetHWND()))
 		{
-			m_pc->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
+			GetPC()->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
 		}
 		UpdateFloppy(drive);
 	}
 
 	void OverlayXT::LoadHardDiskImage(BYTE drive)
 	{
-		if (!m_pc || !m_pc->GetHardDrive())
+		if (!GetPC() || !GetPC()->GetHardDrive())
 		{
 			return;
 		}
@@ -483,19 +486,19 @@ namespace ui
 		fs::path diskImage;
 		if (SelectFile(diskImage, GetHWND()))
 		{
-			BYTE currImageType = m_pc->GetHardDrive()->GetImageInfo(drive).type;
+			BYTE currImageType = GetPC()->GetHardDrive()->GetImageInfo(drive).type;
 
 			// Assume same hdd type for now to simplify things.
 			// Incompatible images will be rejected
-			m_pc->GetHardDrive()->LoadDiskImage(drive, currImageType, diskImage.string().c_str());
+			GetPC()->GetHardDrive()->LoadDiskImage(drive, currImageType, diskImage.string().c_str());
 		}
 		UpdateHardDisk(drive);
 	}
 
 	void OverlayXT::ToggleCPUSpeed()
 	{
-		const emul::CPUSpeed currSpeed = m_pc->GetCPUSpeed();
-		const emul::Computer::CPUSpeeds& speeds = m_pc->GetCPUSpeeds();
+		const emul::CPUSpeed currSpeed = GetPC()->GetCPUSpeed();
+		const emul::Computer::CPUSpeeds& speeds = GetPC()->GetCPUSpeeds();
 		emul::Computer::CPUSpeeds::const_iterator currIt = speeds.find(currSpeed);
 		if (currIt == speeds.end())
 		{
@@ -509,7 +512,7 @@ namespace ui
 				currIt = speeds.begin();
 			}
 		}
-		m_pc->SetCPUSpeed(*currIt);
+		GetPC()->SetCPUSpeed(*currIt);
 		UpdateSpeed();
 	}
 

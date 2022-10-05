@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Computer.h"
+#include <Computer/ComputerBase.h>
 #include "Video/VideoZXSpectrum.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardZX80.h"
@@ -9,7 +9,7 @@ namespace emul
 {
 	class CPUZ80;
 
-	class ComputerZXSpectrum : public Computer
+	class ComputerZXSpectrum : public ComputerBase
 	{
 	public:
 		ComputerZXSpectrum();
@@ -27,6 +27,10 @@ namespace emul
 		void WriteULA(BYTE value);
 
 	protected:
+		virtual void InitCPU(const char* cpuid) override;
+
+		void InitVideo();
+
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;
 

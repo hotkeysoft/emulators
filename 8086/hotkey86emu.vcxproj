@@ -165,6 +165,7 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\Computer\ComputerBase.cpp" />
     <ClCompile Include="..\Common\Config.cpp" />
     <ClCompile Include="..\Common\CPU\CPU.cpp" />
     <ClCompile Include="..\Common\CPU\CPUInfo.cpp" />
@@ -253,6 +254,7 @@
     <ClCompile Include="Video\VideoVGA.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\Computer\ComputerBase.h" />
     <ClInclude Include="..\Common\Config.h" />
     <ClInclude Include="..\Common\CPU\CPU.h" />
     <ClInclude Include="..\Common\CPU\CPUCommon.h" />

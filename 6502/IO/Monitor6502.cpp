@@ -15,9 +15,9 @@ namespace emul
 	{
 	}
 
-	void Monitor6502::Init(CPU6502& cpu, Memory& memory)
+	void Monitor6502::Init(CPU* cpu, Memory& memory)
 	{
-		m_cpu = &cpu;
+		m_cpu = dynamic_cast<CPU6502*>(cpu);
 		m_memory = &memory;
 	}
 

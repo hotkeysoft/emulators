@@ -58,6 +58,9 @@
     <Filter Include="Common\Video">
       <UniqueIdentifier>{3f0c064d-a873-426e-b826-68a865cc4def}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Computer">
+      <UniqueIdentifier>{1d3273e8-825d-4543-a01b-693f57e3f1bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -156,9 +159,6 @@
     <ClInclude Include="..\Common\CPU\MemoryBlockBase.h">
       <Filter>Common\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="Computer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\UI\MainWindow.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
@@ -183,6 +183,9 @@
     <ClInclude Include="..\Common\UI\Overlay.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Computer\ComputerBase.h">
+      <Filter>Common\Computer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -199,9 +202,6 @@
     </ClCompile>
     <ClCompile Include="CPU\CPUZ80.cpp">
       <Filter>Source Files\CPU</Filter>
-    </ClCompile>
-    <ClCompile Include="Computer.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
@@ -280,6 +280,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\UI\Overlay.cpp">
       <Filter>Common\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Computer\ComputerBase.cpp">
+      <Filter>Common\Computer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

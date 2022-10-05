@@ -2,7 +2,7 @@
 
 #include <Video/Video.h>
 #include <IO/InputEventHandler.h>
-#include <Computer.h>
+#include <Computer/ComputerBase.h>
 #include <CoreUI.h>
 
 namespace ui
@@ -15,7 +15,7 @@ namespace ui
 		Overlay();
 
 		virtual bool Init();
-		virtual void SetPC(emul::Computer* pc);
+		virtual void SetPC(emul::ComputerBase* pc);
 		virtual void Show(bool show = true) { m_show = show; }
 		virtual bool Update();
 
@@ -64,7 +64,7 @@ namespace ui
 		void ShowSnapshotWindow();
 		void AddSnapshotItem(const std::filesystem::path& path, int index, int w, int h);
 
-		emul::Computer* m_pc = nullptr;
+		emul::ComputerBase* m_pc = nullptr;
 		std::filesystem::path m_snapshotBaseDirectory;
 		std::filesystem::path m_lastSnapshotDir;
 

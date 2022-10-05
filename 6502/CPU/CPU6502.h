@@ -11,6 +11,7 @@
 namespace emul
 {
 	static const size_t CPU6502_ADDRESS_BITS = 16;
+	static const char* CPUID_6502 = "6502";
 
 	class CPU6502 : public CPU, public PortConnector
 	{

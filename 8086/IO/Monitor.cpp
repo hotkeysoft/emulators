@@ -15,9 +15,9 @@ namespace emul
 	{
 	}
 
-	void Monitor::Init(CPU8086& cpu, Memory& memory)
+	void Monitor::Init(CPU8086* cpu, Memory& memory)
 	{
-		m_cpu = &cpu;
+		m_cpu = cpu;
 		m_memory = &memory;
 	}
 

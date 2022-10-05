@@ -54,7 +54,7 @@ namespace emul
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
-		m_post.Init(m_cpu);
+		m_post.Init(GetCPU());
 
 		InitRAM(baseRAM);
 		InitPIT(new pit::Device8254(0x40, PIT_CLK));
@@ -169,13 +169,13 @@ namespace emul
 
 		if (m_keyboard.NMIPending())
 		{
-			GetCPU().Interrupt(2);
+			GetCPU()->Interrupt(2);
 			return true;
 		}
-		else if (m_pic->InterruptPending() && GetCPU().CanInterrupt())
+		else if (m_pic->InterruptPending() && GetCPU()->CanInterrupt())
 		{
 			m_pic->InterruptAcknowledge();
-			GetCPU().Interrupt(m_pic->GetPendingInterrupt());
+			GetCPU()->Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
 		else if (!Computer::Step())
@@ -184,7 +184,7 @@ namespace emul
 		}
 
 		static uint32_t cpuTicks = 0;
-		cpuTicks += GetCPU().GetInstructionTicks();
+		cpuTicks += GetCPU()->GetInstructionTicks();
 
 		ppi::Device8255PCjr* ppi = (ppi::Device8255PCjr*)m_ppi;
 		video::VideoPCjr* video = (video::VideoPCjr*)m_video;

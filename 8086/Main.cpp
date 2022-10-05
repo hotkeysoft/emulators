@@ -400,8 +400,8 @@ int main(int argc, char* args[])
 		while (run)
 		{
 			if (breakpointEnabled &&
-				(pc->GetCPU().GetRegValue(REG16::CS) == breakpoint.segment) &&
-				(pc->GetCPU().GetRegValue(REG16::IP) == breakpoint.offset))
+				(pc->GetCPU()->GetRegValue(REG16::CS) == breakpoint.segment) &&
+				(pc->GetCPU()->GetRegValue(REG16::IP) == breakpoint.offset))
 			{
 				ShowMonitor();
 				mode = Mode::MONITOR;

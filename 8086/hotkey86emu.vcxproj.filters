@@ -79,6 +79,9 @@
     <Filter Include="Common\Video">
       <UniqueIdentifier>{d806b271-0441-4a6c-a476-3df01bc7db4e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Computer">
+      <UniqueIdentifier>{8824de60-0fdb-4c1a-9abb-4f9a7446323b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -323,6 +326,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\UI\Overlay.cpp">
       <Filter>Common\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Computer\ComputerBase.cpp">
+      <Filter>Common\Computer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -592,6 +598,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\UI\Overlay.h">
       <Filter>Common\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Computer\ComputerBase.h">
+      <Filter>Common\Computer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

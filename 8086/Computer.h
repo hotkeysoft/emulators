@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CPU/CPU8086.h"
+#include <Computer/ComputerBase.h>
 #include <CPU/Memory.h>
 #include "IO/InputEvents.h"
 #include "Hardware/DeviceDMAPageRegister.h"
@@ -55,7 +56,7 @@ namespace emul
 		size_t m_speed = 4772726;
 	};
 
-	class Computer : public Serializable, public PortConnector
+	class Computer : public ComputerBase
 	{
 	public:
 		const char* CPUID_8086 = "8086";
@@ -64,29 +65,19 @@ namespace emul
 
 		virtual ~Computer();
 
-		virtual std::string_view GetName() const = 0;
-		virtual std::string_view GetID() const = 0;
-
 		virtual void Init(WORD baseRAM) = 0;
-
-		virtual bool Step() { return m_cpu->Step(); }
-
-		virtual void Reset() { m_cpu->Reset(); }
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }
 
-		CPU8086& GetCPU() const { return *m_cpu; }
-		Memory& GetMemory() { return m_memory; }
 		beeper::DevicePCSpeaker& GetSound() { return m_pcSpeaker; } // TODO: Sound interface
 		fdc::DeviceFloppy* GetFloppy() { return m_floppy; }
 		hdd::DeviceHardDrive* GetHardDrive() { return m_hardDrive; }
 		virtual kbd::DeviceKeyboard& GetKeyboard() = 0;
-		video::Video& GetVideo() { return *m_video; }
-		events::InputEvents& GetInputs() { return *m_inputs; }
 		mouse::DeviceSerialMouse* GetMouse() { return m_mouse; }
 
 		virtual void Reboot(bool hard = false);
-		void SetTurbo(bool turbo) { m_turbo = turbo; }
+
+		CPU8086* GetCPU() const { return (CPU8086*)m_cpu; }
 
 		typedef std::set<CPUSpeed> CPUSpeeds;
 		CPUSpeeds GetCPUSpeeds() const { return m_cpuSpeeds; }
@@ -103,7 +94,9 @@ namespace emul
 	protected:
 		Computer();
 
-		virtual void Init(const char* cpuid, WORD baseRAM);
+		virtual void Init(const char* cpuid, WORD baseRAM) override;
+		virtual void InitCPU(const char* cpuid) override;
+
 		virtual void InitVideo(const std::string& defaultMode, const VideoModes& supported = VideoModes());
 		virtual void InitSound();
 		virtual void InitPIT(pit::Device8254* pit);
@@ -113,7 +106,6 @@ namespace emul
 		virtual void InitJoystick(WORD baseAddress, size_t baseClock);
 		virtual void InitFloppy(fdc::DeviceFloppy* fdd, BYTE irq=0, BYTE dma=0);
 		virtual void InitHardDrive(hdd::DeviceHardDrive* hdd, BYTE irq = 0, BYTE dma = 0);
-		virtual void InitInputs(size_t clockSpeedHz);
 		virtual void InitMouse(size_t baseClock);
 		virtual void InitRTC();
 
@@ -131,24 +123,18 @@ namespace emul
 		virtual void TickFloppy();
 		virtual void TickHardDrive();
 
-		WORD m_baseRAM = 640;
-		Memory m_memory;
-
 		MemoryBlock m_hddROM;
 
-		emul::CPU8086* m_cpu = nullptr;
 		pit::Device8254* m_pit = nullptr;
 		pic::Device8259* m_pic = nullptr;
 		ppi::DevicePPI* m_ppi = nullptr;
 		dma::Device8237* m_dma1 = nullptr;
 		dma::Device8237* m_dma2 = nullptr;
 		dma::DeviceDMAPageRegister m_dmaPageRegister;
-		video::Video* m_video = nullptr;
 		joy::DeviceJoystick* m_joystick = nullptr;
 		beeper::DevicePCSpeaker m_pcSpeaker;
 		hdd::DeviceHardDrive* m_hardDrive = nullptr;
 		fdc::DeviceFloppy* m_floppy = nullptr;
-		events::InputEvents* m_inputs = nullptr;
 		mouse::DeviceSerialMouse* m_mouse = nullptr;
 		rtc::Device8167* m_rtc = nullptr;
 
@@ -156,8 +142,6 @@ namespace emul
 		BYTE m_floppyDMA = 0;
 		BYTE m_hddIRQ = 0;
 		BYTE m_hddDMA = 0;
-
-		bool m_turbo = false;
 
 	private:
 		VideoModes m_videoModes;

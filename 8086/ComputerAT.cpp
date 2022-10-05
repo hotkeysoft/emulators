@@ -137,11 +137,11 @@ namespace emul
 			InitHardDrive(new hdd::DeviceHardDrive(0x320, PIT_CLK), IRQ_HDD, DMA_HDD);
 		}
 
-		m_post.Init(m_cpu);
+		m_post.Init(GetCPU());
 
 		{
 			ppi::Device8042AT* ppi = (ppi::Device8042AT*)m_ppi;
-			ppi->SetCPU(m_cpu);
+			ppi->SetCPU(GetCPU());
 		}
 
 		// Configuration switches
@@ -231,11 +231,11 @@ namespace emul
 		static auto lastTick = std::chrono::high_resolution_clock::now();
 		static int64_t syncTicks = 0;
 
-		if (m_pic->InterruptPending() && GetCPU().CanInterrupt())
+		if (m_pic->InterruptPending() && GetCPU()->CanInterrupt())
 		{
 			m_pic->InterruptAcknowledge();
 			LogPrintf(LOG_DEBUG, "[%zu] IRQ %d", g_ticks, m_pic->GetPendingInterrupt() - 8);
-			GetCPU().Interrupt(m_pic->GetPendingInterrupt());
+			GetCPU()->Interrupt(m_pic->GetPendingInterrupt());
 			return true;
 		}
 		else if (!Computer::Step())
@@ -244,7 +244,7 @@ namespace emul
 		}
 
 		static uint32_t cpuTicks = 0;
-		cpuTicks += GetCPU().GetInstructionTicks();
+		cpuTicks += GetCPU()->GetInstructionTicks();
 
 		ppi::Device8042AT* ppi = (ppi::Device8042AT*)m_ppi;
 

@@ -6,6 +6,7 @@
 
 namespace emul
 {
+	class CPU;
 	class CPU6502;
 
 	enum class MonitorState { RUN, WAIT, EXIT, SWITCH_MODE };
@@ -21,7 +22,7 @@ namespace emul
 		Monitor6502(Monitor6502&&) = delete;
 		Monitor6502& operator=(Monitor6502&&) = delete;
 
-		virtual void Init(CPU6502& cpu, Memory& memory);
+		virtual void Init(CPU* cpu, Memory& memory);
 
 		void SetCustomMemoryView(ADDRESS address) { m_customMemView = address; }
 

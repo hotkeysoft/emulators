@@ -12,7 +12,7 @@ namespace emul
 {
 	ComputerZX80::ComputerZX80() :
 		Logger("ZX80"),
-		Computer(m_memory),
+		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x4000, emul::MemoryType::RAM),
 		m_rom("ROM", 0x1000, emul::MemoryType::ROM)
 	{
@@ -20,7 +20,7 @@ namespace emul
 
 	void ComputerZX80::Init(WORD baseRAM)
 	{
-		Computer::Init(CPUID_Z80, baseRAM);
+		ComputerBase::Init(CPUID_Z80, baseRAM);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
@@ -35,25 +35,41 @@ namespace emul
 
 		Connect(0xFE, static_cast<PortConnector::INFunction>(&ComputerZX80::ReadKeyboard));
 
+		InitInputs(1000000);
+		GetInputs().InitKeyboard(&m_keyboard);
+		InitVideo();
+	}
+
+	void ComputerZX80::InitCPU(const char* cpuid)
+	{
+		if (cpuid == CPUID_Z80) m_cpu = new CPUZ80(m_memory);
+		else
+		{
+			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
+			throw std::exception("CPUType not supported");
+		}
+	}
+
+	void ComputerZX80::InitVideo()
+	{
+		video::VideoZX80* video = new video::VideoZX80();
+
 		// TODO, depends if code is shared with zx81
 		const char* arch = "zx80";
-
-		video::VideoZX80* video = new video::VideoZX80();
 
 		DWORD backgroundRGB = CONFIG().GetValueDWORD(arch, "video.bg", video->GetDefaultBackground());
 		DWORD foregroundRGB = CONFIG().GetValueDWORD(arch, "video.fg", video->GetDefaultForeground());
 
 		video->SetBackground(backgroundRGB);
 		video->SetForeground(foregroundRGB);
-		InitVideo(video); // Takes ownership
 
-		InitInputs(6000000);
-		GetInputs().InitKeyboard(&m_keyboard);
+		m_video = video;
+		m_video->Init(&m_memory, nullptr);
 	}
 
 	bool ComputerZX80::Step()
 	{
-		if (!Computer::Step())
+		if (!ComputerBase::Step())
 		{
 			return false;
 		}
