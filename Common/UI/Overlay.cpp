@@ -761,6 +761,7 @@ namespace ui
 
 			Rect r{ 0, h - GetOverlayHeight(), w, GetOverlayHeight() };
 			m_mainWnd->MoveRect(&r);
+			WINMGR().GetWindowSize(true); // Discards cached value
 		}
 		else // Pass to active window
 		{
