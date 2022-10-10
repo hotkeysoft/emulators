@@ -13,11 +13,16 @@ namespace tape
 	public:
 		TapeDeck(std::string id) : Logger(id.c_str()) {}
 
+		TapeDeck(const TapeDeck&) = delete;
+		TapeDeck& operator=(const TapeDeck&) = delete;
+		TapeDeck(TapeDeck&&) = delete;
+		TapeDeck& operator=(TapeDeck&&) = delete;
+
 		void Init(size_t sampleRate);
 
 		void SetState(TapeState state) { m_state = state; }
 		TapeState GetState() const { return m_state; }
-		bool GetSense() const { return m_state >= TapeState::PLAY; }
+		bool GetSense() const { return m_state != TapeState::STOP; }
 
 		size_t GetTapeLen() const { return m_data.size(); }
 
@@ -31,7 +36,14 @@ namespace tape
 		size_t GetCounterSeconds() const { return m_counter; } // TODO
 
 		// Only affects PLAY and REC states
-		void SetMotor(bool enable) { m_motorEnabled = enable; }
+		void SetMotor(bool enable) {
+			if (enable != m_motorEnabled)
+			{
+				LogPrintf(LOG_INFO, "Set Motor: %d", enable);
+				m_motorEnabled = enable;
+			}
+
+		}
 
 		// Reads bit at current position
 		bool Read() const { return m_currIn; }

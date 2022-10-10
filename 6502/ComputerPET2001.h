@@ -28,6 +28,8 @@ namespace emul
 
 		CPU6502& GetCPU() const { return *((CPU6502*)m_cpu); }
 
+		virtual tape::DeviceTape* GetTape() override { return &m_tape; }
+
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;

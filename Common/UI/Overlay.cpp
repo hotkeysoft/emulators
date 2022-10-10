@@ -10,6 +10,7 @@
 #pragma warning(disable:4251)
 
 #include <CPU/CPUCommon.h>
+#include <Storage/DeviceTape.h>
 #include <Core/Window.h>
 #include <Core/WindowManager.h>
 #include <Core/ResourceManager.h>
@@ -30,6 +31,10 @@ namespace fs = std::filesystem;
 
 using cfg::CONFIG;
 using namespace CoreUI;
+
+using tape::DeviceTape;
+using tape::TapeDeck;
+using tape::TapeState;
 
 using emul::SerializableException;
 using emul::SerializationError;
@@ -135,6 +140,52 @@ namespace ui
 			m_lastSnapshotDir.clear();
 		}
 		UpdateSnapshot();
+
+		// Toolbar section: Tape drives
+		if (m_pc->GetTape())
+		{
+			m_tapeStateIcons[(int)TapeStateIcon::PLAY_OFF] = RES().FindImage("overlay16", 18);
+			m_tapeStateIcons[(int)TapeStateIcon::PLAY_ON] = RES().FindImage("overlay16", 19);
+			m_tapeStateIcons[(int)TapeStateIcon::REC_OFF] = RES().FindImage("overlay16", 20);
+			m_tapeStateIcons[(int)TapeStateIcon::REC_ON] = RES().FindImage("overlay16", 21);
+
+			for (int i = 0; i < m_pc->GetTape()->GetCount(); ++i)
+			{
+				char id[32];
+
+				sprintf(id, "tape.%d.%s", i, "counter");
+				m_tapeButtons[i].counter = m_toolbar->AddToolbarItem(id, m_tapeStateIcons[(int)TapeStateIcon::PLAY_OFF], "0000");
+				m_tapeButtons[i].counter->SetTag(i);
+
+				sprintf(id, "tape.%d.%s", i, "stop");
+				m_tapeButtons[i].stop = m_toolbar->AddToolbarItem(id, RES().FindImage("overlay16", 22));
+				m_tapeButtons[i].stop->SetTooltip("Stop tape");
+				m_tapeButtons[i].stop->SetTag(i);
+
+				sprintf(id, "tape.%d.%s", i, "rewind");
+				m_tapeButtons[i].rewind = m_toolbar->AddToolbarItem(id, RES().FindImage("overlay16", 25));
+				m_tapeButtons[i].rewind->SetTooltip("Rewind tape");
+				m_tapeButtons[i].rewind->SetTag(i);
+
+				sprintf(id, "tape.%d.%s", i, "play");
+				m_tapeButtons[i].play = m_toolbar->AddToolbarItem(id, RES().FindImage("overlay16", 23));
+				m_tapeButtons[i].play->SetTooltip("Play tape");
+				m_tapeButtons[i].play->SetTag(i);
+
+				sprintf(id, "tape.%d.%s", i, "forward");
+				m_tapeButtons[i].forward = m_toolbar->AddToolbarItem(id, RES().FindImage("overlay16", 26));
+				m_tapeButtons[i].forward->SetTooltip("Fast Forward tape");
+				m_tapeButtons[i].forward->SetTag(i);
+
+				sprintf(id, "tape.%d.%s", i, "record");
+				m_tapeButtons[i].record = m_toolbar->AddToolbarItem(id, RES().FindImage("overlay16", 24));
+				m_tapeButtons[i].record->SetTooltip("Record tape");
+				m_tapeButtons[i].record->SetTag(i);
+
+				m_toolbar->AddSeparator();
+			}
+			UpdateTape();
+		}
 	}
 
 	void Overlay::OnClick(WidgetRef widget)
@@ -172,6 +223,34 @@ namespace ui
 		else if (id == "turbo")
 		{
 			ToggleTurbo();
+		}
+		else if (StringUtil::StartsWith(id, "tape."))
+		{
+			int drive = widget->GetTag().i;
+
+			std::string op(id.cbegin()+ 7, id.end());
+			TapeDeck& tape = m_pc->GetTape()->GetTape(drive);
+
+			if (op == "stop")
+			{
+				tape.SetState(TapeState::STOP);
+			}
+			else if (op == "rewind")
+			{
+				tape.SetState(TapeState::REW);
+			}
+			else if (op == "forward")
+			{
+				tape.SetState(TapeState::FWD);
+			}
+			else if (op == "play")
+			{
+				tape.SetState(TapeState::PLAY);
+			}
+			else if (op == "record")
+			{
+				tape.SetState(TapeState::REC);
+			}
 		}
 		else if (StringUtil::StartsWith(id, "snapshot-"))
 		{
@@ -234,6 +313,34 @@ namespace ui
 		m_turboButton->SetImage(m_turbo ? m_turboOn : m_turboOff);
 	}
 
+	void Overlay::UpdateTape()
+	{
+		DeviceTape* tape = m_pc->GetTape();
+		if (!tape)
+		{
+			return;
+		}
+
+		for (int drive = 0; drive < tape->GetCount(); ++drive)
+		{
+			TapeDeck& deck = tape->GetTape(drive);
+
+			m_tapeButtons[drive].stop->SetPushed(deck.GetState() == TapeState::STOP);
+			m_tapeButtons[drive].rewind->SetPushed(deck.GetState() == TapeState::REW);
+			m_tapeButtons[drive].play->SetPushed(deck.GetState() == TapeState::PLAY);
+			m_tapeButtons[drive].forward->SetPushed(deck.GetState() == TapeState::FWD);
+			m_tapeButtons[drive].record->SetPushed(deck.GetState() == TapeState::REC);
+
+			// Counter
+			{
+				static char buf[16];
+				sprintf(buf, "%06zu", deck.GetCounterRaw());
+				m_tapeButtons[drive].counter->SetText(buf);
+			}
+		}
+
+	}
+
 	bool Overlay::Update()
 	{
 		if (!m_pc)
@@ -250,6 +357,9 @@ namespace ui
 			cooldown = cooldownTime;
 			UpdateSnapshot();
 		}
+
+		UpdateTape();
+
 		return true;
 	}
 

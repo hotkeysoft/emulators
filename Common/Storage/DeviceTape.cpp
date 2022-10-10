@@ -10,7 +10,7 @@ namespace tape
 	void TapeDeck::Init(size_t sampleRate)
 	{
 		m_sampleRate = sampleRate;
-		m_fastIncrement = sampleRate/10;
+		m_fastIncrement = sampleRate/10000;
 		New();
 	}
 
@@ -19,9 +19,8 @@ namespace tape
 		m_tapeLoaded = true;
 		m_maxCounter = initialLen * m_sampleRate;
 		m_data.resize(m_maxCounter);
-		m_data.clear();
 		ResetCounter();
-		LogPrintf(LOG_INFO, "New Tape, len = %ds (%zu samples)", initialLen, m_data.size());
+		LogPrintf(LOG_INFO, "New Tape, len = %ds (%zu samples)", initialLen, m_maxCounter);
 	}
 
 	void TapeDeck::Load(const char* path)
@@ -109,6 +108,7 @@ namespace tape
 		LogPrintf(LOG_INFO, "Sample Rate (req):    %d Hz", sampleRate);
 
 		m_pollInterval = m_clockSpeedHz / sampleRate;
+		m_cooldown = m_pollInterval;
 
 		// Adjust for rounding
 		sampleRate = m_clockSpeedHz / m_pollInterval;
@@ -117,7 +117,7 @@ namespace tape
 		LogPrintf(LOG_INFO, "Poll Interval:        %zi", m_pollInterval);
 		LogPrintf(LOG_INFO, "Sample Rate (actual): %d Hz", m_clockSpeedHz / m_pollInterval);
 
-		for (auto deck : m_decks)
+		for (auto& deck : m_decks)
 		{
 			deck.Init(sampleRate);
 		}
@@ -126,7 +126,7 @@ namespace tape
 	void DeviceTape::EnableLog(SEVERITY minSev)
 	{
 		Logger::EnableLog(minSev);
-		for (auto deck : m_decks)
+		for (auto& deck : m_decks)
 		{
 			deck.EnableLog(minSev);
 		}

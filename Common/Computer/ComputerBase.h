@@ -9,6 +9,7 @@
 using emul::WORD;
 
 namespace events { class InputEvents; }
+namespace tape { class DeviceTape; }
 
 namespace emul
 {
@@ -30,6 +31,8 @@ namespace emul
 		Memory& GetMemory() { return m_memory; }
 		events::InputEvents& GetInputs() { return *m_inputs; }
 		video::Video& GetVideo() { return *m_video; }
+
+		virtual tape::DeviceTape* GetTape() { return nullptr; }
 
 		virtual void Reboot();
 		void SetTurbo(bool turbo) { m_turbo = turbo; }

@@ -24,8 +24,7 @@ namespace pia
 
 		enum DataDirection {INPUT = 0, OUTPUT = 1};
 
-		bool GetC1() const { return CR.IRQ1Latch.IsLatched(); }
-		bool GetC2() const { return CR.IRQ2Latch.IsLatched(); }
+		bool GetC2() const { return !CR.GetC2Output(); }
 
 		void SetC1(bool set)
 		{
@@ -99,7 +98,10 @@ namespace pia
 
 			// C2 Control (when C2 is in output mode)
 			bool GetC2OutputControl() const { return emul::GetBit(data, 4); }
+			// When GetC2OutputControl == 0 (not supported)
 			bool GetC2RestoreControl() const { return emul::GetBit(data, 3); }
+			// When GetC2OutputControl == 1
+			bool GetC2Output() const { return emul::GetBit(data, 3); }
 
 			// CPUIRQ/IRQ2 Control (when C2  is in input mode)
 			bool GetIRQ2PositiveTransition() const { return emul::GetBit(data, 4); }
@@ -123,12 +125,6 @@ namespace pia
 
 		// Interrupt status control
 		BYTE ISC = 0;
-
-		// Input line
-		bool C1 = false;
-
-		// Input/output line
-		bool C2 = false;
 	};
 
 	// 6520 PIA

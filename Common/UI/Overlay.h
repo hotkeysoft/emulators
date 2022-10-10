@@ -44,6 +44,7 @@ namespace ui
 		virtual void UpdateSnapshot();
 		virtual void UpdateTurbo();
 		virtual void UpdateTitle(float fps = 0.);
+		virtual void UpdateTape();
 
 		virtual void ToggleTurbo();
 
@@ -78,6 +79,22 @@ namespace ui
 		CoreUI::ToolbarItemPtr m_rebootButton;
 		CoreUI::ToolbarItemPtr m_turboButton;
 		CoreUI::ToolbarItemPtr m_loadSnapshotButton;
+
+		// Tape, TODO: temporary
+		struct TapeGroup
+		{
+			CoreUI::ToolbarItemPtr stop;
+			CoreUI::ToolbarItemPtr rewind;
+			CoreUI::ToolbarItemPtr play;
+			CoreUI::ToolbarItemPtr forward;
+			CoreUI::ToolbarItemPtr record;
+			CoreUI::ToolbarItemPtr counter;
+
+		} m_tapeButtons[2];
+
+		enum class TapeStateIcon { PLAY_OFF, PLAY_ON, REC_OFF, REC_ON, _MAX_STATE };
+		CoreUI::ImageRef m_tapeStateIcons[(int)TapeStateIcon::_MAX_STATE];
+
 
 		CoreUI::ImageRef m_turboOff = nullptr;
 		CoreUI::ImageRef m_turboOn = nullptr;

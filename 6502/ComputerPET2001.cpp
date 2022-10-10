@@ -257,6 +257,8 @@ namespace emul
 				tape2.SetMotor(m_via.GetCassette2MotorOut());
 				m_pia1.SetCassetteSense1In(tape1.GetSense());
 				m_pia1.SetCassetteSense2In(tape2.GetSense());
+
+				m_tape.Tick();
 			}
 
 			GetInputs().Tick();

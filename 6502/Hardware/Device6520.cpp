@@ -35,8 +35,6 @@ namespace pia
 		CR.data = 0;
 		CR.ClearIRQFlags();
 		ISC = 0;
-		C1 = false;
-		C2 = false;
 	}
 
 	// 0 - Read PIBA/DDRA
@@ -135,8 +133,12 @@ namespace pia
 		{
 			LogPrintf(LOG_INFO, " C2 pin: OUT");
 			LogPrintf(LOG_INFO, " C2 output ctrl : %d", CR.GetC2OutputControl());
-			LogPrintf(LOG_INFO, " C2 restore ctrl: %d", CR.GetC2RestoreControl());
+			LogPrintf(LOG_INFO, " C2 output      : %d", CR.GetC2Output());
 
+			if (CR.GetC2OutputControl() == false)
+			{
+				LogPrintf(LOG_ERROR, "C2 output ctrl = 0 not supported");
+			}
 		}
 		else
 		{
@@ -170,8 +172,6 @@ namespace pia
 		to["DDR"] = DDR;
 		to["IR"] = IR;
 		to["OR"] = OR;
-		to["C1"] = C1;
-		to["C2"] = C2;
 		to["ISC"] = ISC;
 		CR.Serialize(to["CR"]);
 	}
@@ -181,8 +181,6 @@ namespace pia
 		DDR = from["DDR"];
 		IR = from["IR"];
 		OR = from["OR"];
-		C1 = from["C1"];
-		C2 = from["C2"];
 		ISC = from["ISC"];
 		CR.Deserialize(from["CR"]);
 	}
