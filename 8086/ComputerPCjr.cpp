@@ -233,7 +233,7 @@ namespace emul
 			m_soundModule.Tick(); m_soundModule.Tick(); m_soundModule.Tick();
 
 			// TODO: Temporary, pcSpeaker handles the audio, so add to mix
-			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput());
+			if (!m_turbo) m_pcSpeaker.Tick(m_soundModule.GetOutput() * 10);
 
 			TickFloppy();
 

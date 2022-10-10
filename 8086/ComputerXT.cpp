@@ -220,7 +220,7 @@ namespace emul
 			{
 				// SN76489 clock is 3x base clock
 				m_soundPCjr.Tick(); m_soundPCjr.Tick(); m_soundPCjr.Tick();
-				if (!m_turbo) m_pcSpeaker.Tick(m_soundPCjr.GetOutput());
+				if (!m_turbo) m_pcSpeaker.Tick(m_soundPCjr.GetOutput() * 10);
 			}
 			else if (isSoundGameBlaster)
 			{
