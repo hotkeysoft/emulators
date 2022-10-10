@@ -37,6 +37,7 @@
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />
     <ClInclude Include="..\Common\Sound\Sound.h" />
+    <ClInclude Include="..\Common\Storage\DeviceTape.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="..\Common\UI\MainWindow.h" />
     <ClInclude Include="..\Common\UI\Overlay.h" />
@@ -75,6 +76,7 @@
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
+    <ClCompile Include="..\Common\Storage\DeviceTape.cpp" />
     <ClCompile Include="..\Common\UI\MainWindow.cpp" />
     <ClCompile Include="..\Common\UI\Overlay.cpp" />
     <ClCompile Include="..\Common\UI\SnapshotInfo.cpp" />

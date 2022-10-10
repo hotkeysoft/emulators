@@ -11,6 +11,9 @@ namespace via
 		// CA2
 		bool GetGraphicsMode() const { return m_portA.GetC2(); }
 
+		// CB1
+		void SetCassette2ReadLine(bool set) { return m_portB.SetC1(set); }
+
 		// Port B Inputs
 		void SetDAVIn(bool set) { m_portB.SetInputBit(7, !set); }
 		void SetNRFDIn(bool set) { m_portB.SetInputBit(6, !set); }

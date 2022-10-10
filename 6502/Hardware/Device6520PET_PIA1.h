@@ -26,13 +26,13 @@ namespace pia
 		// CA2
 		bool GetBlankScreen() const { return m_portA.GetC2(); }
 		// CA1
-		void SetCassetteReadLine(bool set) { return m_portA.SetC1(set); }
+		void SetCassette1ReadLine(bool set) { return m_portA.SetC1(set); }
 
 		// Port B Inputs
 		void SetKeyboardRow(BYTE data) { m_portB.SetInput(data); }
 
 		// CB2
-		bool GetCassette1Motor() const { return m_portB.GetC2(); }
+		bool GetCassette1MotorOut() const { return m_portB.GetC2(); }
 		// CB1
 		void SetScreenRetrace(bool set) { m_portB.SetC1(set); }
 

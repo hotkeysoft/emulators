@@ -82,6 +82,9 @@
     <Filter Include="Common\Computer">
       <UniqueIdentifier>{8824de60-0fdb-4c1a-9abb-4f9a7446323b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Storage">
+      <UniqueIdentifier>{eea6e8b9-693b-4583-8a52-7c03120c7c03}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -329,6 +332,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\Computer\ComputerBase.cpp">
       <Filter>Common\Computer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Storage\DeviceTape.cpp">
+      <Filter>Common\Storage</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -601,6 +607,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\Computer\ComputerBase.h">
       <Filter>Common\Computer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Storage\DeviceTape.h">
+      <Filter>Common\Storage</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

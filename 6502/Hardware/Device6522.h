@@ -44,6 +44,9 @@ namespace via
 		bool GetC1() const { return C1; }
 		bool GetC2() const { return C2; }
 
+		void SetC1(bool set) { C1 = set; }
+		void SetC2(bool set) { C2 = set; }
+
 		void SetC2Operation(C2Operation op);
 
 	protected:

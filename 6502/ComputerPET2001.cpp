@@ -8,6 +8,7 @@
 
 using cfg::CONFIG;
 using sound::SOUND;
+using tape::TapeDeck;
 
 namespace emul
 {
@@ -29,7 +30,8 @@ namespace emul
 		m_videoRAM("VID", 0x0400),
 		m_ioE800("IO", 0x0100),
 		m_pia1("PIA1"),
-		m_pia2("PIA2")
+		m_pia2("PIA2"),
+		m_tape(CPU_CLK)
 	{
 	}
 
@@ -42,6 +44,7 @@ namespace emul
 		InitROM();
 		InitIO();
 		InitVideo();
+		InitTape();
 
 		InitInputs(CPU_CLK, SCAN_RATE);
 		GetInputs().InitKeyboard(&m_keyboard);
@@ -209,6 +212,11 @@ namespace emul
 		m_memory.Allocate(&m_baseRAM, 0);
 	}
 
+	void ComputerPET2001::InitTape()
+	{
+		m_tape.Init(2);
+	}
+
 	void ComputerPET2001::Reset()
 	{
 		ComputerBase::Reset();
@@ -216,21 +224,6 @@ namespace emul
 		m_pia2.Reset();
 		m_via.Reset();
 		m_keyboard.Reset();
-	}
-
-	void ComputerPET2001::SetCassetteSense(int id, bool set)
-	{
-		switch (id)
-		{
-		case 1:
-			m_pia1.SetCassetteSense1In(set);
-			break;
-		case 2:
-			m_pia1.SetCassetteSense2In(set);
-			break;
-		default:
-			LogPrintf(LOG_ERROR, "Invalid drive id: %d", id);
-		}
 	}
 
 	bool ComputerPET2001::Step()
@@ -249,6 +242,21 @@ namespace emul
 			if (!m_turbo)
 			{
 				SOUND().PlayMono(m_via.GetCassetteDataOut() ? 16384 : 0);
+			}
+
+			// Tape update
+			{
+				TapeDeck& tape1 = m_tape.GetTape(0);
+				TapeDeck& tape2 = m_tape.GetTape(1);
+
+				m_pia1.SetCassette1ReadLine(tape1.Read());
+				m_via.SetCassette2ReadLine(tape2.Read());
+				tape1.Write(m_via.GetCassetteDataOut());
+				tape2.Write(m_via.GetCassetteDataOut());
+				tape1.SetMotor(m_pia1.GetCassette1MotorOut());
+				tape2.SetMotor(m_via.GetCassette2MotorOut());
+				m_pia1.SetCassetteSense1In(tape1.GetSense());
+				m_pia1.SetCassetteSense2In(tape2.GetSense());
 			}
 
 			GetInputs().Tick();

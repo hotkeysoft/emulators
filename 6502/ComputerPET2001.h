@@ -8,6 +8,7 @@
 #include "Hardware/Device6520PET_PIA1.h"
 #include "Video/VideoPET2001.h"
 #include "IO/DeviceKeyboardPET2001.h"
+#include <Storage/DeviceTape.h>
 
 namespace emul
 {
@@ -27,8 +28,6 @@ namespace emul
 
 		CPU6502& GetCPU() const { return *((CPU6502*)m_cpu); }
 
-		void SetCassetteSense(int id, bool set);
-
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
@@ -41,6 +40,7 @@ namespace emul
 		void InitROM();
 		void InitIO();
 		void InitVideo();
+		void InitTape();
 
 		std::string GetCharROMPath();
 
@@ -64,5 +64,7 @@ namespace emul
 		via::Device6522PET m_via;
 
 		kbd::DeviceKeyboardPET2001 m_keyboard;
+
+		tape::DeviceTape m_tape;
 	};
 }
