@@ -23,59 +23,17 @@
 #include <Widgets/Label.h>
 #include <Widgets/TextBox.h>
 
-#include <commdlg.h>
-
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_syswm.h>
 
 namespace fs = std::filesystem;
-
 using cfg::CONFIG;
 using namespace CoreUI;
 
 namespace ui
 {
-	HWND GetHWND()
-	{
-		SDL_SysWMinfo wmInfo;
-		SDL_VERSION(&wmInfo.version);
-		SDL_GetWindowWMInfo(MAINWND().GetWindow(), &wmInfo);
-		return wmInfo.info.win.window;
-	}
-
-	bool SelectFile(fs::path& path, HWND parent)
-	{
-		OPENFILENAMEA ofn;
-		char szFile[1024];
-
-		// Initialize OPENFILENAME
-		ZeroMemory(&ofn, sizeof(ofn));
-		ofn.lStructSize = sizeof(ofn);
-		ofn.hwndOwner = parent;
-		ofn.lpstrFile = szFile;
-		// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
-		// use the contents of szFile to initialize itself.
-		ofn.lpstrFile[0] = '\0';
-		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = "All\0*.*\0Floppy Image\0*.IMG\0";
-		ofn.nFilterIndex = 1;
-		ofn.lpstrFileTitle = NULL;
-		ofn.nMaxFileTitle = 0;
-		ofn.lpstrInitialDir = NULL;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-		// Display the Open dialog box.
-
-		if (!GetOpenFileNameA(&ofn))
-		{
-			return false;
-		}
-		path = szFile;
-		return true;
-	}
-
 	// TODO: The actual refresh interval is proportional
 	// to the emulated CPU spees
 	void HardDriveLED::Update(bool active)

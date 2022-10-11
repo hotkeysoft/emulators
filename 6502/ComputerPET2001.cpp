@@ -50,6 +50,8 @@ namespace emul
 		GetInputs().InitKeyboard(&m_keyboard);
 
 		SOUND().SetBaseClock(CPU_CLK);
+
+		m_videoRAM.EnableLog(LOG_DEBUG);
 	}
 
 	void ComputerPET2001::InitCPU(const char* cpuid)
@@ -272,9 +274,9 @@ namespace emul
 			bool blank = m_video->IsVSync();
 			if (blank != oldBlank)
 			{
-				// TODO: Invert?
-				m_pia1.SetScreenRetrace(blank);
+				LogPrintf(LOG_DEBUG, "Blank: %d", blank);
 
+				m_pia1.SetScreenRetrace(blank);
 				m_via.SetRetraceIn(blank);
 				oldBlank = blank;
 			}

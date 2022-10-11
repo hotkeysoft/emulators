@@ -31,18 +31,21 @@ namespace tape
 		void Save(const char* path);
 		void Eject();
 
+		void LoadRaw(const char* path, BYTE threshold = 0x80);
+		void SaveRaw(const char* path);
+
 		void ResetCounter() { m_counter = 0; }
 		size_t GetCounterRaw() const { return m_counter; }
 		size_t GetCounterSeconds() const { return m_counter; } // TODO
 
-		// Only affects PLAY and REC states
-		void SetMotor(bool enable) {
+		bool GetMotor() const { return m_motorEnabled; }
+		void SetMotor(bool enable)
+		{
 			if (enable != m_motorEnabled)
 			{
 				LogPrintf(LOG_INFO, "Set Motor: %d", enable);
 				m_motorEnabled = enable;
 			}
-
 		}
 
 		// Reads bit at current position

@@ -10,7 +10,7 @@ namespace tape
 	void TapeDeck::Init(size_t sampleRate)
 	{
 		m_sampleRate = sampleRate;
-		m_fastIncrement = sampleRate/10000;
+		m_fastIncrement = sampleRate /5000;
 		New();
 	}
 
@@ -31,6 +31,37 @@ namespace tape
 	void TapeDeck::Save(const char* path)
 	{
 
+	}
+
+	void TapeDeck::LoadRaw(const char* path, BYTE threshold)
+	{
+		LogPrintf(LOG_INFO, "LoadRaw, path=%s, threshold=%d", path, threshold);
+
+		std::ifstream inFile(path, std::ios::binary);
+
+		m_data.clear();
+
+		BYTE ch;
+		while (inFile.read((char*)&ch, 1))
+		{
+			static bool lastBit = false;
+			bool bit = ch >= threshold ? false : true;
+			m_data.push_back(bit);
+		}
+
+		LogPrintf(LOG_INFO, "LoadRaw, loaded %d samples", m_data.size());
+
+		inFile.close();
+	}
+
+	void TapeDeck::SaveRaw(const char* path)
+	{
+		std::ofstream outFile(path, std::ios::binary);
+		for (auto var : m_data)
+		{
+			outFile.put(var ? 0xFF : 0);
+		}
+		outFile.close();
 	}
 
 	void TapeDeck::Eject()
@@ -115,7 +146,7 @@ namespace tape
 
 		LogPrintf(LOG_INFO, "Clock Frequency:      %zi Hz", m_clockSpeedHz);
 		LogPrintf(LOG_INFO, "Poll Interval:        %zi", m_pollInterval);
-		LogPrintf(LOG_INFO, "Sample Rate (actual): %d Hz", m_clockSpeedHz / m_pollInterval);
+		LogPrintf(LOG_INFO, "Sample Rate (actual): %d Hz", sampleRate);
 
 		for (auto& deck : m_decks)
 		{

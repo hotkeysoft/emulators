@@ -22,6 +22,8 @@
 #include <Widgets/Label.h>
 #include <Widgets/TextBox.h>
 
+#include <commdlg.h>
+
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -43,6 +45,45 @@ namespace ui
 {
 	Overlay::Overlay() : Logger("GUI")
 	{
+	}
+
+	HWND Overlay::GetHWND()
+	{
+		SDL_SysWMinfo wmInfo;
+		SDL_VERSION(&wmInfo.version);
+		SDL_GetWindowWMInfo(MAINWND().GetWindow(), &wmInfo);
+		return wmInfo.info.win.window;
+	}
+
+	bool Overlay::SelectFile(fs::path& path, HWND parent)
+	{
+		OPENFILENAMEA ofn;
+		char szFile[1024];
+
+		// Initialize OPENFILENAME
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = parent;
+		ofn.lpstrFile = szFile;
+		// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
+		// use the contents of szFile to initialize itself.
+		ofn.lpstrFile[0] = '\0';
+		ofn.nMaxFile = sizeof(szFile);
+		ofn.lpstrFilter = "All\0*.*\0Floppy Image\0*.IMG\0";
+		ofn.nFilterIndex = 1;
+		ofn.lpstrFileTitle = NULL;
+		ofn.nMaxFileTitle = 0;
+		ofn.lpstrInitialDir = NULL;
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+		// Display the Open dialog box.
+
+		if (!GetOpenFileNameA(&ofn))
+		{
+			return false;
+		}
+		path = szFile;
+		return true;
 	}
 
 	bool Overlay::Init()
@@ -251,6 +292,21 @@ namespace ui
 			{
 				tape.SetState(TapeState::REC);
 			}
+			else if (op == "counter") // TODO: Temporary
+			{
+				if (SDL_GetModState() & KMOD_SHIFT)
+				{
+					char buf[128];
+					sprintf(buf, "dump/tape_%zu.raw", time(nullptr));
+					LogPrintf(LOG_INFO, "Dump Tape to %s\n", buf);
+					tape.SaveRaw(buf);
+				}
+				else
+				{
+					LoadTapeImage(tape);
+				}
+			}
+
 		}
 		else if (StringUtil::StartsWith(id, "snapshot-"))
 		{
@@ -324,18 +380,31 @@ namespace ui
 		for (int drive = 0; drive < tape->GetCount(); ++drive)
 		{
 			TapeDeck& deck = tape->GetTape(drive);
+			auto& buttons = m_tapeButtons[drive];
 
-			m_tapeButtons[drive].stop->SetPushed(deck.GetState() == TapeState::STOP);
-			m_tapeButtons[drive].rewind->SetPushed(deck.GetState() == TapeState::REW);
-			m_tapeButtons[drive].play->SetPushed(deck.GetState() == TapeState::PLAY);
-			m_tapeButtons[drive].forward->SetPushed(deck.GetState() == TapeState::FWD);
-			m_tapeButtons[drive].record->SetPushed(deck.GetState() == TapeState::REC);
+			buttons.stop->SetPushed(deck.GetState() == TapeState::STOP);
+			buttons.rewind->SetPushed(deck.GetState() == TapeState::REW);
+			buttons.play->SetPushed(deck.GetState() == TapeState::PLAY);
+			buttons.forward->SetPushed(deck.GetState() == TapeState::FWD);
+			buttons.record->SetPushed(deck.GetState() == TapeState::REC);
 
 			// Counter
 			{
 				static char buf[16];
-				sprintf(buf, "%06zu", deck.GetCounterRaw());
-				m_tapeButtons[drive].counter->SetText(buf);
+				sprintf(buf, "%04zu", deck.GetCounterRaw()/1000);
+				buttons.counter->SetText(buf);
+
+				TapeStateIcon state;
+				switch (deck.GetState())
+				{
+				case TapeState::REC:
+					state = (deck.GetMotor() ? TapeStateIcon::REC_ON : TapeStateIcon::REC_OFF);
+					break;
+				default:
+					state = (deck.GetMotor() ? TapeStateIcon::PLAY_ON : TapeStateIcon::PLAY_OFF);
+					break;
+				}
+				buttons.counter->SetImage(m_tapeStateIcons[(int)state]);
 			}
 		}
 
@@ -784,6 +853,22 @@ namespace ui
 		widget->SetTag((void*)&path);
 
 		m_snapshotWnd->AddControl(widget);
+	}
+
+	void Overlay::LoadTapeImage(TapeDeck& deck)
+	{
+		if (!m_pc || !m_pc->GetTape())
+		{
+			return;
+		}
+
+		fs::path diskImage;
+
+		if (SelectFile(diskImage, GetHWND()))
+		{
+			deck.LoadRaw(diskImage.string().c_str());
+		}
+		UpdateTape();
 	}
 
 	// events::EventHandler

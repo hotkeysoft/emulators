@@ -5,6 +5,8 @@
 #include <Computer/ComputerBase.h>
 #include <CoreUI.h>
 
+namespace tape { class TapeDeck; }
+
 namespace ui
 {
 	using NewComputerCallback = void (*)(std::filesystem::path, json& data);
@@ -36,6 +38,9 @@ namespace ui
 		static const WORD GetOverlayHeight() { return 62; }
 
 	protected:
+		static HWND GetHWND();
+		static bool SelectFile(std::filesystem::path& path, HWND parent);
+
 		CoreUI::ToolbarPtr GetToolbar() { return m_toolbar; }
 
 		virtual void OnClick(CoreUI::WidgetRef widget);
@@ -47,6 +52,8 @@ namespace ui
 		virtual void UpdateTape();
 
 		virtual void ToggleTurbo();
+
+		void LoadTapeImage(tape::TapeDeck& deck);
 
 		// TODO: Should be in separate class so it can be used by others
 		bool MakeSnapshotDirectory(std::filesystem::path& dir);
@@ -94,7 +101,6 @@ namespace ui
 
 		enum class TapeStateIcon { PLAY_OFF, PLAY_ON, REC_OFF, REC_ON, _MAX_STATE };
 		CoreUI::ImageRef m_tapeStateIcons[(int)TapeStateIcon::_MAX_STATE];
-
 
 		CoreUI::ImageRef m_turboOff = nullptr;
 		CoreUI::ImageRef m_turboOn = nullptr;
