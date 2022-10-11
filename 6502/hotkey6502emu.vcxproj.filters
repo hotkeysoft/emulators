@@ -67,6 +67,12 @@
     <Filter Include="Common\Storage">
       <UniqueIdentifier>{bcc68fe5-2777-41a0-aeff-8680a3ce509f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{32d45594-fbdd-40ec-a864-73ab2fa7ceb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{e8ad531e-a813-45d1-9beb-677fbacd54e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -198,6 +204,9 @@
     <ClInclude Include="..\Common\Storage\DeviceTape.h">
       <Filter>Common\Storage</Filter>
     </ClInclude>
+    <ClInclude Include="UI\OverlayPET.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -301,6 +310,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\Storage\DeviceTape.cpp">
       <Filter>Common\Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\OverlayPET.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

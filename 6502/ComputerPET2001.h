@@ -30,6 +30,8 @@ namespace emul
 
 		virtual tape::DeviceTape* GetTape() override { return &m_tape; }
 
+		void LoadPRG(const char* file);
+
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;

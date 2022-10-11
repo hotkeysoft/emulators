@@ -2,9 +2,6 @@
 
 #include <UI/MainWindow.h>
 #include "OverlayXT.h"
-#include <UI/TimeFormatter.h>
-#include <UI/SnapshotInfo.h>
-#include <UI/SnapshotWidget.h>
 #include <Config.h>
 #include "../Storage/DeviceFloppy.h"
 #include "../Storage/DeviceHardDrive.h"

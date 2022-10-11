@@ -19,6 +19,7 @@ namespace tape
 		TapeDeck& operator=(TapeDeck&&) = delete;
 
 		void Init(size_t sampleRate);
+		void Reset();
 
 		void SetState(TapeState state) { m_state = state; }
 		TapeState GetState() const { return m_state; }
@@ -86,6 +87,7 @@ namespace tape
 		DeviceTape& operator=(DeviceTape&&) = delete;
 
 		virtual void Init(size_t maxTapeCount);
+		virtual void Reset();
 
 		virtual void EnableLog(SEVERITY minSev) override;
 
@@ -96,7 +98,7 @@ namespace tape
 
 		TapeDeck& GetTape(int drive)
 		{
-			assert((drive >= 0) && (drive < m_deckCount));
+			assert((drive >= 0) && (drive < MAX_TAPE_COUNT));
 			return m_decks[drive];
 		}
 

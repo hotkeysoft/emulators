@@ -10,8 +10,14 @@ namespace tape
 	void TapeDeck::Init(size_t sampleRate)
 	{
 		m_sampleRate = sampleRate;
-		m_fastIncrement = sampleRate /5000;
+		m_fastIncrement = sampleRate / 5000;
 		New();
+	}
+
+	void TapeDeck::Reset()
+	{
+		m_counter = 0;
+		m_state = TapeState::STOP;
 	}
 
 	void TapeDeck::New(size_t initialLen)
@@ -52,6 +58,8 @@ namespace tape
 		LogPrintf(LOG_INFO, "LoadRaw, loaded %d samples", m_data.size());
 
 		inFile.close();
+		m_counter = 0;
+		m_state = TapeState::STOP;
 	}
 
 	void TapeDeck::SaveRaw(const char* path)
@@ -59,13 +67,15 @@ namespace tape
 		std::ofstream outFile(path, std::ios::binary);
 		for (auto var : m_data)
 		{
-			outFile.put(var ? 0xFF : 0);
+			char ch = var ? 0 : 0xFF;
+			outFile.write(&ch, 1);
 		}
 		outFile.close();
 	}
 
 	void TapeDeck::Eject()
 	{
+		m_state = TapeState::STOP;
 		m_tapeLoaded = false;
 		m_data.resize(m_sampleRate);
 		m_data.clear();
@@ -151,6 +161,14 @@ namespace tape
 		for (auto& deck : m_decks)
 		{
 			deck.Init(sampleRate);
+		}
+	}
+
+	void DeviceTape::Reset()
+	{
+		for (auto& deck : m_decks)
+		{
+			deck.Reset();
 		}
 	}
 

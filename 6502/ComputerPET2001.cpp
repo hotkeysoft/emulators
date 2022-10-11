@@ -226,6 +226,7 @@ namespace emul
 		m_pia2.Reset();
 		m_via.Reset();
 		m_keyboard.Reset();
+		m_tape.Reset();
 	}
 
 	bool ComputerPET2001::Step()
@@ -293,6 +294,66 @@ namespace emul
 		}
 
 		return true;
+	}
+
+	void ComputerPET2001::LoadPRG(const char* file)
+	{
+		LogPrintf(LOG_INFO, "LoadPRG: loading %s", file);
+
+		FILE* f = fopen(file, "rb");
+		if (!f)
+		{
+			LogPrintf(LOG_ERROR, "LoadPRG: error opening binary file");
+			return;
+		}
+
+		bool error = false;
+
+		// Load "header" (2 bytes, load address)
+		WORD loadAddress = 0;
+		size_t bytesRead = fread(&loadAddress, 2, 1, f);
+		if (bytesRead != 1)
+		{
+			LogPrintf(LOG_ERROR, "LoadPRG: error reading header");
+			error = true;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "Load Address: %04X", loadAddress);
+		}
+
+		if (!error)
+		{
+			// Load data
+			MemoryBlock::RawBlock buf;
+			buf.resize(32768);
+			bytesRead = fread(&buf[0], sizeof(BYTE), buf.size(), f);
+			if (bytesRead < 1)
+			{
+				LogPrintf(LOG_ERROR, "LoadPRG: error reading binary file");
+				error = true;
+			}
+			else
+			{
+				LogPrintf(LOG_INFO, "LoadPRG: read %d bytes", bytesRead);
+				buf.resize(bytesRead);
+				m_baseRAM.Fill(loadAddress, buf);
+
+				WORD end = loadAddress + (WORD)bytesRead;
+
+				if (loadAddress == 0x0401)
+				{
+					LogPrintf(LOG_INFO, "LoadPRG: Adjusting BASIC pointers");
+
+					// Adjust pointers, TODO: only basic2
+					m_memory.Write16(0x2A, end);
+					m_memory.Write16(0x2C, end);
+					m_memory.Write16(0x2E, end);
+				}
+			}
+		}
+
+		fclose(f);
 	}
 
 	void ComputerPET2001::Serialize(json& to)

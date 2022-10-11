@@ -2,7 +2,7 @@
 
 #include <Config.h>
 #include <UI/MainWindow.h>
-#include <UI/Overlay.h>
+#include "UI/OverlayPET.h"
 #include <Sound/Sound.h>
 
 #include <CPU/Memory.h>
@@ -41,6 +41,7 @@ using emul::ComputerBase;
 using sound::SOUND;
 using ui::MAINWND;
 using ui::Overlay;
+using ui::OverlayPET;
 
 size_t emul::g_ticks = 0;
 
@@ -328,7 +329,8 @@ int main(int argc, char* args[])
 	MAINWND().Init(Overlay::GetOverlayHeight());
 	InitSound();
 
-	Overlay overlay;
+	// TODO: switchable overlay
+	OverlayPET overlay;
 	overlay.Init();
 	overlay.SetNewComputerCallback(NewComputerCallback);
 	bool showOverlay = true;
