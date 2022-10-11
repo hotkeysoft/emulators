@@ -499,8 +499,8 @@ namespace via
 
 	BYTE Device6522::Interrupt::GetIFR() const
 	{
-		BYTE ifr = (m_interruptFlags & m_interruptEnable);
-		bool any = (ifr != 0);
+		BYTE ifr = m_interruptFlags;
+		bool any = ((ifr & m_interruptEnable) != 0);
 		emul::SetBit(ifr, 7, any);
 		return ifr;
 	}

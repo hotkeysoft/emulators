@@ -110,12 +110,12 @@ namespace via
 		{
 			if (TIMER1.Tick())
 			{
-				LogPrintf(LOG_DEBUG, "Timer1 triggered");
+				LogPrintf(LOG_INFO, "Timer1 triggered");
 				m_interrupt.SetInterrupt(InterruptFlag::TIMER1);
 			}
 			if (TIMER2.Tick())
 			{
-				LogPrintf(LOG_DEBUG, "Timer2 triggered");
+				LogPrintf(LOG_INFO, "Timer2 triggered");
 				m_interrupt.SetInterrupt(InterruptFlag::TIMER2);
 			}
 		}
