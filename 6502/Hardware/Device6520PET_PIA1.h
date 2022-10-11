@@ -34,7 +34,7 @@ namespace pia
 		// CB2
 		bool GetCassette1MotorOut() const { return m_portB.GetC2(); }
 		// CB1
-		void SetScreenRetrace(bool set) { m_portB.SetC1(set); }
+		void SetScreenRetrace(bool set) { m_portB.SetC1(!set); }
 
 	protected:
 		virtual void OnReadPort(PIAPort* src) override;

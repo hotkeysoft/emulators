@@ -22,7 +22,7 @@ namespace via
 
 		// Port B Outputs
 		bool GetCassette2MotorOut() const { return !emul::GetBit(m_portB.GetOutput(), 4); }
-		bool GetCassetteDataOut() const { return emul::GetBit(m_portB.GetOutput(), 3); }
+		bool GetCassetteDataOut() const { return !emul::GetBit(m_portB.GetOutput(), 3); }
 		bool GetATNOut() const { return !emul::GetBit(m_portB.GetOutput(), 2); }
 		bool GetNRFDOut() const { return !emul::GetBit(m_portB.GetOutput(), 1); }
 

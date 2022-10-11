@@ -165,8 +165,8 @@ namespace via
 
 		Connect(0x4, static_cast<IOConnector::READFunction>(&Device6522::ReadT1CounterL));
 		Connect(0x5, static_cast<IOConnector::READFunction>(&Device6522::ReadT1CounterH));
-		Connect(0x6, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchesL));
-		Connect(0x7, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchesH));
+		Connect(0x6, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchL));
+		Connect(0x7, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchH));
 		Connect(0x8, static_cast<IOConnector::READFunction>(&Device6522::ReadT2CounterL));
 		Connect(0x9, static_cast<IOConnector::READFunction>(&Device6522::ReadT2CounterH));
 		Connect(0xA, static_cast<IOConnector::READFunction>(&Device6522::ReadSR));
@@ -175,10 +175,10 @@ namespace via
 		Connect(0xD, static_cast<IOConnector::READFunction>(&Device6522::ReadIFR));
 		Connect(0xE, static_cast<IOConnector::READFunction>(&Device6522::ReadIER));
 
-		Connect(0x4, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchesL));
+		Connect(0x4, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchL));
 		Connect(0x5, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1CounterH));
-		Connect(0x6, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchesL));
-		Connect(0x7, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchesH));
+		Connect(0x6, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchL));
+		Connect(0x7, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchH));
 		Connect(0x8, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2LatchesL));
 		Connect(0x9, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2CounterH));
 		Connect(0xA, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteSR));
@@ -201,6 +201,7 @@ namespace via
 		ACR.Clear();
 		UpdateACR();
 
+		TIMER1.Reset();
 		TIMER2.Reset();
 
 		m_portA.Reset();
@@ -210,41 +211,59 @@ namespace via
 	// 4 - T1C-L: T1 Low-Order Counter
 	BYTE Device6522::ReadT1CounterL()
 	{
-		LogPrintf(LOG_WARNING, "ReadT1CounterL (Not implemented)");
-		return 0xFF;
-	}
+		BYTE value = TIMER1.GetCounterLow();
 
+		// Reading this register resets the Timer1 interrupt flag
+		m_interrupt.ClearInterrupt(InterruptFlag::TIMER1);
+
+		LogPrintf(LOG_DEBUG, "ReadT1CounterL, value=%02X", value);
+		return value;
+	}
 	// 5 - T1C-H: T1 High-Order Counter
 	BYTE Device6522::ReadT1CounterH()
 	{
-		LogPrintf(LOG_WARNING, "ReadT1CounterH (Not implemented)");
-		return 0xFF;
+		BYTE value = TIMER1.GetCounterHigh();
+
+		LogPrintf(LOG_DEBUG, "ReadT1CounterH, value=%02X", value);
+		return value;
 	}
 	void Device6522::WriteT1CounterH(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteT1CounterH, value=%02X (Not implemented)", value);
+		LogPrintf(LOG_DEBUG, "WriteT1CounterH, value=%02X", value);
+
+		// Writing this register resets the Timer1 interrupt flag
+		m_interrupt.ClearInterrupt(InterruptFlag::TIMER1);
+
+		TIMER1.SetCounterHighLatch(value);
+		TIMER1.Load();
 	}
 
 	// 6 - T1L-L: T1 Low-Order Latches
-	BYTE Device6522::ReadT1LatchesL()
+	BYTE Device6522::ReadT1LatchL()
 	{
-		LogPrintf(LOG_WARNING, "ReadT1LatchesL (Not implemented)");
-		return 0xFF;
+		BYTE value = TIMER1.GetCounterLowLatch();
+
+		LogPrintf(LOG_DEBUG, "ReadT1LatchL, value=%02X", value);
+		return value;
 	}
-	void Device6522::WriteT1LatchesL(BYTE value)
+	void Device6522::WriteT1LatchL(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteT1LatchesL, value=%02X (Not implemented)", value);
+		LogPrintf(LOG_DEBUG, "WriteT1LatchL, value=%02X", value);
+		TIMER1.SetCounterLowLatch(value);
 	}
 
 	// 7 - T1L-H: T1 High-Order Latches
-	BYTE Device6522::ReadT1LatchesH()
+	BYTE Device6522::ReadT1LatchH()
 	{
-		LogPrintf(LOG_WARNING, "ReadT1LatchesH (Not implemented)");
-		return 0xFF;
+		BYTE value = TIMER1.GetCounterHighLatch();
+
+		LogPrintf(LOG_DEBUG, "ReadT1LatchH, value=%02X", value);
+		return value;
 	}
-	void Device6522::WriteT1LatchesH(BYTE value)
+	void Device6522::WriteT1LatchH(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteT1LatchesH, value=%02X (Not implemented)", value);
+		LogPrintf(LOG_DEBUG, "WriteT1LatchH, value=%02X", value);
+		TIMER1.SetCounterHighLatch(value);
 	}
 
 	// 8 - T2C-L: T2 Low-Order Counter
@@ -278,7 +297,8 @@ namespace via
 		// Writing this register resets the Timer2 interrupt flag
 		m_interrupt.ClearInterrupt(InterruptFlag::TIMER2);
 
-		TIMER2.SetCounterHigh(value);
+		TIMER2.SetCounterHighLatch(value);
+		TIMER2.Load();
 	}
 
 	// A - SR: Shift Register
@@ -427,41 +447,43 @@ namespace via
 		);
 	}
 
-	void Device6522::Timer2::Reset()
+	void Device6522::Timer::Reset()
 	{
 		m_armed = false;
 		m_latch = 0;
 		m_counter = 0;
 	}
 
-	bool Device6522::Timer2::Tick()
+	bool Device6522::Timer::Tick()
 	{
 		bool ret = false;
-		--m_counter;
-		if (m_counter == 0)
+
+		if (m_load)
 		{
 			m_counter = m_latch;
+			m_load = false;
+		}
+		else if (m_counter == 0)
+		{
+			m_load = true;
 			ret = m_armed; // Triggers interrupt only once
 			m_armed = false;
+		}
+		else
+		{
+			--m_counter;
 		}
 
 		return ret;
 	}
 
-	void Device6522::Timer2::SetCounterHigh(BYTE value)
-	{
-		emul::SetHByte(m_latch, value);
-		m_counter = m_latch;
-		m_armed = true;
-	}
-
-	void Device6522::Timer2::Serialize(json& to)
+	void Device6522::Timer::Serialize(json& to)
 	{
 		to["latch"] = m_latch;
 		to["armed"] = m_armed;
 		to["counter"] = m_counter;
 	}
-	void Device6522::Timer2::Deserialize(const json& from)
+	void Device6522::Timer::Deserialize(const json& from)
 	{
 		m_latch = from["latch"];
 		m_armed = from["armed"];
@@ -499,6 +521,7 @@ namespace via
 		m_portA.Serialize(to["portA"]);
 		m_portB.Serialize(to["portB"]);
 
+		TIMER1.Serialize(to["timer1"]);
 		TIMER2.Serialize(to["timer2"]);
 
 		m_interrupt.Serialize(to["interrupt"]);
@@ -512,6 +535,7 @@ namespace via
 		m_portA.Deserialize(from["portA"]);
 		m_portB.Deserialize(from["portB"]);
 
+		TIMER1.Deserialize(from["timer1"]);
 		TIMER2.Deserialize(from["timer2"]);
 
 		m_interrupt.Deserialize(from["interrupt"]);

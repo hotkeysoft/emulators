@@ -108,6 +108,11 @@ namespace via
 
 		void Tick()
 		{
+			if (TIMER1.Tick())
+			{
+				LogPrintf(LOG_DEBUG, "Timer1 triggered");
+				m_interrupt.SetInterrupt(InterruptFlag::TIMER1);
+			}
 			if (TIMER2.Tick())
 			{
 				LogPrintf(LOG_DEBUG, "Timer2 triggered");
@@ -128,12 +133,12 @@ namespace via
 		void WriteT1CounterH(BYTE value);
 
 		// 6 - T1L-L: T1 Low-Order Latches
-		BYTE ReadT1LatchesL();
-		void WriteT1LatchesL(BYTE value);
+		BYTE ReadT1LatchL();
+		void WriteT1LatchL(BYTE value);
 
 		// 7 - T1L-H: T1 High-Order Latches
-		BYTE ReadT1LatchesH();
-		void WriteT1LatchesH(BYTE value);
+		BYTE ReadT1LatchH();
+		void WriteT1LatchH(BYTE value);
 
 		// 8 - T2C-L: T2 Low-Order Counter
 		BYTE ReadT2CounterL();
@@ -252,16 +257,22 @@ namespace via
 		} ACR;
 		void UpdateACR();
 
-		struct Timer2 : emul::Serializable
+		// TODO: Only one shot, timer1&2 differences
+		struct Timer : emul::Serializable
 		{
 			void Reset();
 			bool Tick(); // Returns true when interrupt should be set. TODO: Ugly
 
 			BYTE GetCounterHigh() const { return emul::GetHByte(m_counter); }
-			BYTE GetCounterLow() const { return emul::GetHByte(m_counter); }
+			BYTE GetCounterLow() const { return emul::GetLByte(m_counter); }
+
+			BYTE GetCounterHighLatch() const { return emul::GetHByte(m_latch); }
+			BYTE GetCounterLowLatch() const { return emul::GetLByte(m_latch); }
 
 			void SetCounterLowLatch(BYTE value) { emul::SetLByte(m_latch, value); }
-			void SetCounterHigh(BYTE);
+			void SetCounterHighLatch(BYTE value) { emul::SetHByte(m_latch, value); }
+
+			void Load() { m_load = true; m_armed = true; }
 
 			// emul::Serializable
 			virtual void Serialize(json& to) override;
@@ -269,9 +280,10 @@ namespace via
 
 		private:
 			bool m_armed = false;
+			bool m_load = false;
 			WORD m_latch = 0;
 			WORD m_counter = 0;
-		} TIMER2;
+		} TIMER1, TIMER2;
 
 		VIAPort m_portA;
 		VIAPort m_portB;
