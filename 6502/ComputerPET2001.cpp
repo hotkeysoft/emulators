@@ -345,10 +345,22 @@ namespace emul
 				{
 					LogPrintf(LOG_INFO, "LoadPRG: Adjusting BASIC pointers");
 
-					// Adjust pointers, TODO: only basic2
-					m_memory.Write16(0x2A, end);
-					m_memory.Write16(0x2C, end);
-					m_memory.Write16(0x2E, end);
+					switch (m_model)
+					{
+					case Model::BASIC1:
+					case Model::BASIC1p:
+					default:
+						m_memory.Write16(0x7C, end);
+						m_memory.Write16(0x7E, end);
+						m_memory.Write16(0x80, end);
+						break;
+					case Model::BASIC2n:
+					case Model::BASIC2p:
+						m_memory.Write16(0x2A, end);
+						m_memory.Write16(0x2C, end);
+						m_memory.Write16(0x2E, end);
+						break;
+					}
 				}
 			}
 		}
