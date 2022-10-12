@@ -419,6 +419,8 @@ namespace emul
 
 			PUSH(GetHByte(m_programCounter));
 			PUSH(GetLByte(m_programCounter));
+
+			SetFlag(FLAG_B, false); // Not initiated by BRK
 			PUSH(m_reg.flags | _FLAG_R5);
 
 			SetFlag(FLAG_I, true);
