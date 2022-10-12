@@ -5,6 +5,7 @@
 #include "IO/Console.h"
 #include "CPU/CPU6502.h"
 #include <Sound/Sound.h>
+#include "IO/DeviceKeyboardPET2001.h"
 
 using cfg::CONFIG;
 using sound::SOUND;
@@ -45,11 +46,17 @@ namespace emul
 	{
 	}
 
+	ComputerPET2001::~ComputerPET2001()
+	{
+		delete m_keyboard;
+	}
+
 	void ComputerPET2001::Init(WORD baseRAM)
 	{
 		ComputerBase::Init(CPUID_6502, baseRAM);
 
 		InitModel();
+		InitKeyboard();
 		InitRAM(baseRAM);
 		InitROM();
 		InitIO();
@@ -57,7 +64,7 @@ namespace emul
 		InitTape();
 
 		InitInputs(CPU_CLK, SCAN_RATE);
-		GetInputs().InitKeyboard(&m_keyboard);
+		GetInputs().InitKeyboard(m_keyboard);
 
 		SOUND().SetBaseClock(CPU_CLK);
 
@@ -83,7 +90,7 @@ namespace emul
 		}
 		return Model::UNKNOWN;
 	}
-	const char* ComputerPET2001::ModelToString(ComputerPET2001::Model model)
+	std::string ComputerPET2001::ModelToString(ComputerPET2001::Model model)
 	{
 		for (auto curr : s_modelMap)
 		{
@@ -92,9 +99,8 @@ namespace emul
 				return curr.first.c_str();
 			}
 		}
-		return nullptr;
+		return "unknown";
 	}
-
 
 	void ComputerPET2001::InitModel()
 	{
@@ -107,6 +113,15 @@ namespace emul
 			m_model = Model::BASIC1p;
 			LogPrintf(LOG_WARNING, "Unknown model [%s], using default", model.c_str());
 		}
+
+		LogPrintf(LOG_INFO, "InitModel: [%s]", ModelToString(m_model).c_str());
+	}
+
+	void ComputerPET2001::InitKeyboard()
+	{
+		m_keyboard = new kbd::DeviceKeyboardPET2001();
+		m_keyboard->EnableLog(CONFIG().GetLogLevel("keyboard"));
+		m_keyboard->SetModel(m_model);
 	}
 
 	std::string ComputerPET2001::GetCharROMPath()
@@ -214,7 +229,7 @@ namespace emul
 
 		// PIA1 @ E8[10]
 		m_pia1.EnableLog(CONFIG().GetLogLevel("pet.pia1"));
-		m_pia1.Init(&m_keyboard);
+		m_pia1.Init(m_keyboard);
 		// Incomplete decoding, will also select at 3x, 5x, 7x etc
 		m_ioE800.AddDevice(m_pia1, 0x10);
 
@@ -263,7 +278,7 @@ namespace emul
 		m_pia1.Reset();
 		m_pia2.Reset();
 		m_via.Reset();
-		m_keyboard.Reset();
+		m_keyboard->Reset();
 		m_tape.Reset();
 	}
 

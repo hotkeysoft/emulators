@@ -177,9 +177,6 @@
     <ClInclude Include="..\Common\UI\MainWindow.h">
       <Filter>Common\UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\IO\InputEventHandler.h">
-      <Filter>Common\IO</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\Video\Video.h">
       <Filter>Common\Video</Filter>
     </ClInclude>
@@ -206,6 +203,9 @@
     </ClInclude>
     <ClInclude Include="UI\OverlayPET.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\IO\InputEventHandler.h">
+      <Filter>Header Files\IO</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -313,6 +313,9 @@
     </ClCompile>
     <ClCompile Include="UI\OverlayPET.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceKeyboardPET2001.cpp">
+      <Filter>Common\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

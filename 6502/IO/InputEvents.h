@@ -4,14 +4,13 @@
 
 #include <map>
 #include <vector>
-#include "DeviceKeyboardPET2001.h"
 
 using emul::BYTE;
 
+namespace kbd { class DeviceKeyboardPET2001; }
+
 namespace events
 {
-	enum class KBDMapping { XT, TANDY };
-
 	class EventHandler;
 
 	class Key

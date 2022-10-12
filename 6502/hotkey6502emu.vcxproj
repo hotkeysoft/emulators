@@ -90,6 +90,7 @@
     <ClCompile Include="Hardware\Device6520.cpp" />
     <ClCompile Include="Hardware\Device6520PET_PIA1.cpp" />
     <ClCompile Include="Hardware\Device6522.cpp" />
+    <ClCompile Include="IO\DeviceKeyboardPET2001.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor6502.cpp" />
     <ClCompile Include="Main.cpp" />
