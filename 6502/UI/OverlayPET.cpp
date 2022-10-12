@@ -60,7 +60,7 @@ namespace ui
 
 		fs::path diskImage;
 
-		if (SelectFile(diskImage, GetHWND()))
+		if (SelectFile(diskImage, GetHWND(), { {"Program Files (*.prg)", "*.prg"} }))
 		{
 			pet->LoadPRG(diskImage.string().c_str());
 		}

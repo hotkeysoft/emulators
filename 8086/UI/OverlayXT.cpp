@@ -424,7 +424,7 @@ namespace ui
 		{
 			GetPC()->GetFloppy()->ClearDiskImage(drive);
 		}
-		else if (SelectFile(diskImage, GetHWND()))
+		else if (SelectFile(diskImage, GetHWND(), { {"Floppy disk image (*.img)", "*.img"} }))
 		{
 			GetPC()->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
 		}
@@ -439,7 +439,7 @@ namespace ui
 		}
 
 		fs::path diskImage;
-		if (SelectFile(diskImage, GetHWND()))
+		if (SelectFile(diskImage, GetHWND(), { {"Hard disk image (*.img)", "*.img"} }))
 		{
 			BYTE currImageType = GetPC()->GetHardDrive()->GetImageInfo(drive).type;
 

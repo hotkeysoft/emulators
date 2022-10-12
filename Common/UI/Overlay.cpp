@@ -55,8 +55,21 @@ namespace ui
 		return wmInfo.info.win.window;
 	}
 
-	bool Overlay::SelectFile(fs::path& path, HWND parent)
+	bool Overlay::SelectFile(fs::path& path, HWND parent, SelectFileFilters filters, bool addAllFilesFilter)
 	{
+		std::string filterStr;
+		if (addAllFilesFilter)
+		{
+			filters.push_back(std::make_pair("All Files (*.*)", "*.*"));
+		}
+		for (auto& filter : filters)
+		{
+			filterStr.append(filter.first);
+			filterStr.push_back('\0');
+			filterStr.append(filter.second);
+			filterStr.push_back('\0');
+		}
+
 		OPENFILENAMEA ofn;
 		char szFile[1024];
 
@@ -69,7 +82,7 @@ namespace ui
 		// use the contents of szFile to initialize itself.
 		ofn.lpstrFile[0] = '\0';
 		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = "All\0*.*\0Floppy Image\0*.IMG\0";
+		ofn.lpstrFilter = filterStr.c_str();
 		ofn.nFilterIndex = 1;
 		ofn.lpstrFileTitle = NULL;
 		ofn.nMaxFileTitle = 0;
@@ -864,7 +877,8 @@ namespace ui
 
 		fs::path diskImage;
 
-		if (SelectFile(diskImage, GetHWND()))
+		// TODO: Temp
+		if (SelectFile(diskImage, GetHWND(), { {"Raw Tape image (*.raw)", "*.raw"} }))
 		{
 			deck.LoadRaw(diskImage.string().c_str());
 		}
