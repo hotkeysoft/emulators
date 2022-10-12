@@ -17,6 +17,8 @@ namespace emul
 	class ComputerPET2001 : public ComputerBase
 	{
 	public:
+		enum class Model { UNKNOWN, BASIC1, BASIC1p, BASIC2n, BASIC2b, BASIC4n, BASIC4b };
+
 		ComputerPET2001();
 
 		virtual std::string_view GetName() const override { return "PET2001"; };
@@ -48,12 +50,17 @@ namespace emul
 
 		std::string GetCharROMPath();
 
-		enum class Model { BASIC1, BASIC1p, BASIC2n, BASIC2p };
+		static const std::map<std::string, Model> s_modelMap;
+		static Model StringToModel(const char*);
+		static const char* ModelToString(Model);
+
 		Model m_model = Model::BASIC1p;
 
 		const std::string m_basePathROM = "data/PET/PET2001/";
+		const std::string m_basePathROM4 = "data/PET/PET4000/";
 
 		emul::MemoryBlock m_baseRAM;
+		emul::MemoryBlock m_romB000;
 		emul::MemoryBlock m_romC000;
 		emul::MemoryBlock m_romD000;
 		emul::MemoryBlock m_romE000;
