@@ -47,10 +47,13 @@ namespace emul
 	}
 
 	inline bool GetLSB(const BYTE b) { return b & 1; }
-	inline bool GetMSB(const BYTE b) { return b & 128; }
+	inline bool GetMSB(const BYTE b) { return b & 0x80; }
 
 	inline bool GetLSB(const WORD b) { return b & 1; }
-	inline bool GetMSB(const WORD b) { return b & 32768; }
+	inline bool GetMSB(const WORD b) { return b & 0x8000; }
+
+	inline bool GetLSB(const DWORD b) { return b & 1; }
+	inline bool GetMSB(const DWORD b) { return b & 0x80000000; }
 
 	inline BYTE GetLByte(const WORD w) { return BYTE(w); };
 	inline BYTE GetHByte(const WORD w) { return BYTE(w >> 8); };
