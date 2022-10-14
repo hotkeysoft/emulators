@@ -14,6 +14,7 @@
 #include <Computer/ComputerBase.h>
 #include "Computer6502.h"
 #include "ComputerPET2001.h"
+#include "ComputerVIC20.h"
 
 #include <conio.h>
 #include <vector>
@@ -139,6 +140,10 @@ ComputerBase* CreateComputer(std::string arch)
 	if (arch == "pet" || arch == "pet2001")
 	{
 		computer = new emul::ComputerPET2001();
+	}
+	else if (arch == "vic" || arch == "vic20")
+	{
+		computer = new emul::ComputerVIC20();
 	}
 
 	return computer;

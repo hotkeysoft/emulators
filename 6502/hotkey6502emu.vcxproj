@@ -48,6 +48,7 @@
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="Computer6502.h" />
     <ClInclude Include="ComputerPET2001.h" />
+    <ClInclude Include="ComputerVIC20.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="CPU\CPU6502.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
@@ -61,6 +62,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UI\OverlayPET.h" />
     <ClInclude Include="Video\VideoPET2001.h" />
+    <ClInclude Include="Video\VideoVIC.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Computer\ComputerBase.cpp" />
@@ -86,6 +88,7 @@
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="Computer6502.cpp" />
     <ClCompile Include="ComputerPET2001.cpp" />
+    <ClCompile Include="ComputerVIC20.cpp" />
     <ClCompile Include="CPU\CPU6502.cpp" />
     <ClCompile Include="Hardware\Device6520.cpp" />
     <ClCompile Include="Hardware\Device6520PET_PIA1.cpp" />
@@ -102,6 +105,7 @@
     </ClCompile>
     <ClCompile Include="UI\OverlayPET.cpp" />
     <ClCompile Include="Video\VideoPET2001.cpp" />
+    <ClCompile Include="Video\VideoVIC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config\6502.ans">

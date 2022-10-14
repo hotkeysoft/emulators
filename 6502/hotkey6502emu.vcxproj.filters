@@ -207,6 +207,12 @@
     <ClInclude Include="..\Common\IO\InputEventHandler.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="ComputerVIC20.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\VideoVIC.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -316,6 +322,12 @@
     </ClCompile>
     <ClCompile Include="IO\DeviceKeyboardPET2001.cpp">
       <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerVIC20.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\VideoVIC.cpp">
+      <Filter>Source Files\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
