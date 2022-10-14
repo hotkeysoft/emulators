@@ -69,11 +69,21 @@ namespace video
 		IOConnector::Connect(0xF, static_cast<IOConnector::WRITEFunction>(&VideoVIC::WriteColorControl));
 	}
 
+	void VideoVIC::Reset()
+	{
+		Video::Reset();
+		m_rawVICRegisters.fill(0);
+		UpdateBaseAddress();
+		m_currX = 0;
+		m_currY = 0;
+		m_currRow = 0;
+	}
+
 	// CR0
 	BYTE VideoVIC::ReadScreenOriginX()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadScreenOriginX, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::ORIGIN_X);
+		LogPrintf(LOG_DEBUG, "ReadScreenOriginX, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteScreenOriginX(BYTE value)
@@ -84,8 +94,8 @@ namespace video
 	// CR1
 	BYTE VideoVIC::ReadScreenOriginY()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadScreenOriginY, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::ORIGIN_Y);
+		LogPrintf(LOG_DEBUG, "ReadScreenOriginY, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteScreenOriginY(BYTE value)
@@ -96,20 +106,24 @@ namespace video
 	// CR2
 	BYTE VideoVIC::ReadColumns()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadColumns, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::COLUMNS);
+		LogPrintf(LOG_DEBUG, "ReadColumns, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteColumns(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteColumns, value=%02X, not implemented", value);
+		WriteVICRegister(VICRegister::COLUMNS, value);
+		LogPrintf(LOG_WARNING, "WriteColumns, value=%02X", value);
+
+		// High bit contains video memory offset
+		UpdateBaseAddress();
 	}
 
 	// CR3
 	BYTE VideoVIC::ReadRows()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadRows, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::ROWS);
+		LogPrintf(LOG_DEBUG, "ReadRows, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteRows(BYTE value)
@@ -120,8 +134,8 @@ namespace video
 	// CR4
 	BYTE VideoVIC::ReadRaster()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadRaster, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::RASTER);
+		LogPrintf(LOG_DEBUG, "ReadRaster, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteRaster(BYTE value)
@@ -132,20 +146,22 @@ namespace video
 	// CR5
 	BYTE VideoVIC::ReadBaseAddress()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadBaseAddress, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::BASE_ADDRESS);
+		LogPrintf(LOG_DEBUG, "ReadBaseAddress, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteBaseAddress(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteBaseAddress, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteBaseAddress, value=%02X", value);
+		WriteVICRegister(VICRegister::BASE_ADDRESS, value);
+		UpdateBaseAddress();
 	}
 
 	// CR6
 	BYTE VideoVIC::ReadLightPenX()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadLightPenX, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::LIGHTPEN_X);
+		LogPrintf(LOG_DEBUG, "ReadLightPenX, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteLightPenX(BYTE value)
@@ -156,8 +172,8 @@ namespace video
 	// CR7
 	BYTE VideoVIC::ReadLightPenY()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadLightPenY, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::LIGHTPEN_Y);
+		LogPrintf(LOG_DEBUG, "ReadLightPenY, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteLightPenY(BYTE value)
@@ -168,8 +184,8 @@ namespace video
 	// CR8
 	BYTE VideoVIC::ReadPotX()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadPotX, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::POT_X);
+		LogPrintf(LOG_DEBUG, "ReadPotX, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WritePotX(BYTE value)
@@ -180,8 +196,8 @@ namespace video
 	// CR9
 	BYTE VideoVIC::ReadPotY()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadPotY, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::POT_Y);
+		LogPrintf(LOG_DEBUG, "ReadPotY, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WritePotY(BYTE value)
@@ -192,8 +208,8 @@ namespace video
 	// CRA
 	BYTE VideoVIC::ReadAudioFreq1()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadAudioFreq1, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::AUDIO_FREQ1);
+		LogPrintf(LOG_DEBUG, "ReadAudioFreq1, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteAudioFreq1(BYTE value)
@@ -204,8 +220,8 @@ namespace video
 	// CRB
 	BYTE VideoVIC::ReadAudioFreq2()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadAudioFreq2, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::AUDIO_FREQ2);
+		LogPrintf(LOG_DEBUG, "ReadAudioFreq2, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteAudioFreq2(BYTE value)
@@ -216,8 +232,8 @@ namespace video
 	// CRC
 	BYTE VideoVIC::ReadAudioFreq3()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadAudioFreq3, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::AUDIO_FREQ3);
+		LogPrintf(LOG_DEBUG, "ReadAudioFreq3, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteAudioFreq3(BYTE value)
@@ -228,8 +244,8 @@ namespace video
 	// CRD
 	BYTE VideoVIC::ReadAudioFreq4()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadAudioFreq4, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::AUDIO_FREQ4);
+		LogPrintf(LOG_DEBUG, "ReadAudioFreq4, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteAudioFreq4(BYTE value)
@@ -240,8 +256,8 @@ namespace video
 	// CRE
 	BYTE VideoVIC::ReadAudioAmplitude()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadAudioAmplitude, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::AUDIO_AMPLITUDE);
+		LogPrintf(LOG_DEBUG, "ReadAudioAmplitude, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteAudioAmplitude(BYTE value)
@@ -252,8 +268,8 @@ namespace video
 	// CRF
 	BYTE VideoVIC::ReadColorControl()
 	{
-		BYTE value = 0xFF;
-		LogPrintf(LOG_WARNING, "ReadColorControl, not implemented");
+		BYTE value = ReadVICRegister(VICRegister::COLOR_CONTROL);
+		LogPrintf(LOG_DEBUG, "ReadColorControl, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteColorControl(BYTE value)
@@ -273,7 +289,7 @@ namespace video
 		{
 			++m_currY;
 			m_currX = 0;
-			m_currChar = CHAR_BASE + (H_DISPLAY * (m_currY / CHAR_HEIGHT));
+			m_currChar = m_matrixBaseAddress + (H_DISPLAY * (m_currY / CHAR_HEIGHT));
 			m_currRow = m_currY % CHAR_HEIGHT;
 		}
 
@@ -287,7 +303,7 @@ namespace video
 			m_currY = 0;
 			m_currX = 0;
 			m_currRow = 0;
-			m_currChar = CHAR_BASE;
+			m_currChar = m_matrixBaseAddress;
 		}
 
 		if (IsDisplayArea())
@@ -313,18 +329,81 @@ namespace video
 		};
 	}
 
+	// On VIC-20, A13 is mapped to /BLK4 (0x8000)
+	void VideoVIC::AdjustA13(ADDRESS& addr) const
+	{
+		bool A13 = GetBit(addr, 13);
+		SetBit(addr, 13, false);
+		SetBit(addr, 15, !A13);
+	}
+
+	void VideoVIC::UpdateBaseAddress()
+	{
+		LogPrintf(LOG_INFO, "UpdateBaseAddress");
+		BYTE reg = ReadVICRegister(VICRegister::BASE_ADDRESS);
+
+		// Bits 3-0: start address of character cell space (A13-A10)
+		m_charBaseAddress = (reg & 0x0F) << 10;
+		AdjustA13(m_charBaseAddress);
+		LogPrintf(LOG_WARNING, "CHAR BASE:   %04X", m_charBaseAddress);
+
+		// Hi bit of CR2 contains an offset for the matrix and color base addresses
+		bool offset = emul::GetMSB(ReadVICRegister(VICRegister::COLUMNS));
+
+		// Bits 7-4: start address of char matrix space (A13-A10)
+		m_matrixBaseAddress = (reg & 0xF0) << (10 - 4);
+		AdjustA13(m_matrixBaseAddress);
+		// offset in A9
+		SetBit(m_matrixBaseAddress, 9, offset);
+		LogPrintf(LOG_WARNING, "MATRIX BASE: %04X", m_matrixBaseAddress);
+
+		// Color RAM @ 0x9400
+		m_colorBaseAddress = 0x9400;
+		SetBit(m_colorBaseAddress, 9, offset);
+		LogPrintf(LOG_WARNING, "COLOR BASE:  %04X", m_colorBaseAddress);
+	}
+
 	void VideoVIC::DrawChar()
 	{
 		BYTE ch = m_memory->Read8(m_currChar);
 		const bool reverse = GetBit(ch, 7);
 		SetBit(ch, 7, 0);
 
-		const WORD charROMAddress = CHARROM_BASE + (ch * CHAR_HEIGHT) + m_currRow;
+		const WORD charROMAddress = m_charBaseAddress + (ch * CHAR_HEIGHT) + m_currRow;
 		const BYTE pixels = m_memory->Read8(charROMAddress);
 
 		for (int i = 0; i < CHAR_WIDTH; ++i)
 		{
 			DrawPixel((GetBit(pixels, 7-i) ^ reverse )? m_fgColor : m_bgColor);
 		}
+	}
+
+	// emul::Serializable
+	void VideoVIC::Serialize(json& to)
+	{
+		Video::Serialize(to);
+
+		to["registers"] = m_rawVICRegisters;
+
+		to["currChar"] = m_currChar;
+		to["bg"] = m_bgColor;
+		to["fg"] = m_fgColor;
+		to["currX"] = m_currX;
+		to["currY"] = m_currY;
+		to["currRow"] = m_currRow;
+	}
+	void VideoVIC::Deserialize(const json& from)
+	{
+		Video::Deserialize(from);
+
+		m_rawVICRegisters = from["registers"];
+		UpdateBaseAddress();
+
+		m_currChar = from["currChar"];
+		m_bgColor = from["bg"];
+		m_fgColor = from["fg"];
+		m_currX = from["currX"];
+		m_currY = from["currY"];
+		m_currRow = from["currRow"];
 	}
 }

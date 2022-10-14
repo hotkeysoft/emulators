@@ -9,12 +9,35 @@ namespace via
 
 namespace video
 {
+    enum class VICRegister
+    {
+        ORIGIN_X = 0,
+        ORIGIN_Y,
+        COLUMNS,
+        ROWS,
+        RASTER,
+        BASE_ADDRESS,
+        LIGHTPEN_X,
+        LIGHTPEN_Y,
+        POT_X,
+        POT_Y,
+        AUDIO_FREQ1,
+        AUDIO_FREQ2,
+        AUDIO_FREQ3,
+        AUDIO_FREQ4,
+        AUDIO_AMPLITUDE,
+        COLOR_CONTROL,
+
+        _REGISTER_COUNT
+    };
+
     class VideoVIC : public Video, public emul::IOConnector
     {
     public:
         VideoVIC();
 
         virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);
+        virtual void Reset() override;
 
         virtual const std::string GetID() const override { return "vic"; }
         virtual void Tick() override;
@@ -30,6 +53,10 @@ namespace video
         virtual bool IsVSync() const override { return m_currY >= V_DISPLAY; }
         virtual bool IsHSync() const override { return m_currX >= H_DISPLAY; }
         virtual bool IsDisplayArea() const override { return !IsVSync() && !IsHSync(); }
+
+        // emul::Serializable
+        virtual void Serialize(json& to) override;
+        virtual void Deserialize(const json& from) override;
 
     protected:
         // CR0
@@ -122,9 +149,20 @@ namespace video
         static const uint32_t RIGHT_BORDER = (H_DISPLAY + H_TOTAL) / 2;
         static const uint32_t BOTTOM_BORDER = (V_DISPLAY + V_TOTAL) / 2;
 
-        const ADDRESS CHAR_BASE = 0x1E00;
-        const ADDRESS CHARROM_BASE = 0x8000;
-        ADDRESS m_currChar = CHAR_BASE;
+        // RAW vic registers
+        BYTE ReadVICRegister(VICRegister reg) const { return m_rawVICRegisters[(int)reg]; }
+        void WriteVICRegister(VICRegister reg, BYTE value) { m_rawVICRegisters[(int)reg] = value; }
+        std::array<BYTE, (int)VICRegister::_REGISTER_COUNT> m_rawVICRegisters;
+
+        void UpdateBaseAddress();
+        void AdjustA13(ADDRESS& addr) const;
+
+        // Computed by UpdateBaseAddress()
+        ADDRESS m_matrixBaseAddress = 0;
+        ADDRESS m_colorBaseAddress = 0;
+        ADDRESS m_charBaseAddress = 0;
+
+        ADDRESS m_currChar = 0;
 
         void DrawChar();
 
