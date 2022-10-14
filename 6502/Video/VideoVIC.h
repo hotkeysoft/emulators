@@ -125,7 +125,7 @@ namespace video
         static const uint32_t CHAR_WIDTH = 8;
         // Each Tick() is a half char (4 pixels)
         static const uint32_t HALF_CHAR_WIDTH = CHAR_WIDTH / 2;
-        static const uint32_t CHAR_HEIGHT = 8;
+        uint32_t CHAR_HEIGHT = 8;
 
         // Number of lines displayed
         uint32_t V_DISPLAY = 184;
@@ -164,7 +164,7 @@ namespace video
         WORD GetVICRaster() const { return (WORD)GetVICRegister(VICRegister::RASTER) | (GetVICRaster8() ? 256 : 0); }
         BYTE GetVICColumns() const { return GetVICRegister(VICRegister::COLUMNS) & 127; }
         BYTE GetVICRows() const { return (GetVICRegister(VICRegister::ROWS) >> 1) & 63; }
-        bool GetVICDoubleX() const { return emul::GetBit(GetVICRegister(VICRegister::ROWS), 0); }
+        bool GetVICDoubleY() const { return emul::GetBit(GetVICRegister(VICRegister::ROWS), 0); }
         bool GetVICMemOffset() const { return emul::GetMSB(GetVICRegister(VICRegister::COLUMNS)); }
         bool GetVICInterlace() const { return emul::GetMSB(GetVICRegister(VICRegister::ORIGIN_X)); }
         BYTE GetVICOriginX() const { return GetVICRegister(VICRegister::ORIGIN_X) & 127; }
@@ -195,6 +195,7 @@ namespace video
         uint32_t m_borderColor = 0;
         uint32_t m_backgroundColor = 0;
         bool m_invertColors = false;
+        bool m_doubleHeight = false;
 
         uint32_t m_currX = 0;
         uint32_t m_currY = 0;

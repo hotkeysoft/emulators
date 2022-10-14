@@ -149,11 +149,11 @@ namespace video
 
 		// D7 is raster.D8
 		// D6-D1 is number of rows
-		// D0 is double char width
+		// D0: 0 for Single char height, 1 for double char height
 		LogPrintf(LOG_INFO, "WriteRows: Raster.D8[%d] Rows:%d, Double:%d",
 			GetVICRaster8(),
 			GetVICRows(),
-			GetVICDoubleX());
+			GetVICDoubleY());
 
 		// Update raster.D8 to set value (actual count is done in m_currY)
 		SetBit(m_currY, 8, GetVICRaster8());
@@ -399,7 +399,7 @@ namespace video
 		// Bits 3-0: start address of character cell space (A13-A10)
 		m_charBaseAddress = (reg & 0x0F) << 10;
 		AdjustA13(m_charBaseAddress);
-		LogPrintf(LOG_WARNING, "  CHAR BASE:   %04X", m_charBaseAddress);
+		LogPrintf(LOG_INFO, "  CHAR BASE:   %04X", m_charBaseAddress);
 
 		// Hi bit of CR2 contains an offset for the matrix and color base addresses
 		bool offset = GetVICMemOffset();
@@ -409,17 +409,18 @@ namespace video
 		AdjustA13(m_matrixBaseAddress);
 		// offset in A9
 		SetBit(m_matrixBaseAddress, 9, offset);
-		LogPrintf(LOG_WARNING, "  MATRIX BASE: %04X", m_matrixBaseAddress);
+		LogPrintf(LOG_INFO, "  MATRIX BASE: %04X", m_matrixBaseAddress);
 
 		// Color RAM @ 0x9400
 		m_colorBaseAddress = 0x9400;
 		SetBit(m_colorBaseAddress, 9, offset);
-		LogPrintf(LOG_WARNING, "  COLOR BASE:  %04X", m_colorBaseAddress);
+		LogPrintf(LOG_INFO, "  COLOR BASE:  %04X", m_colorBaseAddress);
 	}
 
 	void VideoVIC::UpdateScreenArea()
 	{
 		LogPrintf(LOG_INFO, "UpdateScreenArea");
+
 		// Discard hi bit, used for base address offset
 		BYTE columns = GetVICColumns();
 		BYTE rows = GetVICRows();
@@ -433,6 +434,7 @@ namespace video
 		H_DISPLAY = columns * 2; // In half-chars
 		H_DISPLAY_PX = H_DISPLAY * HALF_CHAR_WIDTH;
 
+		CHAR_HEIGHT = GetVICDoubleY() ? 16 : 8;
 		V_DISPLAY = rows * CHAR_HEIGHT;
 
 		LEFT_BORDER = originX;
@@ -448,6 +450,7 @@ namespace video
 		LogPrintf(LOG_INFO, "  L_BORDER:  %d half characters (%d pixels)", LEFT_BORDER, LEFT_BORDER_PX);
 		LogPrintf(LOG_INFO, "  R_BORDER:  %d half characters (%d pixels)", RIGHT_BORDER, RIGHT_BORDER * CHAR_WIDTH);
 
+		LogPrintf(LOG_INFO, "  CHAR_H:    %d pixels", CHAR_HEIGHT);
 		LogPrintf(LOG_INFO, "  V_DISPLAY: %d characters (%d pixels)", rows, V_DISPLAY);
 		LogPrintf(LOG_INFO, "  V_TOTAL:   %d pixels", V_TOTAL);
 		LogPrintf(LOG_INFO, "  T_BORDER:  %d pixels", TOP_BORDER);
@@ -487,17 +490,22 @@ namespace video
 		bool multiColor = GetBit(color, 3);
 		uint32_t fgColor = GetVICColor(color & 7);
 
-		if (multiColor)
-		{
-			LogPrintf(LOG_WARNING, "DrawChar: Multicolor mode not implemented");
-		}
+		const WORD charAddress = m_charBaseAddress + (ch * CHAR_HEIGHT) + m_currRow;
+		const BYTE pixels = m_memory->Read8(charAddress);
 
-		const WORD charROMAddress = m_charBaseAddress + (ch * CHAR_HEIGHT) + m_currRow;
-		const BYTE pixels = m_memory->Read8(charROMAddress);
+		//if (multiColor)
+		//{
+		//	for (int i = 0; i < 4; ++i)
+		//	{
 
-		for (int i = 0; i < CHAR_WIDTH; ++i)
+		//	}
+		//}
+		//else
 		{
-			DrawPixel((GetBit(pixels, 7-i) ^ m_invertColors )? fgColor : m_backgroundColor);
+			for (int i = 0; i < CHAR_WIDTH; ++i)
+			{
+				DrawPixel((GetBit(pixels, 7 - i) ^ m_invertColors) ? fgColor : m_backgroundColor);
+			}
 		}
 	}
 
