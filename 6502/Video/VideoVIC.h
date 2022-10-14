@@ -123,36 +123,52 @@ namespace video
         BYTE ReadColorControl();
         void WriteColorControl(BYTE value);
 
-        // TODO: TEMP until VIC implementation
-
         // Pixels per character
         static const uint32_t CHAR_WIDTH = 8;
         static const uint32_t CHAR_HEIGHT = 8;
 
         // Number of lines displayed
-        static const uint32_t V_DISPLAY = 184;
+        uint32_t V_DISPLAY = 184;
         // Total number of lines (including borders)
         static const uint32_t V_TOTAL = 262;
 
         // Number of characters per line (displayed)
-        static const uint32_t H_DISPLAY = 22;
-        static const uint32_t H_DISPLAY_PX = H_DISPLAY * CHAR_WIDTH;
+        uint32_t H_DISPLAY = 22;
+        uint32_t H_DISPLAY_PX = H_DISPLAY * CHAR_WIDTH;
 
         // Total number of characters per line (including borders)
         static const uint32_t H_TOTAL = 32;
         static const uint32_t H_TOTAL_PX = H_TOTAL * CHAR_WIDTH;
 
         // Split borders evenly on both sides
-        static const uint32_t LEFT_BORDER = (H_TOTAL - H_DISPLAY) / 2;
-        static const uint32_t LEFT_BORDER_PX = LEFT_BORDER * CHAR_WIDTH;
-        static const uint32_t TOP_BORDER = (V_TOTAL - V_DISPLAY) / 2;
-        static const uint32_t RIGHT_BORDER = (H_DISPLAY + H_TOTAL) / 2;
-        static const uint32_t BOTTOM_BORDER = (V_DISPLAY + V_TOTAL) / 2;
+        uint32_t LEFT_BORDER = (H_TOTAL - H_DISPLAY) / 2;
+        uint32_t LEFT_BORDER_PX = LEFT_BORDER * CHAR_WIDTH;
+        uint32_t TOP_BORDER = (V_TOTAL - V_DISPLAY) / 2;
+        uint32_t RIGHT_BORDER = (H_DISPLAY + H_TOTAL) / 2;
+        uint32_t BOTTOM_BORDER = (V_DISPLAY + V_TOTAL) / 2;
+
+        // Recomputes totals, display, borders, etc. based on register values
+        void UpdateScreenArea();
 
         // RAW vic registers
-        BYTE ReadVICRegister(VICRegister reg) const { return m_rawVICRegisters[(int)reg]; }
-        void WriteVICRegister(VICRegister reg, BYTE value) { m_rawVICRegisters[(int)reg] = value; }
+        const BYTE& GetVICRegister(VICRegister reg) const { return m_rawVICRegisters[(int)reg]; }
+        BYTE& GetVICRegister(VICRegister reg) { return m_rawVICRegisters[(int)reg]; }
         std::array<BYTE, (int)VICRegister::_REGISTER_COUNT> m_rawVICRegisters;
+
+        // Helpers for VIC registers
+        bool GetVICRaster8() const { return emul::GetBit(GetVICRegister(VICRegister::ROWS), 7); }
+        void SetVICRaster8(bool value) { emul::SetBit(GetVICRegister(VICRegister::ROWS), 7, value); }
+        WORD GetVICRaster() const { return (WORD)GetVICRegister(VICRegister::RASTER) | (GetVICRaster8() ? 256 : 0); }
+        BYTE GetVICColumns() const { return GetVICRegister(VICRegister::COLUMNS) & 127; }
+        BYTE GetVICRows() const { return (GetVICRegister(VICRegister::ROWS) >> 1) & 63; }
+        bool GetVICDoubleX() const { return emul::GetBit(GetVICRegister(VICRegister::ROWS), 0); }
+        bool GetVICMemOffset() const { return emul::GetMSB(GetVICRegister(VICRegister::COLUMNS)); }
+        bool GetVICInterlace() const { return emul::GetMSB(GetVICRegister(VICRegister::ORIGIN_X)); }
+        BYTE GetVICOriginX() const { return GetVICRegister(VICRegister::ORIGIN_X) & 127; }
+        BYTE GetVICOriginY() const { return GetVICRegister(VICRegister::ORIGIN_Y); }
+
+        // Synchronizes registers with actual raster value in m_currY
+        void UpdateVICRaster();
 
         void UpdateBaseAddress();
         void AdjustA13(ADDRESS& addr) const;

@@ -82,38 +82,44 @@ namespace video
 	// CR0
 	BYTE VideoVIC::ReadScreenOriginX()
 	{
-		BYTE value = ReadVICRegister(VICRegister::ORIGIN_X);
+		const BYTE value = GetVICRegister(VICRegister::ORIGIN_X);
 		LogPrintf(LOG_DEBUG, "ReadScreenOriginX, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteScreenOriginX(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteScreenOriginX value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteScreenOriginX value=%02X", value);
+		GetVICRegister(VICRegister::ORIGIN_X) = value;
+		UpdateScreenArea();
 	}
 
 	// CR1
 	BYTE VideoVIC::ReadScreenOriginY()
 	{
-		BYTE value = ReadVICRegister(VICRegister::ORIGIN_Y);
+		const BYTE value = GetVICRegister(VICRegister::ORIGIN_Y);
 		LogPrintf(LOG_DEBUG, "ReadScreenOriginY, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteScreenOriginY(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteScreenOriginY, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteScreenOriginY, value=%02X", value);
+		GetVICRegister(VICRegister::ORIGIN_Y) = value;
+		UpdateScreenArea();
 	}
 
 	// CR2
 	BYTE VideoVIC::ReadColumns()
 	{
-		BYTE value = ReadVICRegister(VICRegister::COLUMNS);
+		const BYTE value = GetVICRegister(VICRegister::COLUMNS);
 		LogPrintf(LOG_DEBUG, "ReadColumns, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteColumns(BYTE value)
 	{
-		WriteVICRegister(VICRegister::COLUMNS, value);
-		LogPrintf(LOG_WARNING, "WriteColumns, value=%02X", value);
+		GetVICRegister(VICRegister::COLUMNS) = value;
+		LogPrintf(LOG_DEBUG, "WriteColumns, value=%02X", value);
+
+		UpdateScreenArea();
 
 		// High bit contains video memory offset
 		UpdateBaseAddress();
@@ -122,69 +128,92 @@ namespace video
 	// CR3
 	BYTE VideoVIC::ReadRows()
 	{
-		BYTE value = ReadVICRegister(VICRegister::ROWS);
+		// High bit of ROWS rewister contains hi raster counter
+		// Actual count is in m_currY, so we need to update the registers before reading
+		UpdateVICRaster();
+		const BYTE value = GetVICRegister(VICRegister::ROWS);
 		LogPrintf(LOG_DEBUG, "ReadRows, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteRows(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteRows, value=%02X, not implemented", value);
+		GetVICRegister(VICRegister::ROWS) = value;
+		LogPrintf(LOG_DEBUG, "WriteRows, value=%02X", value);
+
+		// D7 is raster.D8
+		// D6-D1 is number of rows
+		// D0 is double char width
+		LogPrintf(LOG_INFO, "WriteRows: Raster.D8[%d] Rows:%d, Double:%d",
+			GetVICRaster8(),
+			GetVICRows(),
+			GetVICDoubleX());
+
+		// Update raster.D8 to set value (actual count is done in m_currY)
+		SetBit(m_currY, 8, GetVICRaster8());
+
+		UpdateScreenArea();
 	}
 
 	// CR4
 	BYTE VideoVIC::ReadRaster()
 	{
-		BYTE value = ReadVICRegister(VICRegister::RASTER);
+		// Actual count is in m_currY, so we need to update the registers before reading
+		UpdateVICRaster();
+		const BYTE value = GetVICRegister(VICRegister::RASTER);
 		LogPrintf(LOG_DEBUG, "ReadRaster, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteRaster(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteRaster, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteRaster, value=%02X", value);
+		GetVICRegister(VICRegister::RASTER) = value;
+		m_currY = GetVICRaster();
 	}
 
 	// CR5
 	BYTE VideoVIC::ReadBaseAddress()
 	{
-		BYTE value = ReadVICRegister(VICRegister::BASE_ADDRESS);
+		const BYTE value = GetVICRegister(VICRegister::BASE_ADDRESS);
 		LogPrintf(LOG_DEBUG, "ReadBaseAddress, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteBaseAddress(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "WriteBaseAddress, value=%02X", value);
-		WriteVICRegister(VICRegister::BASE_ADDRESS, value);
+		GetVICRegister(VICRegister::BASE_ADDRESS) = value;
 		UpdateBaseAddress();
 	}
 
 	// CR6
 	BYTE VideoVIC::ReadLightPenX()
 	{
-		BYTE value = ReadVICRegister(VICRegister::LIGHTPEN_X);
+		const BYTE value = GetVICRegister(VICRegister::LIGHTPEN_X);
 		LogPrintf(LOG_DEBUG, "ReadLightPenX, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteLightPenX(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteLightPenX, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteLightPenX, value=%02X", value);
+		GetVICRegister(VICRegister::LIGHTPEN_X) = value;
 	}
 
 	// CR7
 	BYTE VideoVIC::ReadLightPenY()
 	{
-		BYTE value = ReadVICRegister(VICRegister::LIGHTPEN_Y);
+		const BYTE value = GetVICRegister(VICRegister::LIGHTPEN_Y);
 		LogPrintf(LOG_DEBUG, "ReadLightPenY, return=%02X", value);
 		return value;
 	}
 	void VideoVIC::WriteLightPenY(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteLightPenY, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteLightPenY, value=%02X", value);
+		GetVICRegister(VICRegister::LIGHTPEN_Y) = value;
 	}
 
 	// CR8
 	BYTE VideoVIC::ReadPotX()
 	{
-		BYTE value = ReadVICRegister(VICRegister::POT_X);
+		const BYTE value = GetVICRegister(VICRegister::POT_X);
 		LogPrintf(LOG_DEBUG, "ReadPotX, return=%02X", value);
 		return value;
 	}
@@ -196,7 +225,7 @@ namespace video
 	// CR9
 	BYTE VideoVIC::ReadPotY()
 	{
-		BYTE value = ReadVICRegister(VICRegister::POT_Y);
+		const BYTE value = GetVICRegister(VICRegister::POT_Y);
 		LogPrintf(LOG_DEBUG, "ReadPotY, return=%02X", value);
 		return value;
 	}
@@ -208,7 +237,7 @@ namespace video
 	// CRA
 	BYTE VideoVIC::ReadAudioFreq1()
 	{
-		BYTE value = ReadVICRegister(VICRegister::AUDIO_FREQ1);
+		const BYTE value = GetVICRegister(VICRegister::AUDIO_FREQ1);
 		LogPrintf(LOG_DEBUG, "ReadAudioFreq1, return=%02X", value);
 		return value;
 	}
@@ -220,7 +249,7 @@ namespace video
 	// CRB
 	BYTE VideoVIC::ReadAudioFreq2()
 	{
-		BYTE value = ReadVICRegister(VICRegister::AUDIO_FREQ2);
+		const BYTE value = GetVICRegister(VICRegister::AUDIO_FREQ2);
 		LogPrintf(LOG_DEBUG, "ReadAudioFreq2, return=%02X", value);
 		return value;
 	}
@@ -232,7 +261,7 @@ namespace video
 	// CRC
 	BYTE VideoVIC::ReadAudioFreq3()
 	{
-		BYTE value = ReadVICRegister(VICRegister::AUDIO_FREQ3);
+		const BYTE value = GetVICRegister(VICRegister::AUDIO_FREQ3);
 		LogPrintf(LOG_DEBUG, "ReadAudioFreq3, return=%02X", value);
 		return value;
 	}
@@ -244,7 +273,7 @@ namespace video
 	// CRD
 	BYTE VideoVIC::ReadAudioFreq4()
 	{
-		BYTE value = ReadVICRegister(VICRegister::AUDIO_FREQ4);
+		const BYTE value = GetVICRegister(VICRegister::AUDIO_FREQ4);
 		LogPrintf(LOG_DEBUG, "ReadAudioFreq4, return=%02X", value);
 		return value;
 	}
@@ -256,7 +285,7 @@ namespace video
 	// CRE
 	BYTE VideoVIC::ReadAudioAmplitude()
 	{
-		BYTE value = ReadVICRegister(VICRegister::AUDIO_AMPLITUDE);
+		const BYTE value = GetVICRegister(VICRegister::AUDIO_AMPLITUDE);
 		LogPrintf(LOG_DEBUG, "ReadAudioAmplitude, return=%02X", value);
 		return value;
 	}
@@ -268,7 +297,7 @@ namespace video
 	// CRF
 	BYTE VideoVIC::ReadColorControl()
 	{
-		BYTE value = ReadVICRegister(VICRegister::COLOR_CONTROL);
+		const BYTE value = GetVICRegister(VICRegister::COLOR_CONTROL);
 		LogPrintf(LOG_DEBUG, "ReadColorControl, return=%02X", value);
 		return value;
 	}
@@ -322,10 +351,10 @@ namespace video
 		// TODO
 		const uint32_t tempBorder = 8;
 		return SDL_Rect{
-			LEFT_BORDER_PX - tempBorder,
-			TOP_BORDER - tempBorder,
-			H_DISPLAY_PX + (2 * tempBorder),
-			V_DISPLAY + (2 * tempBorder)
+			int(LEFT_BORDER_PX - tempBorder),
+			int(TOP_BORDER - tempBorder),
+			int(H_DISPLAY_PX + (2 * tempBorder)),
+			int(V_DISPLAY + (2 * tempBorder))
 		};
 	}
 
@@ -340,27 +369,63 @@ namespace video
 	void VideoVIC::UpdateBaseAddress()
 	{
 		LogPrintf(LOG_INFO, "UpdateBaseAddress");
-		BYTE reg = ReadVICRegister(VICRegister::BASE_ADDRESS);
+		BYTE reg = GetVICRegister(VICRegister::BASE_ADDRESS);
 
 		// Bits 3-0: start address of character cell space (A13-A10)
 		m_charBaseAddress = (reg & 0x0F) << 10;
 		AdjustA13(m_charBaseAddress);
-		LogPrintf(LOG_WARNING, "CHAR BASE:   %04X", m_charBaseAddress);
+		LogPrintf(LOG_WARNING, "  CHAR BASE:   %04X", m_charBaseAddress);
 
 		// Hi bit of CR2 contains an offset for the matrix and color base addresses
-		bool offset = emul::GetMSB(ReadVICRegister(VICRegister::COLUMNS));
+		bool offset = GetVICMemOffset();
 
 		// Bits 7-4: start address of char matrix space (A13-A10)
 		m_matrixBaseAddress = (reg & 0xF0) << (10 - 4);
 		AdjustA13(m_matrixBaseAddress);
 		// offset in A9
 		SetBit(m_matrixBaseAddress, 9, offset);
-		LogPrintf(LOG_WARNING, "MATRIX BASE: %04X", m_matrixBaseAddress);
+		LogPrintf(LOG_WARNING, "  MATRIX BASE: %04X", m_matrixBaseAddress);
 
 		// Color RAM @ 0x9400
 		m_colorBaseAddress = 0x9400;
 		SetBit(m_colorBaseAddress, 9, offset);
-		LogPrintf(LOG_WARNING, "COLOR BASE:  %04X", m_colorBaseAddress);
+		LogPrintf(LOG_WARNING, "  COLOR BASE:  %04X", m_colorBaseAddress);
+	}
+
+	void VideoVIC::UpdateScreenArea()
+	{
+		LogPrintf(LOG_INFO, "UpdateScreenArea");
+		// Discard hi bit, used for base address offset
+		BYTE columns = GetVICColumns();
+		BYTE rows = GetVICRows();
+
+		BYTE originX = GetVICOriginX();
+		BYTE originY = GetVICOriginY();
+
+		H_DISPLAY = columns;
+		V_DISPLAY = rows * CHAR_HEIGHT;
+
+		LEFT_BORDER = originX;
+		LEFT_BORDER_PX = LEFT_BORDER * CHAR_WIDTH;
+		TOP_BORDER = originY;
+		RIGHT_BORDER = (H_DISPLAY + LEFT_BORDER);
+		BOTTOM_BORDER = (V_DISPLAY + TOP_BORDER);
+
+		LogPrintf(LOG_INFO, "  H_DISPLAY: %d characters (%d pixels)", H_DISPLAY, H_DISPLAY * CHAR_WIDTH);
+		LogPrintf(LOG_INFO, "  H_TOTAL:   %d characters (%d pixels)", H_TOTAL, H_TOTAL_PX);
+		LogPrintf(LOG_INFO, "  L_BORDER:  %d characters (%d pixels)", LEFT_BORDER, LEFT_BORDER_PX);
+		LogPrintf(LOG_INFO, "  R_BORDER:  %d characters (%d pixels)", RIGHT_BORDER, RIGHT_BORDER * CHAR_WIDTH);
+
+		LogPrintf(LOG_INFO, "  V_DISPLAY: %d characters (%d pixels)", rows, V_DISPLAY);
+		LogPrintf(LOG_INFO, "  V_TOTAL:   %d pixels", V_TOTAL);
+		LogPrintf(LOG_INFO, "  T_BORDER:  %d pixels", TOP_BORDER);
+		LogPrintf(LOG_INFO, "  B_BORDER:  %d pixels", BOTTOM_BORDER);
+	}
+
+	void VideoVIC::UpdateVICRaster()
+	{
+		GetVICRegister(VICRegister::RASTER) = m_currY;
+		SetVICRaster8(GetBit(m_currY, 8));
 	}
 
 	void VideoVIC::DrawChar()
@@ -398,6 +463,7 @@ namespace video
 
 		m_rawVICRegisters = from["registers"];
 		UpdateBaseAddress();
+		UpdateScreenArea();
 
 		m_currChar = from["currChar"];
 		m_bgColor = from["bg"];
