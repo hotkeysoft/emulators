@@ -310,7 +310,7 @@ namespace emul
 		m_reg.SP = 0;
 
 		m_irq = false;
-		m_nmi = false;
+		m_nmi.ResetLatch();
 
 		// Read reset vector
 		ADDRESS resetVector = m_memory.Read16(ADDR_RESET);
@@ -412,8 +412,8 @@ namespace emul
 
 	void CPU6502::Interrupt()
 	{
-		// TODO: NMI is edge sensitive, NMI is level sensitive
-		if (m_nmi || (m_irq && !GetFlag(FLAG_I)))
+		bool nmi = m_nmi.IsLatched();
+		if (nmi || (m_irq && !GetFlag(FLAG_I)))
 		{
 			LogPrintf(LOG_DEBUG, "Interrupt");
 
@@ -425,8 +425,8 @@ namespace emul
 
 			SetFlag(FLAG_I, true);
 
-			ADDRESS irqVector = m_memory.Read16(ADDR_IRQ);
-			m_programCounter = irqVector;
+			ADDRESS intVector = nmi ? m_memory.Read16(ADDR_NMI) : m_memory.Read16(ADDR_IRQ);
+			m_programCounter = intVector;
 			TICKINT();
 		}
 	}
@@ -791,7 +791,7 @@ namespace emul
 	{
 		to["opcode"] = m_opcode;
 		to["irq"] = m_irq;
-		to["nmi"] = m_nmi;
+		m_nmi.Serialize(to["nmi"]);
 		to["pc"] = m_programCounter;
 		to["a"] = m_reg.A;
 		to["flags"] = m_reg.flags;
@@ -803,7 +803,7 @@ namespace emul
 	{
 		m_opcode = from["opcode"];
 		m_irq = from["irq"];
-		m_nmi = from["nmi"];
+		m_nmi.Deserialize(from["nmi"]);
 		m_programCounter = from["pc"];
 		m_reg.A = from["a"];
 		m_reg.flags = from["flags"];

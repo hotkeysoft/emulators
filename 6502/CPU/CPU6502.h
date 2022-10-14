@@ -4,6 +4,7 @@
 #include <CPU/CPU.h>
 #include <CPU/PortConnector.h>
 #include <CPU/CPUInfo.h>
+#include <EdgeDetectLatch.h>
 
 #undef IN
 #undef OUT
@@ -38,7 +39,7 @@ namespace emul
 
 		// Interrupts
 		void SetIRQ(bool irq) { m_irq = irq; }
-		void SetNMI(bool nmi) { m_nmi = nmi; }
+		void SetNMI(bool nmi) { m_nmi.Set(nmi); }
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -67,8 +68,10 @@ namespace emul
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_opcode = 0;
 
+		// IRQ is level sensitive
 		bool m_irq = false;
-		bool m_nmi = false;
+		// NMI is edge sensitive
+		hscommon::EdgeDetectLatch m_nmi;
 		virtual void Interrupt();
 
 		enum FLAG : BYTE
