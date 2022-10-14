@@ -44,8 +44,11 @@ namespace via
 	{
 	}
 
-	void VIAPort::Init(bool isPortB)
+	void VIAPort::Init(Device6522* parent, bool isPortB)
 	{
+		assert(parent);
+		m_parent = parent;
+
 		Reset();
 
 		WORD offset = isPortB ? 0 : 1;
@@ -73,6 +76,7 @@ namespace via
 
 	BYTE VIAPort::ReadInputRegister()
 	{
+		m_parent->OnReadPort(this);
 		BYTE value = IR;
 
 		// For output pins, mix with output register
@@ -111,10 +115,10 @@ namespace via
 	{
 		LogPrintf(LOG_DEBUG, "Write DataDirectionRegister, value=%02X", value);
 		DDR = value;
-		LogPrintf(LOG_DEBUG, "Set DataDirection:");
+		LogPrintf(LOG_INFO, "Set DataDirection:");
 		for (int i = 7; i >= 0; --i)
 		{
-			LogPrintf(LOG_DEBUG, " PIN %d: %s", i, (GetDataDirection(i) == DataDirection::INPUT) ? "IN" : "OUT");
+			LogPrintf(LOG_INFO, " PIN %d: %s", i, (GetDataDirection(i) == DataDirection::INPUT) ? "IN" : "OUT");
 		}
 	}
 
@@ -172,8 +176,8 @@ namespace via
 	{
 		Reset();
 
-		m_portA.Init(false);
-		m_portB.Init(true);
+		m_portA.Init(this, false);
+		m_portB.Init(this, true);
 
 		// Attach connections made in children objects
 		Attach(m_portA);

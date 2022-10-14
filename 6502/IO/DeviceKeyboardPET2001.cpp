@@ -219,7 +219,7 @@ namespace kbd
 
 	};
 
-	DeviceKeyboardPET2001::DeviceKeyboardPET2001() : Logger("kbd"), m_currKeymap(&s_keyMapNormal)
+	DeviceKeyboardPET2001::DeviceKeyboardPET2001() : m_currKeymap(&s_keyMapNormal)
 	{
 		Reset();
 	}

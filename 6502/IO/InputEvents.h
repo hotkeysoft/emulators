@@ -7,7 +7,7 @@
 
 using emul::BYTE;
 
-namespace kbd { class DeviceKeyboardPET2001; }
+namespace kbd { class DeviceKeyboard; }
 
 namespace events
 {
@@ -45,11 +45,11 @@ namespace events
 		InputEvents& operator=(InputEvents&&) = delete;
 
 		void Init();
-		void InitKeyboard(kbd::DeviceKeyboardPET2001* kbd);
+		void InitKeyboard(kbd::DeviceKeyboard* kbd);
 
 		void AddEventHandler(EventHandler* handler) { m_handlers.push_back(handler); }
 
-		kbd::DeviceKeyboardPET2001* GetKeyboard() const { return m_keyboard; }
+		kbd::DeviceKeyboard* GetKeyboard() const { return m_keyboard; }
 
 		void Tick();
 
@@ -63,7 +63,7 @@ namespace events
 		void InputKey(SDL_KeyboardEvent& evt);
 		bool m_quit = false;
 
-		kbd::DeviceKeyboardPET2001* m_keyboard = nullptr;
+		kbd::DeviceKeyboard* m_keyboard = nullptr;
 		KeyMap* m_keyMap = nullptr;
 
 		std::vector<EventHandler*> m_handlers;

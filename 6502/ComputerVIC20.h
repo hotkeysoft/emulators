@@ -3,10 +3,11 @@
 #include "Computer/ComputerBase.h"
 #include "IO/InputEvents.h"
 #include <CPU/IOBlock.h>
-#include "Hardware/Device6522.h"
+#include "Hardware/Device6522VIC_VIA1.h"
+#include "Hardware/Device6522VIC_VIA2.h"
 #include <Storage/DeviceTape.h>
 
-namespace kbd { class DeviceKeyboardPET2001; }
+namespace kbd { class DeviceKeyboardVIC20; }
 
 namespace emul
 {
@@ -73,10 +74,10 @@ namespace emul
 		emul::MemoryBlock m_romBASIC;
 		emul::MemoryBlock m_romKERNAL;
 
-		via::Device6522 m_via1;
-		via::Device6522 m_via2;
+		via::Device6522VIC_VIA1 m_via1;
+		via::Device6522VIC_VIA2 m_via2;
 
-		kbd::DeviceKeyboardPET2001* m_keyboard = nullptr;
+		kbd::DeviceKeyboardVIC20* m_keyboard = nullptr;
 
 		tape::DeviceTape m_tape;
 	};

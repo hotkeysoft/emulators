@@ -5,7 +5,7 @@
 #include "IO/Console.h"
 #include "CPU/CPU6502.h"
 #include <Sound/Sound.h>
-#include "IO/DeviceKeyboardPET2001.h"
+#include "IO/DeviceKeyboardVIC20.h"
 #include "Video/VideoVIC.h"
 
 using cfg::CONFIG;
@@ -79,7 +79,7 @@ namespace emul
 
 	void ComputerVIC20::InitKeyboard()
 	{
-		m_keyboard = new kbd::DeviceKeyboardPET2001();
+		m_keyboard = new kbd::DeviceKeyboardVIC20();
 		m_keyboard->EnableLog(CONFIG().GetLogLevel("keyboard"));
 	}
 
@@ -119,7 +119,7 @@ namespace emul
 
 		// VIA2 @ 0x91[20]
 		m_via2.EnableLog(CONFIG().GetLogLevel("vic20.via2"));
-		m_via2.Init();
+		m_via2.Init(m_keyboard);
 		// Incomplete decoding, will also select at 3x, 6x, 7x, Ax, Bx, etc
 		m_ioVIA.AddDevice(m_via2, 0x20);
 	}

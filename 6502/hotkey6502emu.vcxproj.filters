@@ -213,6 +213,18 @@
     <ClInclude Include="Video\VideoVIC.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\Device6522VIC_VIA1.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device6522VIC_VIA2.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\DeviceKeyboardVIC20.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\DeviceKeyboard.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -328,6 +340,12 @@
     </ClCompile>
     <ClCompile Include="Video\VideoVIC.cpp">
       <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceKeyboardVIC20.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device6522VIC_VIA2.cpp">
+      <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

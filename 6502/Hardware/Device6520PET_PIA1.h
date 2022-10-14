@@ -1,10 +1,7 @@
 #pragma once
 #include "Device6520.h"
 
-namespace kbd
-{
-	class DeviceKeyboardPET2001;
-}
+namespace kbd { class DeviceKeyboard; }
 
 namespace pia
 {
@@ -13,7 +10,7 @@ namespace pia
 	public:
 		Device6520PET_PIA1(std::string id = "PIA1") : Device6520(id), Logger(id.c_str()) {}
 
-		void Init(kbd::DeviceKeyboardPET2001* kbd);
+		void Init(kbd::DeviceKeyboard* kbd);
 
 		// Port A Inputs
 		void SetDiagnosticSenseIn(bool set) { m_portA.SetInputBit(7, !set); }
@@ -21,7 +18,7 @@ namespace pia
 		void SetCassetteSense2In(bool set) { m_portA.SetInputBit(5, !set); }
 		void SetCassetteSense1In(bool set) { m_portA.SetInputBit(4, !set); }
 
-		BYTE GetKeyboardRowSelect() const { return m_portA.GetOutput() & 0b00001111; }
+		BYTE GetKeyboardColumnSelect() const { return m_portA.GetOutput() & 0b00001111; }
 
 		// CA2
 		bool GetBlankScreen() const { return m_portA.GetC2(); }
@@ -39,7 +36,7 @@ namespace pia
 	protected:
 		virtual void OnReadPort(PIAPort* src) override;
 
-		kbd::DeviceKeyboardPET2001* m_keyboard = nullptr;
+		kbd::DeviceKeyboard* m_keyboard = nullptr;
 	};
 }
 

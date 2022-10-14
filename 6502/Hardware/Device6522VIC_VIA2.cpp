@@ -1,22 +1,22 @@
 #include "stdafx.h"
 
-#include "Device6520PET_PIA1.h"
+#include "Device6522VIC_VIA2.h"
 #include "../IO/DeviceKeyboard.h"
 
-namespace pia
+namespace via
 {
-	void Device6520PET_PIA1::Init(kbd::DeviceKeyboard* kbd)
+	void Device6522VIC_VIA2::Init(kbd::DeviceKeyboard* kbd)
 	{
-		Device6520::Init();
+		Device6522::Init();
 
 		assert(kbd);
 		m_keyboard = kbd;
 	}
 
-	void Device6520PET_PIA1::OnReadPort(PIAPort* source)
+	void Device6522VIC_VIA2::OnReadPort(VIAPort* source)
 	{
 		// Keyboard data
-		if (source == &m_portB)
+		if (source == &m_portA)
 		{
 			BYTE column = GetKeyboardColumnSelect();
 			BYTE rowData = m_keyboard->GetRowData(column);

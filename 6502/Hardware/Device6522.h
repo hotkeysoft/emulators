@@ -10,6 +10,8 @@ using emul::WORD;
 
 namespace via
 {
+	class Device6522;
+
 	enum class C2Operation {
 		IN_NEG_EDGE = 0,
 		IN_NEG_EDGE_INT,
@@ -38,7 +40,7 @@ namespace via
 	public:
 		VIAPort(std::string id);
 
-		void Init(bool isPortB);
+		void Init(Device6522* parent, bool isPortB);
 
 		void Reset();
 
@@ -46,6 +48,7 @@ namespace via
 
 		BYTE GetOutput() const { return OR; }
 		void SetInputBit(BYTE bit, bool set) { emul::SetBit(IR, bit, set); }
+		void SetInput(BYTE data) { IR = data; }
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -60,6 +63,8 @@ namespace via
 		void SetC2Operation(C2Operation op);
 
 	protected:
+		Device6522* m_parent = nullptr;
+
 		// CPU IO Access
 		// -------------
 
@@ -117,6 +122,8 @@ namespace via
 		bool GetIRQ() const { return m_interrupt.IsIRQ(); }
 
 		void Tick();
+
+		virtual void OnReadPort(VIAPort* src) {};
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;

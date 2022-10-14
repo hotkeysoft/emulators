@@ -2,7 +2,7 @@
 
 #include <IO/InputEventHandler.h>
 #include "InputEvents.h"
-#include "DeviceKeyboardPET2001.h"
+#include "DeviceKeyboard.h"
 #include <SDL.h>
 
 namespace events
@@ -38,7 +38,7 @@ namespace events
 		LogPrintf(LOG_INFO, "Poll Frequency:  %.2f Hz", (float)m_clockSpeedHz/(float)m_pollInterval);
 	}
 
-	void InputEvents::InitKeyboard(kbd::DeviceKeyboardPET2001* kbd)
+	void InputEvents::InitKeyboard(kbd::DeviceKeyboard* kbd)
 	{
 		assert(kbd);
 		m_keyboard = kbd;
