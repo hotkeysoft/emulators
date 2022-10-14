@@ -133,21 +133,22 @@ namespace emul
 			LogPrintf(LOG_WARNING, "Requested base RAM too low (%dKB), using 4KB", baseRAM);
 			baseRAM = 5;
 		}
-		else if (baseRAM > 32)
-		{
-			baseRAM = 32;
-			LogPrintf(LOG_WARNING, "Requested base RAM too low (%dKB), using 32KB", baseRAM);
-		}
 
 		// Above 8K, Round to 8k block
-		if (baseRAM > 8)
+		if (baseRAM > 5)
 		{
-			WORD rounded = (baseRAM & 0xF8);
+			WORD rounded = ((baseRAM + 7) & 0xF8);
 			if (rounded != baseRAM)
 			{
 				baseRAM = rounded;
 				LogPrintf(LOG_WARNING, "Requested base RAM rounded to (%dKB)", baseRAM);
 			}
+		}
+
+		if (baseRAM > 32)
+		{
+			baseRAM = 32;
+			LogPrintf(LOG_WARNING, "Requested base RAM too high (%dKB), using 32KB", baseRAM);
 		}
 
 		switch (baseRAM)
@@ -163,11 +164,7 @@ namespace emul
 			[[fallthrough]];
 		case 8:
 			m_memory.Allocate(&m_ramBlock0RAM3, 0x0C00);
-			[[fallthrough]];
-		case 7:
 			m_memory.Allocate(&m_ramBlock0RAM2, 0x0800);
-			[[fallthrough]];
-		case 6:
 			m_memory.Allocate(&m_ramBlock0RAM1, 0x0400);
 			[[fallthrough]];
 		default:
