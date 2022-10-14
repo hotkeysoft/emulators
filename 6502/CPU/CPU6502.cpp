@@ -417,6 +417,8 @@ namespace emul
 		{
 			LogPrintf(LOG_DEBUG, "Interrupt");
 
+			m_nmi.ResetLatch();
+
 			PUSH(GetHByte(m_programCounter));
 			PUSH(GetLByte(m_programCounter));
 
