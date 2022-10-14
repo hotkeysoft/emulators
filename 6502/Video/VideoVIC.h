@@ -150,10 +150,12 @@ namespace video
         // Recomputes totals, display, borders, etc. based on register values
         void UpdateScreenArea();
 
+        void UpdateColors();
+
         // RAW vic registers
         const BYTE& GetVICRegister(VICRegister reg) const { return m_rawVICRegisters[(int)reg]; }
         BYTE& GetVICRegister(VICRegister reg) { return m_rawVICRegisters[(int)reg]; }
-        std::array<BYTE, (int)VICRegister::_REGISTER_COUNT> m_rawVICRegisters;
+        std::array<BYTE, (int)VICRegister::_REGISTER_COUNT> m_rawVICRegisters = { };
 
         // Helpers for VIC registers
         bool GetVICRaster8() const { return emul::GetBit(GetVICRegister(VICRegister::ROWS), 7); }
@@ -166,6 +168,9 @@ namespace video
         bool GetVICInterlace() const { return emul::GetMSB(GetVICRegister(VICRegister::ORIGIN_X)); }
         BYTE GetVICOriginX() const { return GetVICRegister(VICRegister::ORIGIN_X) & 127; }
         BYTE GetVICOriginY() const { return GetVICRegister(VICRegister::ORIGIN_Y); }
+        BYTE GetVICBackgroundColor() const { return GetVICRegister(VICRegister::COLOR_CONTROL) >> 4; }
+        BYTE GetVICBorderColor() const { return GetVICRegister(VICRegister::COLOR_CONTROL) & 7; }
+        bool GetVICInvertFGBG() const { return !emul::GetBit(GetVICRegister(VICRegister::COLOR_CONTROL), 3); }
 
         // Synchronizes registers with actual raster value in m_currY
         void UpdateVICRaster();
@@ -179,11 +184,15 @@ namespace video
         ADDRESS m_charBaseAddress = 0;
 
         ADDRESS m_currChar = 0;
+        ADDRESS m_currColor = 0;
 
         void DrawChar();
 
-        uint32_t m_bgColor = 0xFF000000;
-        uint32_t m_fgColor = 0xFFFFFFFF;
+        static const uint32_t s_VICPalette[16];
+        constexpr uint32_t GetVICColor(BYTE index) const { return s_VICPalette[index]; }
+
+        uint32_t m_borderColor = 0;
+        uint32_t m_backgroundColor = 0;
 
         uint32_t m_currX = 0;
         uint32_t m_currY = 0;

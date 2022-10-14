@@ -6,6 +6,13 @@ using emul::SetBit;
 
 namespace video
 {
+	const uint32_t VideoVIC::s_VICPalette[16] = {
+		0xFF000000, 0xFFFFFFFF, 0xFF782922, 0xFF87D6DD,
+		0xFFAA5FB6, 0xFF55A049, 0xFF40318D, 0xFFBFCE72,
+		0xFFAA7449, 0xFFEAB489, 0xFFB86962, 0xFFC7FFFF,
+		0xFFEA9FF6, 0xFF94E089, 0xFF8071CC, 0xFFFFFFB2
+	};
+
 	VideoVIC::VideoVIC() : Logger("vidVIC"), IOConnector(0x0F)
 	{
 	}
@@ -16,9 +23,6 @@ namespace video
 
 		Video::Init(memory, charROM, forceMono);
 		InitFrameBuffer(H_TOTAL_PX, V_TOTAL);
-
-		m_bgColor = GetMonitorPalette()[0];
-		m_fgColor = GetMonitorPalette()[15];
 
 		IOConnector::Connect(0x0, static_cast<IOConnector::READFunction>(&VideoVIC::ReadScreenOriginX));
 		IOConnector::Connect(0x0, static_cast<IOConnector::WRITEFunction>(&VideoVIC::WriteScreenOriginX));
@@ -74,6 +78,7 @@ namespace video
 		Video::Reset();
 		m_rawVICRegisters.fill(0);
 		UpdateBaseAddress();
+		UpdateColors();
 		m_currX = 0;
 		m_currY = 0;
 		m_currRow = 0;
@@ -303,7 +308,9 @@ namespace video
 	}
 	void VideoVIC::WriteColorControl(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteColorControl, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteColorControl, value=%02X", value);
+		GetVICRegister(VICRegister::COLOR_CONTROL) = value;
+		UpdateColors();
 	}
 
 	void VideoVIC::Tick()
@@ -319,6 +326,7 @@ namespace video
 			++m_currY;
 			m_currX = 0;
 			m_currChar = m_matrixBaseAddress + (H_DISPLAY * (m_currY / CHAR_HEIGHT));
+			m_currColor = m_colorBaseAddress + (H_DISPLAY * (m_currY / CHAR_HEIGHT));
 			m_currRow = m_currY % CHAR_HEIGHT;
 		}
 
@@ -333,16 +341,18 @@ namespace video
 			m_currX = 0;
 			m_currRow = 0;
 			m_currChar = m_matrixBaseAddress;
+			m_currColor = m_colorBaseAddress;
 		}
 
 		if (IsDisplayArea())
 		{
 			DrawChar();
 			++m_currChar;
+			++m_currColor;
 		}
 		else
 		{
-			DrawBackground(8, m_bgColor);
+			DrawBackground(8, m_borderColor);
 		}
 	}
 
@@ -420,6 +430,11 @@ namespace video
 		LogPrintf(LOG_INFO, "  V_TOTAL:   %d pixels", V_TOTAL);
 		LogPrintf(LOG_INFO, "  T_BORDER:  %d pixels", TOP_BORDER);
 		LogPrintf(LOG_INFO, "  B_BORDER:  %d pixels", BOTTOM_BORDER);
+
+		if (GetVICInterlace())
+		{
+			LogPrintf(LOG_WARNING, "UpdateScreenArea: Interlace not supported");
+		}
 	}
 
 	void VideoVIC::UpdateVICRaster()
@@ -428,18 +443,40 @@ namespace video
 		SetVICRaster8(GetBit(m_currY, 8));
 	}
 
+	void VideoVIC::UpdateColors()
+	{
+		LogPrintf(LOG_INFO, "UpdateColors");
+		BYTE bg = GetVICBackgroundColor();
+		BYTE border = GetVICBorderColor();
+		bool invert = GetVICInvertFGBG();
+
+		LogPrintf(LOG_INFO, "  BACKGROUND: %d", bg);
+		LogPrintf(LOG_INFO, "  BORDER:     %d", border);
+		LogPrintf(LOG_INFO, "  INVERT:     %d", invert);
+
+		m_backgroundColor = GetVICColor(bg);
+		m_borderColor = GetVICColor(border);
+
+		if (invert)
+		{
+			LogPrintf(LOG_WARNING, "UpdateColors: Invert not supported");
+		}
+	}
+
 	void VideoVIC::DrawChar()
 	{
 		BYTE ch = m_memory->Read8(m_currChar);
-		const bool reverse = GetBit(ch, 7);
-		SetBit(ch, 7, 0);
+		BYTE color = m_memory->Read8(m_currColor) & 0x0F;
+		uint32_t fgColor = GetVICColor(color);
+		//const bool reverse = GetBit(ch, 7);
+		//SetBit(ch, 7, 0);
 
 		const WORD charROMAddress = m_charBaseAddress + (ch * CHAR_HEIGHT) + m_currRow;
 		const BYTE pixels = m_memory->Read8(charROMAddress);
 
 		for (int i = 0; i < CHAR_WIDTH; ++i)
 		{
-			DrawPixel((GetBit(pixels, 7-i) ^ reverse )? m_fgColor : m_bgColor);
+			DrawPixel(GetBit(pixels, 7-i) ? fgColor : m_backgroundColor);
 		}
 	}
 
@@ -451,8 +488,9 @@ namespace video
 		to["registers"] = m_rawVICRegisters;
 
 		to["currChar"] = m_currChar;
-		to["bg"] = m_bgColor;
-		to["fg"] = m_fgColor;
+		to["currColor"] = m_currColor;
+		to["background"] = m_backgroundColor;
+		to["border"] = m_borderColor;
 		to["currX"] = m_currX;
 		to["currY"] = m_currY;
 		to["currRow"] = m_currRow;
@@ -466,8 +504,9 @@ namespace video
 		UpdateScreenArea();
 
 		m_currChar = from["currChar"];
-		m_bgColor = from["bg"];
-		m_fgColor = from["fg"];
+		m_currChar = from["currColor"];
+		m_backgroundColor = from["background"];
+		m_borderColor = from["border"];
 		m_currX = from["currX"];
 		m_currY = from["currY"];
 		m_currRow = from["currRow"];
