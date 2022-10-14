@@ -298,7 +298,9 @@ namespace video
 	}
 	void VideoVIC::WriteAudioAmplitude(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteAudioAmplitude, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteAudioAmplitude, value=%02X", value);
+		GetVICRegister(VICRegister::AUDIO_AMPLITUDE) = value;
+		UpdateColors();
 	}
 
 	// CRF
@@ -330,7 +332,8 @@ namespace video
 				DrawBackground(4, m_borderColor);
 			}
 		}
-		else if (m_currX == H_TOTAL)
+
+		if (m_currX == H_TOTAL)
 		{
 			++m_currY;
 			m_currX = 0;
@@ -373,11 +376,11 @@ namespace video
 	SDL_Rect VideoVIC::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
 		// TODO, will always center
-		const uint32_t tempBorder = 16;
+		const int tempBorder = 16;
 
 		return SDL_Rect{
-			int(LEFT_BORDER_PX - tempBorder),
-			int(TOP_BORDER - tempBorder),
+			int(LEFT_BORDER_PX) - tempBorder,
+			int(TOP_BORDER) - tempBorder,
 			int(H_DISPLAY_PX + (2 * tempBorder)),
 			int(V_DISPLAY + (2 * tempBorder))
 		};
@@ -448,7 +451,7 @@ namespace video
 		LogPrintf(LOG_INFO, "  H_DISPLAY: %d half characters (%d pixels)", H_DISPLAY, H_DISPLAY_PX);
 		LogPrintf(LOG_INFO, "  H_TOTAL:   %d half characters (%d pixels)", H_TOTAL, H_TOTAL_PX);
 		LogPrintf(LOG_INFO, "  L_BORDER:  %d half characters (%d pixels)", LEFT_BORDER, LEFT_BORDER_PX);
-		LogPrintf(LOG_INFO, "  R_BORDER:  %d half characters (%d pixels)", RIGHT_BORDER, RIGHT_BORDER * CHAR_WIDTH);
+		LogPrintf(LOG_INFO, "  R_BORDER:  %d half characters (%d pixels)", RIGHT_BORDER, RIGHT_BORDER * HALF_CHAR_WIDTH);
 
 		LogPrintf(LOG_INFO, "  CHAR_H:    %d pixels", CHAR_HEIGHT);
 		LogPrintf(LOG_INFO, "  V_DISPLAY: %d characters (%d pixels)", rows, V_DISPLAY);
@@ -473,34 +476,47 @@ namespace video
 		LogPrintf(LOG_INFO, "UpdateColors");
 		BYTE bg = GetVICBackgroundColor();
 		BYTE border = GetVICBorderColor();
+		BYTE aux = GetVICAuxiliaryColor();
 
 		m_backgroundColor = GetVICColor(bg);
 		m_borderColor = GetVICColor(border);
+		m_auxiliaryColor = GetVICColor(aux);
 		m_invertColors = GetVICInvertColors();
 
 		LogPrintf(LOG_INFO, "  BACKGROUND: %d", bg);
 		LogPrintf(LOG_INFO, "  BORDER:     %d", border);
+		LogPrintf(LOG_INFO, "  AUXILIARY:  %d", aux);
 		LogPrintf(LOG_INFO, "  INVERT:     %d", m_invertColors);
 	}
 
 	void VideoVIC::DrawChar()
 	{
-		BYTE ch = m_memory->Read8(m_currChar);
-		BYTE color = m_memory->Read8(m_currColor);
-		bool multiColor = GetBit(color, 3);
-		uint32_t fgColor = GetVICColor(color & 7);
+		const BYTE ch = m_memory->Read8(m_currChar);
+		const BYTE color = m_memory->Read8(m_currColor);
+		const bool multiColor = GetBit(color, 3);
+		const uint32_t fgColor = GetVICColor(color & 7);
 
 		const WORD charAddress = m_charBaseAddress + (ch * CHAR_HEIGHT) + m_currRow;
-		const BYTE pixels = m_memory->Read8(charAddress);
+		BYTE pixels = m_memory->Read8(charAddress);
 
-		//if (multiColor)
-		//{
-		//	for (int i = 0; i < 4; ++i)
-		//	{
-
-		//	}
-		//}
-		//else
+		if (multiColor)
+		{
+			for (int i = 0; i < CHAR_WIDTH/2; ++i)
+			{
+				uint32_t color;
+				switch (pixels & 0b11000000)
+				{
+				case 0b00000000: color = m_backgroundColor; break;
+				case 0b01000000: color = m_borderColor; break;
+				case 0b10000000: color = fgColor; break;
+				case 0b11000000: color = m_auxiliaryColor; break;
+				}
+				DrawPixel(color);
+				DrawPixel(color);
+				pixels <<= 2;
+			}
+		}
+		else
 		{
 			for (int i = 0; i < CHAR_WIDTH; ++i)
 			{

@@ -172,6 +172,8 @@ namespace video
         BYTE GetVICBackgroundColor() const { return GetVICRegister(VICRegister::COLOR_CONTROL) >> 4; }
         BYTE GetVICBorderColor() const { return GetVICRegister(VICRegister::COLOR_CONTROL) & 7; }
         bool GetVICInvertColors() const { return !emul::GetBit(GetVICRegister(VICRegister::COLOR_CONTROL), 3); }
+        BYTE GetVICAudioAmplitude() const { return GetVICRegister(VICRegister::AUDIO_AMPLITUDE) & 0x0F; }
+        BYTE GetVICAuxiliaryColor() const { return (GetVICRegister(VICRegister::AUDIO_AMPLITUDE) >> 4) & 0x0F; }
 
         // Synchronizes registers with actual raster value in m_currY
         void UpdateVICRaster();
@@ -194,6 +196,7 @@ namespace video
 
         uint32_t m_borderColor = 0;
         uint32_t m_backgroundColor = 0;
+        uint32_t m_auxiliaryColor = 0;
         bool m_invertColors = false;
         bool m_doubleHeight = false;
 
