@@ -1,5 +1,6 @@
 #pragma once
 #include <Video/Video.h>
+#include <CPU/IOConnector.h>
 
 namespace via
 {
@@ -8,7 +9,7 @@ namespace via
 
 namespace video
 {
-    class VideoVIC : public Video
+    class VideoVIC : public Video, public emul::IOConnector
     {
     public:
         VideoVIC();
@@ -31,7 +32,69 @@ namespace video
         virtual bool IsDisplayArea() const override { return !IsVSync() && !IsHSync(); }
 
     protected:
-        bool m_graphics = false;
+        // CR0
+        BYTE ReadScreenOriginX();
+        void WriteScreenOriginX(BYTE value);
+
+        // CR1
+        BYTE ReadScreenOriginY();
+        void WriteScreenOriginY(BYTE value);
+
+        // CR2
+        BYTE ReadColumns();
+        void WriteColumns(BYTE value);
+
+        // CR3
+        BYTE ReadRows();
+        void WriteRows(BYTE value);
+
+        // CR4
+        BYTE ReadRaster();
+        void WriteRaster(BYTE value);
+
+        // CR5
+        BYTE ReadBaseAddress();
+        void WriteBaseAddress(BYTE value);
+
+        // CR6
+        BYTE ReadLightPenX();
+        void WriteLightPenX(BYTE value);
+
+        // CR7
+        BYTE ReadLightPenY();
+        void WriteLightPenY(BYTE value);
+
+        // CR8
+        BYTE ReadPotX();
+        void WritePotX(BYTE value);
+
+        // CR9
+        BYTE ReadPotY();
+        void WritePotY(BYTE value);
+
+        // CRA
+        BYTE ReadAudioFreq1();
+        void WriteAudioFreq1(BYTE value);
+
+        // CRB
+        BYTE ReadAudioFreq2();
+        void WriteAudioFreq2(BYTE value);
+
+        // CRC
+        BYTE ReadAudioFreq3();
+        void WriteAudioFreq3(BYTE value);
+
+        // CRD
+        BYTE ReadAudioFreq4();
+        void WriteAudioFreq4(BYTE value);
+
+        // CRE
+        BYTE ReadAudioAmplitude();
+        void WriteAudioAmplitude(BYTE value);
+
+        // CRF
+        BYTE ReadColorControl();
+        void WriteColorControl(BYTE value);
 
         // TODO: TEMP until VIC implementation
 
@@ -59,8 +122,6 @@ namespace video
         static const uint32_t RIGHT_BORDER = (H_DISPLAY + H_TOTAL) / 2;
         static const uint32_t BOTTOM_BORDER = (V_DISPLAY + V_TOTAL) / 2;
 
-        // PET has a purely character display, 40x25 = 1000 characters
-        // 1K RAM buffer @ 0x8000
         const ADDRESS CHAR_BASE = 0x1E00;
         const ADDRESS CHARROM_BASE = 0x8000;
         ADDRESS m_currChar = CHAR_BASE;
