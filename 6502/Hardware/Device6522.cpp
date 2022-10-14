@@ -426,10 +426,6 @@ namespace via
 		{
 			LogPrintf(LOG_WARNING, "ACR: T1 Output on PB7 not implemented");
 		}
-		if (ACR.GetTimer1Mode() == AuxControl::T1Mode::CONTINUOUS)
-		{
-			LogPrintf(LOG_WARNING, "ACR: T1 Continuous not implemented");
-		}
 		if (ACR.GetTimer2Mode() == AuxControl::T2Mode::PULSE_PB6)
 		{
 			LogPrintf(LOG_WARNING, "ACR: T2 Pulse Mode not implemented");
@@ -560,7 +556,10 @@ namespace via
 			if (TIMER1.IsArmed())
 			{
 				m_interrupt.SetInterrupt(InterruptFlag::TIMER1);
-				TIMER1.Disarm();
+				if (ACR.GetTimer1Mode() == AuxControl::T1Mode::ONE_SHOT)
+				{
+					TIMER1.Disarm();
+				}
 			}
 		}
 		if (TIMER2.Tick())
