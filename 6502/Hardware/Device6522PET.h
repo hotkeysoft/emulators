@@ -11,6 +11,9 @@ namespace via
 		// CA2
 		bool GetGraphicsMode() const { return m_portA.GetC2(); }
 
+		// Mix of CB2 and CassetteDataOut
+		WORD GetSoundOut() const { return (m_portB.GetC2() ? 8192 : 0) + (GetCassetteDataOut() ? 8192 : 0); }
+
 		// CB1
 		void SetCassette2ReadLine(bool set) { return m_portB.SetC1(set); }
 

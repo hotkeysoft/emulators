@@ -22,6 +22,22 @@ namespace via
 		}
 	}
 
+	static const char* GetShiftRegisterModeStr(ShiftRegisterMode mode)
+	{
+		switch (mode)
+		{
+		case ShiftRegisterMode::DISABLED:          return "Disabled";
+		case ShiftRegisterMode::SHIFT_IN_T2:       return "INPUT, T2";
+		case ShiftRegisterMode::SHIFT_IN_CLK:      return "INPUT, CLK";
+		case ShiftRegisterMode::SHIFT_IN_EXTCLK:   return "INPUT, EXT CLK";
+		case ShiftRegisterMode::SHIFT_OUT_T2_FREE: return "OUTPUT, T2 FREE";
+		case ShiftRegisterMode::SHIFT_OUT_T2:      return "OUTPUT, T2";
+		case ShiftRegisterMode::SHIFT_OUT_CLK:     return "OUTPUT, CLK";
+		case ShiftRegisterMode::SHIFT_OUT_EXTCLK:  return "OUTPUT,  EXT CLK";
+		default: throw std::exception("Not possible");
+		}
+	}
+
 	VIAPort::VIAPort(std::string id) :
 		Logger(id.c_str()),
 		IOConnector(0x0F) // Addresses 0-F are decoded by device
@@ -95,10 +111,10 @@ namespace via
 	{
 		LogPrintf(LOG_DEBUG, "Write DataDirectionRegister, value=%02X", value);
 		DDR = value;
-		LogPrintf(LOG_INFO, "Set DataDirection:");
+		LogPrintf(LOG_DEBUG, "Set DataDirection:");
 		for (int i = 7; i >= 0; --i)
 		{
-			LogPrintf(LOG_INFO, " PIN %d: %s", i, (GetDataDirection(i) == DataDirection::INPUT) ? "IN" : "OUT");
+			LogPrintf(LOG_DEBUG, " PIN %d: %s", i, (GetDataDirection(i) == DataDirection::INPUT) ? "IN" : "OUT");
 		}
 	}
 
@@ -179,7 +195,7 @@ namespace via
 		Connect(0x5, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1CounterH));
 		Connect(0x6, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchL));
 		Connect(0x7, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchH));
-		Connect(0x8, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2LatchesL));
+		Connect(0x8, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2LatchL));
 		Connect(0x9, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2CounterH));
 		Connect(0xA, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteSR));
 		Connect(0xB, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteACR));
@@ -206,6 +222,8 @@ namespace via
 
 		m_portA.Reset();
 		m_portB.Reset();
+
+		m_shiftRegister = 0;
 	}
 
 	// 4 - T1C-L: T1 Low-Order Counter
@@ -238,7 +256,7 @@ namespace via
 		TIMER1.Load();
 	}
 
-	// 6 - T1L-L: T1 Low-Order Latches
+	// 6 - T1L-L: T1 Low-Order Latch
 	BYTE Device6522::ReadT1LatchL()
 	{
 		BYTE value = TIMER1.GetCounterLowLatch();
@@ -252,7 +270,7 @@ namespace via
 		TIMER1.SetCounterLowLatch(value);
 	}
 
-	// 7 - T1L-H: T1 High-Order Latches
+	// 7 - T1L-H: T1 High-Order Latch
 	BYTE Device6522::ReadT1LatchH()
 	{
 		BYTE value = TIMER1.GetCounterHighLatch();
@@ -277,9 +295,9 @@ namespace via
 		LogPrintf(LOG_DEBUG, "ReadT2CounterL, value=%02X", value);
 		return value;
 	}
-	void Device6522::WriteT2LatchesL(BYTE value)
+	void Device6522::WriteT2LatchL(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "WriteT2LatchesL, value=%02X", value);
+		LogPrintf(LOG_DEBUG, "WriteT2LatchL, value=%02X", value);
 		TIMER2.SetCounterLowLatch(value);
 	}
 
@@ -304,12 +322,34 @@ namespace via
 	// A - SR: Shift Register
 	BYTE Device6522::ReadSR()
 	{
-		LogPrintf(LOG_WARNING, "ReadSR (Not implemented)");
-		return 0xFF;
+		m_interrupt.ClearInterrupt(InterruptFlag::SR);
+		BYTE value = m_shiftRegister;
+		LogPrintf(LOG_DEBUG, "ReadSR, value=%02X", value);
+		return value;
 	}
 	void Device6522::WriteSR(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteSR, value=%02X (Not implemented)", value);
+		LogPrintf(LOG_DEBUG, "WriteSR, value=%02X", value);
+		m_shiftRegister = value;
+
+		ShiftRegisterMode srMode = ACR.GetShiftRegisterMode();
+		switch (srMode)
+		{
+		case ShiftRegisterMode::DISABLED:
+			// No effect;
+			break;
+		case ShiftRegisterMode::SHIFT_OUT_T2_FREE:
+		case ShiftRegisterMode::SHIFT_OUT_T2:
+			if (m_interrupt.IsInterruptSet(InterruptFlag::SR))
+			{
+				TIMER2.Load();
+			}
+			m_interrupt.ClearInterrupt(InterruptFlag::SR);
+			break;
+		default:
+			LogPrintf(LOG_WARNING, "WriteSR: Mode not supported: %s", GetShiftRegisterModeStr(srMode));
+			break;
+		}
 	}
 
 	// B - ACR: Auxiliary Control Register
@@ -375,7 +415,8 @@ namespace via
 		LogPrintf(LOG_INFO, " T1 Mode         : %s", ACR.GetTimer1Mode() == AuxControl::T1Mode::CONTINUOUS ? "CONTINUOUS" : "ONE SHOT");
 		LogPrintf(LOG_INFO, " T2 Mode         : %s", ACR.GetTimer2Mode() == AuxControl::T2Mode::TIMED_INTERRUPT ? "INTERRUPT" : "PULSE PB6");
 
-		LogPrintf(LOG_INFO, " Shift Reg Mode  : %d", ACR.GetShiftRegisterMode());
+		ShiftRegisterMode srMode = ACR.GetShiftRegisterMode();
+		LogPrintf(LOG_INFO, " Shift Reg Mode  : %s", GetShiftRegisterModeStr(srMode));
 
 		LogPrintf(LOG_INFO, " PortA Latching  : %d", ACR.GetPortALatchingEnabled());
 		LogPrintf(LOG_INFO, " PortB Latching  : %d", ACR.GetPortBLatchingEnabled());
@@ -393,9 +434,16 @@ namespace via
 		{
 			LogPrintf(LOG_WARNING, "ACR: T2 Pulse Mode not implemented");
 		}
-		if (ACR.GetShiftRegisterMode() != AuxControl::SRMode::DISABLED)
+
+		switch (srMode)
 		{
-			LogPrintf(LOG_WARNING, "ACR: Shift Register not implemented");
+		case ShiftRegisterMode::DISABLED:
+		case ShiftRegisterMode::SHIFT_OUT_T2_FREE:
+			// OK
+			break;
+		default:
+			LogPrintf(LOG_WARNING, "ACR: Shift Register mode not implemented: %s", GetShiftRegisterModeStr(srMode));
+			break;
 		}
 		if (ACR.GetPortALatchingEnabled())
 		{
@@ -463,11 +511,10 @@ namespace via
 			m_counter = m_latch;
 			m_load = false;
 		}
-		else if (m_counter == 0)
+		else if (m_latch && (m_counter == 0))
 		{
 			m_load = true;
-			ret = m_armed; // Triggers interrupt only once
-			m_armed = false;
+			ret = true;
 		}
 		else
 		{
@@ -505,6 +552,45 @@ namespace via
 		return ifr;
 	}
 
+	void Device6522::Tick()
+	{
+		if (TIMER1.Tick())
+		{
+			LogPrintf(LOG_DEBUG, "Timer1 triggered");
+			if (TIMER1.IsArmed())
+			{
+				m_interrupt.SetInterrupt(InterruptFlag::TIMER1);
+				TIMER1.Disarm();
+			}
+		}
+		if (TIMER2.Tick())
+		{
+			LogPrintf(LOG_DEBUG, "Timer2 triggered");
+			if (TIMER2.IsArmed())
+			{
+				m_interrupt.SetInterrupt(InterruptFlag::TIMER2);
+				TIMER2.Disarm();
+			}
+
+			if (ACR.GetShiftRegisterMode() == ShiftRegisterMode::SHIFT_OUT_T2_FREE)
+			{
+				// TODO: Should pulse CB1 but I don't think this is used much
+				// On the PET CB1 is tape input
+				Shift();
+			}
+		}
+	}
+
+	void Device6522::Shift()
+	{
+		LogPrintf(LOG_DEBUG, "[%zu] SHIFT %02X", emul::g_ticks, m_shiftRegister);
+		// TODO: Only free-running mode now
+		bool msb = emul::GetMSB(m_shiftRegister);
+		m_portB.SetC2(msb);
+		m_shiftRegister <<= 1;
+		emul::SetBit(m_shiftRegister, 0, msb);
+	}
+
 	void Device6522::Interrupt::Serialize(json& to)
 	{
 		to["IER"] = m_interruptEnable;
@@ -521,6 +607,8 @@ namespace via
 		m_portA.Serialize(to["portA"]);
 		m_portB.Serialize(to["portB"]);
 
+		to["SR"] = m_shiftRegister;
+
 		TIMER1.Serialize(to["timer1"]);
 		TIMER2.Serialize(to["timer2"]);
 
@@ -534,6 +622,8 @@ namespace via
 	{
 		m_portA.Deserialize(from["portA"]);
 		m_portB.Deserialize(from["portB"]);
+
+		m_shiftRegister = from["SR"];
 
 		TIMER1.Deserialize(from["timer1"]);
 		TIMER2.Deserialize(from["timer2"]);

@@ -297,7 +297,9 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(m_via.GetCassetteDataOut() ? 16384 : 0);
+				// Mix of PortB Shift register output and tape out
+				// TODO: Allow mixing/mute
+				SOUND().PlayMono(m_via.GetSoundOut());
 			}
 
 			// Tape update
@@ -408,6 +410,8 @@ namespace emul
 						break;
 					case Model::BASIC2n:
 					case Model::BASIC2b:
+					case Model::BASIC4b:
+					case Model::BASIC4n:
 						m_memory.Write16(0x2A, end);
 						m_memory.Write16(0x2C, end);
 						m_memory.Write16(0x2E, end);

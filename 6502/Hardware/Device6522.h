@@ -20,6 +20,16 @@ namespace via
 		OUT_LOW,
 		OUT_HIGH
 	};
+	enum class ShiftRegisterMode {
+		DISABLED = 0,
+		SHIFT_IN_T2,
+		SHIFT_IN_CLK,
+		SHIFT_IN_EXTCLK,
+		SHIFT_OUT_T2_FREE,
+		SHIFT_OUT_T2,
+		SHIFT_OUT_CLK,
+		SHIFT_OUT_EXTCLK
+	};
 	enum class ActiveEdge { NEG_EDGE, POS_EDGE };
 	enum class InterruptFlag { CA2, CA1, SR, CB2, CB1, TIMER2, TIMER1, ANY };
 
@@ -106,19 +116,7 @@ namespace via
 
 		bool GetIRQ() const { return m_interrupt.IsIRQ(); }
 
-		void Tick()
-		{
-			if (TIMER1.Tick())
-			{
-				LogPrintf(LOG_INFO, "Timer1 triggered");
-				m_interrupt.SetInterrupt(InterruptFlag::TIMER1);
-			}
-			if (TIMER2.Tick())
-			{
-				LogPrintf(LOG_INFO, "Timer2 triggered");
-				m_interrupt.SetInterrupt(InterruptFlag::TIMER2);
-			}
-		}
+		void Tick();
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -132,17 +130,17 @@ namespace via
 		BYTE ReadT1CounterH();
 		void WriteT1CounterH(BYTE value);
 
-		// 6 - T1L-L: T1 Low-Order Latches
+		// 6 - T1L-L: T1 Low-Order Latch
 		BYTE ReadT1LatchL();
 		void WriteT1LatchL(BYTE value);
 
-		// 7 - T1L-H: T1 High-Order Latches
+		// 7 - T1L-H: T1 High-Order Latch
 		BYTE ReadT1LatchH();
 		void WriteT1LatchH(BYTE value);
 
 		// 8 - T2C-L: T2 Low-Order Counter
 		BYTE ReadT2CounterL();
-		void WriteT2LatchesL(BYTE value);
+		void WriteT2LatchL(BYTE value);
 
 		// 9 - T2C-H: T2 High-Order Counter
 		BYTE ReadT2CounterH();
@@ -242,12 +240,7 @@ namespace via
 			enum class T2Mode { TIMED_INTERRUPT, PULSE_PB6 };
 			T2Mode GetTimer2Mode() const { return (T2Mode)emul::GetBit(m_data, 5); }
 
-			enum class SRMode {
-				DISABLED = 0, SHIFT_IN_T2, SHIFT_IN_CLK, SHIFT_IN_EXTCLK,
-				SHIFT_OUT_T2_FREE, SHIFT_OUT_T2, SHIFT_OUT_CLK, SHIFT_OUT_EXTCLK
-			};
-
-			SRMode GetShiftRegisterMode() const { return (SRMode)((m_data >> 2) & 7); }
+			ShiftRegisterMode GetShiftRegisterMode() const { return (ShiftRegisterMode)((m_data >> 2) & 7); }
 
 			bool GetPortBLatchingEnabled() const { return emul::GetBit(m_data, 1); }
 			bool GetPortALatchingEnabled() const { return emul::GetBit(m_data, 0); }
@@ -273,6 +266,8 @@ namespace via
 			void SetCounterHighLatch(BYTE value) { emul::SetHByte(m_latch, value); }
 
 			void Load() { m_load = true; m_armed = true; }
+			bool IsArmed() const { return m_armed; }
+			void Disarm() { m_armed = false; }
 
 			// emul::Serializable
 			virtual void Serialize(json& to) override;
@@ -284,6 +279,9 @@ namespace via
 			WORD m_latch = 0;
 			WORD m_counter = 0;
 		} TIMER1, TIMER2;
+
+		void Shift();
+		BYTE m_shiftRegister = 0;
 
 		VIAPort m_portA;
 		VIAPort m_portB;
