@@ -68,7 +68,7 @@ namespace emul
 
 		// IO2, 3, not implemented
 
-		emul::MemoryBlock m_ramBlock5; // 8K (expansion /BLK5), autostart
+		emul::MemoryBlock m_ramBlock5; // 8K (expansion /BLK5), 0xA000 autostart
 
 		emul::MemoryBlock m_romBASIC;
 		emul::MemoryBlock m_romKERNAL;

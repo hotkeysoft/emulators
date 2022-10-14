@@ -14,9 +14,9 @@ using tape::TapeDeck;
 
 namespace emul
 {
-	const size_t MAIN_CLK = 16000000; // 16 MHz Main crystal
-	const size_t PIXEL_CLK = MAIN_CLK / 2;
-	const size_t CPU_CLK = PIXEL_CLK / 8;
+	const size_t MAIN_CLK = 14318180; // Main crystal
+	const size_t PIXEL_CLK = (MAIN_CLK / 7) * 2;
+	const size_t CPU_CLK = PIXEL_CLK / 4;
 
 	// Poll each frame
 	const size_t SCAN_RATE = (262 * 64);
@@ -101,6 +101,10 @@ namespace emul
 		video->EnableLog(CONFIG().GetLogLevel("video"));
 		video->Init(&m_memory, nullptr);
 		m_video = video;
+
+		// Map it to memory
+		m_memory.Allocate(&m_ioVIC, 0x9000);
+		m_ioVIC.AddDevice(*video, 0);
 	}
 
 	void ComputerVIC20::InitIO()
@@ -171,6 +175,8 @@ namespace emul
 			m_memory.Allocate(&m_ramBlock0LOW, 0x0000);
 			m_memory.Allocate(&m_ramBlock0MAIN, 0x1000);
 		}
+
+		m_memory.Allocate(&m_ramCOLOR, 0x9400);
 
 		m_memory.Clear();
 	}
