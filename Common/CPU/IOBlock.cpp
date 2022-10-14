@@ -70,7 +70,7 @@ namespace emul
 					LogPrintf(LOG_WARNING, "AddDevice(%s): There is already a device mapped to IOREAD address %04X, overwriting", device.GetModuleID(), addr);
 				}
 				m_readHandlers[addr] = &(readHandler->second);
-				LogPrintf(LOG_DEBUG, "AddDevice: Connect IOREAD address %04X", addr);
+				LogPrintf(LOG_INFO, "AddDevice: Connect IOREAD address %04X", addr);
 			}
 
 			// TODO: Chaining
@@ -82,7 +82,7 @@ namespace emul
 					LogPrintf(LOG_WARNING, "AddDevice(%s): There is already a device mapped to IOWRITE address %04X, overwriting", device.GetModuleID(), addr);
 				}
 				m_writeHandlers[addr] = &(writeHandler->second);
-				LogPrintf(LOG_DEBUG, "AddDevice: Connect IOWRITE address %04X", addr);
+				LogPrintf(LOG_INFO, "AddDevice: Connect IOWRITE address %04X", addr);
 			}
 		}
 	}
