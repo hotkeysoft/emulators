@@ -244,12 +244,8 @@ namespace emul
 			m_via1.Tick();
 			m_via2.Tick();
 
-			//GetCPU().SetIRQ(
-			//	m_pia1.GetIRQA() ||
-			//	m_pia1.GetIRQB() ||
-			//	m_pia2.GetIRQA() ||
-			//	m_pia2.GetIRQB() ||
-			//	m_via.GetIRQ());
+			GetCPU().SetNMI(m_via1.GetIRQ());
+			GetCPU().SetIRQ(m_via2.GetIRQ());
 		}
 
 		return true;
