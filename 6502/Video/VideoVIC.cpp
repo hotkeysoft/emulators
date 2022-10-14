@@ -2,6 +2,7 @@
 #include "VideoVIC.h"
 
 using emul::GetBit;
+using emul::GetLSB;
 using emul::SetBit;
 
 namespace video
@@ -79,6 +80,7 @@ namespace video
 		m_rawVICRegisters.fill(0);
 		UpdateBaseAddress();
 		UpdateColors();
+		UpdateScreenArea();
 		m_currX = 0;
 		m_currY = 0;
 		m_currRow = 0;
@@ -315,18 +317,25 @@ namespace video
 
 	void VideoVIC::Tick()
 	{
+		if (!H_DISPLAY || !V_DISPLAY)
+			return;
+
 		++m_currX;
 
 		if (m_currX == RIGHT_BORDER)
 		{
 			NewLine();
+			if (LEFT_BORDER_ODD)
+			{
+				DrawBackground(4, m_borderColor);
+			}
 		}
 		else if (m_currX == H_TOTAL)
 		{
 			++m_currY;
 			m_currX = 0;
-			m_currChar = m_matrixBaseAddress + (H_DISPLAY * (m_currY / CHAR_HEIGHT));
-			m_currColor = m_colorBaseAddress + (H_DISPLAY * (m_currY / CHAR_HEIGHT));
+			m_currChar = m_matrixBaseAddress + ((H_DISPLAY/2) * (m_currY / CHAR_HEIGHT));
+			m_currColor = m_colorBaseAddress + ((H_DISPLAY/2) * (m_currY / CHAR_HEIGHT));
 			m_currRow = m_currY % CHAR_HEIGHT;
 		}
 
@@ -344,22 +353,28 @@ namespace video
 			m_currColor = m_colorBaseAddress;
 		}
 
-		if (IsDisplayArea())
+		// Tick every half character (4 pixels)
+		// Draw 8 characters, but only on odd or even ticks (depending on the border)
+		if (GetLSB(m_currX) ^ LEFT_BORDER_ODD)
 		{
-			DrawChar();
-			++m_currChar;
-			++m_currColor;
-		}
-		else
-		{
-			DrawBackground(8, m_borderColor);
+			if (IsDisplayArea())
+			{
+				DrawChar();
+				++m_currChar;
+				++m_currColor;
+			}
+			else
+			{
+				DrawBackground(8, m_borderColor);
+			}
 		}
 	}
 
 	SDL_Rect VideoVIC::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
-		// TODO
-		const uint32_t tempBorder = 8;
+		// TODO, will always center
+		const uint32_t tempBorder = 16;
+
 		return SDL_Rect{
 			int(LEFT_BORDER_PX - tempBorder),
 			int(TOP_BORDER - tempBorder),
@@ -409,22 +424,29 @@ namespace video
 		BYTE columns = GetVICColumns();
 		BYTE rows = GetVICRows();
 
+		// Unit: half-characters (4 pixels)
 		BYTE originX = GetVICOriginX();
-		BYTE originY = GetVICOriginY();
 
-		H_DISPLAY = columns;
+		// Unit: 2 pixels
+		BYTE originY = GetVICOriginY() * 2;
+
+		H_DISPLAY = columns * 2; // In half-chars
+		H_DISPLAY_PX = H_DISPLAY * HALF_CHAR_WIDTH;
+
 		V_DISPLAY = rows * CHAR_HEIGHT;
 
 		LEFT_BORDER = originX;
-		LEFT_BORDER_PX = LEFT_BORDER * CHAR_WIDTH;
+		LEFT_BORDER_ODD = GetLSB(originX);
+		LEFT_BORDER_PX = LEFT_BORDER * HALF_CHAR_WIDTH;
 		TOP_BORDER = originY;
-		RIGHT_BORDER = (H_DISPLAY + LEFT_BORDER);
-		BOTTOM_BORDER = (V_DISPLAY + TOP_BORDER);
 
-		LogPrintf(LOG_INFO, "  H_DISPLAY: %d characters (%d pixels)", H_DISPLAY, H_DISPLAY * CHAR_WIDTH);
-		LogPrintf(LOG_INFO, "  H_TOTAL:   %d characters (%d pixels)", H_TOTAL, H_TOTAL_PX);
-		LogPrintf(LOG_INFO, "  L_BORDER:  %d characters (%d pixels)", LEFT_BORDER, LEFT_BORDER_PX);
-		LogPrintf(LOG_INFO, "  R_BORDER:  %d characters (%d pixels)", RIGHT_BORDER, RIGHT_BORDER * CHAR_WIDTH);
+		RIGHT_BORDER = (H_TOTAL - LEFT_BORDER);
+		BOTTOM_BORDER = (V_TOTAL - TOP_BORDER);
+
+		LogPrintf(LOG_INFO, "  H_DISPLAY: %d half characters (%d pixels)", H_DISPLAY, H_DISPLAY_PX);
+		LogPrintf(LOG_INFO, "  H_TOTAL:   %d half characters (%d pixels)", H_TOTAL, H_TOTAL_PX);
+		LogPrintf(LOG_INFO, "  L_BORDER:  %d half characters (%d pixels)", LEFT_BORDER, LEFT_BORDER_PX);
+		LogPrintf(LOG_INFO, "  R_BORDER:  %d half characters (%d pixels)", RIGHT_BORDER, RIGHT_BORDER * CHAR_WIDTH);
 
 		LogPrintf(LOG_INFO, "  V_DISPLAY: %d characters (%d pixels)", rows, V_DISPLAY);
 		LogPrintf(LOG_INFO, "  V_TOTAL:   %d pixels", V_TOTAL);
@@ -448,35 +470,34 @@ namespace video
 		LogPrintf(LOG_INFO, "UpdateColors");
 		BYTE bg = GetVICBackgroundColor();
 		BYTE border = GetVICBorderColor();
-		bool invert = GetVICInvertFGBG();
-
-		LogPrintf(LOG_INFO, "  BACKGROUND: %d", bg);
-		LogPrintf(LOG_INFO, "  BORDER:     %d", border);
-		LogPrintf(LOG_INFO, "  INVERT:     %d", invert);
 
 		m_backgroundColor = GetVICColor(bg);
 		m_borderColor = GetVICColor(border);
+		m_invertColors = GetVICInvertColors();
 
-		if (invert)
-		{
-			LogPrintf(LOG_WARNING, "UpdateColors: Invert not supported");
-		}
+		LogPrintf(LOG_INFO, "  BACKGROUND: %d", bg);
+		LogPrintf(LOG_INFO, "  BORDER:     %d", border);
+		LogPrintf(LOG_INFO, "  INVERT:     %d", m_invertColors);
 	}
 
 	void VideoVIC::DrawChar()
 	{
 		BYTE ch = m_memory->Read8(m_currChar);
-		BYTE color = m_memory->Read8(m_currColor) & 0x0F;
-		uint32_t fgColor = GetVICColor(color);
-		//const bool reverse = GetBit(ch, 7);
-		//SetBit(ch, 7, 0);
+		BYTE color = m_memory->Read8(m_currColor);
+		bool multiColor = GetBit(color, 3);
+		uint32_t fgColor = GetVICColor(color & 7);
+
+		if (multiColor)
+		{
+			LogPrintf(LOG_WARNING, "DrawChar: Multicolor mode not implemented");
+		}
 
 		const WORD charROMAddress = m_charBaseAddress + (ch * CHAR_HEIGHT) + m_currRow;
 		const BYTE pixels = m_memory->Read8(charROMAddress);
 
 		for (int i = 0; i < CHAR_WIDTH; ++i)
 		{
-			DrawPixel(GetBit(pixels, 7-i) ? fgColor : m_backgroundColor);
+			DrawPixel((GetBit(pixels, 7-i) ^ m_invertColors )? fgColor : m_backgroundColor);
 		}
 	}
 
@@ -489,8 +510,6 @@ namespace video
 
 		to["currChar"] = m_currChar;
 		to["currColor"] = m_currColor;
-		to["background"] = m_backgroundColor;
-		to["border"] = m_borderColor;
 		to["currX"] = m_currX;
 		to["currY"] = m_currY;
 		to["currRow"] = m_currRow;
@@ -502,11 +521,10 @@ namespace video
 		m_rawVICRegisters = from["registers"];
 		UpdateBaseAddress();
 		UpdateScreenArea();
+		UpdateColors();
 
 		m_currChar = from["currChar"];
 		m_currChar = from["currColor"];
-		m_backgroundColor = from["background"];
-		m_borderColor = from["border"];
 		m_currX = from["currX"];
 		m_currY = from["currY"];
 		m_currRow = from["currRow"];

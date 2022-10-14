@@ -48,8 +48,6 @@ namespace video
 
         // More "IsBlanking", we don't really care about vsync/hsync pulse width
         // This returns true if we're in an horizontal or blanking interval
-        // PET doesn't care about hsync, but uses the vertical blanking interval
-        // to update video RAM (otherwise we'd get flickering - not emulated)
         virtual bool IsVSync() const override { return m_currY >= V_DISPLAY; }
         virtual bool IsHSync() const override { return m_currX >= H_DISPLAY; }
         virtual bool IsDisplayArea() const override { return !IsVSync() && !IsHSync(); }
@@ -125,6 +123,8 @@ namespace video
 
         // Pixels per character
         static const uint32_t CHAR_WIDTH = 8;
+        // Each Tick() is a half char (4 pixels)
+        static const uint32_t HALF_CHAR_WIDTH = CHAR_WIDTH / 2;
         static const uint32_t CHAR_HEIGHT = 8;
 
         // Number of lines displayed
@@ -132,20 +132,21 @@ namespace video
         // Total number of lines (including borders)
         static const uint32_t V_TOTAL = 262;
 
-        // Number of characters per line (displayed)
-        uint32_t H_DISPLAY = 22;
-        uint32_t H_DISPLAY_PX = H_DISPLAY * CHAR_WIDTH;
+        // Number of half-characters per line (displayed)
+        uint32_t H_DISPLAY = 22 * 2;
+        uint32_t H_DISPLAY_PX = H_DISPLAY * HALF_CHAR_WIDTH;
 
-        // Total number of characters per line (including borders)
-        static const uint32_t H_TOTAL = 32;
-        static const uint32_t H_TOTAL_PX = H_TOTAL * CHAR_WIDTH;
+        // Total number of half-characters per line (including borders)
+        static const uint32_t H_TOTAL = 32 * 2;
+        static const uint32_t H_TOTAL_PX = H_TOTAL * HALF_CHAR_WIDTH;
 
-        // Split borders evenly on both sides
-        uint32_t LEFT_BORDER = (H_TOTAL - H_DISPLAY) / 2;
-        uint32_t LEFT_BORDER_PX = LEFT_BORDER * CHAR_WIDTH;
-        uint32_t TOP_BORDER = (V_TOTAL - V_DISPLAY) / 2;
-        uint32_t RIGHT_BORDER = (H_DISPLAY + H_TOTAL) / 2;
-        uint32_t BOTTOM_BORDER = (V_DISPLAY + V_TOTAL) / 2;
+        // Computed by UpdateScreenArea()
+        uint32_t LEFT_BORDER = 0;
+        uint32_t LEFT_BORDER_PX = 0;
+        bool LEFT_BORDER_ODD = false;
+        uint32_t TOP_BORDER = 0;
+        uint32_t RIGHT_BORDER = 0;
+        uint32_t BOTTOM_BORDER = 0;
 
         // Recomputes totals, display, borders, etc. based on register values
         void UpdateScreenArea();
@@ -170,7 +171,7 @@ namespace video
         BYTE GetVICOriginY() const { return GetVICRegister(VICRegister::ORIGIN_Y); }
         BYTE GetVICBackgroundColor() const { return GetVICRegister(VICRegister::COLOR_CONTROL) >> 4; }
         BYTE GetVICBorderColor() const { return GetVICRegister(VICRegister::COLOR_CONTROL) & 7; }
-        bool GetVICInvertFGBG() const { return !emul::GetBit(GetVICRegister(VICRegister::COLOR_CONTROL), 3); }
+        bool GetVICInvertColors() const { return !emul::GetBit(GetVICRegister(VICRegister::COLOR_CONTROL), 3); }
 
         // Synchronizes registers with actual raster value in m_currY
         void UpdateVICRaster();
@@ -193,6 +194,7 @@ namespace video
 
         uint32_t m_borderColor = 0;
         uint32_t m_backgroundColor = 0;
+        bool m_invertColors = false;
 
         uint32_t m_currX = 0;
         uint32_t m_currY = 0;
