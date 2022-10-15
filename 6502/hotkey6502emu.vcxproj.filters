@@ -225,6 +225,12 @@
     <ClInclude Include="IO\DeviceKeyboard.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="IO\DeviceJoystickDigital.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\DeviceJoystick.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -329,9 +335,6 @@
     <ClCompile Include="..\Common\Storage\DeviceTape.cpp">
       <Filter>Common\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="UI\OverlayPET.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IO\DeviceKeyboardPET2001.cpp">
       <Filter>Common\IO</Filter>
     </ClCompile>
@@ -345,6 +348,18 @@
       <Filter>Source Files\IO</Filter>
     </ClCompile>
     <ClCompile Include="Hardware\Device6522VIC_VIA2.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\OverlayPET.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceJoystick.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceJoystickDigital.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device6522VIC_VIA1.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>

@@ -55,6 +55,7 @@ namespace emul
 		ComputerBase::Init(CPUID_6502, baseRAM);
 
 		InitKeyboard();
+		InitJoystick();
 		InitRAM(baseRAM);
 		InitROM();
 		InitIO();
@@ -63,6 +64,7 @@ namespace emul
 
 		InitInputs(CPU_CLK, SCAN_RATE);
 		GetInputs().InitKeyboard(m_keyboard);
+		GetInputs().InitJoystick(&m_joystick);
 
 		SOUND().SetBaseClock(CPU_CLK);
 	}
@@ -83,6 +85,15 @@ namespace emul
 		m_keyboard->EnableLog(CONFIG().GetLogLevel("keyboard"));
 	}
 
+	void ComputerVIC20::InitJoystick()
+	{
+		if (CONFIG().GetValueBool("joystick", "enable"))
+		{
+			m_joystick.EnableLog(CONFIG().GetLogLevel("joystick"));
+			m_joystick.Init();
+		}
+	}
+
 	void ComputerVIC20::InitROM()
 	{
 		m_romCHAR.LoadFromFile("data/VIC20/CHAR-8000.bin");
@@ -93,6 +104,20 @@ namespace emul
 
 		m_romKERNAL.LoadFromFile("data/VIC20/KERNAL-E000-ntsc.bin");
 		m_memory.Allocate(&m_romKERNAL, 0xE000);
+
+		// 16K cartridge
+		//MemoryBlock* rom6000 = new MemoryBlock("ROM6000", 8192, MemoryType::ROM);
+		//rom6000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Pole Position-6000.prg");
+		//m_memory.Allocate(rom6000, 0x6000);
+
+		//MemoryBlock* romA000 = new MemoryBlock("ROMA000", 8192, MemoryType::ROM);
+		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Pole Position-a000.prg");
+		//m_memory.Allocate(romA000, 0xA000);
+
+		// 8K cartridge
+		//MemoryBlock* romA000 = new MemoryBlock("ROMA000", 8192, MemoryType::ROM);
+		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/8k/cart/Frogger.prg");
+		//m_memory.Allocate(romA000, 0xA000);
 	}
 
 	void ComputerVIC20::InitVideo()
@@ -109,17 +134,19 @@ namespace emul
 
 	void ComputerVIC20::InitIO()
 	{
+		m_ioVIA.EnableLog(LOG_ERROR);
+
 		m_memory.Allocate(&m_ioVIA, 0x9100);
 
 		// VIA1 @ 0x91[10]
 		m_via1.EnableLog(CONFIG().GetLogLevel("vic20.via1"));
-		m_via1.Init();
+		m_via1.Init(&m_joystick);
 		// Incomplete decoding, will also select at 3x, 5x, 7x etc
 		m_ioVIA.AddDevice(m_via1, 0x10);
 
 		// VIA2 @ 0x91[20]
 		m_via2.EnableLog(CONFIG().GetLogLevel("vic20.via2"));
-		m_via2.Init(m_keyboard);
+		m_via2.Init(m_keyboard, &m_joystick);
 		// Incomplete decoding, will also select at 3x, 6x, 7x, Ax, Bx, etc
 		m_ioVIA.AddDevice(m_via2, 0x20);
 	}

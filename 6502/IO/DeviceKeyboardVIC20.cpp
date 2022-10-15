@@ -101,6 +101,10 @@ namespace kbd
 		{ SDL_SCANCODE_KP_MINUS, Key(0x20, 7) }, // -
 		{ SDL_SCANCODE_HOME, Key(0x40, 7) }, // HOME
 		{ SDL_SCANCODE_F7, Key(0x80, 7) }, // F7
+
+		// Restore key is outside of the keyboard matrix
+		// Put it in its own "column"
+		{ SDL_SCANCODE_BACKSLASH, Key(0x01, 8)}
 	};
 
 	DeviceKeyboardVIC20::DeviceKeyboardVIC20() : m_currKeymap(&s_keyMapNormal)

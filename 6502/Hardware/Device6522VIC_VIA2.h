@@ -2,6 +2,8 @@
 #include "Device6522.h"
 
 namespace kbd { class DeviceKeyboard; }
+namespace joy { class DeviceJoystick; }
+namespace joy { class DeviceJoystickDigital; }
 
 namespace via
 {
@@ -10,7 +12,7 @@ namespace via
 	public:
 		Device6522VIC_VIA2(std::string id = "VIA2") : Device6522(id), Logger(id.c_str()) {}
 
-		void Init(kbd::DeviceKeyboard* kbd);
+		void Init(kbd::DeviceKeyboard* kbd, joy::DeviceJoystick* m_joystick);
 
 		BYTE GetKeyboardColumnSelect() const { return m_portB.GetOutput(); }
 
@@ -20,6 +22,7 @@ namespace via
 		virtual void OnReadPort(VIAPort* src) override;
 
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
+		joy::DeviceJoystickDigital* m_joystick = nullptr;
 	};
 }
 

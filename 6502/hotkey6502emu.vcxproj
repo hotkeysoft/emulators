@@ -58,6 +58,8 @@
     <ClInclude Include="Hardware\Device6522PET.h" />
     <ClInclude Include="Hardware\Device6522VIC_VIA1.h" />
     <ClInclude Include="Hardware\Device6522VIC_VIA2.h" />
+    <ClInclude Include="IO\DeviceJoystick.h" />
+    <ClInclude Include="IO\DeviceJoystickDigital.h" />
     <ClInclude Include="IO\DeviceKeyboard.h" />
     <ClInclude Include="IO\DeviceKeyboardPET2001.h" />
     <ClInclude Include="IO\DeviceKeyboardVIC20.h" />
@@ -97,7 +99,10 @@
     <ClCompile Include="Hardware\Device6520.cpp" />
     <ClCompile Include="Hardware\Device6520PET_PIA1.cpp" />
     <ClCompile Include="Hardware\Device6522.cpp" />
+    <ClCompile Include="Hardware\Device6522VIC_VIA1.cpp" />
     <ClCompile Include="Hardware\Device6522VIC_VIA2.cpp" />
+    <ClCompile Include="IO\DeviceJoystick.cpp" />
+    <ClCompile Include="IO\DeviceJoystickDigital.cpp" />
     <ClCompile Include="IO\DeviceKeyboardPET2001.cpp" />
     <ClCompile Include="IO\DeviceKeyboardVIC20.cpp" />
     <ClCompile Include="IO\InputEvents.cpp" />

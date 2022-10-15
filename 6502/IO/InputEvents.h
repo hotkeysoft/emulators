@@ -8,6 +8,7 @@
 using emul::BYTE;
 
 namespace kbd { class DeviceKeyboard; }
+namespace joy { class DeviceJoystick; }
 
 namespace events
 {
@@ -46,10 +47,12 @@ namespace events
 
 		void Init();
 		void InitKeyboard(kbd::DeviceKeyboard* kbd);
+		void InitJoystick(joy::DeviceJoystick* joy);
 
 		void AddEventHandler(EventHandler* handler) { m_handlers.push_back(handler); }
 
 		kbd::DeviceKeyboard* GetKeyboard() const { return m_keyboard; }
+		joy::DeviceJoystick* GetJoystick() const { return m_joystick; }
 
 		void Tick();
 
@@ -61,10 +64,17 @@ namespace events
 		size_t m_cooldown;
 
 		void InputKey(SDL_KeyboardEvent& evt);
+		void InputControllerButton(uint8_t button, uint8_t state);
+		void InputControllerAxis(uint8_t axis, int16_t value);
 		bool m_quit = false;
 
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
 		KeyMap* m_keyMap = nullptr;
+
+		SDL_GameController* m_gameController = nullptr;
+		SDL_JoystickID m_controllerID = -1;
+
+		joy::DeviceJoystick* m_joystick = nullptr;
 
 		std::vector<EventHandler*> m_handlers;
 	};

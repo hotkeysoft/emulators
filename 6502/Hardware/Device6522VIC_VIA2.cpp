@@ -1,28 +1,27 @@
 #include "stdafx.h"
 
-#include "Device6522VIC_VIA2.h"
-#include "../IO/DeviceKeyboard.h"
+#include "Device6522VIC_VIA1.h"
+#include "../IO/DeviceJoystickDigital.h"
 
 namespace via
 {
-	void Device6522VIC_VIA2::Init(kbd::DeviceKeyboard* kbd)
+	void Device6522VIC_VIA1::Init(joy::DeviceJoystick* joy)
 	{
 		Device6522::Init();
 
-		assert(kbd);
-		m_keyboard = kbd;
+		m_joystick = dynamic_cast<joy::DeviceJoystickDigital*>(joy);
+		assert(m_joystick);
 	}
 
-	void Device6522VIC_VIA2::OnReadPort(VIAPort* source)
+	void Device6522VIC_VIA1::OnReadPort(VIAPort* source)
 	{
-		// Keyboard data
+		// Joystick input
 		if (source == &m_portA)
 		{
-			BYTE column = GetKeyboardColumnSelect();
-			BYTE rowData = m_keyboard->GetRowData(column);
-			LogPrintf(LOG_DEBUG, "OnReadKeyboard, column = %d, data = %02X", column, rowData);
-
-			SetKeyboardRow(rowData);
+			m_portA.SetInputBit(2, !m_joystick->GetUp());
+			m_portA.SetInputBit(3, !m_joystick->GetDown());
+			m_portA.SetInputBit(4, !m_joystick->GetLeft());
+			m_portA.SetInputBit(5, !m_joystick->GetFire());
 		}
 	}
 }

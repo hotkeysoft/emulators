@@ -41,8 +41,10 @@ namespace kbd
 			return ret;
 		}
 
+		bool IsRestorePressed() const { return m_keyGrid[9] != 0xFF; }
+
 	protected:
-		using KeyGrid = std::array<BYTE, 8>;
+		using KeyGrid = std::array<BYTE, 9>;
 
 		KeyGrid m_keyGrid;
 		events::KeyMap* m_currKeymap;
