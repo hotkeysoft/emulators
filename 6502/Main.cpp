@@ -265,6 +265,7 @@ ComputerBase* RestoreNewComputerFromSnapshot()
 	{
 		fprintf(stderr, "Unable to restore PC: %s\n", e.what());
 		delete newPC;
+		newPC = nullptr;
 	}
 
 	restoreSnapshot = false;
