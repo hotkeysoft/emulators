@@ -73,6 +73,12 @@
     <Filter Include="Source Files\UI">
       <UniqueIdentifier>{e8ad531e-a813-45d1-9beb-677fbacd54e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Sound">
+      <UniqueIdentifier>{a032bf4c-7d55-483c-a194-0cfcc1a0740a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Sound">
+      <UniqueIdentifier>{c1053d7d-8f6e-4477-9063-12c2f18f738e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -231,6 +237,9 @@
     <ClInclude Include="IO\DeviceJoystick.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="Sound\SoundVIC.h">
+      <Filter>Header Files\Sound</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -361,6 +370,9 @@
     </ClCompile>
     <ClCompile Include="Hardware\Device6522VIC_VIA1.cpp">
       <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound\SoundVIC.cpp">
+      <Filter>Source Files\Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

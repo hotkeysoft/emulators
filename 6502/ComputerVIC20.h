@@ -6,6 +6,7 @@
 #include "Hardware/Device6522VIC_VIA1.h"
 #include "Hardware/Device6522VIC_VIA2.h"
 #include "IO/DeviceJoystickDigital.h"
+#include "Sound/SoundVIC.h"
 #include <Storage/DeviceTape.h>
 
 namespace kbd { class DeviceKeyboardVIC20; }
@@ -45,6 +46,7 @@ namespace emul
 		void InitRAM(emul::WORD baseRAM);
 		void InitROM();
 		void InitIO();
+		void InitSound();
 		void InitVideo();
 		void InitTape();
 
@@ -81,6 +83,7 @@ namespace emul
 
 		kbd::DeviceKeyboardVIC20* m_keyboard = nullptr;
 		joy::DeviceJoystickDigital m_joystick;
+		sound::vic::SoundVIC m_sound;
 
 		tape::DeviceTape m_tape;
 	};

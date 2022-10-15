@@ -11,6 +11,8 @@
 using cfg::CONFIG;
 using sound::SOUND;
 using tape::TapeDeck;
+using video::vic::VideoVIC;
+using sound::vic::SoundVIC;
 
 namespace emul
 {
@@ -59,6 +61,7 @@ namespace emul
 		InitRAM(baseRAM);
 		InitROM();
 		InitIO();
+		InitSound();
 		InitVideo();
 		InitTape();
 
@@ -94,6 +97,12 @@ namespace emul
 		}
 	}
 
+	void ComputerVIC20::InitSound()
+	{
+		m_sound.EnableLog(CONFIG().GetLogLevel("sound"));
+		m_sound.Init();
+	}
+
 	void ComputerVIC20::InitROM()
 	{
 		m_romCHAR.LoadFromFile("data/VIC20/CHAR-8000.bin");
@@ -107,22 +116,22 @@ namespace emul
 
 		// 16K cartridge
 		//MemoryBlock* rom6000 = new MemoryBlock("ROM6000", 8192, MemoryType::ROM);
-		//rom6000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Pole Position-6000.prg");
+		//rom6000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Jungle Hunt-6000.prg");
 		//m_memory.Allocate(rom6000, 0x6000);
 
 		//MemoryBlock* romA000 = new MemoryBlock("ROMA000", 8192, MemoryType::ROM);
-		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Pole Position-a000.prg");
+		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Jungle Hunt-a000.prg");
 		//m_memory.Allocate(romA000, 0xA000);
 
 		// 8K cartridge
 		//MemoryBlock* romA000 = new MemoryBlock("ROMA000", 8192, MemoryType::ROM);
-		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/8k/cart/Frogger.prg");
+		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/8k/cart/OmegaRaceOrig.prg");
 		//m_memory.Allocate(romA000, 0xA000);
 	}
 
 	void ComputerVIC20::InitVideo()
 	{
-		video::VideoVIC* video = new video::VideoVIC();
+		VideoVIC* video = new VideoVIC(m_sound);
 		video->EnableLog(CONFIG().GetLogLevel("video"));
 		video->Init(&m_memory, nullptr);
 		m_video = video;
@@ -234,7 +243,7 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(0/*m_via.GetSoundOut()*/);
+				SOUND().PlayMono(m_sound.GetOutput());
 			}
 
 			// Tape update
@@ -260,16 +269,7 @@ namespace emul
 			}
 
 			m_video->Tick();
-			static bool oldBlank = false;
-			bool blank = m_video->IsVSync();
-			//if (blank != oldBlank)
-			//{
-			//	LogPrintf(LOG_DEBUG, "Blank: %d", blank);
-
-			//	m_pia1.SetScreenRetrace(blank);
-			//	m_via.SetRetraceIn(blank);
-			//	oldBlank = blank;
-			//}
+			m_sound.Tick();
 
 			m_via1.Tick();
 			m_via2.Tick();

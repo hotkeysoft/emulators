@@ -1,13 +1,14 @@
 #pragma once
 #include <Video/Video.h>
 #include <CPU/IOConnector.h>
+#include "../Sound/SoundVIC.h"
 
 namespace via
 {
     class Device6522PET;
 }
 
-namespace video
+namespace video::vic
 {
     enum class VICRegister
     {
@@ -34,7 +35,12 @@ namespace video
     class VideoVIC : public Video, public emul::IOConnector
     {
     public:
-        VideoVIC();
+        VideoVIC(sound::vic::SoundVIC& sound);
+
+        VideoVIC(const VideoVIC&) = delete;
+        VideoVIC& operator=(const VideoVIC&) = delete;
+        VideoVIC(VideoVIC&&) = delete;
+        VideoVIC& operator=(VideoVIC&&) = delete;
 
         virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);
         virtual void Reset() override;
@@ -203,5 +209,7 @@ namespace video
         uint32_t m_currX = 0;
         uint32_t m_currY = 0;
         BYTE m_currRow = 0;
+
+        sound::vic::SoundVIC& m_sound;
     };
 }

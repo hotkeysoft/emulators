@@ -4,8 +4,9 @@
 using emul::GetBit;
 using emul::GetLSB;
 using emul::SetBit;
+using sound::vic::SoundVIC;
 
-namespace video
+namespace video::vic
 {
 	const uint32_t VideoVIC::s_VICPalette[16] = {
 		0xFF000000, 0xFFFFFFFF, 0xFF782922, 0xFF87D6DD,
@@ -14,7 +15,10 @@ namespace video
 		0xFFEA9FF6, 0xFF94E089, 0xFF8071CC, 0xFFFFFFB2
 	};
 
-	VideoVIC::VideoVIC() : Logger("vidVIC"), IOConnector(0x0F)
+	VideoVIC::VideoVIC(SoundVIC& sound) :
+		Logger("vidVIC"),
+		IOConnector(0x0F),
+		m_sound(sound)
 	{
 	}
 
@@ -250,7 +254,9 @@ namespace video
 	}
 	void VideoVIC::WriteAudioFreq1(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteAudioFreq1, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteAudioFreq1, value=%02X, not implemented", value);
+		GetVICRegister(VICRegister::AUDIO_FREQ1) = value;
+		m_sound.GetVoice(0).SetFrequency(value);
 	}
 
 	// CRB
@@ -262,7 +268,9 @@ namespace video
 	}
 	void VideoVIC::WriteAudioFreq2(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteAudioFreq2, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteAudioFreq2, value=%02X, not implemented", value);
+		GetVICRegister(VICRegister::AUDIO_FREQ2) = value;
+		m_sound.GetVoice(1).SetFrequency(value);
 	}
 
 	// CRC
@@ -274,7 +282,9 @@ namespace video
 	}
 	void VideoVIC::WriteAudioFreq3(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteAudioFreq3, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteAudioFreq3, value=%02X", value);
+		GetVICRegister(VICRegister::AUDIO_FREQ3) = value;
+		m_sound.GetVoice(2).SetFrequency(value);
 	}
 
 	// CRD
@@ -286,7 +296,9 @@ namespace video
 	}
 	void VideoVIC::WriteAudioFreq4(BYTE value)
 	{
-		LogPrintf(LOG_WARNING, "WriteAudioFreq4, value=%02X, not implemented", value);
+		LogPrintf(LOG_DEBUG, "WriteAudioFreq4, value=%02X", value);
+		GetVICRegister(VICRegister::AUDIO_FREQ4) = value;
+		m_sound.GetVoice(3).SetFrequency(value);
 	}
 
 	// CRE
@@ -301,6 +313,7 @@ namespace video
 		LogPrintf(LOG_DEBUG, "WriteAudioAmplitude, value=%02X", value);
 		GetVICRegister(VICRegister::AUDIO_AMPLITUDE) = value;
 		UpdateColors();
+		m_sound.SetVolume(value);
 	}
 
 	// CRF
