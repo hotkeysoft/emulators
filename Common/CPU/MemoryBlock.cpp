@@ -141,11 +141,11 @@ namespace emul
 
 	bool MemoryBlock::Fill(ADDRESS offset, const MemoryBlock::RawBlock& data)
 	{
-		LogPrintf(LOG_INFO, "Fill: filling Raw Block[%04X]@%04X", data.size(), offset);
+		LogPrintf(LOG_INFO, "Fill: filling Raw Block[size=%d]@%04X", data.size(), offset);
 
 		if ((offset + data.size()) > m_size)
 		{
-			LogPrintf(LOG_INFO, "Fill: data can't fit in existing block of size [%04X]. Raw Block[%04X]@%04X",
+			LogPrintf(LOG_ERROR, "Fill: data can't fit in existing block of size [%d]. Raw Block[size=%d]@%04X",
 				m_size, data.size(), offset);
 			return false;
 		}

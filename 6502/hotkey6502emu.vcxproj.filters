@@ -207,9 +207,6 @@
     <ClInclude Include="..\Common\Storage\DeviceTape.h">
       <Filter>Common\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="UI\OverlayPET.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\IO\InputEventHandler.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
@@ -245,6 +242,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\FileUtil.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\OverlayPET.h">
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

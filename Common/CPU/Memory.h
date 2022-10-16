@@ -43,6 +43,10 @@ namespace emul
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress);
 
+		// Fills a block of memory with raw block of bytes.
+		// Spills over to next block(s) on boundaries.
+		virtual bool FillRAM(ADDRESS baseAddress, const MemoryBlock::RawBlock& data);
+
 		virtual void Serialize(json& to);
 		virtual void Deserialize(const json& from);
 

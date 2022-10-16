@@ -21,6 +21,7 @@ using namespace CoreUI;
 using namespace hscommon::fileUtil;
 
 namespace fs = std::filesystem;
+using emul::PRGLoader;
 
 namespace ui
 {
@@ -28,8 +29,19 @@ namespace ui
 	{
 		Overlay::SetPC(pc);
 
-		ToolbarItemPtr item = GetToolbar()->AddToolbarItem("loadPRG", RES().FindImage("overlay16", 2), "PRG");
-		item->SetTooltip("Load PRG software");
+		if (PRGLoader* prg = GetPRGLoader(); prg != nullptr)
+		{
+			ToolbarItemPtr item = GetToolbar()->AddToolbarItem("loadPRG", RES().FindImage("overlay16", 2), "PRG");
+			item->SetTooltip("Load PRG software (BASIC programs or cartridge ROMs)");
+
+			if (prg->CanUnloadPRG())
+			{
+				item = GetToolbar()->AddToolbarItem("unloadPRG", RES().FindImage("overlay16", 7));
+				item->SetTooltip("Eject cartridge and\nRESET the computer");
+			}
+
+			GetToolbar()->AddSeparator();
+		}
 	}
 
 	void OverlayPET::OnClick(CoreUI::WidgetRef widget)
@@ -40,6 +52,10 @@ namespace ui
 		{
 			LoadPRG();
 		}
+		else if (id == "unloadPRG")
+		{
+			UnloadPRG();
+		}
 		else
 		{
 			// Let parent handle it
@@ -49,12 +65,7 @@ namespace ui
 
 	void OverlayPET::LoadPRG()
 	{
-		if (!m_pc)
-		{
-			return;
-		}
-
-		emul::PRGLoader* prgLoader = dynamic_cast<emul::PRGLoader*>(m_pc);
+		emul::PRGLoader* prgLoader = GetPRGLoader();
 		if (!prgLoader)
 		{
 			LogPrintf(LOG_ERROR, "Invalid architecture");
@@ -67,5 +78,17 @@ namespace ui
 		{
 			prgLoader->LoadPRG(paths);
 		}
+	}
+
+	void OverlayPET::UnloadPRG()
+	{
+		emul::PRGLoader* prgLoader = GetPRGLoader();
+		if (!prgLoader)
+		{
+			LogPrintf(LOG_ERROR, "Invalid architecture");
+			return;
+		}
+
+		prgLoader->UnloadPRG();
 	}
 }

@@ -8,5 +8,10 @@ namespace emul
 	{
 	public:
 		virtual void LoadPRG(const hscommon::fileUtil::PathList& paths) = 0;
+
+		virtual std::string GetPRGInfo() const { return ""; }
+
+		virtual bool CanUnloadPRG() const { return false; };
+		virtual void UnloadPRG() {};
 	};
 }

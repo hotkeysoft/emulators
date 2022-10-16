@@ -25,6 +25,20 @@ namespace emul
 	// Poll each frame
 	const size_t SCAN_RATE = (262 * 64);
 
+	const char* GetMemoryLayoutStr(ComputerVIC20::MemoryLayout layout)
+	{
+		switch (layout)
+		{
+		case ComputerVIC20::MemoryLayout::UNKNOWN: return "UNKNOWN";
+		case ComputerVIC20::MemoryLayout::MEM_5K:  return "5K";
+		case ComputerVIC20::MemoryLayout::MEM_8K:  return "8K";
+		case ComputerVIC20::MemoryLayout::MEM_16K: return "16K";
+		case ComputerVIC20::MemoryLayout::MEM_24K: return "24K";
+		case ComputerVIC20::MemoryLayout::MEM_32K: return "32K";
+		default: throw std::exception("not possible");
+		}
+	}
+
 	ComputerVIC20::ComputerVIC20() :
 		Logger("VIC20"),
 		ComputerBase(m_memory, 256),
@@ -39,6 +53,10 @@ namespace emul
 		m_romCHAR("ROM-CHAR", 0x1000, emul::MemoryType::ROM),
 		m_ramCOLOR("RAM-COLOR", 0x400),
 		m_ramBlock5("RAM-BLK5", 0x2000),
+		m_romBlock1("ROM-BLK1", 0x2000, emul::MemoryType::ROM),
+		m_romBlock2("ROM-BLK2", 0x2000, emul::MemoryType::ROM),
+		m_romBlock3("ROM-BLK3", 0x2000, emul::MemoryType::ROM),
+		m_romBlock5("ROM-BLK5", 0x2000, emul::MemoryType::ROM),
 		m_romBASIC("ROM-BASIC", 0x2000, emul::MemoryType::ROM),
 		m_romKERNAL("ROM-KERNAL", 0x2000, emul::MemoryType::ROM),
 		m_ioVIC("IOVIC", 0x0100),
@@ -60,7 +78,7 @@ namespace emul
 
 		InitKeyboard();
 		InitJoystick();
-		InitRAM(baseRAM);
+		InitRAM();
 		InitROM();
 		InitIO();
 		InitSound();
@@ -115,20 +133,6 @@ namespace emul
 
 		m_romKERNAL.LoadFromFile("data/VIC20/KERNAL-E000-ntsc.bin");
 		m_memory.Allocate(&m_romKERNAL, 0xE000);
-
-		// 16K cartridge
-		//MemoryBlock* rom6000 = new MemoryBlock("ROM6000", 8192, MemoryType::ROM);
-		//rom6000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Pole Position-6000.prg");
-		//m_memory.Allocate(rom6000, 0x6000);
-
-		//MemoryBlock* romA000 = new MemoryBlock("ROMA000", 8192, MemoryType::ROM);
-		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Pole Position-a000.prg");
-		//m_memory.Allocate(romA000, 0xA000);
-
-		// 8K cartridge
-		//MemoryBlock* romA000 = new MemoryBlock("ROMA000", 8192, MemoryType::ROM);
-		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/8k/cart/OmegaRaceOrig.prg");
-		//m_memory.Allocate(romA000, 0xA000);
 	}
 
 	void ComputerVIC20::InitVideo()
@@ -162,57 +166,64 @@ namespace emul
 		m_ioVIA.AddDevice(m_via2, 0x20);
 	}
 
-	void ComputerVIC20::InitRAM(emul::WORD baseRAM)
+	void ComputerVIC20::InitRAM()
 	{
-		LogPrintf(LOG_INFO, "Requested base RAM: %dKB", baseRAM);
+		LogPrintf(LOG_INFO, "Requested base RAM: %dKB", m_baseRAMSize);
 
-		if (baseRAM < 5)
+		WORD actualRAM = m_baseRAMSize;
+
+		if (actualRAM < 5)
 		{
-			LogPrintf(LOG_WARNING, "Requested base RAM too low (%dKB), using 4KB", baseRAM);
-			baseRAM = 5;
+			LogPrintf(LOG_WARNING, "Requested base RAM too low (%dKB), using 4KB", actualRAM);
+			actualRAM = 5;
 		}
 
 		// Above 8K, Round to 8k block
-		if (baseRAM > 5)
+		if (actualRAM > 5)
 		{
-			WORD rounded = ((baseRAM + 7) & 0xF8);
-			if (rounded != baseRAM)
+			WORD rounded = ((actualRAM + 7) & 0xF8);
+			if (rounded != actualRAM)
 			{
-				baseRAM = rounded;
-				LogPrintf(LOG_WARNING, "Requested base RAM rounded to (%dKB)", baseRAM);
+				actualRAM = rounded;
+				LogPrintf(LOG_WARNING, "Requested base RAM rounded to (%dKB)", actualRAM);
 			}
 		}
 
-		if (baseRAM > 32)
+		if (actualRAM > 32)
 		{
-			baseRAM = 32;
-			LogPrintf(LOG_WARNING, "Requested base RAM too high (%dKB), using 32KB", baseRAM);
+			actualRAM = 32;
+			LogPrintf(LOG_WARNING, "Requested base RAM too high (%dKB), using 32KB", actualRAM);
 		}
 
-		switch (baseRAM)
+		ResetMemoryLayout();
+		switch (actualRAM)
 		{
 		case 32:
 			m_memory.Allocate(&m_ramBlock1, 0x6000);
+			SetMemoryLayout(MemoryLayout::MEM_32K);
 			[[fallthrough]];
 		case 24:
 			m_memory.Allocate(&m_ramBlock1, 0x4000);
+			SetMemoryLayout(MemoryLayout::MEM_24K);
 			[[fallthrough]];
 		case 16:
 			m_memory.Allocate(&m_ramBlock1, 0x2000);
+			SetMemoryLayout(MemoryLayout::MEM_16K);
 			[[fallthrough]];
 		case 8:
 			m_memory.Allocate(&m_ramBlock0RAM3, 0x0C00);
 			m_memory.Allocate(&m_ramBlock0RAM2, 0x0800);
 			m_memory.Allocate(&m_ramBlock0RAM1, 0x0400);
+			SetMemoryLayout(MemoryLayout::MEM_8K);
 			[[fallthrough]];
 		default:
 			// Base 5K: Always allocated
 			m_memory.Allocate(&m_ramBlock0LOW, 0x0000);
 			m_memory.Allocate(&m_ramBlock0MAIN, 0x1000);
+			SetMemoryLayout(MemoryLayout::MEM_5K);
 		}
 
 		m_memory.Allocate(&m_ramCOLOR, 0x9400);
-
 		m_memory.Clear();
 	}
 
@@ -228,6 +239,24 @@ namespace emul
 		m_via2.Reset();
 		m_keyboard->Reset();
 		m_tape.Reset();
+	}
+
+	void ComputerVIC20::ResetMemoryLayout()
+	{
+		m_memoryLayout = MemoryLayout::UNKNOWN;
+	}
+
+	void ComputerVIC20::SetMemoryLayout(MemoryLayout layout)
+	{
+		if (m_memoryLayout == MemoryLayout::UNKNOWN)
+		{
+			m_memoryLayout = layout;
+			LogPrintf(LOG_INFO, "Memory Configuration: %s", GetMemoryLayoutStr(m_memoryLayout));
+		}
+		else
+		{
+			// Ignore calls after already set
+		}
 	}
 
 	bool ComputerVIC20::Step()
@@ -283,6 +312,113 @@ namespace emul
 		return true;
 	}
 
+	bool ComputerVIC20::ValidateRAMBlock(ADDRESS loadAddress, const MemoryBlock::RawBlock& block)
+	{
+		MemoryLayout toLoadLayout = MemoryLayout::UNKNOWN;
+
+		switch (loadAddress)
+		{
+		case 0x1001:
+			LogPrintf(LOG_INFO, "LoadPRG: Detected BASIC program (5K Config)");
+			toLoadLayout = MemoryLayout::MEM_5K;
+			break;
+		case 0x0401:
+			LogPrintf(LOG_INFO, "LoadPRG: Detected BASIC program (8K Config)");
+			toLoadLayout = MemoryLayout::MEM_8K;
+			break;
+		case 0x1201:
+			LogPrintf(LOG_INFO, "LoadPRG: Detected BASIC program (>=16K Config)");
+			toLoadLayout = MemoryLayout::MEM_16K;
+			break;
+		default:
+			LogPrintf(LOG_INFO, "LoadPRG: Unknown configuration, loading at address %04X", loadAddress);
+			toLoadLayout = MemoryLayout::UNKNOWN;
+			return true; // Don't do any validation
+		}
+
+		// Check for mismatch with current configuration
+		if (GetMemoryLayout() == toLoadLayout)
+		{
+			return true;
+		}
+
+		// Mismatch... possibly
+		// 16K expected should match 16, 24 or 32.
+		// We don't know if the PRG expects 24 or 32, we can only check the minimum
+		if ((toLoadLayout == MemoryLayout::MEM_16K) && (GetMemoryLayout() >= toLoadLayout))
+		{
+			return true;
+		}
+
+		// Real mismatch
+		LogPrintf(LOG_ERROR, "Incompatible RAM Configuration. PRG Expects=[%s], Actual=[%s]",
+			GetMemoryLayoutStr(toLoadLayout),
+			GetMemoryLayoutStr(GetMemoryLayout()));
+
+		return false;
+	}
+
+	void ComputerVIC20::LoadRAMBlock(ADDRESS loadAddress, const MemoryBlock::RawBlock& block)
+	{
+		if (!m_memory.FillRAM(loadAddress, block))
+		{
+			LogPrintf(LOG_ERROR, "LoadRAMBlock failed, Reset computer");
+			Reset();
+			return;
+		}
+
+		ADDRESS end = loadAddress + (WORD)block.size();
+
+		ADDRESS basicStart = m_memory.Read16(0x2B);
+
+		if (loadAddress == basicStart)
+		{
+			LogPrintf(LOG_INFO, "LoadRAMBlock: Adjusting BASIC pointers");
+
+			m_memory.Write16(0x2D, end);
+			m_memory.Write16(0x2F, end + 6);
+			m_memory.Write16(0x31, end + 6);
+		}
+	}
+
+	void ComputerVIC20::LoadROMBlock(ADDRESS loadAddress, const MemoryBlock::RawBlock& block)
+	{
+		MemoryBlock* target = nullptr;
+		switch (loadAddress)
+		{
+		case 0x2000: target = &m_romBlock1; break;
+		case 0x4000: target = &m_romBlock2; break;
+		case 0x6000: target = &m_romBlock3; break;
+		case 0xA000: target = &m_romBlock5; break;
+		default: target = nullptr; break;
+		}
+
+		if (!target)
+		{
+			LogPrintf(LOG_INFO, "LoadROMBlock: Invalid load address %04X", loadAddress);
+			return;
+		}
+
+		target->Fill(0, block);
+		m_memory.Allocate(target, loadAddress);
+
+		if (loadAddress == 0xA000)
+		{
+			Reset();
+		}
+	}
+
+	// Unload all ROM blocks, put back RAM block (if they were present)
+	void ComputerVIC20::UnloadPRG()
+	{
+		m_memory.Free(&m_romBlock1);
+		m_memory.Free(&m_romBlock2);
+		m_memory.Free(&m_romBlock3);
+		m_memory.Free(&m_romBlock5);
+		InitRAM();
+		Reset();
+	}
+
 	void ComputerVIC20::LoadPRG(const hscommon::fileUtil::PathList& paths)
 	{
 		if (paths.size() == 0)
@@ -316,8 +452,6 @@ namespace emul
 				LogPrintf(LOG_INFO, "Load Address: %04X", loadAddress);
 			}
 
-			// TODO: Cartridges: allocate ROM block(s)
-
 			// Load data
 			MemoryBlock::RawBlock buf;
 			buf.resize(32768);
@@ -331,28 +465,20 @@ namespace emul
 			LogPrintf(LOG_INFO, "LoadPRG: read %d bytes", bytesRead);
 			buf.resize(bytesRead);
 
-			// Find memory block where we want to insert the code
-			const MemorySlot& slot = m_memory.FindBlock(loadAddress);
-			MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
-			if (!block)
+			switch (loadAddress)
 			{
-				LogPrintf(LOG_ERROR, "LoadPRG: No memory allocated at load address: %04X");
-				return;
-			}
-
-			block->Fill(loadAddress - slot.base, buf);
-
-			WORD end = loadAddress + (WORD)bytesRead;
-
-			WORD basicStart = m_memory.Read16(0x2B);
-
-			if (loadAddress == basicStart)
-			{
-				LogPrintf(LOG_INFO, "LoadPRG: Adjusting BASIC pointers");
-
-				m_memory.Write16(0x2D, end);
-				m_memory.Write16(0x2F, end);
-				m_memory.Write16(0x31, end);
+			case 0x2000:
+			case 0x4000:
+			case 0x6000:
+			case 0xA000:
+				LoadROMBlock(loadAddress, buf);
+				break;
+			default:
+				if (ValidateRAMBlock(loadAddress, buf))
+				{
+					LoadRAMBlock(loadAddress, buf);
+				}
+				break;
 			}
 		}
 	}

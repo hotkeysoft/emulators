@@ -33,7 +33,13 @@ namespace emul
 
 		virtual tape::DeviceTape* GetTape() override { return &m_tape; }
 
+		enum class MemoryLayout { UNKNOWN, MEM_5K, MEM_8K, MEM_16K, MEM_24K, MEM_32K };
+		MemoryLayout GetMemoryLayout() const { return m_memoryLayout; }
+
+		// emul::PRGLoader
+		virtual bool CanUnloadPRG() const { return true; };
 		virtual void LoadPRG(const hscommon::fileUtil::PathList& paths) override;
+		virtual void UnloadPRG() override;
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -44,12 +50,20 @@ namespace emul
 
 		void InitKeyboard();
 		void InitJoystick();
-		void InitRAM(emul::WORD baseRAM);
+		void InitRAM();
 		void InitROM();
 		void InitIO();
 		void InitSound();
 		void InitVideo();
 		void InitTape();
+
+		void ResetMemoryLayout();
+		void SetMemoryLayout(MemoryLayout mem);
+		MemoryLayout m_memoryLayout = MemoryLayout::UNKNOWN;
+
+		bool ValidateRAMBlock(ADDRESS loadAddress, const MemoryBlock::RawBlock& block);
+		void LoadRAMBlock(ADDRESS loadAddress, const MemoryBlock::RawBlock& block);
+		void LoadROMBlock(ADDRESS loadAddress, const MemoryBlock::RawBlock& block);
 
 		emul::MemoryBlock m_ramBlock0LOW;  // 1K Low memory
 		emul::MemoryBlock m_ramBlock0RAM1; // 1K (expansion /RAM1)
@@ -57,9 +71,9 @@ namespace emul
 		emul::MemoryBlock m_ramBlock0RAM3; // 1K (expansion /RAM3)
 		emul::MemoryBlock m_ramBlock0MAIN; // 4K Main RAM
 
-		emul::MemoryBlock m_ramBlock1; // 8K (expansion /BLK1)
-		emul::MemoryBlock m_ramBlock2; // 8K (expansion /BLK2)
-		emul::MemoryBlock m_ramBlock3; // 8K (expansion /BLK3)
+		emul::MemoryBlock m_ramBlock1; // 8K (expansion /BLK1), 0x2000
+		emul::MemoryBlock m_ramBlock2; // 8K (expansion /BLK2), 0x4000
+		emul::MemoryBlock m_ramBlock3; // 8K (expansion /BLK3), 0x6000
 
 		// Block4, char ROM, IO, Color Ram, expansion IO
 		emul::MemoryBlock m_romCHAR; // 0x8000
@@ -78,6 +92,12 @@ namespace emul
 
 		emul::MemoryBlock m_romBASIC;
 		emul::MemoryBlock m_romKERNAL;
+
+		// ROM blocks, used when loading PRG files, replace the ramBlocks (if present)
+		emul::MemoryBlock m_romBlock1; // 8K (expansion /BLK1), 0x2000
+		emul::MemoryBlock m_romBlock2; // 8K (expansion /BLK2), 0x4000
+		emul::MemoryBlock m_romBlock3; // 8K (expansion /BLK3), 0x6000
+		emul::MemoryBlock m_romBlock5; // 8K (expansion /BLK5), 0xA000 autostart
 
 		via::Device6522VIC_VIA1 m_via1;
 		via::Device6522VIC_VIA2 m_via2;

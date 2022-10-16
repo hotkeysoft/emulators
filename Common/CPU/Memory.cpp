@@ -263,6 +263,32 @@ namespace emul
 		return nullptr;
 	}
 
+	bool Memory::FillRAM(ADDRESS baseAddress, const MemoryBlock::RawBlock& data)
+	{
+		WORD bytesToLoad = data.size();
+
+		// minimum check: check if baseAddress hits RAM
+		const MemorySlot& slot = FindBlock(baseAddress);
+		MemoryBlock* targetBlock = dynamic_cast<MemoryBlock*>(slot.block);
+		if (!targetBlock)
+		{
+			LogPrintf(LOG_ERROR, "FillRAM: No memory allocated at load address: %04X", baseAddress);
+			return false;
+		}
+		else if (targetBlock->GetType() != MemoryType::RAM)
+		{
+			LogPrintf(LOG_ERROR, "FillRAM: No RAM allocated at load address: %04X", baseAddress);
+			return false;
+		}
+
+		// Lazy way to do it
+		for (BYTE b : data)
+		{
+			Write8(baseAddress++, b);
+		}
+		return true;
+	}
+
 	void Memory::Serialize(json& to)
 	{
 		json blocks;
