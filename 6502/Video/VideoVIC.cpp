@@ -139,7 +139,7 @@ namespace video::vic
 	// CR3
 	BYTE VideoVIC::ReadRows()
 	{
-		// High bit of ROWS rewister contains hi raster counter
+		// High bit of ROWS register contains hi raster counter
 		// Actual count is in m_currY, so we need to update the registers before reading
 		UpdateVICRaster();
 		const BYTE value = GetVICRegister(VICRegister::ROWS);
@@ -371,7 +371,7 @@ namespace video::vic
 
 		// Tick every half character (4 pixels)
 		// Draw 8 characters, but only on odd or even ticks (depending on the border)
-		if (GetLSB(m_currX) ^ LEFT_BORDER_ODD)
+		if (GetLSB(m_currX) ^ !LEFT_BORDER_ODD)
 		{
 			if (IsDisplayArea())
 			{
@@ -399,7 +399,7 @@ namespace video::vic
 		};
 	}
 
-	// On VIC-20, A13 is mapped to /BLK4 (0x8000)
+	// From the VIC's point of view, A13 is mapped to /BLK4 (0x8000)
 	void VideoVIC::AdjustA13(ADDRESS& addr) const
 	{
 		bool A13 = GetBit(addr, 13);
@@ -480,8 +480,10 @@ namespace video::vic
 
 	void VideoVIC::UpdateVICRaster()
 	{
-		GetVICRegister(VICRegister::RASTER) = m_currY;
-		SetVICRaster8(GetBit(m_currY, 8));
+		// Adjust CRT raster line vs currY (which starts at zero at the first displayed line)
+		const WORD adjustedY = (m_currY + V_TOTAL - BOTTOM_BORDER) % V_TOTAL;
+		GetVICRegister(VICRegister::RASTER) = adjustedY >> 1;
+		SetVICRaster8(GetLSB(adjustedY));
 	}
 
 	void VideoVIC::UpdateColors()

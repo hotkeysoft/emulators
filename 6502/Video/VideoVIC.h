@@ -136,14 +136,14 @@ namespace video::vic
         // Number of lines displayed
         uint32_t V_DISPLAY = 184;
         // Total number of lines (including borders)
-        static const uint32_t V_TOTAL = 262;
+        static const uint32_t V_TOTAL = 261;
 
         // Number of half-characters per line (displayed)
         uint32_t H_DISPLAY = 22 * 2;
         uint32_t H_DISPLAY_PX = H_DISPLAY * HALF_CHAR_WIDTH;
 
         // Total number of half-characters per line (including borders)
-        static const uint32_t H_TOTAL = 32 * 2;
+        static const uint32_t H_TOTAL = 65;
         static const uint32_t H_TOTAL_PX = H_TOTAL * HALF_CHAR_WIDTH;
 
         // Computed by UpdateScreenArea()
