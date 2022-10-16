@@ -178,7 +178,7 @@ namespace emul
 
 	bool Memory::LoadBinary(const char* file, ADDRESS baseAddress)
 	{
-		MemorySlot& slot = m_memory[baseAddress / m_blockGranularity];
+		const MemorySlot& slot = FindBlock(baseAddress);
 		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
 
 		if (!block)
@@ -193,7 +193,7 @@ namespace emul
 	BYTE Memory::Read8(ADDRESS address) const
 	{
 		address &= m_addressMask;
-		const MemorySlot& slot = m_memory[address / m_blockGranularity];
+		const MemorySlot& slot = FindBlock(address);
 		MemoryBlockBase* block = slot.block;
 
 		if (block)
@@ -217,7 +217,7 @@ namespace emul
 	void Memory::Write8(ADDRESS address, BYTE value)
 	{
 		address &= m_addressMask;
-		const MemorySlot& slot = m_memory[address / m_blockGranularity];
+		const MemorySlot& slot = FindBlock(address);
 		MemoryBlockBase* block = slot.block;
 
 		if (block)
@@ -238,7 +238,7 @@ namespace emul
 
 	void Memory::Dump(ADDRESS start, DWORD len, const char* outFile)
 	{
-		MemorySlot& slot = m_memory[start / m_blockGranularity];
+		const MemorySlot& slot = FindBlock(start);
 		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
 
 		if (block)

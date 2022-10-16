@@ -65,6 +65,7 @@
     <ClInclude Include="IO\DeviceKeyboardVIC20.h" />
     <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor6502.h" />
+    <ClInclude Include="PRGLoader.h" />
     <ClInclude Include="Sound\SoundVIC.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UI\OverlayPET.h" />

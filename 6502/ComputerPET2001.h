@@ -8,6 +8,7 @@
 #include "Hardware/Device6520PET_PIA1.h"
 #include "Video/VideoPET2001.h"
 #include <Storage/DeviceTape.h>
+#include "PRGLoader.h"
 
 namespace kbd { class DeviceKeyboardPET2001; }
 
@@ -15,7 +16,7 @@ namespace emul
 {
 	class CPU6502;
 
-	class ComputerPET2001 : public ComputerBase
+	class ComputerPET2001 : public ComputerBase, public PRGLoader
 	{
 	public:
 		enum class Model { UNKNOWN, BASIC1, BASIC1p, BASIC2n, BASIC2b, BASIC4n, BASIC4b };
@@ -38,7 +39,7 @@ namespace emul
 
 		virtual tape::DeviceTape* GetTape() override { return &m_tape; }
 
-		void LoadPRG(const char* file);
+		virtual void LoadPRG(const char* file) override;
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;

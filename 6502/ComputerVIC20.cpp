@@ -116,11 +116,11 @@ namespace emul
 
 		// 16K cartridge
 		//MemoryBlock* rom6000 = new MemoryBlock("ROM6000", 8192, MemoryType::ROM);
-		//rom6000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Jungle Hunt-6000.prg");
+		//rom6000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Pole Position-6000.prg");
 		//m_memory.Allocate(rom6000, 0x6000);
 
 		//MemoryBlock* romA000 = new MemoryBlock("ROMA000", 8192, MemoryType::ROM);
-		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Jungle Hunt-a000.prg");
+		//romA000->LoadFromFile("D:/Dloads/Emulation/VIC20/Games/16k/6000+A000/cart/Pole Position-a000.prg");
 		//m_memory.Allocate(romA000, 0xA000);
 
 		// 8K cartridge
@@ -279,6 +279,72 @@ namespace emul
 		}
 
 		return true;
+	}
+
+	void ComputerVIC20::LoadPRG(const char* file)
+	{
+		LogPrintf(LOG_INFO, "LoadPRG: loading %s", file);
+
+		FILE* f = fopen(file, "rb");
+		if (!f)
+		{
+			LogPrintf(LOG_ERROR, "LoadPRG: error opening binary file");
+			return;
+		}
+
+		// Load "header" (2 bytes, load address)
+		WORD loadAddress = 0;
+		size_t bytesRead = fread(&loadAddress, 2, 1, f);
+		if (bytesRead != 1)
+		{
+			LogPrintf(LOG_ERROR, "LoadPRG: error reading header");
+			return;
+		}
+		else
+		{
+			LogPrintf(LOG_INFO, "Load Address: %04X", loadAddress);
+		}
+
+		// TODO: Cartridges: allocate ROM block(s)
+
+		// Load data
+		MemoryBlock::RawBlock buf;
+		buf.resize(32768);
+		bytesRead = fread(&buf[0], sizeof(BYTE), buf.size(), f);
+		if (bytesRead < 1)
+		{
+			LogPrintf(LOG_ERROR, "LoadPRG: error reading binary file");
+			return;
+		}
+
+		LogPrintf(LOG_INFO, "LoadPRG: read %d bytes", bytesRead);
+		buf.resize(bytesRead);
+
+		// Find memory block where we want to insert the code
+		const MemorySlot& slot = m_memory.FindBlock(loadAddress);
+		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
+		if (!block)
+		{
+			LogPrintf(LOG_ERROR, "LoadPRG: No memory allocated at load address: %04X");
+			return;
+		}
+
+		block->Fill(loadAddress - slot.base, buf);
+
+		WORD end = loadAddress + (WORD)bytesRead;
+
+		WORD basicStart = m_memory.Read16(0x2B);
+
+		if (loadAddress == basicStart)
+		{
+			LogPrintf(LOG_INFO, "LoadPRG: Adjusting BASIC pointers");
+
+			m_memory.Write16(0x2D, end);
+			m_memory.Write16(0x2F, end);
+			m_memory.Write16(0x31, end);
+		}
+
+		fclose(f);
 	}
 
 	void ComputerVIC20::Serialize(json& to)

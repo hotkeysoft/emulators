@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "OverlayPET.h"
-#include "ComputerPET2001.h"
+#include "PRGLoader.h"
 
 #include <CPU/CPUCommon.h>
 #include <Core/Window.h>
@@ -51,8 +51,8 @@ namespace ui
 			return;
 		}
 
-		emul::ComputerPET2001* pet = dynamic_cast<emul::ComputerPET2001*>(m_pc);
-		if (!pet)
+		emul::PRGLoader* prgLoader = dynamic_cast<emul::PRGLoader*>(m_pc);
+		if (!prgLoader)
 		{
 			LogPrintf(LOG_ERROR, "Invalid architecture");
 			return;
@@ -62,7 +62,7 @@ namespace ui
 
 		if (SelectFile(diskImage, GetHWND(), { {"Program Files (*.prg)", "*.prg"} }))
 		{
-			pet->LoadPRG(diskImage.string().c_str());
+			prgLoader->LoadPRG(diskImage.string().c_str());
 		}
 	}
 }

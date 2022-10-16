@@ -30,6 +30,8 @@ namespace emul
 
 		bool MapWindow(ADDRESS source, ADDRESS window, DWORD len);
 
+		const MemorySlot& FindBlock(ADDRESS address) const { return m_memory[address / m_blockGranularity]; }
+
 		BYTE Read8(ADDRESS address) const;
 		WORD Read16(ADDRESS address) const;
 		void Write8(ADDRESS address, BYTE value);

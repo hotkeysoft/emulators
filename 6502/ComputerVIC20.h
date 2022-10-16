@@ -8,6 +8,7 @@
 #include "IO/DeviceJoystickDigital.h"
 #include "Sound/SoundVIC.h"
 #include <Storage/DeviceTape.h>
+#include "PRGLoader.h"
 
 namespace kbd { class DeviceKeyboardVIC20; }
 
@@ -15,7 +16,7 @@ namespace emul
 {
 	class CPU6502;
 
-	class ComputerVIC20 : public ComputerBase
+	class ComputerVIC20 : public ComputerBase, public PRGLoader
 	{
 	public:
 		ComputerVIC20();
@@ -32,7 +33,7 @@ namespace emul
 
 		virtual tape::DeviceTape* GetTape() override { return &m_tape; }
 
-		void LoadPRG(const char* file);
+		virtual void LoadPRG(const char* file) override;
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
