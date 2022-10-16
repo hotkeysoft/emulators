@@ -336,6 +336,9 @@
     <ClCompile Include="..\Common\Storage\DeviceTape.cpp">
       <Filter>Common\Storage</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\FileUtil.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h">
@@ -610,6 +613,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\Storage\DeviceTape.h">
       <Filter>Common\Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\FileUtil.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

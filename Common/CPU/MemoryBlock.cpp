@@ -1,6 +1,9 @@
 #include "stdafx.h"
 
 #include <CPU/MemoryBlock.h>
+#include <FileUtil.h>
+
+using hscommon::fileUtil::File;
 
 namespace emul
 {
@@ -82,7 +85,7 @@ namespace emul
 			throw std::exception("LoadBinary: offset out of range");
 		}
 
-		FILE* f = fopen(file, "rb");
+		File f(file, "rb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadBinary: error opening binary file");
@@ -100,7 +103,6 @@ namespace emul
 			LogPrintf(LOG_INFO, "LoadBinary: read %d bytes to memory block at offset %04Xh", bytesRead, offset);
 		}
 
-		fclose(f);
 		return true;
 	}
 
@@ -111,7 +113,7 @@ namespace emul
 		WORD halfSize = m_size / 2;
 		std::vector<BYTE> tempBuf(halfSize);
 
-		FILE* f = fopen(file, "rb");
+		File f(file, "rb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadBinary: error opening binary file");
@@ -128,7 +130,6 @@ namespace emul
 		{
 			LogPrintf(LOG_INFO, "LoadBinary: read %d bytes to memory block (%s addresses)", oddEven == OddEven::ODD ? "ODD" : "EVEN");
 		}
-		fclose(f);
 
 		for (auto i = 0; i < halfSize; ++i)
 		{
@@ -163,7 +164,7 @@ namespace emul
 
 		LogPrintf(LOG_INFO, "Dump: dumping block size=%d to %s", m_size, outFile);
 
-		FILE* f = fopen(outFile, "wb");
+		File f(outFile, "wb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "Dump: error opening binary file");
@@ -182,7 +183,6 @@ namespace emul
 			LogPrintf(LOG_INFO, "Dump: wrote %d bytes to file", bytesWritten);
 		}
 
-		fclose(f);
 		return true;
 	}
 }

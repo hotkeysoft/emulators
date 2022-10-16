@@ -6,10 +6,12 @@
 #include "CPU/CPU6502.h"
 #include <Sound/Sound.h>
 #include "IO/DeviceKeyboardPET2001.h"
+#include <FileUtil.h>
 
 using cfg::CONFIG;
 using sound::SOUND;
 using tape::TapeDeck;
+using hscommon::fileUtil::File;
 
 namespace emul
 {
@@ -355,7 +357,7 @@ namespace emul
 	{
 		LogPrintf(LOG_INFO, "LoadPRG: loading %s", file);
 
-		FILE* f = fopen(file, "rb");
+		File f(file, "rb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadPRG: error opening binary file");
@@ -422,8 +424,6 @@ namespace emul
 				}
 			}
 		}
-
-		fclose(f);
 	}
 
 	void ComputerPET2001::Serialize(json& to)

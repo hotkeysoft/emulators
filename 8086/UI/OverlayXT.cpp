@@ -19,6 +19,7 @@
 #include <Widgets/Button.h>
 #include <Widgets/Label.h>
 #include <Widgets/TextBox.h>
+#include <FileUtil.h>
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -28,6 +29,7 @@
 namespace fs = std::filesystem;
 using cfg::CONFIG;
 using namespace CoreUI;
+using namespace hscommon::fileUtil;
 
 namespace ui
 {
@@ -424,7 +426,7 @@ namespace ui
 		{
 			GetPC()->GetFloppy()->ClearDiskImage(drive);
 		}
-		else if (SelectFile(diskImage, GetHWND(), { {"Floppy disk image (*.img)", "*.img"} }))
+		else if (SelectFile(diskImage, { {"Floppy disk image (*.img)", "*.img"} }))
 		{
 			GetPC()->GetFloppy()->LoadDiskImage(drive, diskImage.string().c_str());
 		}
@@ -439,7 +441,7 @@ namespace ui
 		}
 
 		fs::path diskImage;
-		if (SelectFile(diskImage, GetHWND(), { {"Hard disk image (*.img)", "*.img"} }))
+		if (SelectFile(diskImage, { {"Hard disk image (*.img)", "*.img"} }))
 		{
 			BYTE currImageType = GetPC()->GetHardDrive()->GetImageInfo(drive).type;
 

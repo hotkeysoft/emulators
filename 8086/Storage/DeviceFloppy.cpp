@@ -2,7 +2,9 @@
 
 #include "DeviceFloppy.h"
 #include <array>
+#include <FileUtil.h>
 
+using hscommon::fileUtil::File;
 using emul::GetBit;
 
 namespace fdc
@@ -27,7 +29,7 @@ namespace fdc
 		m_dataRegisterReady = false;
 		m_executionPhase = false;
 		m_dataInputOutput = DataDirection::CPU2FDC;
-	
+
 		m_st0 = 0xC0; // TODO: Find why in datasheet
 		m_srt = 16;
 		m_hlt = 254;
@@ -87,7 +89,7 @@ namespace fdc
 		m_images[drive].Clear();
 		m_images[drive].data.resize(size);
 
-		FILE* f = fopen(path, "rb");
+		File f(path, "rb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadDiskImage: error opening binary file");
@@ -109,7 +111,6 @@ namespace fdc
 		m_images[drive].loaded = true;
 		m_images[drive].geometry = geometry;
 
-		fclose(f);
 		return true;
 	}
 
@@ -129,7 +130,7 @@ namespace fdc
 
 		LogPrintf(LOG_INFO, "SaveDiskImage: saving floppy %d to file %s", drive, path);
 
-		FILE* f = fopen(path, "wb");
+		File f(path, "wb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "SaveDiskImage: error opening binary file");
@@ -148,7 +149,6 @@ namespace fdc
 			LogPrintf(LOG_INFO, "SaveDiskImage: written %d bytes", bytesWritten);
 		}
 
-		fclose(f);
 		return true;
 	}
 
@@ -413,7 +413,7 @@ namespace fdc
 			Push(m_st0);
 			m_state = STATE::CMD_EXEC_DONE;
 			break;
-		default: 
+		default:
 			LogPrintf(Logger::LOG_ERROR, "Tick() Unknown State: %d", m_state);
 			throw std::exception("Unknown state");
 		}
@@ -897,7 +897,7 @@ namespace fdc
 	void DeviceFloppy::WriteSector()
 	{
 		LogPrintf(LOG_DEBUG, "WriteSector, fifo=%d", m_fifo.size());
-		
+
 		// Exit Conditions
 
 		FloppyDisk& disk = m_images[m_currDrive];
@@ -944,7 +944,7 @@ namespace fdc
 		m_nextState = STATE::RW_DONE;
 		m_state = STATE::CMD_EXEC_DELAY;
 	}
-	
+
 	bool DeviceFloppy::UpdateCurrPos()
 	{
 		const FloppyDisk& disk = m_images[m_currDrive];

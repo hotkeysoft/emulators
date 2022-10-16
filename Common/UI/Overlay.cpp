@@ -21,18 +21,17 @@
 #include <Widgets/Button.h>
 #include <Widgets/Label.h>
 #include <Widgets/TextBox.h>
-
-#include <commdlg.h>
+#include <FileUtil.h>
 
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
-#include <SDL_syswm.h>
 
 namespace fs = std::filesystem;
 
 using cfg::CONFIG;
 using namespace CoreUI;
+using namespace hscommon::fileUtil;
 
 using tape::DeviceTape;
 using tape::TapeDeck;
@@ -45,58 +44,6 @@ namespace ui
 {
 	Overlay::Overlay() : Logger("GUI")
 	{
-	}
-
-	HWND Overlay::GetHWND()
-	{
-		SDL_SysWMinfo wmInfo;
-		SDL_VERSION(&wmInfo.version);
-		SDL_GetWindowWMInfo(MAINWND().GetWindow(), &wmInfo);
-		return wmInfo.info.win.window;
-	}
-
-	bool Overlay::SelectFile(fs::path& path, HWND parent, SelectFileFilters filters, bool addAllFilesFilter)
-	{
-		std::string filterStr;
-		if (addAllFilesFilter)
-		{
-			filters.push_back(std::make_pair("All Files (*.*)", "*.*"));
-		}
-		for (auto& filter : filters)
-		{
-			filterStr.append(filter.first);
-			filterStr.push_back('\0');
-			filterStr.append(filter.second);
-			filterStr.push_back('\0');
-		}
-
-		OPENFILENAMEA ofn;
-		char szFile[1024];
-
-		// Initialize OPENFILENAME
-		ZeroMemory(&ofn, sizeof(ofn));
-		ofn.lStructSize = sizeof(ofn);
-		ofn.hwndOwner = parent;
-		ofn.lpstrFile = szFile;
-		// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
-		// use the contents of szFile to initialize itself.
-		ofn.lpstrFile[0] = '\0';
-		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = filterStr.c_str();
-		ofn.nFilterIndex = 1;
-		ofn.lpstrFileTitle = NULL;
-		ofn.nMaxFileTitle = 0;
-		ofn.lpstrInitialDir = NULL;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-		// Display the Open dialog box.
-
-		if (!GetOpenFileNameA(&ofn))
-		{
-			return false;
-		}
-		path = szFile;
-		return true;
 	}
 
 	bool Overlay::Init()
@@ -878,7 +825,7 @@ namespace ui
 		fs::path diskImage;
 
 		// TODO: Temp
-		if (SelectFile(diskImage, GetHWND(), { {"Raw Tape image (*.raw)", "*.raw"} }))
+		if (SelectFile(diskImage, { {"Raw Tape image (*.raw)", "*.raw"} }))
 		{
 			deck.LoadRaw(diskImage.string().c_str());
 		}

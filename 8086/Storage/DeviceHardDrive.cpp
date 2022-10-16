@@ -16,19 +16,6 @@ namespace hdd
 	{
 	}
 
-	DeviceHardDrive::~DeviceHardDrive()
-	{
-		if (m_images[0].data)
-		{
-			fclose(m_images[0].data);
-		}
-
-		if (m_images[1].data)
-		{
-			fclose(m_images[1].data);
-		}
-	}
-
 	void DeviceHardDrive::Reset()
 	{
 		m_fifo.clear();
@@ -72,7 +59,7 @@ namespace hdd
 			return false;
 		}
 
-		FILE* f = fopen(path, "r+b");
+		hscommon::fileUtil::File f(path, "r+b");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadDiskImage: error opening binary file");
@@ -84,7 +71,7 @@ namespace hdd
 		image.type = type;
 		image.path = path;
 		image.loaded = true;
-		image.data = f;
+		image.data.Attach(f);
 		image.geometry = geometry;
 
 		return true;
@@ -362,7 +349,7 @@ namespace hdd
 			m_fifo.clear();
 			m_state = STATE::CMD_EXEC_DONE;
 			break;
-		default: 
+		default:
 			LogPrintf(Logger::LOG_ERROR, "Tick() Unknown State: %d", m_state);
 			throw std::exception("Unknown state");
 		}
@@ -559,7 +546,7 @@ namespace hdd
 	}
 
 	DeviceHardDrive::STATE DeviceHardDrive::Diagnostic()
-	{	
+	{
 		LogPrintf(LOG_INFO, "COMMAND: %s", m_currCommand->name);
 
 		ReadCommandBlock();
@@ -710,7 +697,7 @@ namespace hdd
 		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
 
 		if (m_fifo.size() == 0)
-		{ 
+		{
 			if (!m_commandBlock.blockCount)
 			{
 				m_currOpWait = DelayToTicks(10);

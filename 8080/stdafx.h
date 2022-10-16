@@ -33,6 +33,7 @@
 #include <inipp.h>
 #include <Logger.h>
 #include <StringUtil.h>
+#include <FileUtil.h>
 #include <CPU/CPUCommon.h>
 
 #define WIN32_LEAN_AND_MEAN

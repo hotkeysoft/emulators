@@ -2,6 +2,7 @@
 
 #include <CPU/PortConnector.h>
 #include <Serializable.h>
+#include <FileUtil.h>
 #include <vector>
 #include <deque>
 
@@ -25,25 +26,28 @@ namespace hdd
 	class HardDisk
 	{
 	public:
+		HardDisk() {}
 		~HardDisk() { Clear(); }
+
+		HardDisk(const HardDisk&) = delete;
+		HardDisk& operator=(const HardDisk&) = delete;
+		HardDisk(HardDisk&&) = delete;
+		HardDisk& operator=(HardDisk&&) = delete;
+
 		void Clear()
 		{
 			type = 0;
 			path.clear();
 			loaded = false;
 
-			if (data)
-			{
-				fclose(data);
-				data = nullptr;
-			}
+			data.Close();
 		}
 
 		BYTE type;
 		std::filesystem::path path;
 		bool loaded = false;
 		Geometry geometry;
-		FILE* data = nullptr;
+		hscommon::fileUtil::File data;
 	};
 
 	class DeviceHardDrive : public PortConnector, public emul::Serializable
@@ -51,7 +55,7 @@ namespace hdd
 
 	public:
 		DeviceHardDrive(WORD baseAddress, size_t clockSpeedHz);
-		virtual ~DeviceHardDrive();
+		virtual ~DeviceHardDrive() {}
 
 		DeviceHardDrive() = delete;
 		DeviceHardDrive(const DeviceHardDrive&) = delete;
@@ -344,11 +348,11 @@ namespace hdd
 			{ 3, { "Type 3 (10MB)", 4, 306, 17 } },
 
 			// Custom
-			// 
+			//
 			// Dip switches return "0" for both drives.
-			// The first drive table entry in ROM is 306/4/17 or 612/4/17 
-			// depending on BIOS used. We can use images with different 
-			// cylinder count, but the head and sector count must stay the 
+			// The first drive table entry in ROM is 306/4/17 or 612/4/17
+			// depending on BIOS used. We can use images with different
+			// cylinder count, but the head and sector count must stay the
 			// same for it to work correctly.
 			//
 			// TODO: Ideally the image geometry would be patched in the BIOS.

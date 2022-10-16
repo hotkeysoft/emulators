@@ -7,12 +7,14 @@
 #include <Sound/Sound.h>
 #include "IO/DeviceKeyboardVIC20.h"
 #include "Video/VideoVIC.h"
+#include <FileUtil.h>
 
 using cfg::CONFIG;
 using sound::SOUND;
 using tape::TapeDeck;
 using video::vic::VideoVIC;
 using sound::vic::SoundVIC;
+using hscommon::fileUtil::File;
 
 namespace emul
 {
@@ -285,7 +287,7 @@ namespace emul
 	{
 		LogPrintf(LOG_INFO, "LoadPRG: loading %s", file);
 
-		FILE* f = fopen(file, "rb");
+		File f(file, "rb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadPRG: error opening binary file");
@@ -343,8 +345,6 @@ namespace emul
 			m_memory.Write16(0x2F, end);
 			m_memory.Write16(0x31, end);
 		}
-
-		fclose(f);
 	}
 
 	void ComputerVIC20::Serialize(json& to)

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include <Config.h>
+#include <FileUtil.h>
 #include <UI/MainWindow.h>
 #include "UI/OverlayPET.h"
 #include <Sound/Sound.h>
@@ -46,7 +47,7 @@ using ui::OverlayPET;
 
 size_t emul::g_ticks = 0;
 
-FILE* logFile = nullptr;
+hscommon::fileUtil::File logFile;
 
 enum class Mode { MONITOR = 0, LOG = 2};
 Mode mode = Mode::LOG;
@@ -302,7 +303,7 @@ int main(int argc, char* args[])
 
 		bool flush = CONFIG().GetValueBool("debug", "logfile.flush");
 
-		logFile = fopen(logFileName.c_str(), flush ? "wc" : "w");
+		logFile.Open(logFileName.c_str(), flush ? "wc" : "w");
 		if (!logFile)
 		{
 			fprintf(stderr, "Error opening log file\n");
@@ -562,11 +563,6 @@ int main(int argc, char* args[])
 
 		fprintf(stderr, "Shutdown SDL Subsystems\n");
 		SDL_Quit();
-
-		if (logFile)
-		{
-			fclose(logFile);
-		}
 	}
 
 	return 0;

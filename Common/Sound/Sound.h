@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL.h>
+#include <FileUtil.h>
 
 using emul::WORD;
 
@@ -61,7 +62,7 @@ namespace sound
 		int16_t* m_bufStaging = nullptr;
 		size_t m_bufStagingPos = 0;
 
-		FILE* m_outputFile = nullptr;
+		hscommon::fileUtil::File m_outputFile;
 
 		const int PLAYBACK_FREQUENCY = 44100;
 		int m_freqDivider = 1;

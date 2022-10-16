@@ -148,8 +148,7 @@ namespace sound
 		if (!stream && m_outputFile)
 		{
 			LogPrintf(LOG_INFO, "StreamToFile: Stop audio stream dump to file");
-			fclose(m_outputFile);
-			m_outputFile = nullptr;
+			m_outputFile.Close();
 			return;
 		}
 		else
@@ -161,7 +160,7 @@ namespace sound
 
 			LogPrintf(LOG_INFO, "StreamToFile: Start audio stream dump to file [%s]", outFile);
 
-			m_outputFile = fopen(outFile, "wb");
+			m_outputFile.Open(outFile, "wb");
 			if (!m_outputFile)
 			{
 				LogPrintf(LOG_ERROR, "StreamToFile: error opening file");

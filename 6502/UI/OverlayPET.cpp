@@ -13,10 +13,13 @@
 #include <Widgets/ToolbarItem.h>
 #include <Widgets/Button.h>
 #include <Widgets/Label.h>
+#include <FileUtil.h>
 
 #include <commdlg.h>
 
 using namespace CoreUI;
+using namespace hscommon::fileUtil;
+
 namespace fs = std::filesystem;
 
 namespace ui
@@ -60,7 +63,7 @@ namespace ui
 
 		fs::path diskImage;
 
-		if (SelectFile(diskImage, GetHWND(), { {"Program Files (*.prg)", "*.prg"} }))
+		if (SelectFile(diskImage, { {"Program Files (*.prg)", "*.prg"} }))
 		{
 			prgLoader->LoadPRG(diskImage.string().c_str());
 		}

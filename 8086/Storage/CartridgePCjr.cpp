@@ -1,6 +1,9 @@
 #include "stdafx.h"
 
 #include "CartridgePCjr.h"
+#include <FileUtil.h>
+
+using hscommon::fileUtil::File;
 
 namespace cart
 {
@@ -17,7 +20,7 @@ namespace cart
 		}
 		LogPrintf(LOG_INFO, "LoadCartridge: loading %s", file);
 
-		FILE* f = fopen(file, "rb");
+		File f(file, "rb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadCartridge: error opening binary file");
@@ -82,7 +85,6 @@ namespace cart
 			LogPrintf(LOG_INFO, "LoadCartridge: read %d bytes to memory block", bytesRead);
 		}
 
-		fclose(f);
 		return true;
 	}
 }

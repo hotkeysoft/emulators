@@ -61,6 +61,9 @@
     <Filter Include="Common\Computer">
       <UniqueIdentifier>{1d3273e8-825d-4543-a01b-693f57e3f1bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Storage">
+      <UniqueIdentifier>{34624d5b-626e-4d34-a78a-ff7acc16ffac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -186,6 +189,12 @@
     <ClInclude Include="..\Common\Computer\ComputerBase.h">
       <Filter>Common\Computer</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Storage\DeviceTape.h">
+      <Filter>Common\Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\FileUtil.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -283,6 +292,12 @@
     </ClCompile>
     <ClCompile Include="..\Common\Computer\ComputerBase.cpp">
       <Filter>Common\Computer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Storage\DeviceTape.cpp">
+      <Filter>Common\Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\FileUtil.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

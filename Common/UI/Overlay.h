@@ -11,9 +11,6 @@ namespace ui
 {
 	using NewComputerCallback = void (*)(std::filesystem::path, json& data);
 
-	using SelectFileFilter = std::pair<std::string, std::string>;
-	using SelectFileFilters = std::vector<SelectFileFilter>;
-
 	class Overlay : public Logger, public video::Renderer, public events::EventHandler
 	{
 	public:
@@ -41,9 +38,6 @@ namespace ui
 		static const WORD GetOverlayHeight() { return 62; }
 
 	protected:
-		static HWND GetHWND();
-		static bool SelectFile(std::filesystem::path& path, HWND parent, SelectFileFilters filter = {}, bool addAllFilesFilter = true);
-
 		CoreUI::ToolbarPtr GetToolbar() { return m_toolbar; }
 
 		virtual void OnClick(CoreUI::WidgetRef widget);
