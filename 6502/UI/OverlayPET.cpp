@@ -61,11 +61,11 @@ namespace ui
 			return;
 		}
 
-		fs::path diskImage;
+		PathList paths;
 
-		if (SelectFile(diskImage, { {"Program Files (*.prg)", "*.prg"} }))
+		if (SelectFileMulti(paths, { {"Program Files (*.prg)", "*.prg"} }))
 		{
-			prgLoader->LoadPRG(diskImage.string().c_str());
+			prgLoader->LoadPRG(paths);
 		}
 	}
 }

@@ -353,11 +353,22 @@ namespace emul
 		return true;
 	}
 
-	void ComputerPET2001::LoadPRG(const char* file)
+	void ComputerPET2001::LoadPRG(const hscommon::fileUtil::PathList& paths)
 	{
-		LogPrintf(LOG_INFO, "LoadPRG: loading %s", file);
+		if (paths.size() == 0)
+		{
+			LogPrintf(LOG_WARNING, "LoadPRG: No files selected");
+			return;
+		}
+		else if (paths.size() > 1)
+		{
+			LogPrintf(LOG_WARNING, "LoadPRG: Load muliple files not supported, loading first file");
+		}
 
-		File f(file, "rb");
+		std::string pathStr = paths[0].string();
+		LogPrintf(LOG_INFO, "LoadPRG: loading %s", pathStr.c_str());
+
+		File f(pathStr.c_str(), "rb");
 		if (!f)
 		{
 			LogPrintf(LOG_ERROR, "LoadPRG: error opening binary file");

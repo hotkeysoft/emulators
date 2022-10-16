@@ -283,67 +283,77 @@ namespace emul
 		return true;
 	}
 
-	void ComputerVIC20::LoadPRG(const char* file)
+	void ComputerVIC20::LoadPRG(const hscommon::fileUtil::PathList& paths)
 	{
-		LogPrintf(LOG_INFO, "LoadPRG: loading %s", file);
-
-		File f(file, "rb");
-		if (!f)
+		if (paths.size() == 0)
 		{
-			LogPrintf(LOG_ERROR, "LoadPRG: error opening binary file");
+			LogPrintf(LOG_WARNING, "LoadPRG: No files selected");
 			return;
 		}
 
-		// Load "header" (2 bytes, load address)
-		WORD loadAddress = 0;
-		size_t bytesRead = fread(&loadAddress, 2, 1, f);
-		if (bytesRead != 1)
+		for (auto& path : paths)
 		{
-			LogPrintf(LOG_ERROR, "LoadPRG: error reading header");
-			return;
-		}
-		else
-		{
-			LogPrintf(LOG_INFO, "Load Address: %04X", loadAddress);
-		}
+			std::string pathStr = path.string();
+			LogPrintf(LOG_INFO, "LoadPRG: loading %s", pathStr.c_str());
 
-		// TODO: Cartridges: allocate ROM block(s)
+			File f(pathStr.c_str(), "rb");
+			if (!f)
+			{
+				LogPrintf(LOG_ERROR, "LoadPRG: error opening binary file");
+				return;
+			}
 
-		// Load data
-		MemoryBlock::RawBlock buf;
-		buf.resize(32768);
-		bytesRead = fread(&buf[0], sizeof(BYTE), buf.size(), f);
-		if (bytesRead < 1)
-		{
-			LogPrintf(LOG_ERROR, "LoadPRG: error reading binary file");
-			return;
-		}
+			// Load "header" (2 bytes, load address)
+			WORD loadAddress = 0;
+			size_t bytesRead = fread(&loadAddress, 2, 1, f);
+			if (bytesRead != 1)
+			{
+				LogPrintf(LOG_ERROR, "LoadPRG: error reading header");
+				return;
+			}
+			else
+			{
+				LogPrintf(LOG_INFO, "Load Address: %04X", loadAddress);
+			}
 
-		LogPrintf(LOG_INFO, "LoadPRG: read %d bytes", bytesRead);
-		buf.resize(bytesRead);
+			// TODO: Cartridges: allocate ROM block(s)
 
-		// Find memory block where we want to insert the code
-		const MemorySlot& slot = m_memory.FindBlock(loadAddress);
-		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
-		if (!block)
-		{
-			LogPrintf(LOG_ERROR, "LoadPRG: No memory allocated at load address: %04X");
-			return;
-		}
+			// Load data
+			MemoryBlock::RawBlock buf;
+			buf.resize(32768);
+			bytesRead = fread(&buf[0], sizeof(BYTE), buf.size(), f);
+			if (bytesRead < 1)
+			{
+				LogPrintf(LOG_ERROR, "LoadPRG: error reading binary file");
+				return;
+			}
 
-		block->Fill(loadAddress - slot.base, buf);
+			LogPrintf(LOG_INFO, "LoadPRG: read %d bytes", bytesRead);
+			buf.resize(bytesRead);
 
-		WORD end = loadAddress + (WORD)bytesRead;
+			// Find memory block where we want to insert the code
+			const MemorySlot& slot = m_memory.FindBlock(loadAddress);
+			MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
+			if (!block)
+			{
+				LogPrintf(LOG_ERROR, "LoadPRG: No memory allocated at load address: %04X");
+				return;
+			}
 
-		WORD basicStart = m_memory.Read16(0x2B);
+			block->Fill(loadAddress - slot.base, buf);
 
-		if (loadAddress == basicStart)
-		{
-			LogPrintf(LOG_INFO, "LoadPRG: Adjusting BASIC pointers");
+			WORD end = loadAddress + (WORD)bytesRead;
 
-			m_memory.Write16(0x2D, end);
-			m_memory.Write16(0x2F, end);
-			m_memory.Write16(0x31, end);
+			WORD basicStart = m_memory.Read16(0x2B);
+
+			if (loadAddress == basicStart)
+			{
+				LogPrintf(LOG_INFO, "LoadPRG: Adjusting BASIC pointers");
+
+				m_memory.Write16(0x2D, end);
+				m_memory.Write16(0x2F, end);
+				m_memory.Write16(0x31, end);
+			}
 		}
 	}
 

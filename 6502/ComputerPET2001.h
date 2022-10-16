@@ -39,7 +39,7 @@ namespace emul
 
 		virtual tape::DeviceTape* GetTape() override { return &m_tape; }
 
-		virtual void LoadPRG(const char* file) override;
+		virtual void LoadPRG(const hscommon::fileUtil::PathList& paths) override;
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;

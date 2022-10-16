@@ -8,8 +8,10 @@ namespace hscommon::fileUtil
 {
     using SelectFileFilter = std::pair<std::string, std::string>;
     using SelectFileFilters = std::vector<SelectFileFilter>;
+    using PathList = std::vector<std::filesystem::path>;
 
-    bool SelectFile(std::filesystem::path& path, SelectFileFilters filter = {}, bool addAllFilesFilter = true);
+    bool SelectFile(std::filesystem::path& path, SelectFileFilters filters = {}, bool addAllFilesFilter = true);
+    bool SelectFileMulti(PathList& paths, SelectFileFilters filters = {}, bool addAllFilesFilter = true);
 
     // Thin file wrapper that automatically closes the file
     // when going out of scope.
