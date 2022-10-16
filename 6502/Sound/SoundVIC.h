@@ -22,9 +22,9 @@ namespace sound::vic
 
 		virtual void Init() { Reset(); }
 		virtual void Reset();
-		virtual void Tick() = 0;
+		void Tick();
 
-		bool GetOutput() const { return m_out & m_enabled; }
+		bool GetOutput() const { return m_out; }
 
 		virtual void SetFrequency(BYTE value);
 
@@ -32,8 +32,10 @@ namespace sound::vic
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-		void ToggleOutput() { m_out = !m_out; }
-		void SetOutput(bool out) { m_out = out; }
+		virtual void OnEndCount() { ToggleOutput(); }
+
+		void ToggleOutput() { m_out = (m_enabled && !m_out); }
+		void SetOutput(bool out) { m_out = (m_enabled && out); }
 
 		BYTE m_n = 0xFF;
 		BYTE m_counter = 0xFF;
@@ -41,20 +43,6 @@ namespace sound::vic
 
 	private:
 		bool m_out = false;
-	};
-
-	class VoiceSquare : public Voice
-	{
-	public:
-		VoiceSquare(const char* label);
-
-		virtual void Tick() override;
-
-		VoiceSquare() = delete;
-		VoiceSquare(const VoiceSquare&) = delete;
-		VoiceSquare& operator=(const VoiceSquare&) = delete;
-		VoiceSquare(VoiceSquare&&) = delete;
-		VoiceSquare& operator=(VoiceSquare&&) = delete;
 	};
 
 	class VoiceNoise : public Voice
@@ -68,20 +56,18 @@ namespace sound::vic
 		VoiceNoise(VoiceNoise&&) = delete;
 		VoiceNoise& operator=(VoiceNoise&&) = delete;
 
-		virtual void Tick() override;
+		virtual void Reset() override;
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-		bool m_internalOutput = false;
+		virtual void OnEndCount() override { Shift(); }
 
 		void Shift();
-		void ResetShiftRegister() { m_shiftRegister = (1 << (m_shiftRegisterLen - 1)); }
 
-		const BYTE m_shiftRegisterLen = 15;
-		const WORD m_noisePattern = 0b000000000010001;
-		WORD m_shiftRegister;
+		BYTE m_outShiftRegister = 0; // 8 bit output shift register
+		WORD m_lfShiftRegister = 0; // 16 bit linear feedback shift register
 	};
 
 	class SoundVIC : public Logger, public emul::Serializable

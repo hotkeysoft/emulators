@@ -3,6 +3,8 @@
 #include "SoundVIC.h"
 
 using emul::GetBit;
+using emul::SetBit;
+using emul::GetLSB;
 using emul::GetMSB;
 
 namespace sound::vic
@@ -11,6 +13,21 @@ namespace sound::vic
 	{
 		m_n = 0xFF;
 		m_counter = 0xFF;
+	}
+
+	void Voice::SetFrequency(BYTE value)
+	{
+		m_n = 127 - (value & 127);
+		m_enabled = GetMSB(value);
+	}
+
+	void Voice::Tick()
+	{
+		if (--m_counter == 0)
+		{
+			m_counter = m_n;
+			OnEndCount();
+		}
 	}
 
 	void Voice::Serialize(json& to)
@@ -29,97 +46,62 @@ namespace sound::vic
 		m_out = from["out"];
 	}
 
-	void Voice::SetFrequency(BYTE value)
-	{
-		m_n = 127 - (value & 127);
-		m_enabled = GetMSB(value);
-	}
-
-	// =================================
-
-	VoiceSquare::VoiceSquare(const char* label) : Voice(label)
-	{
-	}
-
-	void VoiceSquare::Tick()
-	{
-		if (--m_counter == 0)
-		{
-			m_counter = m_n;
-			ToggleOutput();
-		}
-	}
-
 	// =================================
 
 	VoiceNoise::VoiceNoise(const char* label) : Voice(label)
 	{
-		ResetShiftRegister();
-		SetOutput(false);
 	}
 
-	void VoiceNoise::Tick()
+	void VoiceNoise::Reset()
 	{
-		if (--m_counter == 0)
-		{
-			m_counter = m_n;
-			m_internalOutput = !m_internalOutput;
-			if (m_internalOutput)
-			{
-				Shift();
-			}
-		}
-	}
-
-	static bool parity(WORD val)
-	{
-		val ^= (val >> 8);
-		val ^= (val >> 4);
-		val ^= (val >> 2);
-		val ^= (val >> 1);
-		return val & 1;
+		Voice::Reset();
+		m_outShiftRegister = 0x0;
+		m_lfShiftRegister = 0x0;
 	}
 
 	void VoiceNoise::Shift()
 	{
-		bool input;
-		//if (m_whiteNoise)
-		//{
-			input = parity(m_shiftRegister & m_noisePattern);
-		//}
-		//else
+		if (GetLSB(m_lfShiftRegister))
 		{
-//			input = (m_shiftRegister & 1);
+			const bool bit = GetMSB(m_outShiftRegister);
+			m_outShiftRegister <<= 1;
+			SetBit(m_outShiftRegister, 0, !bit);
 		}
 
-		m_shiftRegister = (m_shiftRegister >> 1);
-		m_shiftRegister |= (input << (m_shiftRegisterLen - 1));
+		m_lfShiftRegister <<= 1;
 
-		SetOutput(m_shiftRegister & 1);
+		// http://sleepingelephant.com/ipw-web/bulletin/bb/viewtopic.php?f=11&t=8733&start=210#p104360
+		const bool lfsr1 = (GetBit(m_lfShiftRegister, 3) ^ GetBit(m_lfShiftRegister, 12));
+		const bool lfsr2 = (GetBit(m_lfShiftRegister, 14) ^ GetBit(m_lfShiftRegister, 15));
+		const bool lfsr3 = lfsr1 ^ lfsr2;
+
+		SetBit(m_lfShiftRegister, 0, !lfsr3);
+
+		SetOutput(GetLSB(m_outShiftRegister));
 	}
 
 	void VoiceNoise::Serialize(json& to)
 	{
 		Voice::Serialize(to);
 
-		to["internalOutput"] = m_internalOutput;
-		to["shiftRegister"] = m_shiftRegister;
+		to["outShiftRegister"] = m_outShiftRegister;
+		to["lfShiftRegister"] = m_lfShiftRegister;
 	}
 	void VoiceNoise::Deserialize(const json& from)
 	{
 		Voice::Deserialize(from);
 
-		m_internalOutput = from["internalOutput"];
-		m_shiftRegister = from["shiftRegister"];
+		m_outShiftRegister = from["outShiftRegister"];
+		m_lfShiftRegister = from["lfShiftRegister"];
 	}
 
 	// =================================
 
 	SoundVIC::SoundVIC() : Logger("soundVIC")
 	{
-		m_voices[0] = new VoiceSquare("vic_V0");
-		m_voices[1] = new VoiceSquare("vic_V1");
-		m_voices[2] = new VoiceSquare("vic_V2");
+		m_voices[0] = new Voice("vic_V0");
+		m_voices[1] = new Voice("vic_V1");
+		m_voices[2] = new Voice("vic_V2");
 		m_voices[3] = new VoiceNoise("vic_N");
 
 		Reset();
@@ -167,16 +149,18 @@ namespace sound::vic
 		if (GetBit(changed, 7)) m_voices[0]->Tick(); // CLK/256
 		if (GetBit(changed, 6)) m_voices[1]->Tick(); // CLK/128
 		if (GetBit(changed, 5)) m_voices[2]->Tick(); // CLK/64
-		if (GetBit(changed, 4)) m_voices[3]->Tick(); // CLK/32
+
+		if (GetBit(changed, 2)) m_voices[3]->Tick(); // CLK/8
 	}
 
 	WORD SoundVIC::GetOutput()
 	{
-		WORD out = 0;
-		for (int i = 0; i < 4; ++i)
-		{
-			out += m_voices[i]->GetOutput() ? 1 : 0;
-		}
+		WORD out =
+			(m_voices[0]->GetOutput() ? 1 : 0) +
+			(m_voices[1]->GetOutput() ? 1 : 0) +
+			(m_voices[2]->GetOutput() ? 1 : 0) +
+			(m_voices[3]->GetOutput() ? 1 : 0);
+
 		return out * m_volume * 1024;
 	}
 
