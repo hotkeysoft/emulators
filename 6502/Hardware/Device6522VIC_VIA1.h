@@ -19,6 +19,9 @@ namespace via
 		// CA2
 		bool GetCassetteMotorOut() const { return !m_portA.GetC2(); }
 
+		// PA6 - Cassette switch
+		void SetCassetteSwitchIn(bool set) { m_portA.SetInputBit(6, !set); }
+
 	protected:
 		virtual void OnReadPort(VIAPort* src) override;
 

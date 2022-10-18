@@ -50,10 +50,12 @@ namespace tape
 		}
 
 		// Reads bit at current position
-		bool Read() const { return m_currIn; }
+		bool Read() const { return m_currIn & m_motorEnabled; }
 
 		// Writes bit at current position
 		void Write(bool val) { m_currOut = val; }
+
+		WORD GetSound() const { return (m_motorEnabled && (m_currOut || m_currIn)) ? 8192 : 0; }
 
 		void Tick();
 

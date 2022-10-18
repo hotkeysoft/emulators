@@ -28,7 +28,7 @@ namespace hscommon
 			m_value = set;
 		}
 
-		void ResetLatch() { m_latched = false; }
+		void ResetLatch() { if (m_latched) { m_latched = false; m_value = true; } }
 		bool IsLatched() const { return m_latched; }
 
 		void SetTrigger(Trigger t) { ResetLatch(); m_invert = (t == Trigger::NEGATIVE); }

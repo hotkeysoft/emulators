@@ -3,6 +3,7 @@
 #include <Serializable.h>
 #include <CPU/CPUCommon.h>
 #include <CPU/IOConnector.h>
+#include <EdgeDetectLatch.h>
 
 using emul::IOConnector;
 using emul::BYTE;
@@ -54,12 +55,13 @@ namespace via
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
-		bool GetC1() const { return C1; }
+		bool GetC1() const { return C1.IsLatched(); }
 		bool GetC2() const { return C2; }
 
-		void SetC1(bool set) { C1 = set; }
+		void SetC1(bool set) { C1.Set(set); }
 		void SetC2(bool set) { C2 = set; }
 
+		void SetC1InterruptActiveEdge(ActiveEdge edge);
 		void SetC2Operation(C2Operation op);
 
 	protected:
@@ -95,7 +97,7 @@ namespace via
 		BYTE IR = 0; // Input set by hardware
 
 		// Input line
-		bool C1 = false;
+		hscommon::EdgeDetectLatch C1;
 
 		// Input/output line
 		bool C2 = false;
@@ -292,5 +294,6 @@ namespace via
 
 		VIAPort m_portA;
 		VIAPort m_portB;
+		friend class VIAPort;
 	};
 }

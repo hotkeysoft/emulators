@@ -18,6 +18,12 @@ namespace via
 
 		void SetKeyboardRow(BYTE data) { m_portA.SetInput(data); }
 
+		// PB3 - Cassette Write
+		BYTE GetCassetteDataOut() const { return emul::GetBit(m_portB.GetOutput(), 3); }
+
+		// CA1 - Cassette Read
+		void SetCassetteDataIn(bool data) { m_portA.SetC1(!data); }
+
 	protected:
 		virtual void OnReadPort(VIAPort* src) override;
 

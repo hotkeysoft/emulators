@@ -3,6 +3,7 @@
 #include "Device6522.h"
 
 using emul::GetMSB;
+using hscommon::EdgeDetectLatch;
 
 namespace via
 {
@@ -33,7 +34,7 @@ namespace via
 		case ShiftRegisterMode::SHIFT_OUT_T2_FREE: return "OUTPUT, T2 FREE";
 		case ShiftRegisterMode::SHIFT_OUT_T2:      return "OUTPUT, T2";
 		case ShiftRegisterMode::SHIFT_OUT_CLK:     return "OUTPUT, CLK";
-		case ShiftRegisterMode::SHIFT_OUT_EXTCLK:  return "OUTPUT,  EXT CLK";
+		case ShiftRegisterMode::SHIFT_OUT_EXTCLK:  return "OUTPUT, EXT CLK";
 		default: throw std::exception("Not possible");
 		}
 	}
@@ -70,12 +71,18 @@ namespace via
 		DDR = 0;
 		OR = 0;
 		IR = 0xFF; // TODO: Assume pullups for now
-		C1 = false;
+		C1.ResetLatch();
+		C1.SetTrigger(EdgeDetectLatch::Trigger::NEGATIVE);
 		C2 = false;
 	}
 
 	BYTE VIAPort::ReadInputRegister()
 	{
+		// Resets C1 and C2 (TODO: C2 input not implemented)
+		C1.ResetLatch();
+		m_parent->m_interrupt.ClearInterrupt(InterruptFlag::CA1);
+		LogPrintf(LOG_DEBUG, "Reset C1 Latch");
+
 		m_parent->OnReadPort(this);
 		BYTE value = IR;
 
@@ -88,6 +95,11 @@ namespace via
 	}
 	void VIAPort::WriteOutputRegister(BYTE value)
 	{
+		// Resets C1 and C2 (TODO: C2 input not implemented)
+		C1.ResetLatch();
+		m_parent->m_interrupt.ClearInterrupt(InterruptFlag::CA2);
+		LogPrintf(LOG_DEBUG, "Reset C1 Latch");
+
 		LogPrintf(LOG_DEBUG, "Write OutputRegister, value=%02X", value);
 		OR = value;
 	}
@@ -122,6 +134,11 @@ namespace via
 		}
 	}
 
+	void VIAPort::SetC1InterruptActiveEdge(ActiveEdge edge)
+	{
+		C1.SetTrigger(edge == ActiveEdge::POS_EDGE ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE);
+	}
+
 	void VIAPort::SetC2Operation(C2Operation op)
 	{
 		// CA2 Operation
@@ -151,7 +168,7 @@ namespace via
 		to["DDR"] = DDR;
 		to["IR"] = IR;
 		to["OR"] = OR;
-		to["C1"] = C1;
+		C1.Serialize(to["C1"]);
 		to["C2"] = C2;
 	}
 
@@ -160,7 +177,7 @@ namespace via
 		DDR = from["DDR"];
 		IR = from["IR"];
 		OR = from["OR"];
-		C1 = from["C1"];
+		C1.Deserialize(from["C1"]);
 		C2 = from["C2"];
 	}
 
@@ -464,6 +481,9 @@ namespace via
 		LogPrintf(LOG_INFO, " CB1 Interrupt active edge: %s", PCR.GetCB1InterruptActiveEdge() == ActiveEdge::NEG_EDGE ? "NEG" : "POS");
 		LogPrintf(LOG_INFO, " CB2 Operation: %s", GetC2OperationStr(PCR.GetCB2Operation()));
 
+		m_portA.SetC1InterruptActiveEdge(PCR.GetCA1InterruptActiveEdge());
+		m_portB.SetC1InterruptActiveEdge(PCR.GetCB1InterruptActiveEdge());
+
 		m_portA.SetC2Operation(PCR.GetCA2Operation());
 		m_portB.SetC2Operation(PCR.GetCB2Operation());
 	}
@@ -554,6 +574,17 @@ namespace via
 
 	void Device6522::Tick()
 	{
+		if (m_portA.GetC1())
+		{
+			LogPrintf(LOG_DEBUG, "CA1 Interrupt set");
+			m_interrupt.SetInterrupt(InterruptFlag::CA1);
+		}
+		if (m_portB.GetC1())
+		{
+			LogPrintf(LOG_DEBUG, "CB1 Interrupt set");
+			m_interrupt.SetInterrupt(InterruptFlag::CB1);
+		}
+
 		if (TIMER1.Tick())
 		{
 			LogPrintf(LOG_DEBUG, "Timer1 triggered");

@@ -45,13 +45,13 @@ namespace tape
 
 		std::ifstream inFile(path, std::ios::binary);
 
-		m_data.clear();
+		std::vector<BYTE> buffer(std::istreambuf_iterator<char>(inFile), {});
 
-		BYTE ch;
-		while (inFile.read((char*)&ch, 1))
+		m_data.clear();
+		m_data.reserve(buffer.size());
+		for (BYTE b : buffer)
 		{
-			static bool lastBit = false;
-			bool bit = ch >= threshold ? false : true;
+			bool bit = b >= threshold ? false : true;
 			m_data.push_back(bit);
 		}
 

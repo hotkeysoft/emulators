@@ -268,27 +268,24 @@ namespace emul
 
 		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
+		TapeDeck& tape = m_tape.GetTape(0);
+
 		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
 			++g_ticks;
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(m_sound.GetOutput());
+				WORD sound = m_sound.GetOutput() + tape.GetSound();
+				SOUND().PlayMono(sound);
 			}
 
 			// Tape update
 			{
-				TapeDeck& tape = m_tape.GetTape(0);
-
-				//m_pia1.SetCassette1ReadLine(tape1.Read());
-				//m_via.SetCassette2ReadLine(tape2.Read());
-				//tape1.Write(m_via.GetCassetteDataOut());
-				//tape2.Write(m_via.GetCassetteDataOut());
-				//tape1.SetMotor(m_pia1.GetCassette1MotorOut());
-				//tape2.SetMotor(m_via.GetCassette2MotorOut());
-				//m_pia1.SetCassetteSense1In(tape1.GetSense());
-				//m_pia1.SetCassetteSense2In(tape2.GetSense());
+				m_via2.SetCassetteDataIn(tape.Read());
+				tape.Write(m_via2.GetCassetteDataOut());
+				tape.SetMotor(m_via1.GetCassetteMotorOut());
+				m_via1.SetCassetteSwitchIn(tape.GetSense());
 
 				m_tape.Tick();
 			}
