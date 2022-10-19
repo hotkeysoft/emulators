@@ -40,8 +40,6 @@ namespace ui
 		virtual void OnClick(CoreUI::WidgetRef widget) override;
 		virtual void OnClose(CoreUI::WidgetRef widget) override;
 
-		virtual void UpdateTitle(float fps = 0.) override;
-
 		void UpdateSpeed();
 		void UpdateFloppy(BYTE drive);
 		void UpdateHardDisk(BYTE drive);

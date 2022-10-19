@@ -402,6 +402,12 @@ namespace ui
 		std::ostringstream os;
 		os << m_pc->GetName();
 
+		std::string_view model = m_pc->GetModel();
+		if (!model.empty())
+		{
+			os << " [" << model << "]";
+		}
+
 		if (fps > 0.)
 		{
 			os << " [" << std::fixed << std::setprecision(1) << fps << " fps]";

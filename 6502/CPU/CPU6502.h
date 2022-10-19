@@ -183,6 +183,9 @@ namespace emul
 		void LSR(BYTE& dest);
 		void ROR(BYTE& dest);
 
+		void SLO(BYTE& dest);
+		void ISC(BYTE& dest);
+
 		friend class Monitor6502;
 	};
 }

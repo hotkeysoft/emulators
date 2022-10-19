@@ -15,10 +15,13 @@ namespace video::vic
 		0xFFEA9FF6, 0xFF94E089, 0xFF8071CC, 0xFFFFFFB2
 	};
 
-	VideoVIC::VideoVIC(SoundVIC& sound) :
+	VideoVIC::VideoVIC(SoundVIC& sound, uint32_t columns, uint32_t rows) :
 		Logger("vidVIC"),
 		IOConnector(0x0F),
-		m_sound(sound)
+		m_sound(sound),
+		H_TOTAL(columns),
+		H_TOTAL_PX(H_TOTAL * HALF_CHAR_WIDTH),
+		V_TOTAL(rows)
 	{
 	}
 
@@ -438,7 +441,16 @@ namespace video::vic
 		LogPrintf(LOG_INFO, "UpdateScreenArea");
 
 		// Discard hi bit, used for base address offset
-		BYTE columns = GetVICColumns();
+		BYTE columns = (GetVICColumns() & 127);
+		if (columns > 31)
+		{
+			columns = 31;
+		}
+		else if (columns == 0)
+		{
+			columns = 32;
+		}
+
 		BYTE rows = GetVICRows();
 
 		// Unit: half-characters (4 pixels)

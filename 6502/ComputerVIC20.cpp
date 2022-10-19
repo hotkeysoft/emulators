@@ -18,12 +18,24 @@ using hscommon::fileUtil::File;
 
 namespace emul
 {
-	const size_t MAIN_CLK = 14318180; // Main crystal
-	const size_t PIXEL_CLK = (MAIN_CLK / 7) * 2;
-	const size_t CPU_CLK = PIXEL_CLK / 4;
+	const size_t MAIN_CLK_NTSC = 14318180;
+	const size_t MAIN_CLK_PAL = 4433618;
+
+	const size_t PIXEL_CLK_NTSC = (MAIN_CLK_NTSC / 7) * 2;
+	const size_t PIXEL_CLK_PAL = MAIN_CLK_PAL;
+
+	const size_t CPU_CLK_NTSC = PIXEL_CLK_NTSC / 4;
+	const size_t CPU_CLK_PAL = PIXEL_CLK_PAL / 4;
+
+	const size_t VIC_COLUMNS_NTSC = 65;
+	const size_t VIC_COLUMNS_PAL = 71;
+
+	const size_t VIC_ROWS_NTSC = 261;
+	const size_t VIC_ROWS_PAL = 312;
 
 	// Poll each frame
-	const size_t SCAN_RATE = (262 * 64);
+	const size_t SCAN_RATE_NTSC = VIC_COLUMNS_NTSC * VIC_ROWS_NTSC;
+	const size_t SCAN_RATE_PAL = VIC_COLUMNS_PAL * VIC_ROWS_PAL;
 
 	const char* GetMemoryLayoutStr(ComputerVIC20::MemoryLayout layout)
 	{
@@ -35,7 +47,17 @@ namespace emul
 		case ComputerVIC20::MemoryLayout::MEM_16K: return "16K";
 		case ComputerVIC20::MemoryLayout::MEM_24K: return "24K";
 		case ComputerVIC20::MemoryLayout::MEM_32K: return "32K";
-		default: throw std::exception("not possible");
+		default: throw std::exception("invalid memory layout");
+		}
+	}
+
+	const char* ComputerVIC20::GetModelStr(ComputerVIC20::Model model)
+	{
+		switch (model)
+		{
+		case ComputerVIC20::Model::NTSC: return "ntsc";
+		case ComputerVIC20::Model::PAL: return "pal";
+		default: throw std::exception("invalid model");
 		}
 	}
 
@@ -62,8 +84,8 @@ namespace emul
 		m_ioVIC("IOVIC", 0x0100),
 		m_ioVIA("IOVIA", 0x0300),
 		m_via1("VIA1"),
-		m_via2("VIA2"),
-		m_tape(CPU_CLK)
+		m_via2("VIA2")
+
 	{
 	}
 
@@ -76,6 +98,7 @@ namespace emul
 	{
 		ComputerBase::Init(CPUID_6502, baseRAM);
 
+		InitModel();
 		InitKeyboard();
 		InitJoystick();
 		InitRAM();
@@ -85,11 +108,19 @@ namespace emul
 		InitVideo();
 		InitTape();
 
-		InitInputs(CPU_CLK, SCAN_RATE);
+		if (m_model == Model::NTSC)
+		{
+			InitInputs(CPU_CLK_NTSC, SCAN_RATE_NTSC);
+			SOUND().SetBaseClock(CPU_CLK_NTSC);
+		}
+		else
+		{
+			InitInputs(CPU_CLK_PAL, SCAN_RATE_PAL);
+			SOUND().SetBaseClock(CPU_CLK_PAL);
+		}
+
 		GetInputs().InitKeyboard(m_keyboard);
 		GetInputs().InitJoystick(&m_joystick);
-
-		SOUND().SetBaseClock(CPU_CLK);
 	}
 
 	void ComputerVIC20::InitCPU(const char* cpuid)
@@ -100,6 +131,27 @@ namespace emul
 			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
 			throw std::exception("CPUType not supported");
 		}
+	}
+
+	void ComputerVIC20::InitModel()
+	{
+		m_model = Model::NTSC;
+		std::string modelStr = CONFIG().GetValueStr("core", "model", "ntsc");
+
+		if (modelStr == GetModelStr(Model::NTSC))
+		{
+			m_model = Model::NTSC;
+		}
+		else if (modelStr == GetModelStr(Model::PAL))
+		{
+			m_model = Model::PAL;
+		}
+		else
+		{
+			LogPrintf(LOG_WARNING, "Unknown model [%s], using default", modelStr.c_str());
+		}
+
+		LogPrintf(LOG_INFO, "Model: %s", GetModelStr(m_model));
 	}
 
 	void ComputerVIC20::InitKeyboard()
@@ -131,13 +183,23 @@ namespace emul
 		m_romBASIC.LoadFromFile("data/VIC20/BASIC-C000.bin");
 		m_memory.Allocate(&m_romBASIC, 0xC000);
 
-		m_romKERNAL.LoadFromFile("data/VIC20/KERNAL-E000-ntsc.bin");
+		if (m_model == Model::NTSC)
+		{
+			m_romKERNAL.LoadFromFile("data/VIC20/KERNAL-E000-ntsc.bin");
+		}
+		else
+		{
+			m_romKERNAL.LoadFromFile("data/VIC20/KERNAL-E000-pal.bin");
+		}
 		m_memory.Allocate(&m_romKERNAL, 0xE000);
 	}
 
 	void ComputerVIC20::InitVideo()
 	{
-		VideoVIC* video = new VideoVIC(m_sound);
+		VideoVIC* video = new VideoVIC(
+			m_sound,
+			(m_model == Model::NTSC) ? VIC_COLUMNS_NTSC : VIC_COLUMNS_PAL,
+			(m_model == Model::NTSC) ? VIC_ROWS_NTSC : VIC_ROWS_PAL);
 		video->EnableLog(CONFIG().GetLogLevel("video"));
 		video->Init(&m_memory, nullptr);
 		m_video = video;
@@ -229,7 +291,8 @@ namespace emul
 
 	void ComputerVIC20::InitTape()
 	{
-		m_tape.Init(1);
+		m_tape = new tape::DeviceTape((m_model == Model::NTSC) ? CPU_CLK_NTSC : CPU_CLK_PAL);
+		m_tape->Init(1);
 	}
 
 	void ComputerVIC20::Reset()
@@ -238,7 +301,7 @@ namespace emul
 		m_via1.Reset();
 		m_via2.Reset();
 		m_keyboard->Reset();
-		m_tape.Reset();
+		m_tape->Reset();
 	}
 
 	void ComputerVIC20::ResetMemoryLayout()
@@ -268,7 +331,7 @@ namespace emul
 
 		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
-		TapeDeck& tape = m_tape.GetTape(0);
+		TapeDeck& tape = m_tape->GetTape(0);
 
 		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
@@ -287,7 +350,7 @@ namespace emul
 				tape.SetMotor(m_via1.GetCassetteMotorOut());
 				m_via1.SetCassetteSwitchIn(tape.GetSense());
 
-				m_tape.Tick();
+				m_tape->Tick();
 			}
 
 			GetInputs().Tick();
@@ -484,6 +547,8 @@ namespace emul
 	{
 		ComputerBase::Serialize(to);
 
+		to["model"] = GetModelStr(m_model);
+
 		m_via1.Serialize(to["via1"]);
 		m_via2.Serialize(to["via2"]);
 	}
@@ -491,6 +556,11 @@ namespace emul
 	void ComputerVIC20::Deserialize(const json& from)
 	{
 		ComputerBase::Deserialize(from);
+
+		if (GetModelStr(m_model) != from["model"])
+		{
+			throw SerializableException("ComputerVIC20: Model is not compatible", SerializationError::COMPAT);
+		}
 
 		m_via1.Deserialize(from["via1"]);
 		m_via2.Deserialize(from["via2"]);

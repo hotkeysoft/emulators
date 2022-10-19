@@ -24,6 +24,11 @@ namespace emul
 
 		virtual std::string_view GetName() const override { return "VIC20"; };
 		virtual std::string_view GetID() const override { return "vic20"; };
+		virtual std::string_view GetModel() const override
+		{
+			static const std::string model = GetModelStr(m_model);
+			return model;
+		}
 
 		virtual void Init(WORD baseRAM) override;
 		virtual void Reset() override;
@@ -31,10 +36,13 @@ namespace emul
 
 		CPU6502& GetCPU() const { return *((CPU6502*)m_cpu); }
 
-		virtual tape::DeviceTape* GetTape() override { return &m_tape; }
+		virtual tape::DeviceTape* GetTape() override { return m_tape; }
 
 		enum class MemoryLayout { UNKNOWN, MEM_5K, MEM_8K, MEM_16K, MEM_24K, MEM_32K };
 		MemoryLayout GetMemoryLayout() const { return m_memoryLayout; }
+
+		enum class Model { NTSC, PAL };
+		static const char* GetModelStr(Model);
 
 		// emul::PRGLoader
 		virtual bool CanUnloadPRG() const { return true; };
@@ -48,6 +56,7 @@ namespace emul
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 
+		void InitModel();
 		void InitKeyboard();
 		void InitJoystick();
 		void InitRAM();
@@ -56,6 +65,8 @@ namespace emul
 		void InitSound();
 		void InitVideo();
 		void InitTape();
+
+		Model m_model = Model::NTSC;
 
 		void ResetMemoryLayout();
 		void SetMemoryLayout(MemoryLayout mem);
@@ -106,6 +117,6 @@ namespace emul
 		joy::DeviceJoystickDigital m_joystick;
 		sound::vic::SoundVIC m_sound;
 
-		tape::DeviceTape m_tape;
+		tape::DeviceTape* m_tape = nullptr;
 	};
 }

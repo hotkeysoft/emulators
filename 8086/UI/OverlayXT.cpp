@@ -387,32 +387,6 @@ namespace ui
 		return true;
 	}
 
-	void OverlayXT::UpdateTitle(float fps)
-	{
-		if (!m_pc)
-		{
-			return;
-		}
-
-		std::ostringstream os;
-		os << m_pc->GetName();
-
-		// Display video mode only if non-trivial (e.g skip pcjr)
-		const auto& videoModes = GetPC()->GetVideoModes();
-		if (videoModes.size() > 1)
-		{
-			os << " [" << m_pc->GetVideo().GetDisplayName() << "]";
-		}
-
-		if (fps > 0.)
-		{
-			os << " [" << std::fixed << std::setprecision(1) << fps << " fps]";
-		}
-
-		m_mainWnd->SetText(os.str().c_str());
-	}
-
-
 	void OverlayXT::LoadFloppyDiskImage(BYTE drive, bool eject)
 	{
 		if (!GetPC() || !GetPC()->GetFloppy())

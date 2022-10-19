@@ -16,7 +16,7 @@ namespace ui
 	{
 		m_description.clear();
 		m_pc.clear();
-		m_video.clear();
+		m_model.clear();
 		m_isLoaded = false;
 	}
 
@@ -26,7 +26,7 @@ namespace ui
 		Clear();
 
 		m_pc = pc->GetName();
-		m_video = pc->GetVideo().GetDisplayName();
+		m_model = pc->GetModel();
 		m_isLoaded = true;
 	}
 
@@ -49,7 +49,7 @@ namespace ui
 			inStream >> j;
 
 			m_pc = j["pc"];
-			m_video = j["video"];
+			m_model = j["model"];
 			m_description = j["description"];
 		}
 		catch (std::exception e)
@@ -65,7 +65,7 @@ namespace ui
 	{
 		json j;
 		j["pc"] = m_pc;
-		j["video"] = m_video;
+		j["model"] = m_model;
 		j["description"] = m_description;
 
 		try
@@ -105,7 +105,7 @@ namespace ui
 		}
 		if (m_isLoaded && m_pc.size())
 		{
-			os << '[' << m_pc << "][" << m_video << "]";
+			os << '[' << m_pc << "][" << m_model << "]";
 		}
 		else
 		{

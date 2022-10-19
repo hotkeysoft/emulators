@@ -26,6 +26,11 @@ namespace emul
 
 		virtual std::string_view GetName() const override { return "PET2001"; };
 		virtual std::string_view GetID() const override { return "pet2001"; };
+		virtual std::string_view GetModel() const override
+		{
+			static const std::string model = ModelToString(m_model);
+			return model;
+		}
 
 		virtual void Init(WORD baseRAM) override;
 		virtual void Reset() override;
@@ -33,7 +38,6 @@ namespace emul
 
 		CPU6502& GetCPU() const { return *((CPU6502*)m_cpu); }
 
-		Model GetModel() const { return m_model; }
 		static Model StringToModel(const char*);
 		static std::string ModelToString(Model);
 

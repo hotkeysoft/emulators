@@ -293,6 +293,26 @@ namespace emul
 
 		// NOP
 		m_opcodes[0xEA] = [=]() { }; // NOP
+
+		// Undocumented opcodes
+
+		// SLO: ASL + ORA
+		m_opcodes[0x07] = [=]() { MEMopRMW(&CPU6502::SLO, GetZP()); }; // zp
+		m_opcodes[0x17] = [=]() { MEMopRMW(&CPU6502::SLO, GetZPX()); }; // zpx
+		m_opcodes[0x03] = [=]() { MEMopRMW(&CPU6502::SLO, GetINDX()); }; // izx
+		m_opcodes[0x13] = [=]() { MEMopRMW(&CPU6502::SLO, GetINDY()); }; // izy
+		m_opcodes[0x0F] = [=]() { MEMopRMW(&CPU6502::SLO, GetABS()); }; // abs
+		m_opcodes[0x1F] = [=]() { MEMopRMW(&CPU6502::SLO, GetABSX()); }; // abx
+		m_opcodes[0x1B] = [=]() { MEMopRMW(&CPU6502::SLO, GetABSY()); }; // aby
+
+		// ISC: INC + SBC
+		m_opcodes[0xE7] = [=]() { MEMopRMW(&CPU6502::ISC, GetZP());  }; // zp
+		m_opcodes[0xF7] = [=]() { MEMopRMW(&CPU6502::ISC, GetZPX()); }; // zpx
+		m_opcodes[0xEF] = [=]() { MEMopRMW(&CPU6502::ISC, GetABS()); }; // abs
+		m_opcodes[0xFF] = [=]() { MEMopRMW(&CPU6502::ISC, GetABSX()); }; // abx
+
+		// NOP
+		m_opcodes[0x1A] = [=]() { }; // abx
 	}
 
 	CPU6502::~CPU6502()
@@ -787,6 +807,18 @@ namespace emul
 		dest >>= 1;
 		SetBit(dest, 7, carry);
 		AdjustNZ(dest);
+	}
+
+	void CPU6502::SLO(BYTE& dest)
+	{
+		ASL(dest);
+		ORA(dest);
+	}
+
+	void CPU6502::ISC(BYTE& dest)
+	{
+		INC(dest);
+		SBC(dest);
 	}
 
 	void CPU6502::Serialize(json& to)

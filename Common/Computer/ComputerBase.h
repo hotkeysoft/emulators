@@ -20,6 +20,7 @@ namespace emul
 
 		virtual std::string_view GetName() const = 0;
 		virtual std::string_view GetID() const = 0;
+		virtual std::string_view GetModel() const { return ""; }
 
 		virtual void Init(WORD baseRAM) = 0;
 
@@ -31,6 +32,7 @@ namespace emul
 		Memory& GetMemory() { return m_memory; }
 		events::InputEvents& GetInputs() { return *m_inputs; }
 		video::Video& GetVideo() { return *m_video; }
+		const video::Video& GetVideo() const { return *m_video; }
 
 		virtual tape::DeviceTape* GetTape() { return nullptr; }
 

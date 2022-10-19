@@ -65,6 +65,18 @@ namespace emul
 
 		virtual ~Computer();
 
+		virtual std::string_view GetModel() const override
+		{
+			static std::string model;
+			// Use video mode as model only if non-trivial (e.g skip pcjr)
+			const auto& videoModes = GetVideoModes();
+			if (videoModes.size() > 1)
+			{
+				model = GetVideo().GetDisplayName();
+			}
+			return model;
+		}
+
 		virtual void Init(WORD baseRAM) = 0;
 
 		bool LoadBinary(const char* file, ADDRESS baseAddress) { return m_memory.LoadBinary(file, baseAddress); }

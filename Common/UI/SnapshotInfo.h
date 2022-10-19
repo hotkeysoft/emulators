@@ -20,7 +20,6 @@ namespace ui
 
 		const std::string& GetDescription() const { return m_description; }
 		const std::string& GetPC() const { return m_pc; }
-		const std::string& GetVideo() const { return m_video; }
 
 		void SetDescription(const char* desc) { m_description = desc ? desc : ""; }
 
@@ -38,7 +37,7 @@ namespace ui
 		std::filesystem::path m_snapshotDir;
 
 		std::string m_pc;
-		std::string m_video;
+		std::string m_model;
 		std::string m_description;
 	};
 }

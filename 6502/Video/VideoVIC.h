@@ -35,7 +35,7 @@ namespace video::vic
     class VideoVIC : public Video, public emul::IOConnector
     {
     public:
-        VideoVIC(sound::vic::SoundVIC& sound);
+        VideoVIC(sound::vic::SoundVIC& sound, uint32_t columns, uint32_t rows);
 
         VideoVIC(const VideoVIC&) = delete;
         VideoVIC& operator=(const VideoVIC&) = delete;
@@ -136,15 +136,15 @@ namespace video::vic
         // Number of lines displayed
         uint32_t V_DISPLAY = 184;
         // Total number of lines (including borders)
-        static const uint32_t V_TOTAL = 261;
+        const uint32_t V_TOTAL = 261;
 
         // Number of half-characters per line (displayed)
         uint32_t H_DISPLAY = 22 * 2;
         uint32_t H_DISPLAY_PX = H_DISPLAY * HALF_CHAR_WIDTH;
 
         // Total number of half-characters per line (including borders)
-        static const uint32_t H_TOTAL = 65;
-        static const uint32_t H_TOTAL_PX = H_TOTAL * HALF_CHAR_WIDTH;
+        const uint32_t H_TOTAL;
+        const uint32_t H_TOTAL_PX;
 
         // Computed by UpdateScreenArea()
         uint32_t LEFT_BORDER = 0;
