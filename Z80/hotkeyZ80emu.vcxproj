@@ -46,6 +46,7 @@
     <ClInclude Include="..\Common\Video\Video.h" />
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="Computer8080.h" />
+    <ClInclude Include="ComputerColecoVision.h" />
     <ClInclude Include="ComputerZ80.h" />
     <ClInclude Include="ComputerZX80.h" />
     <ClInclude Include="ComputerZXSpectrum.h" />
@@ -60,6 +61,8 @@
     <ClInclude Include="IO\Monitor8080.h" />
     <ClInclude Include="IO\MonitorZ80.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Video\TMS9918.h" />
+    <ClInclude Include="Video\VideoColecoVision.h" />
     <ClInclude Include="Video\VideoZX80.h" />
     <ClInclude Include="Video\VideoZXSpectrum.h" />
   </ItemGroup>
@@ -85,6 +88,7 @@
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="Computer8080.cpp" />
+    <ClCompile Include="ComputerColecoVision.cpp" />
     <ClCompile Include="ComputerZ80.cpp" />
     <ClCompile Include="ComputerZX80.cpp" />
     <ClCompile Include="ComputerZXSpectrum.cpp" />
@@ -101,6 +105,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Video\TMS9918.cpp" />
+    <ClCompile Include="Video\VideoColecoVision.cpp" />
     <ClCompile Include="Video\VideoZX80.cpp" />
     <ClCompile Include="Video\VideoZXSpectrum.cpp" />
   </ItemGroup>

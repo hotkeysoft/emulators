@@ -195,6 +195,15 @@
     <ClInclude Include="..\Common\FileUtil.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="ComputerColecoVision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\VideoColecoVision.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\TMS9918.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -298,6 +307,15 @@
     </ClCompile>
     <ClCompile Include="..\Common\FileUtil.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerColecoVision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\VideoColecoVision.cpp">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\TMS9918.cpp">
+      <Filter>Source Files\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
