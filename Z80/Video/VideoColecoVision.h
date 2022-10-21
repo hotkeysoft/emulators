@@ -26,11 +26,13 @@ namespace video
 
         virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 
-        virtual bool IsEnabled() const override { return true; }
+        virtual bool IsEnabled() const override { return m_vdp.IsEnabled(); }
 
         virtual bool IsVSync() const override { return m_vdp.IsVSync(); }
         virtual bool IsHSync() const override { return false; }
         virtual bool IsDisplayArea() const override { return m_vdp.IsDisplay(); }
+
+        bool IsInterrupt() const { return m_vdp.IsInterrupt(); }
 
         // emul::Serializable
         virtual void Serialize(json& to) override;

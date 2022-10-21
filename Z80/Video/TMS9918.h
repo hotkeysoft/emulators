@@ -21,8 +21,6 @@ namespace video::vdp
         BYTE ReadVRAMData();
         void WriteVRAMData(BYTE value);
 
-        bool IsInterrupt() { return false; };
-
         void Tick();
 
         bool IsHDisplay() const { return m_currX >= 0 && m_currX < H_DISPLAY; }
@@ -30,6 +28,10 @@ namespace video::vdp
         bool IsDisplay() const { return IsVDisplay() && IsHDisplay(); }
 
         bool IsVSync() const { return m_currY >= (BOTTOM_BORDER - V_SYNC); }
+
+        bool IsEnabled() const { return m_config.enable; }
+
+        bool IsInterrupt() const { return m_config.interruptEnabled && m_interrupt; };
 
         // emul::Serializable
         virtual void Serialize(json& to);
@@ -51,19 +53,25 @@ namespace video::vdp
         WORD m_currReadAddress = 0;
         WORD m_currWriteAddress = 0;
 
-        // Mode Select
-        bool m_m1 = false;
-        bool m_m2 = false;
-        bool m_m3 = false;
+        struct Config
+        {
+            // Mode Select
+            bool m1 = false;
+            bool m2 = false;
+            bool m3 = false;
+
+            bool vram16k = false;
+            bool enable = false;
+            bool interruptEnabled = false;
+            bool sprites16x16 = false;
+            bool sprites2x = false;
+        } m_config;
 
         // Computes m_mode from m1,m2,m3
         void UpdateMode();
         VideoMode m_mode = VideoMode::GRAPH_1;
 
-        bool m_blank = false;
         bool m_interrupt = false;
-        bool m_sprites16x16 = false;
-        bool m_sprites2x = false;
 
         // Table base addresses
         struct Tables

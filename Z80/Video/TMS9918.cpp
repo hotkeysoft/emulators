@@ -42,15 +42,16 @@ namespace video::vdp
 		m_currWriteAddress = 0;
 		m_currReadAddress = 0;
 
-		m_m1 = false;
-		m_m2 = false;
-		m_m3 = false;
+		m_config.m1 = false;
+		m_config.m2 = false;
+		m_config.m3 = false;
 		UpdateMode();
 
-		m_blank = false;
-		m_interrupt = false;
-		m_sprites16x16 = false;
-		m_sprites2x = false;
+		m_config.vram16k = false;
+		m_config.enable = false;
+		m_config.interruptEnabled = false;
+		m_config.sprites16x16 = false;
+		m_config.sprites2x = false;
 
 		m_baseAddr.name = 0;
 		m_baseAddr.color = 0;
@@ -58,9 +59,8 @@ namespace video::vdp
 		m_baseAddr.spriteAttr = 0;
 		m_baseAddr.spritePattern = 0;
 
-		// TODO: Temporary
-		m_fgColor = 0xFFFFFFFF;
-		m_bgColor = 0xFF55aa55;
+		m_fgColor = GetColor(0);
+		m_bgColor = GetColor(0);
 
 		m_currName = m_vram.getPtr() + m_baseAddr.name;
 		m_currColor = m_vram.getPtr() + m_baseAddr.color;
@@ -96,9 +96,11 @@ namespace video::vdp
 			m_currX = -TOP_BORDER;
 
 			m_currName = m_vram.getPtr() + m_baseAddr.name;
+
+			m_interrupt = true;
 		}
 
-		if (IsDisplay())
+		if (IsDisplay() && IsEnabled())
 		{
 			DrawMode1(); // TODO
 		}
@@ -110,11 +112,15 @@ namespace video::vdp
 
 	BYTE TMS9918::ReadStatus()
 	{
+		BYTE value = m_interrupt << 7;
+
+		// Reset interrupt bit
+		m_interrupt = false;
 		// Reset data flip flop
 		m_dataFlipFlop = false;
 
-		LogPrintf(LOG_DEBUG, "ReadStatus");
-		return 0xFF;
+		LogPrintf(LOG_DEBUG, "ReadStatus, value=%02X", value);
+		return value;
 	}
 
 	void TMS9918::Write(BYTE value)
@@ -161,27 +167,34 @@ namespace video::vdp
 		switch (reg)
 		{
 		case 0:
-			m_m3 = GetBit(m_tempData, 6);
+			m_config.m3 = GetBit(m_tempData, 1);
 			UpdateMode();
-			if (GetBit(m_tempData, 7))
+			if (GetBit(m_tempData, 0))
 			{
-				LogPrintf(LOG_WARNING, "External VDP Input not supported");
+				LogPrintf(LOG_WARNING, "R0: External VDP Input not supported");
 			}
 			break;
 		case 1:
-			m_blank = GetBit(m_tempData, 1);
-			m_interrupt = GetBit(m_tempData, 2);
-			m_m1 = GetBit(m_tempData, 2);
-			m_m2 = GetBit(m_tempData, 3);
-			m_sprites16x16 = GetBit(m_tempData, 6);
-			m_sprites2x = GetBit(m_tempData, 7);
+			m_config.vram16k = GetBit(m_tempData, 7);
+			m_config.enable = GetBit(m_tempData, 6);
+			m_config.interruptEnabled = GetBit(m_tempData, 5);
+			m_config.m1 = GetBit(m_tempData, 4);
+			m_config.m2 = GetBit(m_tempData, 3);
+			m_config.sprites16x16 = GetBit(m_tempData, 1);
+			m_config.sprites2x = GetBit(m_tempData, 0);
 
-			LogPrintf(LOG_INFO, "R1: BLANK[%d], INT_EN[%d], SPR16x16[%d], SPR2X[%d]",
-				m_blank,
-				m_interrupt,
-				m_sprites16x16,
-				m_sprites2x);
+			LogPrintf(LOG_INFO, "R1: 16K[%d] ENABLE[%d], INT_EN[%d], SPR16x16[%d], SPR2X[%d]",
+				m_config.vram16k,
+				m_config.enable,
+				m_config.interruptEnabled,
+				m_config.sprites16x16,
+				m_config.sprites2x);
 			UpdateMode();
+			if (!m_config.vram16k)
+			{
+				LogPrintf(LOG_WARNING, "R1: VRAM 4K not supported");
+			}
+
 			break;
 		case 2:
 			m_baseAddr.name = (m_tempData & 15) * 0x400;
@@ -204,8 +217,15 @@ namespace video::vdp
 			LogPrintf(LOG_INFO, "Sprite Pattern Gen Table base address = %04x", m_baseAddr.spritePattern);
 			break;
 		case 7:
-			LogPrintf(LOG_INFO, "WriteRegister: reg[%d] = %02x", reg, m_tempData);
+		{
+			BYTE fg = GetColor((m_tempData >> 4) & 0x0F);
+			BYTE bg = GetColor(m_tempData & 0x0F);
+			LogPrintf(LOG_INFO, "FG Color[%d], BG Color[%d]", fg, bg);
+
+			m_fgColor = GetColor(fg);
+			m_bgColor = GetColor(bg);
 			break;
+		}
 		default:
 			LogPrintf(LOG_ERROR, "WriteRegister: Invalid register %d", reg);
 			break;
@@ -231,17 +251,17 @@ namespace video::vdp
 	void TMS9918::UpdateMode()
 	{
 		// TODO: Check other combinations/modes
-		if (m_m1)
+		if (m_config.m1)
 		{
 			m_mode = VideoMode::TEXT;
 		}
-		else if (m_m2)
+		else if (m_config.m2)
 		{
 			m_mode = VideoMode::MULTICOLOR;
 		}
 		else
 		{
-			m_mode = m_m3 ? VideoMode::GRAPH_2 : VideoMode::GRAPH_1;
+			m_mode = m_config.m3 ? VideoMode::GRAPH_2 : VideoMode::GRAPH_1;
 		}
 
 		LogPrintf(LOG_INFO, "UpdateMode: [%s]", GetVideoModeStr(m_mode));
@@ -278,14 +298,15 @@ namespace video::vdp
 		to["currReadAddress"] = m_currReadAddress;
 		to["currWriteAddress"] = m_currWriteAddress;
 
-		to["m1"] = m_m1;
-		to["m2"] = m_m2;
-		to["m3"] = m_m3;
+		to["cfg.m1"] = m_config.m1;
+		to["cfg.m2"] = m_config.m2;
+		to["cfg.m3"] = m_config.m3;
 
-		to["blank"] = m_blank;
-		to["interrupt"] = m_interrupt;
-		to["sprites16x16"] = m_sprites16x16;
-		to["sprites2x"] = m_sprites2x;
+		to["cfg.vram16k"] = m_config.vram16k;
+		to["cfg.enable"] = m_config.enable;
+		to["cfg.interruptEnabled"] = m_config.interruptEnabled;
+		to["cfg.sprites16x16"] = m_config.sprites16x16;
+		to["cfg.sprites2x"] = m_config.sprites2x;
 
 		to["addr.name"] = m_baseAddr.name;
 		to["addr.color"] = m_baseAddr.color;
@@ -309,14 +330,15 @@ namespace video::vdp
 		m_currReadAddress = from["currReadAddress"];
 		m_currWriteAddress = from["currWriteAddress"];
 
-		m_m1 = from["m1"];
-		m_m2 = from["m2"];
-		m_m3 = from["m3"];
+		m_config.m1 = from["cfg.m1"];
+		m_config.m2 = from["cfg.m2"];
+		m_config.m3 = from["cfg.m3"];
 
-		m_blank = from["blank"];
-		m_interrupt = from["interrupt"];
-		m_sprites16x16 = from["sprites16x16"];
-		m_sprites2x = from["sprites2x"];
+		m_config.vram16k = from["cfg.vram16k"];
+		m_config.enable = from["cfg.enable"];
+		m_config.interruptEnabled = from["cfg.interruptEnabled"];
+		m_config.sprites16x16 = from["cfg.sprites16x16"];
+		m_config.sprites2x = from["cfg.sprites2x"];
 
 		m_baseAddr.name = from["addr.name"];
 		m_baseAddr.color = from["addr.color"];
