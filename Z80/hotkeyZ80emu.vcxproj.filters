@@ -105,9 +105,6 @@
     <ClInclude Include="Video\VideoZX80.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
-    <ClInclude Include="IO\InputEvents.h">
-      <Filter>Header Files\IO</Filter>
-    </ClInclude>
     <ClInclude Include="IO\DeviceKeyboardZX80.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
@@ -204,6 +201,18 @@
     <ClInclude Include="Video\TMS9918.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\IO\DeviceJoystick.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\IO\DeviceJoystickDigital.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\IO\DeviceKeyboard.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\IO\InputEvents.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -232,9 +241,6 @@
     </ClCompile>
     <ClCompile Include="Video\VideoZX80.cpp">
       <Filter>Source Files\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="IO\InputEvents.cpp">
-      <Filter>Source Files\IO</Filter>
     </ClCompile>
     <ClCompile Include="ComputerZX80.cpp">
       <Filter>Source Files</Filter>
@@ -316,6 +322,18 @@
     </ClCompile>
     <ClCompile Include="Video\TMS9918.cpp">
       <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\IO\DeviceJoystick.cpp">
+      <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\IO\DeviceJoystickDigital.cpp">
+      <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\IO\InputEvents.cpp">
+      <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceKeyboardZX80.cpp">
+      <Filter>Source Files\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

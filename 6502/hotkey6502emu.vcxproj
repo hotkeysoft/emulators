@@ -33,7 +33,10 @@
     <ClInclude Include="..\Common\FileUtil.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
-    <ClInclude Include="..\Common\IO\InputEventHandler.h" />
+    <ClInclude Include="..\Common\IO\DeviceJoystick.h" />
+    <ClInclude Include="..\Common\IO\DeviceJoystickDigital.h" />
+    <ClInclude Include="..\Common\IO\DeviceKeyboard.h" />
+    <ClInclude Include="..\Common\IO\InputEvents.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />
@@ -59,12 +62,8 @@
     <ClInclude Include="Hardware\Device6522PET.h" />
     <ClInclude Include="Hardware\Device6522VIC_VIA1.h" />
     <ClInclude Include="Hardware\Device6522VIC_VIA2.h" />
-    <ClInclude Include="IO\DeviceJoystick.h" />
-    <ClInclude Include="IO\DeviceJoystickDigital.h" />
-    <ClInclude Include="IO\DeviceKeyboard.h" />
     <ClInclude Include="IO\DeviceKeyboardPET2001.h" />
     <ClInclude Include="IO\DeviceKeyboardVIC20.h" />
-    <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor6502.h" />
     <ClInclude Include="PRGLoader.h" />
     <ClInclude Include="Sound\SoundVIC.h" />
@@ -86,6 +85,9 @@
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\FileUtil.cpp" />
     <ClCompile Include="..\Common\IO\Console.cpp" />
+    <ClCompile Include="..\Common\IO\DeviceJoystick.cpp" />
+    <ClCompile Include="..\Common\IO\DeviceJoystickDigital.cpp" />
+    <ClCompile Include="..\Common\IO\InputEvents.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
@@ -105,11 +107,8 @@
     <ClCompile Include="Hardware\Device6522.cpp" />
     <ClCompile Include="Hardware\Device6522VIC_VIA1.cpp" />
     <ClCompile Include="Hardware\Device6522VIC_VIA2.cpp" />
-    <ClCompile Include="IO\DeviceJoystick.cpp" />
-    <ClCompile Include="IO\DeviceJoystickDigital.cpp" />
     <ClCompile Include="IO\DeviceKeyboardPET2001.cpp" />
     <ClCompile Include="IO\DeviceKeyboardVIC20.cpp" />
-    <ClCompile Include="IO\InputEvents.cpp" />
     <ClCompile Include="IO\Monitor6502.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Sound\SoundVIC.cpp" />

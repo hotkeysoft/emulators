@@ -92,6 +92,7 @@ namespace emul
 	ComputerVIC20::~ComputerVIC20()
 	{
 		delete m_keyboard;
+		delete m_tape;
 	}
 
 	void ComputerVIC20::Init(WORD baseRAM)

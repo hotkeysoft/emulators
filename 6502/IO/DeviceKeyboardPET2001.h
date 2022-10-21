@@ -3,7 +3,7 @@
 #include <CPU/CPUCommon.h>
 #include <CPU/PortConnector.h>
 #include "../ComputerPET2001.h"
-#include "DeviceKeyboard.h"
+#include <IO/DeviceKeyboard.h>
 #include <map>
 
 using emul::BYTE;

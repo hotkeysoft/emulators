@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CPU/CPUCommon.h>
-#include "DeviceJoystick.h"
+#include <IO/DeviceJoystick.h>
 
 namespace joy
 {

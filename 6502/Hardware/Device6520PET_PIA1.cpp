@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "Device6520PET_PIA1.h"
-#include "../IO/DeviceKeyboard.h"
+#include <IO/DeviceKeyboard.h>
 
 namespace pia
 {

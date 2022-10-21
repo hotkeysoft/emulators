@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "DeviceJoystick.h"
+#include <IO/DeviceJoystick.h>
 
 namespace joy
 {

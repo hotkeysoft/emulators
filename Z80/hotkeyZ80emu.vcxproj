@@ -31,7 +31,11 @@
     <ClInclude Include="..\Common\FileUtil.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
+    <ClInclude Include="..\Common\IO\DeviceJoystick.h" />
+    <ClInclude Include="..\Common\IO\DeviceJoystickDigital.h" />
+    <ClInclude Include="..\Common\IO\DeviceKeyboard.h" />
     <ClInclude Include="..\Common\IO\InputEventHandler.h" />
+    <ClInclude Include="..\Common\IO\InputEvents.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
     <ClInclude Include="..\Common\Serializable.h" />
@@ -57,7 +61,6 @@
     <ClInclude Include="CPU\test\daa.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="IO\DeviceKeyboardZX80.h" />
-    <ClInclude Include="IO\InputEvents.h" />
     <ClInclude Include="IO\Monitor8080.h" />
     <ClInclude Include="IO\MonitorZ80.h" />
     <ClInclude Include="stdafx.h" />
@@ -77,6 +80,9 @@
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\FileUtil.cpp" />
     <ClCompile Include="..\Common\IO\Console.cpp" />
+    <ClCompile Include="..\Common\IO\DeviceJoystick.cpp" />
+    <ClCompile Include="..\Common\IO\DeviceJoystickDigital.cpp" />
+    <ClCompile Include="..\Common\IO\InputEvents.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />
     <ClCompile Include="..\Common\Serializable.cpp" />
     <ClCompile Include="..\Common\Sound\Sound.cpp" />
@@ -95,7 +101,7 @@
     <ClCompile Include="CPU\CPU8080.cpp" />
     <ClCompile Include="CPU\CPUZ80.cpp" />
     <ClCompile Include="CPU\CPUZ80Test.cpp" />
-    <ClCompile Include="IO\InputEvents.cpp" />
+    <ClCompile Include="IO\DeviceKeyboardZX80.cpp" />
     <ClCompile Include="IO\Monitor8080.cpp" />
     <ClCompile Include="IO\MonitorZ80.cpp" />
     <ClCompile Include="Main.cpp" />

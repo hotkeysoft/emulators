@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "DeviceKeyboardVIC20.h"
-#include "InputEvents.h"
+#include <IO/InputEvents.h>
 
 using events::KeyMap;
 using events::Key;

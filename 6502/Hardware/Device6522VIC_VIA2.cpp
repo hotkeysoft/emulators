@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "Device6522VIC_VIA1.h"
-#include "../IO/DeviceJoystickDigital.h"
+#include <IO/DeviceJoystickDigital.h>
 
 namespace via
 {

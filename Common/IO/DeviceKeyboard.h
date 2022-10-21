@@ -1,8 +1,7 @@
 #pragma once
 
 #include <CPU/CPUCommon.h>
-#include <map>
-#include "InputEvents.h"
+#include <IO/InputEvents.h>
 
 using emul::BYTE;
 

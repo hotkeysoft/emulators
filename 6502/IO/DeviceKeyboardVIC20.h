@@ -2,10 +2,7 @@
 
 #include <CPU/CPUCommon.h>
 #include <CPU/PortConnector.h>
-#include <map>
-#include "DeviceKeyboard.h"
-
-using emul::BYTE;
+#include <IO/DeviceKeyboard.h>
 
 namespace kbd
 {
@@ -44,7 +41,7 @@ namespace kbd
 		bool IsRestorePressed() const { return m_keyGrid[9] != 0xFF; }
 
 	protected:
-		using KeyGrid = std::array<BYTE, 9>;
+		using KeyGrid = std::array<emul::BYTE, 9>;
 
 		KeyGrid m_keyGrid;
 		events::KeyMap* m_currKeymap;

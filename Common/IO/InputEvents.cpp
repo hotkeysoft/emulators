@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
+#include <IO/InputEvents.h>
 #include <IO/InputEventHandler.h>
-#include "InputEvents.h"
-#include "DeviceKeyboard.h"
-#include "DeviceJoystick.h"
+#include <IO/DeviceKeyboard.h>
+#include <IO/DeviceJoystick.h>
 #include <SDL.h>
 
 namespace events

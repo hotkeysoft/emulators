@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
 #include "Device6522VIC_VIA2.h"
-#include "../IO/DeviceKeyboard.h"
-#include "../IO/DeviceJoystickDigital.h"
+#include <IO/DeviceKeyboard.h>
+#include <IO/DeviceJoystickDigital.h>
 
 namespace via
 {

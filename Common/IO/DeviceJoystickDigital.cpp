@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "DeviceJoystickDigital.h"
+#include <IO/DeviceJoystickDigital.h>
 #include <Config.h>
 #include <algorithm>
 
