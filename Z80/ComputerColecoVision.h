@@ -4,6 +4,7 @@
 #include "Video/VideoColecoVision.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceJoystickColecoVision.h"
+#include "Sound/DeviceSN76489.h"
 
 namespace emul
 {
@@ -43,5 +44,7 @@ namespace emul
 		emul::MemoryBlock m_cart;
 
 		joy::DeviceJoystickColecoVision m_joystick;
+
+		sn76489::DeviceSN76489 m_sound;
 	};
 }

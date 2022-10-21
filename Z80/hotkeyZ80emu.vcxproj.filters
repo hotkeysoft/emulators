@@ -64,6 +64,12 @@
     <Filter Include="Common\Storage">
       <UniqueIdentifier>{34624d5b-626e-4d34-a78a-ff7acc16ffac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Sound">
+      <UniqueIdentifier>{223b08c5-25ec-402a-9b95-8320660d065a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Sound">
+      <UniqueIdentifier>{00f4d7a3-57da-4b22-9eda-1891ebb16434}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -216,6 +222,9 @@
     <ClInclude Include="IO\DeviceJoystickColecoVision.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="Sound\DeviceSN76489.h">
+      <Filter>Header Files\Sound</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -340,6 +349,9 @@
     </ClCompile>
     <ClCompile Include="IO\DeviceJoystickColecoVision.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound\DeviceSN76489.cpp">
+      <Filter>Source Files\Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
