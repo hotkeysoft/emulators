@@ -3,6 +3,7 @@
 #include <Computer/ComputerBase.h>
 #include "Video/VideoColecoVision.h"
 #include "IO/InputEvents.h"
+#include "IO/DeviceJoystickColecoVision.h"
 
 namespace emul
 {
@@ -30,7 +31,6 @@ namespace emul
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 
-		void InitKeyboard();
 		void InitJoystick();
 		void InitRAM();
 		void InitROM();
@@ -40,7 +40,8 @@ namespace emul
 		emul::MemoryBlock m_ram;
 		emul::MemoryBlock m_rom;
 
-		//kbd::DeviceKeyboard* m_keyboard = nullptr;
-		//joy::DeviceJoystickDigital m_joystick;
+		emul::MemoryBlock m_cart;
+
+		joy::DeviceJoystickColecoVision m_joystick;
 	};
 }

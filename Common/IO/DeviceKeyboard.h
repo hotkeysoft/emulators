@@ -7,10 +7,10 @@ using emul::BYTE;
 
 namespace kbd
 {
-	class DeviceKeyboard : public Logger
+	class DeviceKeyboard
 	{
 	public:
-		DeviceKeyboard() : Logger("kbd") {}
+		DeviceKeyboard() {}
 		virtual ~DeviceKeyboard() {}
 
 		DeviceKeyboard(const DeviceKeyboard&) = delete;

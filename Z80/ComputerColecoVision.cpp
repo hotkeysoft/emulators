@@ -26,7 +26,8 @@ namespace emul
 		Logger("ColecoVision"),
 		ComputerBase(m_memory),
 		m_ram("RAM", RAM_SIZE, emul::MemoryType::RAM),
-		m_rom("ROM", 0x2000, emul::MemoryType::ROM)
+		m_rom("ROM", 0x2000, emul::MemoryType::ROM),
+		m_cart("CART", 0x8000, emul::MemoryType::ROM)
 	{
 	}
 
@@ -34,7 +35,6 @@ namespace emul
 	{
 		ComputerBase::Init(CPUID_Z80, RAM_SIZE); // RAM is fixed
 
-		InitKeyboard();
 		InitJoystick();
 		InitRAM();
 		InitROM();
@@ -43,7 +43,7 @@ namespace emul
 
 		InitInputs(CPU_CLK, SCAN_RATE);
 
-		//GetInputs().InitKeyboard(m_keyboard);
+		GetInputs().InitKeyboard(&m_joystick);
 		//GetInputs().InitJoystick(&m_joystick);
 	}
 
@@ -57,19 +57,10 @@ namespace emul
 		}
 	}
 
-	void ComputerColecoVision::InitKeyboard()
-	{
-		//m_keyboard = new kbd::DeviceKeyboard();
-		//m_keyboard->EnableLog(CONFIG().GetLogLevel("keyboard"));
-	}
-
 	void ComputerColecoVision::InitJoystick()
 	{
-		if (CONFIG().GetValueBool("joystick", "enable"))
-		{
-			//m_joystick.EnableLog(CONFIG().GetLogLevel("joystick"));
-			//m_joystick.Init();
-		}
+		m_joystick.EnableLog(CONFIG().GetLogLevel("joystick"));
+		m_joystick.Init();
 	}
 
 	void ComputerColecoVision::InitSound()
@@ -83,6 +74,9 @@ namespace emul
 	{
 		m_rom.LoadFromFile("data/z80/colecovision.bin");
 		m_memory.Allocate(&m_rom, 0);
+
+		m_cart.LoadFromFile("D:/Emulation/COLECO/VENTUREb.ROM");
+		m_memory.Allocate(&m_cart, 0x8000);
 	}
 
 	void ComputerColecoVision::InitVideo()
@@ -130,6 +124,8 @@ namespace emul
 			{
 				return false;
 			}
+
+			GetCPU().SetNMI(GetVideo().IsInterrupt());
 		}
 
 		return true;

@@ -6,7 +6,7 @@
 
 namespace kbd
 {
-	class DeviceKeyboardVIC20 : public DeviceKeyboard
+	class DeviceKeyboardVIC20 : public DeviceKeyboard, public Logger
 	{
 	public:
 		DeviceKeyboardVIC20();

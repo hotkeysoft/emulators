@@ -107,7 +107,7 @@ namespace kbd
 		{ SDL_SCANCODE_BACKSLASH, Key(0x01, 8)}
 	};
 
-	DeviceKeyboardVIC20::DeviceKeyboardVIC20() : m_currKeymap(&s_keyMapNormal)
+	DeviceKeyboardVIC20::DeviceKeyboardVIC20() : Logger("kbd"), m_currKeymap(&s_keyMapNormal)
 	{
 		Reset();
 	}

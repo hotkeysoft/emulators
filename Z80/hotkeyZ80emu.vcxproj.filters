@@ -213,6 +213,9 @@
     <ClInclude Include="..\Common\IO\InputEvents.h">
       <Filter>Common\IO</Filter>
     </ClInclude>
+    <ClInclude Include="IO\DeviceJoystickColecoVision.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -333,6 +336,9 @@
       <Filter>Common\IO</Filter>
     </ClCompile>
     <ClCompile Include="IO\DeviceKeyboardZX80.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceJoystickColecoVision.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
   </ItemGroup>

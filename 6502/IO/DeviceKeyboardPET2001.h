@@ -10,7 +10,7 @@ using emul::BYTE;
 
 namespace kbd
 {
-	class DeviceKeyboardPET2001 : public DeviceKeyboard
+	class DeviceKeyboardPET2001 : public DeviceKeyboard, public Logger
 	{
 	public:
 		DeviceKeyboardPET2001();
