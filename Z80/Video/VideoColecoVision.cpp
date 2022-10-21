@@ -19,7 +19,7 @@ namespace video
 	void VideoColecoVision::Init(emul::Memory* memory, const char* charROM, bool forceMono)
 	{
 		Video::Init(memory, charROM, forceMono);
-		InitFrameBuffer(720, 640);
+		InitFrameBuffer(512, 262);
 
 		// TODO: Need masking in io ports to simplify this
 
@@ -34,12 +34,13 @@ namespace video
 			Connect(basePort + offset + 1, static_cast<PortConnector::OUTFunction>(&VideoColecoVision::Write1));
 		}
 
+		m_vdp.Init(this);
 		m_vdp.Reset();
 	}
 
 	SDL_Rect VideoColecoVision::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
-		return SDL_Rect{ 0, 0, 320, 320 };
+		return SDL_Rect{ 0, 0, 342, 262 };
 	}
 
 	void VideoColecoVision::Serialize(json& to)

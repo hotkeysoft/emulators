@@ -63,6 +63,13 @@ namespace video
 		virtual bool IsHSync() const = 0;
 		virtual bool IsDisplayArea() const = 0;
 
+		// Framebuffer
+		void BeginFrame();
+		void NewLine();
+		void DrawPixel(uint32_t color) { ++m_fbCurrX; m_lastDot = color; m_fb[m_fbCurrPos++] = color; }
+		void DrawBackground(BYTE width);
+		void DrawBackground(BYTE width, uint32_t color);
+
 		// events::EventHandler
 		virtual bool HandleEvent(SDL_Event& e) override;
 
@@ -93,13 +100,6 @@ namespace video
 		const uint32_t* m_monitorPalette = nullptr;
 
 		emul::Memory* m_memory = nullptr;
-
-		// Framebuffer
-		void BeginFrame();
-		void NewLine();
-		void DrawPixel(uint32_t color) { ++m_fbCurrX; m_lastDot = color; m_fb[m_fbCurrPos++] = color; }
-		void DrawBackground(BYTE width);
-		void DrawBackground(BYTE width, uint32_t color);
 
 		uint32_t GetLastDot() const { return m_lastDot; }
 

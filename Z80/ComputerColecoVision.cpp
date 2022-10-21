@@ -14,7 +14,7 @@ namespace emul
 {
 	const size_t MAIN_CLK = 7159090;
 	const size_t CPU_CLK = MAIN_CLK / 2;
-	const size_t PIXEL_CLK = CPU_CLK * 3; // For reference only
+	const size_t PIXEL_CLK = CPU_CLK * 3 / 2; // For reference only
 
 	// Input scanning rate
 	const size_t SCAN_CLK = 60; // TODO: Synchronize with vdp
@@ -42,7 +42,6 @@ namespace emul
 		InitVideo();
 
 		InitInputs(CPU_CLK, SCAN_RATE);
-
 
 		//GetInputs().InitKeyboard(m_keyboard);
 		//GetInputs().InitJoystick(&m_joystick);
@@ -89,8 +88,9 @@ namespace emul
 	void ComputerColecoVision::InitVideo()
 	{
 		video::VideoColecoVision* video = new video::VideoColecoVision();
-
 		m_video = video;
+
+		m_video->EnableLog(CONFIG().GetLogLevel("video"));
 		m_video->Init(&m_memory, nullptr);
 	}
 

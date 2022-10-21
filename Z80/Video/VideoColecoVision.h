@@ -14,10 +14,12 @@ namespace video
         virtual const std::string GetID() const override { return "colecovision"; }
         virtual void Tick() override
         {
-            // VDP clock is 3x cpu clk
             m_vdp.Tick();
-            m_vdp.Tick();
-            m_vdp.Tick();
+
+            // VDP clock is 1.5x cpu clk
+            static bool half = false;
+            if (half) m_vdp.Tick();
+            half = !half;
         }
 
         virtual void EnableLog(SEVERITY severity) override;
@@ -26,9 +28,9 @@ namespace video
 
         virtual bool IsEnabled() const override { return true; }
 
-        virtual bool IsVSync() const override { return false; }
+        virtual bool IsVSync() const override { return m_vdp.IsVSync(); }
         virtual bool IsHSync() const override { return false; }
-        virtual bool IsDisplayArea() const override { return !IsVSync() && !IsHSync(); }
+        virtual bool IsDisplayArea() const override { return m_vdp.IsDisplay(); }
 
         // emul::Serializable
         virtual void Serialize(json& to) override;
@@ -41,6 +43,6 @@ namespace video
         void Write0(BYTE value) { m_vdp.WriteVRAMData(value); }
         void Write1(BYTE value) { m_vdp.Write(value); }
 
-        TMS9918 m_vdp;
+        vdp::TMS9918 m_vdp;
     };
 }
