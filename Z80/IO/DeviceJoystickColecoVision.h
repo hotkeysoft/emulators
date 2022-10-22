@@ -25,7 +25,7 @@ namespace joy
 
 		virtual void Reset() override;
 
-		virtual void InputKey(BYTE row, BYTE col, bool pressed) override { m_keypad = pressed ? ~row : 0xFF; }
+		virtual void InputKey(BYTE row, BYTE col, bool pressed) override { m_keypad = pressed ? row : 0xFF; }
 
 		virtual events::KeyMap& GetKeymap() const override { return *m_currKeymap; }
 
