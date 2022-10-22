@@ -1427,4 +1427,61 @@ namespace emul
 		m_iff1 = true;
 		m_iff2 = true;
 	}
+
+	void CPUZ80::Serialize(json& to)
+	{
+		CPU8080::Serialize(to);
+
+		to["regAlt.A"] = m_regAlt.A;
+		to["regAlt.flags"] = m_regAlt.flags;
+		to["regAlt.B"] = m_regAlt.B;
+		to["regAlt.C"] = m_regAlt.C;
+		to["regAlt.D"] = m_regAlt.D;
+		to["regAlt.E"] = m_regAlt.E;
+		to["regAlt.H"] = m_regAlt.H;
+		to["regAlt.L"] = m_regAlt.L;
+
+		to["reg.IX"] = m_regIX;
+		to["reg.IY"] = m_regIY;
+		to["reg.I"] = m_regI;
+		to["reg.R"] = m_regR;
+
+		to["iff1"] = m_iff1;
+		to["iff2"] = m_iff2;
+
+		to["dataBusEnable"] = m_dataBusEnable;
+		to["ioHighAddress"] = m_ioHighAddress;
+
+		m_nmiLatch.Serialize(to["nmi"]);
+		m_intLatch.Serialize(to["int"]);
+	}
+
+	void CPUZ80::Deserialize(const json& from)
+	{
+		CPU8080::Deserialize(from);
+
+		m_regAlt.A = from["regAlt.A"];
+		m_regAlt.flags = from["regAlt.flags"];
+		m_regAlt.B = from["regAlt.B"];
+		m_regAlt.C = from["regAlt.C"];
+		m_regAlt.D = from["regAlt.D"];
+		m_regAlt.E = from["regAlt.E"];
+		m_regAlt.H = from["regAlt.H"];
+		m_regAlt.L = from["regAlt.L"];
+
+		m_regIX = from["reg.IX"];
+		m_regIY = from["reg.IY"];
+		m_regI = from["reg.I"];
+		m_regR = from["reg.R"];
+
+		m_iff1 = from["iff1"];
+		m_iff2 = from["iff2"];
+
+		m_dataBusEnable = from["dataBusEnable"];
+		m_ioHighAddress = from["ioHighAddress"];
+
+		m_nmiLatch.Deserialize(from["nmi"]);
+		m_intLatch.Deserialize(from["int"]);
+
+	}
 }

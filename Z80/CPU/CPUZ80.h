@@ -34,6 +34,10 @@ namespace emul
 		// This can be used in IO handlers
 		BYTE GetIOHighAddress() const { return m_ioHighAddress; }
 
+		// emul::Serializable
+		virtual void Serialize(json& to);
+		virtual void Deserialize(const json& from);
+
 	protected:
 		CPUZ80(const char* cpuid, Memory& memory);
 
