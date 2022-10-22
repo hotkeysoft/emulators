@@ -54,6 +54,10 @@ namespace video::vdp
 
         bool IsInterrupt() const { return m_config.interruptEnabled && m_status.interrupt; };
 
+        constexpr SDL_Rect GetDisplayRect() const {
+            return SDL_Rect{ LEFT_BORDER, TOP_BORDER, H_DISPLAY, V_DISPLAY };
+        };
+
         // emul::Serializable
         virtual void Serialize(json& to);
         virtual void Deserialize(const json& from);

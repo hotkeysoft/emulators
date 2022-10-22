@@ -40,7 +40,14 @@ namespace video
 
 	SDL_Rect VideoColecoVision::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
-		return SDL_Rect{ 0, 0, 342, 262 };
+		border = 8;
+		SDL_Rect rect = m_vdp.GetDisplayRect();
+		rect.x -= border;
+		rect.y -= border;
+		rect.w += border * 2;
+		rect.h += border * 2;
+
+		return rect;
 	}
 
 	void VideoColecoVision::Serialize(json& to)
