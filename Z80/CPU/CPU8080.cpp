@@ -1148,4 +1148,51 @@ namespace emul
 	void CPU8080::NOP()
 	{
 	}
+
+	void CPU8080::Serialize(json& to)
+	{
+		to["cpuid"] = GetID();
+
+		to["reg.A"] = m_reg.A;
+		to["reg.flags"] = m_reg.flags;
+		to["reg.B"] = m_reg.B;
+		to["reg.C"] = m_reg.C;
+		to["reg.D"] = m_reg.D;
+		to["reg.E"] = m_reg.E;
+		to["reg.H"] = m_reg.H;
+		to["reg.L"] = m_reg.L;
+
+		to["reg.PC"] = m_programCounter;
+		to["reg.SP"] = m_regSP;
+
+		to["opcode"] = m_opcode;
+		to["ioRequest"] = m_ioRequest;
+		to["intAck"] = m_interruptAcknowledge;
+		to["intEnabled"] = m_interruptsEnabled;
+	}
+
+	void CPU8080::Deserialize(const json& from)
+	{
+		if (from["cpuid"] != GetID())
+		{
+			throw emul::SerializableException("CPU: Incompatible", emul::SerializationError::COMPAT);
+		}
+
+		m_reg.A = from["reg.A"];
+		m_reg.flags = from["reg.flags"];
+		m_reg.B = from["reg.B"];
+		m_reg.C = from["reg.C"];
+		m_reg.D = from["reg.D"];
+		m_reg.E = from["reg.E"];
+		m_reg.H = from["reg.H"];
+		m_reg.L = from["reg.L"];
+
+		m_programCounter = from["reg.PC"];
+		m_regSP = from["reg.SP"];
+
+		m_opcode = from["opcode"];
+		m_ioRequest = from["ioRequest"];
+		m_interruptAcknowledge = from["intAck"];
+		m_interruptsEnabled = from["intEnabled"];
+	}
 }

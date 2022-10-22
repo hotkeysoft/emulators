@@ -44,8 +44,8 @@ namespace emul
 		bool IsInterruptAcknowledge() const { return m_interruptAcknowledge; }
 
 		// emul::Serializable
-		virtual void Serialize(json& to) {} // TODO
-		virtual void Deserialize(const json& from) {} // TODO
+		virtual void Serialize(json& to);
+		virtual void Deserialize(const json& from);
 
 	protected:
 		CPU8080(const char* cpuid, Memory& memory);
