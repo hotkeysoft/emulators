@@ -3,6 +3,7 @@
 #include <CPU/CPUCommon.h>
 #include <CPU/PortConnector.h>
 #include <IO/DeviceKeyboard.h>
+#include <IO/DeviceJoystickDigital.h>
 
 #include <map>
 
@@ -10,7 +11,10 @@ using emul::BYTE;
 
 namespace joy
 {
-	class DeviceJoystickColecoVision : public kbd::DeviceKeyboard, public emul::PortConnector
+	class DeviceJoystickColecoVision :
+		public kbd::DeviceKeyboard,
+		public joy::DeviceJoystickDigital,
+		public emul::PortConnector
 	{
 	public:
 		DeviceJoystickColecoVision();
@@ -41,7 +45,15 @@ namespace joy
 		BYTE ReadController2();
 
 		BYTE m_keypad = 0xFF;
-		BYTE m_joystick = 0xFF;
+
+		BYTE GetJoystick() const {
+			return
+				(GetUp() << 0) |
+				(GetRight() << 1) |
+				(GetDown() << 2) |
+				(GetLeft() << 3) |
+				(GetFire() << 6);
+		}
 
 		events::KeyMap* m_currKeymap;
 	};

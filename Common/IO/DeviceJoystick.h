@@ -7,7 +7,7 @@ using emul::BYTE;
 
 namespace joy
 {
-	class DeviceJoystick : public Logger
+	class DeviceJoystick : virtual public Logger
 	{
 	public:
 		DeviceJoystick() : Logger("joy") {}

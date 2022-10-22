@@ -52,7 +52,7 @@ namespace emul
 		InitInputs(CPU_CLK, SCAN_RATE);
 
 		GetInputs().InitKeyboard(&m_joystick);
-		//GetInputs().InitJoystick(&m_joystick);
+		GetInputs().InitJoystick(&m_joystick);
 	}
 
 	void ComputerColecoVision::InitCPU(const char* cpuid)

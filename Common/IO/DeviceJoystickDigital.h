@@ -8,7 +8,7 @@ namespace joy
 	class DeviceJoystickDigital : public DeviceJoystick
 	{
 	public:
-		DeviceJoystickDigital() {}
+		DeviceJoystickDigital() : Logger("joyDigital") {}
 		virtual ~DeviceJoystickDigital() {}
 
 		virtual void Init() override;
