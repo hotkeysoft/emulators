@@ -18,6 +18,7 @@ namespace emul
 		virtual std::string_view GetName() const override { return "ColecoVision"; };
 		virtual std::string_view GetID() const override { return "colecovision"; };
 
+		virtual void Reset() override;
 		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;

@@ -32,6 +32,13 @@ namespace emul
 	{
 	}
 
+	void ComputerColecoVision::Reset()
+	{
+		ComputerBase::Reset();
+		m_memory.Clear();
+		m_joystick.Reset();
+	}
+
 	void ComputerColecoVision::Init(WORD baseRAM)
 	{
 		ComputerBase::Init(CPUID_Z80, RAM_SIZE); // RAM is fixed
@@ -76,8 +83,14 @@ namespace emul
 		m_rom.LoadFromFile("data/z80/colecovision.bin");
 		m_memory.Allocate(&m_rom, 0);
 
-		m_cart.LoadFromFile("D:/Emulation/COLECO/VENTUREb.ROM");
-		m_memory.Allocate(&m_cart, 0x8000);
+
+		std::string cart = CONFIG().GetValueStr("cartridge", "file");
+		if (cart.size())
+		{
+			LogPrintf(LOG_INFO, "Loading cartridge image: %d", cart.c_str());
+			m_cart.LoadFromFile(cart.c_str());
+			m_memory.Allocate(&m_cart, 0x8000);
+		}
 	}
 
 	void ComputerColecoVision::InitVideo()
@@ -141,9 +154,13 @@ namespace emul
 	void ComputerColecoVision::Serialize(json& to)
 	{
 		ComputerBase::Serialize(to);
+		m_sound.Serialize(to["sound"]);
+		//m_joystick.Serialize(to["joystick"]);
 	}
 	void ComputerColecoVision::Deserialize(const json& from)
 	{
 		ComputerBase::Deserialize(from);
+		m_sound.Deserialize(from["sound"]);
+		//m_joystick.Deserialize(from["joystick"]);
 	}
 }
