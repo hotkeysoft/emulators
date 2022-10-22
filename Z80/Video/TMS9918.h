@@ -7,6 +7,27 @@ namespace video::vdp
 {
     enum class VideoMode { GRAPH_1, GRAPH_2, MULTICOLOR, TEXT };
 
+#pragma pack(push, 1)
+    struct Sprite
+    {
+    public:
+        // Helpers
+        int GetY() const { return (yPos >= 0xE1) ? ((int8_t)(yPos)) : yPos; }
+        int GetX() const { return hPos - (IsLeftOffset() ? 32 : 0); }
+        bool IsLeftOffset() const { return emul::GetMSB(color); }
+        bool IsLast() const { return yPos == 0xD0; }
+        BYTE GetName() const { return name; }
+        BYTE GetColor() const { return color & 0x0F; }
+
+    protected:
+        // Raw data
+        BYTE yPos;
+        BYTE hPos;
+        BYTE name;
+        BYTE color;
+    };
+#pragma pack(pop)
+
     class TMS9918 : public Logger, public emul::Serializable
     {
     public:
@@ -31,7 +52,7 @@ namespace video::vdp
 
         bool IsEnabled() const { return m_config.enable; }
 
-        bool IsInterrupt() const { return m_config.interruptEnabled && m_interrupt; };
+        bool IsInterrupt() const { return m_config.interruptEnabled && m_status.interrupt; };
 
         // emul::Serializable
         virtual void Serialize(json& to);
@@ -71,23 +92,53 @@ namespace video::vdp
         void UpdateMode();
         VideoMode m_mode = VideoMode::GRAPH_1;
 
-        bool m_interrupt = false;
+        struct Status
+        {
+            bool interrupt = false;
+            bool coincidence = false;
+            bool fifthSpriteFlag = false;
+            BYTE fifthSpriteName = 0;
+
+            void Reset();
+            BYTE Get();
+        } m_status;
 
         // Table base addresses
         struct Tables
         {
+            // Raw values
+            WORD rawName = 0;
+            WORD rawColor = 0;
+            WORD rawPattern = 0;
+            WORD rawSpriteAttr = 0;
+            WORD rawSpritePattern = 0;
+
+            // Computed values
             WORD name = 0;
             WORD color = 0;
-            WORD patternGen = 0;
+            WORD pattern = 0;
             WORD spriteAttr = 0;
             WORD spritePattern = 0;
-        } m_baseAddr;
 
+            // GRAPH1 & GRAPH2
+            WORD patterns[3] = {};
+            WORD colors[3] = {};
+
+            void Reset();
+            void Update(VideoMode mode);
+        } m_tables;
+
+        // Sprites
+        Sprite* m_sprites = nullptr;
+        const Sprite* GetSprite(int index) const { return m_sprites + index; }
+        void UpdateSpriteData();
+
+        // Colors
         static const uint32_t s_palette[16];
         constexpr uint32_t GetColor(BYTE index) const { return s_palette[index]; }
 
-        uint32_t m_fgColor = GetColor(0);
-        uint32_t m_bgColor = GetColor(0);
+        BYTE m_fgColor = 0;
+        BYTE m_bgColor = 0;
 
         static const int H_DISPLAY = 256;
         static const int H_TOTAL = 342;
@@ -106,10 +157,9 @@ namespace video::vdp
         int m_currX = 0;
         int m_currY = 0;
 
-        const BYTE* m_currName = nullptr;
-        const BYTE* m_currPattern = nullptr;
-        const BYTE* m_currColor = nullptr;
+        WORD m_currName = 0;
 
-        void DrawMode1();
+        void DrawGraph();
+        void DrawSprites();
     };
 }
