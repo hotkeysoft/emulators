@@ -195,5 +195,6 @@ namespace video::vdp
 
         void DrawGraph();
         void DrawSpriteLine();
+        void DrawSpritePixel(uint32_t*& dest, bool bit, uint32_t color);
     };
 }
