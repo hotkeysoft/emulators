@@ -46,13 +46,22 @@ namespace joy
 
 		BYTE m_keypad = 0xFF;
 
+		BYTE GetKeypad() const {
+			return (m_keypad & 0x0F) | // 0..3
+				(1 << 4) |
+				(1 << 5) |
+				((!GetFire2()) << 6) |
+				(1 << 7);
+		}
+
 		BYTE GetJoystick() const {
-			return
+			const BYTE ret =
 				(GetUp() << 0) |
 				(GetRight() << 1) |
 				(GetDown() << 2) |
 				(GetLeft() << 3) |
 				(GetFire() << 6);
+			return ~ret;
 		}
 
 		events::KeyMap* m_currKeymap;

@@ -73,7 +73,7 @@ namespace joy
 	BYTE DeviceJoystickColecoVision::ReadController1()
 	{
 		LogPrintf(LOG_DEBUG, "ReadController1");
-		return m_mode == Mode::KEYPAD ? (m_keypad | 0x70) : ~GetJoystick();
+		return m_mode == Mode::KEYPAD ? GetKeypad() : GetJoystick();
 	}
 
 	BYTE DeviceJoystickColecoVision::ReadController2()

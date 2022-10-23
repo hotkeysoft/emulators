@@ -23,6 +23,7 @@ namespace joy
 		bool GetLeft() const { return m_joysticks[0].axisValue[0] <= (-m_threshold); }
 		bool GetRight() const { return m_joysticks[0].axisValue[0] >= (m_threshold); }
 		bool GetFire() const { return m_joysticks[0].buttons[0]; }
+		bool GetFire2() const { return m_joysticks[0].buttons[1]; }
 
 	protected:
 		int16_t m_threshold = 10000;
