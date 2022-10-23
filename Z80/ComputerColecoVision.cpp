@@ -80,12 +80,17 @@ namespace emul
 
 	void ComputerColecoVision::InitROM()
 	{
-		m_rom.LoadFromFile("data/z80/colecovision.bin");
+		bool nodelay = CONFIG().GetValueBool("coleco", "nodelay");
+		const char* bios = nodelay ? "data/z80/colecovision_nodelay.bin" : "data/z80/colecovision.bin";
+
+		LogPrintf(LOG_INFO, "Loading BIOS ROM [%s]", bios);
+		m_rom.LoadFromFile(bios);
 		m_memory.Allocate(&m_rom, 0);
 
+		m_cart.Clear(0xFF);
+		m_memory.Allocate(&m_cart, 0x8000);
 
 		std::string cart = CONFIG().GetValueStr("cartridge", "file");
-
 		if (cart.size())
 		{
 			LoadCartridge(cart);
@@ -122,14 +127,13 @@ namespace emul
 
 		LogPrintf(LOG_INFO, "Loading cartridge image: %s", cartFile.c_str());
 		m_cart.LoadFromFile(cartFile.c_str());
-		m_memory.Allocate(&m_cart, 0x8000);
 		Reset();
 	}
 
 	void ComputerColecoVision::UnloadCartridge()
 	{
 		m_cartridgeInfo.clear();
-		m_memory.Free(&m_cart);
+		m_cart.Clear(0xFF);
 		Reset();
 	}
 
@@ -176,11 +180,16 @@ namespace emul
 		ComputerBase::Serialize(to);
 		m_sound.Serialize(to["sound"]);
 		//m_joystick.Serialize(to["joystick"]);
+
+		to["cartridgeInfo"] = m_cartridgeInfo;
 	}
 	void ComputerColecoVision::Deserialize(const json& from)
 	{
+		m_memory.Allocate(&m_cart, 0x8000);
 		ComputerBase::Deserialize(from);
 		m_sound.Deserialize(from["sound"]);
 		//m_joystick.Deserialize(from["joystick"]);
+
+		m_cartridgeInfo = from["cartridgeInfo"];
 	}
 }
