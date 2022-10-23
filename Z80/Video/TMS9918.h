@@ -177,7 +177,7 @@ namespace video::vdp
         std::array<const Sprite*, 4> m_spriteDrawList = {};
 
         using SpriteLine = std::array<uint32_t, H_TOTAL>;
-        SpriteLine m_spritePixels[4];
+        SpriteLine m_spritePixels;
 
         void UpdateSpriteDrawList();
 

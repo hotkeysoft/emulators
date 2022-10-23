@@ -113,7 +113,7 @@ namespace video::vdp
 			{
 				UpdateSpriteDrawList();
 				DrawSpriteLine();
-				m_video->MergeLine(m_spritePixels[0].data(), H_TOTAL);
+				m_video->MergeLine(m_spritePixels.data(), H_TOTAL);
 			}
 			m_video->NewLine();
 			++m_currY;
@@ -317,10 +317,12 @@ namespace video::vdp
 		if (m_config.m1)
 		{
 			mode = VideoMode::TEXT;
+			LogPrintf(LOG_WARNING, "TEXT Mode: Not implemented");
 		}
 		else if (m_config.m2)
 		{
 			mode = VideoMode::MULTICOLOR;
+			LogPrintf(LOG_WARNING, "MULTICOLOR Mode: Not implemented");
 		}
 		else
 		{
@@ -416,10 +418,12 @@ namespace video::vdp
 
 	void TMS9918::DrawSpritePixel(uint32_t*& dest, bool bit, uint32_t color)
 	{
+		// TODO: Won't work with transparent sprites
 		if (bit && *dest)
 		{
 			m_status.coincidence = true;
 		}
+
 		SetPix(dest, bit, color);
 		if (m_config.sprites2x)
 		{
@@ -429,8 +433,7 @@ namespace video::vdp
 
 	void TMS9918::DrawSpriteLine()
 	{
-		SpriteLine& line = m_spritePixels[0];
-		line.fill(0);
+		m_spritePixels.fill(0);
 
 		for (int i = 0; i < 4; ++i)
 		{
@@ -443,10 +446,10 @@ namespace video::vdp
 			const int patternLine = (m_currY - sprite->GetY()) / (m_config.sprites2x ? 2 : 1);
 			const int xStart = sprite->GetX() + LEFT_BORDER;
 
-			BYTE patternA = *(m_vram.getPtr() + GetSpritePatternBase(sprite->GetName()) + patternLine);
-			BYTE patternC = *(m_vram.getPtr() + GetSpritePatternBase(sprite->GetName()) + patternLine + 0x10);
+			const BYTE patternA = *(m_vram.getPtr() + GetSpritePatternBase(sprite->GetName()) + patternLine);
+			const BYTE patternC = *(m_vram.getPtr() + GetSpritePatternBase(sprite->GetName()) + patternLine + 0x10);
 
-			uint32_t* start = &line[xStart];
+			uint32_t* start = &m_spritePixels[xStart];
 			for (int i = 0; i < 8; ++i)
 			{
 				DrawSpritePixel(start, GetBit(patternA, 7 - i), color);
@@ -459,6 +462,9 @@ namespace video::vdp
 				}
 			}
 		}
+		// Blank out any sprite drawn in the borders
+		std::fill(m_spritePixels.begin(), m_spritePixels.begin() + LEFT_BORDER, 0);
+		std::fill(m_spritePixels.begin() + RIGHT_BORDER, m_spritePixels.end(), 0);
 	}
 
 	void TMS9918::UpdateSpriteDrawList()
