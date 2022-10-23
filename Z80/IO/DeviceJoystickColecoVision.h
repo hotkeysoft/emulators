@@ -47,11 +47,12 @@ namespace joy
 		BYTE m_keypad = 0xFF;
 
 		BYTE GetKeypad() const {
-			return (m_keypad & 0x0F) | // 0..3
+			const BYTE ret = (m_keypad & 0x0F) | // 0..3
 				(1 << 4) |
 				(1 << 5) |
 				((!GetFire2()) << 6) |
-				(1 << 7);
+				(0 << 7);
+			return ret;
 		}
 
 		BYTE GetJoystick() const {
