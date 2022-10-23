@@ -225,6 +225,9 @@
     <ClInclude Include="Sound\DeviceSN76489.h">
       <Filter>Header Files\Sound</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Storage\CartridgeLoader.h">
+      <Filter>Common\Storage</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

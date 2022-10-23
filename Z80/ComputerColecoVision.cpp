@@ -85,11 +85,10 @@ namespace emul
 
 
 		std::string cart = CONFIG().GetValueStr("cartridge", "file");
+
 		if (cart.size())
 		{
-			LogPrintf(LOG_INFO, "Loading cartridge image: %d", cart.c_str());
-			m_cart.LoadFromFile(cart.c_str());
-			m_memory.Allocate(&m_cart, 0x8000);
+			LoadCartridge(cart);
 		}
 	}
 
@@ -111,6 +110,27 @@ namespace emul
 			m_memory.MapWindow(0x6000, ramBase + (RAM_SIZE * offset), RAM_SIZE);
 		}
 		m_memory.Clear();
+	}
+
+	void ComputerColecoVision::LoadCartridge(const std::filesystem::path& path)
+	{
+		UnloadCartridge();
+
+		std::string cartFile = path.string();
+
+		m_cartridgeInfo = path.stem().string();
+
+		LogPrintf(LOG_INFO, "Loading cartridge image: %s", cartFile.c_str());
+		m_cart.LoadFromFile(cartFile.c_str());
+		m_memory.Allocate(&m_cart, 0x8000);
+		Reset();
+	}
+
+	void ComputerColecoVision::UnloadCartridge()
+	{
+		m_cartridgeInfo.clear();
+		m_memory.Free(&m_cart);
+		Reset();
 	}
 
 	bool ComputerColecoVision::Step()

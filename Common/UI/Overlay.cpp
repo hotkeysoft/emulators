@@ -32,6 +32,7 @@ namespace fs = std::filesystem;
 using cfg::CONFIG;
 using namespace CoreUI;
 using namespace hscommon::fileUtil;
+using emul::CartridgeLoader;
 
 using tape::DeviceTape;
 using tape::TapeDeck;
@@ -187,6 +188,22 @@ namespace ui
 			}
 			UpdateTape();
 		}
+
+		// Cartridge
+		if (CartridgeLoader* cart = GetCartridgeLoader(); cart != nullptr)
+		{
+			m_cartridgeButton = GetToolbar()->AddToolbarItem("loadCart", RES().FindImage("overlay16", 2));
+			m_cartridgeButton->SetTooltip("Load cartridge ROM");
+
+			if (cart->CanUnloadCartridge())
+			{
+				ToolbarItemPtr item = GetToolbar()->AddToolbarItem("unloadCart", RES().FindImage("overlay16", 7));
+				item->SetTooltip("Eject cartridge and\nRESET the computer");
+			}
+
+			GetToolbar()->AddSeparator();
+			UpdateCartridgeName();
+		}
 	}
 
 	void Overlay::OnClick(WidgetRef widget)
@@ -267,6 +284,14 @@ namespace ui
 				}
 			}
 
+		}
+		else if (id == "loadCart")
+		{
+			LoadCartridge();
+		}
+		else if (id == "unloadCart")
+		{
+			UnloadCartridge();
 		}
 		else if (StringUtil::StartsWith(id, "snapshot-"))
 		{
@@ -836,6 +861,59 @@ namespace ui
 			deck.LoadRaw(diskImage.string().c_str());
 		}
 		UpdateTape();
+	}
+
+	void Overlay::LoadCartridge()
+	{
+		emul::CartridgeLoader* cartLoader = GetCartridgeLoader();
+		if (!cartLoader)
+		{
+			LogPrintf(LOG_ERROR, "Invalid architecture");
+			return;
+		}
+
+		fs::path path;
+
+		if (SelectFile(path, { {"Cartridge ROM (*.rom *.bin)", "*.rom;*.bin"} }))
+		{
+			cartLoader->LoadCartridge(path);
+			UpdateCartridgeName();
+		}
+	}
+
+	void Overlay::UnloadCartridge()
+	{
+		emul::CartridgeLoader* cartLoader = GetCartridgeLoader();
+		if (!cartLoader)
+		{
+			LogPrintf(LOG_ERROR, "Invalid architecture");
+			return;
+		}
+
+		cartLoader->UnloadCartridge();
+		UpdateCartridgeName();
+	}
+
+	void Overlay::UpdateCartridgeName()
+	{
+		emul::CartridgeLoader* cartLoader = GetCartridgeLoader();
+		if (!cartLoader)
+		{
+			LogPrintf(LOG_ERROR, "Invalid architecture");
+			return;
+		}
+
+		std::string name = cartLoader->GetCartridgeInfo();
+		if (name.empty())
+		{
+			name = "EMPTY";
+		}
+
+		std::ostringstream os;
+		os << "CART ["
+			<< name
+			<< "]";
+		m_cartridgeButton->SetText(os.str().c_str());
 	}
 
 	// events::EventHandler

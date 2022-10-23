@@ -3,6 +3,7 @@
 #include <Video/Video.h>
 #include <IO/InputEventHandler.h>
 #include <Computer/ComputerBase.h>
+#include <Storage/CartridgeLoader.h>
 #include <CoreUI.h>
 
 namespace tape { class TapeDeck; }
@@ -101,6 +102,14 @@ namespace ui
 
 		CoreUI::ImageRef m_turboOff = nullptr;
 		CoreUI::ImageRef m_turboOn = nullptr;
+
+		// Cartridges
+		CoreUI::ToolbarItemPtr m_cartridgeButton;
+
+		emul::CartridgeLoader* GetCartridgeLoader() { return dynamic_cast<emul::CartridgeLoader*>(m_pc); };
+		void LoadCartridge();
+		void UnloadCartridge();
+		void UpdateCartridgeName();
 
 		std::set<std::filesystem::path> m_snapshots;
 		NewComputerCallback m_callback = nullptr;

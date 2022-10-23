@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Computer/ComputerBase.h>
+#include <Storage/CartridgeLoader.h>
 #include "Video/VideoColecoVision.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceJoystickColecoVision.h"
@@ -10,7 +11,7 @@ namespace emul
 {
 	class CPUZ80;
 
-	class ComputerColecoVision : public ComputerBase
+	class ComputerColecoVision : public ComputerBase, public CartridgeLoader
 	{
 	public:
 		ComputerColecoVision();
@@ -38,6 +39,12 @@ namespace emul
 		void InitROM();
 		void InitSound();
 		void InitVideo();
+
+		// emul::CartridgeLoader
+		virtual void LoadCartridge(const std::filesystem::path& path) override;
+		virtual void UnloadCartridge() override;
+		virtual std::string GetCartridgeInfo() const override { return m_cartridgeInfo; }
+		std::string m_cartridgeInfo;
 
 		emul::MemoryBlock m_ram;
 		emul::MemoryBlock m_rom;
