@@ -18,6 +18,17 @@ namespace video::vdp
         bool IsLast() const { return yPos == 0xD0; }
         BYTE GetName() const { return name; }
         BYTE GetColor() const { return color & 0x0F; }
+        bool IsVisible(int y) const {
+            const int ymin = GetY();
+            const int ymax = ymin + size;
+            return (y >= ymin && y < ymax);
+        }
+
+        static int GetSize() { return size; }
+        static void SetSize(int s) { size = s; }
+
+        static BYTE GetNameMask() { return nameMask; }
+        static void SetNameMask(BYTE mask) { nameMask = mask; }
 
     protected:
         // Raw data
@@ -25,6 +36,9 @@ namespace video::vdp
         BYTE hPos;
         BYTE name;
         BYTE color;
+
+        static int size;
+        static BYTE nameMask;
     };
 #pragma pack(pop)
 
@@ -63,10 +77,23 @@ namespace video::vdp
         virtual void Deserialize(const json& from);
 
     protected:
+        static const int H_DISPLAY = 256;
+        static const int H_TOTAL = 342;
+        static const int H_SYNC = H_TOTAL - 26;
+
+        static const int LEFT_BORDER = 37;
+        static const int RIGHT_BORDER = H_DISPLAY + LEFT_BORDER;
+
+        static const int V_DISPLAY = 192;
+        static const int V_TOTAL = 262;
+        static const int V_SYNC = 3;
+
+        static const int TOP_BORDER = 40;
+        static const int BOTTOM_BORDER = TOP_BORDER + V_DISPLAY;
+
         void WriteRegister(BYTE reg);
 
         video::Video* m_video = nullptr;
-
         emul::MemoryBlock m_vram;
 
         // TODO: Adjust with vram size
@@ -103,6 +130,14 @@ namespace video::vdp
             bool fifthSpriteFlag = false;
             BYTE fifthSpriteName = 0;
 
+            void SetFifthSpriteFlag(BYTE id)
+            {
+                if (!fifthSpriteFlag)
+                {
+                    fifthSpriteFlag = true;
+                    fifthSpriteName = id;
+                }
+            }
             void Reset();
             BYTE Get();
         } m_status;
@@ -135,7 +170,16 @@ namespace video::vdp
         // Sprites
         Sprite* m_sprites = nullptr;
         const Sprite* GetSprite(int index) const { return m_sprites + index; }
+        WORD GetSpritePatternBase(BYTE name) const { return m_tables.spritePattern + (8 * (name & Sprite::GetNameMask())); }
         void UpdateSpriteData();
+
+        // Draw max 4 sprites per line
+        std::array<const Sprite*, 4> m_spriteDrawList = {};
+
+        using SpriteLine = std::array<uint32_t, H_TOTAL>;
+        SpriteLine m_spritePixels[4];
+
+        void UpdateSpriteDrawList();
 
         // Colors
         static const uint32_t s_palette[16];
@@ -144,26 +188,12 @@ namespace video::vdp
         BYTE m_fgColor = 0;
         BYTE m_bgColor = 0;
 
-        static const int H_DISPLAY = 256;
-        static const int H_TOTAL = 342;
-        static const int H_SYNC = H_TOTAL - 26;
-
-        static const int LEFT_BORDER = 37;
-        static const int RIGHT_BORDER = H_DISPLAY + LEFT_BORDER;
-
-        static const int V_DISPLAY = 192;
-        static const int V_TOTAL = 262;
-        static const int V_SYNC = 3;
-
-        static const int TOP_BORDER = 40;
-        static const int BOTTOM_BORDER = TOP_BORDER + V_DISPLAY;
-
         int m_currX = 0;
         int m_currY = 0;
 
         WORD m_currName = 0;
 
         void DrawGraph();
-        void DrawSprites();
+        void DrawSpriteLine();
     };
 }

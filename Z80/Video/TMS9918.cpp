@@ -39,6 +39,9 @@ namespace video::vdp
 		}
 	}
 
+	int Sprite::size = 8;
+	BYTE Sprite::nameMask = 0xFF;
+
 	void TMS9918::Status::Reset()
 	{
 		interrupt = false;
@@ -75,6 +78,9 @@ namespace video::vdp
 		m_config.sprites16x16 = false;
 		m_config.sprites2x = false;
 
+		Sprite::SetSize(8);
+		Sprite::SetNameMask(0xFF);
+
 		m_tables.Reset();
 
 		m_config.m1 = false;
@@ -87,6 +93,8 @@ namespace video::vdp
 		m_bgColor = 0;
 
 		m_currName = 0;
+
+		m_status.Reset();
 	}
 
 	void TMS9918::Init(video::Video* video)
@@ -101,6 +109,12 @@ namespace video::vdp
 
 		if (m_currX == RIGHT_BORDER)
 		{
+			if (IsVDisplay())
+			{
+				UpdateSpriteDrawList();
+				DrawSpriteLine();
+				m_video->MergeLine(m_spritePixels[0].data(), H_TOTAL);
+			}
 			m_video->NewLine();
 			++m_currY;
 			m_currX = -LEFT_BORDER;
@@ -108,14 +122,13 @@ namespace video::vdp
 			m_currName = ((m_currY / 8) * 32);
 		}
 
-		if (m_currY == V_DISPLAY)
+		if ((m_currY == V_DISPLAY) && (m_currX == 0))
 		{
 			m_status.interrupt = true;
 		}
-		else if (m_currY == BOTTOM_BORDER)
-		{
-			DrawSprites();
 
+		if (m_currY == BOTTOM_BORDER)
+		{
 			m_video->RenderFrame();
 			m_video->BeginFrame();
 
@@ -221,19 +234,26 @@ namespace video::vdp
 			m_config.sprites16x16 = GetBit(m_tempData, 1);
 			m_config.sprites2x = GetBit(m_tempData, 0);
 
-			LogPrintf(LOG_DEBUG, "R1: 16K[%d] ENABLE[%d], INT_EN[%d], SPR16x16[%d], SPR2X[%d]",
+			Sprite::SetSize(8 * ((m_config.sprites16x16) ? 2 : 1) * ((m_config.sprites2x ? 2 : 1)));
+			Sprite::SetNameMask(m_config.sprites16x16 ? 0xFC : 0xFF);
+
+			LogPrintf(LOG_DEBUG, "R1: 16K[%d] ENABLE[%d], INT_EN[%d], SPR16x16[%d], SPR2X[%d] (SPR_SIZE[%d])",
 				m_config.vram16k,
 				m_config.enable,
 				m_config.interruptEnabled,
 				m_config.sprites16x16,
-				m_config.sprites2x);
+				m_config.sprites2x,
+				Sprite::GetSize());
 
 			UpdateMode();
 			if (!m_config.vram16k)
 			{
 				LogPrintf(LOG_WARNING, "R1: VRAM 4K not supported");
 			}
-
+			if (m_config.sprites2x)
+			{
+				LogPrintf(LOG_WARNING, "R1: Sprites 2x not supported");
+			}
 			break;
 		case 2:
 			m_tables.rawName = m_tempData & 15;
@@ -391,25 +411,71 @@ namespace video::vdp
 		}
 	}
 
-	void TMS9918::DrawSprites()
+	void TMS9918::DrawSpriteLine()
 	{
+		SpriteLine& line = m_spritePixels[0];
+		line.fill(0);
+
+		for (int i = 0; i < 4; ++i)
+		{
+			const Sprite* sprite = m_spriteDrawList[i];
+			if (!sprite)
+			{
+				break;
+			}
+			const uint32_t color = GetColor(sprite->GetColor());
+			const int patternLine = m_currY - sprite->GetY();
+			const int xStart = sprite->GetX() + LEFT_BORDER;
+			const int size = Sprite::GetSize();
+
+			BYTE patternA = *(m_vram.getPtr() + GetSpritePatternBase(sprite->GetName()) + patternLine);
+			BYTE patternC = *(m_vram.getPtr() + GetSpritePatternBase(sprite->GetName()) + patternLine + 0x10);
+			// TODO: 8/16
+
+			uint32_t* start = &line[xStart];
+			for (int i = 0; i < 8; ++i)
+			{
+				if (GetBit(patternA, 7 - i))
+				{
+					*start = color;
+				}
+				++start;
+			}
+			if (m_config.sprites16x16)
+			{
+				for (int i = 0; i < 8; ++i)
+				{
+					if (GetBit(patternC, 7 - i))
+					{
+						*start = color;
+					}
+					++start;
+				}
+			}
+		}
+	}
+
+	void TMS9918::UpdateSpriteDrawList()
+	{
+		m_spriteDrawList.fill(nullptr);
+
+		int drawn = 0;
 		for (int i = 0; i < 32; ++i)
 		{
 			const Sprite* sprite = GetSprite(i);
 			if (sprite->IsLast())
 				break;
 
-			const int x = sprite->GetX();
-			const int y = sprite->GetY();
-			uint32_t color = GetColor(sprite->GetColor());
-
-			if (color)
+			if (sprite->IsVisible(m_currY))
 			{
-				m_video->DrawAt(x + LEFT_BORDER, y + TOP_BORDER, color);
+				if (drawn == 4)
+				{
+					LogPrintf(LOG_DEBUG, ">4 sprites on line %d", m_currY);
+					m_status.SetFifthSpriteFlag(i);
+					break;
+				}
+				m_spriteDrawList[drawn++] = sprite;
 			}
-
-
-			//LogPrintf(LOG_INFO, "Sprite [%2d]: %s", i, GetSpriteInfoStr(sprite));
 		}
 	}
 
@@ -430,6 +496,7 @@ namespace video::vdp
 		to["cfg.interruptEnabled"] = m_config.interruptEnabled;
 		to["cfg.sprites16x16"] = m_config.sprites16x16;
 		to["cfg.sprites2x"] = m_config.sprites2x;
+		to["cfg.spriteSize"] = Sprite::GetSize();
 
 		to["status.interrupt"] = m_status.interrupt;
 		to["status.coincidence"] = m_status.coincidence;
@@ -471,6 +538,7 @@ namespace video::vdp
 		m_config.interruptEnabled = from["cfg.interruptEnabled"];
 		m_config.sprites16x16 = from["cfg.sprites16x16"];
 		m_config.sprites2x = from["cfg.sprites2x"];
+		Sprite::SetSize(from["cfg.spriteSize"]);
 
 		m_status.interrupt = from["status.interrupt"];
 		m_status.coincidence = from["status.coincidence"];

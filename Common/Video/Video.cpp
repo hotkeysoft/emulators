@@ -192,6 +192,21 @@ namespace video
 		m_fbCurrPos = m_fbCurrY * m_fbWidth;
 	}
 
+	void Video::MergeLine(uint32_t* pixels, size_t len)
+	{
+		uint32_t* dest = m_fb.data() + (m_fbCurrY * m_fbWidth);
+		for (size_t x = 0; x < len; ++x)
+		{
+			uint32_t src = *pixels;
+			if (src)
+			{
+				*dest = *pixels;
+			}
+			++pixels;
+			++dest;
+		}
+	}
+
 	void Video::DrawBackground(BYTE width)
 	{
 		DrawBackground(width, GetBackgroundColor());
