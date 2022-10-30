@@ -333,7 +333,7 @@ int main(int argc, char* args[])
 	}
 #endif
 
-	MAINWND().Init(Overlay::GetOverlayHeight());
+	MAINWND().Init("hotkey6502emu", Overlay::GetOverlayHeight());
 	InitSound();
 
 	// TODO: switchable overlay

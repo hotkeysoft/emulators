@@ -22,7 +22,7 @@ namespace ui
 
 		static MainWindow& Get();
 
-		bool Init(WORD overlayHeight = 0);
+		bool Init(const char* title, WORD overlayHeight = 0);
 
 		SDL_Window* GetWindow() const { return m_sdlWindow; }
 		SDL_Renderer* GetRenderer() const { return m_sdlRenderer; }

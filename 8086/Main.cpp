@@ -355,7 +355,7 @@ int main(int argc, char* args[])
 		return 0;}
 #endif
 
-	MAINWND().Init(Overlay::GetOverlayHeight());
+	MAINWND().Init("hotkey86emu", Overlay::GetOverlayHeight());
 	InitSound();
 
 	OverlayXT overlay;

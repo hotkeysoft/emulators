@@ -345,7 +345,7 @@ int main(int argc, char* args[])
 	}
 #endif
 
-	MAINWND().Init(Overlay::GetOverlayHeight());
+	MAINWND().Init("hotkeyZ80emu", Overlay::GetOverlayHeight());
 	InitSound();
 
 	Overlay overlay;

@@ -18,7 +18,7 @@ namespace ui
 		return wnd;
 	}
 
-	bool MainWindow::Init(WORD overlayHeight)
+	bool MainWindow::Init(const char* title, WORD overlayHeight)
 	{
 		EnableLog(CONFIG().GetLogLevel("mainwindow"));
 
@@ -46,7 +46,7 @@ namespace ui
 			&m_sdlWindow,
 			&m_sdlRenderer);
 
-		SDL_SetWindowTitle(m_sdlWindow, "hotkey86");
+		SDL_SetWindowTitle(m_sdlWindow, title);
 
 		SDL_GetWindowSize(m_sdlWindow, &m_size.w, &m_size.h);
 		LogPrintf(LOG_INFO, "Window Size: %dx%d", m_size.w, m_size.h);
