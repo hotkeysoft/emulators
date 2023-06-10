@@ -1,40 +1,55 @@
 # emulators
-Emulators for 8080-, Z80 and TMS1000-family CPUs
+Emulators for 8080-, 6502, Z80 and TMS1000-family CPUs. 
+
+All components/modules/projects are a work in progress and by no means feature complete
 
 - 8080: 8080/8085 Emulator (from https://github.com/hotkeysoft/pfe_cpu8085)
-- Z80 (wip) **(NEW)**
+- 🆕**6502**
+  - CPU Core, passes standard tests for documented instructions
+  - 🆕**PET 2001 emulation**
+    - BASIC v1/2/4
+    - Load/Save to cassette tape (wip, barely works with raw audio files)
+    - Load PRG files
+    - Sound
+      - 1 bit square wave
+    - Video
+      - 40 column models with no CRTC only
+    - Compatibility
+      - Loaded a lot of BASIC games and most seemed to work file 
+  - 🆕**VIC20 emulation**
+    - RAM configurations: 5,8,16,24,32K
+    - VIC Chip
+      - Video (NTSC/PAL timings)
+      - Sound
+    - Load PRG files
+    - Load/Save to tape (barely, see PET)
+    - Compatibility
+      - Tested with multiples game cartridges, a lot of games seem to work fine
+- Z80
   - CPU Mostly complete, passes standard test suite
   - Barebones ZX80 emulation
   - Barebones ZX Spectrum emulation
-- 8086: 8086/8088/80186/80286 Emulator + IBM PC components (work in progress)
+  - 🆕**Colecovision Emulation**
+    - Load 8/16/24/32K ROM Cartridges
+    - Digital joystick (single) with keypad (keyboard numeric pad)
+    - Sound (SN76489)
+    - Video (TMS9918)
+      - Mode 1/2 (Text and multicolor modes not implemented)
+      - Sprites 
+    - Compatibility
+      - Tested with multiples game cartridges, a lot of games seem to work fine
+- 8086: 8086/8088/80186/80286 Emulator + IBM PC components
   - Most opcodes implemented + some undocumented
   - Timing / sync between clocked components
     - No RAM wait states
     - CPU is not cycle accurate but "good enough"
   - Partial implementation of debugger/monitor in console
-  - Config file support (config/config.ini)
-    - architecture, base ram, video mode, monitor, log levels 
-  - Terminal window + Display in separate SDL window
-  - Snapshots of CPU+RAM+Most component states
-    - Exception: storage (floppy/hdd) not persisted
-    - Restore snapshots with different hardware configuration
-      - Minimally tested
-  - Serial Mouse emulation (NEW)
+  - Serial Mouse emulation
     - Scroll-lock key to enable/disable capture 
       - Needs to be configurable, easies to disable capture 
     - Overlay status button shows capture status
       - Clicking the button enables capture (use scroll-lock to disengage)
     - This is a real low level emulation, not a bios thing, so you need a mouse driver
-  - GUI Overlay
-    - Frame rate indicator
-    - Soft/hard restart (shift for hard)
-    - Load/eject floppies
-    - Swap hard drives (need reboot)
-    - Load/Restore snapshot
-      - Can browse all snapshots (shift-click restore button)
-      - Edit snapshot: Add description, delete
-    - Toggle clock speed, warp mode
-    - Joystick trimming/fine adjust
   - Floppy emulation
     - Most standard image sizes auto detected (160/180/320/360/720/1.2/1.44)
     - Partial command set (read/write, no format or more obscure commands)
@@ -67,15 +82,15 @@ Emulators for 8080-, Z80 and TMS1000-family CPUs
         - Emulated modes (CGA/MDA) can be set in config file
         - Mostly complete, need more extensive tests. Some issues:
           - Glitchy scrolling in some games
-      - VGA graphics **(NEW)**
+      - VGA graphics
         - Runs original IBM VGA BIOS (post error)
         - Mostly complete, need more extensive tests.
       - Sound
         - PC Speaker
-        - CMS/Game Blaster (wip) **(NEW)**
-        - Disney Sound Source (wip) **(NEW)**
+        - CMS/Game Blaster (wip)
+        - Disney Sound Source (wip)
         - Tandy/PCjr (SN76489, see Tandy/PCjr sections)
-  - IBM PC/AT (5170) **(NEW)**
+  - IBM PC/AT (5170)
     - Loads original BIOS ROM (passes POST, except for some config mismatches)
     - Boots various versions of PC/MS-DOS
     - Various games load from floppy & hdd
@@ -137,6 +152,26 @@ Emulators for 8080-, Z80 and TMS1000-family CPUs
      - [Wizard Electronic Game](https://github.com/hotkeysoft/wizardElectronicGame-kicad) (Merlin / Master Merlin ROM)
      - [LED Matrix Game](https://github.com/hotkeysoft/ledMatrixGame-kicad) (Pocket Repeat ROM)
 
+
+- Common (shared between projects)
+  - Config file support (config/config.ini)
+    - architecture, base ram, video mode, monitor, log levels 
+  - Terminal window + Display in separate SDL window
+  - Snapshots of CPU+RAM+Most component states
+    - Exception: storage (floppy/hdd) not persisted
+    - Restore snapshots with different hardware configuration
+      - Minimally tested
+  - GUI Overlay
+    - Frame rate indicator
+    - Soft/hard restart (shift for hard)
+    - Load/eject floppies
+    - Swap hard drives (need reboot)
+    - Load/Restore snapshot
+      - Can browse all snapshots (shift-click restore button)
+      - Edit snapshot: Add description, delete
+    - Toggle clock speed, warp mode
+    - Joystick trimming/fine adjust
+
 ## Compatibility (PC emulator)
 
 (I need to make a compatibility grid)
@@ -167,12 +202,13 @@ A lot of old XT games work fine:
 
 ## TODO
 - Merge common code
+  - Started 
 - Document the installation, files/directories required
   - Maybe make an installer for the PC emulator
   - Make emulator more robust/verbose when basics things are missing (roms, directories, etc)
-- Fix annoying crash on soft reboot, only hard reboot works at the moment (shift-reboot in the GUI overlay)
+- PC: Fix annoying crash on soft reboot, only hard reboot works at the moment (shift-reboot in the GUI overlay)
 - Split emulators in different repositories (still debating)
 - Adlib... started, I *hate* FM sound (well, not the sound, but the understanding/coding part)
 - Compatibility grid for PC games
 - Screenshots and stuff
-- Window scaling is.. not the best. Certainly not pixel accurate. Need to take borders into account in calculations
+- Window scaling is... not the best. Certainly not pixel accurate. Need to take borders into account in calculations
