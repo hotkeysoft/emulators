@@ -131,6 +131,22 @@ namespace emul
 		m_console.WriteAt(coord.x, coord.y, hex, 4, attr);
 	}
 
+	void Monitor68000::WriteValueHex(DWORD value, const Coord& coord, WORD attr)
+	{
+		static char hex[8];
+
+		hex[0] = hexDigits[(value >> 28) & 0x0F];
+		hex[1] = hexDigits[(value >> 24) & 0x0F];
+		hex[2] = hexDigits[(value >> 20) & 0x0F];
+		hex[3] = hexDigits[(value >> 16) & 0x0F];
+		hex[4] = hexDigits[(value >> 12) & 0x0F];
+		hex[5] = hexDigits[(value >> 8) & 0x0F];
+		hex[6] = hexDigits[(value >> 4) & 0x0F];
+		hex[7] = hexDigits[(value & 0x0F)];
+
+		m_console.WriteAt(coord.x, coord.y, hex, 4, attr);
+	}
+
 	void Monitor68000::Update()
 	{
 		UpdateRegisters();
@@ -205,11 +221,28 @@ namespace emul
 
 	void Monitor68000::UpdateRegisters()
 	{
-		WriteValueHex(m_cpu->m_reg.A, m_cpu->GetInfo().GetCoord("A"));
-		WriteValueHex(m_cpu->m_reg.X, m_cpu->GetInfo().GetCoord("X"));
-		WriteValueHex(m_cpu->m_reg.Y, m_cpu->GetInfo().GetCoord("Y"));
+		WriteValueHex(m_cpu->m_reg.ADDR[0], m_cpu->GetInfo().GetCoord("A0"));
+		WriteValueHex(m_cpu->m_reg.ADDR[1], m_cpu->GetInfo().GetCoord("A1"));
+		WriteValueHex(m_cpu->m_reg.ADDR[2], m_cpu->GetInfo().GetCoord("A2"));
+		WriteValueHex(m_cpu->m_reg.ADDR[3], m_cpu->GetInfo().GetCoord("A3"));
+		WriteValueHex(m_cpu->m_reg.ADDR[4], m_cpu->GetInfo().GetCoord("A4"));
+		WriteValueHex(m_cpu->m_reg.ADDR[5], m_cpu->GetInfo().GetCoord("A5"));
+		WriteValueHex(m_cpu->m_reg.ADDR[6], m_cpu->GetInfo().GetCoord("A6"));
+		WriteValueHex(m_cpu->m_reg.ADDR[7], m_cpu->GetInfo().GetCoord("A7"));
 
-		WriteValueHex((WORD)m_cpu->GetSP(), m_cpu->GetInfo().GetCoord("SP"));
+		WriteValueHex(m_cpu->m_reg.DATA[0], m_cpu->GetInfo().GetCoord("D0"));
+		WriteValueHex(m_cpu->m_reg.DATA[1], m_cpu->GetInfo().GetCoord("D1"));
+		WriteValueHex(m_cpu->m_reg.DATA[2], m_cpu->GetInfo().GetCoord("D2"));
+		WriteValueHex(m_cpu->m_reg.DATA[3], m_cpu->GetInfo().GetCoord("D3"));
+		WriteValueHex(m_cpu->m_reg.DATA[4], m_cpu->GetInfo().GetCoord("D4"));
+		WriteValueHex(m_cpu->m_reg.DATA[5], m_cpu->GetInfo().GetCoord("D5"));
+		WriteValueHex(m_cpu->m_reg.DATA[6], m_cpu->GetInfo().GetCoord("D6"));
+		WriteValueHex(m_cpu->m_reg.DATA[7], m_cpu->GetInfo().GetCoord("D7"));
+
+
+		WriteValueHex(m_cpu->m_reg.USP, m_cpu->GetInfo().GetCoord("USP"));
+		WriteValueHex(m_cpu->m_reg.SSP, m_cpu->GetInfo().GetCoord("SSP"));
+
 		WriteValueHex((WORD)m_cpu->GetCurrentAddress(), m_cpu->GetInfo().GetCoord("PC"));
 	}
 

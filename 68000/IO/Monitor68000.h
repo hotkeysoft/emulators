@@ -56,6 +56,7 @@ namespace emul
 		void WriteValueNibble(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(WORD value, const cpuInfo::Coord& coord, WORD attr = 15);
+		void WriteValueHex(DWORD value, const cpuInfo::Coord& coord, WORD attr = 15);
 
 		virtual void UpdateRegisters();
 		void UpdateTicks();

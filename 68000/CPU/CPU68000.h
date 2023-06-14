@@ -27,8 +27,8 @@ namespace emul
 		virtual void Reset();
 		virtual void Reset(ADDRESS overrideAddress);
 
-		virtual bool Step();
-
+		virtual bool Step() override;
+		// Not used, 16 bit opcode
 		virtual void Exec(BYTE opcode) override;
 
 		virtual const std::string GetID() const override { return m_info.GetId(); };
@@ -36,10 +36,6 @@ namespace emul
 		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter; }
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
-
-		// Interrupts
-		void SetIRQ(bool irq) { m_irq = irq; }
-		void SetNMI(bool nmi) { m_nmi.Set(nmi); }
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -50,15 +46,45 @@ namespace emul
 		CPU68000(const char* cpuid, Memory& memory);
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
-		// Use third timing conditional penalty (2nd value not used)
-		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
-		inline void TICKPAGE() { CPU::TICK(1); } // Page crossing penalty
-		inline void TICKINT() { CPU::TICK(m_info.GetMiscTiming(cpuInfo::MiscTiming::TRAP)[0]); }
 
 		// Hardware vectors
-		const ADDRESS ADDR_NMI = 0xFFFA;
-		const ADDRESS ADDR_RESET = 0xFFFC;
-		const ADDRESS ADDR_IRQ = 0xFFFE;
+		enum class VECTOR : BYTE
+		{
+			ResetSSP               = 0, // Reset, Initial SSP (Supervisor Stack Pointer)
+			ResetPC                = 1, // Reset, Initial PC (Program Counter)
+			BusError               = 2,
+			AddressError           = 3,
+			IllegalInstruction     = 4,
+			ZeroDivide             = 5,
+			CHK_Instruction        = 6,
+			TRAPV_Instruction      = 7,
+			PrivilegeViolation     = 8,
+			Trace                  = 9,
+			Line1010Emulator       = 10,
+			Line1111Emulator       = 11,
+
+			// (12-14 Reserved)
+
+			UninitializedIntVector = 15,
+
+			// (16-23 Reserved)
+
+			SpuriousInterrupt      = 24,
+
+			// 25-31 Level 1-7 Interrupt Autovector
+			InterruptBase      = 25,
+
+			// 32-47 TRAP Instructions vectors (32 + n)
+			TrapBase              = 32,
+
+			// 48-63 Reserved
+			// 64-255 User Interrupt Vectors
+			USER_INT_BASE     = 64
+		};
+
+		ADDRESS GetVectorAddress(VECTOR v) { return (ADDRESS)v * 4; }
+		ADDRESS GetIntVectorAddress(BYTE i) { assert(i <= 7); return ((ADDRESS)VECTOR::InterruptBase + i) * 4; }
+		ADDRESS GetTrapVectorAddress(BYTE t) { assert(t <= 16);  return ((ADDRESS)VECTOR::TrapBase + t) * 4; }
 
 		using OpcodeTable = std::vector<std::function<void()>>;
 		OpcodeTable m_opcodes;
@@ -66,125 +92,86 @@ namespace emul
 
 		cpuInfo::CPUInfo m_info;
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
-		BYTE m_opcode = 0;
+		WORD m_opcode = 0;
 
-		// IRQ is level sensitive
-		bool m_irq = false;
-		// NMI is edge sensitive
-		hscommon::EdgeDetectLatch m_nmi;
 		virtual void Interrupt();
 
-		enum FLAG : BYTE
+		enum FLAG : WORD
 		{
-			FLAG_N		= 128, // 1 when result is negative
-			FLAG_V		= 64,  // 1 on signed overflow
-			_FLAG_R5	= 32,  // 1
-			FLAG_B		= 16,  // 1 when interrupt was caused by a BRK
-			FLAG_D		= 8,   // 1 when CPU is in BCD mode
-			FLAG_I		= 4,   // 1 when IRQ is disabled
-			FLAG_Z		= 2,   // 1 when result is 0
-			FLAG_C		= 1    // 1 on unsigned overflow
+			// Supervisor mode flags (R/O in user mode)
+			FLAG_T		= 0x8000, // 1 Trace mode
+			FLAG_R14	= 0x4000, // 0
+			FLAG_S		= 0x2000, // 1 Supervisor mode
+			_FLAG_R12	= 0x1000, // 0
+			_FLAG_R11	= 0x0800, // 0
+			FLAG_I2 	= 0x0400, // I[0..2], interrupt mask
+			FLAG_I1		= 0x0200, // ""
+			FLAG_I0		= 0x0100, // ""
+
+			// User mode R/W
+			_FLAG_R7	= 0x0080, // 0
+			_FLAG_R6	= 0x0040, // 0
+			_FLAG_R5	= 0x0020, // 0
+			_FLAG_R4	= 0x0010, // 0
+			FLAG_X		= 0x0008, // 1 eXtend
+			FLAG_Z		= 0x0004, // 1 Zero
+			FLAG_V		= 0x0002, // 1 Signed oVerflow
+			FLAG_C		= 0x0001  // 1 Carry (unsigned overflow)
 		};
 
-		FLAG FLAG_RESERVED_ON = FLAG(_FLAG_R5);
+		FLAG FLAG_RESERVED_OFF = FLAG(
+			_FLAG_R4 | _FLAG_R5 | _FLAG_R6 | _FLAG_R7 |
+			_FLAG_R11 | FLAG_R14);
 
 		ADDRESS m_programCounter = 0;
 
 		struct Registers
 		{
-			BYTE A = 0;
-			BYTE flags = 0;
+			std::array<DWORD, 8> DATA; // D0..D7
+			std::array<DWORD, 8> ADDR; // A0..A7
 
-			BYTE X = 0;
-			BYTE Y = 0;
+			// Alias stack pointer
+			DWORD& SP = ADDR[7];
 
-			BYTE SP = 0;
+			// Stack pointer is aliased to A7 but user and supervisor
+			// modes keep separate values
+
+			// USP (User) Stack Pointer
+			DWORD USP;
+			// SSP (Supervisor) Stack Pointer
+			DWORD SSP;
+
+			WORD flags;
 		} m_reg;
 
-		void ClearFlags(BYTE& flags);
-		void SetFlags(BYTE f);
+		void ClearFlags(WORD& flags);
+		void SetFlags(WORD f);
 
-		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; };
+		// Flag Helpers
+		bool GetFlag(FLAG f) const { return (m_reg.flags & f) ? true : false; };
 		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); };
 		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
 
-		WORD GetSP() const { return m_reg.SP | 0x0100; }
+		bool IsSupervisorMode() const { return GetFlag(FLAG_S); }
+		void SetSupervisorMode(bool set) { SetFlag(FLAG_S, set); }
 
-		BYTE GetPage(ADDRESS addr) const { return emul::GetHByte(addr); }
+		bool IsTrace() const { return GetFlag(FLAG_T); }
+		void SetTrace(bool set) { SetFlag(FLAG_T, set); }
 
-		// Memory operation Read-Modify-Write
-		void MEMopRMW(std::function<void(CPU68000*, BYTE&)> func, ADDRESS dest);
+		BYTE GetInterruptMask() const { return (m_reg.flags >> 8) | 7; }
+		void SetInterruptMask(BYTE mask) {
+			assert(mask < 8);
+			SetFlag(FLAG_I0, GetBit(mask, 0));
+			SetFlag(FLAG_I1, GetBit(mask, 1));
+			SetFlag(FLAG_I2, GetBit(mask, 2));
+		}
 
-		// Memory operation Read
-		void MEMopR(std::function<void(CPU68000*, BYTE)> func, ADDRESS oper);
-
+		// Not used, 16 bit fetch
 		virtual BYTE FetchByte() override;
 
-		// Addressing Modes
-		// ----------------
-
-		// Zero Page
-		ADDRESS GetZP() { return FetchByte(); }
-		ADDRESS GetZPX() { return (BYTE)(FetchByte() + m_reg.X); }
-		ADDRESS GetZPY() { return (BYTE)(FetchByte() + m_reg.Y); }
-
-		// Absolute
-		ADDRESS GetABS() { return FetchWord(); }
-		// TODO: 1 cycle penalty for boundary crossing
-		ADDRESS GetABSX() { return (WORD)(FetchWord() + m_reg.X); }
-		ADDRESS GetABSY() { return (WORD)(FetchWord() + m_reg.Y); }
-
-		// Indirect
-		ADDRESS GetIND();
-		ADDRESS GetINDX();
-		ADDRESS GetINDY();
-
-		void AdjustNZ(BYTE val);
-
-		// Opcodes
-		void PUSH(BYTE val);
-		BYTE POP();
-
-		void LD(BYTE& dest, BYTE src);
-		void LDmem(BYTE& dest, ADDRESS src);
-		void STmem(ADDRESS dest, BYTE src);
-
-		void PLA();
-		void PHA();
-		void PLP();
-		void PHP();
-
-		void BRANCHif(bool cond);
-		void JSR(ADDRESS dest);
-		void RTS();
-		void JMP(ADDRESS dest);
-		void BIT(ADDRESS src);
-		void BRK();
-		void RTI();
-
-		void ORA(BYTE oper);
-		void AND(BYTE oper);
-		void EOR(BYTE oper);
-		BYTE addSubBinary(BYTE oper, bool carry);
-		BYTE addBCD(BYTE oper, bool carry);
-		BYTE subBCD(BYTE oper, bool carry);
-		void ADC(BYTE oper);
-		void SBC(BYTE oper);
-
-		void cmp(BYTE reg, BYTE oper);
-		void CMPA(BYTE oper) { cmp(m_reg.A, oper); }
-		void CMPX(BYTE oper) { cmp(m_reg.X, oper); }
-		void CMPY(BYTE oper) { cmp(m_reg.Y, oper); }
-
-		void INC(BYTE& dest);
-		void DEC(BYTE& dest);
-		void ASL(BYTE& dest);
-		void ROL(BYTE& dest);
-		void LSR(BYTE& dest);
-		void ROR(BYTE& dest);
-
-		void SLO(BYTE& dest);
-		void ISC(BYTE& dest);
+		ADDRESS GetSP() const { return m_reg.SP; }
+		void Exec(WORD opcode);
+		bool InternalStep();
 
 		friend class Monitor68000;
 	};
