@@ -24,19 +24,11 @@ namespace emul
 
 		virtual void Init(CPU* cpu, Memory& memory);
 
-		void SetCustomMemoryView(ADDRESS address) { m_customMemView = address; }
-
-		void Show();
-		MonitorState Run();
-		void Update();
-
-	protected:
-		ADDRESS m_customMemView = 0;
-
 		struct Instruction
 		{
 			void AddRaw(BYTE b);
 			void AddRaw(WORD w);
+			void AddRaw(DWORD dw);
 
 			ADDRESS address;
 			WORD offset;
@@ -44,6 +36,66 @@ namespace emul
 			BYTE raw[16];
 			char text[32];
 		};
+		virtual ADDRESS Disassemble(ADDRESS address, Monitor68000::Instruction& decoded);
+
+		void SetCustomMemoryView(ADDRESS address) { m_customMemView = address; }
+
+		void Show();
+		MonitorState Run();
+		void Update();
+
+	protected:
+		enum class EASize
+		{
+			Byte  = 0b00,
+			Word  = 0b01,
+			Long  = 0b10,
+			Undef = 0b11
+		};
+
+		enum class EAMode
+		{
+			// Register Direct modes
+			DataRegDirect = 0b000000,
+			AddrRegDirect = 0b001000,
+
+			// Memory Address modes
+			AddrRegIndirect = 0b010000,
+			AddrRegIndirectPostIncrement = 0b011000,
+			AddrRegIndirectPreDecrement = 0b100000,
+			AddrRegIndirectDisplacement = 0b101000,
+			AddrRegIndirectIndex = 0b110000,
+
+			// Special Address Modes (Mode=111)
+			// (need reg# for complete decoding)
+			AbsoluteShort = 0b111000,
+			AbsoluteLong = 0b111001,
+			ProgramCounterDisplacement = 0b111010,
+			ProgramCounterIndex = 0b111011,
+			Immediate = 0b111100,
+
+			Invalid = 0b111111
+		};
+
+		class EffectiveAddress
+		{
+		public:
+			EffectiveAddress(WORD data);
+
+			EAMode GetMode() const { return m_mode; }
+			BYTE GetRegister() const { return m_regNumber; }
+			const char* GetText() const { return m_text[0] ? m_text : BuildText(); }
+		private:
+			const char* BuildText() const;
+
+			EASize m_size = EASize::Undef;
+			BYTE m_regNumber = 0;
+			EAMode m_mode = EAMode::Invalid;
+
+			mutable char m_text[32] = ""; // Mutable because lazy evaluation
+		};
+
+		ADDRESS m_customMemView = 0;
 
 		MonitorState ProcessKey();
 
@@ -67,8 +119,6 @@ namespace emul
 		void UpdateCode();
 
 		static bool Replace(std::string& str, const std::string& from, const std::string& to);
-
-		virtual ADDRESS Disassemble(ADDRESS address, Monitor68000::Instruction& decoded);
 
 		enum class RUNMode { STEP, RUN };
 		RUNMode m_runMode = RUNMode::STEP;

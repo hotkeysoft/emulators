@@ -28,6 +28,13 @@
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
 
+#define DISASSEMBLY_TEST
+
+#ifdef DISASSEMBLY_TEST
+#include "CPU/CPU68000.h"
+#include "IO/Monitor68000.h"
+#endif
+
 //#define CPU_TEST
 
 #ifdef CPU_TEST
@@ -276,6 +283,48 @@ ComputerBase* RestoreNewComputerFromSnapshot()
 
 int main(int argc, char* args[])
 {
+#ifdef DISASSEMBLY_TEST
+	{
+		Logger::RegisterLogCallback(nullptr);
+
+		emul::Memory mem(4096);
+		mem.Init(24);
+		emul::CPU68000 cpu(mem);
+		cpu.Init();
+
+		emul::MemoryBlock::RawBlock data = {
+			0x00, 0x00, 0x00, 0x12,
+			0x00, 0x04, 0x12, 0x34,
+			0x00, 0x80, 0x12, 0x34, 0x56, 0x78,
+			0x02, 0x00, 0x00, 0x12,
+		};
+		emul::MemoryBlock testROM("TEST", data, emul::MemoryType::ROM);
+		mem.Allocate(&testROM, 0);
+
+		emul::Monitor68000 monit(console);
+		monit.Init(&cpu, mem);
+
+		ADDRESS pos = 0;
+		do
+		{
+			emul::Monitor68000::Instruction decoded;
+			pos = monit.Disassemble(pos, decoded);
+
+			char raw[40];
+			memset(raw, ' ', sizeof(raw));
+			memcpy(raw, decoded.raw, decoded.len);
+			raw[sizeof(raw) - 1] = 0;
+
+			fprintf(stderr, "%s %.32s\n", raw, decoded.text);
+		}
+		while (pos < data.size());
+
+		fprintf(stderr, "Press any key to continue\n");
+		_getch();
+		return 0;
+	}
+#endif
+
 	InitLeakCheck();
 
 	Logger::RegisterLogCallback(LogCallback);

@@ -10,6 +10,77 @@ namespace emul
 {
 	static const char hexDigits[] = "0123456789ABCDEF";
 
+	const char* Monitor68000::EffectiveAddress::BuildText() const
+	{
+		switch (m_mode)
+		{
+		case EAMode::DataRegDirect:
+			sprintf(m_text, "D%d", m_regNumber);
+			break;
+		case EAMode::AddrRegDirect:
+			sprintf(m_text, "A%d", m_regNumber);
+			break;
+		case EAMode::AddrRegIndirect:
+			sprintf(m_text, "(A%d)", m_regNumber);
+			break;
+		case EAMode::AddrRegIndirectPostIncrement:
+			sprintf(m_text, "(A%d)+", m_regNumber);
+			break;
+		case EAMode::AddrRegIndirectPreDecrement:
+			sprintf(m_text, "-(A%d)", m_regNumber);
+			break;
+		case EAMode::AddrRegIndirectDisplacement:
+			sprintf(m_text, "#$%04X(A%d)", 0x0BAD, m_regNumber); // TODO: displacement
+			break;
+		case EAMode::AddrRegIndirectIndex:
+			sprintf(m_text, "#$%02X(A%d,Xi)", 0xBA, m_regNumber); // TODO: Extension word
+			break;
+		case EAMode::AbsoluteShort:
+			sprintf(m_text, "($%04X).w", 0x0BAD); // TODO: address
+			break;
+		case EAMode::AbsoluteLong:
+			sprintf(m_text, "($%08X).l", 0x0BADBEEF); // TODO: address
+			break;
+		case EAMode::ProgramCounterDisplacement:
+			sprintf(m_text, "#$%02X(PC,Xi)", 0xBA); // TODO: Extension word
+			break;
+		case EAMode::ProgramCounterIndex:
+			sprintf(m_text, "#$%02X(PC,Xi)", 0xBA); // TODO: Extension word
+			break;
+		case EAMode::Immediate: // TODO: Need size
+			sprintf(m_text, "[imm]");
+			break;
+
+		case EAMode::Invalid:
+			sprintf(m_text, "[eaERR]");
+			break;
+		}
+
+		return m_text;
+	}
+
+	Monitor68000::EffectiveAddress::EffectiveAddress(WORD modeRegData)
+	{
+		m_regNumber = modeRegData & 7;
+		m_size = (EASize)((modeRegData >> 6) & 3);
+
+		if ((modeRegData & 0b111000) != 0b111000)
+		{
+			// Normal modes (Mode != 0b111)
+			m_mode = EAMode(modeRegData & 0b111000);
+		}
+		else switch (m_regNumber) // Special modes
+		{
+		case 0b000: m_mode = EAMode::AbsoluteShort; break;
+		case 0b001: m_mode = EAMode::AbsoluteLong; break;
+		case 0b010: m_mode = EAMode::ProgramCounterDisplacement; break;
+		case 0b011: m_mode = EAMode::ProgramCounterIndex; break;
+		case 0b100: m_mode = EAMode::Immediate; break;
+		default: m_mode = EAMode::Invalid;
+		}
+	}
+
+
 	Monitor68000::Monitor68000(Console& console) :
 		m_console(console)
 	{
@@ -386,19 +457,39 @@ namespace emul
 	ADDRESS Monitor68000::Disassemble(ADDRESS address, Monitor68000::Instruction& decoded)
 	{
 		decoded.address = address;
-		BYTE data = m_memory->Read8(address);
+		WORD data = m_memory->Read16be(address);
 
 		decoded.AddRaw(data);
 
-		Opcode instr = m_cpu->GetInfo().GetOpcode(data);
+		// Get group from upper 4 bits
+		BYTE group = (data >> 12) & 3;
+
+		Opcode instr = m_cpu->GetInfo().GetOpcode(group);
 		std::string text = instr.text;
+
+		if (instr.multi != Opcode::MULTI::NONE)
+		{
+			// Sub opcode is next 6 bits
+			// TODO depends on group
+			BYTE op2 = (data >> 6) & 63;
+			const std::string op2Str = m_cpu->GetInfo().GetSubOpcodeStr(instr, op2);
+
+			char grpLabel[16] = "";
+			sprintf(grpLabel, "{grp%d}", (int)instr.multi + 1);
+			Replace(text, grpLabel, op2Str);
+
+			instr = m_cpu->GetInfo().GetSubOpcode(instr, op2);
+		}
+
+		address += 2;
 
 		char buf[32];
 		switch (instr.imm)
 		{
 		case Opcode::IMM::W8:
 		{
-			BYTE imm8 = m_memory->Read8(++address);
+			WORD imm8 = m_memory->Read16be(address);
+			address += 2;
 			decoded.AddRaw(imm8);
 
 			sprintf(buf, "$%02X", imm8);
@@ -407,22 +498,40 @@ namespace emul
 		}
 		case Opcode::IMM::W16:
 		{
-			WORD imm16 = m_memory->Read16(++address);
-			++address;
+			WORD imm16 = m_memory->Read16be(address);
+			address += 2;
 			decoded.AddRaw(imm16);
 
 			sprintf(buf, "$%04X", imm16);
 			Replace(text, "{i16}", buf);
 			break;
 		}
+		case Opcode::IMM::W32:
+		{
+			DWORD imm32 = m_memory->Read32be(address);
+			address += 4;
+
+			decoded.AddRaw(imm32);
+
+			sprintf(buf, "$%08X", imm32);
+			Replace(text, "{i32}", buf);
+			break;
+		}
+
 		default:
 			break;
 		}
 
+		// Effective address
+		if (instr.rm16)
+		{
+			EffectiveAddress ea(data);
+			Replace(text, "{rm16}", ea.GetText());
+		}
+
+
 		memset(decoded.text, ' ', 32);
 		memcpy(decoded.text, text.c_str(), text.size());
-
-		++address;
 
 		return address;
 	}
@@ -434,11 +543,18 @@ namespace emul
 	}
 	void Monitor68000::Instruction::AddRaw(WORD w)
 	{
-		// LOW BYTE
-		this->raw[this->len++] = hexDigits[(w >> 4) & 0x0F];
-		this->raw[this->len++] = hexDigits[(w & 0x0F)];
 		// HIGH BYTE
 		this->raw[this->len++] = hexDigits[(w >> 12) & 0x0F];
 		this->raw[this->len++] = hexDigits[(w >> 8) & 0x0F];
+		// LOW BYTE
+		this->raw[this->len++] = hexDigits[(w >> 4) & 0x0F];
+		this->raw[this->len++] = hexDigits[(w & 0x0F)];
+	}
+	void Monitor68000::Instruction::AddRaw(DWORD dw)
+	{
+		// HIGH WORD
+		AddRaw(GetHWord(dw));
+		// LOW WORD
+		AddRaw(GetLWord(dw));
 	}
 }
