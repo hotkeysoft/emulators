@@ -53,6 +53,8 @@ namespace emul
 
 		BYTE Read8(ADDRESS address) const;
 		WORD Read16(ADDRESS address) const;
+		WORD Read16be(ADDRESS address) const; // big-endian
+		DWORD Read32be(ADDRESS address) const; // big-endian
 		void Write8(ADDRESS address, BYTE value);
 		void Write16(ADDRESS address, WORD value);
 

@@ -314,6 +314,20 @@ namespace emul
 		return MakeWord(h, l);
 	}
 
+	WORD Memory::Read16be(ADDRESS address) const
+	{
+		BYTE h = Read8(address);
+		BYTE l = Read8(address + 1);
+		return MakeWord(h, l);
+	}
+
+	DWORD Memory::Read32be(ADDRESS address) const
+	{
+		WORD h = Read16be(address);
+		WORD l = Read16be(address + 2);
+		return MakeDword(h, l);
+	}
+
 	void Memory::Write8(ADDRESS address, BYTE value)
 	{
 		address &= m_addressMask;
