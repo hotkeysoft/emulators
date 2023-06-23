@@ -280,10 +280,49 @@ ComputerBase* RestoreNewComputerFromSnapshot()
 
 	return newPC;
 }
-
-int main(int argc, char* args[])
+namespace args
 {
+	bool isDisassemble = false;
+	emul::MemoryBlock::RawBlock data;
+
+	void parse(int argc, char* argv[])
+	{
+		const std::vector<std::string_view> args(argv + 1, argv + argc);
+		isDisassemble = (args.size() >= 2) && (args[0] == "-d");
+
+		if (isDisassemble)
+		{
+			const std::string_view& hexData = args[1];
+			if ((hexData.size() % 4) != 0)
+			{
+				fprintf(stderr, "disassembly hex data must be a multiple of 16 bits");
+				exit(2);
+			}
+			if (hexData.find_first_not_of("0123456789abcdefABCDEF") != std::string::npos)
+			{
+				fprintf(stderr, "invalid character in disassembly hex data");
+				exit(2);
+			}
+
+			for (size_t pos = 0; pos < hexData.size(); /*nothing*/)
+			{
+				char currHexByte[3];
+				currHexByte[0] = hexData[pos++];
+				currHexByte[1] = hexData[pos++];
+				currHexByte[2] = 0;
+				unsigned long byte = strtoul(currHexByte, nullptr, 16);
+
+				data.push_back((BYTE)byte);
+			}
+		}
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	args::parse(argc, argv);
 #ifdef DISASSEMBLY_TEST
+	if (args::isDisassemble)
 	{
 		Logger::RegisterLogCallback(nullptr);
 
@@ -292,13 +331,7 @@ int main(int argc, char* args[])
 		emul::CPU68000 cpu(mem);
 		cpu.Init();
 
-		emul::MemoryBlock::RawBlock data = {
-			0x00, 0x00, 0x00, 0x12,
-			0x00, 0x04, 0x12, 0x34,
-			0x00, 0x80, 0x12, 0x34, 0x56, 0x78,
-			0x02, 0x00, 0x00, 0x12,
-		};
-		emul::MemoryBlock testROM("TEST", data, emul::MemoryType::ROM);
+		emul::MemoryBlock testROM("TEST", args::data, emul::MemoryType::ROM);
 		mem.Allocate(&testROM, 0);
 
 		emul::Monitor68000 monit(console);
@@ -317,10 +350,8 @@ int main(int argc, char* args[])
 
 			fprintf(stderr, "%s %.32s\n", raw, decoded.text);
 		}
-		while (pos < data.size());
+		while (pos < args::data.size());
 
-		fprintf(stderr, "Press any key to continue\n");
-		_getch();
 		return 0;
 	}
 #endif

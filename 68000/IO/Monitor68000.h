@@ -80,7 +80,9 @@ namespace emul
 		class EffectiveAddress
 		{
 		public:
-			EffectiveAddress(WORD data);
+			EffectiveAddress() {}
+
+			ADDRESS ComputeEA(Memory& memory, WORD data, ADDRESS currAddress);
 
 			EAMode GetMode() const { return m_mode; }
 			BYTE GetRegister() const { return m_regNumber; }
@@ -91,6 +93,8 @@ namespace emul
 			EASize m_size = EASize::Undef;
 			BYTE m_regNumber = 0;
 			EAMode m_mode = EAMode::Invalid;
+
+			ADDRESS m_address = 0xDEADC0DE;
 
 			mutable char m_text[32] = ""; // Mutable because lazy evaluation
 		};

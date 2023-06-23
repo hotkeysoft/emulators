@@ -36,10 +36,10 @@ namespace emul
 			sprintf(m_text, "#$%02X(A%d,Xi)", 0xBA, m_regNumber); // TODO: Extension word
 			break;
 		case EAMode::AbsoluteShort:
-			sprintf(m_text, "($%04X).w", 0x0BAD); // TODO: address
+			sprintf(m_text, "($%04X).w", m_address); // TODO: address
 			break;
 		case EAMode::AbsoluteLong:
-			sprintf(m_text, "($%08X).l", 0x0BADBEEF); // TODO: address
+			sprintf(m_text, "($%08X).l", m_address); // TODO: address
 			break;
 		case EAMode::ProgramCounterDisplacement:
 			sprintf(m_text, "#$%02X(PC,Xi)", 0xBA); // TODO: Extension word
@@ -59,25 +59,37 @@ namespace emul
 		return m_text;
 	}
 
-	Monitor68000::EffectiveAddress::EffectiveAddress(WORD modeRegData)
+	ADDRESS Monitor68000::EffectiveAddress::ComputeEA(Memory& memory, WORD opcode, ADDRESS currAddress)
 	{
-		m_regNumber = modeRegData & 7;
-		m_size = (EASize)((modeRegData >> 6) & 3);
+		m_regNumber = opcode & 7;
+		m_size = (EASize)((opcode >> 6) & 3);
 
-		if ((modeRegData & 0b111000) != 0b111000)
+		if ((opcode & 0b111000) != 0b111000)
 		{
 			// Normal modes (Mode != 0b111)
-			m_mode = EAMode(modeRegData & 0b111000);
+			m_mode = EAMode(opcode & 0b111000);
 		}
 		else switch (m_regNumber) // Special modes
 		{
-		case 0b000: m_mode = EAMode::AbsoluteShort; break;
-		case 0b001: m_mode = EAMode::AbsoluteLong; break;
+		case 0b000:
+			m_mode = EAMode::AbsoluteShort;
+			m_address = emul::Widen(memory.Read16be(currAddress));
+			currAddress += 2;
+			break;
+		case 0b001:
+		{
+			m_mode = EAMode::AbsoluteLong;
+			m_address = memory.Read32be(currAddress);
+			currAddress += 4;
+			break;
+		}
 		case 0b010: m_mode = EAMode::ProgramCounterDisplacement; break;
 		case 0b011: m_mode = EAMode::ProgramCounterIndex; break;
 		case 0b100: m_mode = EAMode::Immediate; break;
 		default: m_mode = EAMode::Invalid;
 		}
+
+		return currAddress;
 	}
 
 
@@ -525,7 +537,8 @@ namespace emul
 		// Effective address
 		if (instr.rm16)
 		{
-			EffectiveAddress ea(data);
+			EffectiveAddress ea;
+			address = ea.ComputeEA(*m_memory, data, address);
 			Replace(text, "{rm16}", ea.GetText());
 		}
 
