@@ -123,6 +123,15 @@ namespace crtc_vga
 
 		m_rawData[m_config.currRegister] = value;
 
+		// Register 0-7 are read only if this protection flag is enabled
+		// except bit 4 of overflow register (7:CRT_OVERFLOW)
+		// Registers 0-6 are handled here, (7:CRT_OVERFLOW) is done below
+		if (m_config.protectRegisters0to7 && (m_config.currRegister <= CRT_V_TOTAL))
+		{
+			LogPrintf(LOG_INFO, "Trying to write protected register [%02x]", m_config.currRegister);
+			return;
+		}
+
 		switch (m_config.currRegister)
 		{
 		case CRT_H_TOTAL:
@@ -173,23 +182,27 @@ namespace crtc_vga
 			// Sets the 9th bit for some parameters
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:               *overflow*");
 
-			SetHByte(m_config.vTotal, 0);
-			SetBit(m_config.vTotal, 8, GetBit(value, 0));
-			SetBit(m_config.vTotal, 9, GetBit(value, 5));
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:            *vTotal = %d", m_config.vTotal);
+			if (!m_config.protectRegisters0to7)
+			{
+				SetHByte(m_config.vTotal, 0);
+				SetBit(m_config.vTotal, 8, GetBit(value, 0));
+				SetBit(m_config.vTotal, 9, GetBit(value, 5));
+				LogPrintf(Logger::LOG_INFO, "WriteCRTCData:            *vTotal = %d", m_config.vTotal);
 
-			SetHByte(m_config.vDisplayed, 0);
-			SetBit(m_config.vDisplayed, 8, GetBit(value, 1));
-			SetBit(m_config.vDisplayed, 9, GetBit(value, 6));
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        *vDisplayed = %d", m_config.vDisplayed);
+				SetHByte(m_config.vDisplayed, 0);
+				SetBit(m_config.vDisplayed, 8, GetBit(value, 1));
+				SetBit(m_config.vDisplayed, 9, GetBit(value, 6));
+				LogPrintf(Logger::LOG_INFO, "WriteCRTCData:        *vDisplayed = %d", m_config.vDisplayed);
 
-			SetHByte(m_config.vSyncStart, 0);
-			SetBit(m_config.vSyncStart, 8, GetBit(value, 2));
-			SetBit(m_config.vSyncStart, 9, GetBit(value, 7));
+				SetHByte(m_config.vSyncStart, 0);
+				SetBit(m_config.vSyncStart, 8, GetBit(value, 2));
+				SetBit(m_config.vSyncStart, 9, GetBit(value, 7));
 
-			SetBit(m_config.vBlankStart, 8, GetBit(value, 3));
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       *vBlankStart = %d", m_config.vBlankStart);
+				SetBit(m_config.vBlankStart, 8, GetBit(value, 3));
+				LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       *vBlankStart = %d", m_config.vBlankStart);
+			}
 
+			// Bit 4 of the line compare register is accessible even if registers 0-7 are protected
 			SetBit(m_config.lineCompare, 8, GetBit(value, 4));
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       *lineCompare = %d", m_config.lineCompare);
 
@@ -201,7 +214,7 @@ namespace crtc_vga
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:      presetRowScan = %d", m_config.presetRowScan);
 			m_config.bytePanning = (value >> 5) & 3;
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:       byte panning = %d", m_config.bytePanning);
-		
+
 			if (m_config.bytePanning > 0)
 			{
 				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: byte panning > 0 not implemented");
@@ -288,11 +301,6 @@ namespace crtc_vga
 
 			m_config.protectRegisters0to7 = GetBit(value, 7);
 			LogPrintf(Logger::LOG_INFO, "WriteCRTCData:         protect0-7 = %s", m_config.protectRegisters0to7 ? "ENABLED" : "DISABLED");
-
-			if (m_config.protectRegisters0to7)
-			{
-				LogPrintf(Logger::LOG_WARNING, "WriteCRTCData: protect0-7 registers not implemented");
-			}
 			m_configChanged = true;
 			break;
 
@@ -339,14 +347,14 @@ namespace crtc_vga
 			m_config.selectRowScanCounter = !GetBit(value, 1);
 			m_config.vCounterDiv2 = GetBit(value, 2);
 			m_config.countByTwo = GetBit(value, 3);
-			
+
 			m_config.addressWrap = GetBit(value, 5);
 			m_config.byteAddressMode = GetBit(value, 6);
 
 			// TODO
 			m_config.reset = GetBit(value, 7);
 
-			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: [%cCOMPAT %cROWSCANCNT %cVDIV2 %cCOUNTBY2 %cADDRESWRAP ADDRESSMODE[%s]] ", 
+			LogPrintf(Logger::LOG_INFO, "WriteCRTCData: [%cCOMPAT %cROWSCANCNT %cVDIV2 %cCOUNTBY2 %cADDRESWRAP ADDRESSMODE[%s]] ",
 				m_config.compatibility ? ' ' : '/',
 				m_config.selectRowScanCounter ? ' ' : '/',
 				m_config.vCounterDiv2 ? ' ' : '/',
@@ -424,7 +432,7 @@ namespace crtc_vga
 	}
 
 	void CRTController::Tick()
-	{	
+	{
 		m_data.hPos += m_data.charWidth;
 		++m_data.memoryAddress;
 
@@ -439,10 +447,10 @@ namespace crtc_vga
 
 			++m_data.vPos;
 
-			// This is a bit confusing, most detailed info found 
+			// This is a bit confusing, most detailed info found
 			// in the Chips 82C451 VGA Controller doc:
 			// "The vertical parameters in the CRT Controller
-			// (even for a split screen) are not affected, 
+			// (even for a split screen) are not affected,
 			// only the CRTC row scan counter and display
 			// memory addressing screen refresh are affected."
 			if (m_config.doubleScan && !m_data.doubledLine)
@@ -459,12 +467,12 @@ namespace crtc_vga
 			if (m_data.rowAddress > m_config.maxScanlineAddress)
 			{
 				m_data.rowAddress = 0;
-				m_data.lineStartAddress += m_data.offset;			
+				m_data.lineStartAddress += m_data.offset;
 			}
 
 			if (m_data.vPos == m_config.lineCompare)
 			{
-				m_data.lineStartAddress = 0;		
+				m_data.lineStartAddress = 0;
 				m_data.rowAddress = 0;
 			}
 			m_data.memoryAddress = m_data.lineStartAddress;
@@ -479,7 +487,7 @@ namespace crtc_vga
 			{
 				FireNewFrame();
 			}
-			
+
 			if (m_data.vPos >= m_data.vTotal)
 			{
 				FireRenderFrame();
@@ -528,7 +536,7 @@ namespace crtc_vga
 		config["bytePanning"] = m_config.bytePanning;
 		config["maxScanlineAddress"] = m_config.maxScanlineAddress;
 		config["doubleScan"] = m_config.doubleScan;
-		config["cursorStart"] = m_config.cursorStart;		
+		config["cursorStart"] = m_config.cursorStart;
 		config["cursorOff"] = m_config.cursorOff;
 		config["cursorEnd"] = m_config.cursorEnd;
 		config["cursorSkew"] = m_config.cursorSkew;
