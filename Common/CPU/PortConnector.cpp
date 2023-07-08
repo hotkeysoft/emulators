@@ -7,7 +7,14 @@ namespace emul
 {
 	PortConnector::OutputPortMap PortConnector::m_outputPorts;
 	PortConnector::InputPortMap PortConnector::m_inputPorts;
-	WORD PortConnector::m_currentPort;
+	WORD PortConnector::m_currentPort = 0;
+	PortConnectorMode PortConnector::m_portConnectorMode = PortConnectorMode::UNDEFINED;
+
+	GetPortFunc PortConnector::m_getPortFunc = nullptr;
+
+	WORD GetPortByteHi(WORD port) { return port >> 8; }
+	WORD GetPortByteLow(WORD port) { return port & 0xFF; }
+	WORD GetPortWord(WORD port) { return port; }
 
 	PortConnector::PortHandler::~PortHandler()
 	{
@@ -38,39 +45,85 @@ namespace emul
 	{
 	}
 
+	void PortConnector::Init(PortConnectorMode mode)
+	{
+		Clear();
+		m_portConnectorMode = mode;
+
+		switch (mode)
+		{
+		case PortConnectorMode::BYTE_HI:
+			m_getPortFunc = GetPortByteHi;
+			m_inputPorts.resize(256);
+			m_outputPorts.resize(256);
+			break;
+
+		case PortConnectorMode::BYTE_LOW:
+			m_getPortFunc = GetPortByteLow;
+			m_inputPorts.resize(256);
+			m_outputPorts.resize(256);
+			break;
+
+		case PortConnectorMode::WORD:
+			m_getPortFunc = GetPortWord;
+			m_inputPorts.resize(65536);
+			m_outputPorts.resize(65536);
+			break;
+
+		default:
+			throw std::exception("PortConnector::Init(): Invalid mode");
+		}
+	}
+
 	void PortConnector::Clear()
 	{
 		m_inputPorts.clear();
-		m_outputPorts.reserve(200);
 		m_outputPorts.clear();
 	}
 
-	bool PortConnector::Connect(WORD portNb, INFunction inFunc)
+	bool PortConnector::Connect(WORD port, INFunction inFunc)
 	{
-		LogPrintf(LOG_INFO, "Connect input port 0x%04X", portNb);
+		if (GetPortConnectorMode() == PortConnectorMode::UNDEFINED)
+		{
 
-		if (m_inputPorts.find(portNb) != m_inputPorts.end())
+			LogPrintf(LOG_ERROR, "PortConnector: Not Initialized");
+			throw std::exception("PortConnector: Not Initialized");
+		}
+
+		LogPrintf(LOG_INFO, "Connect input port 0x%04X", port);
+
+		PortHandler& inPort = GetInputPort(port);
+
+		if (inPort.IsSet())
 		{
 			LogPrintf(LOG_ERROR, "Port already exists");
 			return false;
 		}
 
-		m_inputPorts.emplace(portNb, PortHandler(this, inFunc));
+		inPort = PortHandler(this, inFunc);
 
 		return true;
 	}
 
-	bool PortConnector::Connect(WORD portNb, OUTFunction outFunc, bool share)
+	bool PortConnector::Connect(WORD port, OUTFunction outFunc, bool share)
 	{
-		LogPrintf(LOG_INFO, "Connect output port 0x%04X", portNb);
+		if (GetPortConnectorMode() == PortConnectorMode::UNDEFINED)
+		{
 
-		OutputPortMap::iterator it = m_outputPorts.find(portNb);
-		if (it != m_outputPorts.end())
+			LogPrintf(LOG_ERROR, "PortConnector: Not Initialized");
+			throw std::exception("PortConnector: Not Initialized");
+		}
+
+		LogPrintf(LOG_INFO, "Connect output port 0x%04X", port);
+
+		PortHandler& outPort = GetOutputPort(port);
+
+		if (outPort.IsSet())
 		{
 			if (share)
 			{
-				LogPrintf(LOG_INFO, "Chaining output port 0x%04X", portNb);
-				it->second.Chain(PortHandler(this, outFunc));
+				LogPrintf(LOG_INFO, "Chaining output port 0x%04X", port);
+				outPort.Chain(PortHandler(this, outFunc));
 			}
 			else
 			{
@@ -79,35 +132,41 @@ namespace emul
 			}
 		}
 
-		m_outputPorts.emplace(portNb, PortHandler(this, outFunc));
+		outPort = PortHandler(this, outFunc);
 
 		return true;
 	}
 
-	bool PortConnector::DisconnectInput(WORD portNb)
+	bool PortConnector::DisconnectInput(WORD port)
 	{
-		if (m_inputPorts.erase(portNb))
+		PortHandler& inPort = GetInputPort(port);
+
+		if (inPort.IsSet())
 		{
-			LogPrintf(LOG_INFO, "Disconnect input port 0x%04X", portNb);
+			inPort = PortHandler();
+			LogPrintf(LOG_INFO, "Disconnect input port 0x%04X", port);
 			return true;
 		}
 		else
 		{
-			LogPrintf(LOG_INFO, "Disconnect input port 0x%04X (not connected)", portNb);
+			LogPrintf(LOG_INFO, "Disconnect input port 0x%04X (not connected)", port);
 			return false;
 		}
 	}
 
-	bool PortConnector::DisconnectOutput(WORD portNb)
+	bool PortConnector::DisconnectOutput(WORD port)
 	{
-		if (m_outputPorts.erase(portNb))
+		PortHandler& outPort = GetOutputPort(port);
+
+		if (outPort.IsSet())
 		{
-			LogPrintf(LOG_INFO, "Disconnect output port 0x%04X", portNb);
+			outPort = PortHandler();
+			LogPrintf(LOG_INFO, "Disconnect output port 0x%04X", port);
 			return true;
 		}
 		else
 		{
-			LogPrintf(LOG_INFO, "Disconnect output port 0x%04X (not connected)", portNb);
+			LogPrintf(LOG_INFO, "Disconnect output port 0x%04X (not connected)", port);
 			return false;
 		}
 	}
@@ -115,8 +174,9 @@ namespace emul
 	bool PortConnector::In(WORD port, BYTE& value)
 	{
 		m_currentPort = port;
-		auto it = m_inputPorts.find(port);
-		if (it == m_inputPorts.end())
+		PortHandler& inPort = GetInputPort(port);
+
+		if (!inPort.IsSet())
 		{
 #ifdef _DEBUG
 			LogPrintf(LOG_WARNING, "PortConnector::In: port 0x%04X not allocated", port);
@@ -125,15 +185,16 @@ namespace emul
 			return false;
 		}
 
-		value = it->second.In();
+		value = inPort.In();
 		return true;
 	}
 
 	bool PortConnector::Out(WORD port, BYTE value)
 	{
 		m_currentPort = port;
-		auto it = m_outputPorts.find(port);
-		if (it == m_outputPorts.end())
+		PortHandler& outPort = GetOutputPort(port);
+
+		if (!outPort.IsSet())
 		{
 #ifdef _DEBUG
 			LogPrintf(LOG_WARNING, "PortConnector::Out(0x%04X, 0x%02X): port not allocated", port, value);
@@ -141,7 +202,7 @@ namespace emul
 			return false;
 		}
 
-		it->second.Out(value);
+		outPort.Out(value);
 		return true;
 	}
 }

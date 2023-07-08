@@ -5,11 +5,24 @@
 
 namespace emul
 {
+	enum class PortConnectorMode {
+		UNDEFINED,
+		BYTE_LOW, // 256 entry port map, uses port LSB as key
+		BYTE_HI, // 256 entry port map, use port MSB as key
+		WORD // 65536 entry port map
+	};
+
+
+	typedef WORD(*GetPortFunc)(WORD);
+
+
 	class PortConnector : virtual public Logger
 	{
 	public:
 		PortConnector();
 		virtual ~PortConnector();
+
+		static void Init(PortConnectorMode mode);
 
 		static void Clear();
 
@@ -19,9 +32,12 @@ namespace emul
 		class PortHandler
 		{
 		public:
+			PortHandler() : owner(nullptr), inFunc(nullptr) {}
 			PortHandler(PortConnector* owner, OUTFunction func) : owner(owner), outFunc(func) {}
 			PortHandler(PortConnector* owner, INFunction func) : owner(owner), inFunc(func) {}
 			~PortHandler();
+
+			bool IsSet() const { return inFunc != nullptr; }
 
 			void Chain(PortHandler);
 
@@ -46,8 +62,8 @@ namespace emul
 			PortHandler* chained = nullptr;
 		};
 
-		using InputPortMap = std::unordered_map<WORD, PortHandler> ;
-		using OutputPortMap = std::unordered_map<WORD, PortHandler> ;
+		using InputPortMap = std::vector<PortHandler>;
+		using OutputPortMap = std::vector<PortHandler>;
 
 		bool In(WORD port, BYTE& value);
 		bool Out(WORD port, BYTE value);
@@ -62,9 +78,17 @@ namespace emul
 		static WORD GetCurrentPort() { return m_currentPort; }
 
 	protected:
+		static PortConnectorMode GetPortConnectorMode() { return m_portConnectorMode; }
+
+		inline PortHandler& GetInputPort(WORD port) const { return m_inputPorts[m_getPortFunc(port)]; }
+		inline PortHandler& GetOutputPort(WORD port) const { return m_outputPorts[m_getPortFunc(port)]; }
+	private:
 		static OutputPortMap m_outputPorts;
 		static InputPortMap m_inputPorts;
-	private:
+
+		static GetPortFunc m_getPortFunc;
+
 		static WORD m_currentPort;
+		static PortConnectorMode m_portConnectorMode;
 	};
 }
