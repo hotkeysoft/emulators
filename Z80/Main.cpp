@@ -19,6 +19,7 @@
 #include "ComputerZX80.h"
 #include "ComputerZXSpectrum.h"
 #include "ComputerColecoVision.h"
+#include "ComputerCPC464.h"
 
 #include <conio.h>
 #include <vector>
@@ -155,6 +156,10 @@ ComputerBase* CreateComputer(std::string arch)
 	else if (arch == "coleco" || arch == "colecovision")
 	{
 		computer = new emul::ComputerColecoVision();
+	}
+	else if (arch == "cpc464" || arch == "amstradcpc464")
+	{
+		computer = new emul::ComputerCPC464();
 	}
 	return computer;
 }

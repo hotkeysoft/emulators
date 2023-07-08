@@ -52,6 +52,7 @@
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="Computer8080.h" />
     <ClInclude Include="ComputerColecoVision.h" />
+    <ClInclude Include="ComputerCPC464.h" />
     <ClInclude Include="ComputerZ80.h" />
     <ClInclude Include="ComputerZX80.h" />
     <ClInclude Include="ComputerZXSpectrum.h" />
@@ -98,6 +99,7 @@
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="Computer8080.cpp" />
     <ClCompile Include="ComputerColecoVision.cpp" />
+    <ClCompile Include="ComputerCPC464.cpp" />
     <ClCompile Include="ComputerZ80.cpp" />
     <ClCompile Include="ComputerZX80.cpp" />
     <ClCompile Include="ComputerZXSpectrum.cpp" />

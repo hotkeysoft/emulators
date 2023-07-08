@@ -228,6 +228,9 @@
     <ClInclude Include="..\Common\Storage\CartridgeLoader.h">
       <Filter>Common\Storage</Filter>
     </ClInclude>
+    <ClInclude Include="ComputerCPC464.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -355,6 +358,9 @@
     </ClCompile>
     <ClCompile Include="Sound\DeviceSN76489.cpp">
       <Filter>Source Files\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerCPC464.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
