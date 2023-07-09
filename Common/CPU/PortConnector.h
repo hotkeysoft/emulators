@@ -72,6 +72,10 @@ namespace emul
 		bool Connect(WORD portNb, INFunction inFunc);
 		bool Connect(WORD portNb, OUTFunction outFunc, bool share = false);
 
+		// No support for 16 bit masks for now
+		bool Connect(BitMaskB portMask, INFunction inFunc);
+		bool Connect(BitMaskB portMask, OUTFunction outFunc, bool share = false);
+
 		bool DisconnectInput(WORD portNb);
 		bool DisconnectOutput(WORD portNb);
 

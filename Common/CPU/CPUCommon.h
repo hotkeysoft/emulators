@@ -21,6 +21,8 @@
 #define PRINTF_BYTE_TO_BIN_INT32(i) \
     PRINTF_BYTE_TO_BIN_INT16((i) >> 16), PRINTF_BYTE_TO_BIN_INT16(i)
 
+using hscommon::bitUtil::BitMask;
+
 namespace emul
 {
 	extern size_t g_ticks;
@@ -149,4 +151,6 @@ namespace emul
 		a ^= b;
 	}
 
+	typedef BitMask<BYTE> BitMaskB;
+	typedef BitMask<WORD> BitMaskW;
 }

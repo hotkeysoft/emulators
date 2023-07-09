@@ -137,6 +137,50 @@ namespace emul
 		return true;
 	}
 
+	bool PortConnector::Connect(BitMaskB portMask, INFunction inFunc)
+	{
+		if (!IsInit())
+		{
+			LogPrintf(LOG_ERROR, "PortConnector: Not Initialized");
+			throw std::exception("PortConnector: Not Initialized");
+		}
+
+		LogPrintf(LOG_INFO, "Connect input ports, mask=[%s]", portMask.ToString().c_str());
+
+		bool ok = true;
+		for (WORD i = 0; i < 256; ++i)
+		{
+			if (portMask.IsMatch((BYTE)i) && !Connect(i, inFunc))
+			{
+				ok = false;
+			}
+		}
+
+		return ok;
+	}
+
+	bool PortConnector::Connect(BitMaskB portMask, OUTFunction outFunc, bool share)
+	{
+		if (!IsInit())
+		{
+			LogPrintf(LOG_ERROR, "PortConnector: Not Initialized");
+			throw std::exception("PortConnector: Not Initialized");
+		}
+
+		LogPrintf(LOG_INFO, "Connect output ports, mask=[%s]", portMask.ToString().c_str());
+
+		bool ok = true;
+		for (WORD i = 0; i < 256; ++i)
+		{
+			if (portMask.IsMatch((BYTE)i) && !Connect(i, outFunc, share))
+			{
+				ok = false;
+			}
+		}
+
+		return ok;
+	}
+
 	bool PortConnector::DisconnectInput(WORD port)
 	{
 		PortHandler& inPort = GetInputPortDirect(port);
