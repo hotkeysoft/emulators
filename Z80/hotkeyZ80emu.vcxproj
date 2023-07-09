@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\BitMask.h" />
     <ClInclude Include="..\Common\Computer\ComputerBase.h" />
     <ClInclude Include="..\Common\Config.h" />
     <ClInclude Include="..\Common\CPU\CPU.h" />
@@ -70,6 +71,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Video\TMS9918.h" />
     <ClInclude Include="Video\VideoColecoVision.h" />
+    <ClInclude Include="Video\VideoCPC464.h" />
     <ClInclude Include="Video\VideoZX80.h" />
     <ClInclude Include="Video\VideoZXSpectrum.h" />
   </ItemGroup>
@@ -120,6 +122,7 @@
     </ClCompile>
     <ClCompile Include="Video\TMS9918.cpp" />
     <ClCompile Include="Video\VideoColecoVision.cpp" />
+    <ClCompile Include="Video\VideoCPC464.cpp" />
     <ClCompile Include="Video\VideoZX80.cpp" />
     <ClCompile Include="Video\VideoZXSpectrum.cpp" />
   </ItemGroup>

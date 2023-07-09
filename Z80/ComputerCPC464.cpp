@@ -4,7 +4,7 @@
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPUZ80.h"
-#include "Video/VideoZXSpectrum.h"
+#include "Video/VideoCPC464.h"
 #include <Sound/Sound.h>
 
 using cfg::CONFIG;
@@ -23,7 +23,6 @@ namespace emul
 	const size_t RTC_CLK = 50; // 50Hz
 	const size_t RTC_RATE = CPU_CLK / RTC_CLK;
 
-
 	ComputerCPC464::ComputerCPC464() :
 		Logger("ZXSpectrum"),
 		ComputerBase(m_memory),
@@ -35,6 +34,7 @@ namespace emul
 
 	void ComputerCPC464::Init(WORD baseRAM)
 	{
+		PortConnector::Init(PortConnectorMode::BYTE_HI);
 		ComputerBase::Init(CPUID_Z80, baseRAM);
 
 		EnableLog(LOG_DEBUG);
@@ -52,6 +52,9 @@ namespace emul
 		// Put high ROM on top of RAM
 		m_romHigh.LoadFromFile("data/z80/amstrad.cpc464.basic.bin");
 		m_memory.Allocate(&m_romHigh, 0xC000);
+
+		// Upper ROM Bank Number, not present on 464, shut it down
+		Connect(0xDF, static_cast<PortConnector::OUTFunction>(&ComputerCPC464::NullWrite));
 
 		InitInputs(CPU_CLK, RTC_CLK);
 		GetInputs().InitKeyboard(&m_keyboard);
@@ -73,7 +76,7 @@ namespace emul
 	// TODO
 	void ComputerCPC464::InitVideo()
 	{
-		video::VideoZXSpectrum* video = new video::VideoZXSpectrum();
+		video::VideoCPC464* video = new video::VideoCPC464();
 
 		m_video = video;
 		m_video->Init(&m_memory, nullptr);
