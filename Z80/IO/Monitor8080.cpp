@@ -342,7 +342,7 @@ namespace emul
 
 		ADDRESS address = m_cpu->GetCurrentAddress();
 
-		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w - 1, 4, codePos.y - 1);
+		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w, 4, codePos.y - 1);
 
 		for (int i = 0; i < 8; ++i)
 		{
