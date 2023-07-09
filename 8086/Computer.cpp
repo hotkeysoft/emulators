@@ -110,6 +110,7 @@ namespace emul
 			LogPrintf(LOG_WARNING, "Unknown cpu override [%d]", cpuOverride);
 		}
 
+		PortConnector::Init(PortConnectorMode::WORD);
 		ComputerBase::Init(cpuid, baseram);
 	}
 

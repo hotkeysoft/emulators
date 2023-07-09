@@ -24,6 +24,7 @@ namespace emul
 
 	void ComputerZ80::Init(WORD baseRAM)
 	{
+		PortConnector::Init(PortConnectorMode::BYTE_LOW);
 		ComputerBase::Init(CPUID_Z80, baseRAM);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));

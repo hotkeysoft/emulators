@@ -41,6 +41,7 @@ namespace emul
 
 	void ComputerColecoVision::Init(WORD baseRAM)
 	{
+		PortConnector::Init(PortConnectorMode::BYTE_LOW);
 		ComputerBase::Init(CPUID_Z80, RAM_SIZE); // RAM is fixed
 
 		InitJoystick();

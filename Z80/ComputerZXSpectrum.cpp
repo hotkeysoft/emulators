@@ -34,6 +34,7 @@ namespace emul
 
 	void ComputerZXSpectrum::Init(WORD baseRAM)
 	{
+		PortConnector::Init(PortConnectorMode::BYTE_LOW);
 		ComputerBase::Init(CPUID_Z80, baseRAM);
 
 		EnableLog(LOG_DEBUG);
@@ -132,7 +133,7 @@ namespace emul
 
 	BYTE ComputerZXSpectrum::ReadKeyboard()
 	{
-		BYTE row = GetCPU().GetIOHighAddress();
+		BYTE row = GetHByte(GetCurrentPort());
 		LogPrintf(LOG_DEBUG, "ReadKeyboard, row = %02X", row);
 
 		BYTE data = ~m_keyboard.GetRowData(row);

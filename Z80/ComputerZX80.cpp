@@ -20,6 +20,7 @@ namespace emul
 
 	void ComputerZX80::Init(WORD baseRAM)
 	{
+		PortConnector::Init(PortConnectorMode::BYTE_LOW);
 		ComputerBase::Init(CPUID_Z80, baseRAM);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
@@ -132,7 +133,7 @@ namespace emul
 
 	BYTE ComputerZX80::ReadKeyboard()
 	{
-		BYTE row = GetCPU().GetIOHighAddress();
+		BYTE row = GetHByte(GetCurrentPort());
 		BYTE data = ~m_keyboard.GetRowData(row);
 
 		GetVideo().VSync(true);
