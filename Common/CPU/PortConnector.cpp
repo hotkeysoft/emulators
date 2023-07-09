@@ -92,7 +92,7 @@ namespace emul
 
 		LogPrintf(LOG_INFO, "Connect input port 0x%04X", port);
 
-		PortHandler& inPort = GetInputPort(port);
+		PortHandler& inPort = GetInputPortDirect(port);
 
 		if (inPort.IsSet())
 		{
@@ -115,7 +115,7 @@ namespace emul
 
 		LogPrintf(LOG_INFO, "Connect output port 0x%04X", port);
 
-		PortHandler& outPort = GetOutputPort(port);
+		PortHandler& outPort = GetOutputPortDirect(port);
 
 		if (outPort.IsSet())
 		{
@@ -139,7 +139,7 @@ namespace emul
 
 	bool PortConnector::DisconnectInput(WORD port)
 	{
-		PortHandler& inPort = GetInputPort(port);
+		PortHandler& inPort = GetInputPortDirect(port);
 
 		if (inPort.IsSet())
 		{
@@ -156,7 +156,7 @@ namespace emul
 
 	bool PortConnector::DisconnectOutput(WORD port)
 	{
-		PortHandler& outPort = GetOutputPort(port);
+		PortHandler& outPort = GetOutputPortDirect(port);
 
 		if (outPort.IsSet())
 		{

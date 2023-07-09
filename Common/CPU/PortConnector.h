@@ -81,8 +81,14 @@ namespace emul
 		static bool IsInit() { return m_outputPorts.size() && m_inputPorts.size() && m_portConnectorMode != PortConnectorMode::UNDEFINED; }
 		static PortConnectorMode GetPortConnectorMode() { return m_portConnectorMode; }
 
+		// Connect/Disconnect are called internally and receive proper byte value in byte modes
+		inline PortHandler& GetInputPortDirect(WORD port) const { return m_inputPorts[port]; }
+		inline PortHandler& GetOutputPortDirect(WORD port) const { return m_outputPorts[port]; }
+
+		// In/Out from CPU receives full word that may need to be trimmed for low/hi byte modes
 		inline PortHandler& GetInputPort(WORD port) const { return m_inputPorts[m_getPortFunc(port)]; }
 		inline PortHandler& GetOutputPort(WORD port) const { return m_outputPorts[m_getPortFunc(port)]; }
+
 	private:
 		static OutputPortMap m_outputPorts;
 		static InputPortMap m_inputPorts;
