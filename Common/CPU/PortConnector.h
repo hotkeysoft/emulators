@@ -78,6 +78,7 @@ namespace emul
 		static WORD GetCurrentPort() { return m_currentPort; }
 
 	protected:
+		static bool IsInit() { return m_outputPorts.size() && m_inputPorts.size() && m_portConnectorMode != PortConnectorMode::UNDEFINED; }
 		static PortConnectorMode GetPortConnectorMode() { return m_portConnectorMode; }
 
 		inline PortHandler& GetInputPort(WORD port) const { return m_inputPorts[m_getPortFunc(port)]; }

@@ -47,7 +47,6 @@ namespace emul
 
 	void PortConnector::Init(PortConnectorMode mode)
 	{
-		Clear();
 		m_portConnectorMode = mode;
 
 		switch (mode)
@@ -73,19 +72,20 @@ namespace emul
 		default:
 			throw std::exception("PortConnector::Init(): Invalid mode");
 		}
+
+		Clear();
 	}
 
 	void PortConnector::Clear()
 	{
-		m_inputPorts.clear();
-		m_outputPorts.clear();
+		std::fill(m_inputPorts.begin(), m_inputPorts.end(), PortHandler());
+		std::fill(m_outputPorts.begin(), m_outputPorts.end(), PortHandler());
 	}
 
 	bool PortConnector::Connect(WORD port, INFunction inFunc)
 	{
-		if (GetPortConnectorMode() == PortConnectorMode::UNDEFINED)
+		if (!IsInit())
 		{
-
 			LogPrintf(LOG_ERROR, "PortConnector: Not Initialized");
 			throw std::exception("PortConnector: Not Initialized");
 		}
@@ -107,9 +107,8 @@ namespace emul
 
 	bool PortConnector::Connect(WORD port, OUTFunction outFunc, bool share)
 	{
-		if (GetPortConnectorMode() == PortConnectorMode::UNDEFINED)
+		if (!IsInit())
 		{
-
 			LogPrintf(LOG_ERROR, "PortConnector: Not Initialized");
 			throw std::exception("PortConnector: Not Initialized");
 		}
@@ -124,6 +123,7 @@ namespace emul
 			{
 				LogPrintf(LOG_INFO, "Chaining output port 0x%04X", port);
 				outPort.Chain(PortHandler(this, outFunc));
+				return true;
 			}
 			else
 			{
