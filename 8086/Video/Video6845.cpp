@@ -10,7 +10,6 @@ using crtc_6845::CRTCData;
 
 namespace video
 {
-
 	Video6845::Video6845(WORD baseAddress, BYTE charWidth) :
 		Logger("Video6845"),
 		m_baseAddress(baseAddress),
@@ -38,8 +37,8 @@ namespace video
 		m_crtc.SetEventHandler(this);
 
 		Video::Init(memory, charROM, forceMono);
-	}	
-	
+	}
+
 	SDL_Rect Video6845::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
 		const struct CRTCData& data = m_crtc.GetData();
@@ -78,7 +77,7 @@ namespace video
 	{
 		BeginFrame();
 	}
-	
+
 	void Video6845::OnEndOfRow()
 	{
 		NewLine();

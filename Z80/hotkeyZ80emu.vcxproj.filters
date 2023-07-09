@@ -237,6 +237,12 @@
     <ClInclude Include="..\Common\BitMask.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Video\CRTController6845.h">
+      <Filter>Common\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\CRTControllerCPC464.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -370,6 +376,9 @@
     </ClCompile>
     <ClCompile Include="Video\VideoCPC464.cpp">
       <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Video\CRTController6845.cpp">
+      <Filter>Common\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

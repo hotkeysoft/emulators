@@ -1,43 +1,50 @@
 #pragma once
 #include <Video/Video.h>
+#include "CRTControllerCPC464.h"
 
 namespace video
 {
-    class VideoCPC464 : public Video
+    class VideoCPC464 : public Video, public crtc_6845::EventHandler
     {
     public:
         VideoCPC464();
 
+        VideoCPC464(const VideoCPC464&) = delete;
+        VideoCPC464& operator=(const VideoCPC464&) = delete;
+        VideoCPC464(VideoCPC464&&) = delete;
+        VideoCPC464& operator=(VideoCPC464&&) = delete;
+
+        virtual const std::string GetID() const override { return "cpc464"; }
+
         virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);
 
-        virtual const std::string GetID() const override { return "colecovision"; }
-        virtual void Tick() override
-        {
-            //m_vdp.Tick();
+        virtual void Reset() override;
+        virtual void Tick() override;
 
-            //// VDP clock is 1.5x cpu clk
-            //static bool half = false;
-            //if (half) m_vdp.Tick();
-            //half = !half;
-        }
+        virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
-        virtual void EnableLog(SEVERITY severity) override;
+        // crtc::EventHandler
+        virtual void OnRenderFrame() override;
+        virtual void OnNewFrame() override;
+        virtual void OnEndOfRow() override;
 
-        virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
-
-        virtual bool IsEnabled() const override { return true; }
-
-        virtual bool IsVSync() const override { return false; }
-        virtual bool IsHSync() const override { return false; }
-        virtual bool IsDisplayArea() const override { return false; }
-
-        bool IsInterrupt() const { return false; }
-
-        // emul::Serializable
         virtual void Serialize(json& to) override;
         virtual void Deserialize(const json& from) override;
 
+        virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
+
+        virtual bool IsEnabled() const { return true; }
+
+        virtual bool IsVSync() const { return m_crtc.IsVSync(); }
+        virtual bool IsHSync() const { return m_crtc.IsHSync(); }
+        virtual bool IsDisplayArea() const { return m_crtc.IsDisplayArea(); }
+
     protected:
         void Write(BYTE value);
+
+        //bool IsCursor() const;
+
+    private:
+        CRTControllerCPC464 m_crtc;
     };
 }
