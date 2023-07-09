@@ -184,6 +184,7 @@
     <ClCompile Include="..\Common\UI\SnapshotInfo.cpp" />
     <ClCompile Include="..\Common\UI\SnapshotWidget.cpp" />
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
+    <ClCompile Include="..\Common\Video\CRTController6845.cpp" />
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="ComputerAT.cpp" />
     <ClCompile Include="CPU\CPU80186.cpp" />
@@ -236,7 +237,6 @@
     <ClCompile Include="UI\OverlayXT.cpp" />
     <ClCompile Include="Video\AttributeControllerEGA.cpp" />
     <ClCompile Include="Video\AttributeControllerVGA.cpp" />
-    <ClCompile Include="Video\CRTController6845.cpp" />
     <ClCompile Include="Video\CRTControllerEGA.cpp" />
     <ClCompile Include="Video\CRTControllerVGA.cpp" />
     <ClCompile Include="Video\DigitalToAnalogConverterVGA.cpp" />
@@ -280,6 +280,7 @@
     <ClInclude Include="..\Common\UI\SnapshotInfo.h" />
     <ClInclude Include="..\Common\UI\SnapshotWidget.h" />
     <ClInclude Include="..\Common\UI\TimeFormatter.h" />
+    <ClInclude Include="..\Common\Video\CRTController6845.h" />
     <ClInclude Include="..\Common\Video\Video.h" />
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="ComputerAT.h" />
@@ -330,7 +331,6 @@
     <ClInclude Include="UI\OverlayXT.h" />
     <ClInclude Include="Video\AttributeControllerEGA.h" />
     <ClInclude Include="Video\AttributeControllerVGA.h" />
-    <ClInclude Include="Video\CRTController6845.h" />
     <ClInclude Include="Video\CRTControllerEGA.h" />
     <ClInclude Include="Video\CRTControllerVGA.h" />
     <ClInclude Include="Video\DigitalToAnalogConverterVGA.h" />

@@ -2,7 +2,7 @@
 
 #include <CPU/CPUCommon.h>
 #include <CPU/Memory.h>
-#include "CRTController6845.h"
+#include <Video/CRTController6845.h>
 #include <Video/Video.h>
 
 using emul::WORD;

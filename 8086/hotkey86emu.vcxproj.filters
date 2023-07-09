@@ -201,9 +201,6 @@
     <ClCompile Include="Video\VideoEGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="Video\CRTController6845.cpp">
-      <Filter>Source Files\Video</Filter>
-    </ClCompile>
     <ClCompile Include="Video\CRTControllerEGA.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
@@ -339,6 +336,9 @@
     <ClCompile Include="..\Common\FileUtil.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Video\CRTController6845.cpp">
+      <Filter>Common\Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Logger.h">
@@ -456,9 +456,6 @@
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="Video\VideoEGA.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="Video\CRTController6845.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="Video\CRTControllerEGA.h">
@@ -616,6 +613,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\FileUtil.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Video\CRTController6845.h">
+      <Filter>Common\Video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
