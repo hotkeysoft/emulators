@@ -61,7 +61,7 @@ namespace emul
 		memset(m_data, filler, m_size);
 	}
 
-	BYTE MemoryBlock::read(ADDRESS offset)
+	BYTE MemoryBlock::read(ADDRESS offset) const
 	{
 		assert(offset < m_size);
 		return m_data[offset];

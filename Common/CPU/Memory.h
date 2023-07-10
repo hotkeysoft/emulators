@@ -10,8 +10,17 @@ namespace emul
 {
 	struct MemorySlot
 	{
-		MemoryBlockBase* block = nullptr;
-		ADDRESS base = 0;
+		MemoryBlockBase* blockR = nullptr;
+		MemoryBlockBase* blockW = nullptr;
+		ADDRESS baseR = 0;
+		ADDRESS baseW = 0;
+	};
+
+	enum class AllocateMode
+	{
+		READ,
+		WRITE,
+		READ_WRITE
 	};
 
 	class Memory : public Logger, public Serializable
@@ -25,7 +34,14 @@ namespace emul
 
 		void Init(size_t addressBits);
 
-		bool Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len = (DWORD)-1);
+		bool Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len = (DWORD)-1, AllocateMode mode = AllocateMode::READ_WRITE);
+
+		// Restore an area of memory so that reads and writes go to the same block
+		// AllocateMode::READ: Restore READ block to match existing WRITE block
+		// AllocateMode::WRITE: Restore WRITE block to match existing READ block
+		// AllocateMode::READ_WRITE: Invalid
+		bool Restore(ADDRESS base, DWORD len, AllocateMode mode);
+
 		bool Free(MemoryBlockBase* block);
 
 		bool MapWindow(ADDRESS source, ADDRESS window, DWORD len);
@@ -57,7 +73,6 @@ namespace emul
 		MemoryBlockBase* FindBlock(const char* id) const;
 
 		using MemoryBlocks = std::vector<std::tuple<ADDRESS, MemoryBlock>>;
-		void AddROMBlock(MemoryBlocks& out, ADDRESS addr, std::vector<BYTE>& buffer) const;
 
 	private:
 		size_t m_addressBits = 0;

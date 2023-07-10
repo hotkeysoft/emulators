@@ -28,7 +28,7 @@ namespace emul
 
 	}
 
-	BYTE IOBlock::read(ADDRESS offset)
+	BYTE IOBlock::read(ADDRESS offset) const
 	{
 		assert(offset < m_size);
 		return m_readHandlers[offset]->Read();

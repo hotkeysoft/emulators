@@ -95,7 +95,7 @@ namespace memory_vga
 		return true;
 	}
 
-	BYTE MemoryVGA::read(ADDRESS offset)
+	BYTE MemoryVGA::read(ADDRESS offset) const
 	{
 		if (!m_enable)
 			return 0xFF;

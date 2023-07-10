@@ -20,7 +20,7 @@ namespace emul
 
 		virtual void Clear(BYTE filler = 0) {};
 
-		virtual BYTE read(ADDRESS offset) = 0;
+		virtual BYTE read(ADDRESS offset) const = 0;
 		virtual void write(ADDRESS offset, BYTE data) = 0;
 
 		static void SetBlockGranularity(WORD blockGranularity);

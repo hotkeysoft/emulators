@@ -13,7 +13,7 @@ namespace emul
 
 		virtual ~IOBlock();
 
-		virtual BYTE read(ADDRESS offset) override;
+		virtual BYTE read(ADDRESS offset) const override;
 		virtual void write(ADDRESS offset, BYTE data) override;
 
 		// mask and maskBits allows partial address decoding

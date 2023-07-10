@@ -110,7 +110,7 @@ namespace memory_ega
 		return true;
 	}
 
-	BYTE MemoryEGA::read(ADDRESS offset)
+	BYTE MemoryEGA::read(ADDRESS offset) const
 	{
 		if (!m_enable)
 			return 0xFF;

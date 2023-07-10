@@ -31,7 +31,7 @@ namespace memory_ega
 
 		void Enable(bool enable) { m_enable = enable; }
 
-		virtual BYTE read(emul::ADDRESS offset) override;
+		virtual BYTE read(emul::ADDRESS offset) const override;
 		virtual void write(emul::ADDRESS offset, BYTE data) override;
 
 		// Direct access to ram for video card drawing
@@ -61,7 +61,7 @@ namespace memory_ega
 		const emul::ADDRESS m_planeAddressMask;
 
 		MemoryBlock m_planes[4];
-		std::array<BYTE, 4> m_dataLatches = { 0, 0, 0, 0 };
+		mutable std::array<BYTE, 4> m_dataLatches = { 0, 0, 0, 0 };
 
 		const BYTE* m_charMapA = nullptr;
 		const BYTE* m_charMapB = nullptr;

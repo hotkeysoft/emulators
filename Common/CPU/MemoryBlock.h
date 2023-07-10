@@ -31,7 +31,7 @@ namespace emul
 		virtual bool Dump(const char* outFile) const { return Dump(0, m_size, outFile); }
 		virtual bool Dump(ADDRESS offset, DWORD len, const char* outFile) const;
 
-		virtual BYTE read(ADDRESS offset) override;
+		virtual BYTE read(ADDRESS offset) const override;
 		virtual void write(ADDRESS offset, BYTE data) override;
 
 		const BYTE* getPtr() const { return m_data; }

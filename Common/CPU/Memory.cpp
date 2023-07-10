@@ -39,7 +39,7 @@ namespace emul
 		}
 	}
 
-	bool Memory::Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len)
+	bool Memory::Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len, AllocateMode mode)
 	{
 		assert(block);
 
@@ -77,16 +77,100 @@ namespace emul
 		for (size_t i = 0; i < nbSlots; ++i)
 		{
 			MemorySlot& slot = m_memory[minSlot + i];
-			if (slot.block)
+
+			switch (mode)
 			{
-				LogPrintf(LOG_WARNING, "Slot [%x] already allocated to [%s], replacing with block [%s]", i,
-					slot.block->GetId().c_str(),
-					block->GetId().c_str());
+			case AllocateMode::READ:
+				if (slot.blockR)
+				{
+					LogPrintf(LOG_INFO, "Slot [%x] already allocated for READ to [%s], replacing with block [%s]", i,
+						slot.blockR->GetId().c_str(),
+						block->GetId().c_str());
+				}
+				slot.blockR = block;
+				slot.baseR = base;
+				break;
+			case AllocateMode::WRITE:
+				if (slot.blockW)
+				{
+					LogPrintf(LOG_INFO, "Slot [%x] already allocated for WRITE to [%s], replacing with block [%s]", i,
+						slot.blockW->GetId().c_str(),
+						block->GetId().c_str());
+				}
+				slot.blockW = block;
+				slot.baseW = base;
+				break;
+			case AllocateMode::READ_WRITE:
+				if (slot.blockR || slot.blockW)
+				{
+					// Lazy, get either one
+					const emul::MemoryBlockBase* oldBlock = slot.blockW ? slot.blockW : slot.blockR;
+					LogPrintf(LOG_INFO, "Slot [%x] already allocated for READ|WRITE to [%s], replacing with block [%s]", i,
+						oldBlock->GetId().c_str(),
+						block->GetId().c_str());
+				}
+				slot.blockR = block;
+				slot.blockW = block;
+				slot.baseR = base;
+				slot.baseW = base;
+				break;
+			default:
+				throw std::exception("not possible");
 			}
-			m_memory[minSlot + i] = {block, base};
 		}
 
 		m_blocks.insert(block);
+		return true;
+	}
+
+	bool Memory::Restore(ADDRESS base, DWORD len, AllocateMode mode)
+	{
+		if (m_addressBits == 0)
+		{
+			LogPrintf(LOG_ERROR, "Not Initialized");
+			return false;
+		}
+
+		if ((mode != AllocateMode::READ) && (mode != AllocateMode::WRITE))
+		{
+			LogPrintf(LOG_ERROR, "Invalid AllocateMode (only READ|WRITE allowed)");
+			return false;
+		}
+		LogPrintf(LOG_INFO, "Restore [%s] @ %X, size = %d bytes", (mode == AllocateMode::READ) ? "READ" : "WRITE", base, len);
+
+		if (len % m_blockGranularity != 0)
+		{
+			LogPrintf(LOG_ERROR, "Block size [%d] is not a multiple of [%d]", len, m_blockGranularity);
+			return false;
+		}
+
+		if (!CheckAddressRange(base, m_addressBits) ||
+			!CheckAddressRange(base + (DWORD)len - 1, m_addressBits))
+		{
+			LogPrintf(LOG_ERROR, "Address out of range: block at %X, size = %d bytes", base, len);
+			LogPrintf(LOG_ERROR, "CPU Max address: %X", GetMaxAddress(m_addressBits));
+			return false;
+		}
+
+		int nbSlots = len / m_blockGranularity;
+		int minSlot = base / m_blockGranularity;
+
+		for (size_t i = 0; i < nbSlots; ++i)
+		{
+			MemorySlot& slot = m_memory[minSlot + i];
+
+			if (mode == AllocateMode::READ)
+			{
+				slot.blockR = slot.blockW;
+				slot.baseR = slot.baseW;
+			}
+			else
+			{
+				slot.blockW = slot.blockR;
+				slot.baseW = slot.baseR;
+			}
+		}
+
 		return true;
 	}
 
@@ -97,10 +181,17 @@ namespace emul
 		for (size_t i = 0; i < m_memory.size(); ++i)
 		{
 			MemorySlot& slot = m_memory[i];
-			MemoryBlockBase* oldBlock = slot.block;
-			if (oldBlock == block)
+
+			if (block == slot.blockR)
 			{
-				slot = { nullptr, 0 };
+				slot.blockR = nullptr;
+				slot.baseR = 0;
+			}
+
+			if (block == slot.blockW)
+			{
+				slot.blockW = nullptr;
+				slot.baseW = 0;
 			}
 		}
 
@@ -168,7 +259,8 @@ namespace emul
 		for (size_t i = 0; i < nbSlots; ++i)
 		{
 			MemorySlot slot = m_memory[sourceBaseSlot + i];
-			slot.base += (window - source);
+			slot.baseR += (window - source);
+			slot.baseW += (window - source);
 
 			m_memory[windowBaseSlot + i] = slot;
 		}
@@ -179,7 +271,7 @@ namespace emul
 	bool Memory::LoadBinary(const char* file, ADDRESS baseAddress)
 	{
 		const MemorySlot& slot = FindBlock(baseAddress);
-		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
+		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.blockR);
 
 		if (!block)
 		{
@@ -187,18 +279,18 @@ namespace emul
 			LogPrintf(LOG_ERROR, "LoadBinary: No memory allocated at address %04X", baseAddress);
 			return false;
 		}
-		return block->LoadFromFile(file, baseAddress - slot.base);
+		return block->LoadFromFile(file, baseAddress - slot.baseR);
 	}
 
 	BYTE Memory::Read8(ADDRESS address) const
 	{
 		address &= m_addressMask;
 		const MemorySlot& slot = FindBlock(address);
-		MemoryBlockBase* block = slot.block;
+		const MemoryBlockBase* block = slot.blockR;
 
 		if (block)
 		{
-			return block->read(address - slot.base);
+			return block->read(address - slot.baseR);
 		}
 		else
 		{
@@ -218,11 +310,11 @@ namespace emul
 	{
 		address &= m_addressMask;
 		const MemorySlot& slot = FindBlock(address);
-		MemoryBlockBase* block = slot.block;
+		MemoryBlockBase* block = slot.blockW;
 
 		if (block)
 		{
-			block->write(address - slot.base, value);
+			block->write(address - slot.baseW, value);
 		}
 		else
 		{
@@ -239,11 +331,11 @@ namespace emul
 	void Memory::Dump(ADDRESS start, DWORD len, const char* outFile)
 	{
 		const MemorySlot& slot = FindBlock(start);
-		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.block);
+		MemoryBlock* block = dynamic_cast<MemoryBlock*>(slot.blockW);
 
 		if (block)
 		{
-			block->Dump(start - slot.base, len, outFile);
+			block->Dump(start - slot.baseW, len, outFile);
 		}
 		else
 		{
@@ -265,11 +357,11 @@ namespace emul
 
 	bool Memory::FillRAM(ADDRESS baseAddress, const MemoryBlock::RawBlock& data)
 	{
-		WORD bytesToLoad = data.size();
+		WORD bytesToLoad = (WORD)data.size();
 
 		// minimum check: check if baseAddress hits RAM
 		const MemorySlot& slot = FindBlock(baseAddress);
-		MemoryBlock* targetBlock = dynamic_cast<MemoryBlock*>(slot.block);
+		MemoryBlock* targetBlock = dynamic_cast<MemoryBlock*>(slot.blockW);
 		if (!targetBlock)
 		{
 			LogPrintf(LOG_ERROR, "FillRAM: No memory allocated at load address: %04X", baseAddress);
