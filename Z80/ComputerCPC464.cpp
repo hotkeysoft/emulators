@@ -51,7 +51,7 @@ namespace emul
 		// TODO
 		// Put high ROM on top of RAM
 		m_romHigh.LoadFromFile("data/z80/amstrad.cpc464.basic.bin");
-		m_memory.Allocate(&m_romHigh, 0xC000);
+//		m_memory.Allocate(&m_romHigh, 0xC000);
 
 		// Upper ROM Bank Number, not present on 464, shut it down
 		Connect(0xDF, static_cast<PortConnector::OUTFunction>(&ComputerCPC464::NullWrite));
@@ -73,12 +73,13 @@ namespace emul
 		}
 	}
 
-	// TODO
 	void ComputerCPC464::InitVideo()
 	{
-		video::VideoCPC464* video = new video::VideoCPC464();
-
+		// Gate array always read directly from base ram block
+		video::VideoCPC464* video = new video::VideoCPC464(&m_baseRAM);
 		m_video = video;
+
+		m_video->EnableLog(CONFIG().GetLogLevel("video"));
 		m_video->Init(&m_memory, nullptr);
 	}
 
