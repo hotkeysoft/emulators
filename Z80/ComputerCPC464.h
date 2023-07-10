@@ -5,11 +5,13 @@
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardZX80.h"
 
+namespace vid464 = video::cpc464;
+
 namespace emul
 {
 	class CPUZ80;
 
-	class ComputerCPC464 : public ComputerBase
+	class ComputerCPC464 : public ComputerBase, public vid464::EventHandler
 	{
 	public:
 		ComputerCPC464();
@@ -22,7 +24,11 @@ namespace emul
 		virtual bool Step() override;
 
 		CPUZ80& GetCPU() const { return *((CPUZ80*)m_cpu); }
-		video::VideoCPC464& GetVideo() { return *((video::VideoCPC464*)m_video); }
+		vid464::VideoCPC464& GetVideo() { return *((vid464::VideoCPC464*)m_video); }
+
+		// vid464::EventHandler
+		virtual void OnLowROMChange(bool load) override;
+		virtual void OnHighROMChange(bool load) override;
 
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
@@ -31,9 +37,15 @@ namespace emul
 
 		void NullWrite(BYTE) {}
 
+		void LoadROM(bool load, emul::MemoryBlock& rom, ADDRESS base);
+
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_romLow;
 		emul::MemoryBlock m_romHigh;
+
+		static const ADDRESS ROM_LOW = 0;
+		static const ADDRESS ROM_HIGH = 0xC000;
+		static const ADDRESS ROM_SIZE = 0x4000;
 
 		kbd::DeviceKeyboardZX80 m_keyboard;
 	};

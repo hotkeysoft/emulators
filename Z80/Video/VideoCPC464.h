@@ -2,8 +2,16 @@
 #include <Video/Video.h>
 #include "CRTControllerCPC464.h"
 
-namespace video
+namespace video::cpc464
 {
+    class EventHandler
+    {
+    public:
+        virtual void OnInterruptChange(bool enabled) {}
+        virtual void OnLowROMChange(bool load) {}
+        virtual void OnHighROMChange(bool load) {}
+    };
+
     class VideoCPC464 : public Video, public crtc_6845::EventHandler
     {
     public:
@@ -17,6 +25,8 @@ namespace video
         virtual const std::string GetID() const override { return "cpc464"; }
 
         virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);
+
+        void SetEventHandler(video::cpc464::EventHandler* handler) { m_events = handler; }
 
         virtual void Reset() override;
         virtual void Tick() override;
@@ -45,7 +55,7 @@ namespace video
         ADDRESS GetBaseAddress() { return m_baseAddress + (((m_crtc.GetData().rowAddress * 0x800) + (m_crtc.GetMemoryAddress10() * 2u)) & 0xFFFF); }
 
         uint32_t GetColor(BYTE index) const { return m_palette[m_pens[index]]; }
-        virtual uint32_t GetBackgroundColor() const override { return GetColor(16); }
+        virtual uint32_t GetBackgroundColor() const override { return GetColor(PEN_BORDER); }
 
         void Draw160x200x16() {};
         void Draw320x200x4();
@@ -67,8 +77,10 @@ namespace video
         ADDRESS m_baseAddress = 0xC000;
 
         // [0..15]=pens, [16]=border
+        static const int PEN_COUNT = 16;
+        static const int PEN_BORDER = PEN_COUNT;
+        std::array<int, PEN_COUNT + 1> m_pens = { 0 };
         int m_currPen = 0;
-        std::array<int, 17> m_pens = { 0 };
 
         const uint32_t m_palette[32] = {
             0xFF6E7D6B, 0xFF6E7B6D, 0xFF00F36B, 0xFFF3F36D,
@@ -80,7 +92,13 @@ namespace video
             0xFF690268, 0xFF71F36B, 0xFF71F504, 0xFF71F3F4,
             0xFF6C0201, 0xFF6C02F2, 0xFF6E7B01, 0xFF6E7BF6 };
 
+        bool m_interruptEnabled = false;
+        bool m_romHighEnabled = false;
+        bool m_romLowEnabled = true;
+
     private:
+        video::cpc464::EventHandler* m_events = nullptr;
+
         CRTControllerCPC464 m_crtc;
     };
 }

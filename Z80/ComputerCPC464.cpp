@@ -27,8 +27,8 @@ namespace emul
 		Logger("ZXSpectrum"),
 		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM),
-		m_romLow("ROML", 0x4000, emul::MemoryType::ROM),
-		m_romHigh("ROMH", 0x4000, emul::MemoryType::ROM)
+		m_romLow("ROML", ROM_SIZE, emul::MemoryType::ROM),
+		m_romHigh("ROMH", ROM_SIZE, emul::MemoryType::ROM)
 	{
 	}
 
@@ -43,15 +43,12 @@ namespace emul
 
 		m_memory.Allocate(&m_baseRAM, 0);
 
-		// TODO
-		// Put low ROM on top of RAM
 		m_romLow.LoadFromFile("data/z80/amstrad.cpc464.os.bin");
-		m_memory.Allocate(&m_romLow, 0);
-
-		// TODO
-		// Put high ROM on top of RAM
 		m_romHigh.LoadFromFile("data/z80/amstrad.cpc464.basic.bin");
-//		m_memory.Allocate(&m_romHigh, 0xC000);
+
+		// Only enable low rom (os) at boot
+		OnLowROMChange(true); // Load low ROM on top of RAM
+		OnHighROMChange(false);
 
 		// Upper ROM Bank Number, not present on 464, shut it down
 		Connect(0xDF, static_cast<PortConnector::OUTFunction>(&ComputerCPC464::NullWrite));
@@ -76,11 +73,37 @@ namespace emul
 	void ComputerCPC464::InitVideo()
 	{
 		// Gate array always read directly from base ram block
-		video::VideoCPC464* video = new video::VideoCPC464(&m_baseRAM);
+		vid464::VideoCPC464* video = new vid464::VideoCPC464(&m_baseRAM);
 		m_video = video;
+
+		GetVideo().SetEventHandler(this);
 
 		m_video->EnableLog(CONFIG().GetLogLevel("video"));
 		m_video->Init(&m_memory, nullptr);
+	}
+
+	void ComputerCPC464::OnLowROMChange(bool load)
+	{
+		LoadROM(load, m_romLow, ROM_LOW);
+	}
+
+	void ComputerCPC464::OnHighROMChange(bool load)
+	{
+		LoadROM(load, m_romHigh, ROM_HIGH);
+	}
+
+	void ComputerCPC464::LoadROM(bool load, MemoryBlock& rom, ADDRESS base)
+	{
+		LogPrintf(LOG_INFO, "%sLOAD ROM [%s]", (load ? "" : "UN"), rom.GetId().c_str());
+
+		if (load)
+		{
+			m_memory.Allocate(&rom, base, -1, emul::AllocateMode::READ);
+		}
+		else
+		{
+			m_memory.Restore(base, ROM_SIZE, emul::AllocateMode::READ);
+		}
 	}
 
 	bool ComputerCPC464::Step()

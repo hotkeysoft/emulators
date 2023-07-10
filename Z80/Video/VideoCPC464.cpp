@@ -7,9 +7,15 @@ using emul::SetBit;
 using crtc_6845::CRTCConfig;
 using crtc_6845::CRTCData;
 
-namespace video
+namespace video::cpc464
 {
-	VideoCPC464::VideoCPC464(emul::MemoryBlock* ram) : Video(), Logger("vidCPC464"), m_ram(ram)
+	static video::cpc464::EventHandler s_defaultHandler;
+
+	VideoCPC464::VideoCPC464(emul::MemoryBlock* ram) :
+		Video(),
+		Logger("vidCPC464"),
+		m_ram(ram),
+		m_events(&s_defaultHandler)
 	{
 		assert(ram);
 		Reset();
@@ -69,7 +75,7 @@ namespace video
 			if (GetBit(value, 4))
 			{
 				LogPrintf(LOG_INFO, "Select pen: [border]");
-				m_currPen = 16;
+				m_currPen = PEN_BORDER;
 			}
 			else
 			{
@@ -82,16 +88,41 @@ namespace video
 			m_pens[m_currPen] = (value & 31);
 			break;
 		case 2:
-			LogPrintf(LOG_INFO, "[%cINT] [%cHROM] [%cLROM] [MODE%d]",
-				(GetBit(value, 4) ? ' ' : '/'),
-				(GetBit(value, 3) ? '/' : ' '),
-				(GetBit(value, 2) ? '/' : ' '),
-				(value & 3));
+		{
+			const bool interrupt = GetBit(value, 4);
+			const bool romL = !GetBit(value, 2);
+			const bool romH = !GetBit(value, 3);
+			const int mode = value & 3;
 
-			m_mode = (value & 3);
+			LogPrintf(LOG_INFO, "[%cINT] [%cHROM] [%cLROM] [MODE%d]",
+				(interrupt ? ' ' : '/'),
+				(romH ? ' ' : '/'),
+				(romL ? ' ' : '/'),
+				(mode));
+
+			m_mode = mode;
+
+			if (interrupt != m_interruptEnabled)
+			{
+				m_interruptEnabled = interrupt;
+				m_events->OnInterruptChange(m_interruptEnabled);
+			}
+
+			if (romL != m_romLowEnabled)
+			{
+				m_romLowEnabled = romL;
+				m_events->OnLowROMChange(m_romLowEnabled);
+			}
+
+			if (romH != m_romHighEnabled)
+			{
+				m_romHighEnabled = romH;
+				m_events->OnHighROMChange(m_romHighEnabled);
+			}
+		}
 			break;
 		case 3:
-			LogPrintf(LOG_INFO, "(Function 3, not present on CPC464)");
+			LogPrintf(LOG_WARNING, "(Function 3, not present on CPC464)");
 			break;
 		}
 	}
@@ -205,6 +236,9 @@ namespace video
 		m_crtc.Serialize(to["crtc"]);
 		to["mode"] = m_mode;
 		to["pens"] = m_pens;
+		to["interruptEnabled"] = m_interruptEnabled;
+		to["romLowEnabled"] = m_romLowEnabled;
+		to["romHighEnabled"] = m_romHighEnabled;
 	}
 
 	void VideoCPC464::Deserialize(const json& from)
@@ -213,6 +247,9 @@ namespace video
 		m_crtc.Deserialize(from["crtc"]);
 		m_mode = from["mode"];
 		m_pens = from["pens"];
+		m_interruptEnabled = from["interruptEnabled"];
+		m_romLowEnabled = from["romLowEnabled"];
+		m_romHighEnabled = from["romHighEnabled"];
 
 		UpdateMode();
 		UpdateBaseAddress();
