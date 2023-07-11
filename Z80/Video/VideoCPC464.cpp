@@ -24,6 +24,14 @@ namespace video::cpc464
 	void VideoCPC464::Reset()
 	{
 		m_crtc.Reset();
+
+		m_baseAddress = 0;
+		m_currPen = 0;
+		m_romHighEnabled = false;
+		m_romLowEnabled = true;
+		m_mode = 0;
+		m_interruptCounter = 0;
+		m_isInterrupt = false;
 	}
 
 	void VideoCPC464::EnableLog(SEVERITY minSev)
@@ -94,7 +102,7 @@ namespace video::cpc464
 			const bool romH = !GetBit(value, 3);
 			const int mode = value & 3;
 
-			LogPrintf(LOG_INFO, "[%cINT] [%cHROM] [%cLROM] [MODE%d]",
+			LogPrintf(LOG_INFO, "[%cINT_RST] [%cHROM] [%cLROM] [MODE%d]",
 				(interrupt ? ' ' : '/'),
 				(romH ? ' ' : '/'),
 				(romL ? ' ' : '/'),
@@ -102,10 +110,10 @@ namespace video::cpc464
 
 			m_mode = mode;
 
-			if (interrupt != m_interruptEnabled)
+			if (interrupt)
 			{
-				m_interruptEnabled = interrupt;
-				m_events->OnInterruptChange(m_interruptEnabled);
+				m_interruptCounter = 0;
+				m_isInterrupt = 0;
 			}
 
 			if (romL != m_romLowEnabled)
@@ -139,12 +147,29 @@ namespace video::cpc464
 			return;
 		}
 
+		// Clock at 1/4 Tick rate
+		static int tick4 = 0;
+		if (++tick4 == 4)
+		{
+			tick4 = 0;
+		}
+		else
+		{
+			return;
+		}
+
 		if (!m_crtc.IsVSync())
 		{
 			Draw();
 		}
 
 		m_crtc.Tick();
+	}
+
+	void VideoCPC464::InterruptAcknowledge()
+	{
+		m_isInterrupt = false;
+		SetBit(m_interruptCounter, 5, false);
 	}
 
 	void VideoCPC464::OnNewFrame()
@@ -157,6 +182,29 @@ namespace video::cpc464
 		NewLine();
 		UpdateBaseAddress();
 		UpdateMode();
+
+		// TODO: maybe not right place for hsync/int processing
+
+		// Two lines after start of vsync, interrupt if counter < 32
+		// and reset counter
+		const auto& crtcData = m_crtc.GetData();
+		if (crtcData.vPos == (crtcData.vSyncMin + 2))
+		{
+			if (!GetBit(m_interruptCounter, 5))
+			{
+				m_isInterrupt = true;
+			}
+
+			m_interruptCounter = 0;
+		}
+		else
+		{
+			if (++m_interruptCounter == 52)
+			{
+				m_isInterrupt = true;
+				m_interruptCounter = 0;
+			}
+		}
 	}
 
 	void VideoCPC464::UpdateMode()
@@ -236,9 +284,10 @@ namespace video::cpc464
 		m_crtc.Serialize(to["crtc"]);
 		to["mode"] = m_mode;
 		to["pens"] = m_pens;
-		to["interruptEnabled"] = m_interruptEnabled;
 		to["romLowEnabled"] = m_romLowEnabled;
 		to["romHighEnabled"] = m_romHighEnabled;
+		to["interruptCounter"] = m_interruptCounter;
+		to["isInterrupt"] = m_isInterrupt;
 	}
 
 	void VideoCPC464::Deserialize(const json& from)
@@ -247,9 +296,10 @@ namespace video::cpc464
 		m_crtc.Deserialize(from["crtc"]);
 		m_mode = from["mode"];
 		m_pens = from["pens"];
-		m_interruptEnabled = from["interruptEnabled"];
 		m_romLowEnabled = from["romLowEnabled"];
 		m_romHighEnabled = from["romHighEnabled"];
+		m_interruptCounter = from["interruptCounter"];
+		m_isInterrupt = from["isInterrupt"];
 
 		UpdateMode();
 		UpdateBaseAddress();

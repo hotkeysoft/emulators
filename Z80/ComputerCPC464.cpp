@@ -13,13 +13,10 @@ using sound::SOUND;
 namespace emul
 {
 	// TODO
-	const size_t MAIN_CLK = 14000000; // 14 MHz Main crystal
+	const size_t MAIN_CLK = 16000000; // 16 MHz Main crystal
 	const size_t PIXEL_CLK = MAIN_CLK / 2;
 	const size_t CPU_CLK = PIXEL_CLK / 2;
 
-	// TODO: ULA
-	// Every 20ms, generate interrupt
-	// For now base on CPU clock
 	const size_t RTC_CLK = 50; // 50Hz
 	const size_t RTC_RATE = CPU_CLK / RTC_CLK;
 
@@ -115,6 +112,11 @@ namespace emul
 
 		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
+		if (GetCPU().IsInterruptAcknowledge())
+		{
+			GetVideo().InterruptAcknowledge();
+		}
+
 		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
 			++g_ticks;
@@ -131,6 +133,8 @@ namespace emul
 			{
 				return false;
 			}
+
+			GetCPU().SetINT(GetVideo().IsInterrupt());
 		}
 
 		return true;

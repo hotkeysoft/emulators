@@ -7,7 +7,6 @@ namespace video::cpc464
     class EventHandler
     {
     public:
-        virtual void OnInterruptChange(bool enabled) {}
         virtual void OnLowROMChange(bool load) {}
         virtual void OnHighROMChange(bool load) {}
     };
@@ -49,6 +48,9 @@ namespace video::cpc464
         virtual bool IsHSync() const { return m_crtc.IsHSync(); }
         virtual bool IsDisplayArea() const { return m_crtc.IsDisplayArea(); }
 
+        bool IsInterrupt() const { return m_isInterrupt;  }
+        void InterruptAcknowledge();
+
     protected:
         void Write(BYTE value);
 
@@ -74,7 +76,7 @@ namespace video::cpc464
 
         emul::MemoryBlock* m_ram = nullptr;
         void UpdateBaseAddress();
-        ADDRESS m_baseAddress = 0xC000;
+        ADDRESS m_baseAddress = 0;
 
         // [0..15]=pens, [16]=border
         static const int PEN_COUNT = 16;
@@ -92,9 +94,11 @@ namespace video::cpc464
             0xFF690268, 0xFF71F36B, 0xFF71F504, 0xFF71F3F4,
             0xFF6C0201, 0xFF6C02F2, 0xFF6E7B01, 0xFF6E7BF6 };
 
-        bool m_interruptEnabled = false;
         bool m_romHighEnabled = false;
         bool m_romLowEnabled = true;
+
+        BYTE m_interruptCounter = 0;
+        bool m_isInterrupt = false;
 
     private:
         video::cpc464::EventHandler* m_events = nullptr;
