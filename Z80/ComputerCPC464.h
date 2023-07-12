@@ -20,6 +20,8 @@ namespace emul
 		virtual std::string_view GetName() const override { return "CPC464"; };
 		virtual std::string_view GetID() const override { return "cpc464"; };
 
+		virtual void Reset() override;
+
 		virtual void Init(WORD baseRAM) override;
 
 		virtual bool Step() override;

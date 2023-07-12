@@ -29,6 +29,14 @@ namespace emul
 	{
 	}
 
+	void ComputerCPC464::Reset()
+	{
+		ComputerBase::Reset();
+		GetVideo().Reset();
+		m_pio.Reset();
+		m_keyboard.Reset();
+	}
+
 	void ComputerCPC464::Init(WORD baseRAM)
 	{
 		PortConnector::Init(PortConnectorMode::BYTE_HI);
