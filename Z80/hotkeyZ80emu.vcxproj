@@ -64,6 +64,9 @@
     <ClInclude Include="CPU\CPUZ80Test.h" />
     <ClInclude Include="CPU\test\daa.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
+    <ClInclude Include="Hardware\Device8255.h" />
+    <ClInclude Include="Hardware\Device8255CPC464.h" />
+    <ClInclude Include="Hardware\DevicePPI.h" />
     <ClInclude Include="IO\DeviceJoystickColecoVision.h" />
     <ClInclude Include="IO\DeviceKeyboardZX80.h" />
     <ClInclude Include="IO\Monitor8080.h" />
@@ -111,6 +114,8 @@
     <ClCompile Include="CPU\CPU8080.cpp" />
     <ClCompile Include="CPU\CPUZ80.cpp" />
     <ClCompile Include="CPU\CPUZ80Test.cpp" />
+    <ClCompile Include="Hardware\Device8255.cpp" />
+    <ClCompile Include="Hardware\Device8255CPC464.cpp" />
     <ClCompile Include="IO\DeviceJoystickColecoVision.cpp" />
     <ClCompile Include="IO\DeviceKeyboardZX80.cpp" />
     <ClCompile Include="IO\Monitor8080.cpp" />

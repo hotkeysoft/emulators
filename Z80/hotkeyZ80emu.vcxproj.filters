@@ -70,6 +70,12 @@
     <Filter Include="Header Files\Sound">
       <UniqueIdentifier>{00f4d7a3-57da-4b22-9eda-1891ebb16434}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Hardware">
+      <UniqueIdentifier>{6ea13cc6-8ecd-49db-9c90-124900c3ef0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Hardware">
+      <UniqueIdentifier>{981f8293-dec1-46f8-a808-50b84a294e34}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -243,6 +249,15 @@
     <ClInclude Include="Video\CRTControllerCPC464.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\Device8255.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\DevicePPI.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device8255CPC464.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -379,6 +394,12 @@
     </ClCompile>
     <ClCompile Include="..\Common\Video\CRTController6845.cpp">
       <Filter>Common\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device8255.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device8255CPC464.cpp">
+      <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

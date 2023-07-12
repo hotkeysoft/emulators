@@ -50,6 +50,9 @@ namespace emul
 		// Upper ROM Bank Number, not present on 464, shut it down
 		Connect(0xDF, static_cast<PortConnector::OUTFunction>(&ComputerCPC464::NullWrite));
 
+		m_pio.EnableLog(CONFIG().GetLogLevel("pio"));
+		m_pio.Init("xxxx0xxx");
+
 		InitInputs(CPU_CLK, RTC_CLK);
 		GetInputs().InitKeyboard(&m_keyboard);
 
