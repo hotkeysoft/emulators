@@ -2,6 +2,8 @@
 
 #include "Device8255.h"
 
+namespace kbd { class DeviceKeyboard; }
+
 namespace ppi
 {
 	enum class DistributorID {
@@ -42,6 +44,8 @@ namespace ppi
 		Device8255CPC464(Device8255CPC464&&) = delete;
 		Device8255CPC464& operator=(Device8255CPC464&&) = delete;
 
+		void SetKeyboard(kbd::DeviceKeyboard* keyboard) { m_keyboard = keyboard; }
+
 		virtual void Reset() override;
 
 		virtual bool IsSoundON() override { return true; }
@@ -54,7 +58,7 @@ namespace ppi
 		void SetExpansionPortPin(bool exp) { emul::SetBit(m_portBData, 5, !exp); }
 		void SetRefreshRate(ScreenRefreshRate rate) { emul::SetBit(m_portBData, 5, (bool)rate); }
 		void SetDistributorID(DistributorID id) { m_portBData &= (BYTE)DistributorID::_MASK; m_portBData |= (BYTE)id; }
-		void SetVSync(bool vsync) { emul::SetBit(m_portBData, 5, vsync); }
+		void SetVSync(bool vsync) { emul::SetBit(m_portBData, 0, vsync); }
 
 		// PORT C, output
 		bool GetBDIR() const { return emul::GetBit(m_portCData, 7); }
@@ -64,6 +68,8 @@ namespace ppi
 		KeyboardLine GetKeyboardLine() const { int line = (m_portCData & 15); return (line) > 9 ? KeyboardLine::INVALID : (KeyboardLine)line; }
 
 	protected:
+		kbd::DeviceKeyboard* m_keyboard = nullptr;
+
 		virtual BYTE PORTA_IN() override;
 		virtual void PORTA_OUT(BYTE value) override;
 

@@ -258,6 +258,9 @@
     <ClInclude Include="Hardware\Device8255CPC464.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="IO\DeviceKeyboardCPC464.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -400,6 +403,9 @@
     </ClCompile>
     <ClCompile Include="Hardware\Device8255CPC464.cpp">
       <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceKeyboardCPC464.cpp">
+      <Filter>Source Files\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

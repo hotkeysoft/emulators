@@ -3,7 +3,7 @@
 #include <Computer/ComputerBase.h>
 #include "Video/VideoCPC464.h"
 #include "IO/InputEvents.h"
-#include "IO/DeviceKeyboardZX80.h"
+#include "IO/DeviceKeyboardCPC464.h"
 #include "Hardware/Device8255CPC464.h"
 
 namespace vid464 = video::cpc464;
@@ -50,7 +50,7 @@ namespace emul
 		static const ADDRESS ROM_HIGH = 0xC000;
 		static const ADDRESS ROM_SIZE = 0x4000;
 
-		kbd::DeviceKeyboardZX80 m_keyboard;
+		kbd::DeviceKeyboardCPC464 m_keyboard;
 		ppi::Device8255CPC464 m_pio;
 	};
 }

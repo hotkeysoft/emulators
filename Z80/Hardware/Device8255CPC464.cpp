@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Device8255CPC464.h"
+#include <IO/DeviceKeyboard.h>
 
 using emul::GetBit;
 
@@ -21,7 +22,10 @@ namespace ppi
 	BYTE Device8255CPC464::PORTA_IN()
 	{
 		LogPrintf(LOG_INFO, "PORTA: IN, value=%02x", m_portAData);
-		return m_portAData;
+		//return m_portAData;
+
+		const auto line = GetKeyboardLine();
+		return (line != KeyboardLine::INVALID) ? m_keyboard->GetRowData((BYTE)line) : 0xFF;
 	}
 	void Device8255CPC464::PORTA_OUT(BYTE value)
 	{

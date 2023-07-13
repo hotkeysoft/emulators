@@ -59,6 +59,7 @@ namespace emul
 		Connect(0xDF, static_cast<PortConnector::OUTFunction>(&ComputerCPC464::NullWrite));
 
 		m_pio.EnableLog(CONFIG().GetLogLevel("pio"));
+		m_pio.SetKeyboard(&m_keyboard);
 		m_pio.Init("xxxx0xxx");
 
 		InitInputs(CPU_CLK, RTC_CLK);
@@ -147,6 +148,8 @@ namespace emul
 
 			GetCPU().SetINT(GetVideo().IsInterrupt());
 		}
+
+		m_pio.SetVSync(GetVideo().IsVSync());
 
 		return true;
 	}
