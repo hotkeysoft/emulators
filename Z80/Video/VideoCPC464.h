@@ -59,10 +59,10 @@ namespace video::cpc464
         uint32_t GetColor(BYTE index) const { return m_palette[m_pens[index]]; }
         virtual uint32_t GetBackgroundColor() const override { return GetColor(PEN_BORDER); }
 
-        void Draw160x200x16() {};
-        void Draw320x200x4();
-        void Draw640x200x2() {};
-        void Draw160x200x4() {};
+        void Draw160x200x16(); // Mode 0
+        void Draw320x200x4();  // Mode 1
+        void Draw640x200x2(); // Mode 2
+        void Draw160x200x4(); // Mode 3 (unofficial)
 
         const std::array<const char*, 4> m_modes = {
             "160x200x16",

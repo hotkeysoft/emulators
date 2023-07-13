@@ -43,7 +43,7 @@ namespace video::cpc464
 	void VideoCPC464::Init(emul::Memory* memory, const char* charROM, bool forceMono)
 	{
 		Video::Init(memory, charROM, forceMono);
-		InitFrameBuffer(512, 262);
+		InitFrameBuffer(1024, 262);
 
 		Connect("01xxxxxx", static_cast<PortConnector::OUTFunction>(&VideoCPC464::Write));
 
@@ -60,6 +60,7 @@ namespace video::cpc464
 
 	SDL_Rect VideoCPC464::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
+		xMultiplier = (m_mode == 2) ? 2 : 1;
 		border = 8;
 		const struct CRTCData& data = m_crtc.GetData();
 
@@ -102,7 +103,7 @@ namespace video::cpc464
 			const bool romH = !GetBit(value, 3);
 			const int mode = value & 3;
 
-			LogPrintf(LOG_INFO, "[%cINT_RST] [%cHROM] [%cLROM] [MODE%d]",
+			LogPrintf(LOG_DEBUG, "[%cINT_RST] [%cHROM] [%cLROM] [MODE%d]",
 				(interrupt ? ' ' : '/'),
 				(romH ? ' ' : '/'),
 				(romL ? ' ' : '/'),
@@ -240,6 +241,48 @@ namespace video::cpc464
 	}
 
 	// Mode 1
+	// 160x200x16 colors (4 bits), 2 pixels / byte
+	//
+	// High Nibble: pixels[0..1](bit 0, 2)
+	// Low Nibble:  pixels[0..1](bit 1, 3)
+	//
+	// bit:   bit7 bit6 bit5 bit4 | bit3 bit2 bit1 bit0
+	// pixel: p0.0 p1.0 p0.2 p1.2 | p0.1 p1.1 p0.3 p1.3
+	void VideoCPC464::Draw160x200x16()
+	{
+		const struct CRTCData& data = m_crtc.GetData();
+
+		// Called every 8 horizontal pixels
+		// In this mode 1 byte = 2 pixels, but each pixel is doubled
+		if (IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = m_ram->read(base++);
+
+				for (int i = 0; i < 2; ++i)
+				{
+					const BYTE index =
+						(GetBit(ch, 7) << 0) |
+						(GetBit(ch, 5) << 2) |
+						(GetBit(ch, 3) << 1) |
+						(GetBit(ch, 1) << 3);
+
+					DrawPixel(GetColor(index));
+					DrawPixel(GetColor(index));
+					ch <<= 1;
+				}
+			}
+		}
+		else
+		{
+			DrawBackground(8);
+		}
+	}
+
+	// Mode 1
 	// 320x200x4 colors (2 bits), 4 pixels / byte
 	//
 	// High Nibble: pixels[0..3](l bit)
@@ -267,6 +310,79 @@ namespace video::cpc464
 						(GetBit(ch, 7) << 0) |
 						(GetBit(ch, 3) << 1);
 
+					DrawPixel(GetColor(index));
+					ch <<= 1;
+				}
+			}
+		}
+		else
+		{
+			DrawBackground(8);
+		}
+	}
+
+	// Mode 1
+	// 640x200x4 colors (1 bits), 1 pixels / byte
+	//
+	// bit:   bit7 bit6 bit5 bit4 | bit3 bit2 bit1 bit0
+	// pixel: p.7  p.6  p.5  p.4  | p.3  p.2  p.1  p.0
+	void VideoCPC464::Draw640x200x2()
+	{
+		const struct CRTCData& data = m_crtc.GetData();
+
+		// Called every 16 horizontal pixels
+		// In this mode 1 byte = 8 pixels
+		if (IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = m_ram->read(base++);
+
+				for (int i = 0; i < 8; ++i)
+				{
+					const BYTE index = emul::GetMSB(ch);
+					DrawPixel(GetColor(index));
+					ch <<= 1;
+				}
+			}
+		}
+		else
+		{
+			DrawBackground(16);
+		}
+	}
+
+	// Mode 3 (unofficial, not supported in BASIC)
+	// 160x200x4 colors (2 bits), 2 pixels / byte
+	//
+	// High Nibble: pixels[0..1](bit 0)
+	// Low Nibble:  pixels[0..1](bit 1)
+	//
+	// bit:   bit7 bit6 bit5 bit4 | bit3 bit2 bit1 bit0
+	// pixel: p0.0 p1.0   x    x  | p0.1 p1.1   x    x
+	void VideoCPC464::Draw160x200x4()
+	{
+		const struct CRTCData& data = m_crtc.GetData();
+
+		// Called every 8 horizontal pixels
+		// In this mode 1 byte = 2 pixels, but each pixel is doubled
+		if (IsDisplayArea() && IsEnabled())
+		{
+			ADDRESS base = GetAddress();
+
+			for (int w = 0; w < 2; ++w)
+			{
+				BYTE ch = m_ram->read(base++);
+
+				for (int i = 0; i < 2; ++i)
+				{
+					const BYTE index =
+						(GetBit(ch, 7) << 0) |
+						(GetBit(ch, 3) << 1);
+
+					DrawPixel(GetColor(index));
 					DrawPixel(GetColor(index));
 					ch <<= 1;
 				}
