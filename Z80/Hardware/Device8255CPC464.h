@@ -7,11 +7,16 @@ namespace kbd { class DeviceKeyboard; }
 namespace ppi
 {
 	enum class DistributorID {
-		AWA = (4 << 1),
+		ISP       = (0 << 1),
+		Triumph   = (1 << 1),
+		Saisho    = (2 << 1),
+		Solavox   = (3 << 1),
+		AWA       = (4 << 1),
 		Schneider = (5 << 1),
-		Amstrad = (7 << 1),
+		Orion     = (6 << 1),
+		Amstrad   = (7 << 1),
 
-		_MASK = ~(7 << 1)
+		_MASK = ~Amstrad
 	};
 
 	enum class ScreenRefreshRate {
