@@ -65,11 +65,18 @@ namespace ppi
 	void Device8255::SetControlWord(BYTE ctrl)
 	{
 		m_controlWord = ctrl;
-		if (!(ctrl | CTRL_MODESETFLAG))
+
+		// PORT C Single bit set
+		if (!(ctrl & CTRL_MODESETFLAG))
 		{
-			throw std::exception("Single bit set not implemented");
+			bool set = emul::GetBit(ctrl, 0);
+			BYTE bit = (ctrl >> 1) & 7;
+			LogPrintf(LOG_DEBUG, "Set Single Bit [%d] = [%d]", bit, set);
+			emul::SetBit(m_portCData, bit, set);
+			return;
 		}
 
+		// Change MODE/DIRECTION
 		switch (ctrl & (CTRL_GA_MODE2 | CTRL_GA_MODE1))
 		{
 		case 0:
