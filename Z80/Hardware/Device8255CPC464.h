@@ -56,7 +56,7 @@ namespace ppi
 		void SetCassetteInput(bool input) { emul::SetBit(m_portBData, 7, input); }
 		void SetPrinterBusy(bool busy) { emul::SetBit(m_portBData, 6, busy); }
 		void SetExpansionPortPin(bool exp) { emul::SetBit(m_portBData, 5, !exp); }
-		void SetRefreshRate(ScreenRefreshRate rate) { emul::SetBit(m_portBData, 5, (bool)rate); }
+		void SetRefreshRate(ScreenRefreshRate rate) { emul::SetBit(m_portBData, 4, (bool)rate); }
 		void SetDistributorID(DistributorID id) { m_portBData &= (BYTE)DistributorID::_MASK; m_portBData |= (BYTE)id; }
 		void SetVSync(bool vsync) { emul::SetBit(m_portBData, 0, vsync); }
 

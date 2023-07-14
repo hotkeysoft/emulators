@@ -43,7 +43,7 @@ namespace video::cpc464
 	void VideoCPC464::Init(emul::Memory* memory, const char* charROM, bool forceMono)
 	{
 		Video::Init(memory, charROM, forceMono);
-		InitFrameBuffer(1024, 262);
+		InitFrameBuffer(1024, 313);
 
 		Connect("01xxxxxx", static_cast<PortConnector::OUTFunction>(&VideoCPC464::Write));
 
