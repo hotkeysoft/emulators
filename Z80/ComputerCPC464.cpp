@@ -9,6 +9,7 @@
 
 using cfg::CONFIG;
 using sound::SOUND;
+using tape::TapeDeck;
 
 namespace emul
 {
@@ -29,12 +30,18 @@ namespace emul
 	{
 	}
 
+	ComputerCPC464::~ComputerCPC464()
+	{
+		delete m_tape;
+	}
+
 	void ComputerCPC464::Reset()
 	{
 		ComputerBase::Reset();
 		GetVideo().Reset();
 		m_pio.Reset();
 		m_keyboard.Reset();
+		m_tape->Reset();
 	}
 
 	void ComputerCPC464::Init(WORD baseRAM)
@@ -67,6 +74,7 @@ namespace emul
 
 		SOUND().SetBaseClock(CPU_CLK);
 		InitVideo();
+		InitTape();
 	}
 
 	void ComputerCPC464::InitCPU(const char* cpuid)
@@ -89,6 +97,12 @@ namespace emul
 
 		m_video->EnableLog(CONFIG().GetLogLevel("video"));
 		m_video->Init(&m_memory, nullptr);
+	}
+
+	void ComputerCPC464::InitTape()
+	{
+		m_tape = new tape::DeviceTape(CPU_CLK);
+		m_tape->Init(1);
 	}
 
 	void ComputerCPC464::OnLowROMChange(bool load)
@@ -129,6 +143,8 @@ namespace emul
 			GetVideo().InterruptAcknowledge();
 		}
 
+		TapeDeck& tape = m_tape->GetTape(0);
+
 		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
 			++g_ticks;
@@ -137,7 +153,15 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(0);
+				SOUND().PlayMono(tape.Read() * 8000);
+			}
+
+			{
+				m_pio.SetCassetteInput(tape.Read());
+				tape.Write(m_pio.GetCassetteOutput());
+				tape.SetMotor(m_pio.GetCassetteMotorOut());
+
+				m_tape->Tick();
 			}
 
 			GetInputs().Tick();

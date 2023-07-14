@@ -64,7 +64,7 @@ namespace ppi
 		bool GetBDIR() const { return emul::GetBit(m_portCData, 7); }
 		bool GetBC1() const { return emul::GetBit(m_portCData, 6); }
 		bool GetCassetteOutput() const { return emul::GetBit(m_portCData, 5); }
-		bool GetCassetteMotorOut() const { return !emul::GetBit(m_portCData, 4); }
+		bool GetCassetteMotorOut() const { return emul::GetBit(m_portCData, 4); }
 		KeyboardLine GetKeyboardLine() const { int line = (m_portCData & 15); return (line) > 9 ? KeyboardLine::INVALID : (KeyboardLine)line; }
 
 	protected:

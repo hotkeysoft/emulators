@@ -5,6 +5,7 @@
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardCPC464.h"
 #include "Hardware/Device8255CPC464.h"
+#include <Storage/DeviceTape.h>
 
 namespace vid464 = video::cpc464;
 
@@ -16,6 +17,7 @@ namespace emul
 	{
 	public:
 		ComputerCPC464();
+		~ComputerCPC464();
 
 		virtual std::string_view GetName() const override { return "CPC464"; };
 		virtual std::string_view GetID() const override { return "cpc464"; };
@@ -27,6 +29,7 @@ namespace emul
 		virtual bool Step() override;
 
 		CPUZ80& GetCPU() const { return *((CPUZ80*)m_cpu); }
+		virtual tape::DeviceTape* GetTape() override { return m_tape; }
 		vid464::VideoCPC464& GetVideo() { return *((vid464::VideoCPC464*)m_video); }
 
 		// vid464::EventHandler
@@ -37,6 +40,7 @@ namespace emul
 		virtual void InitCPU(const char* cpuid) override;
 
 		void InitVideo();
+		void InitTape();
 
 		void NullWrite(BYTE) {}
 
@@ -52,5 +56,7 @@ namespace emul
 
 		kbd::DeviceKeyboardCPC464 m_keyboard;
 		ppi::Device8255CPC464 m_pio;
+
+		tape::DeviceTape* m_tape = nullptr;
 	};
 }
