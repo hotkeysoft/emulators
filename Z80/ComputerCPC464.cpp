@@ -42,6 +42,9 @@ namespace emul
 		m_pio.Reset();
 		m_keyboard.Reset();
 		m_tape->Reset();
+
+		OnLowROMChange(true); // Load low ROM on top of RAM
+		OnHighROMChange(false);
 	}
 
 	void ComputerCPC464::Init(WORD baseRAM)

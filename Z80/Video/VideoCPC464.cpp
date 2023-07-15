@@ -221,7 +221,7 @@ namespace video::cpc464
 			throw std::exception("Invalid mode");
 		}
 
-		LogPrintf(LOG_INFO, "Set Mode [%s]", m_modes[m_mode]);
+		LogPrintf(LOG_INFO, "Set Mode [%s] @ line %d", m_modes[m_mode], m_crtc.GetData().vPos);
 		SetMode(m_modes[m_mode]);
 		m_lastMode = m_mode;
 	}
@@ -321,7 +321,7 @@ namespace video::cpc464
 		}
 	}
 
-	// Mode 1
+	// Mode 2
 	// 640x200x4 colors (1 bits), 1 pixels / byte
 	//
 	// bit:   bit7 bit6 bit5 bit4 | bit3 bit2 bit1 bit0
@@ -419,5 +419,7 @@ namespace video::cpc464
 
 		UpdateMode();
 		UpdateBaseAddress();
+		m_events->OnLowROMChange(m_romLowEnabled);
+		m_events->OnHighROMChange(m_romHighEnabled);
 	}
 }
