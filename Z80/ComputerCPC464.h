@@ -8,6 +8,7 @@
 #include <Storage/DeviceTape.h>
 
 namespace vid464 = video::cpc464;
+namespace fdc { class DeviceFloppy; }
 
 namespace emul
 {
@@ -29,6 +30,7 @@ namespace emul
 		virtual bool Step() override;
 
 		CPUZ80& GetCPU() const { return *((CPUZ80*)m_cpu); }
+		fdc::DeviceFloppy* GetFloppy() { return m_floppy; }
 		virtual tape::DeviceTape* GetTape() override { return m_tape; }
 		vid464::VideoCPC464& GetVideo() { return *((vid464::VideoCPC464*)m_video); }
 
@@ -41,22 +43,31 @@ namespace emul
 
 		void InitVideo();
 		void InitTape();
+		void InitFloppy(fdc::DeviceFloppy* fdd);
 
-		void NullWrite(BYTE) {}
+		void TickFloppy();
 
-		void LoadROM(bool load, emul::MemoryBlock& rom, ADDRESS base);
+		void LoadROM(bool load, emul::MemoryBlock* rom, ADDRESS base);
+		bool m_highROMLoaded = false;
 
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_romLow;
-		emul::MemoryBlock m_romHigh;
 
 		static const ADDRESS ROM_LOW = 0;
 		static const ADDRESS ROM_HIGH = 0xC000;
 		static const ADDRESS ROM_SIZE = 0x4000;
+		static const size_t ROM_BANKS = 8;
+
+		std::array<emul::MemoryBlock*, ROM_BANKS> m_romBanks = { nullptr };
+
+		BYTE m_currHighROM = 0;
+		emul::MemoryBlock* GetCurrHighROM() const { return m_romBanks[m_currHighROM] ? m_romBanks[m_currHighROM] : m_romBanks[0]; }
+		bool LoadHighROM(BYTE bank, const char* romFile);
+		void SelectROMBank(BYTE value);
 
 		kbd::DeviceKeyboardCPC464 m_keyboard;
 		ppi::Device8255CPC464 m_pio;
-
 		tape::DeviceTape* m_tape = nullptr;
+		fdc::DeviceFloppy* m_floppy = nullptr;
 	};
 }

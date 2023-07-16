@@ -74,6 +74,8 @@
     <ClInclude Include="IO\MonitorZ80.h" />
     <ClInclude Include="Sound\DeviceSN76489.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Storage\DeviceFloppy.h" />
+    <ClInclude Include="Storage\DeviceFloppyCPC464.h" />
     <ClInclude Include="Video\CRTControllerCPC464.h" />
     <ClInclude Include="Video\TMS9918.h" />
     <ClInclude Include="Video\VideoColecoVision.h" />
@@ -130,6 +132,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Storage\DeviceFloppy.cpp" />
+    <ClCompile Include="Storage\DeviceFloppyCPC464.cpp" />
     <ClCompile Include="Video\TMS9918.cpp" />
     <ClCompile Include="Video\VideoColecoVision.cpp" />
     <ClCompile Include="Video\VideoCPC464.cpp" />

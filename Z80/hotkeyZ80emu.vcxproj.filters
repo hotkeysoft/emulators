@@ -76,6 +76,12 @@
     <Filter Include="Header Files\Hardware">
       <UniqueIdentifier>{981f8293-dec1-46f8-a808-50b84a294e34}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Storage">
+      <UniqueIdentifier>{cb19781e-a74e-4bee-9980-f17434cc5826}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Storage">
+      <UniqueIdentifier>{4b8032ed-f5d7-4e85-9609-68e7250da988}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -261,6 +267,12 @@
     <ClInclude Include="IO\DeviceKeyboardCPC464.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="Storage\DeviceFloppy.h">
+      <Filter>Header Files\Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="Storage\DeviceFloppyCPC464.h">
+      <Filter>Header Files\Storage</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -406,6 +418,12 @@
     </ClCompile>
     <ClCompile Include="IO\DeviceKeyboardCPC464.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Storage\DeviceFloppy.cpp">
+      <Filter>Source Files\Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="Storage\DeviceFloppyCPC464.cpp">
+      <Filter>Source Files\Storage</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

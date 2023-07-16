@@ -5,6 +5,7 @@
 #include "IO/Console.h"
 #include "CPU/CPUZ80.h"
 #include "Video/VideoCPC464.h"
+#include "Storage/DeviceFloppyCPC464.h"
 #include <Sound/Sound.h>
 
 using cfg::CONFIG;
@@ -25,14 +26,19 @@ namespace emul
 		Logger("ZXSpectrum"),
 		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM),
-		m_romLow("ROML", ROM_SIZE, emul::MemoryType::ROM),
-		m_romHigh("ROMH", ROM_SIZE, emul::MemoryType::ROM)
+		m_romLow("ROML", ROM_SIZE, emul::MemoryType::ROM)
 	{
 	}
 
 	ComputerCPC464::~ComputerCPC464()
 	{
 		delete m_tape;
+		delete m_floppy;
+
+		for (MemoryBlock* block : m_romBanks)
+		{
+			delete block;
+		}
 	}
 
 	void ComputerCPC464::Reset()
@@ -47,6 +53,36 @@ namespace emul
 		OnHighROMChange(false);
 	}
 
+	bool ComputerCPC464::LoadHighROM(BYTE bank, const char* romFile)
+	{
+		LogPrintf(LOG_INFO, "Load High ROM Bank [%d]: %s", bank, romFile);
+		if (bank >= ROM_BANKS)
+		{
+			LogPrintf(LOG_ERROR, "Invalid ROM bank id [%d]", bank);
+			throw std::exception("Invalid ROM bank");
+		}
+
+		char id[8];
+		sprintf(id, "ROM%d", bank);
+
+		delete(m_romBanks[bank]);
+		m_romBanks[bank] = nullptr;
+
+		MemoryBlock* block = new MemoryBlock(id, ROM_SIZE, emul::MemoryType::ROM);
+
+		bool loaded = block->LoadFromFile(romFile);
+		if (loaded)
+		{
+			m_romBanks[bank] = block;
+		}
+		else
+		{
+			delete block;
+		}
+
+		return loaded;
+	}
+
 	void ComputerCPC464::Init(WORD baseRAM)
 	{
 		PortConnector::Init(PortConnectorMode::BYTE_HI);
@@ -59,14 +95,16 @@ namespace emul
 		m_memory.Allocate(&m_baseRAM, 0);
 
 		m_romLow.LoadFromFile("data/z80/amstrad.cpc464.os.bin");
-		m_romHigh.LoadFromFile("data/z80/amstrad.cpc464.basic.bin");
+		LoadHighROM(0, "data/z80/amstrad.cpc464.basic.bin");
+
+		// TODO: Dynamic
+		LoadHighROM(7, "data/z80/amstrad.amsdos.0.5.bin");
 
 		// Only enable low rom (os) at boot
 		OnLowROMChange(true); // Load low ROM on top of RAM
 		OnHighROMChange(false);
 
-		// Upper ROM Bank Number, not present on 464, shut it down
-		Connect(0xDF, static_cast<PortConnector::OUTFunction>(&ComputerCPC464::NullWrite));
+		Connect("xx0xxxxx", static_cast<PortConnector::OUTFunction>(&ComputerCPC464::SelectROMBank));
 
 		m_pio.EnableLog(CONFIG().GetLogLevel("pio"));
 		m_pio.SetKeyboard(&m_keyboard);
@@ -78,6 +116,11 @@ namespace emul
 		SOUND().SetBaseClock(CPU_CLK);
 		InitVideo();
 		InitTape();
+
+		if (CONFIG().GetValueBool("floppy", "enable"))
+		{
+			InitFloppy(new fdc::DeviceFloppyCPC464(0x03F0, CPU_CLK));
+		}
 	}
 
 	void ComputerCPC464::InitCPU(const char* cpuid)
@@ -108,28 +151,71 @@ namespace emul
 		m_tape->Init(1);
 	}
 
+	void ComputerCPC464::InitFloppy(fdc::DeviceFloppy* fdd)
+	{
+		assert(fdd);
+		m_floppy = fdd;
+
+		m_floppy->EnableLog(CONFIG().GetLogLevel("floppy"));
+		m_floppy->Init();
+
+		std::string floppy = CONFIG().GetValueStr("floppy", "floppy.1");
+		if (floppy.size())
+		{
+			m_floppy->LoadDiskImage(0, floppy.c_str());
+		}
+
+		floppy = CONFIG().GetValueStr("floppy", "floppy.2");
+		if (floppy.size())
+		{
+			m_floppy->LoadDiskImage(1, floppy.c_str());
+		}
+	}
+
 	void ComputerCPC464::OnLowROMChange(bool load)
 	{
-		LoadROM(load, m_romLow, ROM_LOW);
+		LoadROM(load, &m_romLow, ROM_LOW);
 	}
 
 	void ComputerCPC464::OnHighROMChange(bool load)
 	{
-		LoadROM(load, m_romHigh, ROM_HIGH);
+		m_highROMLoaded = load;
+		LoadROM(load, GetCurrHighROM(), ROM_HIGH);
 	}
 
-	void ComputerCPC464::LoadROM(bool load, MemoryBlock& rom, ADDRESS base)
+	void ComputerCPC464::LoadROM(bool load, MemoryBlock* rom, ADDRESS base)
 	{
-		LogPrintf(LOG_INFO, "%sLOAD ROM [%s]", (load ? "" : "UN"), rom.GetId().c_str());
+		LogPrintf(LOG_INFO, "%sLOAD ROM [%s]", (load ? "" : "UN"), rom->GetId().c_str());
 
 		if (load)
 		{
-			m_memory.Allocate(&rom, base, -1, emul::AllocateMode::READ);
+			m_memory.Allocate(rom, base, -1, emul::AllocateMode::READ);
 		}
 		else
 		{
 			m_memory.Restore(base, ROM_SIZE, emul::AllocateMode::READ);
 		}
+	}
+
+	void ComputerCPC464::SelectROMBank(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "Select ROM Bank: [%d]", value);
+		m_currHighROM = value;
+
+		if (m_highROMLoaded)
+		{
+			LoadROM(true, GetCurrHighROM(), ROM_HIGH);
+		}
+	}
+
+	void ComputerCPC464::TickFloppy()
+	{
+		if (!m_floppy)
+		{
+			return;
+		}
+
+		m_floppy->Tick();
 	}
 
 	bool ComputerCPC464::Step()
@@ -172,6 +258,8 @@ namespace emul
 			{
 				return false;
 			}
+
+			TickFloppy();
 
 			GetCPU().SetINT(GetVideo().IsInterrupt());
 		}
