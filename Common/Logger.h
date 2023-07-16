@@ -5,6 +5,9 @@
 #define LogPrintf(sev, fmt, ...) \
 	do { if (IsLog(sev)) _LogPrintf(sev, fmt, __VA_ARGS__); } while (0)
 
+#define LogPrintHex(sev, buf, size) \
+	do { if (IsLog(sev)) _LogPrintHex(sev, buf, size); } while (0)
+
 class Logger
 {
 public:
@@ -22,6 +25,7 @@ protected:
 
 	inline bool IsLog(SEVERITY sev) const { return sev >= m_minSeverity; }
 	void _LogPrintf(SEVERITY, const char *, ...) const;
+	void _LogPrintHex(SEVERITY, const uint8_t*, size_t) const;
 
 private:
 	Logger();

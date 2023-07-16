@@ -18,11 +18,11 @@ Logger::~Logger()
 
 void Logger::RegisterModuleID(const char* moduleID)
 {
-	if (moduleID == nullptr) 
+	if (moduleID == nullptr)
 	{
 		throw std::exception("Logger: ModuleID is null");
 	}
-	
+
 	m_moduleList.insert(std::pair<std::string, Logger*>(moduleID, this));
 }
 
@@ -75,5 +75,42 @@ void Logger::_LogPrintf(SEVERITY sev, const char *msg, ...) const
 	if (m_logCallbackFunc)
 	{
 		m_logCallbackFunc(m_logBuffer);
+	}
+}
+
+void Logger::_LogPrintHex(SEVERITY sev, const uint8_t* buf, size_t size) const
+{
+	size = std::min(size, (size_t)65536);
+
+	const int bytesPerLine = 16;
+
+	static std::vector<char> hex;
+	static std::vector<char> raw;
+	hex.resize((bytesPerLine * 3) + 1);
+	raw.resize((bytesPerLine) + 1);
+
+	int hStart = 0;
+	for (int i = 0; i < size; ++i)
+	{
+		const int hpos = i % bytesPerLine;
+		const uint8_t ch = buf[i];
+
+		if (hpos == 0)
+		{
+			hStart = i;
+			std::fill(hex.begin(), hex.end(), 'x');
+			std::fill(raw.begin(), raw.end(), 'x');
+			*hex.rbegin() = '\0';
+			*raw.rbegin() = '\0';
+		}
+
+		sprintf(&hex[hpos * 3], "%02X ", ch);
+
+		raw[hpos] = (ch >= 32) ? ch : '.';
+
+		if ((hpos == bytesPerLine - 1) || (i == (size - 1)))
+		{
+			_LogPrintf(sev, " %04X: %s %s", hStart, &hex[0], &raw[0]);
+		}
 	}
 }
