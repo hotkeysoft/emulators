@@ -13,12 +13,15 @@ namespace fdc
 {
 	struct Geometry
 	{
-		const char* name;
-		BYTE head;
-		BYTE cyl;
-		BYTE sect;
-		uint32_t GetImageSize() { return 512 * head * cyl * sect; }
-		uint32_t CHS2A(BYTE c, BYTE h, BYTE s) { return 512 * ((c * head + h) * sect + s - 1); }
+		const char* name = nullptr;
+		BYTE head = 0;
+		BYTE cyl = 0 ;
+		BYTE sect = 0;
+		BYTE sectOffset = 0;
+
+		bool IsSet() const { return name && GetImageSize(); }
+		uint32_t GetImageSize() const { return 512 * head * cyl * sect; }
+		uint32_t CHS2A(BYTE c, BYTE h, BYTE s) const { return 512 * ((c * head + h) * sect + (s - sectOffset) - 1); }
 	};
 
 	class FloppyDisk
@@ -57,7 +60,7 @@ namespace fdc
 		virtual void Tick();
 
 		bool ClearDiskImage(BYTE drive);
-		bool LoadDiskImage(BYTE drive, const char* path);
+		virtual bool LoadDiskImage(BYTE drive, const char* path);
 		bool SaveDiskImage(BYTE drive, const char* path);
 
 		const FloppyDisk& GetImageInfo(BYTE drive) { assert(drive < 4); return m_images[drive]; }
@@ -117,6 +120,7 @@ namespace fdc
 
 			RESULT_WAIT,
 			NOT_READY,
+			ABNORMAL_TERMINATION
 		};
 		STATE m_state = STATE::CMD_WAIT;
 		STATE m_nextState = STATE::CMD_WAIT;
@@ -167,27 +171,44 @@ namespace fdc
 
 		enum ST0
 		{
-			IC1 = 0x80, // 00 = Normal Termination, 01 = Abnormal Termination
-			IC0 = 0x40, // 10 = Invalid Command, 00 = Drive not ready
-			SE  = 0x20, // 1 = Seek End
-			EC  = 0x10, // 1 = Equipment Check (fault, no track 0)
-			NR  = 0x08, // 1 = Not Ready
-			HD  = 0x04, // Head Address
-			US1 = 0x02, // Drive Number at interrupt
-			US0 = 0x01, // Drive Number at interrupt
+			ST0_IC1 = 0x80, // 00 = Normal Termination, 01 = Abnormal Termination
+			ST0_IC0 = 0x40, // 10 = Invalid Command, 00 = Drive not ready
+			ST0_SE  = 0x20, // 1 = Seek End
+			ST0_EC  = 0x10, // 1 = Equipment Check (fault, no track 0)
+			ST0_NR  = 0x08, // 1 = Not Ready
+			ST0_HD  = 0x04, // Head Address
+			ST0_US1 = 0x02, // Drive Number at interrupt
+			ST0_US0 = 0x01, // Drive Number at interrupt
+
+			// Interrupt Codes
+			ST0_INT_NT = 0,       // Normal Termination
+			ST0_INT_AT = ST0_IC0, // Abnormal Termination
+			ST0_INT_IC = ST0_IC1, // Invalid Command
+			ST0_INT_NR = ST0_IC0 | ST0_IC1 // Not Ready
+		};
+
+		enum ST1
+		{
+			ST1_EN = 0x80, // 1 = Tried to access sector beyond the final sector
+			ST1_DE = 0x20, // 1 = CRC error in id or data field
+			ST1_OR = 0x10, // 1 = Overrun
+			ST1_ND = 0x04, // 1 = No Data (sector not found)
+			ST1_NW = 0x02, // 1 = Not Writable
+			ST1_MA = 0x01  // 1 = Missing Address mark
 		};
 
 		enum ST3
 		{
-			ESIG = 0x80, // 1 = Error
-			WPDR = 0x40, // 1 = Write Protection
-			RDY =  0x20, // 1 = Ready
-			TRK0 = 0x10, // Above track 0
-			DSDR = 0x08, // Double sided drive
-			HDDR = 0x04, // Active head
-			DS1 =  0x02, // Drive Number
-			DS0 =  0x01, // Drive Number
+			ST3_ESIG = 0x80, // 1 = Error
+			ST3_WPDR = 0x40, // 1 = Write Protection
+			ST3_RDY =  0x20, // 1 = Ready
+			ST3_TRK0 = 0x10, // Above track 0
+			ST3_DSDR = 0x08, // Double sided drive
+			ST3_HDDR = 0x04, // Active head
+			ST3_DS1 =  0x02, // Drive Number
+			ST3_DS0 =  0x01, // Drive Number
 		};
+
 		BYTE m_st0 = 0; // Status flag
 		BYTE m_st3 = 0; // Status flag
 		BYTE m_pcn = 0; // Present Cylinder Number (TODO: one per drive)
@@ -215,6 +236,7 @@ namespace fdc
 		void Push(BYTE value) { m_fifo.push_back(value); }
 		BYTE Pop() { BYTE ret = m_fifo.front(); m_fifo.pop_front(); return ret; }
 		std::deque<BYTE> m_fifo;
+		void PushSector(fdc::FloppyDisk& disk, uint32_t offset);
 
 		enum CMD
 		{

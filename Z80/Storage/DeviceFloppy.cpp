@@ -209,7 +209,7 @@ namespace fdc
 		}
 
 		BYTE result = 0xFF;
-		LogPrintf(Logger::LOG_DEBUG, "ReadDataFIFO");
+		LogPrintf(Logger::LOG_TRACE, "ReadDataFIFO");
 		switch (m_state)
 		{
 		case STATE::RESULT_WAIT:
@@ -232,7 +232,7 @@ namespace fdc
 			LogPrintf(Logger::LOG_ERROR, "ReadDataFIFO() Unexpected State: %d", m_state);
 			throw std::exception("Unexpected state");
 		}
-		LogPrintf(Logger::LOG_DEBUG, "Return Result: %02X", result);
+		LogPrintf(Logger::LOG_DEBUG, "ReadDataFIFO(): Return Result: %02X", result);
 		return result;
 	}
 
@@ -384,14 +384,14 @@ namespace fdc
 			WriteSector();
 			break;
 		case STATE::DMA_WAIT:
-			LogPrintf(Logger::LOG_DEBUG, "DMA Wait");
+			LogPrintf(Logger::LOG_TRACE, "DMA Wait");
 			if (--m_currOpWait == 0)
 			{
 				m_state = STATE::CMD_ERROR;
 			}
 			break;
 		case STATE::NDMA_WAIT:
-			LogPrintf(Logger::LOG_DEBUG, "NDMA Wait");
+			LogPrintf(Logger::LOG_TRACE, "NDMA Wait");
 			m_dataRegisterReady = true;
 			if (--m_currOpWait == 0)
 			{
@@ -401,14 +401,21 @@ namespace fdc
 			break;
 		case STATE::CMD_ERROR:
 			LogPrintf(Logger::LOG_WARNING, "Command Error");
-			m_st0 = 0x80;
+			m_st0 = ST0_INT_IC;
+			m_fifo.clear();
+			Push(m_st0);
+			m_state = STATE::CMD_EXEC_DONE;
+			break;
+		case STATE::ABNORMAL_TERMINATION:
+			LogPrintf(Logger::LOG_WARNING, "Abnormal Termination");
+			m_st0 |= ST0_INT_AT;
 			m_fifo.clear();
 			Push(m_st0);
 			m_state = STATE::CMD_EXEC_DONE;
 			break;
 		case STATE::NOT_READY:
 			LogPrintf(Logger::LOG_WARNING, "Drive Not Ready");
-			m_st0 |= 0xC0;
+			m_st0 |= ST0_NR;
 			m_fifo.clear();
 			Push(m_st0);
 			m_state = STATE::CMD_EXEC_DONE;
@@ -512,7 +519,7 @@ namespace fdc
 
 		m_dataRegisterReady = false;
 		m_driveActive[driveNumber] = true;
-		m_st0 = SE | driveNumber; // Set Seek end + head + drive
+		m_st0 = ST0_SE | driveNumber; // Set Seek end + head + drive
 		m_pcn = 0;
 
 		assert(m_fifo.size() == 0);
@@ -527,6 +534,15 @@ namespace fdc
 
 		BYTE driveNumber = param % 3;
 		bool head = param & 4;
+
+		// TODO: Hack for initial ID read.
+		// Need to keep track of currSector/etc for each drive
+		// And reset when a new disk image is loaded
+		if (m_currSector == 0)
+		{
+			FloppyDisk& disk = m_images[driveNumber];
+			m_currSector = disk.geometry.sectOffset;
+		}
 
 		LogPrintf(LOG_INFO, "COMMAND: Read ID d=[%d] h=[%d]", driveNumber, head);
 
@@ -567,10 +583,9 @@ namespace fdc
 
 		LogPrintf(LOG_INFO, "COMMAND: Seek d=[%d] h=[%d] cyl=[%d] (travel: [%d])", driveNumber, head, cylinder, travel);
 
-
 		m_dataRegisterReady = false;
 		m_driveActive[driveNumber] = true;
-		m_st0 = SE | (param & 7); // Set Seek end + head + drive
+		m_st0 = ST0_SE | (param & 7); // Set Seek end + head + drive
 		m_pcn = cylinder;
 
 		assert(m_fifo.size() == 0);
@@ -591,7 +606,7 @@ namespace fdc
 
 		LogPrintf(LOG_INFO, "COMMAND: Sense Drive Status d=[%d] h=[%d]", driveNumber, head);
 
-		m_st3 = RDY | (TRK0 * (m_pcn == 0)) | DSDR | (param & 7);
+		m_st3 = ST3_RDY | (ST3_TRK0 * (m_pcn == 0)) | ST3_DSDR | (param & 7);
 
 		assert(m_fifo.size() == 0);
 		// Response: ST3
@@ -623,6 +638,16 @@ namespace fdc
 		return STATE::CMD_EXEC_DONE;
 	}
 
+	void DeviceFloppy::PushSector(fdc::FloppyDisk& disk, uint32_t offset)
+	{
+		for (size_t b = 0; b < 512; ++b)
+		{
+			Push(disk.data[offset + b]);
+		}
+
+		LogPrintHex(LOG_DEBUG, &disk.data[offset], 512);
+	}
+
 	DeviceFloppy::STATE DeviceFloppy::ReadData()
 	{
 		BYTE param = Pop();
@@ -644,7 +669,7 @@ namespace fdc
 		m_multiTrack = GetBit(m_currcommandID, 7);
 
 		LogPrintf(LOG_INFO, "COMMAND: Read Data drive=[%d] head=[%d] multitrack=[%d]", m_currDrive, head, m_multiTrack);
-		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%x] number=[%d] endOfTrack=[%x] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		// TODO: Error handling, validation
 		m_pcn = c;
@@ -663,7 +688,7 @@ namespace fdc
 
 		if (!disk.loaded)
 		{
-			m_st0 = NR | (param & 7); // Not Ready + head + drive
+			m_st0 = ST0_NR | (param & 7); // Not Ready + head + drive
 
 			m_currOpWait = DelayToTicks(100 * 1000); // 100ms
 			return STATE::NOT_READY;
@@ -672,7 +697,7 @@ namespace fdc
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
 
-		if (r < 1 || r > disk.geometry.sect)
+		if (r < 1 || r > (disk.geometry.sect + disk.geometry.sectOffset))
 		{
 			LogPrintf(LOG_ERROR, "Invalid sector [%d]", r);
 			throw std::exception("Invalid sector");
@@ -690,10 +715,7 @@ namespace fdc
 
 		// Put the whole sector in the fifo
 		uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
-		for (size_t b = 0; b < 512; ++b)
-		{
-			Push(disk.data[offset+b]);
-		}
+		PushSector(disk, offset);
 
 		return STATE::READ_START;
 	}
@@ -701,6 +723,8 @@ namespace fdc
 	// Same as readdata but start a sector 1
 	DeviceFloppy::STATE DeviceFloppy::ReadTrack()
 	{
+		FloppyDisk& disk = m_images[m_currDrive];
+
 		BYTE param = Pop();
 
 		m_currDrive = param & 3;
@@ -715,12 +739,12 @@ namespace fdc
 		BYTE dtl = Pop();
 
 		m_currHead = head;
-		m_currSector = 1;
+		m_currSector = disk.geometry.sectOffset + 1;
 		m_maxSector = eot;
 		m_multiTrack = false; // No multitrack bit in command id
 
 		LogPrintf(LOG_INFO, "COMMAND: Read Track drive=[%d] head=[%d] multitrack=[%d]", m_currDrive, head, m_multiTrack);
-		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%x] number=[%d] endOfTrack=[%x] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		// TODO: Error handling, validation
 		m_pcn = c;
@@ -735,11 +759,9 @@ namespace fdc
 
 		assert(m_fifo.size() == 0);
 
-		FloppyDisk& disk = m_images[m_currDrive];
-
 		if (!disk.loaded)
 		{
-			m_st0 = NR | (param & 7); // Not Ready + head + drive
+			m_st0 = ST0_NR | (param & 7); // Not Ready + head + drive
 
 			m_currOpWait = DelayToTicks(100 * 1000); // 100ms
 			return STATE::NOT_READY;
@@ -761,17 +783,14 @@ namespace fdc
 
 		// Put the whole sector in the fifo
 		uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
-		for (size_t b = 0; b < 512; ++b)
-		{
-			Push(disk.data[offset + b]);
-		}
+		PushSector(disk, offset);
 
 		return STATE::READ_START;
 	}
 
 	void DeviceFloppy::ReadSector()
 	{
-		LogPrintf(LOG_DEBUG, "ReadSector, fifo=%d", m_fifo.size());
+		LogPrintf(LOG_TRACE, "ReadSector, fifo=%d", m_fifo.size());
 		// Exit Conditions
 
 		FloppyDisk& disk = m_images[m_currDrive];
@@ -793,10 +812,7 @@ namespace fdc
 			// Put the whole sector in the fifo
 			// TODO: Avoid duplication, check out of bounds
 			uint32_t offset = disk.geometry.CHS2A(m_pcn, m_currHead, m_currSector);
-			for (size_t b = 0; b < 512; ++b)
-			{
-				Push(disk.data[offset + b]);
-			}
+			PushSector(disk, offset);
 		}
 
 		SetDMAPending();
@@ -813,7 +829,7 @@ namespace fdc
 
 		ClearDiskChanged();
 
-		m_st0 = 0;
+		m_st0 = ST0_INT_NT;
 
 		m_fifo.clear();
 
@@ -847,7 +863,7 @@ namespace fdc
 		m_multiTrack = GetBit(m_currcommandID, 7);
 
 		LogPrintf(LOG_INFO, "COMMAND: Write Data drive=[%d] head=[%d] multitrack=[%d]", m_currDrive, head, m_multiTrack);
-		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%d] number=[%d] endOfTrack=[%d] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
+		LogPrintf(LOG_INFO, "|Params: cyl=[%d] head=[%d] sector=[%x] number=[%d] endOfTrack=[%x] gapLength=[%d] dtl=[%d]", c, h, r, n, eot, gpl, dtl);
 
 		// TODO: Error handling, validation
 		m_pcn = c;
@@ -866,7 +882,7 @@ namespace fdc
 
 		if (!disk.loaded)
 		{
-			m_st0 = NR | (param & 7); // Not Ready + head + drive
+			m_st0 = ST0_INT_NR | (param & 7); // Not Ready + head + drive
 
 			m_currOpWait = DelayToTicks(100 * 1000); // 100ms
 			return STATE::NOT_READY;
@@ -875,7 +891,7 @@ namespace fdc
 		// TODO: Only if head is not already loaded
 		m_currOpWait = DelayToTicks((size_t)m_hlt * 1000);
 
-		if (r < 1 || r > disk.geometry.sect)
+		if (r < 1 || r > (disk.geometry.sect + disk.geometry.sectOffset))
 		{
 			LogPrintf(LOG_ERROR, "Invalid sector [%d]", r);
 			throw std::exception("Invalid sector");
@@ -902,8 +918,6 @@ namespace fdc
 
 		FloppyDisk& disk = m_images[m_currDrive];
 		// TODO: Handle not loaded
-
-		BYTE maxSector = m_nonDMA ? std::min(m_maxSector, disk.geometry.sect) : disk.geometry.sect;
 
 		if (m_fifo.size() == 512)
 		{
@@ -948,7 +962,7 @@ namespace fdc
 	bool DeviceFloppy::UpdateCurrPos()
 	{
 		const FloppyDisk& disk = m_images[m_currDrive];
-		BYTE maxSector = m_nonDMA ? std::min(m_maxSector, disk.geometry.sect) : disk.geometry.sect;
+		BYTE maxSector = m_nonDMA ? std::min(m_maxSector, (BYTE)(disk.geometry.sect + disk.geometry.sectOffset)) : (disk.geometry.sect + disk.geometry.sectOffset);
 
 		bool isEOT = (m_currSector >= maxSector);
 		LogPrintf(LOG_DEBUG, "UpdateCurrPos mt=[%d], head=[%d], EOT=[%d]", m_multiTrack, m_currHead, isEOT);
@@ -962,7 +976,7 @@ namespace fdc
 		{
 			m_pcn += isEOT ? 1 : 0;
 		}
-		m_currSector = isEOT ? 1 : (m_currSector + 1);
+		m_currSector = isEOT ? (disk.geometry.sectOffset + 1) : (m_currSector + 1);
 		LogPrintf(LOG_DEBUG, "UpdateCurrPos done: cyl=[%d] head=[%d] sector=[%d]", m_pcn, m_currHead, m_currSector);
 
 		// TODO: In multitrack mode, should continue if eot and head passes from 0 to 1
