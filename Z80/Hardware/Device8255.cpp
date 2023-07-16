@@ -83,16 +83,16 @@ namespace ppi
 			LogPrintf(LOG_DEBUG, "GROUP A   : MODE 0");
 			break;
 		case CTRL_GA_MODE1:
-			LogPrintf(LOG_DEBUG, "GROUP A   : MODE 1");
+			LogPrintf(LOG_ERROR, "GROUP A   : MODE 1 (not implemented)");
 			throw std::exception("GROUP A MODE 1 not implemented");
 		default:
-			LogPrintf(LOG_DEBUG, "GROUP A   : MODE 2");
+			LogPrintf(LOG_ERROR, "GROUP A   : MODE 2 (not implemented)");
 			throw std::exception("GROUP A MODE 2 not implemented");
 		}
 
 		if (ctrl & CTRL_GB_MODE1)
 		{
-			LogPrintf(LOG_DEBUG, "GROUP B   : MODE 1");
+			LogPrintf(LOG_ERROR, "GROUP B   : MODE 1 (not implemented)");
 			throw std::exception("GROUP B MODE 1 not implemented");
 		}
 		else
