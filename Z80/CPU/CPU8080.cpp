@@ -674,6 +674,8 @@ namespace emul
 		m_interruptAcknowledge = false;
 		m_interruptsEnabled = false;
 
+		m_state = CPUState::STOP;
+
 		ClearFlags(m_reg.flags);
 	}
 
