@@ -23,15 +23,25 @@ namespace video::cpc464
 
 	void VideoCPC464::Reset()
 	{
+		Video::Reset();
 		m_crtc.Reset();
 
 		m_baseAddress = 0;
 		m_currPen = 0;
 		m_romHighEnabled = false;
 		m_romLowEnabled = true;
-		m_mode = 0;
 		m_interruptCounter = 0;
 		m_isInterrupt = false;
+		m_mode = 0;
+
+		try
+		{
+			UpdateMode();
+		}
+		catch (std::exception ex)
+		{
+			// Normal here on first reset because modes are not initialized
+		}
 	}
 
 	void VideoCPC464::EnableLog(SEVERITY minSev)

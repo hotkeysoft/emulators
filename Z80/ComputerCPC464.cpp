@@ -50,6 +50,7 @@ namespace emul
 		m_tape->Reset();
 
 		OnLowROMChange(true); // Load low ROM on top of RAM
+		m_currHighROM = 0;
 		OnHighROMChange(false);
 	}
 
