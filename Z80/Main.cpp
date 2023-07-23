@@ -594,6 +594,8 @@ int main(int argc, char* args[])
 		delete monitor;
 		monitor = nullptr;
 
+		delete overlay;
+		overlay = nullptr;
 
 		SOUND().Cleanup();
 
