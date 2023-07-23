@@ -89,34 +89,16 @@ namespace emul
 		PortConnector::Init(PortConnectorMode::BYTE_HI);
 		ComputerBase::Init(CPUID_Z80, baseRAM);
 
-		EnableLog(LOG_DEBUG);
-
-		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
-
-		m_memory.Allocate(&m_baseRAM, 0);
-
-		m_romLow.LoadFromFile("data/z80/amstrad.cpc464.os.bin");
-		LoadHighROM(0, "data/z80/amstrad.cpc464.basic.bin");
-
-		// TODO: Dynamic
-		LoadHighROM(7, "data/z80/amstrad.amsdos.0.5.bin");
-
-		// Only enable low rom (os) at boot
-		OnLowROMChange(true); // Load low ROM on top of RAM
-		OnHighROMChange(false);
-
-		Connect("xx0xxxxx", static_cast<PortConnector::OUTFunction>(&ComputerCPC464::SelectROMBank));
-
-		m_pio.EnableLog(CONFIG().GetLogLevel("pio"));
-		m_pio.SetKeyboard(&m_keyboard);
-		m_pio.Init("xxxx0xxx");
-
-		InitInputs(CPU_CLK, RTC_CLK);
-		GetInputs().InitKeyboard(&m_keyboard);
-
-		SOUND().SetBaseClock(CPU_CLK);
+		InitRAM();
+		InitROM();
+		InitIO();
+		InitSound();
 		InitVideo();
 		InitTape();
+
+		InitInputs(CPU_CLK, RTC_CLK);
+		InitKeyboard();
+		InitJoystick();
 
 		if (CONFIG().GetValueBool("floppy", "enable"))
 		{
@@ -132,6 +114,51 @@ namespace emul
 			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
 			throw std::exception("CPUType not supported");
 		}
+	}
+
+	void ComputerCPC464::InitKeyboard()
+	{
+		GetInputs().InitKeyboard(&m_keyboard);
+	}
+
+	void ComputerCPC464::InitJoystick()
+	{
+		// TODO
+	}
+
+	void ComputerCPC464::InitRAM()
+	{
+		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
+
+		m_memory.Allocate(&m_baseRAM, 0);
+	}
+
+	void ComputerCPC464::InitROM()
+	{
+		m_romLow.LoadFromFile("data/z80/amstrad.cpc464.os.bin");
+		LoadHighROM(0, "data/z80/amstrad.cpc464.basic.bin");
+
+		// TODO: Dynamic
+		LoadHighROM(7, "data/z80/amstrad.amsdos.0.5.bin");
+
+		// Only enable low rom (os) at boot
+		OnLowROMChange(true); // Load low ROM on top of RAM
+		OnHighROMChange(false);
+
+		Connect("xx0xxxxx", static_cast<PortConnector::OUTFunction>(&ComputerCPC464::SelectROMBank));
+	}
+
+	void ComputerCPC464::InitIO()
+	{
+		m_pio.EnableLog(CONFIG().GetLogLevel("pio"));
+		m_pio.SetKeyboard(&m_keyboard);
+		m_pio.Init("xxxx0xxx");
+	}
+
+	void ComputerCPC464::InitSound()
+	{
+		SOUND().SetBaseClock(CPU_CLK);
+		// TODO
 	}
 
 	void ComputerCPC464::InitVideo()

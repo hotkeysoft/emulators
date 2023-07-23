@@ -4,6 +4,7 @@
 #include "Video/VideoCPC464.h"
 #include "IO/InputEvents.h"
 #include "IO/DeviceKeyboardCPC464.h"
+#include "IO/DeviceJoystickDigital.h"
 #include "Hardware/Device8255CPC464.h"
 #include <Storage/DeviceTape.h>
 
@@ -41,7 +42,13 @@ namespace emul
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 
+		void InitKeyboard();
+		void InitJoystick();
+		void InitRAM();
+		void InitROM();
+		void InitIO();
 		void InitVideo();
+		void InitSound();
 		void InitTape();
 		void InitFloppy(fdc::DeviceFloppy* fdd);
 
@@ -69,5 +76,7 @@ namespace emul
 		ppi::Device8255CPC464 m_pio;
 		tape::DeviceTape* m_tape = nullptr;
 		fdc::DeviceFloppy* m_floppy = nullptr;
+		joy::DeviceJoystickDigital m_joystick;
+
 	};
 }
