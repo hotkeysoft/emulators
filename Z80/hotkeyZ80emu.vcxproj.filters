@@ -82,6 +82,12 @@
     <Filter Include="Header Files\Storage">
       <UniqueIdentifier>{4b8032ed-f5d7-4e85-9609-68e7250da988}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{1b8e2211-5029-4862-bae6-fed4c46674f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{b8e37a08-bc6b-4f20-9552-3475f9e19d7c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -273,6 +279,9 @@
     <ClInclude Include="Storage\DeviceFloppyCPC464.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
+    <ClInclude Include="UI\OverlayCPC464.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -424,6 +433,9 @@
     </ClCompile>
     <ClCompile Include="Storage\DeviceFloppyCPC464.cpp">
       <Filter>Source Files\Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\OverlayCPC464.cpp">
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

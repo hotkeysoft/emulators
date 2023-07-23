@@ -4,6 +4,7 @@
 #include <FileUtil.h>
 #include <UI/MainWindow.h>
 #include <UI/Overlay.h>
+#include <UI/OverlayCPC464.h>
 #include <Sound/Sound.h>
 
 #include <CPU/Memory.h>
@@ -164,7 +165,21 @@ ComputerBase* CreateComputer(std::string arch)
 	return computer;
 }
 
-void InitPC(ComputerBase* pc, Overlay& overlay, bool reset = true)
+Overlay* CreateOverlay(std::string arch)
+{
+	Overlay* overlay = nullptr;
+	if (arch == "cpc464" || arch == "amstradcpc464")
+	{
+		overlay = new ui::OverlayCPC464();
+	}
+	else
+	{
+		overlay = new ui::Overlay();
+	}
+	return overlay;
+}
+
+void InitPC(ComputerBase* pc, Overlay* overlay, bool reset = true)
 {
 	pc->EnableLog(CONFIG().GetLogLevel("computer"));
 	if (reset)
@@ -190,10 +205,10 @@ void InitPC(ComputerBase* pc, Overlay& overlay, bool reset = true)
 
 	monitor->Init(pc->GetCPU(), pc->GetMemory());
 
-	overlay.SetPC(pc);
+	overlay->SetPC(pc);
 
-	pc->GetVideo().AddRenderer(&overlay);
-	pc->GetInputs().AddEventHandler(&overlay);
+	pc->GetVideo().AddRenderer(overlay);
+	pc->GetInputs().AddEventHandler(overlay);
 	pc->GetInputs().AddEventHandler(&(pc->GetVideo())); // Window resize events
 }
 
@@ -353,12 +368,19 @@ int main(int argc, char* args[])
 	MAINWND().Init("hotkeyZ80emu", Overlay::GetOverlayHeight());
 	InitSound();
 
-	Overlay overlay;
-	overlay.Init();
-	overlay.SetNewComputerCallback(NewComputerCallback);
+	std::string arch = CONFIG().GetValueStr("core", "arch");
+
+	Overlay* overlay = CreateOverlay(arch);
+	if (!overlay)
+	{
+		fprintf(stderr, "Unknown architecture: [core].arch=[%s]", arch.c_str());
+		return 3;
+	}
+
+	overlay->Init();
+	overlay->SetNewComputerCallback(NewComputerCallback);
 	bool showOverlay = true;
 
-	std::string arch = CONFIG().GetValueStr("core", "arch");
 	ComputerBase* pc = CreateComputer(arch);
 	if (!pc)
 	{
@@ -432,7 +454,7 @@ int main(int argc, char* args[])
 				//
 				// For now this only updates the fdd/hdd LEDs.
 				// The actual GUI is refreshed in a callback above
-				if (showOverlay && !overlay.Update())
+				if (showOverlay && !overlay->Update())
 				{
 					break;
 				}
@@ -481,7 +503,7 @@ int main(int argc, char* args[])
 						case FKEY + 1:
 							showOverlay = !showOverlay;
 							fprintf(stderr, "%s Overlay\n", showOverlay ? "Show" : "Hide");
-							overlay.Show(showOverlay);
+							overlay->Show(showOverlay);
 							break;
 						case FKEY + 2:
 						case FKEY + 3:
@@ -552,6 +574,8 @@ int main(int argc, char* args[])
 						delete pc;
 						pc = newPC;
 						InitPC(pc, overlay, false);
+
+						//TODO: Switch overlay
 					}
 				}
 			}

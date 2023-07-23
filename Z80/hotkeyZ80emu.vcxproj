@@ -76,6 +76,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Storage\DeviceFloppy.h" />
     <ClInclude Include="Storage\DeviceFloppyCPC464.h" />
+    <ClInclude Include="UI\OverlayCPC464.h" />
     <ClInclude Include="Video\CRTControllerCPC464.h" />
     <ClInclude Include="Video\TMS9918.h" />
     <ClInclude Include="Video\VideoColecoVision.h" />
@@ -134,6 +135,7 @@
     </ClCompile>
     <ClCompile Include="Storage\DeviceFloppy.cpp" />
     <ClCompile Include="Storage\DeviceFloppyCPC464.cpp" />
+    <ClCompile Include="UI\OverlayCPC464.cpp" />
     <ClCompile Include="Video\TMS9918.cpp" />
     <ClCompile Include="Video\VideoColecoVision.cpp" />
     <ClCompile Include="Video\VideoCPC464.cpp" />
