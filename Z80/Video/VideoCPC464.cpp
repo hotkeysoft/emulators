@@ -53,7 +53,7 @@ namespace video::cpc464
 	void VideoCPC464::Init(emul::Memory* memory, const char* charROM, bool forceMono)
 	{
 		Video::Init(memory, charROM, forceMono);
-		InitFrameBuffer(1024, 313);
+		InitFrameBuffer(1024, 320);
 
 		Connect("01xxxxxx", static_cast<PortConnector::OUTFunction>(&VideoCPC464::Write));
 
@@ -70,7 +70,7 @@ namespace video::cpc464
 
 	SDL_Rect VideoCPC464::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
-		xMultiplier = (m_mode == 2) ? 2 : 1;
+		xMultiplier = 2;
 		border = 8;
 		const struct CRTCData& data = m_crtc.GetData();
 
@@ -80,6 +80,11 @@ namespace video::cpc464
 
 		rect.w = std::min(m_fbWidth - rect.x, (data.hTotalDisp + (2u * border)) * xMultiplier);
 		rect.h = std::min(m_fbHeight - rect.y, (data.vTotalDisp + (2u * border)));
+
+		//rect.x = 0;
+		//rect.y = 0;
+		//rect.w = 1024;
+		//rect.h = 320;
 
 		return rect;
 	}
@@ -169,9 +174,37 @@ namespace video::cpc464
 			return;
 		}
 
-		if (!m_crtc.IsVSync())
+		const auto& crtcData = m_crtc.GetData();
+		if (crtcData.hPos == crtcData.hSyncMax)
+		{
+			UpdateMode();
+
+			// Two lines after start of vsync, interrupt if counter < 32
+			// and reset counter
+
+			if (crtcData.vPos == (crtcData.vSyncMin + 2))
+			{
+				if (!GetBit(m_interruptCounter, 5))
+				{
+					m_isInterrupt = true;
+				}
+
+				m_interruptCounter = 0;
+			}
+			else if (++m_interruptCounter == 52)
+			{
+				m_isInterrupt = true;
+				m_interruptCounter = 0;
+			}
+		}
+
+		if (IsDisplayArea() && IsEnabled())
 		{
 			Draw();
+		}
+		else
+		{
+			DrawBackground(16);
 		}
 
 		m_crtc.Tick();
@@ -192,30 +225,6 @@ namespace video::cpc464
 	{
 		NewLine();
 		UpdateBaseAddress();
-		UpdateMode();
-
-		// TODO: maybe not right place for hsync/int processing
-
-		// Two lines after start of vsync, interrupt if counter < 32
-		// and reset counter
-		const auto& crtcData = m_crtc.GetData();
-		if (crtcData.vPos == (crtcData.vSyncMin + 2))
-		{
-			if (!GetBit(m_interruptCounter, 5))
-			{
-				m_isInterrupt = true;
-			}
-
-			m_interruptCounter = 0;
-		}
-		else
-		{
-			if (++m_interruptCounter == 52)
-			{
-				m_isInterrupt = true;
-				m_interruptCounter = 0;
-			}
-		}
 	}
 
 	void VideoCPC464::UpdateMode()
@@ -262,33 +271,23 @@ namespace video::cpc464
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
-		// Called every 8 horizontal pixels
-		// In this mode 1 byte = 2 pixels, but each pixel is doubled
-		if (IsDisplayArea() && IsEnabled())
-		{
-			ADDRESS base = GetAddress();
+		ADDRESS base = GetAddress();
 
-			for (int w = 0; w < 2; ++w)
+		for (int w = 0; w < 2; ++w)
+		{
+			BYTE ch = m_ram->read(base++);
+
+			for (int i = 0; i < 2; ++i)
 			{
-				BYTE ch = m_ram->read(base++);
+				const BYTE index =
+					(GetBit(ch, 7) << 0) |
+					(GetBit(ch, 5) << 2) |
+					(GetBit(ch, 3) << 1) |
+					(GetBit(ch, 1) << 3);
 
-				for (int i = 0; i < 2; ++i)
-				{
-					const BYTE index =
-						(GetBit(ch, 7) << 0) |
-						(GetBit(ch, 5) << 2) |
-						(GetBit(ch, 3) << 1) |
-						(GetBit(ch, 1) << 3);
-
-					DrawPixel(GetColor(index));
-					DrawPixel(GetColor(index));
-					ch <<= 1;
-				}
+				DrawPixel4(GetColor(index));
+				ch <<= 1;
 			}
-		}
-		else
-		{
-			DrawBackground(8);
 		}
 	}
 
@@ -304,30 +303,21 @@ namespace video::cpc464
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
-		// Called every 8 horizontal pixels
-		// In this mode 1 byte = 4 pixels
-		if (IsDisplayArea() && IsEnabled())
-		{
-			ADDRESS base = GetAddress();
+		ADDRESS base = GetAddress();
 
-			for (int w = 0; w < 2; ++w)
+		for (int w = 0; w < 2; ++w)
+		{
+			BYTE ch = m_ram->read(base++);
+
+			for (int i = 0; i < 4; ++i)
 			{
-				BYTE ch = m_ram->read(base++);
+				const BYTE index =
+					(GetBit(ch, 7) << 0) |
+					(GetBit(ch, 3) << 1);
 
-				for (int i = 0; i < 4; ++i)
-				{
-					const BYTE index =
-						(GetBit(ch, 7) << 0) |
-						(GetBit(ch, 3) << 1);
-
-					DrawPixel(GetColor(index));
-					ch <<= 1;
-				}
+				DrawPixel2(GetColor(index));
+				ch <<= 1;
 			}
-		}
-		else
-		{
-			DrawBackground(8);
 		}
 	}
 
@@ -342,25 +332,18 @@ namespace video::cpc464
 
 		// Called every 16 horizontal pixels
 		// In this mode 1 byte = 8 pixels
-		if (IsDisplayArea() && IsEnabled())
-		{
-			ADDRESS base = GetAddress();
+		ADDRESS base = GetAddress();
 
-			for (int w = 0; w < 2; ++w)
+		for (int w = 0; w < 2; ++w)
+		{
+			BYTE ch = m_ram->read(base++);
+
+			for (int i = 0; i < 8; ++i)
 			{
-				BYTE ch = m_ram->read(base++);
-
-				for (int i = 0; i < 8; ++i)
-				{
-					const BYTE index = emul::GetMSB(ch);
-					DrawPixel(GetColor(index));
-					ch <<= 1;
-				}
+				const BYTE index = emul::GetMSB(ch);
+				DrawPixel(GetColor(index));
+				ch <<= 1;
 			}
-		}
-		else
-		{
-			DrawBackground(16);
 		}
 	}
 
@@ -376,31 +359,21 @@ namespace video::cpc464
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
-		// Called every 8 horizontal pixels
-		// In this mode 1 byte = 2 pixels, but each pixel is doubled
-		if (IsDisplayArea() && IsEnabled())
-		{
-			ADDRESS base = GetAddress();
+		ADDRESS base = GetAddress();
 
-			for (int w = 0; w < 2; ++w)
+		for (int w = 0; w < 2; ++w)
+		{
+			BYTE ch = m_ram->read(base++);
+
+			for (int i = 0; i < 2; ++i)
 			{
-				BYTE ch = m_ram->read(base++);
+				const BYTE index =
+					(GetBit(ch, 7) << 0) |
+					(GetBit(ch, 3) << 1);
 
-				for (int i = 0; i < 2; ++i)
-				{
-					const BYTE index =
-						(GetBit(ch, 7) << 0) |
-						(GetBit(ch, 3) << 1);
-
-					DrawPixel(GetColor(index));
-					DrawPixel(GetColor(index));
-					ch <<= 1;
-				}
+				DrawPixel4(GetColor(index));
+				ch <<= 1;
 			}
-		}
-		else
-		{
-			DrawBackground(8);
 		}
 	}
 
