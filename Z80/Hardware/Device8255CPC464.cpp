@@ -2,6 +2,7 @@
 
 #include "Device8255CPC464.h"
 #include <IO/DeviceKeyboard.h>
+#include <IO/DeviceJoystickDigital.h>
 
 using emul::GetBit;
 
@@ -25,7 +26,26 @@ namespace ppi
 		//return m_portAData;
 
 		const auto line = GetKeyboardLine();
-		return (line != KeyboardLine::INVALID) ? m_keyboard->GetRowData((BYTE)line) : 0xFF;
+		switch (line)
+		{
+		case KeyboardLine::LINE_0:
+		case KeyboardLine::LINE_1:
+		case KeyboardLine::LINE_2:
+		case KeyboardLine::LINE_3:
+		case KeyboardLine::LINE_4:
+		case KeyboardLine::LINE_5:
+		case KeyboardLine::LINE_6:
+		case KeyboardLine::LINE_7:
+		case KeyboardLine::LINE_8:
+			return m_keyboard->GetRowData((BYTE)line);
+		case KeyboardLine::LINE_9:
+			return m_keyboard->GetRowData((BYTE)line) & ReadJoystick1();
+
+		default:
+		case KeyboardLine::INVALID:
+			LogPrintf(LOG_WARNING, "Invalid keyboard line: %d", line);
+			return 0;
+		}
 	}
 	void Device8255CPC464::PORTA_OUT(BYTE value)
 	{
@@ -72,4 +92,24 @@ namespace ppi
 
 	}
 
+	const BYTE JOY_UP = 0x01;
+	const BYTE JOY_DOWN = 0x02;
+	const BYTE JOY_LEFT = 0x04;
+	const BYTE JOY_RIGHT = 0x08;
+	const BYTE JOY_FIRE1 = 0x10;
+	const BYTE JOY_FIRE2 = 0x20;
+
+	BYTE Device8255CPC464::ReadJoystick1() const
+	{
+		if (!m_joystick) return 0xFF;
+
+		BYTE val =
+			(m_joystick->GetUp() * JOY_UP) |
+			(m_joystick->GetDown() * JOY_DOWN) |
+			(m_joystick->GetLeft() * JOY_LEFT) |
+			(m_joystick->GetRight() * JOY_RIGHT) |
+			(m_joystick->GetFire() * JOY_FIRE1) |
+			(m_joystick->GetFire2() * JOY_FIRE2);
+		return ~val;
+	}
 }

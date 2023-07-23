@@ -3,6 +3,7 @@
 #include "Device8255.h"
 
 namespace kbd { class DeviceKeyboard; }
+namespace joy { class DeviceJoystickDigital; }
 
 namespace ppi
 {
@@ -50,6 +51,7 @@ namespace ppi
 		Device8255CPC464& operator=(Device8255CPC464&&) = delete;
 
 		void SetKeyboard(kbd::DeviceKeyboard* keyboard) { m_keyboard = keyboard; }
+		void SetJoystick(joy::DeviceJoystickDigital* joystick) { m_joystick = joystick; }
 
 		virtual void Reset() override;
 
@@ -74,6 +76,9 @@ namespace ppi
 
 	protected:
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
+		joy::DeviceJoystickDigital* m_joystick = nullptr;
+
+		BYTE ReadJoystick1() const;
 
 		virtual BYTE PORTA_IN() override;
 		virtual void PORTA_OUT(BYTE value) override;

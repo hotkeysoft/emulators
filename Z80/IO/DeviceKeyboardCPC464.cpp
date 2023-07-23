@@ -77,8 +77,8 @@ namespace kbd
 		{ SDL_SCANCODE_5, Key(0x02, 6) }, // 5 (Joy 2 down)
 		{ SDL_SCANCODE_R, Key(0x04, 6) }, // R (Joy 2 left)
 		{ SDL_SCANCODE_T, Key(0x08, 6) }, // T (Joy 2 right)
-		{ SDL_SCANCODE_G, Key(0x10, 6) }, // G (Joy 2 fire)
-		{ SDL_SCANCODE_F, Key(0x20, 6) }, // F
+		{ SDL_SCANCODE_G, Key(0x10, 6) }, // G (Joy 2 fire 2)
+		{ SDL_SCANCODE_F, Key(0x20, 6) }, // F (Joy 2 fire 1)
 		{ SDL_SCANCODE_B, Key(0x40, 6) }, // B
 		{ SDL_SCANCODE_V, Key(0x80, 6) }, // V
 
@@ -107,9 +107,8 @@ namespace kbd
 		//{ , Key(0x02, 9) }, // Joy 1 down
 		//{ , Key(0x04, 9) }, // Joy 1 left
 		//{ , Key(0x08, 9) }, // Joy 1 right
-		//{ , Key(0x10, 9) }, // Joy 1 Fire 1
-		//{ , Key(0x20, 9) }, // Joy 1 Fire 2
-		//{ , Key(0x40, 9) }, // Joy 1 Fire 3
+		//{ , Key(0x10, 9) }, // Joy 1 Fire 2
+		//{ , Key(0x20, 9) }, // Joy 1 Fire 1
 		{ SDL_SCANCODE_BACKSPACE, Key(0x80, 9) }, // DEL
 	};
 

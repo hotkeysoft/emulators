@@ -77,6 +77,5 @@ namespace emul
 		tape::DeviceTape* m_tape = nullptr;
 		fdc::DeviceFloppy* m_floppy = nullptr;
 		joy::DeviceJoystickDigital m_joystick;
-
 	};
 }

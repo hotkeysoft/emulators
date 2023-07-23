@@ -91,14 +91,17 @@ namespace emul
 
 		InitRAM();
 		InitROM();
+		InitKeyboard();
+		InitJoystick();
 		InitIO();
 		InitSound();
 		InitVideo();
 		InitTape();
 
 		InitInputs(CPU_CLK, RTC_CLK);
-		InitKeyboard();
-		InitJoystick();
+
+		GetInputs().InitKeyboard(&m_keyboard);
+		GetInputs().InitJoystick(&m_joystick);
 
 		if (CONFIG().GetValueBool("floppy", "enable"))
 		{
@@ -118,12 +121,16 @@ namespace emul
 
 	void ComputerCPC464::InitKeyboard()
 	{
-		GetInputs().InitKeyboard(&m_keyboard);
+		m_keyboard.EnableLog(CONFIG().GetLogLevel("keyboard"));
 	}
 
 	void ComputerCPC464::InitJoystick()
 	{
-		// TODO
+		if (CONFIG().GetValueBool("joystick", "enable"))
+		{
+			m_joystick.EnableLog(CONFIG().GetLogLevel("joystick"));
+			m_joystick.Init();
+		}
 	}
 
 	void ComputerCPC464::InitRAM()
@@ -152,6 +159,7 @@ namespace emul
 	{
 		m_pio.EnableLog(CONFIG().GetLogLevel("pio"));
 		m_pio.SetKeyboard(&m_keyboard);
+		m_pio.SetJoystick(&m_joystick);
 		m_pio.Init("xxxx0xxx");
 	}
 
