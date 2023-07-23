@@ -187,9 +187,6 @@ namespace crtc_6845
 
 	void CRTController::Tick()
 	{
-		m_data.hPos += m_charWidth;
-		++m_data.memoryAddress;
-
 		if (m_data.hPos == m_data.hSyncMin)
 		{
 			m_events->OnEndOfRow();
@@ -211,6 +208,11 @@ namespace crtc_6845
 				++m_data.vPosChar;
 			}
 			m_data.memoryAddress = m_config.startAddress + (m_data.vPosChar * m_config.hDisplayed);
+		}
+		else
+		{
+			m_data.hPos += m_charWidth;
+			++m_data.memoryAddress;
 		}
 
 		if (m_data.vPos >= m_data.vTotal)
