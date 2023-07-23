@@ -236,7 +236,7 @@ namespace emul
 	void ComputerCPC464::SelectROMBank(BYTE value)
 	{
 		LogPrintf(LOG_INFO, "Select ROM Bank: [%d]", value);
-		m_currHighROM = value;
+		m_currHighROM = (value >= ROM_BANKS) ? 0 : value;
 
 		if (m_highROMLoaded)
 		{
