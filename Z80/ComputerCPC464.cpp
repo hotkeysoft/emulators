@@ -304,4 +304,30 @@ namespace emul
 
 		return true;
 	}
+
+	void ComputerCPC464::Serialize(json& to)
+	{
+		ComputerBase::Serialize(to);
+
+		if (m_floppy)
+		{
+			m_floppy->Serialize(to["floppy"]);
+		}
+	}
+
+	void ComputerCPC464::Deserialize(const json& from)
+	{
+		ComputerBase::Deserialize(from);
+
+		if ((from.contains("floppy") && !m_floppy) ||
+			(!from.contains("floppy") && m_floppy))
+		{
+			throw SerializableException("Computer: Floppy configuration is not compatible", SerializationError::COMPAT);
+		}
+
+		if (m_floppy)
+		{
+			m_floppy->Deserialize(from["floppy"]);
+		}
+	}
 }

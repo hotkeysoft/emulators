@@ -39,6 +39,10 @@ namespace emul
 		virtual void OnLowROMChange(bool load) override;
 		virtual void OnHighROMChange(bool load) override;
 
+		// emul::Serializable
+		virtual void Serialize(json& to);
+		virtual void Deserialize(const json& from);
+
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 
