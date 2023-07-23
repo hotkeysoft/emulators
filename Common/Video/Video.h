@@ -67,7 +67,26 @@ namespace video
 		void BeginFrame();
 		void NewLine();
 		void DrawAt(uint32_t x, uint32_t y, uint32_t color) { m_fb[y * m_fbWidth + x] = color; }
-		void DrawPixel(uint32_t color) { ++m_fbCurrX; m_lastDot = color; m_fb[m_fbCurrPos++] = color; }
+
+		void DrawPixel(uint32_t color) {
+			m_lastDot = color;
+			++m_fbCurrX; m_fb[m_fbCurrPos++] = color;
+		}
+
+		void DrawPixel2(uint32_t color) {
+			m_lastDot = color;
+			++m_fbCurrX; m_fb[m_fbCurrPos++] = color;
+			++m_fbCurrX; m_fb[m_fbCurrPos++] = color;
+		}
+
+		void DrawPixel4(uint32_t color) {
+			m_lastDot = color;
+			++m_fbCurrX; m_fb[m_fbCurrPos++] = color;
+			++m_fbCurrX; m_fb[m_fbCurrPos++] = color;
+			++m_fbCurrX; m_fb[m_fbCurrPos++] = color;
+			++m_fbCurrX; m_fb[m_fbCurrPos++] = color;
+		}
+
 		void MergeLine(uint32_t* pixels, size_t len);
 		void DrawBackground(BYTE width);
 		void DrawBackground(BYTE width, uint32_t color);
