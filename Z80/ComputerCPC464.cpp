@@ -19,6 +19,7 @@ namespace emul
 	const size_t PIXEL_CLK = MAIN_CLK / 2;
 	const size_t CPU_CLK = PIXEL_CLK / 2;
 
+	// TODO: Sync with video
 	const size_t RTC_CLK = 50; // 50Hz
 	const size_t RTC_RATE = CPU_CLK / RTC_CLK;
 
@@ -26,7 +27,7 @@ namespace emul
 		Logger("ZXSpectrum"),
 		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM),
-		m_romLow("ROML", ROM_SIZE, emul::MemoryType::ROM)
+		m_romLow("ROM_L", ROM_SIZE, emul::MemoryType::ROM)
 	{
 	}
 
@@ -57,14 +58,9 @@ namespace emul
 	bool ComputerCPC464::LoadHighROM(BYTE bank, const char* romFile)
 	{
 		LogPrintf(LOG_INFO, "Load High ROM Bank [%d]: %s", bank, romFile);
-		if (bank >= ROM_BANKS)
-		{
-			LogPrintf(LOG_ERROR, "Invalid ROM bank id [%d]", bank);
-			throw std::exception("Invalid ROM bank");
-		}
 
-		char id[8];
-		sprintf(id, "ROM%d", bank);
+		char id[16];
+		sprintf(id, "ROM_H%02X", bank);
 
 		delete(m_romBanks[bank]);
 		m_romBanks[bank] = nullptr;
@@ -98,7 +94,7 @@ namespace emul
 		InitVideo();
 		InitTape();
 
-		InitInputs(CPU_CLK, RTC_CLK);
+		InitInputs(CPU_CLK, RTC_RATE);
 
 		GetInputs().InitKeyboard(&m_keyboard);
 		GetInputs().InitJoystick(&m_joystick);
@@ -236,7 +232,7 @@ namespace emul
 	void ComputerCPC464::SelectROMBank(BYTE value)
 	{
 		LogPrintf(LOG_INFO, "Select ROM Bank: [%d]", value);
-		m_currHighROM = (value >= ROM_BANKS) ? 0 : value;
+		m_currHighROM = value;
 
 		if (m_highROMLoaded)
 		{

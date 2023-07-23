@@ -55,7 +55,7 @@ namespace emul
 			Connect(i << 1, static_cast<PortConnector::OUTFunction>(&ComputerZXSpectrum::WriteULA));
 		}
 
-		InitInputs(CPU_CLK, RTC_CLK);
+		InitInputs(CPU_CLK, RTC_RATE);
 		GetInputs().InitKeyboard(&m_keyboard);
 
 		SOUND().SetBaseClock(CPU_CLK);

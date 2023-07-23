@@ -67,7 +67,7 @@ namespace emul
 		static const ADDRESS ROM_LOW = 0;
 		static const ADDRESS ROM_HIGH = 0xC000;
 		static const ADDRESS ROM_SIZE = 0x4000;
-		static const size_t ROM_BANKS = 8;
+		static const size_t ROM_BANKS = 256;
 
 		std::array<emul::MemoryBlock*, ROM_BANKS> m_romBanks = { nullptr };
 
