@@ -337,7 +337,7 @@ namespace fdc
 				m_state = STATE::RESULT_WAIT;
 			}
 
-			if (m_currCommand->interrupt)
+			if (m_currCommand && m_currCommand->interrupt)
 			{
 				LogPrintf(LOG_DEBUG, "Interrupt Pending");
 				SetInterruptPending();
@@ -450,11 +450,10 @@ namespace fdc
 		}
 		else
 		{
-			LogPrintf(LOG_ERROR, "Unknown command");
-			m_state = STATE::CMD_ERROR;
+			LogPrintf(LOG_WARNING, "Unknown command %d", m_currcommandID);
+			m_state = STATE::CMD_EXEC_DONE;
 			m_currCommand = nullptr;
 			m_currcommandID = 0;
-			throw std::exception("Unknown command");
 		}
 	}
 	void DeviceFloppy::ExecuteCommand()
