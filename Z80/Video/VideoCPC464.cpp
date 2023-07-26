@@ -174,19 +174,36 @@ namespace video::cpc464
 			return;
 		}
 
+		if (IsDisplayArea() && IsEnabled())
+		{
+			Draw();
+		}
+		else
+		{
+			DrawBackground(16);
+		}
+
 		const auto& crtcData = m_crtc.GetData();
 		if (crtcData.hPos == crtcData.hSyncMax)
 		{
+			UpdateBaseAddress();
 			UpdateMode();
 
 			// Two lines after start of vsync, interrupt if counter < 32
 			// and reset counter
-
-			if (crtcData.vPos == (crtcData.vSyncMin + 2))
+			if ((crtcData.vPos == crtcData.vSyncMax + 0) || (crtcData.vPos == crtcData.vSyncMax + 1))
 			{
-				if (!GetBit(m_interruptCounter, 5))
+				// Skip
+				++m_interruptCounter;
+			}
+			else if (crtcData.vPos == crtcData.vSyncMax + 2)
+			{
+				if (m_interruptCounter >= 32)
 				{
 					m_isInterrupt = true;
+				}
+				else
+				{
 				}
 
 				m_interruptCounter = 0;
@@ -196,15 +213,6 @@ namespace video::cpc464
 				m_isInterrupt = true;
 				m_interruptCounter = 0;
 			}
-		}
-
-		if (IsDisplayArea() && IsEnabled())
-		{
-			Draw();
-		}
-		else
-		{
-			DrawBackground(16);
 		}
 
 		m_crtc.Tick();
@@ -224,7 +232,6 @@ namespace video::cpc464
 	void VideoCPC464::OnEndOfRow()
 	{
 		NewLine();
-		UpdateBaseAddress();
 	}
 
 	void VideoCPC464::UpdateMode()

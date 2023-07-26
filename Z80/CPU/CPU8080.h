@@ -67,7 +67,7 @@ namespace emul
 
 		bool m_interruptAcknowledge = false;
 		bool m_interruptsEnabled = false;
-		virtual void Interrupt();
+		virtual bool Interrupt();
 
 		enum FLAG : BYTE
 		{

@@ -170,7 +170,7 @@ namespace crtc_6845
 	void CRTController::UpdateHVTotals()
 	{
 		m_data.hTotalDisp = m_config.hDisplayed * m_charWidth;
-		m_data.hTotal = (m_config.hTotal + 1) * m_charWidth;
+		m_data.hTotal = m_config.hTotal * m_charWidth;
 
 		m_data.hSyncMin = m_config.hSyncPos * m_charWidth;
 		m_data.hSyncMax = std::min(m_data.hTotal, (WORD)(m_data.hSyncMin + (m_config.hSyncWidth * m_charWidth)));
@@ -187,16 +187,6 @@ namespace crtc_6845
 
 	void CRTController::Tick()
 	{
-		if (m_data.hPos == m_data.hSyncMin)
-		{
-			m_events->OnEndOfRow();
-		}
-
-		if (m_data.vPos == m_data.vSyncMin)
-		{
-			m_events->OnNewFrame();
-		}
-
 		if (m_data.hPos >= m_data.hTotal)
 		{
 			m_data.hPos = 0;
@@ -208,9 +198,19 @@ namespace crtc_6845
 				++m_data.vPosChar;
 			}
 			m_data.memoryAddress = m_config.startAddress + (m_data.vPosChar * m_config.hDisplayed);
+
+			if (m_data.vPos == m_data.vSyncMin)
+			{
+				m_events->OnNewFrame();
+			}
 		}
 		else
 		{
+			if (m_data.hPos == m_data.hSyncMin)
+			{
+				m_events->OnEndOfRow();
+			}
+
 			m_data.hPos += m_charWidth;
 			++m_data.memoryAddress;
 		}

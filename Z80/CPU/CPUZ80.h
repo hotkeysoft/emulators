@@ -25,7 +25,7 @@ namespace emul
 		// Positive logic
 		void SetNMI(bool value) { m_nmiLatch.Set(value); }
 		// Positive logic
-		void SetINT(bool value) { m_intLatch.Set(value); }
+		void SetINT(bool value) { m_intLatch = value; }
 
 		// This is needed only for the ZX80/81: Disconnects the data bus so the CPU sees NOPs
 		void EnableDataBus(bool enable) { m_dataBusEnable = enable; }
@@ -80,11 +80,11 @@ namespace emul
 
 		// Interrupt flip-flops
 		hscommon::EdgeDetectLatch m_nmiLatch;
-		hscommon::EdgeDetectLatch m_intLatch;
+		bool m_intLatch;
 
 		bool m_iff1 = false;
 		bool m_iff2 = false;
-		virtual void Interrupt() override;
+		virtual bool Interrupt() override;
 
 		// Interrupt mode
 		enum InterruptMode {IM0 = 0, IM1, IM2 } m_interruptMode = InterruptMode::IM0;

@@ -53,7 +53,7 @@ namespace emul
 		ClearFlags(m_regAlt.flags);
 	}
 
-	void CPUZ80::Interrupt()
+	bool CPUZ80::Interrupt()
 	{
 		// Process NMI
 		if (m_nmiLatch.IsLatched())
@@ -72,8 +72,9 @@ namespace emul
 			REFRESH();
 			TICKMISC(MiscTiming::TRAP);
 			m_state = CPUState::RUN;
+			return true;
 		}
-		else if (m_iff1 && m_intLatch.IsLatched()) // Process INT
+		else if (m_iff1 && m_intLatch) // Process INT
 		{
 			LogPrintf(LOG_DEBUG, "INT");
 			m_interruptAcknowledge = true;
@@ -81,9 +82,6 @@ namespace emul
 			{
 				++m_programCounter;
 			}
-
-			// TODO: INT is level triggered (not edge)
-			m_intLatch.ResetLatch();
 
 			DI();
 			pushPC();
@@ -106,7 +104,10 @@ namespace emul
 			REFRESH();
 			TICKMISC(MiscTiming::IRQ);
 			m_state = CPUState::RUN;
+			return true;
 		}
+
+		return false;
 	}
 
 	void CPUZ80::Init()
@@ -1450,7 +1451,7 @@ namespace emul
 		to["dataBusEnable"] = m_dataBusEnable;
 
 		m_nmiLatch.Serialize(to["nmi"]);
-		m_intLatch.Serialize(to["int"]);
+		to["intLatch"] = m_intLatch;
 	}
 
 	void CPUZ80::Deserialize(const json& from)
@@ -1477,7 +1478,6 @@ namespace emul
 		m_dataBusEnable = from["dataBusEnable"];
 
 		m_nmiLatch.Deserialize(from["nmi"]);
-		m_intLatch.Deserialize(from["int"]);
-
+		m_intLatch = from["intLatch"];
 	}
 }

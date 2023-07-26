@@ -701,6 +701,13 @@ namespace emul
 	bool CPU8080::Step()
 	{
 		bool ret = true;
+
+		// Process interrupts
+		if (Interrupt())
+		{
+			return ret;
+		}
+
 		if (m_state != CPUState::HALT)
 		{
 			ret = CPU::Step();
@@ -709,13 +716,14 @@ namespace emul
 		if (m_state == CPUState::HALT)
 		{
 			Halt();
-			m_opTicks = 1;
-			ret = true;
-		}
-
-		if (ret)
-		{
-			Interrupt();
+			if (ret)
+			{
+				m_opTicks = 4;
+			}
+			else
+			{
+				ret = true;
+			}
 		}
 
 		return ret;
@@ -763,12 +771,16 @@ namespace emul
 		}
 	}
 
-	void CPU8080::Interrupt()
+	bool CPU8080::Interrupt()
 	{
 		if (m_interruptsEnabled)
 		{
 			m_interruptAcknowledge = true;
-			return;
+			return true;
+		}
+		else
+		{
+			return false;
 		}
 
 		// TODO: Not implemented

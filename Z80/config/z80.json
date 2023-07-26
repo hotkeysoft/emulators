@@ -6,8 +6,8 @@
     "opcodes": [
       { "name": "NOP",            "timing": [4] },
       { "name": "LD BC, {i16}",   "timing": [10] },
-      { "name": "LD (BC), A",     "timing": [6] },
-      { "name": "INC BC",         "timing": [4] },
+      { "name": "LD (BC), A",     "timing": [7] },
+      { "name": "INC BC",         "timing": [6] },
       { "name": "INC B",          "timing": [4] },
       { "name": "DEC B",          "timing": [4] },
       { "name": "LD B, {i8}",     "timing": [7] },

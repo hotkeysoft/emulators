@@ -259,6 +259,12 @@ namespace emul
 
 		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
+		if (GetCPU().GetState() != CPUState::HALT)
+		{
+			// Stretch ticks so they are a multiple of 1us (4 ticks)
+			cpuTicks = (cpuTicks + 3) & ~0x3;
+		}
+
 		if (GetCPU().IsInterruptAcknowledge())
 		{
 			GetVideo().InterruptAcknowledge();
@@ -294,9 +300,8 @@ namespace emul
 			TickFloppy();
 
 			GetCPU().SetINT(GetVideo().IsInterrupt());
+			m_pio.SetVSync(GetVideo().IsVSync());
 		}
-
-		m_pio.SetVSync(GetVideo().IsVSync());
 
 		return true;
 	}
