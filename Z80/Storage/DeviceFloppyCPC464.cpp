@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "DeviceFloppyCPC464.h"
+#include <set>
 
 using hscommon::fileUtil::File;
 
@@ -113,7 +114,19 @@ namespace fdc
 		}
 
 		dsk::DiscInfo discInfo = ReadDiscInfoBlock(f);
-		if (!discInfo.IsValid())
+
+		bool extended = false;
+		if (discInfo.IsDSK())
+		{
+			LogPrintf(LOG_INFO, "Detected DSK (base) signature");
+			extended = false;
+		}
+		else if (discInfo.IsExt())
+		{
+			LogPrintf(LOG_INFO, "Detected DSK (extended) signature");
+			extended = true;
+		}
+		else
 		{
 			// Fallback to raw file loader
 			f.Close();
@@ -122,31 +135,55 @@ namespace fdc
 			return DeviceFloppy::LoadDiskImage(drive, path);
 		}
 
-		LogPrintf(LOG_INFO, "id        : %s", discInfo.id);
-		LogPrintf(LOG_INFO, "creator   : %s", discInfo.creator);
+		LogPrintf(LOG_INFO, "id        : %.34s", discInfo.id);
+		LogPrintf(LOG_INFO, "creator   : %.14s", discInfo.creator);
 		LogPrintf(LOG_INFO, "tracks    : %d", discInfo.tracks);
 		LogPrintf(LOG_INFO, "sides     : %d", discInfo.sides);
-		LogPrintf(LOG_INFO, "track size: %d", discInfo.trackSize);
+
+		if (!extended)
+		{
+			LogPrintf(LOG_INFO, "track size: %d", discInfo.trackSize);
+		}
+		else
+		{
+			std::set<WORD> sizes;
+			std::ostringstream os;
+			for (int i = 0; i < (discInfo.tracks * discInfo.sides); ++i)
+			{
+				const WORD trackSize = discInfo.GetTracksize(i);
+				sizes.insert(trackSize);
+				os << " " << std::hex << trackSize;
+			}
+
+			LogPrintf(LOG_INFO, "track sizes: %s", os.str().c_str());
+			if (sizes.size() != 1)
+			{
+				LogPrintf(LOG_ERROR, "LoadDiskImage: Not supported: different track sizes");
+				return false;
+			}
+		}
 
 		Geometry geometry;
 		geometry.name = DISK_ID;
 		geometry.cyl = discInfo.tracks;
 		geometry.head = discInfo.sides;
 		geometry.sect = 0;
-		geometry.sectOffset = 0xC0; // TODO: Only 'data' format supported at the moment, see below
+		geometry.sectOffset = (BYTE)-1; // Will be set (0x00 | 0xC0 | 0x40) when tracks are read
 
 		// Standard CPC disc formats ( from https://www.cpcwiki.eu/index.php/Disc_format )
 		//
 		//	Data:	180k single-sided
 		//			40 tracks of nine 512-byte sectors each.
-		//			64 directory entries.
-		//			Capacity: 178k
+		//			Sectors: 0xC1-0xC9
+		//			64 directory entries
+		//			Usable Capacity: 178k
 		//
 		//	System:	180k single-sided
 		//			40 tracks of nine 512-byte sectors each.
 		//			Sectors: 0x41-0x49
-		//			64 directory entries.
+		//			64 directory entries
 		//			Two reserved tracks containing CP/M BIOS.
+		//			Usable Capacity: 169k
 		//
 		//	IBM:	160k single-sided
 		//			40 tracks of eight 512-byte sectors each.
@@ -191,15 +228,31 @@ namespace fdc
 				}
 
 				dsk::TrackData trackData = ReadTrackData(trackInfo, f);
-				if (trackData.empty())
+				if (!trackData.isValid())
 				{
 					LogPrintf(LOG_ERROR, "LoadDiskImage: track[%d,%d] has invalid data", c, h);
 					return false;
 				}
 
-				floppy.data.insert(floppy.data.end(), trackData.begin(), trackData.end());
+				floppy.data.insert(floppy.data.end(), trackData.data.begin(), trackData.data.end());
+
+				if (geometry.sectOffset != (BYTE)-1)
+				{
+					// Already set, sanity check
+					if (geometry.sectOffset != trackData.sectorOffset)
+					{
+						LogPrintf(LOG_ERROR, "LoadDiskImage: Not supported: sector offset for track[%d,%d] different than previous track %d != %d", c, h, geometry.sectOffset, trackData.sectorOffset);
+						return false;
+					}
+				}
+				else
+				{
+					geometry.sectOffset = trackData.sectorOffset;
+				}
 			}
 		}
+
+		LogPrintf(LOG_INFO, "Sector Offset: %02Xh", geometry.sectOffset);
 
 		floppy.geometry = geometry;
 		floppy.loaded = true;
@@ -254,12 +307,12 @@ namespace fdc
 		for (int s = 0; s < trackInfo.sectorCount; ++s)
 		{
 			const dsk::SectorInfo& info = trackInfo.sectorInfo[s];
-			LogPrintf(LOG_INFO, "Reading data for chs=[%d,%d,%d]", info.track, info.side, info.sectorID);
+			LogPrintf(LOG_INFO, "Reading data for chs=[%d,%d,%xh]", info.track, info.side, info.sectorID);
 
 			if (fread(&buf, 512, 1, f) != 1)
 			{
 				LogPrintf(LOG_WARNING, "Error reading track data");
-				trackData.clear();
+				trackData.Clear();
 				break;
 			}
 
@@ -269,14 +322,17 @@ namespace fdc
 		for (auto& sector : sectors)
 		{
 			LogPrintf(LOG_DEBUG, "Sector %x", sector.first);
-			trackData.insert(trackData.end(), sector.second.begin(), sector.second.end());
+			trackData.data.insert(trackData.data.end(), sector.second.begin(), sector.second.end());
 		}
 
+		// Get sector offset from first sector
+		trackData.sectorOffset = sectors.begin()->first & 0xC0;
+
 		const int expected = 512 * trackInfo.sectorCount;
-		if (expected != trackData.size())
+		if (expected != trackData.data.size())
 		{
-			LogPrintf(LOG_WARNING, "Track Data size expected != actual (%d != %d)", expected, trackData.size());
-			trackData.clear();
+			LogPrintf(LOG_WARNING, "Track Data size expected != actual (%d != %d)", expected, trackData.data.size());
+			trackData.Clear();
 		}
 
 		return trackData;
