@@ -78,7 +78,7 @@ namespace ppi
 
 	BYTE Device8255CPC464::OnReadPortA()
 	{
-		LogPrintf(LOG_INFO, "AY3: OnReadPortA");
+		LogPrintf(LOG_DEBUG, "AY3: OnReadPortA");
 
 		const auto line = GetKeyboardLine();
 		switch (line)

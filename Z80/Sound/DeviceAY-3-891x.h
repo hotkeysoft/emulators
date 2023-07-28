@@ -72,20 +72,21 @@ namespace sound::ay3
 	struct OutputData
 	{
 		OutputData() {};
-		OutputData(WORD l, WORD r) : left(l), right(r) {}
-		void Mix(const OutputData& mix)
-		{
-			left += mix.left;
-			right += mix.right;
-		}
-		void Mix(const OutputData& mix, int mul)
-		{
-			left += mix.left * mul;
-			right += mix.right * mul;
-		}
+		OutputData(WORD a, WORD b, WORD c) : A(a), B(b), C(c) {}
+		//void Mix(const OutputData& mix)
+		//{
+		//	left += mix.left;
+		//	right += mix.right;
+		//}
+		//void Mix(const OutputData& mix, int mul)
+		//{
+		//	left += mix.left * mul;
+		//	right += mix.right * mul;
+		//}
 
-		WORD left = 0;
-		WORD right = 0;
+		WORD A = 0;
+		WORD B = 0;
+		WORD C = 0;
 	};
 
 	class Voice : public Logger, public emul::Serializable
@@ -113,8 +114,10 @@ namespace sound::ay3
 		void ToggleOutput() { m_out = !m_out; }
 		void SetOutput(bool out) { m_out = out; }
 
-		emul::DWORD m_n = 0;
-		emul::DWORD m_counter = 0;
+		void IncCounter() { ++m_counter; m_counter &= 4095; }
+
+		emul::WORD m_n = 0; // 12 bit
+		emul::WORD m_counter = 0; // 12 bit
 
 	protected:
 		std::string m_id;
@@ -167,33 +170,39 @@ namespace sound::ay3
 		void Init(VoiceNoise& noise);
 		virtual void Tick() override;
 
-		OutputData GetOutput() const
+		//OutputData GetOutput() const
+		//{
+		//	OutputData out;
+		//	if (m_noiseEnable && m_noise->GetRawOutput())
+		//	{
+		//		out.Mix(OutputData(s_volumeTable[m_amplitudeLeft], s_volumeTable[m_amplitudeRight]));
+		//	}
+		//	if (m_frequencyEnable && m_out)
+		//	{
+		//		OutputData freqData(s_volumeTable[m_amplitudeLeft], s_volumeTable[m_amplitudeRight]);
+		//		out.Mix(freqData, m_noiseEnable ? 4 : 1);
+		//	}
+		//	return out;
+		//}
+		WORD GetOutput() const
 		{
-			OutputData out;
-			if (m_noiseEnable && m_noise->GetRawOutput())
-			{
-				out.Mix(OutputData(s_volumeTable[m_amplitudeLeft], s_volumeTable[m_amplitudeRight]));
-			}
-			if (m_frequencyEnable && m_out)
-			{
-				OutputData freqData(s_volumeTable[m_amplitudeLeft], s_volumeTable[m_amplitudeRight]);
-				out.Mix(freqData, m_noiseEnable ? 4 : 1);
-			}
-			return out;
+			return m_toneEnable ? (m_out * 10000) : 0;
 		}
 
 		void SetAmplitude(BYTE value);
 		void SetFrequencyFine(BYTE value);
 		void SetFrequencyCoarse(BYTE value);
 		void SetNoiseEnable(bool enable);
+		void SetToneEnable(bool enable);
+
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
 
 	protected:
-		BYTE m_amplitudeLeft = 15;
-		BYTE m_amplitudeRight = 15;
+		BYTE m_amplitude = 15;
 		WORD m_frequency = 0;
 		bool m_recomputeN = false;
-		BYTE m_octave = 0;
-		bool m_frequencyEnable = false;
+		bool m_toneEnable = false;
 		bool m_noiseEnable = false;
 
 		VoiceNoise* m_noise = nullptr;
@@ -217,7 +226,13 @@ namespace sound::ay3
 
 		void Tick();
 
-		OutputData GetOutput() const;
+		OutputData GetOutput() const
+		{
+			return OutputData(
+				GetVoice(VoiceID::A).GetOutput(),
+				GetVoice(VoiceID::B).GetOutput(),
+				GetVoice(VoiceID::C).GetOutput());
+		}
 
 		enum class VoiceID
 		{
@@ -228,6 +243,7 @@ namespace sound::ay3
 		};
 
 		VoiceSquare& GetVoice(VoiceID v) { assert(v < VoiceID::_MAX);  return m_voices[(int)v]; }
+		const VoiceSquare& GetVoice(VoiceID v) const { assert(v < VoiceID::_MAX);  return m_voices[(int)v]; }
 
 		void SetCommand(Command c);
 		void WriteData(BYTE data);
@@ -239,7 +255,7 @@ namespace sound::ay3
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-		const BYTE m_tickDivider = 32;
+		const BYTE m_tickDivider = 32; // TODO: Hardcoded for 1MHz clock
 		BYTE m_cooldown = m_tickDivider;
 
 		Address m_currAddress = Address::REG_INVALID;

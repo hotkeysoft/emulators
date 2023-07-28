@@ -62,7 +62,7 @@ namespace sound::ay3
 
 	VoiceSquare::VoiceSquare(std::string label) : Voice(label)
 	{
-		m_n = 1048576 * (1 << m_octave) / (511 - m_frequency);
+		m_n = 0;
 	}
 
 	void VoiceSquare::Init(VoiceNoise& noise)
@@ -72,15 +72,14 @@ namespace sound::ay3
 
 	void VoiceSquare::SetAmplitude(BYTE value)
 	{
-		m_amplitudeLeft = (value >> 0) & 15;
-		m_amplitudeRight = (value >> 4) & 15;
-		LogPrintf(LOG_DEBUG, "SetAmplitude, l[%02d] r[%02d]", m_amplitudeLeft, m_amplitudeRight);
+		m_amplitude = value;
+		LogPrintf(LOG_DEBUG, "SetAmplitude, [%02d]", m_amplitude);
 	}
 	void VoiceSquare::SetFrequencyFine(BYTE value)
 	{
 		emul::SetLByte(m_frequency, value);
 		m_recomputeN = true;
-		LogPrintf(LOG_DEBUG, "SetFrequencyFine  [%02x]", value);
+		LogPrintf(LOG_DEBUG, "SetFrequencyFine   [%02x]", value);
 	}
 	void VoiceSquare::SetFrequencyCoarse(BYTE value)
 	{
@@ -95,20 +94,50 @@ namespace sound::ay3
 		LogPrintf(LOG_DEBUG, "SetNoiseEnable, enable=%d", enable);
 	}
 
+	void VoiceSquare::SetToneEnable(bool enable)
+	{
+		m_toneEnable = enable;
+		LogPrintf(LOG_DEBUG, "SetToneEnable, enable=%d", enable);
+	}
+
 	void VoiceSquare::Tick()
 	{
-		m_counter += m_n;
-		if (GetBit(m_counter, 23))
+		if (m_counter == m_n)
 		{
-			ToggleOutput();
-			m_counter = 0;
-
 			if (m_recomputeN)
 			{
-				m_n = 1048576 * (1 << m_octave) / (511 - m_frequency);
+				m_n = m_frequency;
 				m_recomputeN = false;
 			}
+
+			ToggleOutput();
+			m_counter = 0;
 		}
+		else
+		{
+			IncCounter();
+		}
+	}
+
+	void VoiceSquare::Serialize(json& to)
+	{
+		Voice::Serialize(to);
+
+		to["amplitude"] = m_amplitude;
+		to["frequency"] = m_frequency;
+		to["recomputeN"] = m_recomputeN;
+		to["noiseEnable"] = m_noiseEnable;
+		to["toneEnable"] = m_toneEnable;
+	}
+	void VoiceSquare::Deserialize(const json& from)
+	{
+		Voice::Deserialize(from);
+
+		m_amplitude = from["amplitude"];
+		m_frequency = from["frequency"];
+		m_recomputeN = from["recomputeN"];
+		m_noiseEnable = from["noiseEnable"];
+		m_toneEnable = from["toneEnable"];
 	}
 
 	// =================================
@@ -123,7 +152,7 @@ namespace sound::ay3
 	void VoiceNoise::Init()
 	{
 		SetFrequency(2);
-		m_counter = m_n;
+		m_counter = 0;
 	}
 
 	void VoiceNoise::Tick()
@@ -225,7 +254,7 @@ namespace sound::ay3
 		Logger::EnableLog(minSev);
 		for (auto& voice : m_voices)
 		{
-			voice.EnableLog(minSev);
+			voice.EnableLog(/*minSev*/LOG_DEBUG);
 		}
 		m_noise.EnableLog(minSev);
 	}
@@ -248,7 +277,7 @@ namespace sound::ay3
 
 	void DeviceAY_3_891x::SetCommand(Command command)
 	{
-		LogPrintf(LOG_INFO, "SetCommand: %s", GetCommandString(command));
+		LogPrintf(LOG_TRACE, "SetCommand: %s", GetCommandString(command));
 		m_currCommand = command;
 
 		switch (m_currCommand)
@@ -282,16 +311,15 @@ namespace sound::ay3
 	void DeviceAY_3_891x::SetRegisterAddress()
 	{
 		m_currAddress = (Address)(m_data & 15);
-		LogPrintf(LOG_INFO, "SetRegisterAddress: %02o", m_currAddress);
+		LogPrintf(LOG_TRACE, "SetRegisterAddress: %02o", m_currAddress);
 	}
 
 	void DeviceAY_3_891x::GetRegisterData()
 	{
 		assert(m_currAddress < Address::_REG_MAX);
 
-		LogPrintf(LOG_INFO, "GetRegisterData(%s)", GetAddressString(m_currAddress));
+		LogPrintf(LOG_TRACE, "GetRegisterData(%s)", GetAddressString(m_currAddress));
 
-		//TODO
 		if (m_currAddress == Address::REG_IO_PORT_A)
 		{
 			m_registers[(int)Address::REG_IO_PORT_A] = m_events->OnReadPortA();
@@ -306,7 +334,7 @@ namespace sound::ay3
 
 	void DeviceAY_3_891x::SetRegisterData()
 	{
-		LogPrintf(LOG_INFO, "SetRegisterData, value=%02Xh", m_data);
+		LogPrintf(LOG_TRACE, "SetRegisterData, value=%02Xh", m_data);
 
 		switch (m_currAddress)
 		{
@@ -332,7 +360,18 @@ namespace sound::ay3
 			break;
 
 		case Address::REG_FREQUENCY_NOISE:
+			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
+			break;
 		case Address::REG_MIXER_IO:
+			GetVoice(VoiceID::A).SetToneEnable(!GetBit(m_data, 0));
+			GetVoice(VoiceID::B).SetToneEnable(!GetBit(m_data, 1));
+			GetVoice(VoiceID::C).SetToneEnable(!GetBit(m_data, 2));
+			GetVoice(VoiceID::A).SetNoiseEnable(!GetBit(m_data, 3));
+			GetVoice(VoiceID::B).SetNoiseEnable(!GetBit(m_data, 4));
+			GetVoice(VoiceID::C).SetNoiseEnable(!GetBit(m_data, 5));
+			// Input enable: 6-7
+			break;
+
 		case Address::REG_AMPLITUDE_A:
 		case Address::REG_AMPLITUDE_B:
 		case Address::REG_AMPLITUDE_C:
@@ -362,17 +401,6 @@ namespace sound::ay3
 			voice.Tick();
 		}
 		m_noise.Tick();
-	}
-
-	OutputData DeviceAY_3_891x::GetOutput() const
-	{
-		OutputData out;
-
-		for (auto& voice : m_voices)
-		{
-			out.Mix(voice.GetOutput());
-		}
-		return out;
 	}
 
 	void DeviceAY_3_891x::Serialize(json& to)

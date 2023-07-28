@@ -281,7 +281,9 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(tape.Read() * 8000);
+				//SOUND().PlayMono(tape.Read() * 8000);
+				const auto& out = m_sound.GetOutput();
+				SOUND().PlayStereo(out.A + out.B, out.A + out.C);
 			}
 
 			{
@@ -299,6 +301,8 @@ namespace emul
 			}
 
 			TickFloppy();
+
+			m_sound.Tick();
 
 			GetCPU().SetINT(GetVideo().IsInterrupt());
 			m_pio.SetVSync(GetVideo().IsVSync());
