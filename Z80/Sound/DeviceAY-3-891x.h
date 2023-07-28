@@ -18,10 +18,48 @@ namespace sound::ay3
 
 	enum class Command
 	{
-		INACTIVE,
-		READ_DATA,
-		WRITE_DATA,
-		LATCH_ADDRESS
+		INACTIVE = 0b00,
+		READ_DATA = 0b01,
+		WRITE_DATA = 0b10,
+		LATCH_ADDRESS = 0b11
+	};
+
+	enum class Address
+	{
+		// Tone Generator Control (R0-R5)
+		REG_FREQUENCY_FINE_A,   // R0
+		REG_FREQUENCY_COARSE_A, // R1
+		REG_FREQUENCY_FINE_B,   // R2
+		REG_FREQUENCY_COARSE_B, // R3
+		REG_FREQUENCY_FINE_C,   // R4
+		REG_FREQUENCY_COARSE_C, // R5
+
+		// Noise Generator Control (R6)
+		REG_FREQUENCY_NOISE,    // R6
+
+		// Mixer Control / IO Enable
+		REG_MIXER_IO,           // R7
+
+		// R8-R9 skipped because registers
+		// use octal notation
+
+		// Amplitude Control (R10-R12)
+		REG_AMPLITUDE_A,		// R10
+		REG_AMPLITUDE_B,		// R11
+		REG_AMPLITUDE_C,		// R12
+
+		// Envelope Generator Control (R13-R15)
+		REG_ENVELOPE_FINE,		// R13
+		REG_ENVELOPE_COARSE,	// R14
+
+		REG_ENVELOPE_SHAPE,		// R15
+
+		REG_IO_PORT_A,			// R16
+		REG_IO_PORT_B,			// R17
+
+		_REG_MAX,
+
+		REG_INVALID = 0xFF
 	};
 
 	struct OutputData
@@ -160,7 +198,6 @@ namespace sound::ay3
 		DeviceAY_3_891x(const char* id = "ay3");
 		~DeviceAY_3_891x();
 
-		DeviceAY_3_891x() = delete;
 		DeviceAY_3_891x(const DeviceAY_3_891x&) = delete;
 		DeviceAY_3_891x& operator=(const DeviceAY_3_891x&) = delete;
 		DeviceAY_3_891x(DeviceAY_3_891x&&) = delete;
@@ -186,8 +223,8 @@ namespace sound::ay3
 		VoiceSquare& GetVoice(VoiceID v) { assert(v < VoiceID::_MAX);  return m_voices[(int)v]; }
 
 		void SetCommand(Command c);
-		void WriteData(BYTE data) { m_data = data; }
-		BYTE ReadData() const { return m_data; }
+		void WriteData(BYTE data);
+		BYTE ReadData();
 
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
@@ -196,43 +233,7 @@ namespace sound::ay3
 		const BYTE m_tickDivider = 32;
 		BYTE m_cooldown = m_tickDivider;
 
-		enum class Address
-		{
-			// Tone Generator Control (R0-R5)
-			REG_FREQUENCY_FINE_A,   // R0
-			REG_FREQUENCY_COARSE_A, // R1
-			REG_FREQUENCY_FINE_B,   // R2
-			REG_FREQUENCY_COARSE_B, // R3
-			REG_FREQUENCY_FINE_C,   // R4
-			REG_FREQUENCY_COARSE_C, // R5
-
-			// Noise Generator Control (R6)
-			REG_FREQUENCY_NOISE,    // R6
-
-			// Mixer Control / IO Enable
-			REG_MIXER_IO,           // R7
-
-			// R8-R9 skipped because registers
-			// use octal notation
-
-			// Amplitude Control (R10-R12)
-			REG_AMPLITUDE_A,		// R10
-			REG_AMPLITUDE_B,		// R11
-			REG_AMPLITUDE_C,		// R12
-
-			// Envelope Generator Control (R13-R15)
-			REG_ENVELOPE_FINE,		// R13
-			REG_ENVELOPE_COARSE,	// R14
-
-			REG_ENVELOPE_SHAPE,		// R15
-
-			REG_IO_PORT_A,			// R16
-			REG_IO_PORT_B,			// R17
-
-			_REG_MAX,
-
-			REG_INVALID = 0xFF
-		} m_currAddress = Address::REG_INVALID;
+		Address m_currAddress = Address::REG_INVALID;
 
 		std::array<BYTE, (int)Address::_REG_MAX> m_registers;
 
@@ -243,6 +244,6 @@ namespace sound::ay3
 		void SetRegisterData();
 		void GetRegisterData();
 		Command m_currCommand = Command::INACTIVE;
-		BYTE m_data = 0;
+		mutable BYTE m_data = 0;
 	};
 }

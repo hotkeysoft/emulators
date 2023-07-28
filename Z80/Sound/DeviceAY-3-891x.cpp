@@ -14,7 +14,31 @@ namespace sound::ay3
 		case Command::LATCH_ADDRESS: return "Latch Address";
 		case Command::READ_DATA: return "Read Data";
 		case Command::INACTIVE: return "Inactive";
-		default: throw std::exception("not possible");
+		default: return "[invalid]";
+		}
+	}
+
+	const char* GetAddressString(Address address)
+	{
+		switch (address)
+		{
+		case Address::REG_FREQUENCY_FINE_A: return "Frequency.A.Fine";
+		case Address::REG_FREQUENCY_COARSE_A: return "Frequency.A.Coarse";
+		case Address::REG_FREQUENCY_FINE_B: return "Frequency.B.Fine";
+		case Address::REG_FREQUENCY_COARSE_B: return "Frequency.C.Coarse";
+		case Address::REG_FREQUENCY_FINE_C: return "Frequency.C.Fine";
+		case Address::REG_FREQUENCY_COARSE_C: return "Frequency.C.Coarse";
+		case Address::REG_FREQUENCY_NOISE: return "Frequency.Noise";
+		case Address::REG_MIXER_IO: return "Mixer/IO";
+		case Address::REG_AMPLITUDE_A: return "Amplitude.A";
+		case Address::REG_AMPLITUDE_B: return "Amplitude.B";
+		case Address::REG_AMPLITUDE_C: return "Amplitude.C";
+		case Address::REG_ENVELOPE_FINE: return "Envelope.Fine";
+		case Address::REG_ENVELOPE_COARSE: return "Envelope.Coarse";
+		case Address::REG_ENVELOPE_SHAPE: return "Envelope.Shape";
+		case Address::REG_IO_PORT_A: return "IO.Port.A";
+		case Address::REG_IO_PORT_B: return "IO.Port.B";
+		default: return "[invalid]";
 		}
 	}
 
@@ -221,35 +245,35 @@ namespace sound::ay3
 
 	void DeviceAY_3_891x::SetCommand(Command command)
 	{
-		// address latch or data write is executed
-		// when control pins go to inactive
-		if (command == Command::INACTIVE)
+		LogPrintf(LOG_INFO, "SetCommand: %s", GetCommandString(command));
+		m_currCommand = command;
+
+		switch (m_currCommand)
 		{
-			// Run "last" command
-			switch (m_currCommand)
-			{
-			case Command::WRITE_DATA:
-				SetRegisterData();
-				break;
-			case Command::LATCH_ADDRESS:
-				SetRegisterAddress();
-				break;
-			case Command::READ_DATA:
-				GetRegisterData();
-				break;
-			case Command::INACTIVE:
-				// Nothing to do
-				break;
-			default:
-				throw std::exception("not possible");
-			}
-		}
-		else
-		{
-			LogPrintf(LOG_INFO, "SetCommand: %d", GetCommandString(command));
+		case Command::INACTIVE:
+			break;
+		case Command::READ_DATA:
+			GetRegisterData();
+			break;
+		case Command::LATCH_ADDRESS:
+			SetRegisterAddress();
+			break;
+		case Command::WRITE_DATA:
+			SetRegisterData();
+			break;
+		default:
+			throw std::exception("not possible");
 		}
 
-		m_currCommand = command;
+	}
+
+	void DeviceAY_3_891x::WriteData(BYTE data)
+	{
+		m_data = data;
+	}
+	BYTE DeviceAY_3_891x::ReadData()
+	{
+		return m_data;
 	}
 
 	void DeviceAY_3_891x::SetRegisterAddress()
@@ -261,13 +285,25 @@ namespace sound::ay3
 	void DeviceAY_3_891x::GetRegisterData()
 	{
 		assert(m_currAddress < Address::_REG_MAX);
-		// Put current register value in data latch
+
+		LogPrintf(LOG_INFO, "GetRegisterData(%s)", GetAddressString(m_currAddress));
+
+		//TODO
+		if (m_currAddress == Address::REG_IO_PORT_A)
+		{
+			m_registers[(int)Address::REG_IO_PORT_A] = 0xFF;
+		}
+		else if (m_currAddress == Address::REG_IO_PORT_A)
+		{
+			m_registers[(int)Address::REG_IO_PORT_B] = 0xFF;
+		}
+
 		m_data = m_registers[(int)m_currAddress];
 	}
 
 	void DeviceAY_3_891x::SetRegisterData()
 	{
-		LogPrintf(LOG_TRACE, "SetRegisterData, value=%02Xh", m_data);
+		LogPrintf(LOG_INFO, "SetRegisterData, value=%02Xh", m_data);
 
 		switch (m_currAddress)
 		{
@@ -302,7 +338,7 @@ namespace sound::ay3
 		case Address::REG_ENVELOPE_SHAPE:
 		case Address::REG_IO_PORT_A:
 		case Address::REG_IO_PORT_B:
-			LogPrintf(LOG_WARNING, "Not implemented");
+			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
 			break;
 
 		default:
