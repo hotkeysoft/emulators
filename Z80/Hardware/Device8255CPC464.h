@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Device8255.h"
+#include "Sound/DeviceAY-3-891x.h"
 
 namespace kbd { class DeviceKeyboard; }
 namespace joy { class DeviceJoystickDigital; }
-namespace sound::ay3 { class DeviceAY_3_891x; }
 
 namespace ppi
 {
@@ -41,7 +41,7 @@ namespace ppi
 		INVALID = -1
 	};
 
-	class Device8255CPC464 : public Device8255
+	class Device8255CPC464 : public Device8255, public sound::ay3::EventHandler
 	{
 	public:
 		Device8255CPC464() : Logger("PIO") {}
@@ -51,9 +51,9 @@ namespace ppi
 		Device8255CPC464(Device8255CPC464&&) = delete;
 		Device8255CPC464& operator=(Device8255CPC464&&) = delete;
 
-		void SetKeyboard(kbd::DeviceKeyboard* keyboard) { m_keyboard = keyboard; }
-		void SetJoystick(joy::DeviceJoystickDigital* joystick) { m_joystick = joystick; }
-		void SetSound(sound::ay3::DeviceAY_3_891x* sound) { m_sound = sound; }
+		void SetKeyboard(kbd::DeviceKeyboard* keyboard) { assert(keyboard); m_keyboard = keyboard; }
+		void SetJoystick(joy::DeviceJoystickDigital* joystick) { assert(joystick);  m_joystick = joystick; }
+		void SetSound(sound::ay3::DeviceAY_3_891x* sound) { assert(sound);  m_sound = sound; m_sound->SetEventHandler(this); }
 
 		virtual void Reset() override;
 
@@ -91,5 +91,8 @@ namespace ppi
 
 		virtual BYTE PORTC_IN() override;
 		virtual void PORTC_OUT(BYTE value) override;
+
+		// sound::ay3::EventHandler
+		virtual BYTE OnReadPortA() override;
 	};
 }

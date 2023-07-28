@@ -24,30 +24,7 @@ namespace ppi
 	BYTE Device8255CPC464::PORTA_IN()
 	{
 		LogPrintf(LOG_INFO, "PORTA: IN, value=%02x", m_portAData);
-		//return m_portAData;
 		return m_sound->ReadData();
-
-		//const auto line = GetKeyboardLine();
-		//switch (line)
-		//{
-		//case KeyboardLine::LINE_0:
-		//case KeyboardLine::LINE_1:
-		//case KeyboardLine::LINE_2:
-		//case KeyboardLine::LINE_3:
-		//case KeyboardLine::LINE_4:
-		//case KeyboardLine::LINE_5:
-		//case KeyboardLine::LINE_6:
-		//case KeyboardLine::LINE_7:
-		//case KeyboardLine::LINE_8:
-		//	return m_keyboard->GetRowData((BYTE)line);
-		//case KeyboardLine::LINE_9:
-		//	return m_keyboard->GetRowData((BYTE)line) & ReadJoystick1();
-
-		//default:
-		//case KeyboardLine::INVALID:
-		//	LogPrintf(LOG_WARNING, "Invalid keyboard line: %d", line);
-		//	return 0;
-		//}
 	}
 	void Device8255CPC464::PORTA_OUT(BYTE value)
 	{
@@ -96,6 +73,33 @@ namespace ppi
 		if (m_sound)
 		{
 			m_sound->SetCommand(sound::ay3::Command(value >> 6));
+		}
+	}
+
+	BYTE Device8255CPC464::OnReadPortA()
+	{
+		LogPrintf(LOG_INFO, "AY3: OnReadPortA");
+
+		const auto line = GetKeyboardLine();
+		switch (line)
+		{
+		case KeyboardLine::LINE_0:
+		case KeyboardLine::LINE_1:
+		case KeyboardLine::LINE_2:
+		case KeyboardLine::LINE_3:
+		case KeyboardLine::LINE_4:
+		case KeyboardLine::LINE_5:
+		case KeyboardLine::LINE_6:
+		case KeyboardLine::LINE_7:
+		case KeyboardLine::LINE_8:
+			return m_keyboard->GetRowData((BYTE)line);
+		case KeyboardLine::LINE_9:
+			return m_keyboard->GetRowData((BYTE)line) & ReadJoystick1();
+
+		default:
+		case KeyboardLine::INVALID:
+			LogPrintf(LOG_WARNING, "Invalid keyboard line: %d", line);
+			return 0;
 		}
 	}
 

@@ -6,6 +6,8 @@ using emul::GetBit;
 
 namespace sound::ay3
 {
+	static EventHandler s_defaultHandler;
+
 	const char* GetCommandString(Command command)
 	{
 		switch (command)
@@ -201,6 +203,7 @@ namespace sound::ay3
 
 	DeviceAY_3_891x::DeviceAY_3_891x(const char* id) :
 		Logger(id),
+		m_events(&s_defaultHandler),
 		m_voices {
 			VoiceSquare(std::string(id) + ".0"),
 			VoiceSquare(std::string(id) + ".1"),
@@ -291,11 +294,11 @@ namespace sound::ay3
 		//TODO
 		if (m_currAddress == Address::REG_IO_PORT_A)
 		{
-			m_registers[(int)Address::REG_IO_PORT_A] = 0xFF;
+			m_registers[(int)Address::REG_IO_PORT_A] = m_events->OnReadPortA();
 		}
-		else if (m_currAddress == Address::REG_IO_PORT_A)
+		else if (m_currAddress == Address::REG_IO_PORT_B)
 		{
-			m_registers[(int)Address::REG_IO_PORT_B] = 0xFF;
+			m_registers[(int)Address::REG_IO_PORT_B] = m_events->OnReadPortB();
 		}
 
 		m_data = m_registers[(int)m_currAddress];

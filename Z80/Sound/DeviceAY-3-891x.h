@@ -10,6 +10,13 @@ using emul::WORD;
 
 namespace sound::ay3
 {
+	class EventHandler
+	{
+	public:
+		virtual BYTE OnReadPortA() { return 0xFF; }
+		virtual BYTE OnReadPortB() { return 0xFF; }
+	};
+
 	// Log
 	//static const BYTE s_volumeTable[16] = { 0, 10, 13, 16, 20, 25, 32, 41, 51, 64, 81, 102, 128, 161, 203, 255 };
 
@@ -226,6 +233,8 @@ namespace sound::ay3
 		void WriteData(BYTE data);
 		BYTE ReadData();
 
+		void SetEventHandler(EventHandler* handler) { m_events = handler; }
+
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
@@ -239,6 +248,8 @@ namespace sound::ay3
 
 		std::array<VoiceSquare, (int)VoiceID::_MAX> m_voices;
 		VoiceNoise m_noise;
+
+		EventHandler* m_events = nullptr;
 
 		void SetRegisterAddress();
 		void SetRegisterData();
