@@ -6,6 +6,7 @@
 #include "IO/DeviceKeyboardCPC464.h"
 #include "IO/DeviceJoystickDigital.h"
 #include "Hardware/Device8255CPC464.h"
+#include "Sound/DeviceAY-3-891x.h"
 #include <Storage/DeviceTape.h>
 
 namespace vid464 = video::cpc464;
@@ -81,5 +82,6 @@ namespace emul
 		tape::DeviceTape* m_tape = nullptr;
 		fdc::DeviceFloppy* m_floppy = nullptr;
 		joy::DeviceJoystickDigital m_joystick;
+		sound::ay3::DeviceAY_3_891x m_sound;
 	};
 }

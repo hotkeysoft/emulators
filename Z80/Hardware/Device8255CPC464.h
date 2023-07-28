@@ -4,6 +4,7 @@
 
 namespace kbd { class DeviceKeyboard; }
 namespace joy { class DeviceJoystickDigital; }
+namespace sound::ay3 { class DeviceAY_3_891x; }
 
 namespace ppi
 {
@@ -52,6 +53,7 @@ namespace ppi
 
 		void SetKeyboard(kbd::DeviceKeyboard* keyboard) { m_keyboard = keyboard; }
 		void SetJoystick(joy::DeviceJoystickDigital* joystick) { m_joystick = joystick; }
+		void SetSound(sound::ay3::DeviceAY_3_891x* sound) { m_sound = sound; }
 
 		virtual void Reset() override;
 
@@ -77,6 +79,7 @@ namespace ppi
 	protected:
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
 		joy::DeviceJoystickDigital* m_joystick = nullptr;
+		sound::ay3::DeviceAY_3_891x* m_sound = nullptr;
 
 		BYTE ReadJoystick1() const;
 

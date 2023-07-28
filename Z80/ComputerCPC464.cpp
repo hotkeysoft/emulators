@@ -89,8 +89,8 @@ namespace emul
 		InitROM();
 		InitKeyboard();
 		InitJoystick();
-		InitIO();
 		InitSound();
+		InitIO();
 		InitVideo();
 		InitTape();
 
@@ -156,13 +156,14 @@ namespace emul
 		m_pio.EnableLog(CONFIG().GetLogLevel("pio"));
 		m_pio.SetKeyboard(&m_keyboard);
 		m_pio.SetJoystick(&m_joystick);
+		m_pio.SetSound(&m_sound);
 		m_pio.Init("xxxx0xxx");
 	}
 
 	void ComputerCPC464::InitSound()
 	{
 		SOUND().SetBaseClock(CPU_CLK);
-		// TODO
+		m_sound.Init();
 	}
 
 	void ComputerCPC464::InitVideo()
