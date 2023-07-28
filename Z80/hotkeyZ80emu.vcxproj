@@ -72,6 +72,7 @@
     <ClInclude Include="IO\DeviceKeyboardZX80.h" />
     <ClInclude Include="IO\Monitor8080.h" />
     <ClInclude Include="IO\MonitorZ80.h" />
+    <ClInclude Include="Sound\DeviceAY-3-891x.h" />
     <ClInclude Include="Sound\DeviceSN76489.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Storage\DeviceFloppy.h" />
@@ -126,6 +127,7 @@
     <ClCompile Include="IO\Monitor8080.cpp" />
     <ClCompile Include="IO\MonitorZ80.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Sound\DeviceAY-3-891x.cpp" />
     <ClCompile Include="Sound\DeviceSN76489.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

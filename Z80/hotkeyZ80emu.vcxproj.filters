@@ -282,6 +282,9 @@
     <ClInclude Include="UI\OverlayCPC464.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
+    <ClInclude Include="Sound\DeviceAY-3-891x.h">
+      <Filter>Header Files\Sound</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -436,6 +439,9 @@
     </ClCompile>
     <ClCompile Include="UI\OverlayCPC464.cpp">
       <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound\DeviceAY-3-891x.cpp">
+      <Filter>Source Files\Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
