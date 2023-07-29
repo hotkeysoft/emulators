@@ -23,14 +23,19 @@ namespace ppi
 
 	BYTE Device8255CPC464::PORTA_IN()
 	{
-		LogPrintf(LOG_INFO, "PORTA: IN, value=%02x", m_portAData);
-		return m_sound->ReadData();
+		BYTE value = (m_portADirection == DIRECTION::OUTPUT) ? m_portAData : m_sound->ReadData();
+		LogPrintf(LOG_INFO, "PORTA: IN (PSG), value=%02x", value);
+		return value;
 	}
 	void Device8255CPC464::PORTA_OUT(BYTE value)
 	{
 		m_portAData = value;
-		LogPrintf(LOG_INFO, "PORTA: OUT, value=%02x", value);
-		m_sound->WriteData(value);
+		LogPrintf(LOG_INFO, "PORTA: OUT (PSG), value=%02x", value);
+
+		if (m_portADirection == DIRECTION::OUTPUT)
+		{
+			m_sound->WriteData(value);
+		}
 	}
 
 	BYTE Device8255CPC464::PORTB_IN()
