@@ -93,7 +93,7 @@ namespace sound::ay3
 
 		std::string GetId() const { return m_id; }
 
-		virtual void Reset() { m_n = m_counter = 0; m_out = false; }
+		virtual void Reset();
 		virtual void Tick() = 0;
 
 		bool GetRawOutput() const { return m_out; }
@@ -136,6 +136,8 @@ namespace sound::ay3
 		void SetFrequencyFine(BYTE value);
 		void SetFrequencyCoarse(BYTE value);
 
+		void SetEnvelopeShape(BYTE value);
+
 		BYTE GetAmplitude() const { return m_amplitude; }
 
 		// emul::Serializable
@@ -155,8 +157,6 @@ namespace sound::ay3
 		bool m_hold = false;
 
 		bool m_stopped = false;
-
-		bool GetDirection() const { return m_down ^ (!m_attack); };
 		bool m_down = false;
 	};
 
@@ -208,13 +208,12 @@ namespace sound::ay3
 
 		WORD GetOutput() const
 		{
-			const BYTE amplitude =/* (m_amplitudeMode == AmplitudeMode::FIXED) ? m_amplitude :*/ m_envelope->GetAmplitude();
+			const BYTE amplitude = (m_amplitudeMode == AmplitudeMode::FIXED) ? m_amplitude : m_envelope->GetAmplitude();
 			const WORD dac = s_volumeTable[amplitude] * 32;
 
-			return dac;
-			//return
-			//	((m_toneEnable ? m_out : true) * dac) +
-			//	((m_noiseEnable ? m_noise->GetRawOutput() : true) * dac);
+			return
+				((m_toneEnable ? m_out : true) * dac) +
+				((m_noiseEnable ? m_noise->GetRawOutput() : true) * dac);
 		}
 
 		void SetAmplitude(BYTE value);

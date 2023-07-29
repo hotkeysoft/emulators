@@ -44,22 +44,32 @@ namespace sound::ay3
 		}
 	}
 
+	void Voice::Reset()
+	{
+		LogPrintf(LOG_DEBUG, "Reset");
+		m_n = 0;
+		m_counter = 0;
+		m_frequency = 0;
+		m_recomputeN = false;
+		m_out = false;
+	}
+
 	void Voice::Serialize(json& to)
 	{
 		to["n"] = m_n;
 		to["counter"] = m_counter;
-		to["out"] = m_out;
 		to["frequency"] = m_frequency;
 		to["recomputeN"] = m_recomputeN;
+		to["out"] = m_out;
 	}
 
 	void Voice::Deserialize(const json& from)
 	{
 		m_n = from["n"];
 		m_counter = from["counter"];
-		m_out = from["out"];
 		m_frequency = from["frequency"];
 		m_recomputeN = from["recomputeN"];
+		m_out = from["out"];
 	}
 
 	// =================================
@@ -78,9 +88,9 @@ namespace sound::ay3
 	void VoiceSquare::Reset()
 	{
 		Voice::Reset();
+
+		m_amplitudeMode = AmplitudeMode::FIXED;
 		m_amplitude = 0;
-		m_frequency = 1;
-		m_recomputeN = false;
 		m_toneEnable = false;
 		m_noiseEnable = false;
 	}
@@ -167,17 +177,15 @@ namespace sound::ay3
 	{
 		Voice::Reset();
 		m_amplitude = 0;
+		m_e = 0;
 
-		m_continue = true;
-		m_attack = true;
+		m_continue = false;
+		m_attack = false;
 		m_alternate = false;
 		m_hold = true;
 
 		m_stopped = false;
 		m_down = false;
-
-		m_frequency = 1024;
-		m_n = 1024;
 	}
 
 	void VoiceEnvelope::Tick()
@@ -194,28 +202,33 @@ namespace sound::ay3
 			}
 			else if (!m_stopped)
 			{
-				m_amplitude = GetDirection() ? (15-m_e) : m_e;
+				const bool dir = m_down ^ (!m_attack);
+
+				m_amplitude = dir ? (15-m_e) : m_e;
 
 				IncE();
 
-				if (m_e == 0) // End of a cycle
+				// End of a cycle
+				if (m_e == 0)
 				{
 					if (m_alternate)
 					{
 						m_down = !m_down;
 					}
 
+					// Stop after one cycle for !CONTINUE or HOLD modes
 					if (!m_continue || m_hold)
 					{
 						m_stopped = true;
 						if (!m_continue)
 						{
+							// In !CONTINUE mode, amplitude is maintained at 0 after 1st cycle
 							m_amplitude = 0;
 						}
 						else
 						{
-							//const bool dir = m_down ^ (!m_attack);
-							m_amplitude = GetDirection() ? m_e : (15 - m_e);
+							// In HOLD mode, hold flipped amplitude if alternate is enabled
+							m_amplitude = m_alternate ? (15 - m_amplitude) : m_amplitude;
 						}
 					}
 				}
@@ -240,6 +253,22 @@ namespace sound::ay3
 		LogPrintf(LOG_DEBUG, "SetFrequencyCoarse [%02x]", value);
 	}
 
+	void VoiceEnvelope::SetEnvelopeShape(BYTE value)
+	{
+		m_continue = GetBit(value, 3);
+		m_attack = GetBit(value, 2);
+		m_alternate = GetBit(value, 1);
+		m_hold = GetBit(value, 0);
+		m_recomputeN = true;
+
+		LogPrintf(LOG_DEBUG, "SetEnvelopeShape [%cCONT][%cATK][%cALT][%cHOLD]",
+			m_continue ? ' ' : '/',
+			m_attack ? ' ' : '/',
+			m_alternate ? ' ' : '/',
+			m_hold ? ' ' : '/');
+	}
+
+
 	void VoiceEnvelope::Serialize(json& to)
 	{
 		Voice::Serialize(to);
@@ -251,7 +280,9 @@ namespace sound::ay3
 		to["attack"] = m_attack;
 		to["alternate"] = m_alternate;
 		to["hold"] = m_hold;
+
 		to["stopped"] = m_stopped;
+		to["down"] = m_down;
 	}
 	void VoiceEnvelope::Deserialize(const json& from)
 	{
@@ -266,6 +297,7 @@ namespace sound::ay3
 		m_hold = from["hold"];
 
 		m_stopped = from["stopped"];
+		m_down = from["down"];
 	}
 
 	// =================================
@@ -280,6 +312,7 @@ namespace sound::ay3
 	void VoiceNoise::Reset()
 	{
 		Voice::Reset();
+
 		ResetShiftRegister();
 		m_internalOutput = false;
 	}
@@ -543,7 +576,7 @@ namespace sound::ay3
 			break;
 		case Address::REG_ENVELOPE_SHAPE:
 			m_data &= 0x0F;
-			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
+			m_envelope.SetEnvelopeShape(m_data);
 			break;
 
 		case Address::REG_IO_PORT_A:
