@@ -18,10 +18,10 @@ namespace sound::ay3
 	};
 
 	// Log
-	//static const BYTE s_volumeTable[16] = { 0, 10, 13, 16, 20, 25, 32, 41, 51, 64, 81, 102, 128, 161, 203, 255 };
+	static const BYTE s_volumeTable[16] = { 0, 10, 13, 16, 20, 25, 32, 41, 51, 64, 81, 102, 128, 161, 203, 255 };
 
 	// Linear
-	static const BYTE s_volumeTable[16] = { 0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255 };
+	//static const BYTE s_volumeTable[16] = { 0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255 };
 
 	enum class Command
 	{
@@ -73,16 +73,6 @@ namespace sound::ay3
 	{
 		OutputData() {};
 		OutputData(WORD a, WORD b, WORD c) : A(a), B(b), C(c) {}
-		//void Mix(const OutputData& mix)
-		//{
-		//	left += mix.left;
-		//	right += mix.right;
-		//}
-		//void Mix(const OutputData& mix, int mul)
-		//{
-		//	left += mix.left * mul;
-		//	right += mix.right * mul;
-		//}
 
 		WORD A = 0;
 		WORD B = 0;
@@ -103,6 +93,7 @@ namespace sound::ay3
 
 		std::string GetId() const { return m_id; }
 
+		virtual void Reset() { m_n = m_counter = 0; m_out = false; }
 		virtual void Tick() = 0;
 
 		bool GetRawOutput() const { return m_out; }
@@ -114,10 +105,13 @@ namespace sound::ay3
 		void ToggleOutput() { m_out = !m_out; }
 		void SetOutput(bool out) { m_out = out; }
 
-		void IncCounter() { ++m_counter; m_counter &= 4095; }
+		void IncCounter5() { ++m_counter; m_counter &= 31; }
+		void IncCounter12() { ++m_counter; m_counter &= 4095; }
 
-		emul::WORD m_n = 0; // 12 bit
-		emul::WORD m_counter = 0; // 12 bit
+		emul::WORD m_n = 0;
+		emul::WORD m_counter = 0;
+		WORD m_frequency = 0;
+		bool m_recomputeN = false;
 
 	protected:
 		std::string m_id;
@@ -136,6 +130,7 @@ namespace sound::ay3
 		VoiceNoise& operator=(VoiceNoise&&) = delete;
 
 		void Init();
+		virtual void Reset() override;
 		virtual void Tick() override;
 
 		void SetFrequency(BYTE value);
@@ -144,8 +139,6 @@ namespace sound::ay3
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-		bool m_lastTrigger = false;
-
 		bool m_internalOutput = false;
 
 		void Shift();
@@ -168,25 +161,14 @@ namespace sound::ay3
 		VoiceSquare& operator=(VoiceSquare&&) = delete;
 
 		void Init(VoiceNoise& noise);
+		virtual void Reset() override;
 		virtual void Tick() override;
 
-		//OutputData GetOutput() const
-		//{
-		//	OutputData out;
-		//	if (m_noiseEnable && m_noise->GetRawOutput())
-		//	{
-		//		out.Mix(OutputData(s_volumeTable[m_amplitudeLeft], s_volumeTable[m_amplitudeRight]));
-		//	}
-		//	if (m_frequencyEnable && m_out)
-		//	{
-		//		OutputData freqData(s_volumeTable[m_amplitudeLeft], s_volumeTable[m_amplitudeRight]);
-		//		out.Mix(freqData, m_noiseEnable ? 4 : 1);
-		//	}
-		//	return out;
-		//}
 		WORD GetOutput() const
 		{
-			return m_toneEnable ? (m_out * 10000) : 0;
+			return
+				((m_toneEnable ? m_out : true) * m_amplitude * 64) +
+				((m_noiseEnable ? m_noise->GetRawOutput() : true) * m_amplitude * 64);
 		}
 
 		void SetAmplitude(BYTE value);
@@ -199,9 +181,9 @@ namespace sound::ay3
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-		BYTE m_amplitude = 15;
-		WORD m_frequency = 0;
-		bool m_recomputeN = false;
+		enum class AmplitudeMode { FIXED = 0, ENVELOPE = 1 } m_amplitudeMode = AmplitudeMode::FIXED;
+		BYTE m_amplitude = 255;
+
 		bool m_toneEnable = false;
 		bool m_noiseEnable = false;
 
@@ -266,6 +248,10 @@ namespace sound::ay3
 		VoiceNoise m_noise;
 
 		EventHandler* m_events = nullptr;
+
+		enum class PortMode { INPUT, OUTPUT };
+		PortMode m_portModeA = PortMode::INPUT;
+		PortMode m_portModeB = PortMode::INPUT;
 
 		void SetRegisterAddress();
 		void SetRegisterData();

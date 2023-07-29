@@ -49,6 +49,8 @@ namespace sound::ay3
 		to["n"] = m_n;
 		to["counter"] = m_counter;
 		to["out"] = m_out;
+		to["frequency"] = m_frequency;
+		to["recomputeN"] = m_recomputeN;
 	}
 
 	void Voice::Deserialize(const json& from)
@@ -56,6 +58,8 @@ namespace sound::ay3
 		m_n = from["n"];
 		m_counter = from["counter"];
 		m_out = from["out"];
+		m_frequency = from["frequency"];
+		m_recomputeN = from["recomputeN"];
 	}
 
 	// =================================
@@ -70,10 +74,31 @@ namespace sound::ay3
 		m_noise = &noise;
 	}
 
+	void VoiceSquare::Reset()
+	{
+		Voice::Reset();
+		m_amplitude = 255;
+		m_frequency = 0;
+		m_recomputeN = false;
+		m_toneEnable = false;
+		m_noiseEnable = false;
+	}
+
 	void VoiceSquare::SetAmplitude(BYTE value)
 	{
-		m_amplitude = value;
-		LogPrintf(LOG_DEBUG, "SetAmplitude, [%02d]", m_amplitude);
+		m_amplitudeMode = (AmplitudeMode)GetBit(value, 4);
+
+		if (m_amplitudeMode == AmplitudeMode::FIXED)
+		{
+			m_amplitude = s_volumeTable[value & 15];
+		}
+		else
+		{
+			m_amplitude = 255;
+			LogPrintf(LOG_WARNING, "SetAmplitude: Envelope not implemented");
+		}
+
+		LogPrintf(LOG_DEBUG, "SetAmplitude, [%C][%02x]", (m_amplitudeMode == AmplitudeMode::FIXED ? 'F' : 'E'), (value & 15));
 	}
 	void VoiceSquare::SetFrequencyFine(BYTE value)
 	{
@@ -115,7 +140,7 @@ namespace sound::ay3
 		}
 		else
 		{
-			IncCounter();
+			IncCounter12();
 		}
 	}
 
@@ -123,9 +148,8 @@ namespace sound::ay3
 	{
 		Voice::Serialize(to);
 
+		to["amplitudeMode"] = m_amplitudeMode;
 		to["amplitude"] = m_amplitude;
-		to["frequency"] = m_frequency;
-		to["recomputeN"] = m_recomputeN;
 		to["noiseEnable"] = m_noiseEnable;
 		to["toneEnable"] = m_toneEnable;
 	}
@@ -133,9 +157,8 @@ namespace sound::ay3
 	{
 		Voice::Deserialize(from);
 
+		m_amplitudeMode = from["amplitudeMode"];
 		m_amplitude = from["amplitude"];
-		m_frequency = from["frequency"];
-		m_recomputeN = from["recomputeN"];
 		m_noiseEnable = from["noiseEnable"];
 		m_toneEnable = from["toneEnable"];
 	}
@@ -155,41 +178,42 @@ namespace sound::ay3
 		m_counter = 0;
 	}
 
+	void VoiceNoise::Reset()
+	{
+		Voice::Reset();
+		ResetShiftRegister();
+		m_internalOutput = false;
+	}
+
 	void VoiceNoise::Tick()
 	{
-		if (--m_counter == 0)
+		if (m_counter == m_n)
 		{
-			m_counter = m_n;
+			if (m_recomputeN)
+			{
+				m_n = m_frequency;
+				m_recomputeN = false;
+			}
+
 			m_internalOutput = !m_internalOutput;
 			if (m_internalOutput)
 			{
 				//LogPrintf(LOG_DEBUG, "[%zu] Tick", emul::g_ticks);
 				Shift();
 			}
+			m_counter = 0;
+		}
+		else
+		{
+			IncCounter5();
 		}
 	}
 
 	void VoiceNoise::SetFrequency(BYTE value)
 	{
-		switch (value)
-		{
-		case 0: // 31.25kHz
-			LogPrintf(LOG_DEBUG, "Noise Frequency: 31.25kHz");
-			m_n = 8; // TODO
-			break;
-		case 1: // 15.6kHz
-			LogPrintf(LOG_DEBUG, "Noise Frequency: 15.6kHz");
-			m_n = 16; // TODO
-			break;
-		case 2: // 7.8kHz
-			LogPrintf(LOG_DEBUG, "Noise Frequency: 7.8kHz");
-			m_n = 32; // TODO
-			break;
-		case 3: // Freq generator [0|3]
-			LogPrintf(LOG_WARNING, "Noise Frequency from tone generator: Not implemented");
-			m_n = 0; // TODO
-			break;
-		}
+		m_frequency = value & 31;
+		m_recomputeN = true;
+		LogPrintf(LOG_DEBUG, "SetFrequency       [%02x]", m_frequency);
 	}
 
 	static bool parity(WORD val)
@@ -215,7 +239,6 @@ namespace sound::ay3
 	{
 		Voice::Serialize(to);
 
-		to["lastTrigger"] = m_lastTrigger;
 		to["internalOutput"] = m_internalOutput;
 		to["shiftRegister"] = m_shiftRegister;
 	}
@@ -223,7 +246,6 @@ namespace sound::ay3
 	{
 		Voice::Deserialize(from);
 
-		m_lastTrigger = from["lastTrigger"];
 		m_internalOutput = from["internalOutput"];
 		m_shiftRegister = from["shiftRegister"];
 	}
@@ -254,13 +276,21 @@ namespace sound::ay3
 		Logger::EnableLog(minSev);
 		for (auto& voice : m_voices)
 		{
-			voice.EnableLog(/*minSev*/LOG_DEBUG);
+			voice.EnableLog(minSev);
 		}
 		m_noise.EnableLog(minSev);
 	}
 
 	void DeviceAY_3_891x::Reset()
 	{
+		m_portModeA = PortMode::INPUT;
+		m_portModeB = PortMode::INPUT;
+
+		m_noise.Reset();
+		for (auto& voice : m_voices)
+		{
+			voice.Reset();
+		}
 	}
 
 	void DeviceAY_3_891x::Init()
@@ -269,9 +299,9 @@ namespace sound::ay3
 		//   only used in the Amstrad CPC, which calls Read/Write functions directly
 
 		m_noise.Init();
-		for (int i = 0; i < (int)VoiceID::_MAX; ++i)
+		for (auto& voice: m_voices)
 		{
-			m_voices[i].Init(m_noise);
+			voice.Init(m_noise);
 		}
 	}
 
@@ -320,16 +350,22 @@ namespace sound::ay3
 
 		LogPrintf(LOG_TRACE, "GetRegisterData(%s)", GetAddressString(m_currAddress));
 
+		// IO Ports: Reading an 'output' port will return the value of the register
+		//           ANDed with the input of the port
 		if (m_currAddress == Address::REG_IO_PORT_A)
 		{
-			m_registers[(int)Address::REG_IO_PORT_A] = m_events->OnReadPortA();
+			BYTE initialValue = (m_portModeA == PortMode::OUTPUT) ? m_registers[(int)Address::REG_IO_PORT_A] : 255;
+			m_data = initialValue & m_events->OnReadPortA();
 		}
 		else if (m_currAddress == Address::REG_IO_PORT_B)
 		{
-			m_registers[(int)Address::REG_IO_PORT_B] = m_events->OnReadPortB();
+			BYTE initialValue = (m_portModeB == PortMode::OUTPUT) ? m_registers[(int)Address::REG_IO_PORT_B] : 255;
+			m_data = initialValue & m_events->OnReadPortB();
 		}
-
-		m_data = m_registers[(int)m_currAddress];
+		else
+		{
+			m_data = m_registers[(int)m_currAddress];
+		}
 	}
 
 	void DeviceAY_3_891x::SetRegisterData()
@@ -360,8 +396,9 @@ namespace sound::ay3
 			break;
 
 		case Address::REG_FREQUENCY_NOISE:
-			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
+			m_noise.SetFrequency(m_data);
 			break;
+
 		case Address::REG_MIXER_IO:
 			GetVoice(VoiceID::A).SetToneEnable(!GetBit(m_data, 0));
 			GetVoice(VoiceID::B).SetToneEnable(!GetBit(m_data, 1));
@@ -369,18 +406,29 @@ namespace sound::ay3
 			GetVoice(VoiceID::A).SetNoiseEnable(!GetBit(m_data, 3));
 			GetVoice(VoiceID::B).SetNoiseEnable(!GetBit(m_data, 4));
 			GetVoice(VoiceID::C).SetNoiseEnable(!GetBit(m_data, 5));
-			// Input enable: 6-7
+			m_portModeA = GetBit(m_data, 6) ? PortMode::OUTPUT : PortMode::INPUT;
+			m_portModeB = GetBit(m_data, 7) ? PortMode::OUTPUT : PortMode::INPUT;
 			break;
 
 		case Address::REG_AMPLITUDE_A:
+			GetVoice(VoiceID::A).SetAmplitude(m_data);
+			break;
 		case Address::REG_AMPLITUDE_B:
+			GetVoice(VoiceID::B).SetAmplitude(m_data);
+			break;
 		case Address::REG_AMPLITUDE_C:
+			GetVoice(VoiceID::C).SetAmplitude(m_data);
+			break;
+
 		case Address::REG_ENVELOPE_FINE:
 		case Address::REG_ENVELOPE_COARSE:
 		case Address::REG_ENVELOPE_SHAPE:
+			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
+			break;
+
 		case Address::REG_IO_PORT_A:
 		case Address::REG_IO_PORT_B:
-			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
+			// Nothing to do, store register value in m_registers below
 			break;
 
 		default:

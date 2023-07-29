@@ -163,6 +163,7 @@ namespace emul
 	void ComputerCPC464::InitSound()
 	{
 		SOUND().SetBaseClock(CPU_CLK);
+		m_sound.EnableLog(CONFIG().GetLogLevel("sound"));
 		m_sound.Init();
 	}
 
