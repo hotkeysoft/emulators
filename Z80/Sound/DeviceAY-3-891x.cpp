@@ -66,7 +66,7 @@ namespace sound::ay3
 
 	VoiceSquare::VoiceSquare(std::string label) : Voice(label)
 	{
-		m_n = 0;
+		Reset();
 	}
 
 	void VoiceSquare::Init(VoiceNoise& noise)
@@ -78,7 +78,7 @@ namespace sound::ay3
 	{
 		Voice::Reset();
 		m_amplitude = 255;
-		m_frequency = 0;
+		m_frequency = 1;
 		m_recomputeN = false;
 		m_toneEnable = false;
 		m_noiseEnable = false;
@@ -131,7 +131,7 @@ namespace sound::ay3
 		{
 			if (m_recomputeN)
 			{
-				m_n = m_frequency;
+				m_n = m_frequency ? m_frequency : 1;
 				m_recomputeN = false;
 			}
 
@@ -168,14 +168,9 @@ namespace sound::ay3
 	VoiceNoise::VoiceNoise(std::string label) :
 		Voice(label)
 	{
+		Reset();
 		ResetShiftRegister();
 		SetOutput(false);
-	}
-
-	void VoiceNoise::Init()
-	{
-		SetFrequency(2);
-		m_counter = 0;
 	}
 
 	void VoiceNoise::Reset()
@@ -191,7 +186,7 @@ namespace sound::ay3
 		{
 			if (m_recomputeN)
 			{
-				m_n = m_frequency;
+				m_n = m_frequency ? m_frequency : 1;
 				m_recomputeN = false;
 			}
 
@@ -298,7 +293,6 @@ namespace sound::ay3
 		// TODO: No port connection for now.
 		//   only used in the Amstrad CPC, which calls Read/Write functions directly
 
-		m_noise.Init();
 		for (auto& voice: m_voices)
 		{
 			voice.Init(m_noise);

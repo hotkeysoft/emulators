@@ -129,7 +129,6 @@ namespace sound::ay3
 		VoiceNoise(VoiceNoise&&) = delete;
 		VoiceNoise& operator=(VoiceNoise&&) = delete;
 
-		void Init();
 		virtual void Reset() override;
 		virtual void Tick() override;
 
