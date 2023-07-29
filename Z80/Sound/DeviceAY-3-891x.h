@@ -143,9 +143,9 @@ namespace sound::ay3
 		void Shift();
 		void ResetShiftRegister() { m_shiftRegister = (1 << (m_shiftRegisterLen - 1)); }
 
-		const BYTE m_shiftRegisterLen = 15;
-		const WORD m_noisePattern = 0b000000000010001;
-		WORD m_shiftRegister;
+		const BYTE m_shiftRegisterLen = 17;
+		const DWORD m_noisePattern = 0b00000000000001001;
+		DWORD m_shiftRegister;
 	};
 
 	class VoiceSquare : public Voice

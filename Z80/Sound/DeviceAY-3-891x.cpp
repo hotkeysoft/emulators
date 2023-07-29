@@ -108,7 +108,7 @@ namespace sound::ay3
 	}
 	void VoiceSquare::SetFrequencyCoarse(BYTE value)
 	{
-		emul::SetHByte(m_frequency, value & 15);
+		emul::SetHByte(m_frequency, value);
 		m_recomputeN = true;
 		LogPrintf(LOG_DEBUG, "SetFrequencyCoarse [%02x]", value);
 	}
@@ -169,8 +169,6 @@ namespace sound::ay3
 		Voice(label)
 	{
 		Reset();
-		ResetShiftRegister();
-		SetOutput(false);
 	}
 
 	void VoiceNoise::Reset()
@@ -211,8 +209,9 @@ namespace sound::ay3
 		LogPrintf(LOG_DEBUG, "SetFrequency       [%02x]", m_frequency);
 	}
 
-	static bool parity(WORD val)
+	static bool parity(DWORD val)
 	{
+		val ^= (val >> 15);
 		val ^= (val >> 8);
 		val ^= (val >> 4);
 		val ^= (val >> 2);
@@ -329,12 +328,16 @@ namespace sound::ay3
 	}
 	BYTE DeviceAY_3_891x::ReadData()
 	{
-		return m_data;
+		return (m_currCommand == Command::INACTIVE) ? 0xFF : m_data;
+
 	}
 
 	void DeviceAY_3_891x::SetRegisterAddress()
 	{
-		m_currAddress = (Address)(m_data & 15);
+		// Upper 4 address bits are used as 'chip select'
+		// Therefore nothing is selected if high nibble is != 0
+		// (you could order chips with a different mask, but let's assume 0 for now)
+		m_currAddress =  (m_data & 0xF0) ? Address::REG_INVALID : (Address)(m_data & 15);
 		LogPrintf(LOG_TRACE, "SetRegisterAddress: %02o", m_currAddress);
 	}
 
@@ -346,7 +349,11 @@ namespace sound::ay3
 
 		// IO Ports: Reading an 'output' port will return the value of the register
 		//           ANDed with the input of the port
-		if (m_currAddress == Address::REG_IO_PORT_A)
+		if (m_currAddress == Address::REG_INVALID)
+		{
+			m_data = 0xFF;
+		}
+		else if (m_currAddress == Address::REG_IO_PORT_A)
 		{
 			BYTE initialValue = (m_portModeA == PortMode::OUTPUT) ? m_registers[(int)Address::REG_IO_PORT_A] : 255;
 			m_data = initialValue & m_events->OnReadPortA();
@@ -372,6 +379,7 @@ namespace sound::ay3
 			GetVoice(VoiceID::A).SetFrequencyFine(m_data);
 			break;
 		case Address::REG_FREQUENCY_COARSE_A:
+			m_data &= 0x0F;
 			GetVoice(VoiceID::A).SetFrequencyCoarse(m_data);
 			break;
 
@@ -379,6 +387,7 @@ namespace sound::ay3
 			GetVoice(VoiceID::B).SetFrequencyFine(m_data);
 			break;
 		case Address::REG_FREQUENCY_COARSE_B:
+			m_data &= 0x0F;
 			GetVoice(VoiceID::B).SetFrequencyCoarse(m_data);
 			break;
 
@@ -386,10 +395,12 @@ namespace sound::ay3
 			GetVoice(VoiceID::C).SetFrequencyFine(m_data);
 			break;
 		case Address::REG_FREQUENCY_COARSE_C:
+			m_data &= 0x0F;
 			GetVoice(VoiceID::C).SetFrequencyCoarse(m_data);
 			break;
 
 		case Address::REG_FREQUENCY_NOISE:
+			m_data &= 0x1F;
 			m_noise.SetFrequency(m_data);
 			break;
 
@@ -405,18 +416,24 @@ namespace sound::ay3
 			break;
 
 		case Address::REG_AMPLITUDE_A:
+			m_data &= 0x1F;
 			GetVoice(VoiceID::A).SetAmplitude(m_data);
 			break;
 		case Address::REG_AMPLITUDE_B:
+			m_data &= 0x1F;
 			GetVoice(VoiceID::B).SetAmplitude(m_data);
 			break;
 		case Address::REG_AMPLITUDE_C:
+			m_data &= 0x1F;
 			GetVoice(VoiceID::C).SetAmplitude(m_data);
 			break;
 
 		case Address::REG_ENVELOPE_FINE:
 		case Address::REG_ENVELOPE_COARSE:
+			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
+			break;
 		case Address::REG_ENVELOPE_SHAPE:
+			m_data &= 0x0F;
 			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
 			break;
 
@@ -424,6 +441,10 @@ namespace sound::ay3
 		case Address::REG_IO_PORT_B:
 			// Nothing to do, store register value in m_registers below
 			break;
+
+		case Address::REG_INVALID:
+			LogPrintf(LOG_INFO, "No address selected");
+			return;
 
 		default:
 			throw std::exception("not possible");
