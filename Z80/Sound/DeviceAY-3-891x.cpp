@@ -69,15 +69,16 @@ namespace sound::ay3
 		Reset();
 	}
 
-	void VoiceSquare::Init(VoiceNoise& noise)
+	void VoiceSquare::Init(VoiceNoise& noise, VoiceEnvelope& envelope)
 	{
 		m_noise = &noise;
+		m_envelope = &envelope;
 	}
 
 	void VoiceSquare::Reset()
 	{
 		Voice::Reset();
-		m_amplitude = 255;
+		m_amplitude = 0;
 		m_frequency = 1;
 		m_recomputeN = false;
 		m_toneEnable = false;
@@ -87,18 +88,9 @@ namespace sound::ay3
 	void VoiceSquare::SetAmplitude(BYTE value)
 	{
 		m_amplitudeMode = (AmplitudeMode)GetBit(value, 4);
+		m_amplitude = (value & 15);
 
-		if (m_amplitudeMode == AmplitudeMode::FIXED)
-		{
-			m_amplitude = s_volumeTable[value & 15];
-		}
-		else
-		{
-			m_amplitude = 255;
-			LogPrintf(LOG_WARNING, "SetAmplitude: Envelope not implemented");
-		}
-
-		LogPrintf(LOG_DEBUG, "SetAmplitude, [%C][%02x]", (m_amplitudeMode == AmplitudeMode::FIXED ? 'F' : 'E'), (value & 15));
+		LogPrintf(LOG_DEBUG, "SetAmplitude, [%C][%02x]", (m_amplitudeMode == AmplitudeMode::FIXED ? 'F' : 'E'), m_amplitude);
 	}
 	void VoiceSquare::SetFrequencyFine(BYTE value)
 	{
@@ -164,6 +156,120 @@ namespace sound::ay3
 	}
 
 	// =================================
+
+	VoiceEnvelope::VoiceEnvelope(std::string label) :
+		Voice(label)
+	{
+		Reset();
+	}
+
+	void VoiceEnvelope::Reset()
+	{
+		Voice::Reset();
+		m_amplitude = 0;
+
+		m_continue = true;
+		m_attack = true;
+		m_alternate = false;
+		m_hold = true;
+
+		m_stopped = false;
+		m_down = false;
+
+		m_frequency = 1024;
+		m_n = 1024;
+	}
+
+	void VoiceEnvelope::Tick()
+	{
+		if (m_counter == m_n)
+		{
+			m_counter = 0;
+
+			if (m_recomputeN)
+			{
+				m_n = m_frequency ? m_frequency : 1;
+				m_recomputeN = false;
+				m_stopped = false;
+			}
+			else if (!m_stopped)
+			{
+				m_amplitude = GetDirection() ? (15-m_e) : m_e;
+
+				IncE();
+
+				if (m_e == 0) // End of a cycle
+				{
+					if (m_alternate)
+					{
+						m_down = !m_down;
+					}
+
+					if (!m_continue || m_hold)
+					{
+						m_stopped = true;
+						if (!m_continue)
+						{
+							m_amplitude = 0;
+						}
+						else
+						{
+							//const bool dir = m_down ^ (!m_attack);
+							m_amplitude = GetDirection() ? m_e : (15 - m_e);
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			++m_counter;
+		}
+	}
+
+	void VoiceEnvelope::SetFrequencyFine(BYTE value)
+	{
+		emul::SetLByte(m_frequency, value);
+		m_recomputeN = true;
+		LogPrintf(LOG_DEBUG, "SetFrequencyFine   [%02x]", value);
+	}
+	void VoiceEnvelope::SetFrequencyCoarse(BYTE value)
+	{
+		emul::SetHByte(m_frequency, value);
+		m_recomputeN = true;
+		LogPrintf(LOG_DEBUG, "SetFrequencyCoarse [%02x]", value);
+	}
+
+	void VoiceEnvelope::Serialize(json& to)
+	{
+		Voice::Serialize(to);
+
+		to["amplitude"] = m_amplitude;
+		to["e"] = m_e;
+
+		to["continue"] = m_continue;
+		to["attack"] = m_attack;
+		to["alternate"] = m_alternate;
+		to["hold"] = m_hold;
+		to["stopped"] = m_stopped;
+	}
+	void VoiceEnvelope::Deserialize(const json& from)
+	{
+		Voice::Deserialize(from);
+
+		m_amplitude = from["amplitude"];
+		m_e = from["e"];
+
+		m_continue = from["continue"];
+		m_attack = from["attack"];
+		m_alternate = from["alternate"];
+		m_hold = from["hold"];
+
+		m_stopped = from["stopped"];
+	}
+
+	// =================================
+
 
 	VoiceNoise::VoiceNoise(std::string label) :
 		Voice(label)
@@ -254,9 +360,8 @@ namespace sound::ay3
 			VoiceSquare(std::string(id) + ".1"),
 			VoiceSquare(std::string(id) + ".2")
 		},
-		m_noise {
-			VoiceNoise(std::string(id) + ".noise")
-		}
+		m_noise(std::string(id) + ".noise"),
+		m_envelope(std::string(id) + ".env")
 	{
 		Reset();
 	}
@@ -273,6 +378,7 @@ namespace sound::ay3
 			voice.EnableLog(minSev);
 		}
 		m_noise.EnableLog(minSev);
+		m_envelope.EnableLog(minSev);
 	}
 
 	void DeviceAY_3_891x::Reset()
@@ -280,6 +386,7 @@ namespace sound::ay3
 		m_portModeA = PortMode::INPUT;
 		m_portModeB = PortMode::INPUT;
 
+		m_envelope.Reset();
 		m_noise.Reset();
 		for (auto& voice : m_voices)
 		{
@@ -294,7 +401,7 @@ namespace sound::ay3
 
 		for (auto& voice: m_voices)
 		{
-			voice.Init(m_noise);
+			voice.Init(m_noise, m_envelope);
 		}
 	}
 
@@ -429,8 +536,10 @@ namespace sound::ay3
 			break;
 
 		case Address::REG_ENVELOPE_FINE:
+			m_envelope.SetFrequencyFine(m_data);
+			break;
 		case Address::REG_ENVELOPE_COARSE:
-			LogPrintf(LOG_WARNING, "Not implemented: %s", GetAddressString(m_currAddress));
+			m_envelope.SetFrequencyCoarse(m_data);
 			break;
 		case Address::REG_ENVELOPE_SHAPE:
 			m_data &= 0x0F;
@@ -443,7 +552,7 @@ namespace sound::ay3
 			break;
 
 		case Address::REG_INVALID:
-			LogPrintf(LOG_INFO, "No address selected");
+			LogPrintf(LOG_DEBUG, "No address selected");
 			return;
 
 		default:
@@ -464,6 +573,7 @@ namespace sound::ay3
 			voice.Tick();
 		}
 		m_noise.Tick();
+		m_envelope.Tick();
 	}
 
 	void DeviceAY_3_891x::Serialize(json& to)
@@ -475,6 +585,7 @@ namespace sound::ay3
 			voice.Serialize(to[voice.GetId()]);
 		}
 		m_noise.Serialize(to[m_noise.GetId()]);
+		m_envelope.Serialize(to[m_envelope.GetId()]);
 	}
 
 	void DeviceAY_3_891x::Deserialize(const json& from)

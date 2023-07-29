@@ -49,6 +49,7 @@ namespace emul
 		m_pio.Reset();
 		m_keyboard.Reset();
 		m_tape->Reset();
+		m_sound.Reset();
 
 		OnLowROMChange(true); // Load low ROM on top of RAM
 		m_currHighROM = 0;

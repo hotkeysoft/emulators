@@ -98,6 +98,7 @@ namespace sound::ay3
 
 		bool GetRawOutput() const { return m_out; }
 
+		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
@@ -118,6 +119,47 @@ namespace sound::ay3
 		bool m_out = false;
 	};
 
+	class VoiceEnvelope : public Voice
+	{
+	public:
+		VoiceEnvelope(std::string label);
+
+		VoiceEnvelope() = delete;
+		VoiceEnvelope(const VoiceEnvelope&) = delete;
+		VoiceEnvelope& operator=(const VoiceEnvelope&) = delete;
+		VoiceEnvelope(VoiceEnvelope&&) = delete;
+		VoiceEnvelope& operator=(VoiceEnvelope&&) = delete;
+
+		virtual void Reset() override;
+		virtual void Tick() override;
+
+		void SetFrequencyFine(BYTE value);
+		void SetFrequencyCoarse(BYTE value);
+
+		BYTE GetAmplitude() const { return m_amplitude; }
+
+		// emul::Serializable
+		virtual void Serialize(json& to) override;
+		virtual void Deserialize(const json& from) override;
+
+	protected:
+		BYTE m_amplitude = 0; // [0..15] Current amplitude
+
+		void IncE() { ++m_e; m_e &= 15; }
+		BYTE m_e = 0; // [0..15], position in cycle
+
+		// Envelope shape
+		bool m_continue = false;
+		bool m_attack = false;
+		bool m_alternate = false;
+		bool m_hold = false;
+
+		bool m_stopped = false;
+
+		bool GetDirection() const { return m_down ^ (!m_attack); };
+		bool m_down = false;
+	};
+
 	class VoiceNoise : public Voice
 	{
 	public:
@@ -134,6 +176,7 @@ namespace sound::ay3
 
 		void SetFrequency(BYTE value);
 
+		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
@@ -159,15 +202,19 @@ namespace sound::ay3
 		VoiceSquare(VoiceSquare&&) = delete;
 		VoiceSquare& operator=(VoiceSquare&&) = delete;
 
-		void Init(VoiceNoise& noise);
+		void Init(VoiceNoise& noise, VoiceEnvelope& envelope);
 		virtual void Reset() override;
 		virtual void Tick() override;
 
 		WORD GetOutput() const
 		{
-			return
-				((m_toneEnable ? m_out : true) * m_amplitude * 64) +
-				((m_noiseEnable ? m_noise->GetRawOutput() : true) * m_amplitude * 64);
+			const BYTE amplitude =/* (m_amplitudeMode == AmplitudeMode::FIXED) ? m_amplitude :*/ m_envelope->GetAmplitude();
+			const WORD dac = s_volumeTable[amplitude] * 32;
+
+			return dac;
+			//return
+			//	((m_toneEnable ? m_out : true) * dac) +
+			//	((m_noiseEnable ? m_noise->GetRawOutput() : true) * dac);
 		}
 
 		void SetAmplitude(BYTE value);
@@ -176,18 +223,21 @@ namespace sound::ay3
 		void SetNoiseEnable(bool enable);
 		void SetToneEnable(bool enable);
 
+		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
 	protected:
 		enum class AmplitudeMode { FIXED = 0, ENVELOPE = 1 } m_amplitudeMode = AmplitudeMode::FIXED;
-		BYTE m_amplitude = 255;
+		BYTE m_amplitude = 0;
 
 		bool m_toneEnable = false;
 		bool m_noiseEnable = false;
 
 		VoiceNoise* m_noise = nullptr;
+		VoiceEnvelope* m_envelope = nullptr;
 	};
+
 
 	class DeviceAY_3_891x : public PortConnector, public emul::Serializable
 	{
@@ -232,6 +282,7 @@ namespace sound::ay3
 
 		void SetEventHandler(EventHandler* handler) { m_events = handler; }
 
+		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
@@ -245,6 +296,7 @@ namespace sound::ay3
 
 		std::array<VoiceSquare, (int)VoiceID::_MAX> m_voices;
 		VoiceNoise m_noise;
+		VoiceEnvelope m_envelope;
 
 		EventHandler* m_events = nullptr;
 
