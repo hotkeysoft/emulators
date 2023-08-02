@@ -191,19 +191,16 @@ namespace video::cpc464
 
 			// Two lines after start of vsync, interrupt if counter < 32
 			// and reset counter
-			if ((crtcData.vPos == crtcData.vSyncMax + 0) || (crtcData.vPos == crtcData.vSyncMax + 1))
+			if ((crtcData.vPos == crtcData.vSyncMin + 0) || (crtcData.vPos == crtcData.vSyncMin + 1))
 			{
 				// Skip
 				++m_interruptCounter;
 			}
-			else if (crtcData.vPos == crtcData.vSyncMax + 2)
+			else if (crtcData.vPos == crtcData.vSyncMin + 2)
 			{
 				if (m_interruptCounter >= 32)
 				{
 					m_isInterrupt = true;
-				}
-				else
-				{
 				}
 
 				m_interruptCounter = 0;
