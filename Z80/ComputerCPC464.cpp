@@ -262,11 +262,8 @@ namespace emul
 
 		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
-		if (GetCPU().GetState() != CPUState::HALT)
-		{
-			// Stretch ticks so they are a multiple of 1us (4 ticks)
-			cpuTicks = (cpuTicks + 3) & ~0x3;
-		}
+		// Stretch ticks so they are a multiple of 1us (4 ticks)
+		cpuTicks = (cpuTicks + 3) & ~0x3;
 
 		if (GetCPU().IsInterruptAcknowledge())
 		{
@@ -306,9 +303,9 @@ namespace emul
 
 			m_sound.Tick();
 
-			GetCPU().SetINT(GetVideo().IsInterrupt());
 			m_pio.SetVSync(GetVideo().IsVSync());
 		}
+		GetCPU().SetINT(GetVideo().IsInterrupt());
 
 		return true;
 	}
