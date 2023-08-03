@@ -14,7 +14,15 @@ using tape::TapeDeck;
 
 namespace emul
 {
-	// TODO
+	const std::map<std::string, ComputerCPC464::Model> ComputerCPC464::s_modelMap = {
+		{"464", Model::CPC464},
+		{"cpc464", Model::CPC464},
+		{"664", Model::CPC664},
+		{"cpc664", Model::CPC664},
+		{"6128", Model::CPC6128},
+		{"cpc6128", Model::CPC6128},
+	};
+
 	const size_t MAIN_CLK = 16000000; // 16 MHz Main crystal
 	const size_t PIXEL_CLK = MAIN_CLK / 2;
 	const size_t CPU_CLK = PIXEL_CLK / 2;
@@ -24,7 +32,7 @@ namespace emul
 	const size_t RTC_RATE = CPU_CLK / RTC_CLK;
 
 	ComputerCPC464::ComputerCPC464() :
-		Logger("ZXSpectrum"),
+		Logger("cpc"),
 		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM),
 		m_romLow("ROM_L", ROM_SIZE, emul::MemoryType::ROM)
@@ -58,7 +66,7 @@ namespace emul
 
 	bool ComputerCPC464::LoadHighROM(BYTE bank, const char* romFile)
 	{
-		LogPrintf(LOG_INFO, "Load High ROM Bank [%d]: %s", bank, romFile);
+		LogPrintf(LOG_DEBUG, "Load High ROM Bank [%d]: %s", bank, romFile);
 
 		char id[16];
 		sprintf(id, "ROM_H%02X", bank);
@@ -86,6 +94,7 @@ namespace emul
 		PortConnector::Init(PortConnectorMode::BYTE_HI);
 		ComputerBase::Init(CPUID_Z80, baseRAM);
 
+		InitModel();
 		InitRAM();
 		InitROM();
 		InitKeyboard();
@@ -116,6 +125,42 @@ namespace emul
 		}
 	}
 
+	ComputerCPC464::Model ComputerCPC464::StringToModel(const char* str)
+	{
+		auto m = s_modelMap.find(str);
+		if (m != s_modelMap.end())
+		{
+			return m->second;
+		}
+		return Model::UNKNOWN;
+	}
+	std::string ComputerCPC464::ModelToString(ComputerCPC464::Model model)
+	{
+		for (auto curr : s_modelMap)
+		{
+			if (curr.second == model)
+			{
+				return curr.first.c_str();
+			}
+		}
+		return "unknown";
+	}
+
+	void ComputerCPC464::InitModel()
+	{
+		std::string model = CONFIG().GetValueStr("core", "model", "cpc464");
+
+		m_model = StringToModel(model.c_str());
+
+		if (m_model == Model::UNKNOWN)
+		{
+			m_model = Model::CPC464;
+			LogPrintf(LOG_WARNING, "Unknown model [%s], using default", model.c_str());
+		}
+
+		LogPrintf(LOG_INFO, "InitModel: [%s]", ModelToString(m_model).c_str());
+	}
+
 	void ComputerCPC464::InitKeyboard()
 	{
 		m_keyboard.EnableLog(CONFIG().GetLogLevel("keyboard"));
@@ -139,11 +184,49 @@ namespace emul
 
 	void ComputerCPC464::InitROM()
 	{
-		m_romLow.LoadFromFile("data/z80/amstrad.cpc464.os.bin");
-		LoadHighROM(0, "data/z80/amstrad.cpc464.basic.bin");
+		// TODO: Put in map/json file
 
-		// TODO: Dynamic
-		LoadHighROM(7, "data/z80/amstrad.amsdos.0.5.bin");
+		std::string osROM = m_basePathROM;
+		std::string basicROM = m_basePathROM;
+		std::string dosROM = m_basePathROM + "amstrad.amsdos.0.5.bin";
+
+		switch (m_model)
+		{
+		case Model::CPC464:
+			osROM.append("amstrad.cpc464.os.bin");
+			basicROM.append("amstrad.cpc464.basic.1.0.bin");
+			break;
+		case Model::CPC664:
+			osROM.append("amstrad.cpc664.os.bin");
+			basicROM.append("amstrad.cpc664.basic.1.1.bin");
+			break;
+		case Model::CPC6128:
+			osROM.append("amstrad.cpc6128.os.bin");
+			basicROM.append("amstrad.cpc6128.basic.1.1.bin");
+			break;
+		default:
+			throw std::exception("not possible");
+		}
+
+		if (!m_romLow.LoadFromFile(osROM.c_str()))
+		{
+			LogPrintf(LOG_ERROR, "Error loading OS ROM: %s", osROM.c_str());
+			throw std::exception("Error loading OS ROM");
+		}
+
+		if (!LoadHighROM(0, basicROM.c_str()))
+		{
+			LogPrintf(LOG_ERROR, "Error loading BASIC ROM: %s", basicROM.c_str());
+			throw std::exception("Error loading BASIC ROM");
+		}
+
+		if (CONFIG().GetValueBool("floppy", "enable"))
+		{
+			if (!LoadHighROM(7, dosROM.c_str()))
+			{
+				LogPrintf(LOG_ERROR, "Error loading DOS ROM: %s", dosROM.c_str());
+			}
+		}
 
 		// Only enable low rom (os) at boot
 		OnLowROMChange(true); // Load low ROM on top of RAM
@@ -158,7 +241,7 @@ namespace emul
 		m_pio.SetKeyboard(&m_keyboard);
 		m_pio.SetJoystick(&m_joystick);
 		m_pio.SetSound(&m_sound);
-		m_pio.Init("xxxx0xxx");
+		m_pio.Init("xxxx0xxx", true);
 	}
 
 	void ComputerCPC464::InitSound()
@@ -220,7 +303,7 @@ namespace emul
 
 	void ComputerCPC464::LoadROM(bool load, MemoryBlock* rom, ADDRESS base)
 	{
-		LogPrintf(LOG_INFO, "%sLOAD ROM [%s]", (load ? "" : "UN"), rom->GetId().c_str());
+		LogPrintf(LOG_DEBUG, "%sLOAD ROM [%s]", (load ? "" : "UN"), rom->GetId().c_str());
 
 		if (load)
 		{
@@ -234,7 +317,7 @@ namespace emul
 
 	void ComputerCPC464::SelectROMBank(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "Select ROM Bank: [%d]", value);
+		LogPrintf(LOG_DEBUG, "Select ROM Bank: [%d]", value);
 		m_currHighROM = value;
 
 		if (m_highROMLoaded)
@@ -313,6 +396,8 @@ namespace emul
 	void ComputerCPC464::Serialize(json& to)
 	{
 		ComputerBase::Serialize(to);
+		to["model"] = ModelToString(m_model);
+
 
 		if (m_floppy)
 		{
@@ -323,6 +408,12 @@ namespace emul
 	void ComputerCPC464::Deserialize(const json& from)
 	{
 		ComputerBase::Deserialize(from);
+		std::string modelStr = from["model"];
+		Model model = StringToModel(modelStr.c_str());
+		if ((m_model == Model::UNKNOWN) || (model != m_model))
+		{
+			throw SerializableException("Computer: Model is not compatible", SerializationError::COMPAT);
+		}
 
 		if ((from.contains("floppy") && !m_floppy) ||
 			(!from.contains("floppy") && m_floppy))

@@ -19,11 +19,18 @@ namespace emul
 	class ComputerCPC464 : public ComputerBase, public vid464::EventHandler
 	{
 	public:
+		enum class Model { UNKNOWN, CPC464, CPC664, CPC6128 };
+
 		ComputerCPC464();
 		~ComputerCPC464();
 
-		virtual std::string_view GetName() const override { return "CPC464"; };
-		virtual std::string_view GetID() const override { return "cpc464"; };
+		virtual std::string_view GetName() const override { return "CPC"; };
+		virtual std::string_view GetID() const override { return "cpc"; };
+		virtual std::string_view GetModel() const override
+		{
+			static const std::string model = ModelToString(m_model);
+			return model;
+		}
 
 		virtual void Reset() override;
 
@@ -32,6 +39,10 @@ namespace emul
 		virtual bool Step() override;
 
 		CPUZ80& GetCPU() const { return *((CPUZ80*)m_cpu); }
+
+		static Model StringToModel(const char*);
+		static std::string ModelToString(Model);
+
 		fdc::DeviceFloppy* GetFloppy() { return m_floppy; }
 		virtual tape::DeviceTape* GetTape() override { return m_tape; }
 		vid464::VideoCPC464& GetVideo() { return *((vid464::VideoCPC464*)m_video); }
@@ -47,6 +58,7 @@ namespace emul
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 
+		void InitModel();
 		void InitKeyboard();
 		void InitJoystick();
 		void InitRAM();
@@ -57,7 +69,10 @@ namespace emul
 		void InitTape();
 		void InitFloppy(fdc::DeviceFloppy* fdd);
 
-		void TickFloppy();
+		static const std::map<std::string, Model> s_modelMap;
+		Model m_model = Model::CPC464;
+
+		const std::string m_basePathROM = "data/z80/amstrad/";
 
 		void LoadROM(bool load, emul::MemoryBlock* rom, ADDRESS base);
 		bool m_highROMLoaded = false;
@@ -76,6 +91,8 @@ namespace emul
 		emul::MemoryBlock* GetCurrHighROM() const { return m_romBanks[m_currHighROM] ? m_romBanks[m_currHighROM] : m_romBanks[0]; }
 		bool LoadHighROM(BYTE bank, const char* romFile);
 		void SelectROMBank(BYTE value);
+
+		void TickFloppy();
 
 		kbd::DeviceKeyboardCPC464 m_keyboard;
 		ppi::Device8255CPC464 m_pio;

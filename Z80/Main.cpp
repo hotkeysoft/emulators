@@ -158,7 +158,7 @@ ComputerBase* CreateComputer(std::string arch)
 	{
 		computer = new emul::ComputerColecoVision();
 	}
-	else if (arch == "cpc464" || arch == "amstradcpc464")
+	else if (arch == "amstrad" || arch == "cpc" || arch == "amstradcpc")
 	{
 		computer = new emul::ComputerCPC464();
 	}
@@ -168,7 +168,7 @@ ComputerBase* CreateComputer(std::string arch)
 Overlay* CreateOverlay(std::string arch)
 {
 	Overlay* overlay = nullptr;
-	if (arch == "cpc464" || arch == "amstradcpc464")
+	if (arch == "amstrad" || arch == "cpc" || arch == "amstradcpc")
 	{
 		overlay = new ui::OverlayCPC464();
 	}
@@ -181,7 +181,6 @@ Overlay* CreateOverlay(std::string arch)
 
 void InitPC(ComputerBase* pc, Overlay* overlay, bool reset = true)
 {
-	pc->EnableLog(CONFIG().GetLogLevel("computer"));
 	if (reset)
 	{
 		pc->Reset();
@@ -388,7 +387,9 @@ int main(int argc, char* args[])
 		return 2;
 	}
 
-	int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 640);
+	int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 64);
+
+	pc->EnableLog(CONFIG().GetLogLevel("computer"));
 	pc->Init(baseRAM);
 	InitPC(pc, overlay);
 
