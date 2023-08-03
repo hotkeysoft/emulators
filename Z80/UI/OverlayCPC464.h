@@ -9,17 +9,17 @@ namespace ui
 {
 	using NewComputerCallback = void (*)(std::filesystem::path, json& data);
 
-	class OverlayCPC464 : public Overlay
+	class OverlayCPC : public Overlay
 	{
 	public:
-		OverlayCPC464();
+		OverlayCPC();
 
 		virtual bool Init() override;
 		virtual void SetPC(emul::ComputerBase* pc) override;
 		virtual bool Update() override;
 
 	protected:
-		emul::ComputerCPC464* GetPC() { return (emul::ComputerCPC464*)m_pc; }
+		emul::ComputerCPC* GetPC() { return (emul::ComputerCPC*)m_pc; }
 
 		virtual void OnClick(CoreUI::WidgetRef widget) override;
 

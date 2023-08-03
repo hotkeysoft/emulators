@@ -2,7 +2,7 @@
 #include <Video/Video.h>
 #include "CRTControllerCPC464.h"
 
-namespace video::cpc464
+namespace video::cpc
 {
     class EventHandler
     {
@@ -11,21 +11,21 @@ namespace video::cpc464
         virtual void OnHighROMChange(bool load) {}
     };
 
-    class VideoCPC464 : public Video, public crtc_6845::EventHandler
+    class VideoCPC : public Video, public crtc_6845::EventHandler
     {
     public:
-        VideoCPC464(emul::MemoryBlock* ram);
+        VideoCPC(emul::MemoryBlock* ram);
 
-        VideoCPC464(const VideoCPC464&) = delete;
-        VideoCPC464& operator=(const VideoCPC464&) = delete;
-        VideoCPC464(VideoCPC464&&) = delete;
-        VideoCPC464& operator=(VideoCPC464&&) = delete;
+        VideoCPC(const VideoCPC&) = delete;
+        VideoCPC& operator=(const VideoCPC&) = delete;
+        VideoCPC(VideoCPC&&) = delete;
+        VideoCPC& operator=(VideoCPC&&) = delete;
 
-        virtual const std::string GetID() const override { return "cpc464"; }
+        virtual const std::string GetID() const override { return "vidCPC"; }
 
         virtual void Init(emul::Memory* memory, const char* charROM, bool forceMono = false);
 
-        void SetEventHandler(video::cpc464::EventHandler* handler) { m_events = handler; }
+        void SetEventHandler(video::cpc::EventHandler* handler) { m_events = handler; }
 
         virtual void Reset() override;
         virtual void Tick() override;
@@ -101,8 +101,8 @@ namespace video::cpc464
         bool m_isInterrupt = false;
 
     private:
-        video::cpc464::EventHandler* m_events = nullptr;
+        video::cpc::EventHandler* m_events = nullptr;
 
-        CRTControllerCPC464 m_crtc;
+        CRTControllerCPC m_crtc;
     };
 }

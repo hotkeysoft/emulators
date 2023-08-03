@@ -71,16 +71,16 @@ namespace fdc
 		};
 	}
 
-	class DeviceFloppyCPC464 : public DeviceFloppy
+	class DeviceFloppyCPC : public DeviceFloppy
 	{
 	public:
-		DeviceFloppyCPC464(WORD baseAddress, size_t clockSpeedHz);
+		DeviceFloppyCPC(WORD baseAddress, size_t clockSpeedHz);
 
-		DeviceFloppyCPC464() = delete;
-		DeviceFloppyCPC464(const DeviceFloppyCPC464&) = delete;
-		DeviceFloppyCPC464& operator=(const DeviceFloppyCPC464&) = delete;
-		DeviceFloppyCPC464(DeviceFloppyCPC464&&) = delete;
-		DeviceFloppyCPC464& operator=(DeviceFloppyCPC464&&) = delete;
+		DeviceFloppyCPC() = delete;
+		DeviceFloppyCPC(const DeviceFloppyCPC&) = delete;
+		DeviceFloppyCPC& operator=(const DeviceFloppyCPC&) = delete;
+		DeviceFloppyCPC(DeviceFloppyCPC&&) = delete;
+		DeviceFloppyCPC& operator=(DeviceFloppyCPC&&) = delete;
 
 		virtual void Init() override;
 		void Reset();

@@ -160,7 +160,7 @@ ComputerBase* CreateComputer(std::string arch)
 	}
 	else if (arch == "amstrad" || arch == "cpc" || arch == "amstradcpc")
 	{
-		computer = new emul::ComputerCPC464();
+		computer = new emul::ComputerCPC();
 	}
 	return computer;
 }
@@ -170,7 +170,7 @@ Overlay* CreateOverlay(std::string arch)
 	Overlay* overlay = nullptr;
 	if (arch == "amstrad" || arch == "cpc" || arch == "amstradcpc")
 	{
-		overlay = new ui::OverlayCPC464();
+		overlay = new ui::OverlayCPC();
 	}
 	else
 	{

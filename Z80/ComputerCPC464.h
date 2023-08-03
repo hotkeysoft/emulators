@@ -9,22 +9,21 @@
 #include "Sound/DeviceAY-3-891x.h"
 #include <Storage/DeviceTape.h>
 
-namespace vid464 = video::cpc464;
 namespace fdc { class DeviceFloppy; }
 
 namespace emul
 {
 	class CPUZ80;
 
-	class ComputerCPC464 : public ComputerBase, public vid464::EventHandler
+	class ComputerCPC : public ComputerBase, public video::cpc::EventHandler
 	{
 	public:
 		enum class Model { UNKNOWN, CPC464, CPC664, CPC6128 };
 
-		ComputerCPC464();
-		~ComputerCPC464();
+		ComputerCPC();
+		~ComputerCPC();
 
-		virtual std::string_view GetName() const override { return "CPC"; };
+		virtual std::string_view GetName() const override { return "Amstrad CPC"; };
 		virtual std::string_view GetID() const override { return "cpc"; };
 		virtual std::string_view GetModel() const override
 		{
@@ -45,7 +44,7 @@ namespace emul
 
 		fdc::DeviceFloppy* GetFloppy() { return m_floppy; }
 		virtual tape::DeviceTape* GetTape() override { return m_tape; }
-		vid464::VideoCPC464& GetVideo() { return *((vid464::VideoCPC464*)m_video); }
+		video::cpc::VideoCPC& GetVideo() { return *((video::cpc::VideoCPC*)m_video); }
 
 		// vid464::EventHandler
 		virtual void OnLowROMChange(bool load) override;
@@ -94,8 +93,8 @@ namespace emul
 
 		void TickFloppy();
 
-		kbd::DeviceKeyboardCPC464 m_keyboard;
-		ppi::Device8255CPC464 m_pio;
+		kbd::DeviceKeyboardCPC m_keyboard;
+		ppi::Device8255CPC m_pio;
 		tape::DeviceTape* m_tape = nullptr;
 		fdc::DeviceFloppy* m_floppy = nullptr;
 		joy::DeviceJoystickDigital m_joystick;

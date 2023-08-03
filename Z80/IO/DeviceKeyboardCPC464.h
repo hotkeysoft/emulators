@@ -6,16 +6,16 @@
 
 namespace kbd
 {
-	class DeviceKeyboardCPC464 : public DeviceKeyboard, public Logger
+	class DeviceKeyboardCPC : public DeviceKeyboard, public Logger
 	{
 	public:
-		DeviceKeyboardCPC464();
-		virtual ~DeviceKeyboardCPC464() {}
+		DeviceKeyboardCPC();
+		virtual ~DeviceKeyboardCPC() {}
 
-		DeviceKeyboardCPC464(const DeviceKeyboardCPC464&) = delete;
-		DeviceKeyboardCPC464& operator=(const DeviceKeyboardCPC464&) = delete;
-		DeviceKeyboardCPC464(DeviceKeyboardCPC464&&) = delete;
-		DeviceKeyboardCPC464& operator=(DeviceKeyboardCPC464&&) = delete;
+		DeviceKeyboardCPC(const DeviceKeyboardCPC&) = delete;
+		DeviceKeyboardCPC& operator=(const DeviceKeyboardCPC&) = delete;
+		DeviceKeyboardCPC(DeviceKeyboardCPC&&) = delete;
+		DeviceKeyboardCPC& operator=(DeviceKeyboardCPC&&) = delete;
 
 		virtual void Reset() override { m_keyGrid.fill(0xFF); }
 

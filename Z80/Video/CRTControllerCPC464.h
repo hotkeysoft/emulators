@@ -3,21 +3,21 @@
 
 namespace video
 {
-    class CRTControllerCPC464 : public crtc_6845::CRTController
+    class CRTControllerCPC : public crtc_6845::CRTController
     {
     public:
-        CRTControllerCPC464() : CRTController(0), Logger("CRTC") {}
+        CRTControllerCPC() : CRTController(0), Logger("CRTC") {}
 
         virtual void Init() override
         {
 			Reset();
 
 			// CRTC Register Select
-			Connect("x0xxxx00", static_cast<PortConnector::OUTFunction>(&CRTControllerCPC464::SelectCRTCRegister), true);
+			Connect("x0xxxx00", static_cast<PortConnector::OUTFunction>(&CRTControllerCPC::SelectCRTCRegister), true);
 
 			// CRTC Register Data
-			Connect("x0xxxx01", static_cast<PortConnector::OUTFunction>(&CRTControllerCPC464::WriteCRTCData), true);
-			Connect("x0xxxx11", static_cast<PortConnector::INFunction>(&CRTControllerCPC464::ReadCRTCData), true);
+			Connect("x0xxxx01", static_cast<PortConnector::OUTFunction>(&CRTControllerCPC::WriteCRTCData), true);
+			Connect("x0xxxx11", static_cast<PortConnector::INFunction>(&CRTControllerCPC::ReadCRTCData), true);
         }
     };
 }

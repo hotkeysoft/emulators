@@ -41,15 +41,15 @@ namespace ppi
 		INVALID = -1
 	};
 
-	class Device8255CPC464 : public Device8255, public sound::ay3::EventHandler
+	class Device8255CPC : public Device8255, public sound::ay3::EventHandler
 	{
 	public:
-		Device8255CPC464() : Logger("PIO") {}
+		Device8255CPC() : Logger("PIO") {}
 
-		Device8255CPC464(const Device8255CPC464&) = delete;
-		Device8255CPC464& operator=(const Device8255CPC464&) = delete;
-		Device8255CPC464(Device8255CPC464&&) = delete;
-		Device8255CPC464& operator=(Device8255CPC464&&) = delete;
+		Device8255CPC(const Device8255CPC&) = delete;
+		Device8255CPC& operator=(const Device8255CPC&) = delete;
+		Device8255CPC(Device8255CPC&&) = delete;
+		Device8255CPC& operator=(Device8255CPC&&) = delete;
 
 		void SetKeyboard(kbd::DeviceKeyboard* keyboard) { assert(keyboard); m_keyboard = keyboard; }
 		void SetJoystick(joy::DeviceJoystickDigital* joystick) { assert(joystick);  m_joystick = joystick; }

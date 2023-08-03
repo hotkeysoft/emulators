@@ -32,11 +32,11 @@ using namespace hscommon::fileUtil;
 
 namespace ui
 {
-	OverlayCPC464::OverlayCPC464()
+	OverlayCPC::OverlayCPC()
 	{
 	}
 
-	bool OverlayCPC464::Init()
+	bool OverlayCPC::Init()
 	{
 		if (!Overlay::Init())
 			return false;
@@ -46,12 +46,12 @@ namespace ui
 		return true;
 	}
 
-	void OverlayCPC464::SetPC(emul::ComputerBase* pc)
+	void OverlayCPC::SetPC(emul::ComputerBase* pc)
 	{
 		Overlay::SetPC(pc);
 
-		emul::ComputerCPC464* pcCPC464 = dynamic_cast<emul::ComputerCPC464*>(pc);
-		assert(pcCPC464 != nullptr);
+		emul::ComputerCPC* pcCPC = dynamic_cast<emul::ComputerCPC*>(pc);
+		assert(pcCPC != nullptr);
 
 		// Toolbar section: Floppy drives
 		if (GetPC()->GetFloppy())
@@ -77,7 +77,7 @@ namespace ui
 		}
 	}
 
-	void OverlayCPC464::OnClick(CoreUI::WidgetRef widget)
+	void OverlayCPC::OnClick(CoreUI::WidgetRef widget)
 	{
 		const std::string& id = widget->GetId();
 
@@ -104,7 +104,7 @@ namespace ui
 		}
 	}
 
-	void OverlayCPC464::UpdateFloppy(BYTE drive)
+	void OverlayCPC::UpdateFloppy(BYTE drive)
 	{
 		const auto& image = GetPC()->GetFloppy()->GetImageInfo(drive);
 
@@ -126,7 +126,7 @@ namespace ui
 		m_floppyButton[drive]->SetText(os.str().c_str());
 	}
 
-	bool OverlayCPC464::Update()
+	bool OverlayCPC::Update()
 	{
 		if (!Overlay::Update())
 		{
@@ -144,7 +144,7 @@ namespace ui
 		return true;
 	}
 
-	void OverlayCPC464::LoadFloppyDiskImage(BYTE drive, bool eject)
+	void OverlayCPC::LoadFloppyDiskImage(BYTE drive, bool eject)
 	{
 		if (!GetPC() || !GetPC()->GetFloppy())
 		{

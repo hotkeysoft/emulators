@@ -11,36 +11,36 @@ namespace fdc
 	const emul::BitMaskW DataRegisterMask("0xxxxxx1");
 	const emul::BitMaskW MotorControlMask("0xxxxxxx");
 
-	static const char* DISK_ID = "CPC_DSK";
+	static const char* DISK_ID = "CPC-DSK";
 
 	static_assert(sizeof(dsk::DiscInfo) == 256);
 	static_assert(sizeof(dsk::SectorInfo) == 8);
 	static_assert(sizeof(dsk::TrackInfo) == 256);
 
-	DeviceFloppyCPC464::DeviceFloppyCPC464(WORD baseAddress, size_t clockSpeedHz) :
+	DeviceFloppyCPC::DeviceFloppyCPC(WORD baseAddress, size_t clockSpeedHz) :
 		DeviceFloppy(baseAddress, clockSpeedHz),
-		Logger("floppyCPC464")
+		Logger("floppyCPC")
 	{
 	}
 
-	void DeviceFloppyCPC464::Reset()
+	void DeviceFloppyCPC::Reset()
 	{
 		DeviceFloppy::Reset();
 		m_motor = false;
 	}
 
-	void DeviceFloppyCPC464::Init()
+	void DeviceFloppyCPC::Init()
 	{
 		//MAIN_STATUS_REGISTER = 0x3F4, // read-only
-		Connect("xxxxx0x1", static_cast<PortConnector::INFunction>(&DeviceFloppyCPC464::ReadFloppyController), true);
-		Connect("xxxxx0x1", static_cast<PortConnector::OUTFunction>(&DeviceFloppyCPC464::WriteFloppyController), true);
+		Connect("xxxxx0x1", static_cast<PortConnector::INFunction>(&DeviceFloppyCPC::ReadFloppyController), true);
+		Connect("xxxxx0x1", static_cast<PortConnector::OUTFunction>(&DeviceFloppyCPC::WriteFloppyController), true);
 
-		Connect("xxxxx0x0", static_cast<PortConnector::OUTFunction>(&DeviceFloppyCPC464::WriteFloppyMotorControl), true);
+		Connect("xxxxx0x0", static_cast<PortConnector::OUTFunction>(&DeviceFloppyCPC::WriteFloppyMotorControl), true);
 
 		SetDiskChanged();
 	}
 
-	BYTE DeviceFloppyCPC464::ReadFloppyController()
+	BYTE DeviceFloppyCPC::ReadFloppyController()
 	{
 		const WORD port = GetCurrentPort();
 		LogPrintf(LOG_TRACE, "ReadFDC, port=%04X", port);
@@ -52,7 +52,7 @@ namespace fdc
 		else
 			return 0xFF;
 	}
-	void DeviceFloppyCPC464::WriteFloppyController(BYTE value)
+	void DeviceFloppyCPC::WriteFloppyController(BYTE value)
 	{
 		const WORD port = GetCurrentPort();
 		LogPrintf(LOG_TRACE, "WriteFDC, port = %04X, value=%02X", GetCurrentPort(), value);
@@ -61,7 +61,7 @@ namespace fdc
 			return WriteDataFIFO(value);
 	}
 
-	void DeviceFloppyCPC464::WriteFloppyMotorControl(BYTE value)
+	void DeviceFloppyCPC::WriteFloppyMotorControl(BYTE value)
 	{
 		const WORD port = GetCurrentPort();
 		LogPrintf(LOG_TRACE, "WriteMotorControl, port = %04X, value=%02X", GetCurrentPort(), value);
@@ -72,7 +72,7 @@ namespace fdc
 		}
 	}
 
-	bool DeviceFloppyCPC464::LoadFloppy(BYTE drive, const FloppyDisk& floppy)
+	bool DeviceFloppyCPC::LoadFloppy(BYTE drive, const FloppyDisk& floppy)
 	{
 		if (drive > 3)
 		{
@@ -96,7 +96,7 @@ namespace fdc
 		return true;
 	}
 
-	bool DeviceFloppyCPC464::LoadDiskImage(BYTE drive, const char* path)
+	bool DeviceFloppyCPC::LoadDiskImage(BYTE drive, const char* path)
 	{
 		if (drive > 3)
 		{
@@ -271,7 +271,7 @@ namespace fdc
 		return true;
 	}
 
-	dsk::DiscInfo DeviceFloppyCPC464::ReadDiscInfoBlock(FILE* f)
+	dsk::DiscInfo DeviceFloppyCPC::ReadDiscInfoBlock(FILE* f)
 	{
 		dsk::DiscInfo info;
 		if (fread(&info, sizeof(info), 1, f) != 1)
@@ -283,7 +283,7 @@ namespace fdc
 		return info;
 	}
 
-	dsk::TrackInfo DeviceFloppyCPC464::ReadTrackInfoBlock(FILE* f)
+	dsk::TrackInfo DeviceFloppyCPC::ReadTrackInfoBlock(FILE* f)
 	{
 		dsk::TrackInfo info;
 		if (fread(&info, sizeof(info), 1, f) != 1)
@@ -295,7 +295,7 @@ namespace fdc
 		return info;
 	}
 
-	dsk::TrackData DeviceFloppyCPC464::ReadTrackData(const dsk::TrackInfo& trackInfo, FILE* f)
+	dsk::TrackData DeviceFloppyCPC::ReadTrackData(const dsk::TrackInfo& trackInfo, FILE* f)
 	{
 		dsk::TrackData trackData;
 

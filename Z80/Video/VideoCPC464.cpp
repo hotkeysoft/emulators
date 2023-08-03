@@ -7,21 +7,20 @@ using emul::SetBit;
 using crtc_6845::CRTCConfig;
 using crtc_6845::CRTCData;
 
-namespace video::cpc464
+namespace video::cpc
 {
-	static video::cpc464::EventHandler s_defaultHandler;
+	static video::cpc::EventHandler s_defaultHandler;
 
-	VideoCPC464::VideoCPC464(emul::MemoryBlock* ram) :
+	VideoCPC::VideoCPC(emul::MemoryBlock* ram) :
 		Video(),
-		Logger("vidCPC464"),
+		Logger("vidCPC"),
 		m_ram(ram),
 		m_events(&s_defaultHandler)
 	{
 		assert(ram);
-		Reset();
 	}
 
-	void VideoCPC464::Reset()
+	void VideoCPC::Reset()
 	{
 		Video::Reset();
 		m_crtc.Reset();
@@ -44,31 +43,31 @@ namespace video::cpc464
 		}
 	}
 
-	void VideoCPC464::EnableLog(SEVERITY minSev)
+	void VideoCPC::EnableLog(SEVERITY minSev)
 	{
 		m_crtc.EnableLog(minSev);
 		Video::EnableLog(minSev);
 	}
 
-	void VideoCPC464::Init(emul::Memory* memory, const char* charROM, bool forceMono)
+	void VideoCPC::Init(emul::Memory* memory, const char* charROM, bool forceMono)
 	{
 		Video::Init(memory, charROM, forceMono);
 		InitFrameBuffer(1024, 320);
 
-		Connect("01xxxxxx", static_cast<PortConnector::OUTFunction>(&VideoCPC464::Write), true);
+		Connect("01xxxxxx", static_cast<PortConnector::OUTFunction>(&VideoCPC::Write), true);
 
 		m_crtc.Init();
 		m_crtc.SetEventHandler(this);
 
-		AddMode(m_modes[0], (DrawFunc)&VideoCPC464::Draw160x200x16, (AddressFunc)&VideoCPC464::GetBaseAddress, (ColorFunc)&VideoCPC464::GetColor);
-		AddMode(m_modes[1], (DrawFunc)&VideoCPC464::Draw320x200x4,  (AddressFunc)&VideoCPC464::GetBaseAddress, (ColorFunc)&VideoCPC464::GetColor);
-		AddMode(m_modes[2], (DrawFunc)&VideoCPC464::Draw640x200x2,  (AddressFunc)&VideoCPC464::GetBaseAddress, (ColorFunc)&VideoCPC464::GetColor);
-		AddMode(m_modes[3], (DrawFunc)&VideoCPC464::Draw160x200x4,  (AddressFunc)&VideoCPC464::GetBaseAddress, (ColorFunc)&VideoCPC464::GetColor);
+		AddMode(m_modes[0], (DrawFunc)&VideoCPC::Draw160x200x16, (AddressFunc)&VideoCPC::GetBaseAddress, (ColorFunc)&VideoCPC::GetColor);
+		AddMode(m_modes[1], (DrawFunc)&VideoCPC::Draw320x200x4,  (AddressFunc)&VideoCPC::GetBaseAddress, (ColorFunc)&VideoCPC::GetColor);
+		AddMode(m_modes[2], (DrawFunc)&VideoCPC::Draw640x200x2,  (AddressFunc)&VideoCPC::GetBaseAddress, (ColorFunc)&VideoCPC::GetColor);
+		AddMode(m_modes[3], (DrawFunc)&VideoCPC::Draw160x200x4,  (AddressFunc)&VideoCPC::GetBaseAddress, (ColorFunc)&VideoCPC::GetColor);
 
-		UpdateMode();
+		Reset();
 	}
 
-	SDL_Rect VideoCPC464::GetDisplayRect(BYTE border, WORD xMultiplier) const
+	SDL_Rect VideoCPC::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
 		xMultiplier = 2;
 		border = 8;
@@ -89,7 +88,7 @@ namespace video::cpc464
 		return rect;
 	}
 
-	void VideoCPC464::Write(BYTE value)
+	void VideoCPC::Write(BYTE value)
 	{
 		LogPrintf(LOG_TRACE, "Write(%04x, %02x)", GetCurrentPort(), value);
 
@@ -151,12 +150,12 @@ namespace video::cpc464
 		}
 	}
 
-	void VideoCPC464::OnRenderFrame()
+	void VideoCPC::OnRenderFrame()
 	{
 		Video::RenderFrame();
 	}
 
-	void VideoCPC464::Tick()
+	void VideoCPC::Tick()
 	{
 		if (!m_crtc.IsInit())
 		{
@@ -215,23 +214,23 @@ namespace video::cpc464
 		m_crtc.Tick();
 	}
 
-	void VideoCPC464::InterruptAcknowledge()
+	void VideoCPC::InterruptAcknowledge()
 	{
 		m_isInterrupt = false;
 		SetBit(m_interruptCounter, 5, false);
 	}
 
-	void VideoCPC464::OnNewFrame()
+	void VideoCPC::OnNewFrame()
 	{
 		BeginFrame();
 	}
 
-	void VideoCPC464::OnEndOfRow()
+	void VideoCPC::OnEndOfRow()
 	{
 		NewLine();
 	}
 
-	void VideoCPC464::UpdateMode()
+	void VideoCPC::UpdateMode()
 	{
 		static int m_lastMode = -1;
 
@@ -258,7 +257,7 @@ namespace video::cpc464
 	//     0    1  | 4000 - 7FFF
 	//     1    0  | 8000 - BFFF
 	//     1    1  | C000 - FFFF
-	void VideoCPC464::UpdateBaseAddress()
+	void VideoCPC::UpdateBaseAddress()
 	{
 		m_baseAddress = (m_crtc.GetConfig().startAddress & 0b0011000000000000) << 2;
 	}
@@ -271,7 +270,7 @@ namespace video::cpc464
 	//
 	// bit:   bit7 bit6 bit5 bit4 | bit3 bit2 bit1 bit0
 	// pixel: p0.0 p1.0 p0.2 p1.2 | p0.1 p1.1 p0.3 p1.3
-	void VideoCPC464::Draw160x200x16()
+	void VideoCPC::Draw160x200x16()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
@@ -303,7 +302,7 @@ namespace video::cpc464
 	//
 	// bit:   bit7 bit6 bit5 bit4 | bit3 bit2 bit1 bit0
 	// pixel: p0.l p1.l p2.l p3.l | p0.h p1.h p2.h p3.h
-	void VideoCPC464::Draw320x200x4()
+	void VideoCPC::Draw320x200x4()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
@@ -330,7 +329,7 @@ namespace video::cpc464
 	//
 	// bit:   bit7 bit6 bit5 bit4 | bit3 bit2 bit1 bit0
 	// pixel: p.7  p.6  p.5  p.4  | p.3  p.2  p.1  p.0
-	void VideoCPC464::Draw640x200x2()
+	void VideoCPC::Draw640x200x2()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
@@ -359,7 +358,7 @@ namespace video::cpc464
 	//
 	// bit:   bit7 bit6 bit5 bit4 | bit3 bit2 bit1 bit0
 	// pixel: p0.0 p1.0   x    x  | p0.1 p1.1   x    x
-	void VideoCPC464::Draw160x200x4()
+	void VideoCPC::Draw160x200x4()
 	{
 		const struct CRTCData& data = m_crtc.GetData();
 
@@ -381,7 +380,7 @@ namespace video::cpc464
 		}
 	}
 
-	void VideoCPC464::Serialize(json& to)
+	void VideoCPC::Serialize(json& to)
 	{
 		Video::Serialize(to);
 		m_crtc.Serialize(to["crtc"]);
@@ -393,7 +392,7 @@ namespace video::cpc464
 		to["isInterrupt"] = m_isInterrupt;
 	}
 
-	void VideoCPC464::Deserialize(const json& from)
+	void VideoCPC::Deserialize(const json& from)
 	{
 		Video::Deserialize(from);
 		m_crtc.Deserialize(from["crtc"]);

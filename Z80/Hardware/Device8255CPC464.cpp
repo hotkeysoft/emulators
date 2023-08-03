@@ -9,7 +9,7 @@ using emul::GetBit;
 
 namespace ppi
 {
-	void Device8255CPC464::Reset()
+	void Device8255CPC::Reset()
 	{
 		Device8255::Reset();
 
@@ -21,13 +21,13 @@ namespace ppi
 		SetVSync(false);
 	}
 
-	BYTE Device8255CPC464::PORTA_IN()
+	BYTE Device8255CPC::PORTA_IN()
 	{
 		BYTE value = (m_portADirection == DIRECTION::OUTPUT) ? m_portAData : m_sound->ReadData();
 		LogPrintf(LOG_INFO, "PORTA: IN (PSG), value=%02x", value);
 		return value;
 	}
-	void Device8255CPC464::PORTA_OUT(BYTE value)
+	void Device8255CPC::PORTA_OUT(BYTE value)
 	{
 		m_portAData = value;
 		LogPrintf(LOG_INFO, "PORTA: OUT (PSG), value=%02x", value);
@@ -38,7 +38,7 @@ namespace ppi
 		}
 	}
 
-	BYTE Device8255CPC464::PORTB_IN()
+	BYTE Device8255CPC::PORTB_IN()
 	{
 		LogPrintf(LOG_INFO, "PORTB: IN [%cTAPE_R] [%cBUSY] [%cEXP] [%cLK4][%cLK3][%cLK2][%cLK1] [%cVSYNC]",
 			GetBit(m_portBData, 7) ? ' ' : '/',
@@ -52,19 +52,19 @@ namespace ppi
 		);
 		return m_portBData;
 	}
-	void Device8255CPC464::PORTB_OUT(BYTE value)
+	void Device8255CPC::PORTB_OUT(BYTE value)
 	{
 		m_portBData = value;
 		LogPrintf(LOG_INFO, "PORTB: OUT, value=%02x", value);
 	}
 
-	BYTE Device8255CPC464::PORTC_IN()
+	BYTE Device8255CPC::PORTC_IN()
 	{
 		LogPrintf(LOG_INFO, "PORTC: IN, value=%02x", m_portCData);
 		return m_portCData;
 	}
 
-	void Device8255CPC464::PORTC_OUT(BYTE value)
+	void Device8255CPC::PORTC_OUT(BYTE value)
 	{
 		m_portCData = value;
 		LogPrintf(LOG_DEBUG, "PORTC: OUT, value=%02x", value);
@@ -81,7 +81,7 @@ namespace ppi
 		}
 	}
 
-	BYTE Device8255CPC464::OnReadPortA()
+	BYTE Device8255CPC::OnReadPortA()
 	{
 		LogPrintf(LOG_DEBUG, "AY3: OnReadPortA");
 
@@ -115,7 +115,7 @@ namespace ppi
 	const BYTE JOY_FIRE1 = 0x10;
 	const BYTE JOY_FIRE2 = 0x20;
 
-	BYTE Device8255CPC464::ReadJoystick1() const
+	BYTE Device8255CPC::ReadJoystick1() const
 	{
 		if (!m_joystick) return 0xFF;
 

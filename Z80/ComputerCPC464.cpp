@@ -14,7 +14,7 @@ using tape::TapeDeck;
 
 namespace emul
 {
-	const std::map<std::string, ComputerCPC464::Model> ComputerCPC464::s_modelMap = {
+	const std::map<std::string, ComputerCPC::Model> ComputerCPC::s_modelMap = {
 		{"464", Model::CPC464},
 		{"cpc464", Model::CPC464},
 		{"664", Model::CPC664},
@@ -31,7 +31,7 @@ namespace emul
 	const size_t RTC_CLK = 50; // 50Hz
 	const size_t RTC_RATE = CPU_CLK / RTC_CLK;
 
-	ComputerCPC464::ComputerCPC464() :
+	ComputerCPC::ComputerCPC() :
 		Logger("cpc"),
 		ComputerBase(m_memory),
 		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM),
@@ -39,7 +39,7 @@ namespace emul
 	{
 	}
 
-	ComputerCPC464::~ComputerCPC464()
+	ComputerCPC::~ComputerCPC()
 	{
 		delete m_tape;
 		delete m_floppy;
@@ -50,7 +50,7 @@ namespace emul
 		}
 	}
 
-	void ComputerCPC464::Reset()
+	void ComputerCPC::Reset()
 	{
 		ComputerBase::Reset();
 		GetVideo().Reset();
@@ -64,7 +64,7 @@ namespace emul
 		OnHighROMChange(false);
 	}
 
-	bool ComputerCPC464::LoadHighROM(BYTE bank, const char* romFile)
+	bool ComputerCPC::LoadHighROM(BYTE bank, const char* romFile)
 	{
 		LogPrintf(LOG_DEBUG, "Load High ROM Bank [%d]: %s", bank, romFile);
 
@@ -89,7 +89,7 @@ namespace emul
 		return loaded;
 	}
 
-	void ComputerCPC464::Init(WORD baseRAM)
+	void ComputerCPC::Init(WORD baseRAM)
 	{
 		PortConnector::Init(PortConnectorMode::BYTE_HI);
 		ComputerBase::Init(CPUID_Z80, baseRAM);
@@ -111,11 +111,11 @@ namespace emul
 
 		if (CONFIG().GetValueBool("floppy", "enable"))
 		{
-			InitFloppy(new fdc::DeviceFloppyCPC464(0x03F0, CPU_CLK));
+			InitFloppy(new fdc::DeviceFloppyCPC(0x03F0, CPU_CLK));
 		}
 	}
 
-	void ComputerCPC464::InitCPU(const char* cpuid)
+	void ComputerCPC::InitCPU(const char* cpuid)
 	{
 		if (cpuid == CPUID_Z80) m_cpu = new CPUZ80(m_memory);
 		else
@@ -125,7 +125,7 @@ namespace emul
 		}
 	}
 
-	ComputerCPC464::Model ComputerCPC464::StringToModel(const char* str)
+	ComputerCPC::Model ComputerCPC::StringToModel(const char* str)
 	{
 		auto m = s_modelMap.find(str);
 		if (m != s_modelMap.end())
@@ -134,7 +134,7 @@ namespace emul
 		}
 		return Model::UNKNOWN;
 	}
-	std::string ComputerCPC464::ModelToString(ComputerCPC464::Model model)
+	std::string ComputerCPC::ModelToString(ComputerCPC::Model model)
 	{
 		for (auto curr : s_modelMap)
 		{
@@ -146,7 +146,7 @@ namespace emul
 		return "unknown";
 	}
 
-	void ComputerCPC464::InitModel()
+	void ComputerCPC::InitModel()
 	{
 		std::string model = CONFIG().GetValueStr("core", "model", "cpc464");
 
@@ -161,12 +161,12 @@ namespace emul
 		LogPrintf(LOG_INFO, "InitModel: [%s]", ModelToString(m_model).c_str());
 	}
 
-	void ComputerCPC464::InitKeyboard()
+	void ComputerCPC::InitKeyboard()
 	{
 		m_keyboard.EnableLog(CONFIG().GetLogLevel("keyboard"));
 	}
 
-	void ComputerCPC464::InitJoystick()
+	void ComputerCPC::InitJoystick()
 	{
 		if (CONFIG().GetValueBool("joystick", "enable"))
 		{
@@ -175,14 +175,14 @@ namespace emul
 		}
 	}
 
-	void ComputerCPC464::InitRAM()
+	void ComputerCPC::InitRAM()
 	{
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
 		m_memory.Allocate(&m_baseRAM, 0);
 	}
 
-	void ComputerCPC464::InitROM()
+	void ComputerCPC::InitROM()
 	{
 		// TODO: Put in map/json file
 
@@ -232,10 +232,10 @@ namespace emul
 		OnLowROMChange(true); // Load low ROM on top of RAM
 		OnHighROMChange(false);
 
-		Connect("xx0xxxxx", static_cast<PortConnector::OUTFunction>(&ComputerCPC464::SelectROMBank));
+		Connect("xx0xxxxx", static_cast<PortConnector::OUTFunction>(&ComputerCPC::SelectROMBank));
 	}
 
-	void ComputerCPC464::InitIO()
+	void ComputerCPC::InitIO()
 	{
 		m_pio.EnableLog(CONFIG().GetLogLevel("pio"));
 		m_pio.SetKeyboard(&m_keyboard);
@@ -244,18 +244,17 @@ namespace emul
 		m_pio.Init("xxxx0xxx", true);
 	}
 
-	void ComputerCPC464::InitSound()
+	void ComputerCPC::InitSound()
 	{
 		SOUND().SetBaseClock(CPU_CLK);
 		m_sound.EnableLog(CONFIG().GetLogLevel("sound"));
 		m_sound.Init();
 	}
 
-	void ComputerCPC464::InitVideo()
+	void ComputerCPC::InitVideo()
 	{
 		// Gate array always read directly from base ram block
-		vid464::VideoCPC464* video = new vid464::VideoCPC464(&m_baseRAM);
-		m_video = video;
+		m_video = new video::cpc::VideoCPC(&m_baseRAM);
 
 		GetVideo().SetEventHandler(this);
 
@@ -263,13 +262,13 @@ namespace emul
 		m_video->Init(&m_memory, nullptr);
 	}
 
-	void ComputerCPC464::InitTape()
+	void ComputerCPC::InitTape()
 	{
 		m_tape = new tape::DeviceTape(CPU_CLK);
 		m_tape->Init(1);
 	}
 
-	void ComputerCPC464::InitFloppy(fdc::DeviceFloppy* fdd)
+	void ComputerCPC::InitFloppy(fdc::DeviceFloppy* fdd)
 	{
 		assert(fdd);
 		m_floppy = fdd;
@@ -290,18 +289,18 @@ namespace emul
 		}
 	}
 
-	void ComputerCPC464::OnLowROMChange(bool load)
+	void ComputerCPC::OnLowROMChange(bool load)
 	{
 		LoadROM(load, &m_romLow, ROM_LOW);
 	}
 
-	void ComputerCPC464::OnHighROMChange(bool load)
+	void ComputerCPC::OnHighROMChange(bool load)
 	{
 		m_highROMLoaded = load;
 		LoadROM(load, GetCurrHighROM(), ROM_HIGH);
 	}
 
-	void ComputerCPC464::LoadROM(bool load, MemoryBlock* rom, ADDRESS base)
+	void ComputerCPC::LoadROM(bool load, MemoryBlock* rom, ADDRESS base)
 	{
 		LogPrintf(LOG_DEBUG, "%sLOAD ROM [%s]", (load ? "" : "UN"), rom->GetId().c_str());
 
@@ -315,7 +314,7 @@ namespace emul
 		}
 	}
 
-	void ComputerCPC464::SelectROMBank(BYTE value)
+	void ComputerCPC::SelectROMBank(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "Select ROM Bank: [%d]", value);
 		m_currHighROM = value;
@@ -326,7 +325,7 @@ namespace emul
 		}
 	}
 
-	void ComputerCPC464::TickFloppy()
+	void ComputerCPC::TickFloppy()
 	{
 		if (!m_floppy)
 		{
@@ -336,7 +335,7 @@ namespace emul
 		m_floppy->Tick();
 	}
 
-	bool ComputerCPC464::Step()
+	bool ComputerCPC::Step()
 	{
 		if (!ComputerBase::Step())
 		{
@@ -393,7 +392,7 @@ namespace emul
 		return true;
 	}
 
-	void ComputerCPC464::Serialize(json& to)
+	void ComputerCPC::Serialize(json& to)
 	{
 		ComputerBase::Serialize(to);
 		to["model"] = ModelToString(m_model);
@@ -405,7 +404,7 @@ namespace emul
 		}
 	}
 
-	void ComputerCPC464::Deserialize(const json& from)
+	void ComputerCPC::Deserialize(const json& from)
 	{
 		ComputerBase::Deserialize(from);
 		std::string modelStr = from["model"];

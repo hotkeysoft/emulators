@@ -112,7 +112,7 @@ namespace kbd
 		{ SDL_SCANCODE_BACKSPACE, Key(0x80, 9) }, // DEL
 	};
 
-	DeviceKeyboardCPC464::DeviceKeyboardCPC464() : Logger("kbd"), m_currKeymap(&s_keyMapNormal)
+	DeviceKeyboardCPC::DeviceKeyboardCPC() : Logger("kbd"), m_currKeymap(&s_keyMapNormal)
 	{
 		Reset();
 	}
