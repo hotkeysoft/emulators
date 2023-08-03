@@ -4,7 +4,7 @@
 #include <FileUtil.h>
 #include <UI/MainWindow.h>
 #include <UI/Overlay.h>
-#include <UI/OverlayCPC464.h>
+#include <UI/OverlayCPC.h>
 #include <Sound/Sound.h>
 
 #include <CPU/Memory.h>
@@ -20,7 +20,7 @@
 #include "ComputerZX80.h"
 #include "ComputerZXSpectrum.h"
 #include "ComputerColecoVision.h"
-#include "ComputerCPC464.h"
+#include "ComputerCPC.h"
 
 #include <conio.h>
 #include <vector>

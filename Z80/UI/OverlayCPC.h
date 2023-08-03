@@ -2,7 +2,7 @@
 
 #include <Video/Video.h>
 #include <UI/Overlay.h>
-#include "../ComputerCPC464.h"
+#include "../ComputerCPC.h"
 #include <CoreUI.h>
 
 namespace ui

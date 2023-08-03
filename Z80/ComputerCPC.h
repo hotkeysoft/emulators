@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Computer/ComputerBase.h>
-#include "Video/VideoCPC464.h"
+#include "Video/VideoCPC.h"
 #include "IO/InputEvents.h"
-#include "IO/DeviceKeyboardCPC464.h"
+#include "IO/DeviceKeyboardCPC.h"
 #include "IO/DeviceJoystickDigital.h"
-#include "Hardware/Device8255CPC464.h"
+#include "Hardware/Device8255CPC.h"
 #include "Sound/DeviceAY-3-891x.h"
 #include <Storage/DeviceTape.h>
 

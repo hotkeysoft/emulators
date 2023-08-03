@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "VideoCPC464.h"
+#include "VideoCPC.h"
 
 using emul::GetBit;
 using emul::SetBit;

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include <UI/MainWindow.h>
-#include "OverlayCPC464.h"
+#include "OverlayCPC.h"
 #include <Config.h>
 #include "../Storage/DeviceFloppy.h"
 

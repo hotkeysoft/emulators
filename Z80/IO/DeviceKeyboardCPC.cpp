@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "DeviceKeyboardCPC464.h"
+#include "DeviceKeyboardCPC.h"
 #include <IO/InputEvents.h>
 
 using events::KeyMap;

@@ -246,10 +246,10 @@
     <ClInclude Include="..\Common\Storage\CartridgeLoader.h">
       <Filter>Common\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="ComputerCPC464.h">
+    <ClInclude Include="ComputerCPC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Video\VideoCPC464.h">
+    <ClInclude Include="Video\VideoCPC.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\BitMask.h">
@@ -258,7 +258,7 @@
     <ClInclude Include="..\Common\Video\CRTController6845.h">
       <Filter>Common\Video</Filter>
     </ClInclude>
-    <ClInclude Include="Video\CRTControllerCPC464.h">
+    <ClInclude Include="Video\CRTControllerCPC.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
     <ClInclude Include="Hardware\Device8255.h">
@@ -267,19 +267,19 @@
     <ClInclude Include="Hardware\DevicePPI.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Hardware\Device8255CPC464.h">
+    <ClInclude Include="Hardware\Device8255CPC.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="IO\DeviceKeyboardCPC464.h">
+    <ClInclude Include="IO\DeviceKeyboardCPC.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
     <ClInclude Include="Storage\DeviceFloppy.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="Storage\DeviceFloppyCPC464.h">
+    <ClInclude Include="Storage\DeviceFloppyCPC.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
-    <ClInclude Include="UI\OverlayCPC464.h">
+    <ClInclude Include="UI\OverlayCPC.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="Sound\DeviceAY-3-891x.h">
@@ -413,10 +413,10 @@
     <ClCompile Include="Sound\DeviceSN76489.cpp">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="ComputerCPC464.cpp">
+    <ClCompile Include="ComputerCPC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Video\VideoCPC464.cpp">
+    <ClCompile Include="Video\VideoCPC.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\Video\CRTController6845.cpp">
@@ -425,19 +425,19 @@
     <ClCompile Include="Hardware\Device8255.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Hardware\Device8255CPC464.cpp">
+    <ClCompile Include="Hardware\Device8255CPC.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="IO\DeviceKeyboardCPC464.cpp">
+    <ClCompile Include="IO\DeviceKeyboardCPC.cpp">
       <Filter>Source Files\IO</Filter>
     </ClCompile>
     <ClCompile Include="Storage\DeviceFloppy.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="Storage\DeviceFloppyCPC464.cpp">
+    <ClCompile Include="Storage\DeviceFloppyCPC.cpp">
       <Filter>Source Files\Storage</Filter>
     </ClCompile>
-    <ClCompile Include="UI\OverlayCPC464.cpp">
+    <ClCompile Include="UI\OverlayCPC.cpp">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
     <ClCompile Include="Sound\DeviceAY-3-891x.cpp">

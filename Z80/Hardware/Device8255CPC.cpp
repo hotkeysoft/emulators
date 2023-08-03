@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Device8255CPC464.h"
+#include "Device8255CPC.h"
 #include <IO/DeviceKeyboard.h>
 #include <IO/DeviceJoystickDigital.h>
 #include "Sound/DeviceAY-3-891x.h"

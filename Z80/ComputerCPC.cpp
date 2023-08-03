@@ -1,11 +1,11 @@
 #include "stdafx.h"
 
-#include "ComputerCPC464.h"
+#include "ComputerCPC.h"
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPUZ80.h"
-#include "Video/VideoCPC464.h"
-#include "Storage/DeviceFloppyCPC464.h"
+#include "Video/VideoCPC.h"
+#include "Storage/DeviceFloppyCPC.h"
 #include <Sound/Sound.h>
 
 using cfg::CONFIG;

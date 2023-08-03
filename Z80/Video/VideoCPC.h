@@ -1,6 +1,6 @@
 #pragma once
 #include <Video/Video.h>
-#include "CRTControllerCPC464.h"
+#include "CRTControllerCPC.h"
 
 namespace video::cpc
 {

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "DeviceFloppyCPC464.h"
+#include "DeviceFloppyCPC.h"
 #include <set>
 
 using hscommon::fileUtil::File;
