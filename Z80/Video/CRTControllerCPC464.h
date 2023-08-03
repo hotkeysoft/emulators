@@ -13,11 +13,11 @@ namespace video
 			Reset();
 
 			// CRTC Register Select
-			Connect("x0xxxx00", static_cast<PortConnector::OUTFunction>(&CRTControllerCPC464::SelectCRTCRegister));
+			Connect("x0xxxx00", static_cast<PortConnector::OUTFunction>(&CRTControllerCPC464::SelectCRTCRegister), true);
 
 			// CRTC Register Data
-			Connect("x0xxxx01", static_cast<PortConnector::OUTFunction>(&CRTControllerCPC464::WriteCRTCData));
-			Connect("x0xxxx11", static_cast<PortConnector::INFunction>(&CRTControllerCPC464::ReadCRTCData));
+			Connect("x0xxxx01", static_cast<PortConnector::OUTFunction>(&CRTControllerCPC464::WriteCRTCData), true);
+			Connect("x0xxxx11", static_cast<PortConnector::INFunction>(&CRTControllerCPC464::ReadCRTCData), true);
         }
     };
 }

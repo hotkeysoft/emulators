@@ -16,8 +16,8 @@ namespace ppi
 		Device8255(Device8255&&) = delete;
 		Device8255& operator=(Device8255&&) = delete;
 
-		virtual void Init(WORD baseAddress) override;
-		virtual void Init(emul::BitMaskB bitMask) override;
+		virtual void Init(WORD baseAddress, bool shareOut = false) override;
+		virtual void Init(emul::BitMaskB bitMask, bool shareOut = false) override;
 
 		virtual void Reset() override;
 

@@ -19,36 +19,36 @@ namespace ppi
 	}
 
 	// TODO: Combine both Init() functions
-	void Device8255::Init(WORD basePort)
+	void Device8255::Init(WORD basePort, bool shareOut)
 	{
 		Reset();
 
 		Connect(basePort + 0, static_cast<PortConnector::INFunction>(&Device8255::PORTA_IN));
-		Connect(basePort + 0, static_cast<PortConnector::OUTFunction>(&Device8255::PORTA_OUT));
+		Connect(basePort + 0, static_cast<PortConnector::OUTFunction>(&Device8255::PORTA_OUT), shareOut);
 
 		Connect(basePort + 1, static_cast<PortConnector::INFunction>(&Device8255::PORTB_IN));
-		Connect(basePort + 1, static_cast<PortConnector::OUTFunction>(&Device8255::PORTB_OUT));
+		Connect(basePort + 1, static_cast<PortConnector::OUTFunction>(&Device8255::PORTB_OUT), shareOut);
 
 		Connect(basePort + 2, static_cast<PortConnector::INFunction>(&Device8255::PORTC_IN));
-		Connect(basePort + 2, static_cast<PortConnector::OUTFunction>(&Device8255::PORTC_OUT));
+		Connect(basePort + 2, static_cast<PortConnector::OUTFunction>(&Device8255::PORTC_OUT), shareOut);
 
 		Connect(basePort + 3, static_cast<PortConnector::INFunction>(&Device8255::CONTROL_IN));
-		Connect(basePort + 3, static_cast<PortConnector::OUTFunction>(&Device8255::CONTROL_OUT));
+		Connect(basePort + 3, static_cast<PortConnector::OUTFunction>(&Device8255::CONTROL_OUT), shareOut);
 	}
 
-	void Device8255::Init(emul::BitMaskB mask)
+	void Device8255::Init(emul::BitMaskB mask, bool shareOut)
 	{
 		Connect(mask.Merge("00"), static_cast<PortConnector::INFunction>(&Device8255::PORTA_IN));
-		Connect(mask.Merge("00"), static_cast<PortConnector::OUTFunction>(&Device8255::PORTA_OUT));
+		Connect(mask.Merge("00"), static_cast<PortConnector::OUTFunction>(&Device8255::PORTA_OUT), shareOut);
 
 		Connect(mask.Merge("01"), static_cast<PortConnector::INFunction>(&Device8255::PORTB_IN));
-		Connect(mask.Merge("01"), static_cast<PortConnector::OUTFunction>(&Device8255::PORTB_OUT));
+		Connect(mask.Merge("01"), static_cast<PortConnector::OUTFunction>(&Device8255::PORTB_OUT), shareOut);
 
 		Connect(mask.Merge("10"), static_cast<PortConnector::INFunction>(&Device8255::PORTC_IN));
-		Connect(mask.Merge("10"), static_cast<PortConnector::OUTFunction>(&Device8255::PORTC_OUT));
+		Connect(mask.Merge("10"), static_cast<PortConnector::OUTFunction>(&Device8255::PORTC_OUT), shareOut);
 
 		Connect(mask.Merge("11"), static_cast<PortConnector::INFunction>(&Device8255::CONTROL_IN));
-		Connect(mask.Merge("11"), static_cast<PortConnector::OUTFunction>(&Device8255::CONTROL_OUT));
+		Connect(mask.Merge("11"), static_cast<PortConnector::OUTFunction>(&Device8255::CONTROL_OUT), shareOut);
 	}
 
 	BYTE Device8255::CONTROL_IN()

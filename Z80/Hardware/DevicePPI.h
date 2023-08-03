@@ -16,8 +16,8 @@ namespace ppi
 		DevicePPI(DevicePPI&&) = delete;
 		DevicePPI& operator=(DevicePPI&&) = delete;
 
-		virtual void Init(WORD baseAddress) {}
-		virtual void Init(emul::BitMaskB bitMask) {}
+		virtual void Init(WORD baseAddress, bool shareOut = false) {}
+		virtual void Init(emul::BitMaskB bitMask, bool shareOut = false) {}
 		virtual void Reset() {}
 
 		virtual bool IsSoundON() = 0;

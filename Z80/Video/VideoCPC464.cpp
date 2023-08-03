@@ -55,7 +55,7 @@ namespace video::cpc464
 		Video::Init(memory, charROM, forceMono);
 		InitFrameBuffer(1024, 320);
 
-		Connect("01xxxxxx", static_cast<PortConnector::OUTFunction>(&VideoCPC464::Write));
+		Connect("01xxxxxx", static_cast<PortConnector::OUTFunction>(&VideoCPC464::Write), true);
 
 		m_crtc.Init();
 		m_crtc.SetEventHandler(this);

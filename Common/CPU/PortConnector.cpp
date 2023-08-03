@@ -82,7 +82,7 @@ namespace emul
 		std::fill(m_outputPorts.begin(), m_outputPorts.end(), PortHandler());
 	}
 
-	bool PortConnector::Connect(WORD port, INFunction inFunc)
+	bool PortConnector::Connect(WORD port, INFunction inFunc, bool replace)
 	{
 		if (!IsInit())
 		{
@@ -94,7 +94,7 @@ namespace emul
 
 		PortHandler& inPort = GetInputPortDirect(port);
 
-		if (inPort.IsSet())
+		if (!replace && inPort.IsSet())
 		{
 			LogPrintf(LOG_ERROR, "Port already exists");
 			return false;
@@ -137,7 +137,7 @@ namespace emul
 		return true;
 	}
 
-	bool PortConnector::Connect(BitMaskB portMask, INFunction inFunc)
+	bool PortConnector::Connect(BitMaskB portMask, INFunction inFunc, bool replace)
 	{
 		if (!IsInit())
 		{
@@ -150,7 +150,7 @@ namespace emul
 		bool ok = true;
 		for (WORD i = 0; i < 256; ++i)
 		{
-			if (portMask.IsMatch((BYTE)i) && !Connect(i, inFunc))
+			if (portMask.IsMatch((BYTE)i) && !Connect(i, inFunc, replace))
 			{
 				ok = false;
 			}

@@ -32,10 +32,10 @@ namespace fdc
 	void DeviceFloppyCPC464::Init()
 	{
 		//MAIN_STATUS_REGISTER = 0x3F4, // read-only
-		Connect("xxxxx0x1", static_cast<PortConnector::INFunction>(&DeviceFloppyCPC464::ReadFloppyController));
-		Connect("xxxxx0x1", static_cast<PortConnector::OUTFunction>(&DeviceFloppyCPC464::WriteFloppyController));
+		Connect("xxxxx0x1", static_cast<PortConnector::INFunction>(&DeviceFloppyCPC464::ReadFloppyController), true);
+		Connect("xxxxx0x1", static_cast<PortConnector::OUTFunction>(&DeviceFloppyCPC464::WriteFloppyController), true);
 
-		Connect("xxxxx0x0", static_cast<PortConnector::OUTFunction>(&DeviceFloppyCPC464::WriteFloppyMotorControl));
+		Connect("xxxxx0x0", static_cast<PortConnector::OUTFunction>(&DeviceFloppyCPC464::WriteFloppyMotorControl), true);
 
 		SetDiskChanged();
 	}
