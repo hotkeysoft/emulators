@@ -76,13 +76,13 @@ namespace sound::ay3
 
 	VoiceSquare::VoiceSquare(std::string label) : Voice(label)
 	{
-		Reset();
 	}
 
 	void VoiceSquare::Init(VoiceNoise& noise, VoiceEnvelope& envelope)
 	{
 		m_noise = &noise;
 		m_envelope = &envelope;
+		Reset();
 	}
 
 	void VoiceSquare::Reset()
@@ -170,7 +170,6 @@ namespace sound::ay3
 	VoiceEnvelope::VoiceEnvelope(std::string label) :
 		Voice(label)
 	{
-		Reset();
 	}
 
 	void VoiceEnvelope::Reset()
@@ -306,7 +305,6 @@ namespace sound::ay3
 	VoiceNoise::VoiceNoise(std::string label) :
 		Voice(label)
 	{
-		Reset();
 	}
 
 	void VoiceNoise::Reset()
@@ -396,7 +394,6 @@ namespace sound::ay3
 		m_noise(std::string(id) + ".noise"),
 		m_envelope(std::string(id) + ".env")
 	{
-		Reset();
 	}
 
 	DeviceAY_3_891x::~DeviceAY_3_891x()
