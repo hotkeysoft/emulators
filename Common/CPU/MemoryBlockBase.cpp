@@ -17,13 +17,12 @@ namespace emul
 	{
 		assert(IsPowerOf2(blockGranularity));
 		assert(blockGranularity >= 8);
-		assert(blockGranularity <= 65536);
 		s_blockGranularity = blockGranularity;
 	}
 
 	DWORD MemoryBlockBase::RoundBlockSize(DWORD size)
 	{
-		DWORD newSize = ((size + s_blockGranularity - 1) / s_blockGranularity) * s_blockGranularity;
+		DWORD newSize = emul::RoundPowerOf2(size, s_blockGranularity);
 		if (newSize != size)
 		{
 			LogPrintf(Logger::LOG_WARNING, "Rounding block size [%d] -> [%d]", size, newSize);

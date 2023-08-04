@@ -78,6 +78,11 @@ namespace emul
 	inline bool IsPowerOf2(const BYTE b) { return b && !(b & (b - 1)); }
 	inline BYTE LogBase2(BYTE b) { BYTE r = 0; while (b >>= 1) r++; return r; }
 
+	// Round a number up to the nearest multiple of 'mult' (mult must be a power of 2)
+	inline BYTE RoundPowerOf2(const BYTE b, const BYTE mult) { assert(IsPowerOf2(mult)); return (b + (mult - 1)) & (-mult); }
+	inline WORD RoundPowerOf2(const WORD w, const WORD mult) { assert(IsPowerOf2(mult)); return (w + (mult - 1)) & (-mult); }
+	inline DWORD RoundPowerOf2(const DWORD d, const WORD mult) { assert(IsPowerOf2(mult)); return (d + (mult - 1)) & (-(int32_t)mult); }
+
 	inline WORD Widen(const BYTE b)
 	{
 		return WORD((int16_t)((int8_t)b));

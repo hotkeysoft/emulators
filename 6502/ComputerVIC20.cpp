@@ -244,7 +244,7 @@ namespace emul
 		// Above 8K, Round to 8k block
 		if (actualRAM > 5)
 		{
-			WORD rounded = ((actualRAM + 7) & 0xF8);
+			WORD rounded = RoundPowerOf2(actualRAM, 8);
 			if (rounded != actualRAM)
 			{
 				actualRAM = rounded;
