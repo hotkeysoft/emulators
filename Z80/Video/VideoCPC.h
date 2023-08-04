@@ -9,6 +9,7 @@ namespace video::cpc
     public:
         virtual void OnLowROMChange(bool load) {}
         virtual void OnHighROMChange(bool load) {}
+        virtual void OnRAMConfigChange(BYTE ramBank, BYTE ramConfig) {}
     };
 
     class VideoCPC : public Video, public crtc_6845::EventHandler
@@ -96,6 +97,10 @@ namespace video::cpc
 
         bool m_romHighEnabled = false;
         bool m_romLowEnabled = true;
+
+        // RAM Banking for 128K+ models
+        BYTE m_ramBank = 0;
+        BYTE m_ramConfig = 0;
 
         BYTE m_interruptCounter = 0;
         bool m_isInterrupt = false;

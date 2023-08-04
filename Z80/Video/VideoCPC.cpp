@@ -142,11 +142,29 @@ namespace video::cpc
 				m_romHighEnabled = romH;
 				m_events->OnHighROMChange(m_romHighEnabled);
 			}
+			break;
 		}
-			break;
+
 		case 3:
-			LogPrintf(LOG_WARNING, "(Function 3, not present on CPC464)");
+		{
+			// RAM Banking
+			//
+			// TODO(?): PAL address decoding is different than gate array
+			// Gate Array: 01xxxxxx
+			//        PAL: 0xxxxxxx
+
+			BYTE ramBank = (value >> 3) & 7; // RAM Bank[0..7]
+			BYTE ramConfig = value & 7; // Eight available RAM bank configurations [0..7]
+			LogPrintf(LOG_DEBUG, "[RAM_BNK%d] [RAM_CFG%d]", ramBank, ramConfig);
+
+			if ((m_ramBank != ramBank) || (m_ramConfig != ramConfig))
+			{
+				m_ramBank = ramBank;
+				m_ramConfig = ramConfig;
+				m_events->OnRAMConfigChange(m_ramBank, m_ramConfig);
+			}
 			break;
+		}
 		}
 	}
 

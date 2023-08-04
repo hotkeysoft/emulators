@@ -15,6 +15,15 @@ namespace emul
 {
 	class CPUZ80;
 
+	class FakeMemoryBlock : public MemoryBlockBase
+	{
+	public:
+		FakeMemoryBlock() : MemoryBlockBase("NULL_EXT_RAM", 0x10000) {}
+
+		virtual BYTE read(ADDRESS offset) const override { return 0xFF; }
+		virtual void write(ADDRESS offset, BYTE data) override { }
+	};
+
 	class ComputerCPC : public ComputerBase, public video::cpc::EventHandler
 	{
 	public:
@@ -60,7 +69,7 @@ namespace emul
 		void InitModel();
 		void InitKeyboard();
 		void InitJoystick();
-		void InitRAM();
+		void InitRAM(WORD baseRAM);
 		void InitROM();
 		void InitIO();
 		void InitVideo();
@@ -76,14 +85,17 @@ namespace emul
 		void LoadROM(bool load, emul::MemoryBlock* rom, ADDRESS base);
 		bool m_highROMLoaded = false;
 
-		emul::MemoryBlock m_baseRAM;
-		emul::MemoryBlock m_romLow;
-
 		static const ADDRESS ROM_LOW = 0;
 		static const ADDRESS ROM_HIGH = 0xC000;
 		static const ADDRESS ROM_SIZE = 0x4000;
 		static const size_t ROM_BANKS = 256;
+		static const size_t RAM_BANKS = 8;
 
+		emul::MemoryBlock m_baseRAM;
+		std::array<emul::MemoryBlockBase*, RAM_BANKS> m_extRAM = { nullptr };
+		FakeMemoryBlock m_fakeExtRAM; // "null" block representing empty extended banks.
+
+		emul::MemoryBlock m_romLow;
 		std::array<emul::MemoryBlock*, ROM_BANKS> m_romBanks = { nullptr };
 
 		BYTE m_currHighROM = 0;

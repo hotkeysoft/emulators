@@ -37,6 +37,10 @@ namespace emul
 		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM),
 		m_romLow("ROM_L", ROM_SIZE, emul::MemoryType::ROM)
 	{
+		for (auto& block : m_extRAM)
+		{
+			block = &m_fakeExtRAM;
+		}
 	}
 
 	ComputerCPC::~ComputerCPC()
@@ -47,6 +51,14 @@ namespace emul
 		for (MemoryBlock* block : m_romBanks)
 		{
 			delete block;
+		}
+
+		for (MemoryBlockBase* block : m_extRAM)
+		{
+			if (block != &m_fakeExtRAM)
+			{
+				delete block;
+			}
 		}
 	}
 
@@ -95,7 +107,7 @@ namespace emul
 		ComputerBase::Init(CPUID_Z80, baseRAM);
 
 		InitModel();
-		InitRAM();
+		InitRAM(baseRAM);
 		InitROM();
 		InitKeyboard();
 		InitJoystick();
@@ -175,9 +187,53 @@ namespace emul
 		}
 	}
 
-	void ComputerCPC::InitRAM()
+	void ComputerCPC::InitRAM(emul::WORD baseRAM)
 	{
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
+
+		LogPrintf(LOG_INFO, "Requested RAM: %dKB", baseRAM);
+		if ((m_model != Model::CPC6128) && (baseRAM < 64))
+		{
+			LogPrintf(LOG_WARNING, "Requested RAM too low (%dKB), using 64KB", baseRAM);
+			baseRAM = 64;
+		}
+		else if ((m_model == Model::CPC6128) && (baseRAM < 128))
+		{
+			LogPrintf(LOG_WARNING, "Requested RAM too low for CPC6128 (%dKB), using 128KB", baseRAM);
+			baseRAM = 128;
+		}
+
+		WORD rounded = RoundPowerOf2(baseRAM, 64);
+		if (rounded != baseRAM)
+		{
+			baseRAM = rounded;
+			LogPrintf(LOG_WARNING, "Requested RAM rounded to %dKB", baseRAM);
+		}
+
+		const WORD maxRAM = 64 + (RAM_BANKS * 64);
+		if (baseRAM > maxRAM)
+		{
+			LogPrintf(LOG_WARNING, "Requested RAM too high (%dKB), using %dKB", baseRAM, maxRAM);
+			baseRAM = maxRAM;
+		}
+
+		const BYTE extBanks = (baseRAM - 64) / 64;
+		if (extBanks)
+		{
+			LogPrintf(LOG_WARNING, "Allocating [%d] Extended RAM Banks", extBanks);
+		}
+
+		for (int i=0; i<extBanks; ++i)
+		{
+			char id[32];
+			sprintf(id, "RAM_BANK%d", i);
+			MemoryBlock* block = new MemoryBlock(id, 0x10000);
+			m_extRAM[i] = block;
+
+			// This registers the block so it'll be serialized with m_memory
+			// The base RAM alloc will override this just below
+			m_memory.Allocate(block, 0);
+		}
 
 		m_memory.Allocate(&m_baseRAM, 0);
 	}
@@ -396,7 +452,6 @@ namespace emul
 	{
 		ComputerBase::Serialize(to);
 		to["model"] = ModelToString(m_model);
-
 
 		if (m_floppy)
 		{
