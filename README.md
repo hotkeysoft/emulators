@@ -4,9 +4,9 @@ Emulators for 8080-, 6502, Z80 and TMS1000-family CPUs.
 All components/modules/projects are a work in progress and by no means feature complete
 
 - 8080: 8080/8085 Emulator (from https://github.com/hotkeysoft/pfe_cpu8085)
-- 🆕**6502**
+- 6502
   - CPU Core, passes standard tests for documented instructions
-  - 🆕**PET 2001 emulation**
+  - PET 2001 emulation
     - BASIC v1/2/4
     - Load/Save to cassette tape (wip, barely works with raw audio files)
     - Load PRG files
@@ -16,7 +16,7 @@ All components/modules/projects are a work in progress and by no means feature c
       - 40 column models with no CRTC only
     - Compatibility
       - Loaded a lot of BASIC games and most seemed to work file 
-  - 🆕**VIC20 emulation**
+  - VIC20 emulation
     - RAM configurations: 5,8,16,24,32K
     - VIC Chip
       - Video (NTSC/PAL timings)
@@ -29,7 +29,21 @@ All components/modules/projects are a work in progress and by no means feature c
   - CPU Mostly complete, passes standard test suite
   - Barebones ZX80 emulation
   - Barebones ZX Spectrum emulation
-  - 🆕**Colecovision Emulation**
+  - 🆕**Amstrad CPC Emulation** (wip)
+    - CPC464, CPC664, CPC6128
+      - 64K/128K+ configurations
+    - Digital joystick (single)
+    - Video (Gate Array, 6845 CRTC)
+	  - Graphics Modes 0-3
+	  - Fancy stuff probably not working
+    - Sound (AY-3-8912)
+      - Three square wave voices
+      - Noise channel (probably not accurate nor well mixed)
+      - Envelope channel, wip
+	- Floppy emulation
+	  - Load .DSK image files (simple images formats only)
+	- Tape emulation (same bad tape engine that only loads raw files)
+  - Colecovision Emulation
     - Load 8/16/24/32K ROM Cartridges
     - Digital joystick (single) with keypad (keyboard numeric pad)
     - Sound (SN76489)
