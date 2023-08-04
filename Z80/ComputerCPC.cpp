@@ -71,9 +71,12 @@ namespace emul
 		m_tape->Reset();
 		m_sound.Reset();
 
-		OnLowROMChange(true); // Load low ROM on top of RAM
+		m_lowROMLoaded = true;
+		m_highROMLoaded = false;
 		m_currHighROM = 0;
-		OnHighROMChange(false);
+		m_extRAMBank = 0;
+		m_extRAMMode = 0;
+		OnRAMConfigChange(m_extRAMBank, m_extRAMMode);
 	}
 
 	bool ComputerCPC::LoadHighROM(BYTE bank, const char* romFile)
@@ -220,7 +223,7 @@ namespace emul
 		const BYTE extBanks = (baseRAM - 64) / 64;
 		if (extBanks)
 		{
-			LogPrintf(LOG_WARNING, "Allocating [%d] Extended RAM Banks", extBanks);
+			LogPrintf(LOG_INFO, "Allocating [%d] Extended RAM Banks", extBanks);
 		}
 
 		for (int i=0; i<extBanks; ++i)
@@ -347,6 +350,7 @@ namespace emul
 
 	void ComputerCPC::OnLowROMChange(bool load)
 	{
+		m_lowROMLoaded = load;
 		LoadROM(load, &m_romLow, ROM_LOW);
 	}
 
@@ -378,6 +382,81 @@ namespace emul
 		if (m_highROMLoaded)
 		{
 			LoadROM(true, GetCurrHighROM(), ROM_HIGH);
+		}
+	}
+
+	void ComputerCPC::OnRAMConfigChange(BYTE ramBank, BYTE ramMode)
+	{
+		LogPrintf(LOG_WARNING, "OnRAMConfigChange(ramBank=%d, ramMode=%d)", ramBank, ramMode);
+
+		m_extRAMBank = ramBank;
+		m_extRAMMode = ramMode;
+
+		MemoryBlockBase* currBank = m_extRAM[m_extRAMBank];
+
+		// RAM_? 16K Page 0-3 of base 64K
+		// EXT_? 16K Page 0-3 of active 64k ram bank (0..7)
+
+		// mode:              0      1      2      3      4      5      6      7
+		// Page 0 (0x0000): RAM_0  RAM_0  EXT_0  RAM_0  RAM_0  RAM_0  RAM_0  RAM_0
+		// Page 1 (0x4000): RAM_1  RAM_1  EXT_1  RAM_3  EXT_0  EXT_1  EXT_2  EXT_3
+		// Page 2 (0x8000): RAM_2  RAM_2  EXT_2  RAM_2  RAM_2  RAM_2  RAM_2  RAM_2
+		// Page 3 (0xC000): RAM_3  EXT_3  EXT_3  EXT_3  RAM_3  RAM_3  RAM_3  RAM_3
+
+		const ADDRESS Page0 = 0x0000;
+		const ADDRESS Page1 = 0x4000;
+		const ADDRESS Page2 = 0x8000;
+		const ADDRESS Page3 = 0xC000;
+		const ADDRESS RAMSize = 0x10000;
+		const ADDRESS PageSize = 0x4000;
+
+		switch (m_extRAMMode)
+		{
+		case 0: // Normal, all base ram
+			m_memory.Allocate(&m_baseRAM, 0, RAMSize);
+			break;
+		case 1: // All base ram except last page, from ext ram
+			m_memory.Allocate(&m_baseRAM, 0, RAMSize);
+			m_memory.AllocateOffset(currBank, Page3, Page3, PageSize);
+			break;
+		case 2: // All ext ram
+			m_memory.Allocate(currBank, 0, RAMSize);
+			break;
+		case 3: // wat
+			m_memory.AllocateOffset(&m_baseRAM, Page0, Page0, PageSize);
+			m_memory.AllocateOffset(&m_baseRAM, Page3, Page1, PageSize);
+			m_memory.AllocateOffset(&m_baseRAM, Page2, Page2, PageSize);
+			m_memory.AllocateOffset(currBank, Page3, Page3, PageSize);
+			break;
+		case 4: // All base ram, except page 1 = EXT_0
+			m_memory.Allocate(&m_baseRAM, 0, RAMSize);
+			m_memory.AllocateOffset(currBank, Page0, Page1, PageSize);
+			break;
+		case 5: // All base ram, except page 1 = EXT_1
+			m_memory.Allocate(&m_baseRAM, 0, RAMSize);
+			m_memory.AllocateOffset(currBank, Page1, Page1, PageSize);
+			break;
+		case 6: // All base ram, except page 1 = EXT_2
+			m_memory.Allocate(&m_baseRAM, 0, RAMSize);
+			m_memory.AllocateOffset(currBank, Page2, Page1, PageSize);
+			break;
+		case 7: // All base ram, except page 1 = EXT_3
+			m_memory.Allocate(&m_baseRAM, 0, RAMSize);
+			m_memory.AllocateOffset(currBank, Page3, Page1, PageSize);
+			break;
+		default:
+			throw std::exception("not possible");
+		}
+
+		// Put the ROM back on top if needed
+		if (m_highROMLoaded)
+		{
+			LoadROM(true, GetCurrHighROM(), ROM_HIGH);
+		}
+
+		if (m_lowROMLoaded)
+		{
+			LoadROM(true, &m_romLow, ROM_LOW);
 		}
 	}
 
@@ -457,6 +536,12 @@ namespace emul
 		{
 			m_floppy->Serialize(to["floppy"]);
 		}
+
+		to["currHighROM"] = m_currHighROM;
+		to["lowROMLoaded"] = m_lowROMLoaded;
+		to["highROMLoaded"] = m_highROMLoaded;
+		to["extRAMBank"] = m_extRAMBank;
+		to["extRAMMode"] = m_extRAMMode;
 	}
 
 	void ComputerCPC::Deserialize(const json& from)
@@ -479,5 +564,14 @@ namespace emul
 		{
 			m_floppy->Deserialize(from["floppy"]);
 		}
+
+		m_currHighROM = from["currHighROM"];
+		m_lowROMLoaded = from["lowROMLoaded"];
+		m_highROMLoaded = from["highROMLoaded"];
+		m_extRAMBank = from["extRAMBank"];
+		m_extRAMMode = from["extRAMMode"];
+
+		// Should hopefully put back everything in its place
+		OnRAMConfigChange(m_extRAMBank, m_extRAMMode);
 	}
 }

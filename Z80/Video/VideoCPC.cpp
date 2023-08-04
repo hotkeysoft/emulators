@@ -32,6 +32,8 @@ namespace video::cpc
 		m_interruptCounter = 0;
 		m_isInterrupt = false;
 		m_mode = 0;
+		m_ramBank = 0;
+		m_ramMode = 0;
 
 		try
 		{
@@ -154,14 +156,14 @@ namespace video::cpc
 			//        PAL: 0xxxxxxx
 
 			BYTE ramBank = (value >> 3) & 7; // RAM Bank[0..7]
-			BYTE ramConfig = value & 7; // Eight available RAM bank configurations [0..7]
-			LogPrintf(LOG_DEBUG, "[RAM_BNK%d] [RAM_CFG%d]", ramBank, ramConfig);
+			BYTE ramMode = value & 7; // Eight available RAM bank configurations [0..7]
+			LogPrintf(LOG_DEBUG, "[RAM_BANK%d] [RAM_MODE%d]", ramBank, ramMode);
 
-			if ((m_ramBank != ramBank) || (m_ramConfig != ramConfig))
+			if ((m_ramBank != ramBank) || (m_ramMode != ramMode))
 			{
 				m_ramBank = ramBank;
-				m_ramConfig = ramConfig;
-				m_events->OnRAMConfigChange(m_ramBank, m_ramConfig);
+				m_ramMode = ramMode;
+				m_events->OnRAMConfigChange(m_ramBank, m_ramMode);
 			}
 			break;
 		}

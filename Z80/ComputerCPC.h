@@ -58,6 +58,7 @@ namespace emul
 		// vid464::EventHandler
 		virtual void OnLowROMChange(bool load) override;
 		virtual void OnHighROMChange(bool load) override;
+		virtual void OnRAMConfigChange(BYTE ramBank, BYTE ramConfig) override;
 
 		// emul::Serializable
 		virtual void Serialize(json& to);
@@ -83,6 +84,7 @@ namespace emul
 		const std::string m_basePathROM = "data/z80/amstrad/";
 
 		void LoadROM(bool load, emul::MemoryBlock* rom, ADDRESS base);
+		bool m_lowROMLoaded = true;
 		bool m_highROMLoaded = false;
 
 		static const ADDRESS ROM_LOW = 0;
@@ -94,6 +96,8 @@ namespace emul
 		emul::MemoryBlock m_baseRAM;
 		std::array<emul::MemoryBlockBase*, RAM_BANKS> m_extRAM = { nullptr };
 		FakeMemoryBlock m_fakeExtRAM; // "null" block representing empty extended banks.
+		BYTE m_extRAMBank = 0;
+		BYTE m_extRAMMode = 0;
 
 		emul::MemoryBlock m_romLow;
 		std::array<emul::MemoryBlock*, ROM_BANKS> m_romBanks = { nullptr };

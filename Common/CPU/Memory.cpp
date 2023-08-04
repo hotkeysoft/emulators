@@ -39,7 +39,7 @@ namespace emul
 		}
 	}
 
-	bool Memory::Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len, AllocateMode mode)
+	bool Memory::AllocateOffset(MemoryBlockBase* block, ADDRESS sourceOffset, ADDRESS base, DWORD len, AllocateMode mode)
 	{
 		assert(block);
 
@@ -62,6 +62,12 @@ namespace emul
 			return false;
 		}
 
+		if ((sourceOffset + len) > block->GetSize())
+		{
+			LogPrintf(LOG_ERROR, "Requested size [%d] is larger than source block", len);
+			return false;
+		}
+
 		if (!CheckAddressRange(base, m_addressBits) ||
 			!CheckAddressRange(base + (DWORD)len - 1, m_addressBits))
 		{
@@ -73,6 +79,8 @@ namespace emul
 		int nbSlots = len / m_blockGranularity;
 		int minSlot = base / m_blockGranularity;
 		LogPrintf(LOG_DEBUG, "Using %d slots, first slot = %02Xh", nbSlots, minSlot);
+
+		base -= sourceOffset;
 
 		for (size_t i = 0; i < nbSlots; ++i)
 		{

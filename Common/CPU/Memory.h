@@ -34,7 +34,10 @@ namespace emul
 
 		void Init(size_t addressBits);
 
-		bool Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len = (DWORD)-1, AllocateMode mode = AllocateMode::READ_WRITE);
+		bool Allocate(MemoryBlockBase* block, ADDRESS base, DWORD len = (DWORD)-1, AllocateMode mode = AllocateMode::READ_WRITE) {
+			return AllocateOffset(block, 0, base, len, mode);
+		}
+		bool AllocateOffset(MemoryBlockBase* block, ADDRESS sourceOffset, ADDRESS base, DWORD len = (DWORD)-1, AllocateMode mode = AllocateMode::READ_WRITE);
 
 		// Restore an area of memory so that reads and writes go to the same block
 		// AllocateMode::READ: Restore READ block to match existing WRITE block
