@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <map>
+#include <algorithm>
 
 #define LogPrintf(sev, fmt, ...) \
 	do { if (IsLog(sev)) _LogPrintf(sev, fmt, __VA_ARGS__); } while (0)
