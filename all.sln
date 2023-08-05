@@ -26,6 +26,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hotkey6809Emu", "6809\hotkey6809Emu.vcxproj", "{442FE652-F727-469C-A7BC-1830A5973DB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -82,6 +84,14 @@ Global
 		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Release|x64.Build.0 = Release|x64
 		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Release|x86.ActiveCfg = Release|Win32
 		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Release|x86.Build.0 = Release|Win32
+		{442FE652-F727-469C-A7BC-1830A5973DB3}.Debug|x64.ActiveCfg = Debug|x64
+		{442FE652-F727-469C-A7BC-1830A5973DB3}.Debug|x64.Build.0 = Debug|x64
+		{442FE652-F727-469C-A7BC-1830A5973DB3}.Debug|x86.ActiveCfg = Debug|Win32
+		{442FE652-F727-469C-A7BC-1830A5973DB3}.Debug|x86.Build.0 = Debug|Win32
+		{442FE652-F727-469C-A7BC-1830A5973DB3}.Release|x64.ActiveCfg = Release|x64
+		{442FE652-F727-469C-A7BC-1830A5973DB3}.Release|x64.Build.0 = Release|x64
+		{442FE652-F727-469C-A7BC-1830A5973DB3}.Release|x86.ActiveCfg = Release|Win32
+		{442FE652-F727-469C-A7BC-1830A5973DB3}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
