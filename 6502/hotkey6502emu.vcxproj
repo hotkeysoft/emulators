@@ -53,7 +53,6 @@
     <ClInclude Include="Computer6502.h" />
     <ClInclude Include="ComputerPET2001.h" />
     <ClInclude Include="ComputerVIC20.h" />
-    <ClInclude Include="Config.h" />
     <ClInclude Include="CPU\CPU6502.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="Hardware\Device6520.h" />
