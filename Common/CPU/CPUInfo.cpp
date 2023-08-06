@@ -227,6 +227,9 @@ namespace cpuInfo
 		Opcode ret;
 		ret.text = text;
 
+		ret.regreg = text.find("{r,r}") != std::string::npos;
+		ret.idx = text.find("{idx}") != std::string::npos;
+
 		ret.rm8 = text.find("{rm8}") != std::string::npos;
 		ret.rm16 = text.find("{rm16}") != std::string::npos;
 
@@ -257,7 +260,8 @@ namespace cpuInfo
 		else if (grp8) ret.multi = Opcode::MULTI::GRP8;
 		else ret.multi = Opcode::MULTI::NONE;
 
-		if (ret.i8) ret.imm = Opcode::IMM::W8;
+		if (ret.regreg) ret.imm = Opcode::IMM::REGREG;
+		else if (ret.i8) ret.imm = Opcode::IMM::W8;
 		else if (ret.i16) ret.imm = Opcode::IMM::W16;
 		else if (ret.i32) ret.imm = Opcode::IMM::W32;
 		else ret.imm = Opcode::IMM::NONE;

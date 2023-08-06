@@ -10,6 +10,26 @@ namespace emul
 {
 	static const char hexDigits[] = "0123456789ABCDEF";
 
+	const char* GetRegister(BYTE r)
+	{
+		switch (r)
+		{
+		case 0b0000: return "D";
+		case 0b0001: return "X";
+		case 0b0010: return "Y";
+		case 0b0011: return "U";
+		case 0b0100: return "S";
+		case 0b0101: return "PC";
+
+		case 0b1000: return "A";
+		case 0b1001: return "B";
+		case 0b1010: return "CC";
+		case 0b1011: return "DP";
+
+		default: return "invalid";
+		}
+	}
+
 	Monitor6809::Monitor6809(Console& console) :
 		m_console(console)
 	{
@@ -336,7 +356,7 @@ namespace emul
 
 		ADDRESS address = m_cpu->GetCurrentAddress();
 
-		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w - 1, 4, codePos.y - 1);
+		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w, 4, codePos.y - 1);
 
 		for (int i = 0; i < 8; ++i)
 		{
@@ -367,6 +387,16 @@ namespace emul
 		Opcode instr = m_cpu->GetInfo().GetOpcode(data);
 		std::string text = instr.text;
 
+		if (instr.multi != Opcode::MULTI::NONE)
+		{
+			data = m_memory->Read8(++address);
+			decoded.AddRaw(data);
+
+			std::string grpText = instr.text;
+			instr = m_cpu->GetInfo().GetSubOpcode(instr, data);
+			Replace(text, grpText, instr.text);
+		}
+
 		char buf[32];
 		switch (instr.imm)
 		{
@@ -381,12 +411,24 @@ namespace emul
 		}
 		case Opcode::IMM::W16:
 		{
-			WORD imm16 = m_memory->Read16(++address);
+			WORD imm16 = m_memory->Read16be(++address);
 			++address;
 			decoded.AddRaw(imm16);
 
 			sprintf(buf, "$%04X", imm16);
 			Replace(text, "{i16}", buf);
+			break;
+		}
+		case Opcode::IMM::REGREG:
+		{
+			BYTE imm8 = m_memory->Read8(++address);
+			decoded.AddRaw(imm8);
+
+			const char* r0 = GetRegister(GetLNibble(imm8));
+			const char* r1 = GetRegister(GetHNibble(imm8));
+
+			sprintf(buf, "%s,%s", r1, r0);
+			Replace(text, "{r,r}", buf);
 			break;
 		}
 		default:
@@ -408,11 +450,11 @@ namespace emul
 	}
 	void Monitor6809::Instruction::AddRaw(WORD w)
 	{
-		// LOW BYTE
-		this->raw[this->len++] = hexDigits[(w >> 4) & 0x0F];
-		this->raw[this->len++] = hexDigits[(w & 0x0F)];
 		// HIGH BYTE
 		this->raw[this->len++] = hexDigits[(w >> 12) & 0x0F];
 		this->raw[this->len++] = hexDigits[(w >> 8) & 0x0F];
+		// LOW BYTE
+		this->raw[this->len++] = hexDigits[(w >> 4) & 0x0F];
+		this->raw[this->len++] = hexDigits[(w & 0x0F)];
 	}
 }

@@ -29,17 +29,22 @@ namespace cpuInfo
 
 		std::string text;
 
+		bool regreg = false;  // r,r
+		bool idx = false; // indexed
+
 		bool rm8 = false;
 		bool rm16 = false;
+
 		bool r8 = false;
 		bool r16 = false;
 		bool sr = false;
+
 		bool i8 = false;
 		bool i16 = false;
 		bool i32 = false;
 
 		enum class MODREGRM { NONE, W8, W16, SR } modRegRm = MODREGRM::NONE;
-		enum class IMM { NONE, W8, W8W8, W16, W16W8, W32 } imm = IMM::NONE;
+		enum class IMM { NONE, W8, W8W8, W16, W16W8, W32, REGREG } imm = IMM::NONE;
 		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, GRP6, GRP7, GRP8, _COUNT } multi = MULTI::NONE;
 	};
 
