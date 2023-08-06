@@ -72,8 +72,8 @@ namespace emul
 		enum class RUNMode { STEP, RUN };
 		RUNMode m_runMode = RUNMode::STEP;
 
-		enum class RAMMode { ZP, SP, PC, CUSTOM };
-		RAMMode m_ramMode = RAMMode::ZP;
+		enum class RAMMode { DP, SP, USP, PC, CUSTOM };
+		RAMMode m_ramMode = RAMMode::DP;
 
 		CPU6809* m_cpu = nullptr;
 		Memory* m_memory = nullptr;

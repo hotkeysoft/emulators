@@ -171,10 +171,11 @@ namespace emul
 	{
 		switch (m_ramMode)
 		{
-		case RAMMode::ZP: m_ramMode = RAMMode::SP; break;
-		case RAMMode::SP: m_ramMode = RAMMode::PC; break;
+		case RAMMode::DP: m_ramMode = RAMMode::SP; break;
+		case RAMMode::SP: m_ramMode = RAMMode::USP; break;
+		case RAMMode::USP: m_ramMode = RAMMode::PC; break;
 		case RAMMode::PC: m_ramMode = RAMMode::CUSTOM; break;
-		case RAMMode::CUSTOM: m_ramMode = RAMMode::ZP; break;
+		case RAMMode::CUSTOM: m_ramMode = RAMMode::DP; break;
 		}
 
 		UpdateRAMMode();
@@ -184,14 +185,16 @@ namespace emul
 	{
 		const WORD highlight = (3 << 4) | 14;
 		const WORD regular = (0 << 4) | 8;
-		static Coord ramZP = m_cpu->GetInfo().GetCoord("ram.ZP");
+		static Coord ramDP = m_cpu->GetInfo().GetCoord("ram.DP");
+		static Coord ramSP = m_cpu->GetInfo().GetCoord("ram.SP");
+		static Coord ramUSP = m_cpu->GetInfo().GetCoord("ram.USP");
 		static Coord ramPC = m_cpu->GetInfo().GetCoord("ram.PC");
-		static Coord ramSTACK = m_cpu->GetInfo().GetCoord("ram.SP");
 		static Coord ramCustom = m_cpu->GetInfo().GetCoord("ram.CUSTOM");
 
-		m_console.WriteAttrAt(ramZP.x, ramZP.y, (m_ramMode == RAMMode::ZP) ? highlight : regular, ramZP.w);
+		m_console.WriteAttrAt(ramDP.x, ramDP.y, (m_ramMode == RAMMode::DP) ? highlight : regular, ramDP.w);
+		m_console.WriteAttrAt(ramSP.x, ramSP.y, (m_ramMode == RAMMode::SP) ? highlight : regular, ramSP.w);
+		m_console.WriteAttrAt(ramUSP.x, ramUSP.y, (m_ramMode == RAMMode::USP) ? highlight : regular, ramUSP.w);
 		m_console.WriteAttrAt(ramPC.x, ramPC.y, (m_ramMode == RAMMode::PC) ? highlight : regular, ramPC.w);
-		m_console.WriteAttrAt(ramSTACK.x, ramSTACK.y, (m_ramMode == RAMMode::SP) ? highlight : regular, ramSTACK.w);
 
 		{
 			static char buf[32];
@@ -205,11 +208,13 @@ namespace emul
 
 	void Monitor6809::UpdateRegisters()
 	{
-		WriteValueHex(m_cpu->m_reg.A, m_cpu->GetInfo().GetCoord("A"));
+		WriteValueHex(m_cpu->m_reg.D, m_cpu->GetInfo().GetCoord("D"));
 		WriteValueHex(m_cpu->m_reg.X, m_cpu->GetInfo().GetCoord("X"));
 		WriteValueHex(m_cpu->m_reg.Y, m_cpu->GetInfo().GetCoord("Y"));
+		WriteValueHex(m_cpu->m_reg.S, m_cpu->GetInfo().GetCoord("S"));
+		WriteValueHex(m_cpu->m_reg.U, m_cpu->GetInfo().GetCoord("U"));
+		WriteValueHex(m_cpu->m_reg.DP, m_cpu->GetInfo().GetCoord("DP"));
 
-		WriteValueHex((WORD)m_cpu->GetSP(), m_cpu->GetInfo().GetCoord("SP"));
 		WriteValueHex((WORD)m_cpu->GetCurrentAddress(), m_cpu->GetInfo().GetCoord("PC"));
 	}
 
@@ -243,10 +248,12 @@ namespace emul
 	{
 		switch (m_ramMode)
 		{
-		case RAMMode::ZP:
-			return 0;
+		case RAMMode::DP:
+			return (m_cpu->m_reg.DP << 8);
 		case RAMMode::SP:
-			return  m_cpu->GetSP();
+			return  m_cpu->m_reg.S;
+		case RAMMode::USP:
+			return  m_cpu->m_reg.U;
 		case RAMMode::PC:
 			return  m_cpu->GetCurrentAddress();
 		case RAMMode::CUSTOM:
