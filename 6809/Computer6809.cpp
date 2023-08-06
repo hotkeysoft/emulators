@@ -13,14 +13,16 @@ namespace emul
 	Computer6809::Computer6809() :
 		Logger("Computer6809"),
 		ComputerBase(m_memory),
-		m_baseRAM("RAM", 0x10000, emul::MemoryType::RAM)
+		m_baseRAM("RAM", 0xC000, emul::MemoryType::RAM),
+		m_osROM("ROM_OS", 0x1000, emul::MemoryType::ROM),
+		m_basicROM("ROM_BASIC", 0x3000, emul::MemoryType::ROM)
 	{
 	}
 
 	void Computer6809::Reset()
 	{
 		ComputerBase::Reset();
-		GetCPU().Reset(0x400); // Override reset vector for tests
+		//GetCPU().Reset(0x400); // Override reset vector for tests
 	}
 
 	void Computer6809::Init(WORD baseRAM)
@@ -28,6 +30,12 @@ namespace emul
 		ComputerBase::Init(emul::CPUID_6809, baseRAM);
 
 		m_memory.Allocate(&m_baseRAM, 0);
+
+		m_osROM.LoadFromFile("data/Thomson/MO5/mo5.os.bin");
+		m_memory.Allocate(&m_osROM, 0xF000);
+
+		m_basicROM.LoadFromFile("data/Thomson/MO5/mo5.basic.bin");
+		m_memory.Allocate(&m_basicROM, 0xC000);
 
 		InitInputs(1000000, 100000);
 		InitVideo();

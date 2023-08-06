@@ -38,8 +38,9 @@ namespace emul
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
 		// Interrupts
-		void SetIRQ(bool irq) { m_irq = irq; }
 		void SetNMI(bool nmi) { m_nmi.Set(nmi); }
+		void SetFIRQ(bool firq) { m_firq = firq; }
+		void SetIRQ(bool irq) { m_irq = irq; }
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -52,13 +53,17 @@ namespace emul
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
-		inline void TICKPAGE() { CPU::TICK(1); } // Page crossing penalty
 		inline void TICKINT() { CPU::TICK(m_info.GetMiscTiming(cpuInfo::MiscTiming::TRAP)[0]); }
 
-		// Hardware vectors
-		const ADDRESS ADDR_NMI = 0xFFFA;
-		const ADDRESS ADDR_RESET = 0xFFFC;
-		const ADDRESS ADDR_IRQ = 0xFFFE;
+		// Vectors
+		static const ADDRESS _ADDR_RSV  = 0xFFF0; // Reserved by Motorola
+		static const ADDRESS ADDR_SWI3  = 0xFFF2; // SWI3 instruction interrupt vector
+		static const ADDRESS ADDR_SWI2  = 0xFFF4; // SWI2 instruction interrupt vector
+		static const ADDRESS ADDR_FIRQ  = 0xFFF6; // Fast hardware interrupt vector (FIRQ)
+		static const ADDRESS ADDR_IRQ   = 0xFFF8; // Hardware interrupt vector (IRQ)
+		static const ADDRESS ADDR_SWI   = 0xFFFA; // SWI instruction interrupt vector
+		static const ADDRESS ADDR_NMI   = 0xFFFC; // Non-maskable interrupt vector (NMI)
+		static const ADDRESS ADDR_RESET = 0xFFFE; // Reset vector
 
 		using OpcodeTable = std::vector<std::function<void()>>;
 		OpcodeTable m_opcodes;
@@ -68,123 +73,70 @@ namespace emul
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_opcode = 0;
 
-		// IRQ is level sensitive
-		bool m_irq = false;
 		// NMI is edge sensitive
 		hscommon::EdgeDetectLatch m_nmi;
+
+		// NMI is disabled on Reset until the S stack pointer is set
+		bool m_nmiEnabled = false;
+
+		// IRQ and FIRQ are level sensitive
+		bool m_firq = false;
+		bool m_irq = false;
+
 		virtual void Interrupt();
 
 		enum FLAG : BYTE
 		{
-			FLAG_N		= 128, // 1 when result is negative
-			FLAG_V		= 64,  // 1 on signed overflow
-			_FLAG_R5	= 32,  // 1
-			FLAG_B		= 16,  // 1 when interrupt was caused by a BRK
-			FLAG_D		= 8,   // 1 when CPU is in BCD mode
-			FLAG_I		= 4,   // 1 when IRQ is disabled
-			FLAG_Z		= 2,   // 1 when result is 0
+			FLAG_E		= 128, // 1 when Entire machine state was stacked
+			FLAG_F		= 64,  // 1 with FIRQ line is ignored
+			FLAG_H		= 32,  // 1 on half carry (4 bit)
+			FLAG_I		= 16,  // 1 when IRQ line is ignored
+			FLAG_N		= 8,   // 1 when result is negative
+			FLAG_Z		= 4,   // 1 when result is 0
+			FLAG_V		= 2,   // 1 on signed overflow
 			FLAG_C		= 1    // 1 on unsigned overflow
 		};
-
-		FLAG FLAG_RESERVED_ON = FLAG(_FLAG_R5);
 
 		ADDRESS m_programCounter = 0;
 
 		struct Registers
 		{
-			BYTE A = 0;
+#pragma pack(push, 1)
+			union
+			{
+				WORD D = 0;	// Accumulators
+				struct {
+					BYTE A;
+					BYTE B;
+				} ab;
+			};
+#pragma pack(pop)
+
+			WORD S = 0; // Hardware Stack Pointer
+			WORD U = 0; // User Stack Pointer
+			WORD X = 0; // Index Register
+			WORD Y = 0; // Index Register
+
+			BYTE DP = 0; // Direct Page Register
 			BYTE flags = 0;
 
-			BYTE X = 0;
-			BYTE Y = 0;
-
-			BYTE SP = 0;
 		} m_reg;
 
-		void ClearFlags(BYTE& flags);
-		void SetFlags(BYTE f);
+		void ClearFlags(BYTE& flags) { flags = 0; }
+		void SetFlags(BYTE f) { m_reg.flags = f; }
 
-		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; };
-		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); };
+		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; }
+		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); }
 		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
-
-		WORD GetSP() const { return m_reg.SP | 0x0100; }
-
-		BYTE GetPage(ADDRESS addr) const { return emul::GetHByte(addr); }
-
-		// Memory operation Read-Modify-Write
-		void MEMopRMW(std::function<void(CPU6809*, BYTE&)> func, ADDRESS dest);
-
-		// Memory operation Read
-		void MEMopR(std::function<void(CPU6809*, BYTE)> func, ADDRESS oper);
 
 		virtual BYTE FetchByte() override;
 
 		// Addressing Modes
 		// ----------------
 
-		// Zero Page
-		ADDRESS GetZP() { return FetchByte(); }
-		ADDRESS GetZPX() { return (BYTE)(FetchByte() + m_reg.X); }
-		ADDRESS GetZPY() { return (BYTE)(FetchByte() + m_reg.Y); }
-
-		// Absolute
-		ADDRESS GetABS() { return FetchWord(); }
-		// TODO: 1 cycle penalty for boundary crossing
-		ADDRESS GetABSX() { return (WORD)(FetchWord() + m_reg.X); }
-		ADDRESS GetABSY() { return (WORD)(FetchWord() + m_reg.Y); }
-
-		// Indirect
-		ADDRESS GetIND();
-		ADDRESS GetINDX();
-		ADDRESS GetINDY();
-
-		void AdjustNZ(BYTE val);
 
 		// Opcodes
-		void PUSH(BYTE val);
-		BYTE POP();
 
-		void LD(BYTE& dest, BYTE src);
-		void LDmem(BYTE& dest, ADDRESS src);
-		void STmem(ADDRESS dest, BYTE src);
-
-		void PLA();
-		void PHA();
-		void PLP();
-		void PHP();
-
-		void BRANCHif(bool cond);
-		void JSR(ADDRESS dest);
-		void RTS();
-		void JMP(ADDRESS dest);
-		void BIT(ADDRESS src);
-		void BRK();
-		void RTI();
-
-		void ORA(BYTE oper);
-		void AND(BYTE oper);
-		void EOR(BYTE oper);
-		BYTE addSubBinary(BYTE oper, bool carry);
-		BYTE addBCD(BYTE oper, bool carry);
-		BYTE subBCD(BYTE oper, bool carry);
-		void ADC(BYTE oper);
-		void SBC(BYTE oper);
-
-		void cmp(BYTE reg, BYTE oper);
-		void CMPA(BYTE oper) { cmp(m_reg.A, oper); }
-		void CMPX(BYTE oper) { cmp(m_reg.X, oper); }
-		void CMPY(BYTE oper) { cmp(m_reg.Y, oper); }
-
-		void INC(BYTE& dest);
-		void DEC(BYTE& dest);
-		void ASL(BYTE& dest);
-		void ROL(BYTE& dest);
-		void LSR(BYTE& dest);
-		void ROR(BYTE& dest);
-
-		void SLO(BYTE& dest);
-		void ISC(BYTE& dest);
 
 		friend class Monitor6809;
 	};

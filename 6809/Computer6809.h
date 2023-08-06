@@ -27,5 +27,7 @@ namespace emul
 		void InitVideo();
 
 		emul::MemoryBlock m_baseRAM;
+		emul::MemoryBlock m_osROM;
+		emul::MemoryBlock m_basicROM;
 	};
 }
