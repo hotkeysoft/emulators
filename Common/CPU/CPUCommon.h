@@ -57,6 +57,9 @@ namespace emul
 	inline bool GetLSB(const DWORD b) { return b & 1; }
 	inline bool GetMSB(const DWORD b) { return b & 0x80000000; }
 
+	inline BYTE GetLNibble(const BYTE b) { return b & 0b1111; }
+	inline BYTE GetHNibble(const BYTE b) { return (b >> 4) & 0b1111; }
+
 	inline BYTE GetLByte(const WORD w) { return BYTE(w); };
 	inline BYTE GetHByte(const WORD w) { return BYTE(w >> 8); };
 
