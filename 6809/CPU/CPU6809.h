@@ -17,8 +17,24 @@ namespace emul
 	class CPU6809 : public CPU, public PortConnector
 	{
 	public:
+		enum class RegCode {
+			// 16 bit registers
+			D  = 0b0000,
+			X  = 0b0001,
+			Y  = 0b0010,
+			U  = 0b0011,
+			S  = 0b0100,
+			PC = 0b0101,
+
+			// 8 bit register
+			A  = 0b1000,
+			B  = 0b1001,
+			CC = 0b1010,
+			DP = 0b1011,
+		};
+
 		CPU6809(Memory& memory);
-		virtual ~CPU6809();
+		virtual ~CPU6809() {};
 
 		virtual void Init();
 
@@ -47,8 +63,10 @@ namespace emul
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-
 		CPU6809(const char* cpuid, Memory& memory);
+
+		void InitPage2();
+		void InitPage3();
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
@@ -67,6 +85,8 @@ namespace emul
 
 		using OpcodeTable = std::vector<std::function<void()>>;
 		OpcodeTable m_opcodes;
+		OpcodeTable m_opcodesPage2;
+		OpcodeTable m_opcodesPage3;
 		void UnknownOpcode();
 
 		cpuInfo::CPUInfo m_info;
@@ -99,6 +119,9 @@ namespace emul
 
 		ADDRESS m_programCounter = 0;
 
+		// Alias when we need a WORD version of the program counter
+		WORD& m_PC = *((WORD*)&m_programCounter);
+
 		struct Registers
 		{
 #pragma pack(push, 1)
@@ -106,8 +129,8 @@ namespace emul
 			{
 				WORD D = 0;	// Accumulators
 				struct {
-					BYTE A;
 					BYTE B;
+					BYTE A;
 				} ab;
 			};
 #pragma pack(pop)
@@ -120,8 +143,13 @@ namespace emul
 			BYTE DP = 0; // Direct Page Register
 			BYTE flags = 0;
 
+			// For invalid destinations;
+			BYTE void8;
+			WORD void16;
+
 		} m_reg;
 
+		// Flags
 		void ClearFlags(BYTE& flags) { flags = 0; }
 		void SetFlags(BYTE f) { m_reg.flags = f; }
 
@@ -129,14 +157,62 @@ namespace emul
 		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); }
 		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
 
+		// Adjust negative and zero flag
+		void AdjustNZ(BYTE val);
+		void AdjustNZ(WORD val);
+
+		// Sub Opcode Tables
+		void ExecPage2(BYTE opcode);
+		void ExecPage3(BYTE opcode);
+		void exec(OpcodeTable& table, BYTE opcode);
+
+		// Misc helpers
 		virtual BYTE FetchByte() override;
+		virtual WORD FetchWord() override;
 
-		// Addressing Modes
-		// ----------------
+		BYTE FetchDirectByte();
+		WORD FetchDirectWord();
 
+		// Register helpers
+		//
+		// sd (source/dest):
+		// [b7..b4] | [b3..b0]
+		// r0 (src) | r1 (dst)
+
+		static RegCode GetSourceRegCode(BYTE sd) { return (RegCode)GetHNibble(sd); }
+		static RegCode GetDestRegCode(BYTE sd) { return (RegCode)GetLNibble(sd); }
+
+		static bool isSourceRegWide(BYTE sd) { return !GetBit(sd, 7); }
+		static bool isDestRegWide(BYTE sd) { return !GetBit(sd, 3); }
+
+		WORD GetReg(RegCode reg) const;
+		BYTE& GetReg8(RegCode reg);
+		WORD& GetReg16(RegCode reg);
 
 		// Opcodes
 
+		// Branching
+		void BRA(bool condition);
+		void LBRA(bool condition);
+
+		// Load
+		void LD8(BYTE& dest, BYTE src);
+		void LD16(WORD& dest, WORD src);
+
+		// Store
+		void ST8Direct(BYTE src);
+		void ST16Direct(WORD src);
+
+		// Transfer register to register
+		void TFR(BYTE sd);
+
+		// Arithmetic
+		void SUB8(BYTE& dest, BYTE src, bool borrow = false);
+		void SUB16(WORD& dest, WORD src, bool borrow = false);
+
+		// dest by value so it's not modified
+		void CMP8(BYTE dest, BYTE src) { return SUB8(dest, src); }
+		void CMP16(WORD dest, WORD src) { return SUB16(dest, src); }
 
 		friend class Monitor6809;
 	};
