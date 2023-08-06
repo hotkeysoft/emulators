@@ -167,11 +167,17 @@ namespace emul
 		void exec(OpcodeTable& table, BYTE opcode);
 
 		// Misc helpers
+		ADDRESS GetDirect(BYTE low) { return MakeWord(m_reg.DP, low); }
+		ADDRESS GetIndexed(BYTE idx);
+
 		virtual BYTE FetchByte() override;
 		virtual WORD FetchWord() override;
 
-		BYTE FetchDirectByte();
-		WORD FetchDirectWord();
+		BYTE GetMemDirectByte();
+		WORD GetMemDirectWord();
+
+		BYTE GetMemIndexedByte();
+		WORD GetMemIndexedWord();
 
 		// Register helpers
 		//
@@ -200,8 +206,8 @@ namespace emul
 		void LD16(WORD& dest, WORD src);
 
 		// Store
-		void ST8Direct(BYTE src);
-		void ST16Direct(WORD src);
+		void ST8(ADDRESS dest, BYTE src);
+		void ST16(ADDRESS dest, WORD src);
 
 		// Transfer register to register
 		void TFR(BYTE sd);
