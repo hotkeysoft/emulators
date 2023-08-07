@@ -73,7 +73,7 @@
       { "name": "CWAI {i8}",   "timing": [20] },
       { "name": "MUL",         "timing": [11] },
       { "name": "DB $3E" },
-      { "name": "SWI",         "timing": [19] },
+      { "name": "SWI",         "timing": [7] },
 
       "0x40",
       { "name": "NEGA",        "timing": [2] },
@@ -179,7 +179,7 @@
       { "name": "ORA <{i8}",   "timing": [4] },
       { "name": "ADDA <{i8}",  "timing": [4] },
       { "name": "CMPX <{i8}",  "timing": [6] },
-      { "name": "JSR <{i8}",   "timing": [7] },
+      { "name": "JSR <{i8}",   "timing": [5] },
       { "name": "LDX <{i8}",   "timing": [5] },
       { "name": "STX <{i8}",   "timing": [5] },
 
@@ -197,7 +197,7 @@
       { "name": "ORA {idx}",   "timing": [4] },
       { "name": "ADDA {idx}",  "timing": [4] },
       { "name": "CMPX {idx}",  "timing": [6] },
-      { "name": "JSR {idx}",   "timing": [7] },
+      { "name": "JSR {idx}",   "timing": [5] },
       { "name": "LDX {idx}",   "timing": [5] },
       { "name": "STX {idx}",   "timing": [5] },
 
@@ -215,7 +215,7 @@
       { "name": "ORA >{i16}",  "timing": [5] },
       { "name": "ADDA >{i16}", "timing": [5] },
       { "name": "CMPX >{i16}", "timing": [7] },
-      { "name": "JSR >{i16}",  "timing": [8] },
+      { "name": "JSR >{i16}",  "timing": [6] },
       { "name": "LDX >{i16}",  "timing": [6] },
       { "name": "STX >{i16}",  "timing": [6] },
 
@@ -310,7 +310,7 @@
       { "name": "LBLE {i16}",  "timing": [5,0,1] },
 
       "0x3F",
-      { "name": "SWI2",        "timing": [20] },
+      { "name": "SWI2",        "timing": [8] },
 
       "0x83",
       { "name": "CMPD #{i16}", "timing": [5] },
@@ -368,7 +368,7 @@
     ],
     "opcodes.grp2": [
       "0x3F",
-      { "name": "SWI3",        "timing": [20] },
+      { "name": "SWI3",        "timing": [8] },
 
       "0x83",
       { "name": "CMPU #{i16}", "timing": [5] },

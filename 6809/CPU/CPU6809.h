@@ -68,6 +68,7 @@ namespace emul
 		void InitPage2();
 		void InitPage3();
 
+		inline void TICK1() { ++m_opTicks; }
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
@@ -210,13 +211,18 @@ namespace emul
 
 		// Opcodes
 
+		void LEA(WORD& dest, bool setZero);
+
 		// Branching
 		void BRA(bool condition);
 		void LBRA(bool condition);
 
 		void JMP(ADDRESS dest) { m_programCounter = dest; }
+		void BSR();
 		void JSR(ADDRESS dest);
 		void RTS();
+
+		void SWI(BYTE swi);
 
 		// Load
 		void LD8(BYTE& dest, BYTE src);
@@ -229,11 +235,6 @@ namespace emul
 		// Transfer register to register
 		void TFR(BYTE sd);
 
-		void CLR(BYTE& dest); // Clear
-		void CLRm(ADDRESS dest); // Clear
-		void COM(BYTE& dest); // Complement
-		void COMm(ADDRESS dest); // Complement
-
 		// Stack
 		WORD* m_currStack = &m_reg.S;
 
@@ -241,15 +242,34 @@ namespace emul
 		BYTE POP();
 		void SetStack(STACK s) { m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U; }
 
-		void PSH(STACK s);
-		void PUL(STACK s);
+		static const BYTE REGS_ALL = 0xFF;
+		void PSH(STACK s, BYTE regs);
+		void PUL(STACK s, BYTE regs);
 
 		// Logical
+		void ASL(BYTE& dest); // Arithmetic Shift Left
+		void ASLm(ADDRESS dest);
+
 		void LSR(BYTE& dest); // Logical Shift Right
 		void LSRm(ADDRESS dest);
 
 		void EOR(BYTE& dest, BYTE src); // Logical XOR
 		void OR(BYTE& dest, BYTE src); // Logical OR
+		void AND(BYTE& dest, BYTE src); // Logical AND
+
+		void CLR(BYTE& dest); // Clear
+		void CLRm(ADDRESS dest); // Clear
+
+		void COM(BYTE& dest); // Complement
+		void COMm(ADDRESS dest); // Complement
+
+		void INC(BYTE& dest);
+		void INCm(ADDRESS dest);
+
+		void DEC(BYTE& dest);
+		void DECm(ADDRESS dest);
+
+		void TST(const BYTE dest);
 
 		// Arithmetic
 		void ADD8(BYTE& dest, BYTE src, bool carry = false);
