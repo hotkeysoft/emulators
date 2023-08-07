@@ -31,6 +31,10 @@ namespace emul
 	typedef uint16_t WORD;
 	typedef uint32_t DWORD;
 
+	// Signed
+	typedef int8_t SBYTE;
+	typedef uint16_t SWORD;
+
 	typedef uint32_t ADDRESS;
 
 	inline ADDRESS S2A(const WORD segment, const WORD offset = 0)

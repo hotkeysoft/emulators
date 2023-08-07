@@ -174,6 +174,7 @@ namespace emul
 		// Misc helpers
 		ADDRESS GetDirect(BYTE low) { return MakeWord(m_reg.DP, low); }
 		ADDRESS GetIndexed(BYTE idx);
+		ADDRESS GetExtended() { return FetchWord(); }
 		WORD& GetIndexedRegister(BYTE idx);
 
 		virtual BYTE FetchByte() override;
@@ -187,6 +188,9 @@ namespace emul
 
 		BYTE GetMemIndexedByte();
 		WORD GetMemIndexedWord();
+
+		BYTE GetMemExtendedByte();
+		WORD GetMemExtendedWord();
 
 		// Register helpers
 		//
@@ -210,6 +214,10 @@ namespace emul
 		void BRA(bool condition);
 		void LBRA(bool condition);
 
+		void JMP(ADDRESS dest) { m_programCounter = dest; }
+		void JSR(ADDRESS dest);
+		void RTS();
+
 		// Load
 		void LD8(BYTE& dest, BYTE src);
 		void LD16(WORD& dest, WORD src);
@@ -221,18 +229,32 @@ namespace emul
 		// Transfer register to register
 		void TFR(BYTE sd);
 
-		void CLR(BYTE& dest);
+		void CLR(BYTE& dest); // Clear
+		void CLRm(ADDRESS dest); // Clear
+		void COM(BYTE& dest); // Complement
+		void COMm(ADDRESS dest); // Complement
 
 		// Stack
 		WORD* m_currStack = &m_reg.S;
 
-		void push(BYTE value);
-		BYTE pop();
+		void PUSH(BYTE value);
+		BYTE POP();
+		void SetStack(STACK s) { m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U; }
 
 		void PSH(STACK s);
 		void PUL(STACK s);
 
+		// Logical
+		void LSR(BYTE& dest); // Logical Shift Right
+		void LSRm(ADDRESS dest);
+
+		void EOR(BYTE& dest, BYTE src); // Logical XOR
+		void OR(BYTE& dest, BYTE src); // Logical OR
+
 		// Arithmetic
+		void ADD8(BYTE& dest, BYTE src, bool carry = false);
+		void ADD16(BYTE& dest, BYTE src, bool carry = false);
+
 		void SUB8(BYTE& dest, BYTE src, bool borrow = false);
 		void SUB16(WORD& dest, WORD src, bool borrow = false);
 

@@ -427,14 +427,14 @@ namespace emul
 		case 0b0101: os << "B," << reg; break; // ,R + B Offset
 		case 0b0110: os << "A," << reg; break; // ,R + A Offset
 			// 0b0111: n/a
-		case 0b1000: os << "{imm8}," << reg; opcode.i8 = true; break; // ,R + 8 bit offset
-		case 0b1001: os << "{imm16}," << reg; opcode.i16 = true; break; // ,R + 16 bit offset
+		case 0b1000: os << "{i8}," << reg; opcode.imm = Opcode::IMM::W8; break; // ,R + 8 bit offset
+		case 0b1001: os << "{i16}," << reg; opcode.imm = Opcode::IMM::W16; break; // ,R + 16 bit offset
 			// 0b1010: n/a
 		case 0b1011: os << "D," << reg; break; // ,R + D offset
-		case 0b1100: os << "{imm8},PCR"; opcode.i8 = true; break; // ,PC + 8 bit offset
-		case 0b1101: os << "{imm16},PCR"; opcode.i16 = true; break; // ,PC + 16 bit offset
+		case 0b1100: os << "{i8},PCR"; opcode.imm = Opcode::IMM::W8; break; // ,PC + 8 bit offset
+		case 0b1101: os << "{i16},PCR"; opcode.imm = Opcode::IMM::W16; break; // ,PC + 16 bit offset
 			// 0b1110: n/a
-		case 0b1111: os << ",{imm16}"; opcode.i16 = true; break; // [,Address]
+		case 0b1111: os << ",{i16}"; opcode.imm = Opcode::IMM::W16; break; // [,Address]
 
 		default:
 			throw std::exception("Invalid addressing mode");
