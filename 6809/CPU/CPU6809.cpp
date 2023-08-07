@@ -5,8 +5,6 @@ using cpuInfo::Opcode;
 
 namespace emul
 {
-
-
 	CPU6809::CPU6809(Memory& memory) : CPU6809("6809", memory)
 	{
 		static_assert(sizeof(m_reg.D) == 2);
@@ -68,6 +66,16 @@ namespace emul
 
 		m_opcodes[0x2E] = [=]() { BRA((GetFlag(FLAG_N) == GetFlag(FLAG_V)) && (GetFlag(FLAG_Z) == false)); }; // BGT
 		m_opcodes[0x2F] = [=]() { BRA((GetFlag(FLAG_N) != GetFlag(FLAG_V)) || (GetFlag(FLAG_Z) == true)); }; // BLE
+
+		m_opcodes[0x34] = [=]() { PSH(STACK::S); };
+		m_opcodes[0x35] = [=]() { PUL(STACK::S); };
+		m_opcodes[0x36] = [=]() { PSH(STACK::U); };
+		m_opcodes[0x37] = [=]() { PUL(STACK::U); };
+
+		m_opcodes[0x4F] = [=]() { CLR(m_reg.ab.A); }; // CLRA
+
+		m_opcodes[0x5F] = [=]() { CLR(m_reg.ab.B); }; // CLRB
+
 
 		m_opcodes[0x80] = [=]() { SUB8(m_reg.ab.A, FetchByte()); }; // SUBA imm
 		m_opcodes[0x81] = [=]() { CMP8(m_reg.ab.A, FetchByte()); }; // CMPA imm
@@ -265,10 +273,69 @@ namespace emul
 		return m_memory.Read16be(src);
 	}
 
+	WORD& CPU6809::GetIndexedRegister(BYTE idx)
+	{
+		switch ((idx >> 5) & 3)
+		{
+		case 0: return m_reg.X;
+		case 1: return m_reg.Y;
+		case 2: return m_reg.U;
+		case 3: return m_reg.S;
+		default:
+			throw std::exception("not possible");
+		}
+	}
+
 	// Get effective address for indexed mode
 	ADDRESS CPU6809::GetIndexed(BYTE idx)
 	{
-		throw std::exception("not implemented");
+		WORD& reg = GetIndexedRegister(idx);
+
+		bool indirect = GetBit(idx, 4);
+
+		ADDRESS ea;
+
+		if (!GetMSB(idx)) //,R + 5 bit offset
+		{
+			// Extend sign bit
+			bool& signBit = indirect; // Same bit as indirect flag
+			BYTE offset = idx;
+			SetBitMask(offset, 0b11100000, signBit);
+			ea = reg + (SBYTE)offset;
+		}
+		else switch (idx & 0b1111)
+		{
+		case 0b0000: ea = reg++; break; // ,R+
+		case 0b0001: ea = reg; reg += 2; break; // ,R++
+		case 0b0010: ea = --reg; break; // ,-R
+		case 0b0011: reg -= 2; ea = reg; break; // ,--R
+		case 0b0100: ea = reg; break; // ,R + 0 Offset
+		case 0b0101: ea = reg + (SBYTE)m_reg.ab.B; break; // ,R + B Offset
+		case 0b0110: ea = reg + (SBYTE)m_reg.ab.A; break; // ,R + A Offset
+			// 0b0111: n/a
+		case 0b1000: ea = reg + FetchSignedByte(); break; // ,R + 8 bit offset
+		case 0b1001: ea = reg + FetchSignedWord(); break; // ,R + 16 bit offset
+			// 0b1010: n/a
+		case 0b1011: ea = reg + (SWORD)m_reg.D; break; // ,R + D offset
+		case 0b1100: ea = m_programCounter + FetchSignedByte(); break; // ,PC + 8 bit offset
+		case 0b1101: ea = m_programCounter + FetchSignedWord(); break; // ,PC + 16 bit offset
+			// 0b1110: n/a
+		case 0b1111: ea = FetchWord(); break;// [,Address]
+
+		default:
+			throw std::exception("Invalid addressing mode");
+		}
+
+		// Cleanup ea
+		ea &= 0xFFFF;
+
+		if (indirect)
+		{
+			// TODO: 'illegal' modes
+			return m_memory.Read16be(ea);
+		}
+
+		return ea;
 	}
 
 	bool CPU6809::Step()
@@ -374,10 +441,120 @@ namespace emul
 	{
 	}
 
+
+	void CPU6809::push(BYTE value)
+	{
+		TICK();
+		WORD& sp = *m_currStack;
+
+		m_memory.Write8(--sp, value);
+	}
+
+	BYTE CPU6809::pop()
+	{
+		TICK();
+		WORD& sp = *m_currStack;
+
+		return m_memory.Read8(sp++);
+	}
+
+	void CPU6809::PSH(STACK s)
+	{
+		m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U;
+
+		// Alias the 'other' stack if user is pushing S or U
+		const WORD& sp = (s == STACK::S) ? m_reg.U : m_reg.S;
+
+		BYTE regs = FetchByte();
+
+		if (GetBit(regs, 7))
+		{
+			push(GetLByte(m_PC));
+			push(GetHByte(m_PC));
+		}
+		if (GetBit(regs, 6))
+		{
+			push(GetLByte(sp));
+			push(GetHByte(sp));
+		}
+		if (GetBit(regs, 5))
+		{
+			push(GetLByte(m_reg.Y));
+			push(GetHByte(m_reg.Y));
+		}
+		if (GetBit(regs, 4))
+		{
+			push(GetLByte(m_reg.X));
+			push(GetHByte(m_reg.X));
+		}
+		if (GetBit(regs, 3))
+		{
+			push(m_reg.DP);
+		}
+		if (GetBit(regs, 2))
+		{
+			push(m_reg.ab.B);
+		}
+		if (GetBit(regs, 1))
+		{
+			push(m_reg.ab.A);
+		}
+		if (GetBit(regs, 0))
+		{
+			push(m_reg.flags);
+		}
+	}
+	void CPU6809::PUL(STACK s)
+	{
+		m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U;
+
+		// Alias the 'other' stack if user is popping S or U
+		WORD& sp = (s == STACK::S) ? m_reg.U : m_reg.S;
+
+		BYTE regs = FetchByte();
+
+		if (GetBit(regs, 0))
+		{
+			m_reg.flags = pop();
+		}
+		if (GetBit(regs, 1))
+		{
+			m_reg.ab.A = pop();
+		}
+		if (GetBit(regs, 2))
+		{
+			m_reg.ab.B = pop();
+		}
+		if (GetBit(regs, 3))
+		{
+			m_reg.DP = pop();
+		}
+		if (GetBit(regs, 4))
+		{
+			SetHByte(m_reg.X, pop());
+			SetLByte(m_reg.X, pop());
+		}
+		if (GetBit(regs, 5))
+		{
+			SetHByte(m_reg.Y, pop());
+			SetLByte(m_reg.Y, pop());
+		}
+		if (GetBit(regs, 6))
+		{
+			SetHByte(sp, pop());
+			SetLByte(sp, pop());
+		}
+		if (GetBit(regs, 7))
+		{
+			SetHByte(m_PC, pop());
+			SetLByte(m_PC, pop());
+		}
+	}
+
 	// Branching
 	void CPU6809::BRA(bool condition)
 	{
-		int8_t rel = (int8_t)FetchByte();
+		SBYTE rel = FetchSignedByte();
 		if (condition == true)
 		{
 			m_programCounter += rel;
@@ -387,7 +564,7 @@ namespace emul
 
 	void CPU6809::LBRA(bool condition)
 	{
-		int16_t rel = (int16_t)FetchWord();
+		SWORD rel = FetchSignedWord();
 		if (condition == true)
 		{
 			m_programCounter += rel;
@@ -503,6 +680,14 @@ namespace emul
 		{
 			GetReg8(destCode) = GetLByte(source);
 		}
+	}
+
+	void CPU6809::CLR(BYTE& dest)
+	{
+		dest = 0;
+		AdjustNZ(dest);
+		SetFlag(FLAG_V, false);
+		SetFlag(FLAG_C, false);
 	}
 
 	// TODO: Validate flags

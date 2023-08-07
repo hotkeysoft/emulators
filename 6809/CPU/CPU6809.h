@@ -117,6 +117,11 @@ namespace emul
 			FLAG_C		= 1    // 1 on unsigned overflow
 		};
 
+		enum class STACK
+		{
+			S, U
+		};
+
 		ADDRESS m_programCounter = 0;
 
 		// Alias when we need a WORD version of the program counter
@@ -169,9 +174,13 @@ namespace emul
 		// Misc helpers
 		ADDRESS GetDirect(BYTE low) { return MakeWord(m_reg.DP, low); }
 		ADDRESS GetIndexed(BYTE idx);
+		WORD& GetIndexedRegister(BYTE idx);
 
 		virtual BYTE FetchByte() override;
 		virtual WORD FetchWord() override;
+
+		SBYTE FetchSignedByte() { return (SBYTE)FetchByte(); }
+		SWORD FetchSignedWord() { return (SWORD)FetchWord(); }
 
 		BYTE GetMemDirectByte();
 		WORD GetMemDirectWord();
@@ -211,6 +220,17 @@ namespace emul
 
 		// Transfer register to register
 		void TFR(BYTE sd);
+
+		void CLR(BYTE& dest);
+
+		// Stack
+		WORD* m_currStack = &m_reg.S;
+
+		void push(BYTE value);
+		BYTE pop();
+
+		void PSH(STACK s);
+		void PUL(STACK s);
 
 		// Arithmetic
 		void SUB8(BYTE& dest, BYTE src, bool borrow = false);

@@ -68,11 +68,13 @@ namespace emul
 		static bool Replace(std::string& str, const std::string& from, const std::string& to);
 
 		virtual ADDRESS Disassemble(ADDRESS address, Monitor6809::Instruction& decoded);
+		void DecodeIndexedInstruction(cpuInfo::Opcode& opcode, BYTE idx);
+		void DecodeStackRegs(char* buf, BYTE regs, bool isU);
 
 		enum class RUNMode { STEP, RUN };
 		RUNMode m_runMode = RUNMode::STEP;
 
-		enum class RAMMode { DP, SP, USP, PC, CUSTOM };
+		enum class RAMMode { DP, X, Y, SP, USP, PC, CUSTOM };
 		RAMMode m_ramMode = RAMMode::DP;
 
 		CPU6809* m_cpu = nullptr;

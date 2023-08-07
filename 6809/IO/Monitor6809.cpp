@@ -191,7 +191,9 @@ namespace emul
 	{
 		switch (m_ramMode)
 		{
-		case RAMMode::DP: m_ramMode = RAMMode::SP; break;
+		case RAMMode::DP: m_ramMode = RAMMode::X; break;
+		case RAMMode::X: m_ramMode = RAMMode::Y; break;
+		case RAMMode::Y: m_ramMode = RAMMode::SP; break;
 		case RAMMode::SP: m_ramMode = RAMMode::USP; break;
 		case RAMMode::USP: m_ramMode = RAMMode::PC; break;
 		case RAMMode::PC: m_ramMode = RAMMode::CUSTOM; break;
@@ -206,12 +208,16 @@ namespace emul
 		const WORD highlight = (3 << 4) | 14;
 		const WORD regular = (0 << 4) | 8;
 		static Coord ramDP = m_cpu->GetInfo().GetCoord("ram.DP");
+		static Coord ramX = m_cpu->GetInfo().GetCoord("ram.X");
+		static Coord ramY = m_cpu->GetInfo().GetCoord("ram.Y");
 		static Coord ramSP = m_cpu->GetInfo().GetCoord("ram.SP");
 		static Coord ramUSP = m_cpu->GetInfo().GetCoord("ram.USP");
 		static Coord ramPC = m_cpu->GetInfo().GetCoord("ram.PC");
 		static Coord ramCustom = m_cpu->GetInfo().GetCoord("ram.CUSTOM");
 
 		m_console.WriteAttrAt(ramDP.x, ramDP.y, (m_ramMode == RAMMode::DP) ? highlight : regular, ramDP.w);
+		m_console.WriteAttrAt(ramX.x, ramX.y, (m_ramMode == RAMMode::X) ? highlight : regular, ramX.w);
+		m_console.WriteAttrAt(ramY.x, ramY.y, (m_ramMode == RAMMode::Y) ? highlight : regular, ramY.w);
 		m_console.WriteAttrAt(ramSP.x, ramSP.y, (m_ramMode == RAMMode::SP) ? highlight : regular, ramSP.w);
 		m_console.WriteAttrAt(ramUSP.x, ramUSP.y, (m_ramMode == RAMMode::USP) ? highlight : regular, ramUSP.w);
 		m_console.WriteAttrAt(ramPC.x, ramPC.y, (m_ramMode == RAMMode::PC) ? highlight : regular, ramPC.w);
@@ -270,6 +276,10 @@ namespace emul
 		{
 		case RAMMode::DP:
 			return (m_cpu->m_reg.DP << 8);
+		case RAMMode::X:
+			return  m_cpu->m_reg.X;
+		case RAMMode::Y:
+			return  m_cpu->m_reg.Y;
 		case RAMMode::SP:
 			return  m_cpu->m_reg.S;
 		case RAMMode::USP:
@@ -377,6 +387,91 @@ namespace emul
 		return true;
 	}
 
+	char GetIndexedRegister(BYTE idx)
+	{
+		switch ((idx >> 5) & 3)
+		{
+		case 0: return 'X';
+		case 1: return 'Y';
+		case 2: return 'U';
+		case 3: return 'S';
+		default:
+			throw std::exception("not possible");
+		}
+	}
+
+	void Monitor6809::DecodeIndexedInstruction(Opcode& opcode, BYTE idx)
+	{
+		char reg = GetIndexedRegister(idx);
+
+		bool indirect = GetBit(idx, 4);
+
+		std::ostringstream os;
+		if (indirect)
+		{
+			os << '[';
+		}
+
+		if (!GetMSB(idx)) //,R + 5 bit offset
+		{
+			BYTE offset = idx;
+			os << '$' << std::setw(2) << std::setfill('0') << std::hex << (offset & 0b11111) << ',' << reg;
+		}
+		else switch (idx & 0b1111)
+		{
+		case 0b0000: os << ',' << reg << '+'; break; // ,R+
+		case 0b0001: os << ',' << reg << "++"; break; // ,R++
+		case 0b0010: os << ",-" << reg; break; // ,-R
+		case 0b0011: os << ",--" << reg; break; // ,--R
+		case 0b0100: os << ',' << reg; break; // ,R + 0 Offset
+		case 0b0101: os << "B," << reg; break; // ,R + B Offset
+		case 0b0110: os << "A," << reg; break; // ,R + A Offset
+			// 0b0111: n/a
+		case 0b1000: os << "{imm8}," << reg; opcode.i8 = true; break; // ,R + 8 bit offset
+		case 0b1001: os << "{imm16}," << reg; opcode.i16 = true; break; // ,R + 16 bit offset
+			// 0b1010: n/a
+		case 0b1011: os << "D," << reg; break; // ,R + D offset
+		case 0b1100: os << "{imm8},PCR"; opcode.i8 = true; break; // ,PC + 8 bit offset
+		case 0b1101: os << "{imm16},PCR"; opcode.i16 = true; break; // ,PC + 16 bit offset
+			// 0b1110: n/a
+		case 0b1111: os << ",{imm16}"; opcode.i16 = true; break; // [,Address]
+
+		default:
+			throw std::exception("Invalid addressing mode");
+		}
+
+		if (indirect)
+		{
+			os << ']';
+		}
+
+		Replace(opcode.text, "{idx}", os.str());
+	}
+
+	void Monitor6809::DecodeStackRegs(char* buf, BYTE regs, bool isU)
+	{
+		buf[0] = '\0';
+
+		if (GetBit(regs, 7)) strcat(buf, "PC,");
+		if (GetBit(regs, 6)) strcat(buf, isU ? "S," : "U,");
+		if (GetBit(regs, 5)) strcat(buf, "Y,");
+		if (GetBit(regs, 4)) strcat(buf, "X,");
+		if (GetBit(regs, 3)) strcat(buf, "SP,");
+		if (GetBit(regs, 2)) strcat(buf, "B,");
+		if (GetBit(regs, 1)) strcat(buf, "A,");
+		if (GetBit(regs, 0)) strcat(buf, "CC,");
+
+		size_t len = strlen(buf);
+		if (!len)
+		{
+			strcat(buf, "0");
+		}
+		else
+		{
+			buf[strlen(buf) - 1] = '\0';
+		}
+	}
+
 	ADDRESS Monitor6809::Disassemble(ADDRESS address, Monitor6809::Instruction& decoded)
 	{
 		decoded.address = address;
@@ -397,6 +492,15 @@ namespace emul
 			Replace(text, grpText, instr.text);
 		}
 
+		if (instr.idx)
+		{
+			BYTE idx = m_memory->Read8(++address);
+			decoded.AddRaw(idx);
+
+			DecodeIndexedInstruction(instr, idx);
+			text = instr.text;
+		}
+
 		char buf[32];
 		switch (instr.imm)
 		{
@@ -405,8 +509,17 @@ namespace emul
 			BYTE imm8 = m_memory->Read8(++address);
 			decoded.AddRaw(imm8);
 
-			sprintf(buf, "$%02X", imm8);
+			// look for push/pull opcodes and pretty them up
+			if ((data & 0xFC) == 0x34)
+			{
+				DecodeStackRegs(buf, imm8, GetBit(data, 1));
+			}
+			else
+			{
+				sprintf(buf, "$%02X", imm8);
+			}
 			Replace(text, "{i8}", buf);
+
 			break;
 		}
 		case Opcode::IMM::W16:
