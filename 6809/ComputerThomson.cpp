@@ -66,7 +66,7 @@ namespace emul
 		m_pixelRAM.Clear(0xFA);
 		m_attributeRAM.Clear(0xAF);
 
-		m_memory.Allocate(&m_pixelRAM, 0); // Paged in/out with m_attributeRAM
+		MapScreenMem();
 	}
 
 	void ComputerThomson::InitIO()
@@ -74,7 +74,20 @@ namespace emul
 		m_memory.Allocate(&m_ioA7C0, 0xA7C0);
 
 		// TODO: TEMP
-		for (int i = 0; i < 64; ++i)
+		IOConnector::Connect(0, static_cast<IOConnector::READFunction>(&ComputerThomson::ReadPortA));
+		IOConnector::Connect(0, static_cast<IOConnector::WRITEFunction>(&ComputerThomson::WritePortA));
+
+		IOConnector::Connect(1, static_cast<IOConnector::READFunction>(&ComputerThomson::ReadPortB));
+		IOConnector::Connect(1, static_cast<IOConnector::WRITEFunction>(&ComputerThomson::WritePortB));
+
+		IOConnector::Connect(2, static_cast<IOConnector::READFunction>(&ComputerThomson::ReadControlA));
+		IOConnector::Connect(2, static_cast<IOConnector::WRITEFunction>(&ComputerThomson::WriteControlA));
+
+		IOConnector::Connect(3, static_cast<IOConnector::READFunction>(&ComputerThomson::ReadControlB));
+		IOConnector::Connect(3, static_cast<IOConnector::WRITEFunction>(&ComputerThomson::WriteControlB));
+
+
+		for (int i = 4; i < 64; ++i)
 		{
 			IOConnector::Connect(i, static_cast<IOConnector::READFunction>(&ComputerThomson::ReadIO));
 			IOConnector::Connect(i, static_cast<IOConnector::WRITEFunction>(&ComputerThomson::WriteIO));
@@ -83,16 +96,88 @@ namespace emul
 		m_ioA7C0.AddDevice(*this, 0);
 	}
 
+	void ComputerThomson::MapScreenMem()
+	{
+		m_memory.Allocate(m_forme ? &m_pixelRAM : &m_attributeRAM, 0);
+	}
+
 	BYTE ComputerThomson::ReadIO()
 	{
-		LogPrintf(LOG_INFO, "ReadIO()");
+		LogPrintf(LOG_TRACE, "ReadIO()");
 		return 0xFF;
 	}
 
 	void ComputerThomson::WriteIO(BYTE value)
 	{
-		GetCurrentPort();
-		LogPrintf(LOG_INFO, "WriteIO(), value=%02X");
+		LogPrintf(LOG_DEBUG, "WriteIO(), value=%02X", value);
+	}
+
+	BYTE ComputerThomson::ReadPortA()
+	{
+		LogPrintf(LOG_INFO, "ReadPortA()");
+
+		return m_portA | 0b10100000;
+	}
+	void ComputerThomson::WritePortA(BYTE value)
+	{
+		m_portA = value;
+
+		//bit0: / FORME : screen ram mapping(pixel or palette data) for 0x0000..0x1FFF
+		bool forme = GetBit(value, 0);
+
+		if (forme != m_forme)
+		{
+			m_forme = forme;
+			MapScreenMem();
+		}
+
+		//bit1 : RT: red value for border
+		//bit2 : VT: green value for border
+		//bit3 : BT: blue value for border
+		//bit4 : PT: 'pastel' value for border
+		BYTE border = (value >> 1) & 0b1111;
+
+		//bit5 : Lightpen interrupt(input)
+
+		//bit6 : Cassette OUT
+		bool cassette = GetBit(value, 6);
+
+		//bit7 : Cassette input.when idle, the tape drive sets this to a logic 1, and the code checks for it.
+
+		LogPrintf(LOG_INFO, "WritePortA: [%cFORME] [BORDER$%x] [%cCASSETTE]",
+			forme ? ' ' : '/',
+			border,
+			cassette ? ' ' : '/');
+	}
+
+	BYTE ComputerThomson::ReadPortB()
+	{
+		LogPrintf(LOG_INFO, "ReadPortB()");
+		return 0xFF;
+	}
+	void ComputerThomson::WritePortB(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "WritePortB(), value=%02X", value);
+	}
+
+	BYTE ComputerThomson::ReadControlA()
+	{
+		LogPrintf(LOG_INFO, "ReadControlA()");
+		return 0xFF;
+	}
+	void ComputerThomson::WriteControlA(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "WriteControlA(), value=%02X", value);
+	}
+
+	BYTE ComputerThomson::ReadControlB()
+	{
+		LogPrintf(LOG_INFO, "ReadControlB()");
+		return 0xFF;
+	}
+	void ComputerThomson::WriteControlB(BYTE value)
+	{
+		LogPrintf(LOG_INFO, "WriteControlB(), value=%02X", value);
 	}
 
 	void ComputerThomson::InitVideo()
@@ -107,13 +192,20 @@ namespace emul
 	void ComputerThomson::DumpRAM()
 	{
 		char buf[128];
+
 		sprintf(buf, "dump/RAM_USER_%zu.bin", time(nullptr));
 		fprintf(stderr, "Dump USER RAM to %s\n", buf);
-		m_memory.Dump(0x2000, 0x8000, buf);
+		m_userRAM.Dump(buf);
 
 		sprintf(buf, "dump/RAM_PIXEL_%zu.bin", time(nullptr));
 		fprintf(stderr, "Dump PIXEL RAM to %s\n", buf);
-		m_memory.Dump(0, 0x2000, buf);
+		m_pixelRAM.Dump(buf);
+
+		sprintf(buf, "dump/RAM_ATTR_%zu.bin", time(nullptr));
+		fprintf(stderr, "Dump ATTR RAM to %s\n", buf);
+		m_attributeRAM.Dump(buf);
+
+
 	}
 
 	bool ComputerThomson::Step()

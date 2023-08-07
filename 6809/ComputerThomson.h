@@ -30,8 +30,25 @@ namespace emul
 		void InitIO();
 		void InitVideo();
 
+		// TEMP until PIA is connected
 		BYTE ReadIO();
 		void WriteIO(BYTE value);
+
+		bool m_forme = true;
+		void MapScreenMem();
+
+		// System PIA
+		BYTE m_portA = 0xFF;
+		BYTE ReadPortA();
+		void WritePortA(BYTE value);
+		BYTE ReadPortB();
+		void WritePortB(BYTE value);
+
+		BYTE ReadControlA();
+		void WriteControlA(BYTE value);
+		BYTE ReadControlB();
+		void WriteControlB(BYTE value);
+
 
 		void DumpRAM();
 
