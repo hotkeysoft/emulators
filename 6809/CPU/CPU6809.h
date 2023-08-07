@@ -253,9 +253,15 @@ namespace emul
 		void LSR(BYTE& dest); // Logical Shift Right
 		void LSRm(ADDRESS dest);
 
+		void ROL(BYTE& dest); // Rotate Left Through Carry
+		void ROLm(ADDRESS dest);
+
 		void EOR(BYTE& dest, BYTE src); // Logical XOR
 		void OR(BYTE& dest, BYTE src); // Logical OR
 		void AND(BYTE& dest, BYTE src); // Logical AND
+
+		// dest by value so it's not modified
+		void BIT(BYTE dest, BYTE src) { return AND(dest, src); }
 
 		void CLR(BYTE& dest); // Clear
 		void CLRm(ADDRESS dest); // Clear
@@ -273,7 +279,7 @@ namespace emul
 
 		// Arithmetic
 		void ADD8(BYTE& dest, BYTE src, bool carry = false);
-		void ADD16(BYTE& dest, BYTE src, bool carry = false);
+		void ADD16(WORD& dest, WORD src, bool carry = false);
 
 		void SUB8(BYTE& dest, BYTE src, bool borrow = false);
 		void SUB16(WORD& dest, WORD src, bool borrow = false);
@@ -281,6 +287,8 @@ namespace emul
 		// dest by value so it's not modified
 		void CMP8(BYTE dest, BYTE src) { return SUB8(dest, src); }
 		void CMP16(WORD dest, WORD src) { return SUB16(dest, src); }
+
+		void MUL();
 
 		friend class Monitor6809;
 	};
