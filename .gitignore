@@ -17,3 +17,6 @@ x64
 /6502/*.bin
 /6502/dump
 /6502/snapshots
+/6809/*.bin
+/6809/dump
+/6809/snapshots
