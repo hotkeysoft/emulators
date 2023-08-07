@@ -7,13 +7,13 @@ namespace emul
 {
 	class CPU6809;
 
-	class Computer6809 : public ComputerBase
+	class ComputerThomson : public ComputerBase
 	{
 	public:
-		Computer6809();
+		ComputerThomson();
 
-		virtual std::string_view GetName() const override { return "6809"; };
-		virtual std::string_view GetID() const override { return "6809"; };
+		virtual std::string_view GetName() const override { return "Thomson"; };
+		virtual std::string_view GetID() const override { return "thomson"; };
 
 		virtual void Init(WORD baseRAM) override;
 		virtual void Reset() override;
@@ -28,5 +28,6 @@ namespace emul
 
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_osROM;
+		emul::MemoryBlock m_basicROM;
 	};
 }

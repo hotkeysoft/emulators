@@ -14,6 +14,7 @@
 
 #include <Computer/ComputerBase.h>
 #include "Computer6809.h"
+#include "ComputerThomson.h"
 
 #include <conio.h>
 #include <vector>
@@ -135,6 +136,11 @@ ComputerBase* CreateComputer(std::string arch)
 	{
 		computer = new emul::Computer6809();
 	}
+	else if (arch == "thomson")
+	{
+		computer = new emul::ComputerThomson();
+	}
+
 
 	return computer;
 }
@@ -276,7 +282,7 @@ ComputerBase* RestoreNewComputerFromSnapshot()
 
 int main(int argc, char* args[])
 {
-	InitLeakCheck();
+	//InitLeakCheck();
 
 	Logger::RegisterLogCallback(LogCallback);
 

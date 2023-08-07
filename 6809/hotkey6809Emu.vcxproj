@@ -53,6 +53,7 @@
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="..\Common\Video\VideoNull.h" />
     <ClInclude Include="Computer6809.h" />
+    <ClInclude Include="ComputerThomson.h" />
     <ClInclude Include="CPU\CPU6809.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="IO\Monitor6809.h" />
@@ -85,6 +86,7 @@
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="Computer6809.cpp" />
+    <ClCompile Include="ComputerThomson.cpp" />
     <ClCompile Include="CPU\CPU6809.cpp" />
     <ClCompile Include="IO\Monitor6809.cpp" />
     <ClCompile Include="Main.cpp" />

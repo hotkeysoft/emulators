@@ -195,6 +195,9 @@
     <ClInclude Include="..\Common\Video\VideoNull.h">
       <Filter>Common\Video</Filter>
     </ClInclude>
+    <ClInclude Include="ComputerThomson.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -292,6 +295,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\IO\InputEvents.cpp">
       <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerThomson.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
