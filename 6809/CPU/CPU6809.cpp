@@ -80,6 +80,7 @@ namespace emul
 		m_opcodes[0x36] = [=]() { PSH(STACK::U, FetchByte()); };
 		m_opcodes[0x37] = [=]() { PUL(STACK::U, FetchByte()); };
 		m_opcodes[0x39] = [=]() { RTS(); };
+		m_opcodes[0x3B] = [=]() { RTI(); };
 		m_opcodes[0x3D] = [=]() { MUL(); };
 		m_opcodes[0x3F] = [=]() { SWI(1); };
 
@@ -357,7 +358,6 @@ namespace emul
 		m_programCounter = overrideAddress;
 	}
 
-
 	BYTE CPU6809::FetchByte()
 	{
 		BYTE b = m_memory.Read8(GetCurrentAddress());
@@ -579,7 +579,6 @@ namespace emul
 	{
 	}
 
-
 	void CPU6809::PUSH(BYTE value)
 	{
 		TICK1();
@@ -691,7 +690,7 @@ namespace emul
 		SBYTE rel = FetchSignedByte();
 		if (condition == true)
 		{
-			m_programCounter += rel;
+			m_PC += rel;
 			// No time penalty for short branches
 		}
 	}
@@ -701,17 +700,14 @@ namespace emul
 		SWORD rel = FetchSignedWord();
 		if (condition == true)
 		{
-			m_programCounter += rel;
+			m_PC += rel;
 			TICKT3();
 		}
 	}
 
 	void CPU6809::JSR(ADDRESS dest)
 	{
-		SetStack(STACK::S);
-		PUSH(GetLByte(m_PC));
-		PUSH(GetHByte(m_PC));
-
+		PSH(STACK::S, REGS_PC);
 		m_programCounter = dest;
 	}
 
@@ -719,21 +715,20 @@ namespace emul
 	{
 		SBYTE rel = FetchSignedByte();
 
-		SetStack(STACK::S);
-		PUSH(GetLByte(m_PC));
-		PUSH(GetHByte(m_PC));
+		PSH(STACK::S, REGS_PC);
 
 		m_PC += rel;
 	}
 
 	void CPU6809::RTS()
 	{
-		ADDRESS old = m_programCounter;
-		WORD oldS = m_reg.S;
+		PUL(STACK::S, REGS_PC);
+	}
 
-		SetStack(STACK::S);
-		SetHByte(m_PC, POP());
-		SetLByte(m_PC, POP());
+	void CPU6809::RTI()
+	{
+		// Depending on E flag, pop either all registers or just CC + PC
+		PUL(STACK::S, GetFlag(FLAG_E) ? REGS_ALL : REGS_RTI);
 	}
 
 	void CPU6809::SWI(BYTE swi)

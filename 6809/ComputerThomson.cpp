@@ -26,6 +26,7 @@ namespace emul
 	void ComputerThomson::Reset()
 	{
 		ComputerBase::Reset();
+		GetVideo().Reset();
 	}
 
 	void ComputerThomson::Init(WORD baseRAM)
@@ -114,7 +115,7 @@ namespace emul
 
 	BYTE ComputerThomson::ReadPortA()
 	{
-		LogPrintf(LOG_INFO, "ReadPortA()");
+		LogPrintf(LOG_DEBUG, "ReadPortA()");
 
 		return m_portA | 0b10100000;
 	}
@@ -144,7 +145,7 @@ namespace emul
 
 		//bit7 : Cassette input.when idle, the tape drive sets this to a logic 1, and the code checks for it.
 
-		LogPrintf(LOG_INFO, "WritePortA: [%cFORME] [BORDER$%x] [%cCASSETTE]",
+		LogPrintf(LOG_DEBUG, "WritePortA: [%cFORME] [BORDER$%x] [%cCASSETTE]",
 			forme ? ' ' : '/',
 			border,
 			cassette ? ' ' : '/');
@@ -152,32 +153,32 @@ namespace emul
 
 	BYTE ComputerThomson::ReadPortB()
 	{
-		LogPrintf(LOG_INFO, "ReadPortB()");
+		LogPrintf(LOG_DEBUG, "ReadPortB()");
 		return 0xFF;
 	}
 	void ComputerThomson::WritePortB(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WritePortB(), value=%02X", value);
+		LogPrintf(LOG_DEBUG, "WritePortB(), value=%02X", value);
 	}
 
 	BYTE ComputerThomson::ReadControlA()
 	{
-		LogPrintf(LOG_INFO, "ReadControlA()");
+		LogPrintf(LOG_DEBUG, "ReadControlA()");
 		return 0xFF;
 	}
 	void ComputerThomson::WriteControlA(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WriteControlA(), value=%02X", value);
+		LogPrintf(LOG_DEBUG, "WriteControlA(), value=%02X", value);
 	}
 
 	BYTE ComputerThomson::ReadControlB()
 	{
-		LogPrintf(LOG_INFO, "ReadControlB()");
+		LogPrintf(LOG_DEBUG, "ReadControlB()");
 		return 0xFF;
 	}
 	void ComputerThomson::WriteControlB(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WriteControlB(), value=%02X", value);
+		LogPrintf(LOG_DEBUG, "WriteControlB(), value=%02X", value);
 	}
 
 	void ComputerThomson::InitVideo()
@@ -233,7 +234,6 @@ namespace emul
 		{
 			DumpRAM();
 			DrawScreen();
-			_getch();
 
 			return false;
 		}

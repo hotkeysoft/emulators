@@ -223,6 +223,7 @@ namespace emul
 		void RTS();
 
 		void SWI(BYTE swi);
+		void RTI();
 
 		// Load
 		void LD8(BYTE& dest, BYTE src);
@@ -242,7 +243,10 @@ namespace emul
 		BYTE POP();
 		void SetStack(STACK s) { m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U; }
 
-		static const BYTE REGS_ALL = 0xFF;
+		static const BYTE REGS_ALL   = 0b11111111; // PC, U/S, Y, X, DP, B, A, CC
+		static const BYTE REGS_RTI   = 0b10000001; // PC, CC
+		static const BYTE REGS_PC    = 0b10000000; // PC, CC
+
 		void PSH(STACK s, BYTE regs);
 		void PUL(STACK s, BYTE regs);
 
