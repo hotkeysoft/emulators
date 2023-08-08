@@ -30,6 +30,9 @@ namespace emul
 		void InitIO();
 		void InitVideo();
 
+		// TEMP until video
+		void DrawScreen();
+
 		// TEMP until PIA is connected
 		BYTE ReadIO();
 		void WriteIO(BYTE value);

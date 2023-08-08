@@ -204,8 +204,27 @@ namespace emul
 		sprintf(buf, "dump/RAM_ATTR_%zu.bin", time(nullptr));
 		fprintf(stderr, "Dump ATTR RAM to %s\n", buf);
 		m_attributeRAM.Dump(buf);
+	}
 
+	void ComputerThomson::DrawScreen()
+	{
+		m_video->BeginFrame();
+		const BYTE* pixels = m_pixelRAM.getPtr();
+		for (int y = 0; y < 200; ++y)
+		{
+			for (int x = 0; x < 40; ++x)
+			{
+				for (int i = 0; i < 8; ++i)
+				{
+					m_video->DrawPixel(GetBit(*pixels, 7 - i) ? 0xFFFFFFFF : 0);
+				}
 
+				pixels++;
+			}
+			m_video->NewLine();
+		}
+
+		m_video->RenderFrame();
 	}
 
 	bool ComputerThomson::Step()
@@ -213,20 +232,30 @@ namespace emul
 		if (!ComputerBase::Step())
 		{
 			DumpRAM();
+			DrawScreen();
+			_getch();
+
 			return false;
 		}
 
-		static uint32_t cpuTicks = 0;
-		cpuTicks += GetCPU().GetInstructionTicks();
+		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
-		++g_ticks;
-
-		m_video->Tick();
-
-		GetInputs().Tick();
-		if (GetInputs().IsQuit())
+		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
-			return false;
+			++g_ticks;
+
+			if ((g_ticks % 100000) == 0)
+			{
+				DrawScreen();
+			}
+
+			m_video->Tick();
+
+			GetInputs().Tick();
+			if (GetInputs().IsQuit())
+			{
+				return false;
+			}
 		}
 
 		return true;
