@@ -89,8 +89,8 @@ void Logger::_LogPrintHex(SEVERITY sev, const uint8_t* buf, size_t size) const
 	hex.resize((bytesPerLine * 3) + 1);
 	raw.resize((bytesPerLine) + 1);
 
-	int hStart = 0;
-	for (int i = 0; i < size; ++i)
+	size_t hStart = 0;
+	for (size_t i = 0; i < size; ++i)
 	{
 		const int hpos = i % bytesPerLine;
 		const uint8_t ch = buf[i];

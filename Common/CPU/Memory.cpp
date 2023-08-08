@@ -76,8 +76,8 @@ namespace emul
 			return false;
 		}
 
-		int nbSlots = len / m_blockGranularity;
-		int minSlot = base / m_blockGranularity;
+		size_t nbSlots = len / m_blockGranularity;
+		size_t minSlot = base / m_blockGranularity;
 		LogPrintf(LOG_DEBUG, "Using %d slots, first slot = %02Xh", nbSlots, minSlot);
 
 		base -= sourceOffset;
@@ -160,8 +160,8 @@ namespace emul
 			return false;
 		}
 
-		int nbSlots = len / m_blockGranularity;
-		int minSlot = base / m_blockGranularity;
+		size_t nbSlots = len / m_blockGranularity;
+		size_t minSlot = base / m_blockGranularity;
 
 		for (size_t i = 0; i < nbSlots; ++i)
 		{
@@ -259,9 +259,9 @@ namespace emul
 			return false;
 		}
 
-		int nbSlots = len / m_blockGranularity;
-		int sourceBaseSlot = source / m_blockGranularity;
-		int windowBaseSlot = window / m_blockGranularity;
+		size_t nbSlots = len / m_blockGranularity;
+		size_t sourceBaseSlot = source / m_blockGranularity;
+		size_t windowBaseSlot = window / m_blockGranularity;
 		LogPrintf(LOG_DEBUG, "Copying %d slots, base slot = %02Xh -> %02Xh", nbSlots, sourceBaseSlot, windowBaseSlot);
 
 		for (size_t i = 0; i < nbSlots; ++i)

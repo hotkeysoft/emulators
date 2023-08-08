@@ -151,7 +151,7 @@ namespace ui
 			m_tapeStateIcons[(int)TapeStateIcon::REC_OFF] = RES().FindImage("overlay16", 20);
 			m_tapeStateIcons[(int)TapeStateIcon::REC_ON] = RES().FindImage("overlay16", 21);
 
-			for (int i = 0; i < m_pc->GetTape()->GetCount(); ++i)
+			for (int i = 0; i < (int)m_pc->GetTape()->GetCount(); ++i)
 			{
 				char id[32];
 
@@ -362,7 +362,7 @@ namespace ui
 			return;
 		}
 
-		for (int drive = 0; drive < tape->GetCount(); ++drive)
+		for (size_t drive = 0; drive < tape->GetCount(); ++drive)
 		{
 			TapeDeck& deck = tape->GetTape(drive);
 			auto& buttons = m_tapeButtons[drive];

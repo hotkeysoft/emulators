@@ -98,7 +98,7 @@ namespace tape
 
 		virtual void Tick();
 
-		TapeDeck& GetTape(int drive)
+		TapeDeck& GetTape(size_t drive)
 		{
 			assert((drive >= 0) && (drive < MAX_TAPE_COUNT));
 			return m_decks[drive];

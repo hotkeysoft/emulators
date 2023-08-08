@@ -89,7 +89,7 @@ namespace cpuInfo
 				LogPrintf(LOG_ERROR, "MISC timing list too large: [%d>%d]", miscCount, (int)MiscTiming::_COUNT);
 				throw std::exception("misc timing list too large");
 			}
-			for (int i = 0; i < miscCount; ++i)
+			for (size_t i = 0; i < miscCount; ++i)
 			{
 				m_miscTiming[i] = BuildTiming(m_config["cpu"]["misc"][i]);
 				LogPrintf(LOG_DEBUG, "MISC Timing[%d]: %s", i, GetTimingString(m_miscTiming[i]).c_str());
@@ -208,7 +208,7 @@ namespace cpuInfo
 			throw std::exception("invalid timing array");
 		}
 
-		for (int i = 0; i < timingArray.size(); ++i)
+		for (size_t i = 0; i < timingArray.size(); ++i)
 		{
 			timing[i] = timingArray[i];
 		}
