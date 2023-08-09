@@ -43,8 +43,6 @@ namespace emul
 		// TEMP until video
 		void DrawScreen();
 
-		void DumpRAM();
-
 		// TODO: Move to video class?
 		emul::MemoryBlock m_pixelRAM;
 		emul::MemoryBlock m_attributeRAM;

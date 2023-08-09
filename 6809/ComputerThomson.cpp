@@ -109,23 +109,6 @@ namespace emul
 		m_video = video;
 	}
 
-	void ComputerThomson::DumpRAM()
-	{
-		char buf[128];
-
-		sprintf(buf, "dump/RAM_USER_%llu.bin", time(nullptr));
-		fprintf(stderr, "Dump USER RAM to %s\n", buf);
-		m_userRAM.Dump(buf);
-
-		sprintf(buf, "dump/RAM_PIXEL_%llu.bin", time(nullptr));
-		fprintf(stderr, "Dump PIXEL RAM to %s\n", buf);
-		m_pixelRAM.Dump(buf);
-
-		sprintf(buf, "dump/RAM_ATTR_%llu.bin", time(nullptr));
-		fprintf(stderr, "Dump ATTR RAM to %s\n", buf);
-		m_attributeRAM.Dump(buf);
-	}
-
 	void ComputerThomson::DrawScreen()
 	{
 		m_video->BeginFrame();
@@ -157,9 +140,6 @@ namespace emul
 
 		if (!ComputerBase::Step())
 		{
-			DumpRAM();
-			DrawScreen();
-
 			return false;
 		}
 
@@ -198,7 +178,6 @@ namespace emul
 		//to["model"] = ModelToString(m_model);
 
 		m_pia.Serialize(to["pia"]);
-
 	}
 
 	void ComputerThomson::Deserialize(const json& from)
