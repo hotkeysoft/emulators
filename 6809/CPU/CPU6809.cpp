@@ -52,7 +52,9 @@ namespace emul
 		m_opcodes[0x11] = [=]() { ExecPage3(FetchByte()); }; // Page 3 sub intructions
 		m_opcodes[0x1A] = [=]() { m_reg.flags |= FetchByte(); }; // ORCC imm
 		m_opcodes[0x1C] = [=]() { m_reg.flags &= FetchByte(); }; // ANDCC imm
-		m_opcodes[0x1F] = [=]() { TFR(FetchByte()); }; // TFR r,r
+		m_opcodes[0x1D] = [=]() { SEX(); }; // SEX
+		m_opcodes[0x1E] = [=]() { EXG(FetchByte()); }; // EXG r0,r1
+		m_opcodes[0x1F] = [=]() { TFR(FetchByte()); }; // TFR r0,r1
 
 		m_opcodes[0x20] = [=]() { BRA(true); }; // BRA
 		m_opcodes[0x21] = [=]() { BRA(false); }; // BRN
@@ -71,18 +73,19 @@ namespace emul
 		m_opcodes[0x2E] = [=]() { BRA((GetFlag(FLAG_N) == GetFlag(FLAG_V)) && (GetFlag(FLAG_Z) == false)); }; // BGT
 		m_opcodes[0x2F] = [=]() { BRA((GetFlag(FLAG_N) != GetFlag(FLAG_V)) || (GetFlag(FLAG_Z) == true)); }; // BLE
 
-		m_opcodes[0x30] = [=]() { LEA(m_reg.X, true); };
-		m_opcodes[0x31] = [=]() { LEA(m_reg.Y, true); };
-		m_opcodes[0x32] = [=]() { LEA(m_reg.S, false); };
-		m_opcodes[0x33] = [=]() { LEA(m_reg.U, false); };
-		m_opcodes[0x34] = [=]() { PSH(STACK::S, FetchByte()); };
-		m_opcodes[0x35] = [=]() { PUL(STACK::S, FetchByte()); };
-		m_opcodes[0x36] = [=]() { PSH(STACK::U, FetchByte()); };
-		m_opcodes[0x37] = [=]() { PUL(STACK::U, FetchByte()); };
-		m_opcodes[0x39] = [=]() { RTS(); };
-		m_opcodes[0x3B] = [=]() { RTI(); };
-		m_opcodes[0x3D] = [=]() { MUL(); };
-		m_opcodes[0x3F] = [=]() { SWI(1); };
+		m_opcodes[0x30] = [=]() { LEA(m_reg.X, true); }; // LEAX
+		m_opcodes[0x31] = [=]() { LEA(m_reg.Y, true); }; // LEAY
+		m_opcodes[0x32] = [=]() { LEA(m_reg.S, false); }; // LEAS
+		m_opcodes[0x33] = [=]() { LEA(m_reg.U, false); }; // LEAU
+		m_opcodes[0x34] = [=]() { PSH(STACK::S, FetchByte()); }; // PSHS
+		m_opcodes[0x35] = [=]() { PUL(STACK::S, FetchByte()); }; // PULS
+		m_opcodes[0x36] = [=]() { PSH(STACK::U, FetchByte()); }; // PSHU
+		m_opcodes[0x37] = [=]() { PUL(STACK::U, FetchByte()); }; // PULU
+		m_opcodes[0x39] = [=]() { RTS(); }; // RTS
+		m_opcodes[0x3A] = [=]() { m_reg.X += m_reg.ab.B; }; // ABX
+		m_opcodes[0x3B] = [=]() { RTI(); }; // RTI
+		m_opcodes[0x3D] = [=]() { MUL(); }; // MUL
+		m_opcodes[0x3F] = [=]() { SWI(1); }; // SWI
 
 		m_opcodes[0x43] = [=]() { COM(m_reg.ab.A); }; // COMA
 		m_opcodes[0x44] = [=]() { LSR(m_reg.ab.A); }; // LSRA
@@ -879,6 +882,36 @@ namespace emul
 		}
 	}
 
+	void CPU6809::EXG(BYTE sd)
+	{
+		const RegCode sourceCode = GetSourceRegCode(sd);
+		const RegCode destCode = GetDestRegCode(sd);
+
+		const WORD temp = GetReg(destCode);
+
+		switch (GetRegsSize(sd))
+		{
+		case RegSize::BB: // 8 bit -> 8 bit
+			GetReg8(destCode) = GetReg8(sourceCode);
+			GetReg8(sourceCode) = GetLByte(temp);
+			break;
+		case RegSize::BW: // 8 bit -> 16 bit
+			LogPrintf(LOG_ERROR, "EGX 8->16 not implemented");
+			UnknownOpcode();
+			break;
+		case RegSize::WB: // 16 bit -> 8 bit
+			LogPrintf(LOG_ERROR, "EGX 16->8 not implemented");
+			UnknownOpcode();
+			break;
+		case RegSize::WW: // 16 bit -> 16 bit
+			GetReg16(destCode) = GetReg16(sourceCode);
+			GetReg16(sourceCode) = temp;
+			break;
+		default:
+			throw std::exception("not possible");
+		}
+	}
+
 	void CPU6809::COM(BYTE& dest)
 	{
 		dest = ~dest;
@@ -1016,6 +1049,12 @@ namespace emul
 	{
 		AdjustNZ(dest);
 		SetFlag(FLAG_V, false);
+	}
+
+	void CPU6809::SEX()
+	{
+		m_reg.ab.A = GetLSB(m_reg.ab.B) ? 0xFF : 0;
+		AdjustNZ(m_reg.D);
 	}
 
 	void CPU6809::ADD8(BYTE& dest, BYTE src, bool carry)

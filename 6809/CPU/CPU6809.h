@@ -33,6 +33,15 @@ namespace emul
 			DP = 0b1011,
 		};
 
+		enum class RegSize {
+			BB = 0b10001000,
+			BW = 0b10000000,
+			WB = 0b00001000,
+			WW = 0b00000000,
+
+			_MASK = 0b10001000
+		};
+
 		CPU6809(Memory& memory);
 		virtual ~CPU6809() {};
 
@@ -201,6 +210,7 @@ namespace emul
 
 		static RegCode GetSourceRegCode(BYTE sd) { return (RegCode)GetHNibble(sd); }
 		static RegCode GetDestRegCode(BYTE sd) { return (RegCode)GetLNibble(sd); }
+		static RegSize GetRegsSize(BYTE sd) { return (RegSize)(sd & (BYTE)RegSize::_MASK); }
 
 		static bool isSourceRegWide(BYTE sd) { return !GetBit(sd, 7); }
 		static bool isDestRegWide(BYTE sd) { return !GetBit(sd, 3); }
@@ -235,6 +245,9 @@ namespace emul
 
 		// Transfer register to register
 		void TFR(BYTE sd);
+
+		// Exchange Registers
+		void EXG(BYTE sd);
 
 		// Stack
 		WORD* m_currStack = &m_reg.S;
@@ -280,6 +293,8 @@ namespace emul
 		void DECm(ADDRESS dest);
 
 		void TST(const BYTE dest);
+
+		void SEX();
 
 		// Arithmetic
 		void ADD8(BYTE& dest, BYTE src, bool carry = false);
