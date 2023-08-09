@@ -42,6 +42,18 @@ namespace emul
 			_MASK = 0b10001000
 		};
 
+		enum FLAG : BYTE
+		{
+			FLAG_E = 128, // 1 when Entire machine state was stacked
+			FLAG_F = 64,  // 1 with FIRQ line is ignored
+			FLAG_H = 32,  // 1 on half carry (4 bit)
+			FLAG_I = 16,  // 1 when IRQ line is ignored
+			FLAG_N = 8,   // 1 when result is negative
+			FLAG_Z = 4,   // 1 when result is 0
+			FLAG_V = 2,   // 1 on signed overflow
+			FLAG_C = 1    // 1 on unsigned overflow
+		};
+
 		CPU6809(Memory& memory);
 		virtual ~CPU6809() {};
 
@@ -61,6 +73,9 @@ namespace emul
 		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter; }
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
+
+		WORD GetReg(RegCode reg) const;
+		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; }
 
 		// Interrupts
 		void SetNMI(bool nmi) { m_nmi.Set(nmi); }
@@ -115,18 +130,6 @@ namespace emul
 
 		virtual void Interrupt();
 
-		enum FLAG : BYTE
-		{
-			FLAG_E		= 128, // 1 when Entire machine state was stacked
-			FLAG_F		= 64,  // 1 with FIRQ line is ignored
-			FLAG_H		= 32,  // 1 on half carry (4 bit)
-			FLAG_I		= 16,  // 1 when IRQ line is ignored
-			FLAG_N		= 8,   // 1 when result is negative
-			FLAG_Z		= 4,   // 1 when result is 0
-			FLAG_V		= 2,   // 1 on signed overflow
-			FLAG_C		= 1    // 1 on unsigned overflow
-		};
-
 		enum class STACK
 		{
 			S, U
@@ -168,7 +171,6 @@ namespace emul
 		void ClearFlags(BYTE& flags) { flags = 0; }
 		void SetFlags(BYTE f) { m_reg.flags = f; }
 
-		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; }
 		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); }
 		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
 
@@ -215,7 +217,6 @@ namespace emul
 		static bool isSourceRegWide(BYTE sd) { return !GetBit(sd, 7); }
 		static bool isDestRegWide(BYTE sd) { return !GetBit(sd, 3); }
 
-		WORD GetReg(RegCode reg) const;
 		BYTE& GetReg8(RegCode reg);
 		WORD& GetReg16(RegCode reg);
 

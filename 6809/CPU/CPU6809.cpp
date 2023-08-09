@@ -580,6 +580,20 @@ namespace emul
 
 	void CPU6809::Interrupt()
 	{
+		// TEMP
+		if (m_irq && !GetFlag(FLAG_I))
+		{
+			//LogPrintf(LOG_WARNING, "[%zu] IRQ", emul::g_ticks);
+			SetFlag(FLAG_E, true);
+			SetFlag(FLAG_I, true);
+
+			// Push all registers on the system stack
+			PSH(STACK::S, REGS_ALL);
+
+			ADDRESS vect = ADDR_IRQ;
+
+			m_PC = m_memory.Read16be(vect);
+		}
 	}
 
 	void CPU6809::PUSH(BYTE value)
@@ -917,7 +931,7 @@ namespace emul
 		dest = ~dest;
 		AdjustNZ(dest);
 		SetFlag(FLAG_V, false);
-		SetFlag(FLAG_C, false);
+		SetFlag(FLAG_C, true);
 	}
 
 	void CPU6809::COMm(ADDRESS dest)
