@@ -268,11 +268,17 @@ namespace emul
 		void ASL(BYTE& dest); // Arithmetic Shift Left
 		void ASLm(ADDRESS dest);
 
+		void ASR(BYTE& dest); // Arithmetic Shift Right
+		void ASRm(ADDRESS dest);
+
 		void LSR(BYTE& dest); // Logical Shift Right
 		void LSRm(ADDRESS dest);
 
 		void ROL(BYTE& dest); // Rotate Left Through Carry
 		void ROLm(ADDRESS dest);
+
+		void ROR(BYTE& dest); // Rotate Right Through Carry
+		void RORm(ADDRESS dest);
 
 		void EOR(BYTE& dest, BYTE src); // Logical XOR
 		void OR(BYTE& dest, BYTE src); // Logical OR
@@ -307,6 +313,9 @@ namespace emul
 		// dest by value so it's not modified
 		void CMP8(BYTE dest, BYTE src) { return SUB8(dest, src); }
 		void CMP16(WORD dest, WORD src) { return SUB16(dest, src); }
+
+		void NEG(BYTE& dest);
+		void NEGm(ADDRESS dest);
 
 		void MUL();
 
