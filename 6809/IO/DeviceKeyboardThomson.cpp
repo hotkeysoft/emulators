@@ -19,6 +19,7 @@ namespace kbd
 		{ SDL_SCANCODE_X, Key(0x20, 0) }, // X
 		{ SDL_SCANCODE_W, Key(0x40, 0) }, // W
 		{ SDL_SCANCODE_LSHIFT, Key(0x80, 0) }, // Shift
+		{ SDL_SCANCODE_RSHIFT, Key(0x80, 0) }, // Shift
 
 		// Line 1
 		{ SDL_SCANCODE_DELETE, Key(0x01, 1) }, // EFF
@@ -28,7 +29,8 @@ namespace kbd
 		{ SDL_SCANCODE_DOWN, Key(0x10, 1) }, // Down arrow
 		{ SDL_SCANCODE_LEFT, Key(0x20, 1) }, // Left arrow
 		{ SDL_SCANCODE_UP, Key(0x40, 1) }, // Up arrow
-		{ SDL_SCANCODE_RSHIFT, Key(0x80, 1) }, // BASIC
+		{ SDL_SCANCODE_LALT, Key(0x80, 1) }, // BASIC
+		{ SDL_SCANCODE_RALT, Key(0x80, 1) }, // BASIC
 
 		// Line 2
 		{ SDL_SCANCODE_J, Key(0x01, 2) }, // J
@@ -65,7 +67,8 @@ namespace kbd
 		{ SDL_SCANCODE_E, Key(0x08, 5) }, // E
 		{ SDL_SCANCODE_Z, Key(0x10, 5) }, // Z
 		{ SDL_SCANCODE_A, Key(0x20, 5) }, // A
-		{ SDL_SCANCODE_GRAVE, Key(0x40, 5) }, // CNT
+		{ SDL_SCANCODE_LCTRL, Key(0x40, 5) }, // CONTROL
+		{ SDL_SCANCODE_RCTRL, Key(0x40, 5) }, // CONTROL
 
 		// Line 6
 		{ SDL_SCANCODE_7, Key(0x01, 6) }, // 7
@@ -74,7 +77,7 @@ namespace kbd
 		{ SDL_SCANCODE_0, Key(0x08, 6) }, // 0
 		{ SDL_SCANCODE_MINUS, Key(0x10, 6) }, // -
 		{ SDL_SCANCODE_EQUALS, Key(0x20, 6) }, // +
-		{ SDL_SCANCODE_BACKSLASH, Key(0x40, 6) }, // ACC
+		{ SDL_SCANCODE_BACKSLASH, Key(0x40, 6) }, // ACCENT
 
 		// Column 7
 		{ SDL_SCANCODE_6, Key(0x01, 7) }, // 6
