@@ -56,6 +56,9 @@
     <ClInclude Include="ComputerThomson.h" />
     <ClInclude Include="CPU\CPU6809.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
+    <ClInclude Include="Hardware\Device6520.h" />
+    <ClInclude Include="Hardware\Device6520MO5_PIA.h" />
+    <ClInclude Include="IO\DeviceKeyboardThomson.h" />
     <ClInclude Include="IO\Monitor6809.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
@@ -88,6 +91,9 @@
     <ClCompile Include="Computer6809.cpp" />
     <ClCompile Include="ComputerThomson.cpp" />
     <ClCompile Include="CPU\CPU6809.cpp" />
+    <ClCompile Include="Hardware\Device6520.cpp" />
+    <ClCompile Include="Hardware\Device6520MO5_PIA.cpp" />
+    <ClCompile Include="IO\DeviceKeyboardThomson.cpp" />
     <ClCompile Include="IO\Monitor6809.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">

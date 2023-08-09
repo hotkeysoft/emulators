@@ -3,6 +3,8 @@
 #include <Computer/ComputerBase.h>
 #include <CPU/IOBlock.h>
 #include "IO/InputEvents.h"
+#include "Hardware/Device6520MO5_PIA.h"
+#include "IO/DeviceKeyboardThomson.h"
 
 namespace emul
 {
@@ -22,6 +24,10 @@ namespace emul
 
 		CPU6809& GetCPU() const { return *((CPU6809*)m_cpu); }
 
+		// emul::Serializable
+		virtual void Serialize(json& to);
+		virtual void Deserialize(const json& from);
+
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 
@@ -33,25 +39,8 @@ namespace emul
 		// TEMP until video
 		void DrawScreen();
 
-		// TEMP until PIA is connected
-		BYTE ReadIO();
-		void WriteIO(BYTE value);
-
 		bool m_forme = true;
-		void MapScreenMem();
-
-		// System PIA
-		BYTE m_portA = 0xFF;
-		BYTE ReadPortA();
-		void WritePortA(BYTE value);
-		BYTE ReadPortB();
-		void WritePortB(BYTE value);
-
-		BYTE ReadControlA();
-		void WriteControlA(BYTE value);
-		BYTE ReadControlB();
-		void WriteControlB(BYTE value);
-
+		void MapScreenMem(bool forme);
 
 		void DumpRAM();
 
@@ -64,5 +53,8 @@ namespace emul
 		emul::MemoryBlock m_basicROM;
 
 		emul::IOBlock m_ioA7C0;
+
+		pia::Device6520MO5_PIA m_pia;
+		kbd::DeviceKeyboardThomson m_keyboard;
 	};
 }

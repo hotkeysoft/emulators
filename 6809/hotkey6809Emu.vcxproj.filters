@@ -198,6 +198,15 @@
     <ClInclude Include="ComputerThomson.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\Device6520.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device6520MO5_PIA.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\DeviceKeyboardThomson.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -298,6 +307,15 @@
     </ClCompile>
     <ClCompile Include="ComputerThomson.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device6520MO5_PIA.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device6520.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceKeyboardThomson.cpp">
+      <Filter>Source Files\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
