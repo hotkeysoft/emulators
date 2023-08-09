@@ -10,7 +10,7 @@ namespace emul
 {
 	class CPU6809;
 
-	class ComputerThomson : public ComputerBase, public IOConnector
+	class ComputerThomson : public ComputerBase, public IOConnector, public pia::EventHandler
 	{
 	public:
 		ComputerThomson();
@@ -36,11 +36,12 @@ namespace emul
 		void InitIO();
 		void InitVideo();
 
+		// pia::EventHandler
+		virtual void OnScreenMapChange(pia::ScreenRAM map) override;
+		virtual void OnBorderChange(BYTE borderRGBP) override;
+
 		// TEMP until video
 		void DrawScreen();
-
-		bool m_forme = true;
-		void MapScreenMem(bool forme);
 
 		void DumpRAM();
 

@@ -5,6 +5,17 @@ namespace kbd { class DeviceKeyboard; }
 
 namespace pia
 {
+	enum class ScreenRAM { PIXEL = 1, ATTR = 0, UNINITIALIZED = -1 };
+
+	class EventHandler
+	{
+	public:
+		virtual void OnScreenMapChange(ScreenRAM map) {}
+		virtual void OnBorderChange(BYTE borderRGBP) {}
+	};
+
+	static EventHandler s_defaultHandler;
+
 	class Device6520MO5_PIA : public Device6520
 	{
 	public:
@@ -12,11 +23,12 @@ namespace pia
 
 		void Init(kbd::DeviceKeyboard* kbd);
 
+		void SetPIAEventHandler(EventHandler* handler) { m_piaEventHandler = handler ? handler : &s_defaultHandler; }
+
 		// Port A Outputs
 
 		// Screen RAM mapping (pixel / attribute data)
-		enum class ScreenRAM { PIXEL, ATTR };
-		ScreenRAM GetScreenMapping() const { return emul::GetBit(m_portA.GetOutput(), 0) ? ScreenRAM::ATTR : ScreenRAM::PIXEL; }
+		ScreenRAM GetScreenMapping() const { return (ScreenRAM)emul::GetBit(m_portA.GetOutput(), 0); }
 		BYTE GetBorderRGBP() const { return (m_portA.GetOutput() >> 1) & 15; }
 		bool GetCassetteOut() const { return emul::GetBit(m_portA.GetOutput(), 6); }
 
@@ -40,8 +52,14 @@ namespace pia
 
 	protected:
 		virtual void OnReadPort(PIAPort* src) override;
+		virtual void OnWritePort(PIAPort* src) override;
 
 		kbd::DeviceKeyboard* m_keyboard = nullptr;
+
+		ScreenRAM m_screenRAM = ScreenRAM::UNINITIALIZED;
+		BYTE m_borderRGBP = 0xFF;
+
+		EventHandler* m_piaEventHandler = &s_defaultHandler;
 	};
 }
 

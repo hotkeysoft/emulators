@@ -150,6 +150,7 @@ namespace pia
 		bool GetIRQB() const { return m_portB.GetIRQ(); }
 
 		virtual void OnReadPort(PIAPort* src) {};
+		virtual void OnWritePort(PIAPort* src) {};
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;

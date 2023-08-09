@@ -5,10 +5,12 @@
 #include "IO/Console.h"
 #include "CPU/CPU6809.h"
 #include <Video/VideoNull.h>
+#include <Sound/Sound.h>
 
 using cfg::CONFIG;
+using sound::SOUND;
 
-using ScreenRAM = pia::Device6520MO5_PIA::ScreenRAM;
+using ScreenRAM = pia::ScreenRAM;
 
 namespace emul
 {
@@ -43,6 +45,8 @@ namespace emul
 		InitInputs(1000000, 100000);
 		GetInputs().InitKeyboard(&m_keyboard);
 
+		SOUND().SetBaseClock(1000000);
+
 		InitVideo();
 	}
 
@@ -73,58 +77,28 @@ namespace emul
 		m_pixelRAM.Clear(0xFA);
 		m_attributeRAM.Clear(0xAF);
 
-		MapScreenMem(false);
+		OnScreenMapChange(ScreenRAM::PIXEL);
 	}
 
 	void ComputerThomson::InitIO()
 	{
 		m_pia.EnableLog(CONFIG().GetLogLevel("pia"));
 		m_pia.Init(&m_keyboard);
+		m_pia.SetPIAEventHandler(this);
 
 		m_ioA7C0.AddDevice(m_pia, 0, 0b111100);
 		m_memory.Allocate(&m_ioA7C0, 0xA7C0);
 	}
 
-	void ComputerThomson::MapScreenMem(bool forme)
+	void ComputerThomson::OnScreenMapChange(ScreenRAM map)
 	{
-		if (forme != m_forme)
-		{
-			m_memory.Allocate(m_forme ? &m_pixelRAM : &m_attributeRAM, 0);
-			m_forme = forme;
-		}
+		LogPrintf(LOG_INFO, "OnScreenMapChange PIXEL=%d", map);
+		m_memory.Allocate((map == ScreenRAM::PIXEL) ? &m_pixelRAM : &m_attributeRAM, 0);
 	}
-
-	//void ComputerThomson::WritePortA(BYTE value)
-	//{
-	//	m_portA = value;
-
-	//	//bit0: / FORME : screen ram mapping(pixel or palette data) for 0x0000..0x1FFF
-	//	bool forme = GetBit(value, 0);
-
-	//	if (forme != m_forme)
-	//	{
-	//		m_forme = forme;
-	//		MapScreenMem();
-	//	}
-
-	//	//bit1 : RT: red value for border
-	//	//bit2 : VT: green value for border
-	//	//bit3 : BT: blue value for border
-	//	//bit4 : PT: 'pastel' value for border
-	//	BYTE border = (value >> 1) & 0b1111;
-
-	//	//bit5 : Lightpen interrupt(input)
-
-	//	//bit6 : Cassette OUT
-	//	bool cassette = GetBit(value, 6);
-
-	//	//bit7 : Cassette input.when idle, the tape drive sets this to a logic 1, and the code checks for it.
-
-	//	LogPrintf(LOG_DEBUG, "WritePortA: [%cFORME] [BORDER$%x] [%cCASSETTE]",
-	//		forme ? ' ' : '/',
-	//		border,
-	//		cassette ? ' ' : '/');
-	//}
+	void ComputerThomson::OnBorderChange(BYTE borderRGBP)
+	{
+		LogPrintf(LOG_INFO, "OnBorderChange: %X", borderRGBP);
+	}
 
 	void ComputerThomson::InitVideo()
 	{
@@ -175,6 +149,12 @@ namespace emul
 
 	bool ComputerThomson::Step()
 	{
+		static bool vSync = false;
+		if (vSync)
+		{
+			GetCPU().SetIRQ(true);
+		}
+
 		if (!ComputerBase::Step())
 		{
 			DumpRAM();
@@ -183,19 +163,22 @@ namespace emul
 			return false;
 		}
 
-		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
+		GetCPU().SetIRQ(false);
+		vSync = false;
 
-		// TODO: Lame
-		MapScreenMem(m_pia.GetScreenMapping() == ScreenRAM::PIXEL);
+		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
 		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
 			++g_ticks;
 
-			if ((g_ticks % 100000) == 0)
+			if ((g_ticks % 20000) == 0)
 			{
 				DrawScreen();
+				vSync = true;
 			}
+
+			SOUND().PlayMono(m_pia.GetBuzzer()*10000);
 
 			m_video->Tick();
 
