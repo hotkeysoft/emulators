@@ -132,19 +132,10 @@ namespace emul
 
 	bool ComputerThomson::Step()
 	{
-		static bool vSync = false;
-		if (vSync)
-		{
-			GetCPU().SetIRQ(true);
-		}
-
 		if (!ComputerBase::Step())
 		{
 			return false;
 		}
-
-		GetCPU().SetIRQ(false);
-		vSync = false;
 
 		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
@@ -155,7 +146,8 @@ namespace emul
 			if ((g_ticks % 20000) == 0)
 			{
 				DrawScreen();
-				vSync = true;
+				m_pia.SetVSync(true);
+				m_pia.SetVSync(false);
 			}
 
 			SOUND().PlayMono(m_pia.GetBuzzer()*10000);
@@ -167,6 +159,10 @@ namespace emul
 			{
 				return false;
 			}
+
+			GetCPU().SetIRQ(m_pia.GetIRQB());
+			GetCPU().SetFIRQ(m_pia.GetIRQA());
+
 		}
 
 		return true;

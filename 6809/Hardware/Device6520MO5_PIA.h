@@ -44,11 +44,17 @@ namespace pia
 		// Port B Inputs
 		void SetSelectedKeyInput(bool set) { m_portB.SetInputBit(7, set); }
 
-		// CA2
-		// CA1
+		// CA2: Tape drive motor Output
+		bool GetTapeMotorState() const { return m_portA.GetC2(); }
 
-		// CB2
-		// CB1
+		// CA1: Light pen button Input
+		void SetLightPen(bool set) { m_portA.SetC1(set); }
+
+		// CB2: Video incrustation enable Output
+		bool GetVideoIncrustrationEnable() const { return m_portB.GetC2(); }
+
+		// CB1: 50Hz vSync Input
+		void SetVSync(bool set) { m_portB.SetC1(set); }
 
 	protected:
 		virtual void OnReadPort(PIAPort* src) override;
