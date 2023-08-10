@@ -61,6 +61,7 @@
     <ClInclude Include="IO\DeviceKeyboardThomson.h" />
     <ClInclude Include="IO\Monitor6809.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Video\VideoThomson.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Computer\ComputerBase.cpp" />
@@ -102,6 +103,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Video\VideoThomson.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config\6809.ans">

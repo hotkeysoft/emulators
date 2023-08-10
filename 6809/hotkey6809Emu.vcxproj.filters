@@ -207,6 +207,9 @@
     <ClInclude Include="IO\DeviceKeyboardThomson.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="Video\VideoThomson.h">
+      <Filter>Header Files\Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -316,6 +319,9 @@
     </ClCompile>
     <ClCompile Include="IO\DeviceKeyboardThomson.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\VideoThomson.cpp">
+      <Filter>Source Files\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

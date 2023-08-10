@@ -40,10 +40,6 @@ namespace emul
 		virtual void OnScreenMapChange(pia::ScreenRAM map) override;
 		virtual void OnBorderChange(BYTE borderRGBP) override;
 
-		// TEMP until video
-		void DrawScreen();
-
-		// TODO: Move to video class?
 		emul::MemoryBlock m_pixelRAM;
 		emul::MemoryBlock m_attributeRAM;
 

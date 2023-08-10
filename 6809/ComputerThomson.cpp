@@ -4,7 +4,7 @@
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPU6809.h"
-#include <Video/VideoNull.h>
+#include "Video/VideoThomson.h"
 #include <Sound/Sound.h>
 
 using cfg::CONFIG;
@@ -42,7 +42,7 @@ namespace emul
 		InitROM();
 		InitRAM();
 		InitIO();
-		InitInputs(1000000, 100000);
+		InitInputs(1000000, 20000);
 		GetInputs().InitKeyboard(&m_keyboard);
 
 		SOUND().SetBaseClock(1000000);
@@ -98,36 +98,16 @@ namespace emul
 	void ComputerThomson::OnBorderChange(BYTE borderRGBP)
 	{
 		LogPrintf(LOG_INFO, "OnBorderChange: %X", borderRGBP);
+
+		static_cast<video::VideoThomson*>(m_video)->SetBorderColor(borderRGBP);
 	}
 
 	void ComputerThomson::InitVideo()
 	{
-		// Dummy video card
-		video::VideoNull* video = new video::VideoNull();
+		video::VideoThomson* video = new video::VideoThomson();
 		video->EnableLog(CONFIG().GetLogLevel("video"));
-		video->Init(&m_memory, nullptr);
+		video->Init(&m_pixelRAM, &m_attributeRAM);
 		m_video = video;
-	}
-
-	void ComputerThomson::DrawScreen()
-	{
-		m_video->BeginFrame();
-		const BYTE* pixels = m_pixelRAM.getPtr();
-		for (int y = 0; y < 200; ++y)
-		{
-			for (int x = 0; x < 40; ++x)
-			{
-				for (int i = 0; i < 8; ++i)
-				{
-					m_video->DrawPixel(GetBit(*pixels, 7 - i) ? 0xFFFFFFFF : 0);
-				}
-
-				pixels++;
-			}
-			m_video->NewLine();
-		}
-
-		m_video->RenderFrame();
 	}
 
 	bool ComputerThomson::Step()
@@ -143,26 +123,19 @@ namespace emul
 		{
 			++g_ticks;
 
-			if ((g_ticks % 20000) == 0)
-			{
-				DrawScreen();
-				m_pia.SetVSync(true);
-				m_pia.SetVSync(false);
-			}
-
 			SOUND().PlayMono(m_pia.GetBuzzer()*10000);
 
 			m_video->Tick();
+			m_pia.SetVSync(m_video->IsVSync());
+
+			GetCPU().SetIRQ(m_pia.GetIRQB());
+			GetCPU().SetFIRQ(m_pia.GetIRQA());
 
 			GetInputs().Tick();
 			if (GetInputs().IsQuit())
 			{
 				return false;
 			}
-
-			GetCPU().SetIRQ(m_pia.GetIRQB());
-			GetCPU().SetFIRQ(m_pia.GetIRQA());
-
 		}
 
 		return true;

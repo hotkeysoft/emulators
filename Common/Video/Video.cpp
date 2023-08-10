@@ -54,7 +54,6 @@ namespace video
 
 	void Video::Init(emul::Memory* memory, const char*, bool forceMono)
 	{
-		assert(memory);
 		m_memory = memory;
 
 		UpdateTargetRect();
