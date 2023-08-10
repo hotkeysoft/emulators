@@ -14,7 +14,8 @@ namespace kbd
 		{ SDL_SCANCODE_N, Key(0x01, 0) }, // N
 		{ SDL_SCANCODE_COMMA, Key(0x02, 0) }, // ,
 		{ SDL_SCANCODE_PERIOD, Key(0x04, 0) }, // .
-		{ SDL_SCANCODE_SLASH, Key(0x08, 0) }, // @
+		{ SDL_SCANCODE_KP_PERIOD, Key(0x04, 0) }, // .
+		{ SDL_SCANCODE_LEFTBRACKET, Key(0x08, 0) }, // @
 		{ SDL_SCANCODE_SPACE, Key(0x10, 0) }, // SP
 		{ SDL_SCANCODE_X, Key(0x20, 0) }, // X
 		{ SDL_SCANCODE_W, Key(0x40, 0) }, // W
@@ -24,7 +25,7 @@ namespace kbd
 		// Line 1
 		{ SDL_SCANCODE_DELETE, Key(0x01, 1) }, // EFF
 		{ SDL_SCANCODE_INSERT, Key(0x02, 1) }, // INS
-		{ SDL_SCANCODE_HOME, Key(0x04, 1) }, // backspace?
+		{ SDL_SCANCODE_HOME, Key(0x04, 1) }, // Home
 		{ SDL_SCANCODE_RIGHT, Key(0x08, 1) }, // Right arrow
 		{ SDL_SCANCODE_DOWN, Key(0x10, 1) }, // Down arrow
 		{ SDL_SCANCODE_LEFT, Key(0x20, 1) }, // Left arrow
@@ -55,8 +56,11 @@ namespace kbd
 		{ SDL_SCANCODE_I, Key(0x02, 4) }, // I
 		{ SDL_SCANCODE_O, Key(0x04, 4) }, // O
 		{ SDL_SCANCODE_P, Key(0x08, 4) }, // P
-		{ SDL_SCANCODE_LEFTBRACKET, Key(0x10, 4) }, // /
+		{ SDL_SCANCODE_SLASH, Key(0x10, 4) }, // /
+		{ SDL_SCANCODE_KP_DIVIDE, Key(0x10, 4) }, // /
 		{ SDL_SCANCODE_RIGHTBRACKET, Key(0x20, 4) }, // *
+		{ SDL_SCANCODE_SEMICOLON, Key(0x20, 4) }, // *
+		{ SDL_SCANCODE_KP_MULTIPLY, Key(0x20, 4) }, // *
 		{ SDL_SCANCODE_RETURN, Key(0x40, 4) }, // ENTER
 		{ SDL_SCANCODE_KP_ENTER, Key(0x40, 4) }, // ENTER
 
@@ -72,20 +76,33 @@ namespace kbd
 
 		// Line 6
 		{ SDL_SCANCODE_7, Key(0x01, 6) }, // 7
+		{ SDL_SCANCODE_KP_7, Key(0x01, 6) }, // 7
 		{ SDL_SCANCODE_8, Key(0x02, 6) }, // 8
+		{ SDL_SCANCODE_KP_8, Key(0x02, 6) }, // 8
 		{ SDL_SCANCODE_9, Key(0x04, 6) }, // 9
+		{ SDL_SCANCODE_KP_9, Key(0x04, 6) }, // 9
 		{ SDL_SCANCODE_0, Key(0x08, 6) }, // 0
+		{ SDL_SCANCODE_KP_0, Key(0x08, 6) }, // 0
 		{ SDL_SCANCODE_MINUS, Key(0x10, 6) }, // -
+		{ SDL_SCANCODE_KP_MINUS, Key(0x10, 6) }, // -
 		{ SDL_SCANCODE_EQUALS, Key(0x20, 6) }, // +
+		{ SDL_SCANCODE_KP_PLUS, Key(0x20, 6) }, // +
 		{ SDL_SCANCODE_BACKSLASH, Key(0x40, 6) }, // ACCENT
+		{ SDL_SCANCODE_APOSTROPHE, Key(0x40, 6) }, // ACCENT
 
 		// Column 7
 		{ SDL_SCANCODE_6, Key(0x01, 7) }, // 6
+		{ SDL_SCANCODE_KP_6, Key(0x01, 7) }, // 6
 		{ SDL_SCANCODE_5, Key(0x02, 7) }, // 5
+		{ SDL_SCANCODE_KP_5, Key(0x02, 7) }, // 5
 		{ SDL_SCANCODE_4, Key(0x04, 7) }, // 4
+		{ SDL_SCANCODE_KP_4, Key(0x04, 7) }, // 4
 		{ SDL_SCANCODE_3, Key(0x08, 7) }, // 3
+		{ SDL_SCANCODE_KP_3, Key(0x08, 7) }, // 3
 		{ SDL_SCANCODE_2, Key(0x10, 7) }, // 2
+		{ SDL_SCANCODE_KP_2, Key(0x10, 7) }, // 2
 		{ SDL_SCANCODE_1, Key(0x20, 7) }, // 1
+		{ SDL_SCANCODE_KP_1, Key(0x20, 7) }, // 1
 		{ SDL_SCANCODE_ESCAPE, Key(0x40, 7) }, // STOP
 	};
 
