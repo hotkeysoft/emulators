@@ -53,6 +53,9 @@ namespace emul
 
 		m_opcodes[0x10] = [=]() { ExecPage2(FetchByte()); }; // Page 2 sub intructions
 		m_opcodes[0x11] = [=]() { ExecPage3(FetchByte()); }; // Page 3 sub intructions
+		m_opcodes[0x12] = [=]() { }; // NOP
+		m_opcodes[0x16] = [=]() { LBRA(true); }; // LBRA
+		m_opcodes[0x16] = [=]() { LBSR(); }; // LBSR
 		m_opcodes[0x1A] = [=]() { m_reg.flags |= FetchByte(); }; // ORCC imm
 		m_opcodes[0x1C] = [=]() { m_reg.flags &= FetchByte(); }; // ANDCC imm
 		m_opcodes[0x1D] = [=]() { SEX(); }; // SEX
@@ -78,7 +81,7 @@ namespace emul
 
 		m_opcodes[0x30] = [=]() { LEA(m_reg.X, true); }; // LEAX
 		m_opcodes[0x31] = [=]() { LEA(m_reg.Y, true); }; // LEAY
-		m_opcodes[0x32] = [=]() { LEA(m_reg.S, false); }; // LEAS
+		m_opcodes[0x32] = [=]() { LEA(m_reg.S, false); m_nmiEnabled = true; }; // LEAS
 		m_opcodes[0x33] = [=]() { LEA(m_reg.U, false); }; // LEAU
 		m_opcodes[0x34] = [=]() { PSH(STACK::S, FetchByte()); }; // PSHS
 		m_opcodes[0x35] = [=]() { PUL(STACK::S, FetchByte()); }; // PULS
@@ -327,16 +330,15 @@ namespace emul
 		m_opcodesPage2[0xBE] = [=]() { LD16(m_reg.Y, GetMemExtendedWord()); }; // LDY extended
 		m_opcodesPage2[0xBF] = [=]() { ST16(GetExtended(), m_reg.Y); }; // STY extended
 
-		m_opcodesPage2[0xCE] = [=]() { LD16(m_reg.S, FetchWord()); }; // LDS imm
-		m_opcodesPage2[0xDE] = [=]() { LD16(m_reg.S, GetMemDirectWord()); }; // LDS direct
+		m_opcodesPage2[0xCE] = [=]() { LD16(m_reg.S, FetchWord()); m_nmiEnabled = true; }; // LDS imm
+		m_opcodesPage2[0xDE] = [=]() { LD16(m_reg.S, GetMemDirectWord()); m_nmiEnabled = true; }; // LDS direct
 		m_opcodesPage2[0xDF] = [=]() { ST16(GetDirect(FetchByte()), m_reg.S); }; // STS direct
 
-		m_opcodesPage2[0xEE] = [=]() { LD16(m_reg.S, GetMemIndexedWord()); }; // LDS indexed
+		m_opcodesPage2[0xEE] = [=]() { LD16(m_reg.S, GetMemIndexedWord()); m_nmiEnabled = true; }; // LDS indexed
 		m_opcodesPage2[0xEF] = [=]() { ST16(GetIndexed(FetchByte()), m_reg.S); }; // STS indexed
 
-		m_opcodesPage2[0xFE] = [=]() { LD16(m_reg.S, GetMemExtendedWord()); }; // LDS extended
+		m_opcodesPage2[0xFE] = [=]() { LD16(m_reg.S, GetMemExtendedWord()); m_nmiEnabled = true; }; // LDS extended
 		m_opcodesPage2[0xFF] = [=]() { ST16(GetExtended(), m_reg.S); }; // STS extended
-
 	}
 
 	// Prefix 0x11
@@ -360,7 +362,6 @@ namespace emul
 
 		m_opcodesPage3[0xB3] = [=]() { CMP16(m_reg.U, GetMemExtendedWord()); }; // CMPU extended
 		m_opcodesPage3[0xBC] = [=]() { CMP16(m_reg.S, GetMemExtendedWord()); }; // CMPS extended
-
 	}
 
 	void CPU6809::Reset()
@@ -611,23 +612,43 @@ namespace emul
 
 	void CPU6809::Interrupt()
 	{
-		// TEMP
-		if (m_irq && !GetFlag(FLAG_I))
+		if (m_nmiEnabled && m_nmi.IsLatched())
 		{
-			//LogPrintf(LOG_WARNING, "[%zu] IRQ", emul::g_ticks);
-			SetFlag(FLAG_E, true);
-			SetFlag(FLAG_I, true);
+			LogPrintf(LOG_INFO, "[%zu] NMI", emul::g_ticks);
 
-			// Push all registers on the system stack
-			PSH(STACK::S, REGS_ALL);
+			SetFlag(FLAG_E, true);   // Complete state saved
+			PSH(STACK::S, REGS_ALL); // Save all registers
+			SetFlag(FLAG_F, true);   // Disable FIRQ
+			SetFlag(FLAG_I, true);   // Disable IRQ
 
-			ADDRESS vect = ADDR_IRQ;
+			m_PC = m_memory.Read16be(ADDR_NMI);
+			m_nmi.ResetLatch();
+		}
+		else if (m_firq && !GetFlag(FLAG_F))
+		{
+			LogPrintf(LOG_INFO, "[%zu] FIRQ", emul::g_ticks);
 
-			m_PC = m_memory.Read16be(vect);
+			PSH(STACK::S, REGS_PC); // Save program counter
+			SetFlag(FLAG_E, false); // Incomplete state saved
+			PSH(STACK::S, REGS_CC); // Save flags
+			SetFlag(FLAG_F, true);  // Disable FIRQ
+			SetFlag(FLAG_I, true);  // Disable IRQ
+
+			m_PC = m_memory.Read16be(ADDR_FIRQ);
+		}
+		else if (m_irq && !GetFlag(FLAG_I))
+		{
+			LogPrintf(LOG_INFO, "[%zu] IRQ", emul::g_ticks);
+
+			SetFlag(FLAG_E, true);   // Complete state saved
+			PSH(STACK::S, REGS_ALL); // Save all registers
+			SetFlag(FLAG_I, true);   // Disable IRQ
+
+			m_PC = m_memory.Read16be(ADDR_IRQ);
 		}
 	}
 
-	void CPU6809::PUSH(BYTE value)
+	void CPU6809::push(BYTE value)
 	{
 		TICK1();
 		WORD& sp = *m_currStack;
@@ -635,7 +656,7 @@ namespace emul
 		m_memory.Write8(--sp, value);
 	}
 
-	BYTE CPU6809::POP()
+	BYTE CPU6809::pop()
 	{
 		TICK1();
 		WORD& sp = *m_currStack;
@@ -649,42 +670,42 @@ namespace emul
 
 		if (GetBit(regs, 7))
 		{
-			PUSH(GetLByte(m_PC));
-			PUSH(GetHByte(m_PC));
+			push(GetLByte(m_PC));
+			push(GetHByte(m_PC));
 		}
 		if (GetBit(regs, 6))
 		{
 			// Select the 'other' stack
 			const WORD& sp = (s == STACK::S) ? m_reg.U : m_reg.S;
 
-			PUSH(GetLByte(sp));
-			PUSH(GetHByte(sp));
+			push(GetLByte(sp));
+			push(GetHByte(sp));
 		}
 		if (GetBit(regs, 5))
 		{
-			PUSH(GetLByte(m_reg.Y));
-			PUSH(GetHByte(m_reg.Y));
+			push(GetLByte(m_reg.Y));
+			push(GetHByte(m_reg.Y));
 		}
 		if (GetBit(regs, 4))
 		{
-			PUSH(GetLByte(m_reg.X));
-			PUSH(GetHByte(m_reg.X));
+			push(GetLByte(m_reg.X));
+			push(GetHByte(m_reg.X));
 		}
 		if (GetBit(regs, 3))
 		{
-			PUSH(m_reg.DP);
+			push(m_reg.DP);
 		}
 		if (GetBit(regs, 2))
 		{
-			PUSH(m_reg.ab.B);
+			push(m_reg.ab.B);
 		}
 		if (GetBit(regs, 1))
 		{
-			PUSH(m_reg.ab.A);
+			push(m_reg.ab.A);
 		}
 		if (GetBit(regs, 0))
 		{
-			PUSH(m_reg.flags);
+			push(m_reg.flags);
 		}
 	}
 	void CPU6809::PUL(STACK s, BYTE regs)
@@ -693,42 +714,42 @@ namespace emul
 
 		if (GetBit(regs, 0))
 		{
-			m_reg.flags = POP();
+			m_reg.flags = pop();
 		}
 		if (GetBit(regs, 1))
 		{
-			m_reg.ab.A = POP();
+			m_reg.ab.A = pop();
 		}
 		if (GetBit(regs, 2))
 		{
-			m_reg.ab.B = POP();
+			m_reg.ab.B = pop();
 		}
 		if (GetBit(regs, 3))
 		{
-			m_reg.DP = POP();
+			m_reg.DP = pop();
 		}
 		if (GetBit(regs, 4))
 		{
-			SetHByte(m_reg.X, POP());
-			SetLByte(m_reg.X, POP());
+			SetHByte(m_reg.X, pop());
+			SetLByte(m_reg.X, pop());
 		}
 		if (GetBit(regs, 5))
 		{
-			SetHByte(m_reg.Y, POP());
-			SetLByte(m_reg.Y, POP());
+			SetHByte(m_reg.Y, pop());
+			SetLByte(m_reg.Y, pop());
 		}
 		if (GetBit(regs, 6))
 		{
 			// Select the 'other' stack
 			WORD& sp = (s == STACK::S) ? m_reg.U : m_reg.S;
 
-			SetHByte(sp, POP());
-			SetLByte(sp, POP());
+			SetHByte(sp, pop());
+			SetLByte(sp, pop());
 		}
 		if (GetBit(regs, 7))
 		{
-			SetHByte(m_PC, POP());
-			SetLByte(m_PC, POP());
+			SetHByte(m_PC, pop());
+			SetLByte(m_PC, pop());
 		}
 	}
 
@@ -767,6 +788,16 @@ namespace emul
 
 		m_PC += rel;
 	}
+
+	void CPU6809::LBSR()
+	{
+		SWORD rel = FetchSignedWord();
+
+		PSH(STACK::S, REGS_PC);
+
+		m_PC += rel;
+	}
+
 
 	void CPU6809::RTS()
 	{
@@ -919,7 +950,13 @@ namespace emul
 
 		if (isDestRegWide(sd))
 		{
-			GetReg16(destCode) = source;
+			WORD& dest = GetReg16(destCode);
+			dest = source;
+
+			if (IsStackRegister(dest))
+			{
+				m_nmiEnabled = true;
+			}
 		}
 		else
 		{
@@ -937,9 +974,14 @@ namespace emul
 		switch (GetRegsSize(sd))
 		{
 		case RegSize::BB: // 8 bit -> 8 bit
-			GetReg8(destCode) = GetReg8(sourceCode);
-			GetReg8(sourceCode) = GetLByte(temp);
+		{
+			BYTE& source = GetReg8(sourceCode);
+			BYTE& dest = GetReg8(destCode);
+
+			dest = source;
+			source = GetLByte(temp);
 			break;
+		}
 		case RegSize::BW: // 8 bit -> 16 bit
 			LogPrintf(LOG_ERROR, "EGX 8->16 not implemented");
 			UnknownOpcode();
@@ -949,9 +991,19 @@ namespace emul
 			UnknownOpcode();
 			break;
 		case RegSize::WW: // 16 bit -> 16 bit
-			GetReg16(destCode) = GetReg16(sourceCode);
-			GetReg16(sourceCode) = temp;
+		{
+			WORD& source = GetReg16(sourceCode);
+			WORD& dest = GetReg16(destCode);
+
+			dest = source;
+			source = temp;
+
+			if (IsStackRegister(dest) || IsStackRegister(source))
+			{
+				m_nmiEnabled = true;
+			}
 			break;
+		}
 		default:
 			throw std::exception("not possible");
 		}
@@ -1253,7 +1305,6 @@ namespace emul
 		to["irq"] = m_irq;
 		to["firq"] = m_firq;
 
-		to["flags"] = m_reg.flags;
 		to["pc"] = m_programCounter;
 
 		to["d"] = m_reg.D;
@@ -1261,23 +1312,29 @@ namespace emul
 		to["u"] = m_reg.U;
 		to["x"] = m_reg.X;
 		to["y"] = m_reg.Y;
+
+		to["dp"] = m_reg.DP;
+		to["flags"] = m_reg.flags;
 	}
 	void CPU6809::Deserialize(const json& from)
 	{
 		m_opcode = from["opcode"];
-
-		m_reg.flags = from["flags"];
-		m_programCounter = from["pc"];
 
 		m_nmiEnabled = from["nmiEnabled"];
 		m_nmi.Deserialize(from["nmi"]);
 		m_firq = from["firq"];
 		m_irq = from["irq"];
 
+		m_programCounter = from["pc"];
+
 		m_reg.D = from["d"];
 		m_reg.S = from["s"];
 		m_reg.U = from["u"];
 		m_reg.X = from["x"];
 		m_reg.Y = from["y"];
+
+		m_reg.DP = from["dp"];
+		m_reg.flags = from["flags"];
+
 	}
 }

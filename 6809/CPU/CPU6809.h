@@ -164,8 +164,9 @@ namespace emul
 			// For invalid destinations;
 			BYTE void8;
 			WORD void16;
-
 		} m_reg;
+
+		bool IsStackRegister(const WORD& reg) const { return &reg == &m_reg.S; }
 
 		// Flags
 		void ClearFlags(BYTE& flags) { flags = 0; }
@@ -230,6 +231,7 @@ namespace emul
 
 		void JMP(ADDRESS dest) { m_programCounter = dest; }
 		void BSR();
+		void LBSR();
 		void JSR(ADDRESS dest);
 		void RTS();
 
@@ -250,19 +252,24 @@ namespace emul
 		// Exchange Registers
 		void EXG(BYTE sd);
 
-		// Stack
-		WORD* m_currStack = &m_reg.S;
+		// Stack operations
+		static const BYTE REGS_ALL = 0b11111111; // PC, U/S, Y, X, DP, B, A, CC
+		static const BYTE REGS_RTI = 0b10000001; // PC, CC
+		static const BYTE REGS_PC  = 0b10000000; // PC
+		static const BYTE REGS_CC  = 0b00000001; // CC
 
-		void PUSH(BYTE value);
-		BYTE POP();
-		void SetStack(STACK s) { m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U; }
-
-		static const BYTE REGS_ALL   = 0b11111111; // PC, U/S, Y, X, DP, B, A, CC
-		static const BYTE REGS_RTI   = 0b10000001; // PC, CC
-		static const BYTE REGS_PC    = 0b10000000; // PC, CC
-
+		// Push/pull one or more registers on s stack (S or U)
 		void PSH(STACK s, BYTE regs);
 		void PUL(STACK s, BYTE regs);
+
+		// raw push/pop, used by PSH/PUL
+		void push(BYTE value);
+		BYTE pop();
+
+		// Active stack, used by push/pull
+		// (always set before call, no need to serialize)
+		WORD* m_currStack = &m_reg.S;
+		void SetStack(STACK s) { m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U; }
 
 		// Logical
 		void ASL(BYTE& dest); // Arithmetic Shift Left
@@ -288,36 +295,41 @@ namespace emul
 		void BIT(BYTE dest, BYTE src) { return AND(dest, src); }
 
 		void CLR(BYTE& dest); // Clear
-		void CLRm(ADDRESS dest); // Clear
+		void CLRm(ADDRESS dest);
 
 		void COM(BYTE& dest); // Complement
-		void COMm(ADDRESS dest); // Complement
+		void COMm(ADDRESS dest);
 
-		void INC(BYTE& dest);
+		void INC(BYTE& dest); // Increment
 		void INCm(ADDRESS dest);
 
-		void DEC(BYTE& dest);
+		void DEC(BYTE& dest); // Decrement
 		void DECm(ADDRESS dest);
 
-		void TST(const BYTE dest);
+		void TST(const BYTE dest); // Sets N & Z flags
 
-		void SEX();
+		void SEX(); // Sign Extend B to D
 
 		// Arithmetic
+
+		// dest' <- dest + src (+ carry)
 		void ADD8(BYTE& dest, BYTE src, bool carry = false);
 		void ADD16(WORD& dest, WORD src, bool carry = false);
 
+		// dest' <- dest - src (- borrow)
 		void SUB8(BYTE& dest, BYTE src, bool borrow = false);
 		void SUB16(WORD& dest, WORD src, bool borrow = false);
 
 		// dest by value so it's not modified
+		// (void) <- dest - src
 		void CMP8(BYTE dest, BYTE src) { return SUB8(dest, src); }
 		void CMP16(WORD dest, WORD src) { return SUB16(dest, src); }
 
+		// Negate operand, dest' <- (0 - dest)
 		void NEG(BYTE& dest);
 		void NEGm(ADDRESS dest);
 
-		void MUL();
+		void MUL(); // D' = A * B
 
 		friend class Monitor6809;
 	};
