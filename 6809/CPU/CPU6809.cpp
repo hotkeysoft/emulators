@@ -474,25 +474,36 @@ namespace emul
 			SetBitMask(offset, 0b11100000, signBit);
 			ea = reg + (SBYTE)offset;
 			indirect = false;
+			TICK1();
 		}
 		else switch (idx & 0b1111)
 		{
-		case 0b0000: ea = reg++; break; // ,R+
-		case 0b0001: ea = reg; reg += 2; break; // ,R++
-		case 0b0010: ea = --reg; break; // ,-R
-		case 0b0011: reg -= 2; ea = reg; break; // ,--R
+		// Constant Offset from R
 		case 0b0100: ea = reg; break; // ,R + 0 Offset
-		case 0b0101: ea = reg + (SBYTE)m_reg.ab.B; break; // ,R + B Offset
-		case 0b0110: ea = reg + (SBYTE)m_reg.ab.A; break; // ,R + A Offset
-			// 0b0111: n/a
-		case 0b1000: ea = reg + FetchSignedByte(); break; // ,R + 8 bit offset
-		case 0b1001: ea = reg + FetchSignedWord(); break; // ,R + 16 bit offset
-			// 0b1010: n/a
-		case 0b1011: ea = reg + (SWORD)m_reg.D; break; // ,R + D offset
-		case 0b1100: ea = m_programCounter + FetchSignedByte(); break; // ,PC + 8 bit offset
-		case 0b1101: ea = m_programCounter + FetchSignedWord(); break; // ,PC + 16 bit offset
-			// 0b1110: n/a
-		case 0b1111: ea = FetchWord(); break;// [,Address]
+		case 0b1000: ea = reg + FetchSignedByte(); TICK1(); break; // ,R + 8 bit offset
+		case 0b1001: ea = reg + FetchSignedWord(); TICKn(3); break; // ,R + 16 bit offset
+
+		// Accumulator Offset from R
+		case 0b0101: ea = reg + (SBYTE)m_reg.ab.B; TICK1(); break; // ,R + B Offset
+		case 0b0110: ea = reg + (SBYTE)m_reg.ab.A; TICK1(); break; // ,R + A Offset
+		case 0b1011: ea = reg + (SWORD)m_reg.D; TICKn(4); break; // ,R + D offset
+
+		// Auto Increment/Decrement of R
+		case 0b0000: ea = reg++; TICKn(2); break; // ,R+
+		case 0b0001: ea = reg; reg += 2; TICKn(3); break; // ,R++
+		case 0b0010: ea = --reg; break; TICKn(2); // ,-R
+		case 0b0011: reg -= 2; ea = reg; TICKn(3); break; // ,--R
+
+		// Constant Offset from PC
+		case 0b1100: ea = m_programCounter + FetchSignedByte(); TICK1(); break; // ,PC + 8 bit offset
+		case 0b1101: ea = m_programCounter + FetchSignedWord(); TICKn(5); break; // ,PC + 16 bit offset
+
+		// Extended indirect
+		case 0b1111: ea = FetchWord(); TICKn(2); break;// [,Address]
+
+		// 0b0111: n/a
+		// 0b1010: n/a
+		// 0b1110: n/a
 
 		default:
 			LogPrintf(LOG_ERROR, "Invalid addressing mode (%02X)", idx);
@@ -505,6 +516,7 @@ namespace emul
 		if (indirect)
 		{
 			// TODO: 'illegal' modes
+			TICKn(3);
 			return m_memory.Read16be(ea);
 		}
 

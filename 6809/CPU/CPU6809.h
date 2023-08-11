@@ -93,6 +93,7 @@ namespace emul
 		void InitPage3();
 
 		inline void TICK1() { ++m_opTicks; }
+		inline void TICKn(int n) { m_opTicks += n; }
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
