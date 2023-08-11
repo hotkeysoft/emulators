@@ -1,9 +1,10 @@
 #pragma once
 #include <Video/Video.h>
+#include <CPU/IOConnector.h>
 
 namespace video
 {
-    class VideoThomson : public Video
+    class VideoThomson : public Video, public emul::IOConnector
     {
     public:
         VideoThomson();
@@ -26,8 +27,17 @@ namespace video
         virtual bool IsVSync() const override { return m_currY >= V_SYNC_START; }
         virtual bool IsDisplayArea() const override { return !IsHBlank() && !IsVBlank(); }
 
+        uint32_t GetX() const { return m_currX - LEFT_BORDER; }
+        uint32_t GetY() const { return m_currY - TOP_BORDER; }
+
     protected:
         void Draw();
+
+        // Gate Array Mem IO
+        BYTE ReadSCRCLKhigh();  // A7E4
+        BYTE ReadSCRCLKlow();   // A7E5
+        BYTE ReadLineCounter(); // A7E6
+        BYTE ReadINITN();       // A7E7
 
         // DOT Clock it 8MHz, CPU Clock is 1MHz. Tick() is called at CPU clock rate (1MHz)
         // so we draw 8 pixels for each tick.

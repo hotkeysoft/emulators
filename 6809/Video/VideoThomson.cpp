@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "VideoThomson.h"
-//#include "../Hardware/Device6522PET.h"
 
 using emul::GetBit;
 using emul::SetBit;
@@ -8,7 +7,9 @@ using emul::SetBit;
 namespace video
 {
 
-	VideoThomson::VideoThomson() : Logger("vidThomson")
+	VideoThomson::VideoThomson() :
+		Logger("vidThomson"),
+		IOConnector(0x03) // Addresses 0-3 are decoded by device
 	{
 		// These shouldn't change
 		static_assert(H_TOTAL == 64);
@@ -21,12 +22,17 @@ namespace video
 	void VideoThomson::Init(emul::MemoryBlock* pixelRAM, emul::MemoryBlock* attributeRAM)
 	{
 		assert(pixelRAM);
-		assert(attrRAM);
+		assert(attributeRAM);
 		m_pixelRAM = pixelRAM;
 		m_attributeRAM = attributeRAM;
 
 		Video::Init(nullptr, nullptr);
 		InitFrameBuffer(H_TOTAL_PX, V_TOTAL);
+
+		IOConnector::Connect(0, static_cast<IOConnector::READFunction>(&VideoThomson::ReadSCRCLKhigh));
+		IOConnector::Connect(1, static_cast<IOConnector::READFunction>(&VideoThomson::ReadSCRCLKlow));
+		IOConnector::Connect(2, static_cast<IOConnector::READFunction>(&VideoThomson::ReadLineCounter));
+		IOConnector::Connect(3, static_cast<IOConnector::READFunction>(&VideoThomson::ReadINITN));
 	}
 
 	void VideoThomson::Tick()
@@ -40,7 +46,6 @@ namespace video
 		else if (m_currX == H_TOTAL)
 		{
 			NewLine();
-			LogPrintf(LOG_WARNING, "[%zu] line", emul::g_ticks);
 
 			++m_currY;
 			m_currX = 0;
@@ -83,6 +88,34 @@ namespace video
 		//return SDL_Rect{
 		//	0, 0, H_TOTAL_PX, V_TOTAL
 		//};
+	}
+
+	BYTE VideoThomson::ReadSCRCLKhigh()
+	{
+		LogPrintf(LOG_WARNING, "ReadSCRCLKhigh");
+		return 0x19;
+	}
+	BYTE VideoThomson::ReadSCRCLKlow()
+	{
+		LogPrintf(LOG_WARNING, "ReadSCRCLKlow");
+		return 0x14;
+	}
+
+	// bit 7: INITN copy (see below)
+	// bit 6: INILN: 0 when the GA is drawing vertical borders
+	//        on the left and right of the screen (during hblank)
+	BYTE VideoThomson::ReadLineCounter()
+	{
+		BYTE value = ReadINITN() & (IsHBlank() ? 0b10111111 : 0b11111111);
+		LogPrintf(LOG_WARNING, "ReadLineCounter, value=%2x", value);
+		return value;
+	}
+
+	// bit 7: INITN: 0 when the GA is drawing horizontal borders
+	//        above and below the screen (during vblank)
+	BYTE VideoThomson::ReadINITN()
+	{
+		return IsVBlank() ? 0b01111111 : 0b11111111;
 	}
 
 	void VideoThomson::Draw()
