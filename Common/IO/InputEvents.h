@@ -1,9 +1,10 @@
 #pragma once
 
 #include <SDL.h>
-
 #include <map>
 #include <vector>
+
+#include <IO/DeviceMouse.h>
 
 using emul::BYTE;
 
@@ -48,6 +49,7 @@ namespace events
 		void Init();
 		void InitKeyboard(kbd::DeviceKeyboard* kbd);
 		void InitJoystick(joy::DeviceJoystick* joy);
+		void InitMouse(mouse::DeviceMouse* mouse);
 
 		void AddEventHandler(EventHandler* handler) { m_handlers.push_back(handler); }
 
@@ -75,6 +77,9 @@ namespace events
 		SDL_JoystickID m_controllerID = -1;
 
 		joy::DeviceJoystick* m_joystick = nullptr;
+
+		mouse::DeviceMouse* m_mouse = nullptr;
+		mouse::DeviceMouse m_nullMouse;
 
 		std::vector<EventHandler*> m_handlers;
 	};

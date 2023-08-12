@@ -37,6 +37,7 @@
     <ClInclude Include="..\Common\IO\DeviceJoystick.h" />
     <ClInclude Include="..\Common\IO\DeviceJoystickDigital.h" />
     <ClInclude Include="..\Common\IO\DeviceKeyboard.h" />
+    <ClInclude Include="..\Common\IO\DeviceMouse.h" />
     <ClInclude Include="..\Common\IO\InputEvents.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
@@ -55,6 +56,7 @@
     <ClInclude Include="Computer6809.h" />
     <ClInclude Include="ComputerThomson.h" />
     <ClInclude Include="CPU\CPU6809.h" />
+    <ClInclude Include="IO\DeviceLightpenThomson.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="Hardware\Device6520.h" />
     <ClInclude Include="Hardware\Device6520MO5_PIA.h" />
@@ -92,6 +94,7 @@
     <ClCompile Include="Computer6809.cpp" />
     <ClCompile Include="ComputerThomson.cpp" />
     <ClCompile Include="CPU\CPU6809.cpp" />
+    <ClCompile Include="IO\DeviceLightpenThomson.cpp" />
     <ClCompile Include="Hardware\Device6520.cpp" />
     <ClCompile Include="Hardware\Device6520MO5_PIA.cpp" />
     <ClCompile Include="IO\DeviceKeyboardThomson.cpp" />

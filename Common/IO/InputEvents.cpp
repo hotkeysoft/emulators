@@ -4,6 +4,7 @@
 #include <IO/InputEventHandler.h>
 #include <IO/DeviceKeyboard.h>
 #include <IO/DeviceJoystick.h>
+#include <IO/DeviceMouse.h>
 #include <SDL.h>
 
 namespace events
@@ -13,7 +14,8 @@ namespace events
 		Logger("INPUT"),
 		m_clockSpeedHz(clockSpeedHz),
 		m_pollInterval(pollInterval),
-		m_cooldown(pollInterval)
+		m_cooldown(pollInterval),
+		m_mouse(&m_nullMouse)
 	{
 		assert(clockSpeedHz);
 		assert(pollInterval);
@@ -49,6 +51,11 @@ namespace events
 		assert(kbd);
 		m_keyboard = kbd;
 		m_keyMap = &m_keyboard->GetKeymap();
+	}
+
+	void InputEvents::InitMouse(mouse::DeviceMouse* mouse)
+	{
+		m_mouse = mouse ? mouse : &m_nullMouse;
 	}
 
 	void InputEvents::InitJoystick(joy::DeviceJoystick* joy)
@@ -161,6 +168,13 @@ namespace events
 					InputControllerAxis(e.caxis.axis, e.caxis.value);
 				}
 				break;
+			case SDL_MOUSEBUTTONDOWN:
+			case SDL_MOUSEBUTTONUP:
+				m_mouse->SetButtonClick(e.button.x, e.button.y, e.button.button, e.type == SDL_MOUSEBUTTONDOWN);
+				break;
+			case SDL_MOUSEMOTION:
+				m_mouse->SetMouseMoveAbs(e.motion.x, e.motion.y);
+				m_mouse->SetMouseMoveRel(e.motion.xrel, e.motion.yrel);
 			default:
 				break;
 			}

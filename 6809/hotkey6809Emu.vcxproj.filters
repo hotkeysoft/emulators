@@ -210,6 +210,12 @@
     <ClInclude Include="Video\VideoThomson.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\IO\DeviceMouse.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\DeviceLightpenThomson.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -322,6 +328,9 @@
     </ClCompile>
     <ClCompile Include="Video\VideoThomson.cpp">
       <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceLightpenThomson.cpp">
+      <Filter>Source Files\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
