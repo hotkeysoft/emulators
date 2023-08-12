@@ -38,22 +38,22 @@ namespace emul
 		m_opcodes.resize(256);
 		std::fill(m_opcodes.begin(), m_opcodes.end(), [=]() { UnknownOpcode(); });
 
-		m_opcodes[0x00] = [=]() { NEGm(GetDirect(FetchByte())); }; // NEG direct
-		m_opcodes[0x01] = [=]() { NEGm(GetDirect(FetchByte())); }; // NEG direct (undocumented)
-		m_opcodes[0x02] = [=]() { XNCm(GetDirect(FetchByte())); }; // XNC direct (undocumented)
-		m_opcodes[0x03] = [=]() { COMm(GetDirect(FetchByte())); }; // COM direct
-		m_opcodes[0x04] = [=]() { LSRm(GetDirect(FetchByte())); }; // LSR direct
-		m_opcodes[0x05] = [=]() { LSRm(GetDirect(FetchByte())); }; // LSR direct (undocumented)
-		m_opcodes[0x06] = [=]() { RORm(GetDirect(FetchByte())); }; // ROR direct
-		m_opcodes[0x07] = [=]() { ASRm(GetDirect(FetchByte())); }; // ASR direct
-		m_opcodes[0x08] = [=]() { ASLm(GetDirect(FetchByte())); }; // ASL direct
-		m_opcodes[0x09] = [=]() { ROLm(GetDirect(FetchByte())); }; // ROL direct
-		m_opcodes[0x0A] = [=]() { DECm(GetDirect(FetchByte())); }; // DEC direct
-		m_opcodes[0x0B] = [=]() { XDECm(GetDirect(FetchByte())); }; // XDEC direct (undocumented)
-		m_opcodes[0x0C] = [=]() { INCm(GetDirect(FetchByte())); }; // INC direct
+		m_opcodes[0x00] = [=]() { MEMDirectOp(&CPU6809::NEG); }; // NEG direct
+		m_opcodes[0x01] = [=]() { MEMDirectOp(&CPU6809::NEG); }; // NEG direct (undocumented)
+		m_opcodes[0x02] = [=]() { MEMDirectOp(&CPU6809::XNC); }; // XNC direct (undocumented)
+		m_opcodes[0x03] = [=]() { MEMDirectOp(&CPU6809::COM); }; // COM direct
+		m_opcodes[0x04] = [=]() { MEMDirectOp(&CPU6809::LSR); }; // LSR direct
+		m_opcodes[0x05] = [=]() { MEMDirectOp(&CPU6809::LSR); }; // LSR direct (undocumented)
+		m_opcodes[0x06] = [=]() { MEMDirectOp(&CPU6809::ROR); }; // ROR direct
+		m_opcodes[0x07] = [=]() { MEMDirectOp(&CPU6809::ASR); }; // ASR direct
+		m_opcodes[0x08] = [=]() { MEMDirectOp(&CPU6809::ASL); }; // ASL direct
+		m_opcodes[0x09] = [=]() { MEMDirectOp(&CPU6809::ROL); }; // ROL direct
+		m_opcodes[0x0A] = [=]() { MEMDirectOp(&CPU6809::DEC); }; // DEC direct
+		m_opcodes[0x0B] = [=]() { MEMDirectOp(&CPU6809::XDEC); }; // XDEC direct (undocumented)
+		m_opcodes[0x0C] = [=]() { MEMDirectOp(&CPU6809::INC); }; // INC direct
 		m_opcodes[0x0D] = [=]() { TST(GetMemDirectByte()); }; // TST direct
 		m_opcodes[0x0E] = [=]() { JMP(GetDirect(FetchByte())); }; // JMP direct
-		m_opcodes[0x0F] = [=]() { CLRm(GetDirect(FetchByte())); }; // CLR direct
+		m_opcodes[0x0F] = [=]() { MEMDirectOp(&CPU6809::CLR); }; // CLR direct
 
 		m_opcodes[0x10] = [=]() { ExecPage2(FetchByte()); }; // Page 2 sub intructions
 		m_opcodes[0x11] = [=]() { ExecPage3(FetchByte()); }; // Page 3 sub intructions
@@ -134,38 +134,38 @@ namespace emul
 		m_opcodes[0x5E] = [=]() { XCLR(m_reg.ab.B); }; // XCLRB (undocumented)
 		m_opcodes[0x5F] = [=]() { CLR(m_reg.ab.B); }; // CLRB
 
-		m_opcodes[0x60] = [=]() { NEGm(GetIndexed(FetchByte())); }; // NEG indexed
-		m_opcodes[0x61] = [=]() { NEGm(GetIndexed(FetchByte())); }; // NEG indexed (undocumented)
-		m_opcodes[0x62] = [=]() { XNCm(GetIndexed(FetchByte())); }; // XNC indexed (undocumented)
-		m_opcodes[0x63] = [=]() { COMm(GetIndexed(FetchByte())); }; // COM indexed
-		m_opcodes[0x64] = [=]() { LSRm(GetIndexed(FetchByte())); }; // LSR indexed
-		m_opcodes[0x65] = [=]() { LSRm(GetIndexed(FetchByte())); }; // LSR indexed (undocumented)
-		m_opcodes[0x66] = [=]() { RORm(GetIndexed(FetchByte())); }; // ROR indexed
-		m_opcodes[0x67] = [=]() { ASRm(GetIndexed(FetchByte())); }; // ASR indexed
-		m_opcodes[0x68] = [=]() { ASLm(GetIndexed(FetchByte())); }; // ASL indexed
-		m_opcodes[0x69] = [=]() { ROLm(GetIndexed(FetchByte())); }; // ROL indexed
-		m_opcodes[0x6A] = [=]() { DECm(GetIndexed(FetchByte())); }; // DEC indexed
-		m_opcodes[0x6B] = [=]() { XDECm(GetIndexed(FetchByte())); }; // XDEC indexed (undocumented)
-		m_opcodes[0x6C] = [=]() { INCm(GetIndexed(FetchByte())); }; // INC indexed
+		m_opcodes[0x60] = [=]() { MEMIndexedOp(&CPU6809::NEG); }; // NEG indexed
+		m_opcodes[0x61] = [=]() { MEMIndexedOp(&CPU6809::NEG); }; // NEG indexed (undocumented)
+		m_opcodes[0x62] = [=]() { MEMIndexedOp(&CPU6809::XNC); }; // XNC indexed (undocumented)
+		m_opcodes[0x63] = [=]() { MEMIndexedOp(&CPU6809::COM); }; // COM indexed
+		m_opcodes[0x64] = [=]() { MEMIndexedOp(&CPU6809::LSR); }; // LSR indexed
+		m_opcodes[0x65] = [=]() { MEMIndexedOp(&CPU6809::LSR); }; // LSR indexed (undocumented)
+		m_opcodes[0x66] = [=]() { MEMIndexedOp(&CPU6809::ROR); }; // ROR indexed
+		m_opcodes[0x67] = [=]() { MEMIndexedOp(&CPU6809::ASR); }; // ASR indexed
+		m_opcodes[0x68] = [=]() { MEMIndexedOp(&CPU6809::ASL); }; // ASL indexed
+		m_opcodes[0x69] = [=]() { MEMIndexedOp(&CPU6809::ROL); }; // ROL indexed
+		m_opcodes[0x6A] = [=]() { MEMIndexedOp(&CPU6809::DEC); }; // DEC indexed
+		m_opcodes[0x6B] = [=]() { MEMIndexedOp(&CPU6809::XDEC); }; // XDEC indexed (undocumented)
+		m_opcodes[0x6C] = [=]() { MEMIndexedOp(&CPU6809::INC); }; // INC indexed
 		m_opcodes[0x6D] = [=]() { TST(GetMemIndexedByte()); }; // TST indirect
 		m_opcodes[0x6E] = [=]() { JMP(GetIndexed(FetchByte())); }; // JMP indexed
-		m_opcodes[0x6F] = [=]() { CLRm(GetIndexed(FetchByte())); }; // CLR indexed
+		m_opcodes[0x6F] = [=]() { MEMIndexedOp(&CPU6809::CLR); }; // CLR indexed
 
-		m_opcodes[0x70] = [=]() { NEGm(GetExtended()); }; // NEG extended
-		m_opcodes[0x71] = [=]() { NEGm(GetExtended()); }; // NEG extended (undocumented)
-		m_opcodes[0x72] = [=]() { XNCm(GetExtended()); }; // NEG extended (undocumented)
-		m_opcodes[0x73] = [=]() { COMm(GetExtended()); }; // COM extended
-		m_opcodes[0x74] = [=]() { LSRm(GetExtended()); }; // LSR extended
-		m_opcodes[0x76] = [=]() { RORm(GetExtended()); }; // ROR extended
-		m_opcodes[0x77] = [=]() { ASRm(GetExtended()); }; // ASR extended
-		m_opcodes[0x78] = [=]() { ASLm(GetExtended()); }; // ASL extended
-		m_opcodes[0x79] = [=]() { ROLm(GetExtended()); }; // ROL extended
-		m_opcodes[0x7A] = [=]() { DECm(GetExtended()); }; // DEC extended
-		m_opcodes[0x7B] = [=]() { XDECm(GetExtended()); }; // XDEC extended (undocumented)
-		m_opcodes[0x7C] = [=]() { INCm(GetExtended()); }; // INC extended
+		m_opcodes[0x70] = [=]() { MEMExtendedOp(&CPU6809::NEG); }; // NEG extended
+		m_opcodes[0x71] = [=]() { MEMExtendedOp(&CPU6809::NEG); }; // NEG extended (undocumented)
+		m_opcodes[0x72] = [=]() { MEMExtendedOp(&CPU6809::XNC); }; // NEG extended (undocumented)
+		m_opcodes[0x73] = [=]() { MEMExtendedOp(&CPU6809::COM); }; // COM extended
+		m_opcodes[0x74] = [=]() { MEMExtendedOp(&CPU6809::LSR); }; // LSR extended
+		m_opcodes[0x76] = [=]() { MEMExtendedOp(&CPU6809::ROR); }; // ROR extended
+		m_opcodes[0x77] = [=]() { MEMExtendedOp(&CPU6809::ASR); }; // ASR extended
+		m_opcodes[0x78] = [=]() { MEMExtendedOp(&CPU6809::ASL); }; // ASL extended
+		m_opcodes[0x79] = [=]() { MEMExtendedOp(&CPU6809::ROL); }; // ROL extended
+		m_opcodes[0x7A] = [=]() { MEMExtendedOp(&CPU6809::DEC); }; // DEC extended
+		m_opcodes[0x7B] = [=]() { MEMExtendedOp(&CPU6809::XDEC); }; // XDEC extended (undocumented)
+		m_opcodes[0x7C] = [=]() { MEMExtendedOp(&CPU6809::INC); }; // INC extended
 		m_opcodes[0x7D] = [=]() { TST(GetMemExtendedByte()); }; // TST extended
 		m_opcodes[0x7E] = [=]() { JMP(GetExtended()); }; // JMP extended
-		m_opcodes[0x7F] = [=]() { CLRm(GetExtended()); }; // CLR extended
+		m_opcodes[0x7F] = [=]() { MEMExtendedOp(&CPU6809::CLR); }; // CLR extended
 
 		m_opcodes[0x80] = [=]() { SUB8(m_reg.ab.A, FetchByte()); }; // SUBA imm
 		m_opcodes[0x81] = [=]() { CMP8(m_reg.ab.A, FetchByte()); }; // CMPA imm
@@ -467,6 +467,30 @@ namespace emul
 	{
 		ADDRESS src = GetExtended();
 		return m_memory.Read16be(src);
+	}
+
+	void CPU6809::MEMDirectOp(std::function<void(CPU6809*, BYTE&)> func)
+	{
+		const ADDRESS dest = GetDirect(FetchByte());
+		BYTE value = m_memory.Read8(dest);
+		func(this, value);
+		m_memory.Write8(dest, value);
+	}
+
+	void CPU6809::MEMIndexedOp(std::function<void(CPU6809*, BYTE&)> func)
+	{
+		const ADDRESS dest = GetIndexed(FetchByte());
+		BYTE value = m_memory.Read8(dest);
+		func(this, value);
+		m_memory.Write8(dest, value);
+	}
+
+	void CPU6809::MEMExtendedOp(std::function<void(CPU6809*, BYTE&)> func)
+	{
+		const ADDRESS dest = GetExtended();
+		BYTE value = m_memory.Read8(dest);
+		func(this, value);
+		m_memory.Write8(dest, value);
 	}
 
 	WORD& CPU6809::GetIndexedRegister(BYTE idx)
@@ -1062,13 +1086,6 @@ namespace emul
 		SetFlag(FLAG_C, true);
 	}
 
-	void CPU6809::COMm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		COM(value);
-		m_memory.Write8(dest, value);
-	}
-
 	void CPU6809::CLR(BYTE& dest)
 	{
 		dest = 0;
@@ -1077,29 +1094,10 @@ namespace emul
 		SetFlag(FLAG_C, false);
 	}
 
-	void CPU6809::CLRm(ADDRESS dest)
-	{
-		BYTE value = 0;
-		m_memory.Write8(dest, value);
-
-		AdjustNZ(value);
-		SetFlag(FLAG_V, false);
-		SetFlag(FLAG_C, false);
-	}
-
 	void CPU6809::XCLR(BYTE& dest)
 	{
 		dest = 0;
 		AdjustNZ(dest);
-		SetFlag(FLAG_V, false);
-	}
-
-	void CPU6809::XCLRm(ADDRESS dest)
-	{
-		BYTE value = 0;
-		m_memory.Write8(dest, value);
-
-		AdjustNZ(value);
 		SetFlag(FLAG_V, false);
 	}
 
@@ -1114,13 +1112,6 @@ namespace emul
 		AdjustNZ(dest);
 	}
 
-	void CPU6809::ASLm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		ASL(value);
-		m_memory.Write8(dest, value);
-	}
-
 	void CPU6809::ASR(BYTE& dest)
 	{
 		bool sign = GetMSB(dest);
@@ -1133,13 +1124,6 @@ namespace emul
 		AdjustNZ(dest);
 	}
 
-	void CPU6809::ASRm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		ASR(value);
-		m_memory.Write8(dest, value);
-	}
-
 	void CPU6809::LSR(BYTE& dest)
 	{
 		bool lsb = GetLSB(dest);
@@ -1147,13 +1131,6 @@ namespace emul
 
 		SetFlag(FLAG_C, lsb);
 		AdjustNZ(dest);
-	}
-
-	void CPU6809::LSRm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		LSR(value);
-		m_memory.Write8(dest, value);
 	}
 
 	void CPU6809::ROL(BYTE& dest)
@@ -1169,13 +1146,6 @@ namespace emul
 		AdjustNZ(dest);
 	}
 
-	void CPU6809::ROLm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		ROL(value);
-		m_memory.Write8(dest, value);
-	}
-
 	void CPU6809::ROR(BYTE& dest)
 	{
 		bool oldCarry = GetFlag(FLAG_C);
@@ -1185,13 +1155,6 @@ namespace emul
 		SetBit(dest, 7, oldCarry);
 
 		AdjustNZ(dest);
-	}
-
-	void CPU6809::RORm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		ROR(value);
-		m_memory.Write8(dest, value);
 	}
 
 	void CPU6809::EOR(BYTE& dest, BYTE src)
@@ -1219,12 +1182,6 @@ namespace emul
 		++dest;
 		AdjustNZ(dest);
 	}
-	void CPU6809::INCm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		INC(value);
-		m_memory.Write8(dest, value);
-	}
 
 	void CPU6809::DEC(BYTE& dest)
 	{
@@ -1232,25 +1189,12 @@ namespace emul
 		--dest;
 		AdjustNZ(dest);
 	}
-	void CPU6809::DECm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		DEC(value);
-		m_memory.Write8(dest, value);
-	}
 
 	void CPU6809::XDEC(BYTE& dest)
 	{
 		SetFlag(FLAG_C, dest == 0);
 		DEC(dest);
 	}
-	void CPU6809::XDECm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		XDEC(value);
-		m_memory.Write8(dest, value);
-	}
-
 
 	void CPU6809::TST(const BYTE dest)
 	{
@@ -1327,13 +1271,6 @@ namespace emul
 		BYTE tempDest = 0;
 		SUB8(tempDest, dest);
 		dest = tempDest;
-	}
-
-	void CPU6809::NEGm(ADDRESS dest)
-	{
-		BYTE value = m_memory.Read8(dest);
-		NEG(value);
-		m_memory.Write8(dest, value);
 	}
 
 	void CPU6809::MUL()

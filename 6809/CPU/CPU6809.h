@@ -222,6 +222,10 @@ namespace emul
 		BYTE& GetReg8(RegCode reg);
 		WORD& GetReg16(RegCode reg);
 
+		void MEMDirectOp(std::function<void(CPU6809*, BYTE&)> func);
+		void MEMIndexedOp(std::function<void(CPU6809*, BYTE&)> func);
+		void MEMExtendedOp(std::function<void(CPU6809*, BYTE&)> func);
+
 		// Opcodes
 
 		void LEA(WORD& dest, bool setZero);
@@ -274,20 +278,10 @@ namespace emul
 
 		// Logical
 		void ASL(BYTE& dest); // Arithmetic Shift Left
-		void ASLm(ADDRESS dest);
-
 		void ASR(BYTE& dest); // Arithmetic Shift Right
-		void ASRm(ADDRESS dest);
-
 		void LSR(BYTE& dest); // Logical Shift Right
-		void LSRm(ADDRESS dest);
-
 		void ROL(BYTE& dest); // Rotate Left Through Carry
-		void ROLm(ADDRESS dest);
-
 		void ROR(BYTE& dest); // Rotate Right Through Carry
-		void RORm(ADDRESS dest);
-
 		void EOR(BYTE& dest, BYTE src); // Logical XOR
 		void OR(BYTE& dest, BYTE src); // Logical OR
 		void AND(BYTE& dest, BYTE src); // Logical AND
@@ -296,19 +290,10 @@ namespace emul
 		void BIT(BYTE dest, BYTE src) { return AND(dest, src); }
 
 		void CLR(BYTE& dest); // Clear
-		void CLRm(ADDRESS dest);
-
 		void COM(BYTE& dest); // Complement
-		void COMm(ADDRESS dest);
-
 		void INC(BYTE& dest); // Increment
-		void INCm(ADDRESS dest);
-
 		void DEC(BYTE& dest); // Decrement
-		void DECm(ADDRESS dest);
-
 		void TST(const BYTE dest); // Sets N & Z flags
-
 		void SEX(); // Sign Extend B to D
 
 		// Arithmetic
@@ -328,20 +313,13 @@ namespace emul
 
 		// Negate operand, dest' <- (0 - dest)
 		void NEG(BYTE& dest);
-		void NEGm(ADDRESS dest);
 
 		void MUL(); // D' = A * B
 
 		// Undocumented
 		void XNC(BYTE& dest) { GetFlag(FLAG_C) ? COM(dest) : NEG(dest); }
-		void XNCm(ADDRESS dest) { GetFlag(FLAG_C) ? COMm(dest) : NEGm(dest); }
-
 		void XCLR(BYTE& dest);
-		void XCLRm(ADDRESS dest);
-
 		void XDEC(BYTE& dest);
-		void XDECm(ADDRESS dest);
-
 		void XRES();
 
 		friend class Monitor6809;
