@@ -332,6 +332,18 @@ namespace emul
 
 		void MUL(); // D' = A * B
 
+		// Undocumented
+		void XNC(BYTE& dest) { GetFlag(FLAG_C) ? COM(dest) : NEG(dest); }
+		void XNCm(ADDRESS dest) { GetFlag(FLAG_C) ? COMm(dest) : NEGm(dest); }
+
+		void XCLR(BYTE& dest);
+		void XCLRm(ADDRESS dest);
+
+		void XDEC(BYTE& dest);
+		void XDECm(ADDRESS dest);
+
+		void XRES();
+
 		friend class Monitor6809;
 	};
 }
