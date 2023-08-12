@@ -33,7 +33,7 @@ namespace pia
 		bool GetCassetteOut() const { return emul::GetBit(m_portA.GetOutput(), 6); }
 
 		// Port A Inputs
-		void SetLightPenInput(bool set) { m_portA.SetInputBit(5, set); }
+		void SetLightPenButtonInput(bool set) { m_portA.SetInputBit(5, set); }
 		void SetCassetteInput(bool set) { m_portA.SetInputBit(7, set); }
 
 		// Port B Outputs
@@ -47,8 +47,8 @@ namespace pia
 		// CA2: Tape drive motor Output
 		bool GetTapeMotorState() const { return m_portA.GetC2(); }
 
-		// CA1: Light pen button Input
-		void SetLightPen(bool set) { m_portA.SetC1(set); }
+		// CA1: Light pen interrupt Input
+		void SetLightPenInterrupt(bool set) { m_portA.SetC1(set); }
 
 		// CB2: Video incrustation enable Output
 		bool GetVideoIncrustrationEnable() const { return m_portB.GetC2(); }
