@@ -404,7 +404,7 @@ namespace emul
 	{
 		char reg = GetIndexedRegister(idx);
 
-		bool indirect = GetBit(idx, 4);
+		bool indirect = GetBit(idx, 7) && GetBit(idx, 4);
 
 		std::ostringstream os;
 		if (indirect)
@@ -414,28 +414,40 @@ namespace emul
 
 		if (!GetMSB(idx)) //,R + 5 bit offset
 		{
+			bool signBit = GetBit(idx, 4);
 			BYTE offset = idx;
-			os << '$' << std::setw(2) << std::setfill('0') << std::hex << (offset & 0b11111) << ',' << reg;
+			SetBitMask(offset, 0b11100000, signBit);
+
+			os << static_cast<int16_t>((SBYTE)offset) << ',' << reg;
 		}
 		else switch (idx & 0b1111)
 		{
+		// Constant Offset from R (twos complement offset)
+		case 0b0100: os << ',' << reg; break; // ,R + 0 Offset
+		case 0b1000: os << "{s8}," << reg; opcode.imm = Opcode::IMM::S8; break; // ,R + 8 bit offset
+		case 0b1001: os << "{s16}," << reg; opcode.imm = Opcode::IMM::S16; break; // ,R + 16 bit offset
+
+		// Accumulator Offset from R (twos complement offset)
+		case 0b0101: os << "B," << reg; break; // ,R + B Offset
+		case 0b0110: os << "A," << reg; break; // ,R + A Offset
+		case 0b1011: os << "D," << reg; break; // ,R + D offset
+
+		// Auto Increment/Decrement of R
 		case 0b0000: os << ',' << reg << '+'; break; // ,R+
 		case 0b0001: os << ',' << reg << "++"; break; // ,R++
 		case 0b0010: os << ",-" << reg; break; // ,-R
 		case 0b0011: os << ",--" << reg; break; // ,--R
-		case 0b0100: os << ',' << reg; break; // ,R + 0 Offset
-		case 0b0101: os << "B," << reg; break; // ,R + B Offset
-		case 0b0110: os << "A," << reg; break; // ,R + A Offset
-			// 0b0111: n/a
-		case 0b1000: os << "{i8}," << reg; opcode.imm = Opcode::IMM::W8; break; // ,R + 8 bit offset
-		case 0b1001: os << "{i16}," << reg; opcode.imm = Opcode::IMM::W16; break; // ,R + 16 bit offset
-			// 0b1010: n/a
-		case 0b1011: os << "D," << reg; break; // ,R + D offset
-		case 0b1100: os << "{i8},PCR"; opcode.imm = Opcode::IMM::W8; break; // ,PC + 8 bit offset
-		case 0b1101: os << "{i16},PCR"; opcode.imm = Opcode::IMM::W16; break; // ,PC + 16 bit offset
-			// 0b1110: n/a
+
+		// Constant Offset from PC (twos complement offset)
+		case 0b1100: os << "{s8},PCR"; opcode.imm = Opcode::IMM::S8; break; // ,PC + 8 bit offset
+		case 0b1101: os << "{s16},PCR"; opcode.imm = Opcode::IMM::S16; break; // ,PC + 16 bit offset
+
+		// Extended Indirect
 		case 0b1111: os << ",{i16}"; opcode.imm = Opcode::IMM::W16; break; // [,Address]
 
+		// 0b0111: n/a
+		// 0b1010: n/a
+		// 0b1110: n/a
 		default:
 			throw std::exception("Invalid addressing mode");
 		}
@@ -530,6 +542,23 @@ namespace emul
 
 			sprintf(buf, "$%04X", imm16);
 			Replace(text, "{i16}", buf);
+			break;
+		}
+		case Opcode::IMM::S8: // Signed byte (show as decimal)
+		{
+			BYTE imm8 = m_memory->Read8(++address);
+			decoded.AddRaw(imm8);
+			sprintf(buf, "%d", (SBYTE)imm8);
+			Replace(text, "{s8}", buf);
+			break;
+		}
+		case Opcode::IMM::S16: // Signed word (show as decimal)
+		{
+			WORD imm16 = m_memory->Read16be(++address);
+			++address;
+			decoded.AddRaw(imm16);
+			sprintf(buf, "%d", (SWORD)imm16);
+			Replace(text, "{s16}", buf);
 			break;
 		}
 		case Opcode::IMM::REGREG:

@@ -241,6 +241,9 @@ namespace cpuInfo
 		ret.i16 = text.find("{i16}") != std::string::npos;
 		ret.i32 = text.find("{i32}") != std::string::npos;
 
+		ret.s8 = text.find("{s8}") != std::string::npos;
+		ret.s16 = text.find("{s16}") != std::string::npos;
+
 		bool grp1 = text.find("{grp1}") != std::string::npos;
 		bool grp2 = text.find("{grp2}") != std::string::npos;
 		bool grp3 = text.find("{grp3}") != std::string::npos;
@@ -264,6 +267,8 @@ namespace cpuInfo
 		else if (ret.i8) ret.imm = Opcode::IMM::W8;
 		else if (ret.i16) ret.imm = Opcode::IMM::W16;
 		else if (ret.i32) ret.imm = Opcode::IMM::W32;
+		else if (ret.s8) ret.imm = Opcode::IMM::S8;
+		else if (ret.s16) ret.imm = Opcode::IMM::S16;
 		else ret.imm = Opcode::IMM::NONE;
 
 		// Special case: I16/I8 (8088 ENTER)
