@@ -64,6 +64,15 @@ namespace video
 		virtual bool IsDisplayArea() const = 0;
 
 		// Framebuffer
+
+		// Converts client coordinates (relative to main window) to
+		// coordinates relative to the displayed part of the framebuffer
+		// (i.e. the emulated computer's screen)
+		SDL_Point ClientToDisplayRect(SDL_Point screenPoint) const;
+
+		// The client area (in main window coordinates)
+		const SDL_Rect& GetTargetRect() const { return m_targetRect; }
+
 		void BeginFrame();
 		void NewLine();
 		void DrawAt(uint32_t x, uint32_t y, uint32_t color) { m_fb[y * m_fbWidth + x] = color; }

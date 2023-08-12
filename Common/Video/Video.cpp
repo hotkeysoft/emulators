@@ -269,6 +269,24 @@ namespace video
 		m_targetRect = rect;
 	}
 
+	SDL_Point Video::ClientToDisplayRect(SDL_Point screenPoint) const
+	{
+		// Adjust for border
+		screenPoint.x -= m_targetRect.x;
+		screenPoint.y -= m_targetRect.y;
+
+		SDL_Rect displayRect = GetDisplayRect(m_border);
+		screenPoint.x *= displayRect.w;
+		screenPoint.x /= m_targetRect.w;
+		screenPoint.x -= m_border;
+
+		screenPoint.y *= displayRect.h;
+		screenPoint.y /= m_targetRect.h;
+		screenPoint.y -= m_border;
+
+		return screenPoint;
+	}
+
 	// events::EventHandler
 	bool Video::HandleEvent(SDL_Event& e)
 	{
