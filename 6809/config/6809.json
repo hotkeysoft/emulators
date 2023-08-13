@@ -69,7 +69,7 @@
       { "name": "XANDCC #{i8}","timing": [4] },
       { "name": "RTS",         "timing": [5] },
       { "name": "ABX",         "timing": [3] },
-      { "name": "RTI",         "timing": [6,9] },
+      { "name": "RTI",         "timing": [3] },
       { "name": "CWAI {i8}",   "timing": [20] },
       { "name": "MUL",         "timing": [11] },
       { "name": "XRES",        "timing": [7] },
