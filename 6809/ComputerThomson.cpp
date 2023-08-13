@@ -4,7 +4,6 @@
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPU6809.h"
-#include "Video/VideoThomson.h"
 #include <Sound/Sound.h>
 
 using cfg::CONFIG;
@@ -33,6 +32,7 @@ namespace emul
 		GetVideo().Reset();
 		m_pia.Reset();
 		m_keyboard.Reset();
+		m_lightpen.Reset();
 	}
 
 	void ComputerThomson::Init(WORD baseRAM)
@@ -42,12 +42,14 @@ namespace emul
 		InitROM();
 		InitRAM();
 		InitIO();
+
 		InitInputs(1000000, 20000);
+
 		GetInputs().InitKeyboard(&m_keyboard);
+		InitVideo();
+		InitLightpen();
 
 		SOUND().SetBaseClock(1000000);
-
-		InitVideo();
 	}
 
 	void ComputerThomson::InitCPU(const char* cpuid)
@@ -90,24 +92,45 @@ namespace emul
 		m_memory.Allocate(&m_ioA7C0, 0xA7C0);
 	}
 
+	void ComputerThomson::InitLightpen()
+	{
+		m_lightpen.EnableLog(CONFIG().GetLogLevel("mouse"));
+		m_lightpen.SetPIA(&m_pia);
+		m_lightpen.SetVideo(&GetVideo());
+		GetInputs().InitMouse(&m_lightpen);
+	}
+
 	void ComputerThomson::OnScreenMapChange(ScreenRAM map)
 	{
-		LogPrintf(LOG_INFO, "OnScreenMapChange PIXEL=%d", map);
+		LogPrintf(LOG_DEBUG, "OnScreenMapChange PIXEL=%d", map);
 		m_memory.Allocate((map == ScreenRAM::PIXEL) ? &m_pixelRAM : &m_attributeRAM, 0);
 	}
+
 	void ComputerThomson::OnBorderChange(BYTE borderRGBP)
 	{
-		LogPrintf(LOG_INFO, "OnBorderChange: %X", borderRGBP);
+		LogPrintf(LOG_DEBUG, "OnBorderChange: %X", borderRGBP);
 
-		static_cast<video::VideoThomson*>(m_video)->SetBorderColor(borderRGBP);
+		GetVideo().SetBorderColor(borderRGBP);
 	}
 
 	void ComputerThomson::InitVideo()
 	{
 		video::VideoThomson* video = new video::VideoThomson();
 		video->EnableLog(CONFIG().GetLogLevel("video"));
+
+
 		video->Init(&m_pixelRAM, &m_attributeRAM);
 		m_video = video;
+
+		constexpr uint32_t DEFAULT_BORDER = 16;
+		uint32_t border = CONFIG().GetValueInt32("video", "border", DEFAULT_BORDER);
+		if (border < 0 && border > 64)
+		{
+			border = DEFAULT_BORDER;
+		}
+		m_video->SetBorder(border);
+
+		m_ioA7C0.AddDevice(*video, 0b100100, 0b111100);
 	}
 
 	bool ComputerThomson::Step()
@@ -119,14 +142,18 @@ namespace emul
 
 		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
+		auto& video = GetVideo();
 		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
 			++g_ticks;
 
-			SOUND().PlayMono(m_pia.GetBuzzer()*10000);
+			if (!m_turbo)
+			{
+				SOUND().PlayMono(m_pia.GetBuzzer() * 10000);
+			}
 
-			m_video->Tick();
-			m_pia.SetVSync(m_video->IsVSync());
+			video.Tick();
+			m_pia.SetVSync(video.IsVSync());
 
 			GetCPU().SetIRQ(m_pia.GetIRQB());
 			GetCPU().SetFIRQ(m_pia.GetIRQA());
@@ -135,6 +162,12 @@ namespace emul
 			if (GetInputs().IsQuit())
 			{
 				return false;
+			}
+
+			if (video.IsLightpen())
+			{
+				m_pia.SetLightPenInterrupt(false);
+				m_pia.SetLightPenInterrupt(true);
 			}
 		}
 

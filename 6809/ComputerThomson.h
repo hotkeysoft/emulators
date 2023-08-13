@@ -5,6 +5,8 @@
 #include "IO/InputEvents.h"
 #include "Hardware/Device6520MO5_PIA.h"
 #include "IO/DeviceKeyboardThomson.h"
+#include "IO/DeviceLightpenThomson.h"
+#include "Video/VideoThomson.h"
 
 namespace emul
 {
@@ -17,6 +19,8 @@ namespace emul
 
 		virtual std::string_view GetName() const override { return "Thomson"; };
 		virtual std::string_view GetID() const override { return "thomson"; };
+
+		virtual std::string_view GetModel() const override { return "MO5"; };
 
 		virtual void Init(WORD baseRAM) override;
 		virtual void Reset() override;
@@ -35,10 +39,13 @@ namespace emul
 		void InitRAM();
 		void InitIO();
 		void InitVideo();
+		void InitLightpen();
 
 		// pia::EventHandler
 		virtual void OnScreenMapChange(pia::ScreenRAM map) override;
 		virtual void OnBorderChange(BYTE borderRGBP) override;
+
+		video::VideoThomson& GetVideo() { return static_cast<video::VideoThomson&>(*m_video); }
 
 		emul::MemoryBlock m_pixelRAM;
 		emul::MemoryBlock m_attributeRAM;
@@ -51,5 +58,6 @@ namespace emul
 
 		pia::Device6520MO5_PIA m_pia;
 		kbd::DeviceKeyboardThomson m_keyboard;
+		mouse::DeviceLightpenThomson m_lightpen;
 	};
 }

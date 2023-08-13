@@ -30,6 +30,11 @@ namespace video
         uint32_t GetX() const { return m_currX - LEFT_BORDER; }
         uint32_t GetY() const { return m_currY - TOP_BORDER; }
 
+        void SetLightPenPos(int x, int y);
+        bool IsLightpen() const { return m_lightPen; }
+
+        virtual uint32_t GetBackgroundColor() const override { return m_borderColor; }
+
     protected:
         void Draw();
 
@@ -78,12 +83,28 @@ namespace video
         static const uint32_t LEFT_BORDER = H_BLANK / 2;
         static const uint32_t LEFT_BORDER_PX = LEFT_BORDER * CHAR_WIDTH;
         static const uint32_t RIGHT_BORDER = H_DISPLAY + LEFT_BORDER;
+        static const uint32_t RIGHT_BORDER_PX = RIGHT_BORDER * CHAR_WIDTH;
 
         static const uint32_t TOP_BORDER = V_BLANK / 2;
         static const uint32_t BOTTOM_BORDER = V_DISPLAY + TOP_BORDER;
 
+        static const uint32_t LIGHTPEN_OFFSET = 12;
+        static const uint32_t V_LIGHTPEN_MARGIN = 10;
+
         uint32_t m_currX = 0;
         uint32_t m_currY = 0;
+
+        bool m_lightPen = false; // true if the light pen currently "sees" a pixel
+        bool m_lightPenValid = false; // true if inside screen bounds (including borders)
+        uint32_t m_lightPenX = 0; // X position in "chars" (= 8 pixels)
+        uint32_t m_lightPenXOffsetPx; // X Pixel offset
+        uint32_t m_lightPenY = 0;
+
+        void LatchLightpenCounters(); // Updates counters below
+        WORD m_scrClk = 0; // Screen clock, in pixels [0..320*200]
+        bool m_INILN = false;
+        bool m_INITN = false;
+        bool m_LT3 = false;
 
         // Only valid while IsDisplayArea()
         ADDRESS m_currChar = 0;
