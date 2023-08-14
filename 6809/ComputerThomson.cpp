@@ -13,14 +13,19 @@ using ScreenRAM = pia::ScreenRAM;
 
 namespace emul
 {
+	const std::map<std::string, ComputerThomson::Model> ComputerThomson::s_modelMap = {
+		{"mo5", Model::MO5},
+		{"to7", Model::MO7},
+	};
+
 	ComputerThomson::ComputerThomson() :
 		Logger("Thomson"),
 		ComputerBase(m_memory, 64),
-		IOConnector(63), // TODO: Temp, decode whole block
+		IOConnector(63),
 		m_pixelRAM("RAM_PIXEL", 0x2000, emul::MemoryType::RAM),
 		m_attributeRAM("RAM_ATTR", 0x2000, emul::MemoryType::RAM),
-		m_userRAM("RAM_USER", 0x8000, emul::MemoryType::RAM),
-		m_osROM("ROM_OS", 0x1000, emul::MemoryType::ROM),
+		m_userRAM("RAM_USER", emul::MemoryType::RAM),
+		m_osROM("ROM_OS", emul::MemoryType::ROM),
 		m_basicROM("ROM_BASIC", 0x3000, emul::MemoryType::ROM),
 		m_ioA7C0("IO", 0x40)
 	{
@@ -33,12 +38,14 @@ namespace emul
 		m_pia.Reset();
 		m_keyboard.Reset();
 		m_lightpen.Reset();
+		OnScreenMapChange(ScreenRAM::PIXEL);
 	}
 
 	void ComputerThomson::Init(WORD baseRAM)
 	{
 		ComputerBase::Init(emul::CPUID_6809, baseRAM);
 
+		InitModel();
 		InitROM();
 		InitRAM();
 		InitIO();
@@ -62,24 +69,89 @@ namespace emul
 		}
 	}
 
+	ComputerThomson::Model ComputerThomson::StringToModel(const char* str)
+	{
+		auto m = s_modelMap.find(str);
+		if (m != s_modelMap.end())
+		{
+			return m->second;
+		}
+		return Model::UNKNOWN;
+	}
+	std::string ComputerThomson::ModelToString(ComputerThomson::Model model)
+	{
+		for (auto curr : s_modelMap)
+		{
+			if (curr.second == model)
+			{
+				return curr.first.c_str();
+			}
+		}
+		return "unknown";
+	}
+
+	void ComputerThomson::InitModel()
+	{
+		std::string model = CONFIG().GetValueStr("core", "model", "mo5");
+
+		m_model = StringToModel(model.c_str());
+
+		if (m_model == Model::UNKNOWN)
+		{
+			m_model = Model::MO5;
+			LogPrintf(LOG_WARNING, "Unknown model [%s], using default", model.c_str());
+		}
+
+		LogPrintf(LOG_INFO, "InitModel: [%s]", ModelToString(m_model).c_str());
+	}
+
 	void ComputerThomson::InitROM()
 	{
-		m_osROM.LoadFromFile("data/Thomson/MO5/mo5.os.bin");
-		m_memory.Allocate(&m_osROM, 0xF000);
 
-		m_basicROM.LoadFromFile("data/Thomson/MO5/mo5.basic.bin");
-		m_memory.Allocate(&m_basicROM, 0xC000);
+		switch (m_model)
+		{
+		case Model::MO5:
+		{
+			std::string osROM = m_basePathROM + "/MO5/mo5.os.bin";
+			std::string basicROM = m_basePathROM + "/MO5/mo5.basic.bin";
+
+			m_osROM.Alloc(0x1000);
+			m_osROM.LoadFromFile(osROM.c_str());
+			m_memory.Allocate(&m_osROM, 0xF000);
+
+			m_basicROM.LoadFromFile(basicROM.c_str());
+			m_memory.Allocate(&m_basicROM, 0xC000);
+			break;
+		}
+		case Model::MO7:
+			std::string osROM = m_basePathROM + "/TO7/to7.os.bin";
+
+			m_osROM.Alloc(0x1800);
+			m_osROM.LoadFromFile(osROM.c_str());
+			m_memory.Allocate(&m_osROM, 0xE800);
+			break;
+		}
 	}
 
 	void ComputerThomson::InitRAM()
 	{
-		m_userRAM.Clear(0x69);
-		m_memory.Allocate(&m_userRAM, 0x2000);
+		switch (m_model)
+		{
+		case Model::MO5:
+			m_userRAM.Alloc(0x8000);
+			m_memory.Allocate(&m_userRAM, 0x2000);
+			m_screenRAMBase = 0;
+			break;
+		case Model::MO7:
+			m_userRAM.Alloc(0x4000);
+			m_memory.Allocate(&m_userRAM, 0x6000);
+			m_screenRAMBase = 0x4000;
+			break;
+		}
 
-		m_pixelRAM.Clear(0xFA);
-		m_attributeRAM.Clear(0xAF);
-
-		OnScreenMapChange(ScreenRAM::PIXEL);
+		m_userRAM.Clear(0xF0);
+		m_pixelRAM.Clear(0x0F);
+		m_attributeRAM.Clear(0xF0);
 	}
 
 	void ComputerThomson::InitIO()
@@ -103,7 +175,7 @@ namespace emul
 	void ComputerThomson::OnScreenMapChange(ScreenRAM map)
 	{
 		LogPrintf(LOG_DEBUG, "OnScreenMapChange PIXEL=%d", map);
-		m_memory.Allocate((map == ScreenRAM::PIXEL) ? &m_pixelRAM : &m_attributeRAM, 0);
+		m_memory.Allocate((map == ScreenRAM::PIXEL) ? &m_pixelRAM : &m_attributeRAM, m_screenRAMBase);
 	}
 
 	void ComputerThomson::OnBorderChange(BYTE borderRGBP)
@@ -117,7 +189,6 @@ namespace emul
 	{
 		video::VideoThomson* video = new video::VideoThomson();
 		video->EnableLog(CONFIG().GetLogLevel("video"));
-
 
 		video->Init(&m_pixelRAM, &m_attributeRAM);
 		m_video = video;
@@ -177,7 +248,7 @@ namespace emul
 	void ComputerThomson::Serialize(json& to)
 	{
 		ComputerBase::Serialize(to);
-		//to["model"] = ModelToString(m_model);
+		to["model"] = ModelToString(m_model);
 
 		m_pia.Serialize(to["pia"]);
 	}
@@ -185,12 +256,12 @@ namespace emul
 	void ComputerThomson::Deserialize(const json& from)
 	{
 		ComputerBase::Deserialize(from);
-		//std::string modelStr = from["model"];
-		//Model model = StringToModel(modelStr.c_str());
-		//if ((m_model == Model::UNKNOWN) || (model != m_model))
-		//{
-		//	throw SerializableException("Computer: Model is not compatible", SerializationError::COMPAT);
-		//}
+		std::string modelStr = from["model"];
+		Model model = StringToModel(modelStr.c_str());
+		if ((m_model == Model::UNKNOWN) || (model != m_model))
+		{
+			throw SerializableException("Computer: Model is not compatible", SerializationError::COMPAT);
+		}
 
 		m_pia.Deserialize(from["pia"]);
 	}
