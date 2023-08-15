@@ -45,6 +45,7 @@
     </Filter>
     <Filter Include="Header Files\Hardware">
       <UniqueIdentifier>{dfc1a063-d245-42a8-b8e6-8ebdd8f6da3a}</UniqueIdentifier>
+      <Extensions>Hardware\*.h</Extensions>
     </Filter>
     <Filter Include="Source Files\Hardware">
       <UniqueIdentifier>{1b9c5724-209a-4242-94b5-539d71118a9c}</UniqueIdentifier>
@@ -215,6 +216,12 @@
     </ClInclude>
     <ClInclude Include="IO\DeviceLightpenThomson.h">
       <Filter>Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\PIAEventsThomson.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\DevicePIAThomson.h">
+      <Filter>Header Files\Hardware</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "DeviceLightpenThomson.h"
 
-#include "Hardware/Device6520MO5_PIA.h"
+#include "Hardware/DevicePIAThomson.h"
 #include "../Video/VideoThomson.h"
 
 namespace mouse

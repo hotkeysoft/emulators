@@ -4,12 +4,14 @@
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPU6809.h"
+#include "Hardware/Device6520MO5_PIA.h"
 #include <Sound/Sound.h>
 
 using cfg::CONFIG;
 using sound::SOUND;
+using pia::thomson::Device6520MO5_PIA;
 
-using ScreenRAM = pia::ScreenRAM;
+using ScreenRAM = pia::thomson::ScreenRAM;
 
 namespace emul
 {
@@ -27,7 +29,7 @@ namespace emul
 		m_userRAM("RAM_USER", emul::MemoryType::RAM),
 		m_osROM("ROM_OS", emul::MemoryType::ROM),
 		m_basicROM("ROM_BASIC", 0x3000, emul::MemoryType::ROM),
-		m_ioA7C0("IO", 0x40)
+		m_io("IO", 0x40)
 	{
 	}
 
@@ -35,7 +37,7 @@ namespace emul
 	{
 		ComputerBase::Reset();
 		GetVideo().Reset();
-		m_pia.Reset();
+		m_pia->Reset();
 		m_keyboard.Reset();
 		m_lightpen.Reset();
 		OnScreenMapChange(ScreenRAM::PIXEL);
@@ -107,7 +109,6 @@ namespace emul
 
 	void ComputerThomson::InitROM()
 	{
-
 		switch (m_model)
 		{
 		case Model::MO5:
@@ -124,12 +125,16 @@ namespace emul
 			break;
 		}
 		case Model::MO7:
+		{
 			std::string osROM = m_basePathROM + "/TO7/to7.os.bin";
 
 			m_osROM.Alloc(0x1800);
 			m_osROM.LoadFromFile(osROM.c_str());
 			m_memory.Allocate(&m_osROM, 0xE800);
 			break;
+		}
+		default:
+			throw std::exception("not possible");
 		}
 	}
 
@@ -147,6 +152,8 @@ namespace emul
 			m_memory.Allocate(&m_userRAM, 0x6000);
 			m_screenRAMBase = 0x4000;
 			break;
+		default:
+			throw std::exception("not possible");
 		}
 
 		m_userRAM.Clear(0xF0);
@@ -156,18 +163,32 @@ namespace emul
 
 	void ComputerThomson::InitIO()
 	{
-		m_pia.EnableLog(CONFIG().GetLogLevel("pia"));
-		m_pia.Init(&m_keyboard);
-		m_pia.SetPIAEventHandler(this);
-
-		m_ioA7C0.AddDevice(m_pia, 0, 0b111100);
-		m_memory.Allocate(&m_ioA7C0, 0xA7C0);
+		switch (m_model)
+		{
+		case Model::MO5:
+		{
+			Device6520MO5_PIA* pia = new Device6520MO5_PIA();
+			pia->EnableLog(CONFIG().GetLogLevel("pia"));
+			pia->Init(&m_keyboard);
+			m_io.AddDevice(*pia, 0, 0b111100);
+			m_memory.Allocate(&m_io, 0xA7C0);
+			m_pia = pia;
+			break;
+		}
+		case Model::MO7:
+		{
+			break;
+		}
+		default:
+			throw std::exception("not possible");
+		}
+		m_pia->SetPIAEventHandler(this);
 	}
 
 	void ComputerThomson::InitLightpen()
 	{
 		m_lightpen.EnableLog(CONFIG().GetLogLevel("mouse"));
-		m_lightpen.SetPIA(&m_pia);
+		m_lightpen.SetPIA(m_pia);
 		m_lightpen.SetVideo(&GetVideo());
 		GetInputs().InitMouse(&m_lightpen);
 	}
@@ -201,7 +222,17 @@ namespace emul
 		}
 		m_video->SetBorder(border);
 
-		m_ioA7C0.AddDevice(*video, 0b100100, 0b111100);
+		switch (m_model)
+		{
+		case Model::MO5:
+			// 0xA7E4..0xA7E7 (base = 0xA7C0)
+			m_io.AddDevice(*video, 0b100100, 0b111100);
+			break;
+		case Model::MO7: // No gate array on MO7
+			break;
+		default:
+			throw std::exception("not possible");
+		}
 	}
 
 	bool ComputerThomson::Step()
@@ -220,14 +251,19 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(m_pia.GetBuzzer() * 10000);
+				SOUND().PlayMono(m_pia->GetBuzzer() * 10000);
 			}
 
 			video.Tick();
-			m_pia.SetVSync(video.IsVSync());
+			m_pia->SetVSync(video.IsVSync());
 
-			GetCPU().SetIRQ(m_pia.GetIRQB());
-			GetCPU().SetFIRQ(m_pia.GetIRQA());
+			if (video.IsLightpen())
+			{
+				m_pia->TriggerLightPenInterrupt();
+			}
+
+			GetCPU().SetIRQ(m_pia->GetIRQ());
+			GetCPU().SetFIRQ(m_pia->GetFIRQ());
 
 			GetInputs().Tick();
 			if (GetInputs().IsQuit())
@@ -235,11 +271,6 @@ namespace emul
 				return false;
 			}
 
-			if (video.IsLightpen())
-			{
-				m_pia.SetLightPenInterrupt(false);
-				m_pia.SetLightPenInterrupt(true);
-			}
 		}
 
 		return true;
@@ -250,7 +281,7 @@ namespace emul
 		ComputerBase::Serialize(to);
 		to["model"] = ModelToString(m_model);
 
-		m_pia.Serialize(to["pia"]);
+		m_pia->Serialize(to["pia"]);
 	}
 
 	void ComputerThomson::Deserialize(const json& from)
@@ -263,6 +294,6 @@ namespace emul
 			throw SerializableException("Computer: Model is not compatible", SerializationError::COMPAT);
 		}
 
-		m_pia.Deserialize(from["pia"]);
+		m_pia->Deserialize(from["pia"]);
 	}
 }

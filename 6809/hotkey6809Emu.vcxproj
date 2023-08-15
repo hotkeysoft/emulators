@@ -56,6 +56,8 @@
     <ClInclude Include="Computer6809.h" />
     <ClInclude Include="ComputerThomson.h" />
     <ClInclude Include="CPU\CPU6809.h" />
+    <ClInclude Include="Hardware\DevicePIAThomson.h" />
+    <ClInclude Include="Hardware\PIAEventsThomson.h" />
     <ClInclude Include="IO\DeviceLightpenThomson.h" />
     <ClInclude Include="EdgeDetectLatch.h" />
     <ClInclude Include="Hardware\Device6520.h" />

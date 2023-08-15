@@ -3,16 +3,18 @@
 #include <Computer/ComputerBase.h>
 #include <CPU/IOBlock.h>
 #include "IO/InputEvents.h"
-#include "Hardware/Device6520MO5_PIA.h"
 #include "IO/DeviceKeyboardThomson.h"
 #include "IO/DeviceLightpenThomson.h"
+#include "Hardware/PIAEventsThomson.h"
 #include "Video/VideoThomson.h"
+
+namespace pia::thomson { class DevicePIAThomson; }
 
 namespace emul
 {
 	class CPU6809;
 
-	class ComputerThomson : public ComputerBase, public IOConnector, public pia::EventHandler
+	class ComputerThomson : public ComputerBase, public IOConnector, public pia::thomson::EventHandler
 	{
 	public:
 		enum class Model { UNKNOWN, MO5, MO7 };
@@ -57,7 +59,7 @@ namespace emul
 		const std::string m_basePathROM = "data/Thomson/";
 
 		// pia::EventHandler
-		virtual void OnScreenMapChange(pia::ScreenRAM map) override;
+		virtual void OnScreenMapChange(pia::thomson::ScreenRAM map) override;
 		virtual void OnBorderChange(BYTE borderRGBP) override;
 
 		video::VideoThomson& GetVideo() { return static_cast<video::VideoThomson&>(*m_video); }
@@ -70,9 +72,9 @@ namespace emul
 		emul::MemoryBlock m_osROM;
 		emul::MemoryBlock m_basicROM;
 
-		emul::IOBlock m_ioA7C0;
+		emul::IOBlock m_io;
 
-		pia::Device6520MO5_PIA m_pia;
+		pia::thomson::DevicePIAThomson* m_pia = nullptr;
 		kbd::DeviceKeyboardThomson m_keyboard;
 		mouse::DeviceLightpenThomson m_lightpen;
 	};

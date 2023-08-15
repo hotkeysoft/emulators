@@ -3,14 +3,12 @@
 #include "Device6520MO5_PIA.h"
 #include <IO/DeviceKeyboard.h>
 
-namespace pia
+namespace pia::thomson
 {
 	void Device6520MO5_PIA::Init(kbd::DeviceKeyboard* kbd)
 	{
 		Device6520::Init(true);
-
-		assert(kbd);
-		m_keyboard = kbd;
+		SetKeyboard(kbd);
 	}
 
 	void Device6520MO5_PIA::OnReadPort(PIAPort* source)
