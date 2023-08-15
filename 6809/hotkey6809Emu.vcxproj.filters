@@ -223,6 +223,9 @@
     <ClInclude Include="Hardware\DevicePIAThomson.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\DevicePIAThomsonTO7.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -338,6 +341,9 @@
     </ClCompile>
     <ClCompile Include="IO\DeviceLightpenThomson.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\DevicePIAThomsonTO7.cpp">
+      <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

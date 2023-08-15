@@ -5,11 +5,13 @@
 #include "IO/Console.h"
 #include "CPU/CPU6809.h"
 #include "Hardware/Device6520MO5_PIA.h"
+#include "Hardware/DevicePIAThomsonTO7.h"
 #include <Sound/Sound.h>
 
 using cfg::CONFIG;
 using sound::SOUND;
 using pia::thomson::Device6520MO5_PIA;
+using pia::thomson::DevicePIAThomsonTO7;
 
 using ScreenRAM = pia::thomson::ScreenRAM;
 
@@ -170,13 +172,21 @@ namespace emul
 			Device6520MO5_PIA* pia = new Device6520MO5_PIA();
 			pia->EnableLog(CONFIG().GetLogLevel("pia"));
 			pia->Init(&m_keyboard);
-			m_io.AddDevice(*pia, 0, 0b111100);
+			m_io.AddDevice(*pia, 0, 0b111100); // A7C0-A7C3
 			m_memory.Allocate(&m_io, 0xA7C0);
 			m_pia = pia;
 			break;
 		}
 		case Model::MO7:
 		{
+			DevicePIAThomsonTO7* pia = new DevicePIAThomsonTO7();
+			//pia->GetPIA1()->EnableLog(CONFIG().GetLogLevel("pia"));
+			pia->GetPIA2().EnableLog(CONFIG().GetLogLevel("pia.2"));
+			pia->Init(&m_keyboard);
+			//m_io.AddDevice(pia->GetPIA1(), 0b000000, 0b110000); // 0xE7C0-E7C7
+			m_io.AddDevice(pia->GetPIA2(), 0b001000, 0b111000); // 0xE7C8-E7CF
+			m_memory.Allocate(&m_io, 0xE7C0);
+			m_pia = pia;
 			break;
 		}
 		default:

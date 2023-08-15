@@ -143,6 +143,9 @@ namespace pia
 		virtual void Reset();
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
+		const PIAPort& GetPortA() const { return m_portA; }
+		const PIAPort& GetPortB() const { return m_portB; }
+
 		PIAPort& GetPortA() { return m_portA; }
 		PIAPort& GetPortB() { return m_portB; }
 
