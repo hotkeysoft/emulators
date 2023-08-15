@@ -179,13 +179,19 @@ namespace emul
 		}
 		case Model::MO7:
 		{
+			m_io.EnableLog(LOG_INFO);
+
 			DevicePIAThomsonTO7* pia = new DevicePIAThomsonTO7();
-			//pia->GetPIA1()->EnableLog(CONFIG().GetLogLevel("pia"));
+			pia->GetPIA1().EnableLog(CONFIG().GetLogLevel("pia"));
 			pia->GetPIA2().EnableLog(CONFIG().GetLogLevel("pia.2"));
+
 			pia->Init(&m_keyboard);
-			//m_io.AddDevice(pia->GetPIA1(), 0b000000, 0b110000); // 0xE7C0-E7C7
-			m_io.AddDevice(pia->GetPIA2(), 0b001000, 0b111000); // 0xE7C8-E7CF
-			m_memory.Allocate(&m_io, 0xE7C0);
+
+			m_memory.Allocate(&m_io, 0xE7C0); // E7C0-E7FF
+
+			m_io.AddDevice(pia->GetPIA1(), "000xxx"); // 0xE7C0-E7C7 (base=E7C0)
+			m_io.AddDevice(pia->GetPIA2(), "0010xx"); // 0xE7C8-E7CB (base=E7C0)
+
 			m_pia = pia;
 			break;
 		}

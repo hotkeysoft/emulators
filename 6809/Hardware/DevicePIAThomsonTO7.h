@@ -1,5 +1,6 @@
 #pragma once
 #include "Device6520.h"
+#include "Device6846TO7_PIA.h"
 #include "DevicePIAThomson.h"
 
 namespace pia::thomson
@@ -9,9 +10,11 @@ namespace pia::thomson
 	public:
 		DevicePIAThomsonTO7();
 
-		virtual void Reset() override { m_pia6520.Reset(); }
+		virtual void Reset() override;
 
 		void Init(kbd::DeviceKeyboard* kbd);
+
+		virtual void SetPIAEventHandler(EventHandler* handler) override { m_pia6846.SetPIAEventHandler(handler); }
 
 		// Screen RAM mapping (pixel / attribute data)
 		virtual ScreenRAM GetScreenMapping() const override { return ScreenRAM::PIXEL; }
@@ -42,9 +45,11 @@ namespace pia::thomson
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
+		Device6846& GetPIA1() { return m_pia6846; };
 		Device6520& GetPIA2() { return m_pia6520; };
 
 	protected:
+		Device6846TO7_PIA m_pia6846;
 		Device6520 m_pia6520;
 	};
 }

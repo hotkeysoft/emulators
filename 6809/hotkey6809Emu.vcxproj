@@ -56,6 +56,8 @@
     <ClInclude Include="Computer6809.h" />
     <ClInclude Include="ComputerThomson.h" />
     <ClInclude Include="CPU\CPU6809.h" />
+    <ClInclude Include="Hardware\Device6846.h" />
+    <ClInclude Include="Hardware\Device6846TO7_PIA.h" />
     <ClInclude Include="Hardware\DevicePIAThomson.h" />
     <ClInclude Include="Hardware\DevicePIAThomsonTO7.h" />
     <ClInclude Include="Hardware\PIAEventsThomson.h" />
@@ -97,6 +99,8 @@
     <ClCompile Include="Computer6809.cpp" />
     <ClCompile Include="ComputerThomson.cpp" />
     <ClCompile Include="CPU\CPU6809.cpp" />
+    <ClCompile Include="Hardware\Device6846.cpp" />
+    <ClCompile Include="Hardware\Device6846TO7_PIA.cpp" />
     <ClCompile Include="Hardware\DevicePIAThomsonTO7.cpp" />
     <ClCompile Include="IO\DeviceLightpenThomson.cpp" />
     <ClCompile Include="Hardware\Device6520.cpp" />

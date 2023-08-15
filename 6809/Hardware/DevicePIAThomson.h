@@ -14,32 +14,32 @@ namespace pia::thomson
 	public:
 		virtual void Reset() = 0;
 
-		void SetPIAEventHandler(EventHandler* handler) { m_piaEventHandler = handler ? handler : &s_defaultHandler; }
+		virtual void SetPIAEventHandler(EventHandler* handler) { m_piaEventHandler = handler ? handler : &s_defaultHandler; }
 		void SetKeyboard(kbd::DeviceKeyboard* kbd) { assert(kbd); m_keyboard = kbd; };
 
 		// Screen RAM mapping (pixel / attribute data)
-		virtual ScreenRAM GetScreenMapping() const = 0;
-		virtual BYTE GetBorderRGBP() const = 0;
-		virtual bool GetVideoIncrustrationEnable() const { return false; };
+		virtual ScreenRAM GetScreenMapping() const { return ScreenRAM::UNINITIALIZED; }
+		virtual BYTE GetBorderRGBP() const { return 0; }
+		virtual bool GetVideoIncrustrationEnable() const { return false; }
 
 		// Video
 		virtual void SetVSync(bool set) {}
 
 		// Tape
-		virtual bool GetCassetteOut() const = 0;
-		virtual bool GetTapeMotorState() const = 0;
-		virtual void SetCassetteInput(bool set) = 0;
+		virtual bool GetCassetteOut() const { return false; }
+		virtual bool GetTapeMotorState() const { return false; }
+		virtual void SetCassetteInput(bool set) {}
 
 		// Light pen
-		virtual void SetLightPenButtonInput(bool set) = 0;
-		virtual void TriggerLightPenInterrupt() = 0;
+		virtual void SetLightPenButtonInput(bool set) {}
+		virtual void TriggerLightPenInterrupt() {}
 
 		// Sound
-		virtual bool GetBuzzer() const = 0;
+		virtual bool GetBuzzer() const { return false; }
 
 		// Keyboard
-		virtual BYTE GetKeyboardColumnSelect() const = 0;
-		virtual BYTE GetKeyboardRowSelect() const = 0;
+		virtual BYTE GetKeyboardColumnSelect() const { return 0; }
+		virtual BYTE GetKeyboardRowSelect() const { return 0; }
 		virtual void SetSelectedKeyInput(bool set) {};
 
 		// IRQs

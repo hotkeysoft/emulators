@@ -40,7 +40,7 @@ namespace emul
 		m_writeHandlers[offset]->Write(data);
 	}
 
-	void IOBlock::AddDevice(IOConnector& device, WORD mask, WORD maskBits)
+	void IOBlock::AddDevice(IOConnector& device, BitMaskW mask)
 	{
 		WORD deviceMask = device.GetDeviceIOMask();
 		if (deviceMask == 0)
@@ -49,16 +49,9 @@ namespace emul
 			return;
 		}
 
-		if (maskBits == 0)
-		{
-			maskBits = mask;
-		}
-
-		mask &= maskBits;
-
 		for (WORD addr = 0; addr < m_size; ++addr)
 		{
-			if ((addr & maskBits) != mask)
+			if (!mask.IsMatch(addr))
 				continue;
 
 			// TODO: Chaining
@@ -85,5 +78,10 @@ namespace emul
 				LogPrintf(LOG_INFO, "AddDevice: Connect IOWRITE address %04X", addr);
 			}
 		}
+	}
+
+	void IOBlock::AddDevice(IOConnector& device, WORD mask, WORD maskBits)
+	{
+		AddDevice(device, BitMaskW(mask, maskBits ? maskBits : mask));
 	}
 }

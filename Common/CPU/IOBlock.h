@@ -16,6 +16,9 @@ namespace emul
 		virtual BYTE read(ADDRESS offset) const override;
 		virtual void write(ADDRESS offset, BYTE data) override;
 
+		// Use this version, much better
+		void AddDevice(IOConnector& device, BitMaskW portMask);
+
 		// mask and maskBits allows partial address decoding
 		// mask     = b01000000 and
 		// maskBits = b01100000 are equivalent to
