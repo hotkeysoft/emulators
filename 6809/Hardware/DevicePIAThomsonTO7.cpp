@@ -20,7 +20,7 @@ namespace pia::thomson
 	void DevicePIAThomsonTO7::Init(kbd::DeviceKeyboard* kbd)
 	{
 		m_pia6846.Init(kbd);
-		m_pia6520.Init(true);
+		m_pia6520.Init(kbd);
 	}
 
 	void DevicePIAThomsonTO7::Serialize(json& to)

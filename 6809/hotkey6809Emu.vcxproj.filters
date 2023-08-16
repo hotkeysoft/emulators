@@ -232,6 +232,9 @@
     <ClInclude Include="Hardware\Device6846TO7_PIA.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\Device6520TO7_PIA.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -355,6 +358,9 @@
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
     <ClCompile Include="Hardware\Device6846TO7_PIA.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device6520TO7_PIA.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>

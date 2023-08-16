@@ -5,12 +5,13 @@
 
 using events::KeyMap;
 using events::Key;
+using Model = emul::ComputerThomson::Model;
 
 namespace kbd
 {
-	static KeyMap s_keyMapNormal =
+	static KeyMap s_keyMapMO5 =
 	{
-		// Line 0
+		// Column 0
 		{ SDL_SCANCODE_N, Key(0x01, 0) }, // N
 		{ SDL_SCANCODE_COMMA, Key(0x02, 0) }, // ,
 		{ SDL_SCANCODE_PERIOD, Key(0x04, 0) }, // .
@@ -22,7 +23,7 @@ namespace kbd
 		{ SDL_SCANCODE_LSHIFT, Key(0x80, 0) }, // Shift
 		{ SDL_SCANCODE_RSHIFT, Key(0x80, 0) }, // Shift
 
-		// Line 1
+		// Column 1
 		{ SDL_SCANCODE_DELETE, Key(0x01, 1) }, // EFF
 		{ SDL_SCANCODE_INSERT, Key(0x02, 1) }, // INS
 		{ SDL_SCANCODE_HOME, Key(0x04, 1) }, // Home
@@ -33,7 +34,7 @@ namespace kbd
 		{ SDL_SCANCODE_LALT, Key(0x80, 1) }, // BASIC
 		{ SDL_SCANCODE_RALT, Key(0x80, 1) }, // BASIC
 
-		// Line 2
+		// Column 2
 		{ SDL_SCANCODE_J, Key(0x01, 2) }, // J
 		{ SDL_SCANCODE_K, Key(0x02, 2) }, // Z
 		{ SDL_SCANCODE_L, Key(0x04, 2) }, // L
@@ -42,7 +43,7 @@ namespace kbd
 		{ SDL_SCANCODE_V, Key(0x20, 2) }, // V
 		{ SDL_SCANCODE_C, Key(0x40, 2) }, // C
 
-		// Line 3
+		// Column 3
 		{ SDL_SCANCODE_H, Key(0x01, 3) }, // H
 		{ SDL_SCANCODE_G, Key(0x02, 3) }, // G
 		{ SDL_SCANCODE_F, Key(0x04, 3) }, // F
@@ -51,7 +52,7 @@ namespace kbd
 		{ SDL_SCANCODE_Q, Key(0x20, 3)}, // Q
 		{ SDL_SCANCODE_TAB, Key(0x40, 3) }, // RAZ
 
-		// Line 4
+		// Column 4
 		{ SDL_SCANCODE_U, Key(0x01, 4) }, // U
 		{ SDL_SCANCODE_I, Key(0x02, 4) }, // I
 		{ SDL_SCANCODE_O, Key(0x04, 4) }, // O
@@ -64,7 +65,7 @@ namespace kbd
 		{ SDL_SCANCODE_RETURN, Key(0x40, 4) }, // ENTER
 		{ SDL_SCANCODE_KP_ENTER, Key(0x40, 4) }, // ENTER
 
-		// Line 5
+		// Column 5
 		{ SDL_SCANCODE_Y, Key(0x01, 5) }, // Y
 		{ SDL_SCANCODE_T, Key(0x02, 5) }, // T
 		{ SDL_SCANCODE_R, Key(0x04, 5) }, // R
@@ -74,7 +75,7 @@ namespace kbd
 		{ SDL_SCANCODE_LCTRL, Key(0x40, 5) }, // CONTROL
 		{ SDL_SCANCODE_RCTRL, Key(0x40, 5) }, // CONTROL
 
-		// Line 6
+		// Column 6
 		{ SDL_SCANCODE_7, Key(0x01, 6) }, // 7
 		{ SDL_SCANCODE_KP_7, Key(0x01, 6) }, // 7
 		{ SDL_SCANCODE_8, Key(0x02, 6) }, // 8
@@ -106,8 +107,28 @@ namespace kbd
 		{ SDL_SCANCODE_ESCAPE, Key(0x40, 7) }, // STOP
 	};
 
-	DeviceKeyboardThomson::DeviceKeyboardThomson() : Logger("kbd"), m_currKeymap(&s_keyMapNormal)
+	static KeyMap s_keyMapTO7 =
+	{
+		// Column 2
+		{ SDL_SCANCODE_1, Key(0x80, 2) }, // 1
+		{ SDL_SCANCODE_KP_1, Key(0x80, 2) }, // 1
+	};
+
+	DeviceKeyboardThomson::DeviceKeyboardThomson() : Logger("kbd"), m_currKeymap(&s_keyMapMO5)
 	{
 		Reset();
 	}
+
+	void DeviceKeyboardThomson::SetModel(Model model)
+	{
+		switch (model)
+		{
+			case Model::MO5: m_currKeymap = &s_keyMapMO5; break;
+			case Model::TO7: m_currKeymap = &s_keyMapTO7; break;
+			default:
+				LogPrintf(LOG_ERROR, "Unknown Model");
+				break;
+		}
+	}
+
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "Device6520.h"
+#include "Device6520TO7_PIA.h"
 #include "Device6846TO7_PIA.h"
 #include "DevicePIAThomson.h"
 
@@ -17,29 +17,31 @@ namespace pia::thomson
 		virtual void SetPIAEventHandler(EventHandler* handler) override { m_pia6846.SetPIAEventHandler(handler); }
 
 		// Screen RAM mapping (pixel / attribute data)
-		virtual ScreenRAM GetScreenMapping() const override { return ScreenRAM::PIXEL; }
-		virtual BYTE GetBorderRGBP() const override { return 0xFF; }
+		virtual ScreenRAM GetScreenMapping() const override { return m_pia6846.GetScreenMapping(); }
+		virtual BYTE GetBorderRGBP() const override { return m_pia6846.GetBorderRGBP(); }
 
 		// Tape
-		virtual bool GetCassetteOut() const override { return false; }
+		virtual bool GetCassetteOut() const override { return m_pia6846.GetCassetteOut(); }
 		virtual bool GetTapeMotorState() const override { return m_pia6520.GetPortA().GetC2(); }
-		virtual void SetCassetteInput(bool set) override { }
+		virtual void SetCassetteInput(bool set) override { m_pia6846.SetCassetteInput(set); }
 
 		// Light pen
-		virtual void SetLightPenButtonInput(bool set) override { }
-		virtual void TriggerLightPenInterrupt() override { }
+		virtual void SetLightPenButtonInput(bool set) override { m_pia6846.SetLightPenButtonInput(set); }
+		virtual void TriggerLightPenInterrupt() override { m_pia6520.TriggerLightpen(); }
 
 		// Sound
-		virtual bool GetBuzzer() const override { return false; }
+		virtual bool GetBuzzer() const override { return m_pia6846.GetBuzzer(); }
 
 		// Keyboard
 		virtual BYTE GetKeyboardColumnSelect() const override { return 0xFF; }
 		virtual BYTE GetKeyboardRowSelect() const override { return 0xFF; }
 		virtual void SetSelectedKeyInput(bool set) override { }
 
-		// IRQs
-		virtual bool GetIRQ() const override { return false; }
-		virtual bool GetFIRQ() const override { return false; }
+		// IRQ from 6846 (timer and such), FIRQ from 6520 (light pen)
+		virtual bool GetIRQ() const override { return m_pia6846.GetIRQ(); }
+		virtual bool GetFIRQ() const override { return m_pia6520.GetFIRQ(); }
+
+		virtual void SetVSync(bool set) override { m_pia6520.SetINIT(!set); }
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -50,7 +52,7 @@ namespace pia::thomson
 
 	protected:
 		Device6846TO7_PIA m_pia6846;
-		Device6520 m_pia6520;
+		Device6520TO7_PIA m_pia6520;
 	};
 }
 

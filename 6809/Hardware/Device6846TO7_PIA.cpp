@@ -16,7 +16,7 @@ namespace pia::thomson
 		const ScreenRAM newMapping = GetScreenMapping();
 		if (newMapping != m_screenRAM)
 		{
-			LogPrintf(LOG_INFO, "Screen Mapping: %s", newMapping == ScreenRAM::PIXEL ? "PIXEL" : "ATTR");
+			LogPrintf(LOG_DEBUG, "Screen Mapping: %s", newMapping == ScreenRAM::PIXEL ? "PIXEL" : "ATTR");
 			m_screenRAM = newMapping;
 			m_piaEventHandler->OnScreenMapChange(newMapping);
 		}
@@ -24,7 +24,7 @@ namespace pia::thomson
 		const BYTE newBorderRGBP = GetBorderRGBP();
 		if (newBorderRGBP != m_borderRGBP)
 		{
-			LogPrintf(LOG_INFO, "New Border Color: %02X", newBorderRGBP);
+			LogPrintf(LOG_DEBUG, "New Border Color: %02X", newBorderRGBP);
 			m_borderRGBP = newBorderRGBP;
 			m_piaEventHandler->OnBorderChange(newBorderRGBP);
 		}

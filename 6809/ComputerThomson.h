@@ -3,12 +3,12 @@
 #include <Computer/ComputerBase.h>
 #include <CPU/IOBlock.h>
 #include "IO/InputEvents.h"
-#include "IO/DeviceKeyboardThomson.h"
 #include "IO/DeviceLightpenThomson.h"
 #include "Hardware/PIAEventsThomson.h"
 #include "Video/VideoThomson.h"
 
 namespace pia::thomson { class DevicePIAThomson; }
+namespace kbd { class DeviceKeyboardThomson; }
 
 namespace emul
 {
@@ -17,9 +17,10 @@ namespace emul
 	class ComputerThomson : public ComputerBase, public IOConnector, public pia::thomson::EventHandler
 	{
 	public:
-		enum class Model { UNKNOWN, MO5, MO7 };
+		enum class Model { UNKNOWN, MO5, TO7 };
 
 		ComputerThomson();
+		virtual ~ComputerThomson();
 
 		virtual std::string_view GetName() const override { return "Thomson"; };
 		virtual std::string_view GetID() const override { return "thomson"; };
@@ -50,6 +51,7 @@ namespace emul
 		void InitROM();
 		void InitRAM();
 		void InitIO();
+		void InitKeyboard();
 		void InitVideo();
 		void InitLightpen();
 
@@ -75,7 +77,7 @@ namespace emul
 		emul::IOBlock m_io;
 
 		pia::thomson::DevicePIAThomson* m_pia = nullptr;
-		kbd::DeviceKeyboardThomson m_keyboard;
+		kbd::DeviceKeyboardThomson* m_keyboard = nullptr;
 		mouse::DeviceLightpenThomson m_lightpen;
 	};
 }

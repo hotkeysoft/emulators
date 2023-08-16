@@ -1,32 +1,32 @@
 #include "stdafx.h"
 
-#include "Device6520MO5_PIA.h"
+#include "Device6520TO7_PIA.h"
 #include <IO/DeviceKeyboard.h>
 
 namespace pia::thomson
 {
-	void Device6520MO5_PIA::Init(kbd::DeviceKeyboard* kbd)
+	void Device6520TO7_PIA::Init(kbd::DeviceKeyboard* kbd)
 	{
 		Device6520::Init(true);
 		SetKeyboard(kbd);
 	}
 
-	void Device6520MO5_PIA::OnReadPort(PIAPort* source)
+	void Device6520TO7_PIA::OnReadPort(PIAPort* source)
 	{
 		// Keyboard data
-		if (source == &m_portB)
+		if (source == &m_portA)
 		{
 			BYTE colSel = GetKeyboardColumnSelect();
 			BYTE rowSel = GetKeyboardRowSelect();
 
 			BYTE rowData = m_keyboard->GetRowData(colSel);
-			LogPrintf(LOG_DEBUG, "OnReadKeyboard, column = %d, data = %02X", colSel, rowData);
+			LogPrintf(LOG_INFO, "OnReadKeyboard, column = %d, data = %02X", colSel, rowData);
 
-			SetSelectedKeyInput(emul::GetBit(rowData, rowSel));
+			SetKeyboardRowData(rowData);
 		}
 	}
 
-	void Device6520MO5_PIA::OnWritePort(PIAPort* source)
+	void Device6520TO7_PIA::OnWritePort(PIAPort* source)
 	{
 		if (source == &m_portA)
 		{
