@@ -3,12 +3,14 @@
 #include <Computer/ComputerBase.h>
 #include <CPU/IOBlock.h>
 #include "IO/InputEvents.h"
+#include "IO/DeviceKeyboardThomson.h"
 #include "IO/DeviceLightpenThomson.h"
 #include "Hardware/PIAEventsThomson.h"
 #include "Video/VideoThomson.h"
+#include "ThomsonModel.h"
 
 namespace pia::thomson { class DevicePIAThomson; }
-namespace kbd { class DeviceKeyboardThomson; }
+using ThomsonModel = emul::Thomson::Model;
 
 namespace emul
 {
@@ -17,8 +19,6 @@ namespace emul
 	class ComputerThomson : public ComputerBase, public IOConnector, public pia::thomson::EventHandler
 	{
 	public:
-		enum class Model { UNKNOWN, MO5, TO7 };
-
 		ComputerThomson();
 		virtual ~ComputerThomson();
 
@@ -27,7 +27,7 @@ namespace emul
 
 		virtual std::string_view GetModel() const override
 		{
-			static const std::string model = StringUtil::ToUpper(ModelToString(m_model));
+			static const std::string model = StringUtil::ToUpper(emul::Thomson::ModelToString(m_model));
 			return model;
 		}
 
@@ -36,9 +36,6 @@ namespace emul
 		virtual bool Step() override;
 
 		CPU6809& GetCPU() const { return *((CPU6809*)m_cpu); }
-
-		static Model StringToModel(const char*);
-		static std::string ModelToString(Model);
 
 		// emul::Serializable
 		virtual void Serialize(json& to);
@@ -55,8 +52,7 @@ namespace emul
 		void InitVideo();
 		void InitLightpen();
 
-		static const std::map<std::string, Model> s_modelMap;
-		Model m_model = Model::MO5;
+		ThomsonModel m_model = ThomsonModel::MO5;
 
 		const std::string m_basePathROM = "data/Thomson/";
 
@@ -77,7 +73,7 @@ namespace emul
 		emul::IOBlock m_io;
 
 		pia::thomson::DevicePIAThomson* m_pia = nullptr;
-		kbd::DeviceKeyboardThomson* m_keyboard = nullptr;
+		kbd::DeviceKeyboardThomson m_keyboard;
 		mouse::DeviceLightpenThomson m_lightpen;
 	};
 }

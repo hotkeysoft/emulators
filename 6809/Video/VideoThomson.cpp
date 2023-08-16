@@ -3,9 +3,34 @@
 
 using emul::GetBit;
 using emul::SetBit;
+using emul::Thomson::ModelToString;
+using Model = emul::Thomson::Model;
 
 namespace video
 {
+	static const uint32_t s_palette[16] = {
+		0xFF000000, 0xFFFF0000, 0xFF00FF00, 0xFFFFFF00,
+		0xFF0000FF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFFFFFF,
+		0xFFBBBBBB, 0xFFDD7777, 0xFF77DD77, 0xFFDDDD77,
+		0xFF7777DD, 0xFFDD77EE, 0xFFBBFFFF, 0xFFEEBB00,
+	};
+
+	static AttributeColors GetAttributeColorsMO5(BYTE attr)
+	{
+		return {
+			s_palette[(attr >> 4)],
+			s_palette[(attr & 15)]
+		};
+	}
+
+	static AttributeColors GetAttributeColorsTO7(BYTE attr)
+	{
+		return {
+			s_palette[(attr >> 3) & 7],
+			s_palette[(attr & 7)]
+		};
+	}
+
 	VideoThomson::VideoThomson() :
 		Logger("vidThomson"),
 		IOConnector(0x03) // Addresses 0-3 are decoded by device
@@ -18,7 +43,7 @@ namespace video
 		static_assert(V_DISPLAY + V_BLANK + V_SYNC == V_TOTAL);
 	}
 
-	void VideoThomson::Init(emul::MemoryBlock* pixelRAM, emul::MemoryBlock* attributeRAM)
+	void VideoThomson::Init(Model model, emul::MemoryBlock* pixelRAM, emul::MemoryBlock* attributeRAM)
 	{
 		assert(pixelRAM);
 		assert(attributeRAM);
@@ -32,6 +57,16 @@ namespace video
 		IOConnector::Connect(1, static_cast<IOConnector::READFunction>(&VideoThomson::ReadSCRCLKlow));
 		IOConnector::Connect(2, static_cast<IOConnector::READFunction>(&VideoThomson::ReadLineCounter));
 		IOConnector::Connect(3, static_cast<IOConnector::READFunction>(&VideoThomson::ReadINITN));
+
+		switch (model)
+		{
+		case Model::MO5: GetAttributeColors = GetAttributeColorsMO5; break;
+		case Model::TO7: GetAttributeColors = GetAttributeColorsTO7; break;
+		default:
+			LogPrintf(LOG_ERROR, "Unknown model [%s], using MO5", ModelToString(model).c_str());
+			GetAttributeColors = GetAttributeColorsMO5;
+			break;
+		}
 	}
 
 	void VideoThomson::Tick()
@@ -98,6 +133,11 @@ namespace video
 		//return SDL_Rect{
 		//	0, 0, H_TOTAL_PX, V_TOTAL
 		//};
+	}
+
+	void VideoThomson::SetBorderColor(BYTE borderRGBP)
+	{
+		m_borderColor = s_palette[borderRGBP & 15];
 	}
 
 	BYTE VideoThomson::ReadSCRCLKhigh()
@@ -172,8 +212,9 @@ namespace video
 		const BYTE pixels = m_pixelRAM->read(m_currChar);
 		const BYTE attr = m_attributeRAM->read(m_currChar);
 
-		const uint32_t fg = m_palette[(attr >> 4)];
-		const uint32_t bg = m_palette[(attr & 15)];
+		AttributeColors colors = GetAttributeColors(attr);
+		const uint32_t fg = std::get<0>(colors);
+		const uint32_t bg = std::get<1>(colors);
 
 		for (int i = 0; i < 8; ++i)
 		{

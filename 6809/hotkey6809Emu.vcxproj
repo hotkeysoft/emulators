@@ -69,6 +69,7 @@
     <ClInclude Include="IO\DeviceKeyboardThomson.h" />
     <ClInclude Include="IO\Monitor6809.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ThomsonModel.h" />
     <ClInclude Include="Video\VideoThomson.h" />
   </ItemGroup>
   <ItemGroup>

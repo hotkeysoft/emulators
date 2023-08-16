@@ -3,7 +3,7 @@
 #include <CPU/CPUCommon.h>
 #include <CPU/PortConnector.h>
 #include <IO/DeviceKeyboard.h>
-#include "../ComputerThomson.h"
+#include "../ThomsonModel.h"
 
 namespace kbd
 {
@@ -25,7 +25,7 @@ namespace kbd
 		virtual events::KeyMap& GetKeymap() const override { return *m_currKeymap; }
 		virtual BYTE GetRowData(BYTE row) const override { return m_keyGrid[row]; }
 
-		void SetModel(emul::ComputerThomson::Model model);
+		void SetModel(emul::Thomson::Model model);
 
 	protected:
 		using KeyGrid = std::array<emul::BYTE, 8>;

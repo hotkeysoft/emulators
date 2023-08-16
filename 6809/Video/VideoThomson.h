@@ -1,22 +1,26 @@
 #pragma once
 #include <Video/Video.h>
 #include <CPU/IOConnector.h>
+#include "../ThomsonModel.h"
 
 namespace video
 {
+    using AttributeColors = std::tuple<uint32_t, uint32_t>;
+    using GetAttributeColorsFunc = std::function<AttributeColors(BYTE)>;
+
     class VideoThomson : public Video, public emul::IOConnector
     {
     public:
         VideoThomson();
 
-        virtual void Init(emul::MemoryBlock* pixelRAM, emul::MemoryBlock* attributeRAM);
+        virtual void Init(emul::Thomson::Model model, emul::MemoryBlock* pixelRAM, emul::MemoryBlock* attributeRAM);
 
         virtual const std::string GetID() const override { return "thomson"; }
         virtual void Tick() override;
 
         virtual SDL_Rect GetDisplayRect(BYTE border = 0, WORD xMultiplier = 1) const override;
 
-        void SetBorderColor(BYTE borderRGBP) { m_borderColor = m_palette[borderRGBP & 15]; }
+        void SetBorderColor(BYTE borderRGBP);
 
         virtual bool IsEnabled() const override { return true; }
 
@@ -36,6 +40,8 @@ namespace video
         virtual uint32_t GetBackgroundColor() const override { return m_borderColor; }
 
     protected:
+        GetAttributeColorsFunc GetAttributeColors = nullptr;
+
         void Draw();
 
         // Gate Array Mem IO
@@ -113,12 +119,5 @@ namespace video
         emul::MemoryBlock* m_attributeRAM = nullptr;
 
         uint32_t m_borderColor = 0;
-
-        const uint32_t m_palette[16] = {
-            0xFF000000, 0xFFFF0000, 0xFF00FF00, 0xFFFFFF00,
-            0xFF0000FF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFFFFFF,
-            0xFFBBBBBB, 0xFFDD7777, 0xFF77DD77, 0xFFDDDD77,
-            0xFF7777DD, 0xFFDD77EE, 0xFFBBFFFF, 0xFFEEBB00,
-        };
     };
 }

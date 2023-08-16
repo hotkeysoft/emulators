@@ -2,26 +2,22 @@
 
 #include "ComputerThomson.h"
 #include <Config.h>
+#include <Sound/Sound.h>
 #include "IO/Console.h"
 #include "CPU/CPU6809.h"
 #include "Hardware/Device6520MO5_PIA.h"
 #include "Hardware/DevicePIAThomsonTO7.h"
-#include <Sound/Sound.h>
 
 using cfg::CONFIG;
 using sound::SOUND;
 using pia::thomson::Device6520MO5_PIA;
 using pia::thomson::DevicePIAThomsonTO7;
+using namespace emul::Thomson;
 
 using ScreenRAM = pia::thomson::ScreenRAM;
 
 namespace emul
 {
-	const std::map<std::string, ComputerThomson::Model> ComputerThomson::s_modelMap = {
-		{"mo5", Model::MO5},
-		{"to7", Model::MO7},
-	};
-
 	ComputerThomson::ComputerThomson() :
 		Logger("Thomson"),
 		ComputerBase(m_memory, 64),
@@ -33,6 +29,11 @@ namespace emul
 		m_basicROM("ROM_BASIC", 0x3000, emul::MemoryType::ROM),
 		m_io("IO", 0x40)
 	{
+	}
+
+	ComputerThomson::~ComputerThomson()
+	{
+		delete m_pia;
 	}
 
 	void ComputerThomson::Reset()
@@ -52,11 +53,11 @@ namespace emul
 		InitModel();
 		InitROM();
 		InitRAM();
-		InitIO();
 
 		InitInputs(1000000, 20000);
+		InitKeyboard();
+		InitIO();
 
-		GetInputs().InitKeyboard(&m_keyboard);
 		InitVideo();
 		InitLightpen();
 
@@ -71,27 +72,6 @@ namespace emul
 			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
 			throw std::exception("CPUType not supported");
 		}
-	}
-
-	ComputerThomson::Model ComputerThomson::StringToModel(const char* str)
-	{
-		auto m = s_modelMap.find(str);
-		if (m != s_modelMap.end())
-		{
-			return m->second;
-		}
-		return Model::UNKNOWN;
-	}
-	std::string ComputerThomson::ModelToString(ComputerThomson::Model model)
-	{
-		for (auto curr : s_modelMap)
-		{
-			if (curr.second == model)
-			{
-				return curr.first.c_str();
-			}
-		}
-		return "unknown";
 	}
 
 	void ComputerThomson::InitModel()
@@ -126,7 +106,7 @@ namespace emul
 			m_memory.Allocate(&m_basicROM, 0xC000);
 			break;
 		}
-		case Model::MO7:
+		case Model::TO7:
 		{
 			std::string osROM = m_basePathROM + "/TO7/to7.os.bin";
 
@@ -149,7 +129,7 @@ namespace emul
 			m_memory.Allocate(&m_userRAM, 0x2000);
 			m_screenRAMBase = 0;
 			break;
-		case Model::MO7:
+		case Model::TO7:
 			m_userRAM.Alloc(0x4000);
 			m_memory.Allocate(&m_userRAM, 0x6000);
 			m_screenRAMBase = 0x4000;
@@ -161,6 +141,12 @@ namespace emul
 		m_userRAM.Clear(0xF0);
 		m_pixelRAM.Clear(0x0F);
 		m_attributeRAM.Clear(0xF0);
+	}
+
+	void ComputerThomson::InitKeyboard()
+	{
+		m_keyboard.SetModel(m_model);
+		GetInputs().InitKeyboard(&m_keyboard);
 	}
 
 	void ComputerThomson::InitIO()
@@ -177,14 +163,11 @@ namespace emul
 			m_pia = pia;
 			break;
 		}
-		case Model::MO7:
+		case Model::TO7:
 		{
-			m_io.EnableLog(LOG_INFO);
-
 			DevicePIAThomsonTO7* pia = new DevicePIAThomsonTO7();
 			pia->GetPIA1().EnableLog(CONFIG().GetLogLevel("pia"));
 			pia->GetPIA2().EnableLog(CONFIG().GetLogLevel("pia.2"));
-
 			pia->Init(&m_keyboard);
 
 			m_memory.Allocate(&m_io, 0xE7C0); // E7C0-E7FF
@@ -227,7 +210,7 @@ namespace emul
 		video::VideoThomson* video = new video::VideoThomson();
 		video->EnableLog(CONFIG().GetLogLevel("video"));
 
-		video->Init(&m_pixelRAM, &m_attributeRAM);
+		video->Init(m_model, &m_pixelRAM, &m_attributeRAM);
 		m_video = video;
 
 		constexpr uint32_t DEFAULT_BORDER = 16;
@@ -244,7 +227,7 @@ namespace emul
 			// 0xA7E4..0xA7E7 (base = 0xA7C0)
 			m_io.AddDevice(*video, 0b100100, 0b111100);
 			break;
-		case Model::MO7: // No gate array on MO7
+		case Model::TO7: // No gate array on TO7
 			break;
 		default:
 			throw std::exception("not possible");
