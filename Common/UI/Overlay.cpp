@@ -874,7 +874,9 @@ namespace ui
 
 		fs::path path;
 
-		if (SelectFile(path, { {"Cartridge ROM (*.rom *.bin)", "*.rom;*.bin"} }))
+		SelectFileFilters filter = cartLoader->GetLoadFilter();
+
+		if (SelectFile(path, filter))
 		{
 			cartLoader->LoadCartridge(path);
 			UpdateCartridgeName();

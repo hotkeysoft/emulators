@@ -8,6 +8,7 @@
 #include "Hardware/PIAEventsThomson.h"
 #include "Video/VideoThomson.h"
 #include "ThomsonModel.h"
+#include <Storage/CartridgeLoader.h>
 
 namespace pia::thomson { class DevicePIAThomson; }
 using ThomsonModel = emul::Thomson::Model;
@@ -16,7 +17,11 @@ namespace emul
 {
 	class CPU6809;
 
-	class ComputerThomson : public ComputerBase, public IOConnector, public pia::thomson::EventHandler
+	class ComputerThomson :
+		public ComputerBase,
+		public IOConnector,
+		public pia::thomson::EventHandler,
+		public CartridgeLoader
 	{
 	public:
 		ComputerThomson();
@@ -52,6 +57,14 @@ namespace emul
 		void InitVideo();
 		void InitLightpen();
 
+		// CartridgeLoader
+		virtual void LoadCartridge(const std::filesystem::path& path) override;
+		virtual hscommon::fileUtil::SelectFileFilters GetLoadFilter() override;
+
+		virtual void UnloadCartridge() override;
+		virtual std::string GetCartridgeInfo() const override { return m_cartridgeInfo; }
+		std::string m_cartridgeInfo;
+
 		ThomsonModel m_model = ThomsonModel::MO5;
 
 		const std::string m_basePathROM = "data/Thomson/";
@@ -69,6 +82,7 @@ namespace emul
 		emul::MemoryBlock m_userRAM;
 		emul::MemoryBlock m_osROM;
 		emul::MemoryBlock m_basicROM;
+		emul::MemoryBlock m_cartridgeROM;
 
 		emul::IOBlock m_io;
 

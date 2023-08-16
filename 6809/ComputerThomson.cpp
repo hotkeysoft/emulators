@@ -27,6 +27,7 @@ namespace emul
 		m_userRAM("RAM_USER", emul::MemoryType::RAM),
 		m_osROM("ROM_OS", emul::MemoryType::ROM),
 		m_basicROM("ROM_BASIC", 0x3000, emul::MemoryType::ROM),
+		m_cartridgeROM("ROM_CART", emul::MemoryType::ROM),
 		m_io("IO", 0x40)
 	{
 	}
@@ -113,10 +114,20 @@ namespace emul
 			m_osROM.Alloc(0x1800);
 			m_osROM.LoadFromFile(osROM.c_str());
 			m_memory.Allocate(&m_osROM, 0xE800);
+
+			m_cartridgeROM.Alloc(0x4000);
+			m_cartridgeROM.Clear(0xFF);
+			m_memory.Allocate(&m_cartridgeROM, 0);
 			break;
 		}
 		default:
 			throw std::exception("not possible");
+		}
+
+		std::string cart = CONFIG().GetValueStr("cartridge", "file");
+		if (cart.size())
+		{
+			LoadCartridge(cart);
 		}
 	}
 
@@ -273,6 +284,34 @@ namespace emul
 		}
 
 		return true;
+	}
+
+	hscommon::fileUtil::SelectFileFilters ComputerThomson::GetLoadFilter()
+	{
+		return {
+			{"TO7 Cartridge (*.m7)", "*.m7"},
+			{"Cartridge ROM (*.rom *.bin)", "*.rom;*.bin"}
+		};
+	}
+
+	// TODO: Only TO7 for now
+	void ComputerThomson::LoadCartridge(const std::filesystem::path& path)
+	{
+		UnloadCartridge();
+
+		std::string cartFile = path.string();
+
+		m_cartridgeInfo = path.stem().string();
+
+		LogPrintf(LOG_INFO, "Loading cartridge image: %s", cartFile.c_str());
+		m_cartridgeROM.LoadFromFile(cartFile.c_str());
+		Reset();
+	}
+	void ComputerThomson::UnloadCartridge()
+	{
+		m_cartridgeInfo.clear();
+		m_cartridgeROM.Clear(0xFF);
+		Reset();
 	}
 
 	void ComputerThomson::Serialize(json& to)
