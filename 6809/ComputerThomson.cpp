@@ -40,8 +40,14 @@ namespace emul
 	void ComputerThomson::Reset()
 	{
 		ComputerBase::Reset();
-		GetVideo().Reset();
-		m_pia->Reset();
+		if (m_video)
+		{
+			m_video->Reset();
+		}
+		if (m_pia)
+		{
+			m_pia->Reset();
+		}
 		m_keyboard.Reset();
 		m_lightpen.Reset();
 		OnScreenMapChange(ScreenRAM::PIXEL);
@@ -63,6 +69,12 @@ namespace emul
 		InitLightpen();
 
 		SOUND().SetBaseClock(1000000);
+
+		std::string cart = CONFIG().GetValueStr("cartridge", "file");
+		if (cart.size())
+		{
+			LoadCartridge(cart);
+		}
 	}
 
 	void ComputerThomson::InitCPU(const char* cpuid)
@@ -122,12 +134,6 @@ namespace emul
 		}
 		default:
 			throw std::exception("not possible");
-		}
-
-		std::string cart = CONFIG().GetValueStr("cartridge", "file");
-		if (cart.size())
-		{
-			LoadCartridge(cart);
 		}
 	}
 

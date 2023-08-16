@@ -12,6 +12,8 @@ namespace pia::thomson
 	class DevicePIAThomson : public emul::Serializable
 	{
 	public:
+		virtual ~DevicePIAThomson() {}
+
 		virtual void Reset() = 0;
 
 		virtual void SetPIAEventHandler(EventHandler* handler) { m_piaEventHandler = handler ? handler : &s_defaultHandler; }

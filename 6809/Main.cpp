@@ -282,7 +282,7 @@ ComputerBase* RestoreNewComputerFromSnapshot()
 
 int main(int argc, char* args[])
 {
-	//InitLeakCheck();
+	InitLeakCheck();
 
 	Logger::RegisterLogCallback(LogCallback);
 

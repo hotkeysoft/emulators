@@ -13,7 +13,10 @@ namespace mouse
 
 	void DeviceLightpenThomson::Reset()
 	{
-		m_pia->SetLightPenButtonInput(false);
+		if (m_pia)
+		{
+			m_pia->SetLightPenButtonInput(false);
+		}
 	}
 
 	void DeviceLightpenThomson::SetButtonClick(int32_t x, int32_t y, int button, bool down)
