@@ -59,7 +59,7 @@ namespace emul
 		m_opcodes[0x11] = [=]() { ExecPage3(FetchByte()); }; // Page 3 sub intructions
 		m_opcodes[0x12] = [=]() { }; // NOP
 		m_opcodes[0x16] = [=]() { LBRA(true); }; // LBRA
-		m_opcodes[0x16] = [=]() { LBSR(); }; // LBSR
+		m_opcodes[0x17] = [=]() { LBSR(); }; // LBSR
 		m_opcodes[0x1A] = [=]() { m_reg.flags |= FetchByte(); }; // ORCC imm
 		m_opcodes[0x1B] = [=]() {}; // NOP (undocumented)
 		m_opcodes[0x1C] = [=]() { m_reg.flags &= FetchByte(); }; // ANDCC imm
