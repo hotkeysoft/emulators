@@ -12,6 +12,8 @@ namespace pia::thomson
 
 		virtual void Reset() override;
 
+		virtual void Tick() override { m_pia6846.Tick(); }
+
 		void Init(kbd::DeviceKeyboard* kbd);
 
 		virtual void SetPIAEventHandler(EventHandler* handler) override { m_pia6846.SetPIAEventHandler(handler); }
@@ -21,7 +23,7 @@ namespace pia::thomson
 		virtual BYTE GetBorderRGBP() const override { return m_pia6846.GetBorderRGBP(); }
 
 		// Tape
-		virtual bool GetCassetteOut() const override { return m_pia6846.GetCassetteOut(); }
+		virtual bool GetCassetteOut() const override { return m_pia6846.GetCassetteOutput(); }
 		virtual bool GetTapeMotorState() const override { return m_pia6520.GetPortA().GetC2(); }
 		virtual void SetCassetteInput(bool set) override { m_pia6846.SetCassetteInput(set); }
 

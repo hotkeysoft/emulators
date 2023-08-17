@@ -16,6 +16,8 @@ namespace pia::thomson
 
 		virtual void Reset() = 0;
 
+		virtual void Tick() {}
+
 		virtual void SetPIAEventHandler(EventHandler* handler) { m_piaEventHandler = handler ? handler : &s_defaultHandler; }
 		void SetKeyboard(kbd::DeviceKeyboard* kbd) { assert(kbd); m_keyboard = kbd; };
 

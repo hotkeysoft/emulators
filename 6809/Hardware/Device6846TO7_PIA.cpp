@@ -5,12 +5,6 @@
 
 namespace pia::thomson
 {
-	void Device6846TO7_PIA::Init(kbd::DeviceKeyboard* kbd)
-	{
-		Device6846::Init();
-		SetKeyboard(kbd);
-	}
-
 	void Device6846TO7_PIA::OnWritePort()
 	{
 		const ScreenRAM newMapping = GetScreenMapping();

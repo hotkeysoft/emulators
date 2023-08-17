@@ -43,21 +43,60 @@ namespace pia
 		TCR.Reset();
 
 		m_counterLatch = 0xFFFF;
+		m_counter = 0xFFFF;
+		m_timerOutput = false;
+		ClearTimerIRQ();
+	}
+
+	void Device6846::Tick()
+	{
+		static constexpr int PRESCALE = 8;
+		static int prescaler = PRESCALE;
+
+		// Nothing to do in preset mode
+		if (TCR.IsTimerPreset())
+		{
+			m_counter = m_counterLatch;
+			prescaler = PRESCALE;
+			return;
+		}
+
+		if (TCR.IsDiv8Prescaler() && (--prescaler))
+		{
+			return;
+		}
+		prescaler = PRESCALE;
+
+		// Mode 0 only for now
+		if (m_counter-- == 0)
+		{
+			LogPrintf(LOG_TRACE, "[%zu] Time out", emul::g_ticks);
+			m_counter = m_counterLatch;
+			m_timerOutput = !m_timerOutput;
+			SetTimerIRQ();
+		}
 	}
 
 	BYTE Device6846::ReadStatus()
 	{
 		// Reading the status allows interrupt flags
 		// to be cleared by Read/WriteControl
-		PCR.interruptAcknowledged = true;
+		if (PCR.GetCP1IRQFlag() || PCR.GetCP2IRQFlag())
+		{
+			PCR.interruptAcknowledged = true;
+		}
+
+		// Reading the status allows timer irq
+		// to be cleared by Read/WriteCounter
+		AcknowledgeTimerIRQ();
 
 		BYTE value = 0 |
 			(GetIRQ() << 7) |
-			(PCR.GetCP2InterruptFlag() << 2) |
-			(PCR.GetCP1InterruptFlag() << 1) |
-			0; // Timer interrupt
+			(PCR.GetCP2IRQFlag() << 2) |
+			(PCR.GetCP1IRQFlag() << 1) |
+			(m_timerIRQ << 0);
 
-		LogPrintf(LOG_INFO, "ReadStatus, value=%2x", value);
+		LogPrintf(LOG_DEBUG, "ReadStatus, value=%2x", value);
 
 		return value;
 	}
@@ -84,8 +123,8 @@ namespace pia
 			LogPeripheralControlRegister();
 		}
 
-		PCR.CP1Latch.SetTrigger(PCR.GetCP1PositiveTransition() ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE);
-		PCR.CP2Latch.SetTrigger(PCR.GetCP2PositiveTransition() ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE);
+		PCR.CP1IRQLatch.SetTrigger(PCR.GetCP1PositiveTransition() ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE);
+		PCR.CP2IRQLatch.SetTrigger(PCR.GetCP2PositiveTransition() ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE);
 
 		if (PCR.IsReset())
 		{
@@ -150,12 +189,34 @@ namespace pia
 
 	void Device6846::LogTimerControlRegister() const
 	{
-		LogPrintf(LOG_INFO, "Timer Output Enabled: %d", TCR.IsTimerOutputEnabled());
-		LogPrintf(LOG_INFO, "Timer Interrupt Enabled : %d", TCR.IsTimerInterruptEnabled());
-		LogPrintf(LOG_INFO, "Timer Operating Mode : %d", TCR.GetTimerMode());
-		LogPrintf(LOG_INFO, "Timer /8 Prescaler   : %d", TCR.IsDiv8Prescaler());
+		LogPrintf(LOG_INFO, "Timer State          : %s", TCR.IsTimerPreset() ? "Preset state" : "Enabled");
 		LogPrintf(LOG_INFO, "Timer Clock Source   : %s", TCR.IsClockSourceSystem() ? "SYSTEM" : "EXTERNAL");
-		LogPrintf(LOG_INFO, "Timer Initial Reset  : %s", TCR.IsTimerPreset() ? "Preset state" : "Enabled");
+		LogPrintf(LOG_INFO, "Timer /8 Prescaler   : %d", TCR.IsDiv8Prescaler());
+
+		const char* mode = nullptr;
+		bool implemented = false;
+		switch (TCR.GetTimerMode())
+		{
+		case TimerMode::CONTINUOUS1:
+			mode = "Continuous (1)";
+			implemented = true;
+			break;
+		case TimerMode::SINGLE_SHOT_CASCADED: mode = "Single Shot (Cascaded)"; break;
+		case TimerMode::CONTINUOUS2: mode = "Continuous (2)"; break;
+		case TimerMode::SINGLE_SHOT_NORMAL: mode = "Single Shot (Normal)"; break;
+		case TimerMode::FREQ_COMPARISON1: mode = "Frequency Comparison (1)"; break;
+		case TimerMode::FREQ_COMPARISON2: mode = "Frequency Comparison (2)"; break;
+		case TimerMode::PULSE_WIDTH_COMPARISON1: mode = "Pulse Width Comparison (1)"; break;
+		case TimerMode::PULSE_WIDTH_COMPARISON2: mode = "Pulse Width Comparison (2)"; break;
+		}
+		LogPrintf(LOG_INFO, "Timer Operating Mode : %s", mode);
+		LogPrintf(LOG_INFO, "Timer Interrupt Enabled : %d", TCR.IsTimerInterruptEnabled());
+		LogPrintf(LOG_INFO, "Timer Output Enabled: %d", TCR.IsTimerOutputEnabled());
+
+		if (!implemented)
+		{
+			LogPrintf(LOG_ERROR, "Timer Operating Mode not implemented: %s", mode);
+		}
 
 		if (!TCR.IsClockSourceSystem())
 		{
@@ -165,6 +226,11 @@ namespace pia
 
 	BYTE Device6846::ReadTimerMSB()
 	{
+		if (m_timerIRQAcknowledged)
+		{
+			ClearTimerIRQ();
+		}
+
 		BYTE value = emul::GetHByte(m_counter);
 		LogPrintf(LOG_DEBUG, "ReadTimerMSB, value=%02x", value);
 		return value;
@@ -177,6 +243,11 @@ namespace pia
 
 	BYTE Device6846::ReadTimerLSB()
 	{
+		if (m_timerIRQAcknowledged)
+		{
+			ClearTimerIRQ();
+		}
+
 		BYTE value = emul::GetLByte(m_counter);
 		LogPrintf(LOG_DEBUG, "ReadTimerLSB, value=%02x", value);
 		return value;
@@ -186,16 +257,21 @@ namespace pia
 		LogPrintf(LOG_DEBUG, "WriteTimerLSB, value=%02x", value);
 		emul::SetHByte(m_counterLatch, m_tempMSB);
 		emul::SetLByte(m_counterLatch, value);
+		LogPrintf(LOG_INFO, "Set Counter Latch: %04x", m_counterLatch);
 
-		LogPrintf(LOG_TRACE, "Set Counter Latch: %04x", m_counterLatch);
+		if (TCR.GetTimerMode() == TimerMode::CONTINUOUS1)
+		{
+			m_counter = m_counterLatch;
+			ClearTimerIRQ();
+		}
 	}
 
 	void Device6846::LogPeripheralControlRegister() const
 	{
 		LogPrintf(LOG_INFO, " Reset             : %s", PCR.IsReset() ? "RESET" : "Normal operation");
 
-		LogPrintf(LOG_INFO, " CP1 Interrupt flag: %d", PCR.GetCP2InterruptFlag());
-		LogPrintf(LOG_INFO, " CP2 Interrupt flag: %d", PCR.GetCP2InterruptFlag());
+		LogPrintf(LOG_INFO, " CP1 Interrupt flag: %d", PCR.GetCP2IRQFlag());
+		LogPrintf(LOG_INFO, " CP2 Interrupt flag: %d", PCR.GetCP2IRQFlag());
 
 		if (PCR.GetCP2Direction() == DataDirection::OUTPUT)
 		{
@@ -229,8 +305,8 @@ namespace pia
 	{
 		if (force || interruptAcknowledged)
 		{
-			CP1Latch.ResetLatch();
-			CP2Latch.ResetLatch();
+			CP1IRQLatch.ResetLatch();
+			CP2IRQLatch.ResetLatch();
 			interruptAcknowledged = false;
 		}
 	}
@@ -239,15 +315,15 @@ namespace pia
 	{
 		to["data"] = data;
 		to["interruptAcknowledged"] = interruptAcknowledged;
-		CP1Latch.Serialize(to["CP1Latch"]);
-		CP2Latch.Serialize(to["CP2Latch"]);
+		CP1IRQLatch.Serialize(to["CP1IRQLatch"]);
+		CP2IRQLatch.Serialize(to["CP2IRQLatch"]);
 	}
 	void Device6846::PeripheralControlRegister::Deserialize(const json& from)
 	{
 		data = from["data"];
 		interruptAcknowledged = from["interruptAcknowledged"];
-		CP1Latch.Deserialize(from["CP1Latch"]);
-		CP2Latch.Deserialize(from["CP2Latch"]);
+		CP1IRQLatch.Deserialize(from["CP1IRQLatch"]);
+		CP2IRQLatch.Deserialize(from["CP2IRQLatch"]);
 	}
 
 	void Device6846::TimerControlRegister::Serialize(json& to)
@@ -266,6 +342,12 @@ namespace pia
 		to["OR"] = OR;
 		PCR.Serialize(to["PCR"]);
 		TCR.Serialize(to["TCR"]);
+
+		to["tempMSB"] = m_tempMSB;
+		to["counterLatch"] = m_counterLatch;
+		to["counter"] = m_counter;
+		to["timerOutput"] = m_timerOutput;
+		to["timerIRQ"] = m_timerIRQ;
 	}
 
 	void Device6846::Deserialize(const json& from)
@@ -275,5 +357,11 @@ namespace pia
 		OR = from["OR"];
 		PCR.Deserialize(from["PCR"]);
 		TCR.Deserialize(from["TCR"]);
+
+		m_tempMSB = from["tempMSB"];
+		m_counterLatch = from["counterLatch"];
+		m_counter = from["counter"];
+		m_timerOutput = from["timerOutput"];
+		m_timerIRQ = from["timerIRQ"];
 	}
 }

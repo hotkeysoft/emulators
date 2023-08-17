@@ -267,10 +267,11 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(m_pia->GetBuzzer() * 10000);
+				SOUND().PlayMono(m_pia->GetBuzzer() * 4000);
 			}
 
 			video.Tick();
+			m_pia->Tick();
 			m_pia->SetVSync(video.IsVSync());
 
 			if (video.IsLightpen())

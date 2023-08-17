@@ -16,34 +16,38 @@ namespace pia
 	public:
 		Device6846(std::string id);
 
-		void Init();
+		virtual void Init();
 
-		void Reset();
+		virtual void Reset();
+
+		virtual void Tick();
 
 		enum class DataDirection {INPUT = 0, OUTPUT = 1};
 
 		void SetCP1(bool set)
 		{
-			PCR.CP1Latch.Set(set);
+			PCR.CP1IRQLatch.Set(set);
 		}
 
 		void SetC2(bool set)
 		{
-			PCR.CP2Latch.Set(set);
+			PCR.CP2IRQLatch.Set(set);
 		}
 
 		bool GetCP2() const { return PCR.GetCP2Output(); }
 
 		bool GetIRQ() const {
 			return
-				// TODO: TCR
-				(PCR.GetCP1InterruptEnabled() && PCR.CP1Latch.IsLatched()) ||
-				(PCR.GetCP2InterruptEnabled() && PCR.CP2Latch.IsLatched());
+				(PCR.GetCP1InterruptEnabled() && PCR.CP1IRQLatch.IsLatched()) ||
+				(PCR.GetCP2InterruptEnabled() && PCR.CP2IRQLatch.IsLatched()) ||
+				(TCR.IsTimerInterruptEnabled() && m_timerIRQ);
 		}
 
 		BYTE GetOutput() const { return OR; }
 		void SetInputBit(BYTE bit, bool set) { emul::SetBit(IR, bit, set); }
 		void SetInput(BYTE data) { IR = data; }
+
+		bool GetTimerOutput() const { return m_timerOutput & TCR.IsTimerOutputEnabled(); }
 
 		virtual void OnReadPort() {};
 		virtual void OnWritePort() {};
@@ -114,8 +118,8 @@ namespace pia
 			// PCR7: Reset. 0 = normal operation, 1 = reset
 			bool IsReset() const { return emul::GetBit(data, 7); }
 
-			bool GetCP1InterruptFlag() const { return CP1Latch.IsLatched(); }
-			bool GetCP2InterruptFlag() const { return (GetCP2Direction() == DataDirection::OUTPUT) ? false : CP2Latch.IsLatched(); }
+			bool GetCP1IRQFlag() const { return CP1IRQLatch.IsLatched(); }
+			bool GetCP2IRQFlag() const { return (GetCP2Direction() == DataDirection::OUTPUT) ? false : CP2IRQLatch.IsLatched(); }
 			void ClearInterruptFlags(bool force = false);
 
 			// PCR5: 0: CP2 is an input pin, 1: CP2 is an output pin
@@ -140,8 +144,8 @@ namespace pia
 			bool GetCP1PositiveTransition() const { return emul::GetBit(data, 1); }
 			bool GetCP1InterruptEnabled() const { return emul::GetBit(data, 0); }
 
-			hscommon::EdgeDetectLatch CP1Latch;
-			hscommon::EdgeDetectLatch CP2Latch;
+			hscommon::EdgeDetectLatch CP1IRQLatch;
+			hscommon::EdgeDetectLatch CP2IRQLatch;
 			bool interruptAcknowledged = false;
 
 			// emul::Serializable
@@ -150,12 +154,24 @@ namespace pia
 		} PCR;
 		void LogPeripheralControlRegister() const;
 
+		enum class TimerMode {
+			CONTINUOUS1             = 0b000,
+			SINGLE_SHOT_CASCADED    = 0b001,
+			CONTINUOUS2             = 0b010,
+			SINGLE_SHOT_NORMAL      = 0b011,
+			FREQ_COMPARISON1        = 0b100,
+			FREQ_COMPARISON2        = 0b101,
+			PULSE_WIDTH_COMPARISON1 = 0b110,
+			PULSE_WIDTH_COMPARISON2 = 0b111,
+
+			_CONTINUOUS_MASK        = 0b101,
+		};
+
 		struct TimerControlRegister : public emul::Serializable
 		{
 			void Reset()
 			{
 				data = 1;
-				//ClearInterruptFlags(true);
 			}
 
 			// Peripheral Control Register
@@ -171,7 +187,7 @@ namespace pia
 
 			// TCR 5-3: Operating Mode
 			// 0-7, very partially implemented, see cpp file
-			int GetTimerMode() const { return ((data >> 3) & 7); }
+			TimerMode GetTimerMode() const { return TimerMode((data >> 3) & 7); }
 
 			// TCR2: /8 Prescaler. 0 = Not prescaled, 1 = / 8
 			bool IsDiv8Prescaler() const { return emul::GetBit(data, 2); }
@@ -183,6 +199,8 @@ namespace pia
 			// TCR0: Internal Reset. 0 = timer enabled, 1 = timer in preset state
 			bool IsTimerPreset() const { return emul::GetBit(data, 0); }
 
+			bool IsContinuousMode() const { return ((BYTE)GetTimerMode() & 0b101) == 0b000; }
+
 			// emul::Serializable
 			virtual void Serialize(json& to) override;
 			virtual void Deserialize(const json& from) override;
@@ -191,9 +209,16 @@ namespace pia
 
 		// Timer
 
+		void ClearTimerIRQ() { m_timerIRQ = false; m_timerIRQAcknowledged = false; }
+		void SetTimerIRQ() { m_timerIRQ = true; m_timerIRQAcknowledged = false; }
+		void AcknowledgeTimerIRQ() { if (m_timerIRQ) m_timerIRQAcknowledged = true; }
+
 		// Temporarily holds MSB until LSB is written (so that latch is set at once)
 		BYTE m_tempMSB = 0;
 		WORD m_counterLatch = 0;
 		WORD m_counter = 0;
+		bool m_timerOutput = false;
+		bool m_timerIRQ = false;
+		bool m_timerIRQAcknowledged = false;
 	};
 }
