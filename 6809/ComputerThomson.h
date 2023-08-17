@@ -37,6 +37,7 @@ namespace emul
 		}
 
 		virtual void Init(WORD baseRAM) override;
+		void InitCartridge();
 		virtual void Reset() override;
 		virtual bool Step() override;
 

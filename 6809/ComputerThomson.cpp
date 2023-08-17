@@ -70,7 +70,21 @@ namespace emul
 
 		SOUND().SetBaseClock(CPU_CLOCK);
 
+		InitCartridge();
+	}
+
+	void ComputerThomson::InitCartridge()
+	{
 		std::string cart = CONFIG().GetValueStr("cartridge", "file");
+		if (cart.empty())
+		{
+			switch (m_model)
+			{
+			case Model::MO5: cart = CONFIG().GetValueStr("cartridge.mo5", "file"); break;
+			case Model::TO7: cart = CONFIG().GetValueStr("cartridge.to7", "file"); break;
+			}
+		}
+
 		if (cart.size())
 		{
 			LoadCartridge(cart);
@@ -295,10 +309,22 @@ namespace emul
 
 	hscommon::fileUtil::SelectFileFilters ComputerThomson::GetLoadFilter()
 	{
-		return {
-			{"TO7 Cartridge (*.m7)", "*.m7"},
-			{"Cartridge ROM (*.rom *.bin)", "*.rom;*.bin"}
-		};
+		switch (m_model)
+		{
+		case Model::MO5:
+			return {
+				{"MO5 Cartridge (*.m5)", "*.m5"},
+				{"Cartridge ROM (*.rom *.bin)", "*.rom;*.bin"}
+			};
+		case Model::TO7:
+			return {
+				{"TO7 Cartridge (*.m7)", "*.m7"},
+				{"Cartridge ROM (*.rom *.bin)", "*.rom;*.bin"}
+			};
+		default:
+			LogPrintf(LOG_ERROR, "Unknown model");
+			return CartridgeLoader::GetLoadFilter();
+		}
 	}
 
 	// TODO: Only TO7 for now
@@ -312,12 +338,28 @@ namespace emul
 
 		LogPrintf(LOG_INFO, "Loading cartridge image: %s", cartFile.c_str());
 		m_cartridgeROM.LoadFromFile(cartFile.c_str());
+
+		// On the MO5, need to swap out BASIC
+		if (m_model == Model::MO5)
+		{
+			m_memory.Free(&m_basicROM);
+			m_memory.Allocate(&m_cartridgeROM, MO5_ROM_CARTRIDGE_BASE);
+		}
+
 		Reset();
 	}
 	void ComputerThomson::UnloadCartridge()
 	{
 		m_cartridgeInfo.clear();
 		m_cartridgeROM.Clear(0xFF);
+
+		// On the MO5, need to put BASIC back
+		if (m_model == Model::MO5)
+		{
+			m_memory.Free(&m_cartridgeROM);
+			m_memory.Allocate(&m_basicROM, MO5_ROM_BASIC_BASE);
+		}
+
 		Reset();
 	}
 
