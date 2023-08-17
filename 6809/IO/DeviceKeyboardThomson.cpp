@@ -149,7 +149,8 @@ namespace kbd
 		{ SDL_SCANCODE_SLASH, Key(0x10, 3) }, // /?
 		{ SDL_SCANCODE_KP_DIVIDE, Key(0x10, 3) }, // /?
 		{ SDL_SCANCODE_Z, Key(0x20, 3) }, // Z
-		{ SDL_SCANCODE_1, Key(0x40, 3) }, // _=
+		{ SDL_SCANCODE_MINUS, Key(0x40, 3) }, // _=
+		{ SDL_SCANCODE_KP_MINUS, Key(0x40, 3) }, // _=
 		{ SDL_SCANCODE_2, Key(0x80, 3) }, // 2
 		{ SDL_SCANCODE_KP_2, Key(0x80, 3) }, // 2
 
