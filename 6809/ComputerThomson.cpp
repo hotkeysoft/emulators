@@ -20,15 +20,15 @@ namespace emul
 {
 	ComputerThomson::ComputerThomson() :
 		Logger("Thomson"),
-		ComputerBase(m_memory, 64),
-		IOConnector(63),
-		m_pixelRAM("RAM_PIXEL", 0x2000, emul::MemoryType::RAM),
-		m_attributeRAM("RAM_ATTR", 0x2000, emul::MemoryType::RAM),
+		ComputerBase(m_memory, IO_BLOCK_SIZE),
+		IOConnector(IO_BLOCK_SIZE - 1),
+		m_pixelRAM("RAM_PIXEL", RAM_SCREEN_SIZE, emul::MemoryType::RAM),
+		m_attributeRAM("RAM_ATTR", RAM_SCREEN_SIZE, emul::MemoryType::RAM),
 		m_userRAM("RAM_USER", emul::MemoryType::RAM),
 		m_osROM("ROM_OS", emul::MemoryType::ROM),
-		m_basicROM("ROM_BASIC", 0x3000, emul::MemoryType::ROM),
-		m_cartridgeROM("ROM_CART", emul::MemoryType::ROM),
-		m_io("IO", 0x40)
+		m_basicROM("ROM_BASIC", MO5_ROM_BASIC_SIZE, emul::MemoryType::ROM), // MO5
+		m_cartridgeROM("ROM_CART", ROM_CARTRIDGE_SIZE, emul::MemoryType::ROM),
+		m_io("IO", IO_BLOCK_SIZE)
 	{
 	}
 
@@ -61,14 +61,14 @@ namespace emul
 		InitROM();
 		InitRAM();
 
-		InitInputs(1000000, 20000);
+		InitInputs(CPU_CLOCK, INPUT_REFRESH_PERIOD);
 		InitKeyboard();
 		InitIO();
 
 		InitVideo();
 		InitLightpen();
 
-		SOUND().SetBaseClock(1000000);
+		SOUND().SetBaseClock(CPU_CLOCK);
 
 		std::string cart = CONFIG().GetValueStr("cartridge", "file");
 		if (cart.size())
@@ -111,25 +111,25 @@ namespace emul
 			std::string osROM = m_basePathROM + "/MO5/mo5.os.bin";
 			std::string basicROM = m_basePathROM + "/MO5/mo5.basic.bin";
 
-			m_osROM.Alloc(0x1000);
+			m_osROM.Alloc(MO5_ROM_MONITOR_SIZE);
 			m_osROM.LoadFromFile(osROM.c_str());
-			m_memory.Allocate(&m_osROM, 0xF000);
+			m_memory.Allocate(&m_osROM, MO5_ROM_MONITOR_BASE);
 
 			m_basicROM.LoadFromFile(basicROM.c_str());
-			m_memory.Allocate(&m_basicROM, 0xC000);
+			m_memory.Allocate(&m_basicROM, MO5_ROM_BASIC_BASE);
+
 			break;
 		}
 		case Model::TO7:
 		{
 			std::string osROM = m_basePathROM + "/TO7/to7.os.bin";
 
-			m_osROM.Alloc(0x1800);
+			m_osROM.Alloc(TO7_ROM_MONITOR_SIZE);
 			m_osROM.LoadFromFile(osROM.c_str());
-			m_memory.Allocate(&m_osROM, 0xE800);
+			m_memory.Allocate(&m_osROM, TO7_ROM_MONITOR_BASE);
 
-			m_cartridgeROM.Alloc(0x4000);
 			m_cartridgeROM.Clear(0xFF);
-			m_memory.Allocate(&m_cartridgeROM, 0);
+			m_memory.Allocate(&m_cartridgeROM, TO7_ROM_CARTRIDGE_BASE);
 			break;
 		}
 		default:
@@ -142,14 +142,14 @@ namespace emul
 		switch (m_model)
 		{
 		case Model::MO5:
-			m_userRAM.Alloc(0x8000);
-			m_memory.Allocate(&m_userRAM, 0x2000);
-			m_screenRAMBase = 0;
+			m_userRAM.Alloc(MO5_RAM_USER_SIZE);
+			m_memory.Allocate(&m_userRAM, MO5_RAM_USER_BASE);
+			m_screenRAMBase = MO5_RAM_SCREEN_BASE;
 			break;
 		case Model::TO7:
-			m_userRAM.Alloc(0x4000);
-			m_memory.Allocate(&m_userRAM, 0x6000);
-			m_screenRAMBase = 0x4000;
+			m_userRAM.Alloc(TO7_RAM_USER_SIZE);
+			m_memory.Allocate(&m_userRAM, TO7_RAM_USER_BASE);
+			m_screenRAMBase = TO7_RAM_SCREEN_BASE;
 			break;
 		default:
 			throw std::exception("not possible");
@@ -176,7 +176,7 @@ namespace emul
 			pia->EnableLog(CONFIG().GetLogLevel("pia"));
 			pia->Init(&m_keyboard);
 			m_io.AddDevice(*pia, 0, 0b111100); // A7C0-A7C3
-			m_memory.Allocate(&m_io, 0xA7C0);
+			m_memory.Allocate(&m_io, MO5_IO_BASE);
 			m_pia = pia;
 			break;
 		}

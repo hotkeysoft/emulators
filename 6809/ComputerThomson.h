@@ -57,6 +57,37 @@ namespace emul
 		void InitVideo();
 		void InitLightpen();
 
+		// Shared constants
+		static constexpr DWORD   CPU_CLOCK = 1000000;
+		static constexpr DWORD   INPUT_REFRESH_HZ = 50;
+		static constexpr DWORD   INPUT_REFRESH_PERIOD = CPU_CLOCK / INPUT_REFRESH_HZ;
+
+		static constexpr WORD    IO_BLOCK_SIZE          = 64;
+		static constexpr WORD    RAM_SCREEN_SIZE        = 0x2000;
+		static constexpr WORD    ROM_CARTRIDGE_SIZE     = 0x4000;
+
+		// TO7 constants
+		static constexpr WORD    TO7_RAM_USER_SIZE      = 0x4000;
+		static constexpr WORD    TO7_ROM_MONITOR_SIZE   = 0x1800;
+
+		static constexpr ADDRESS TO7_IO_BASE            = 0xE7C0;
+		static constexpr ADDRESS TO7_ROM_CARTRIDGE_BASE = 0x0000;
+		static constexpr ADDRESS TO7_RAM_SCREEN_BASE    = 0x4000;
+		static constexpr ADDRESS TO7_RAM_USER_BASE      = 0x6000;
+		static constexpr ADDRESS TO7_ROM_MONITOR_BASE   = 0xE800;
+
+		// MO5 constants
+		static constexpr WORD    MO5_RAM_USER_SIZE      = 0x8000;
+		static constexpr WORD    MO5_ROM_BASIC_SIZE     = 0x3000;
+		static constexpr WORD    MO5_ROM_MONITOR_SIZE   = 0x1000;
+
+		static constexpr ADDRESS MO5_IO_BASE            = 0xA7C0;
+		static constexpr ADDRESS MO5_ROM_CARTRIDGE_BASE = 0xB000;
+		static constexpr ADDRESS MO5_RAM_SCREEN_BASE    = 0x0000;
+		static constexpr ADDRESS MO5_RAM_USER_BASE      = 0x2000;
+		static constexpr ADDRESS MO5_ROM_BASIC_BASE     = 0xC000;
+		static constexpr ADDRESS MO5_ROM_MONITOR_BASE   = 0xF000;
+
 		// CartridgeLoader
 		virtual void LoadCartridge(const std::filesystem::path& path) override;
 		virtual hscommon::fileUtil::SelectFileFilters GetLoadFilter() override;
