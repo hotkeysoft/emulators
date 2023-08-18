@@ -25,6 +25,7 @@ namespace emul
 		m_pixelRAM("RAM_PIXEL", RAM_SCREEN_SIZE, emul::MemoryType::RAM),
 		m_attributeRAM("RAM_ATTR", RAM_SCREEN_SIZE, emul::MemoryType::RAM),
 		m_userRAM("RAM_USER", emul::MemoryType::RAM),
+		m_extRAM("RAM_EXT", emul::MemoryType::RAM),
 		m_osROM("ROM_OS", emul::MemoryType::ROM),
 		m_basicROM("ROM_BASIC", MO5_ROM_BASIC_SIZE, emul::MemoryType::ROM), // MO5
 		m_cartridgeROM("ROM_CART", ROM_CARTRIDGE_SIZE, emul::MemoryType::ROM),
@@ -59,7 +60,7 @@ namespace emul
 
 		InitModel();
 		InitROM();
-		InitRAM();
+		InitRAM(baseRAM);
 
 		InitInputs(CPU_CLOCK, INPUT_REFRESH_PERIOD);
 		InitKeyboard();
@@ -151,19 +152,56 @@ namespace emul
 		}
 	}
 
-	void ComputerThomson::InitRAM()
+	void ComputerThomson::InitRAM(WORD baseRAM)
 	{
+		LogPrintf(LOG_INFO, "Requested RAM: %dKB", baseRAM);
+
 		switch (m_model)
 		{
 		case Model::MO5:
 			m_userRAM.Alloc(MO5_RAM_USER_SIZE);
 			m_memory.Allocate(&m_userRAM, MO5_RAM_USER_BASE);
 			m_screenRAMBase = MO5_RAM_SCREEN_BASE;
+			m_baseRAMSize = 32;
 			break;
 		case Model::TO7:
+			if (!baseRAM)
+			{
+				baseRAM = 24;
+			}
+
+			LogPrintf(LOG_INFO, "Allocating base RAM (8KB)");
 			m_userRAM.Alloc(TO7_RAM_USER_SIZE);
 			m_memory.Allocate(&m_userRAM, TO7_RAM_USER_BASE);
 			m_screenRAMBase = TO7_RAM_SCREEN_BASE;
+			m_baseRAMSize = 8;
+
+			// Check for 16 K extension
+			if (baseRAM == 8)
+			{
+				break; // nothing to do, already allocated
+			}
+			else if (baseRAM < 8)
+			{
+				LogPrintf(LOG_WARNING, "Requested RAM < 8KB, using 8KB");
+				break; // nothing to do, already allocated
+			}
+			else if (baseRAM > 24)
+			{
+				LogPrintf(LOG_WARNING, "Requested RAM > 24KB, using 24KB");
+				baseRAM = 24;
+			}
+
+			// Nothing to do for 8k, already allocated
+			if (baseRAM != 24)
+			{
+				LogPrintf(LOG_WARNING, "Requested RAM should be 8 or 24, using 24KB");
+			}
+
+			m_baseRAMSize = 24;
+			LogPrintf(LOG_INFO, "Allocating Extension RAM (16KB)");
+			m_extRAM.Alloc(TO7_RAM_EXT_SIZE);
+			m_memory.Allocate(&m_extRAM, TO7_RAM_EXT_BASE);
 			break;
 		default:
 			throw std::exception("not possible");

@@ -52,7 +52,7 @@ namespace emul
 
 		void InitModel();
 		void InitROM();
-		void InitRAM();
+		void InitRAM(WORD baseRAM);
 		void InitIO();
 		void InitKeyboard();
 		void InitVideo();
@@ -68,13 +68,15 @@ namespace emul
 		static constexpr WORD    ROM_CARTRIDGE_SIZE     = 0x4000;
 
 		// TO7 constants
-		static constexpr WORD    TO7_RAM_USER_SIZE      = 0x4000;
+		static constexpr WORD    TO7_RAM_USER_SIZE      = 0x2000;
+		static constexpr WORD    TO7_RAM_EXT_SIZE       = 0x4000;
 		static constexpr WORD    TO7_ROM_MONITOR_SIZE   = 0x1800;
 
 		static constexpr ADDRESS TO7_IO_BASE            = 0xE7C0;
 		static constexpr ADDRESS TO7_ROM_CARTRIDGE_BASE = 0x0000;
 		static constexpr ADDRESS TO7_RAM_SCREEN_BASE    = 0x4000;
 		static constexpr ADDRESS TO7_RAM_USER_BASE      = 0x6000;
+		static constexpr ADDRESS TO7_RAM_EXT_BASE       = 0x8000;
 		static constexpr ADDRESS TO7_ROM_MONITOR_BASE   = 0xE800;
 
 		// MO5 constants
@@ -112,6 +114,7 @@ namespace emul
 		ADDRESS m_screenRAMBase = 0;
 
 		emul::MemoryBlock m_userRAM;
+		emul::MemoryBlock m_extRAM;
 		emul::MemoryBlock m_osROM;
 		emul::MemoryBlock m_basicROM;
 		emul::MemoryBlock m_cartridgeROM;
