@@ -130,6 +130,15 @@ namespace pia
 		{
 			Reset();
 		}
+
+		if (PCR.GetCP2OutputControl() == false)
+		{
+			LogPrintf(LOG_ERROR, "CP2 output ctrl = 0 not supported");
+		}
+		if (PCR.GetCP1InputLatchControl())
+		{
+			LogPrintf(LOG_ERROR, "CP1 input latch control = 1 not supported");
+		}
 	}
 
 	BYTE Device6846::ReadDirection()
@@ -185,6 +194,21 @@ namespace pia
 			LogPrintf(LOG_INFO, "Set Timer Control:");
 			LogTimerControlRegister();
 		}
+
+		// Only a few modes implemented for now
+		switch (TCR.GetTimerMode())
+		{
+		case TimerMode::CONTINUOUS1:
+		case TimerMode::CONTINUOUS2:
+			break;
+		default:
+			LogPrintf(LOG_ERROR, "Timer Operating Mode not implemented: %d", TCR.GetTimerMode());
+		}
+
+		if (!TCR.IsClockSourceSystem())
+		{
+			LogPrintf(LOG_ERROR, "External clock source not implemented");
+		}
 	}
 
 	void Device6846::LogTimerControlRegister() const
@@ -194,13 +218,9 @@ namespace pia
 		LogPrintf(LOG_INFO, "Timer /8 Prescaler   : %d", TCR.IsDiv8Prescaler());
 
 		const char* mode = nullptr;
-		bool implemented = false;
 		switch (TCR.GetTimerMode())
 		{
-		case TimerMode::CONTINUOUS1:
-			mode = "Continuous (1)";
-			implemented = true;
-			break;
+		case TimerMode::CONTINUOUS1: mode = "Continuous (1)"; break;
 		case TimerMode::SINGLE_SHOT_CASCADED: mode = "Single Shot (Cascaded)"; break;
 		case TimerMode::CONTINUOUS2: mode = "Continuous (2)"; break;
 		case TimerMode::SINGLE_SHOT_NORMAL: mode = "Single Shot (Normal)"; break;
@@ -212,16 +232,6 @@ namespace pia
 		LogPrintf(LOG_INFO, "Timer Operating Mode : %s", mode);
 		LogPrintf(LOG_INFO, "Timer Interrupt Enabled : %d", TCR.IsTimerInterruptEnabled());
 		LogPrintf(LOG_INFO, "Timer Output Enabled: %d", TCR.IsTimerOutputEnabled());
-
-		if (!implemented)
-		{
-			LogPrintf(LOG_ERROR, "Timer Operating Mode not implemented: %s", mode);
-		}
-
-		if (!TCR.IsClockSourceSystem())
-		{
-			LogPrintf(LOG_ERROR, "External clock source not implemented");
-		}
 	}
 
 	BYTE Device6846::ReadTimerMSB()
@@ -278,11 +288,6 @@ namespace pia
 			LogPrintf(LOG_INFO, " CP2 pin: OUTPUT");
 			LogPrintf(LOG_INFO, " CP2 output ctrl : %d", PCR.GetCP2OutputControl());
 			LogPrintf(LOG_INFO, " CP2 output      : %d", PCR.GetCP2Output());
-
-			if (PCR.GetCP2OutputControl() == false)
-			{
-				LogPrintf(LOG_ERROR, "CP2 output ctrl = 0 not supported");
-			}
 		}
 		else
 		{
@@ -292,11 +297,6 @@ namespace pia
 		}
 
 		LogPrintf(LOG_INFO, " CP1 latch control    : %d", PCR.GetCP1InputLatchControl());
-		if (PCR.GetCP1InputLatchControl())
-		{
-			LogPrintf(LOG_ERROR, "CP1 input latch control = 1 not supported");
-		}
-
 		LogPrintf(LOG_INFO, " CP1 pos transition   : %d", PCR.GetCP1PositiveTransition());
 		LogPrintf(LOG_INFO, " CP1 Interrupt Enable : %d", PCR.GetCP1InterruptEnabled());
 	}

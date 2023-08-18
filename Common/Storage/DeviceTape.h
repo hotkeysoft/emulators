@@ -50,7 +50,7 @@ namespace tape
 		}
 
 		// Reads bit at current position
-		bool Read() const { return m_currIn & m_motorEnabled; }
+		bool Read() const { return m_currIn && m_motorEnabled; }
 
 		// Writes bit at current position
 		void Write(bool val) { m_currOut = val; }

@@ -16,7 +16,7 @@ namespace pia::thomson
 		BYTE GetKeyboardLED() { return emul::GetBit(GetOutput(), 3); }
 		BYTE GetBorderRGBP() const { return (GetOutput() >> 4) & 7; }
 		void SetCassetteInput(bool set) { SetInputBit(7, set); }
-		BYTE GetCassetteOutput() const { return m_timerOutput; }
+		BYTE GetCassetteOutput() const { return GetTimerOutput(); }
 
 		// CC2
 		bool GetBuzzer() const { return GetCP2(); }

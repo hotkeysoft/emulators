@@ -47,7 +47,7 @@ namespace pia
 		void SetInputBit(BYTE bit, bool set) { emul::SetBit(IR, bit, set); }
 		void SetInput(BYTE data) { IR = data; }
 
-		bool GetTimerOutput() const { return m_timerOutput & TCR.IsTimerOutputEnabled(); }
+		bool GetTimerOutput() const { return m_timerOutput && TCR.IsTimerOutputEnabled(); }
 
 		virtual void OnReadPort() {};
 		virtual void OnWritePort() {};
