@@ -161,6 +161,7 @@ namespace emul
 			LogPrintf(LOG_WARNING, "Setting maximum memory size to 768KB");
 		}
 
+		m_baseRAMSize = baseRAM;
 		m_baseRAM.Alloc(baseRAM * 1024);
 		m_baseRAM.Clear();
 		m_memory.Allocate(&m_baseRAM, 0);

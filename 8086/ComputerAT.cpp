@@ -182,6 +182,7 @@ namespace emul
 			baseRAM = 2048;
 			LogPrintf(LOG_WARNING, "Setting maximum memory size to 2MB");
 		}
+		m_baseRAMSize = baseRAM;
 
 		// TODO.
 		// If requested <= 1M, allocate 640 + extra (above 1M)

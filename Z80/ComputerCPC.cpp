@@ -226,6 +226,8 @@ namespace emul
 			LogPrintf(LOG_INFO, "Allocating [%d] Extended RAM Banks", extBanks);
 		}
 
+		m_baseRAMSize = baseRAM;
+
 		for (int i=0; i<extBanks; ++i)
 		{
 			char id[32];

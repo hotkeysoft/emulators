@@ -263,7 +263,7 @@ namespace emul
 			LogPrintf(LOG_WARNING, "Requested base RAM too high (%dKB), using 32KB", baseRAM);
 			baseRAM = 32;
 		}
-
+		m_baseRAMSize = baseRAM;
 		m_baseRAM.Alloc(baseRAM * 1024);
 		m_memory.Clear();
 		m_memory.Allocate(&m_baseRAM, 0);

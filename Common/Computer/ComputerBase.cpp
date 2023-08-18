@@ -32,7 +32,6 @@ namespace emul
 
 	void ComputerBase::Init(const char* cpuid, WORD baseram)
 	{
-		assert(baseram > 0);
 		m_baseRAMSize = baseram;
 
 		InitCPU(cpuid);

@@ -158,6 +158,8 @@ namespace emul
 			m_extraRAM.Clear();
 			m_memory.Allocate(&m_extraRAM, 0x20000);
 		}
+
+		m_baseRAMSize = baseRAM;
 	}
 
 	bool ComputerPCjr::Step()

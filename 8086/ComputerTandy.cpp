@@ -130,6 +130,7 @@ namespace emul
 			m_ramExtension.Clear();
 			m_memory.Allocate(&m_ramExtension, 0);
 		}
+		m_baseRAMSize = baseRAM;
 	}
 
 	void ComputerTandy::SetRAMPage(BYTE value)

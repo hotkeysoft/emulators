@@ -258,6 +258,8 @@ namespace emul
 			LogPrintf(LOG_WARNING, "Requested base RAM too high (%dKB), using 32KB", actualRAM);
 		}
 
+		m_baseRAMSize = actualRAM;
+
 		ResetMemoryLayout();
 		switch (actualRAM)
 		{

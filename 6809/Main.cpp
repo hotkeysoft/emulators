@@ -246,7 +246,7 @@ ComputerBase* RestoreNewComputerFromSnapshot()
 			// Starting here, anything failing is non-recoverable
 			failureIsFatal = true;
 
-			int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 640);
+			int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram");
 			newPC->Init(baseRAM);
 
 			newPC->SetSerializationDir(snapshotDir);
@@ -345,7 +345,7 @@ int main(int argc, char* args[])
 		return 2;
 	}
 
-	int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 640);
+	int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram");
 	pc->Init(baseRAM);
 	InitPC(pc, overlay);
 
