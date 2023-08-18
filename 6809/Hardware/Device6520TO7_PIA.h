@@ -26,7 +26,7 @@ namespace pia::thomson
 		void SetINIT(bool set) { m_portA.SetC1(set); }
 
 		// CA2: Tape drive motor Output
-		bool GetTapeMotorState() const { return m_portA.GetC2(); }
+		bool GetTapeMotorState() const { return !m_portA.GetC2(); }
 
 		// CB1: Light pen Clock
 		void TriggerLightpen() { SetLightpenClock(false); SetLightpenClock(true); }

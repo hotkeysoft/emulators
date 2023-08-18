@@ -33,7 +33,7 @@ namespace pia::thomson
 		virtual void SetSelectedKeyInput(bool set) override { m_portB.SetInputBit(7, set); }
 
 		// CA2: Tape drive motor Output
-		virtual bool GetTapeMotorState() const override { return m_portA.GetC2(); }
+		virtual bool GetTapeMotorState() const override { return !m_portA.GetC2(); }
 
 		// CA1: Light pen interrupt Input
 		virtual void TriggerLightPenInterrupt() override { m_portA.SetC1(false); m_portA.SetC1(true); }

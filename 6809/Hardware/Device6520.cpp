@@ -135,6 +135,11 @@ namespace pia
 
 		CR.IRQ1Latch.SetTrigger(CR.GetIRQ1PositiveTransition() ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE);
 		CR.IRQ2Latch.SetTrigger(CR.GetIRQ2PositiveTransition() ? EdgeDetectLatch::Trigger::POSITIVE : EdgeDetectLatch::Trigger::NEGATIVE );
+
+		if (CR.GetC2OutputMode() && !CR.GetC2OutputControl())
+		{
+			LogPrintf(LOG_ERROR, "C2 OutputControl = 0 not implemented");
+		}
 	}
 
 	void PIAPort::LogControlRegister()

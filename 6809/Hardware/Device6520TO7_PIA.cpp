@@ -19,7 +19,7 @@ namespace pia::thomson
 			BYTE colSel = GetKeyboardColumnSelect();
 
 			BYTE rowData = m_keyboard->GetRowData(colSel);
-			LogPrintf(LOG_INFO, "OnReadKeyboard, column = %d, data = %02X", colSel, rowData);
+			LogPrintf(LOG_DEBUG, "OnReadKeyboard, column = %d, data = %02X", colSel, rowData);
 
 			SetKeyboardRowData(rowData);
 		}

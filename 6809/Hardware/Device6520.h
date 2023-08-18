@@ -24,7 +24,7 @@ namespace pia
 
 		enum DataDirection {INPUT = 0, OUTPUT = 1};
 
-		bool GetC2() const { return !CR.GetC2Output(); }
+		bool GetC2() const { return CR.GetC2Output(); }
 
 		void SetC1(bool set)
 		{

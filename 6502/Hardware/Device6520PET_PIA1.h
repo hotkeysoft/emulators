@@ -21,7 +21,7 @@ namespace pia
 		BYTE GetKeyboardColumnSelect() const { return m_portA.GetOutput() & 0b00001111; }
 
 		// CA2
-		bool GetBlankScreen() const { return m_portA.GetC2(); }
+		bool GetBlankScreen() const { return !m_portA.GetC2(); }
 		// CA1
 		void SetCassette1ReadLine(bool set) { return m_portA.SetC1(set); }
 
@@ -29,7 +29,7 @@ namespace pia
 		void SetKeyboardRow(BYTE data) { m_portB.SetInput(data); }
 
 		// CB2
-		bool GetCassette1MotorOut() const { return m_portB.GetC2(); }
+		bool GetCassette1MotorOut() const { return !m_portB.GetC2(); }
 		// CB1
 		void SetScreenRetrace(bool set) { m_portB.SetC1(!set); }
 

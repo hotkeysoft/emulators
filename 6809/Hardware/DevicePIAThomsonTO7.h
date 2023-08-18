@@ -24,7 +24,7 @@ namespace pia::thomson
 
 		// Tape
 		virtual bool GetCassetteOut() const override { return m_pia6846.GetCassetteOutput(); }
-		virtual bool GetTapeMotorState() const override { return m_pia6520.GetPortA().GetC2(); }
+		virtual bool GetTapeMotorState() const override { return m_pia6520.GetTapeMotorState(); }
 		virtual void SetCassetteInput(bool set) override { m_pia6846.SetCassetteInput(set); }
 
 		// Light pen
