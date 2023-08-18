@@ -31,6 +31,7 @@
     <ClInclude Include="..\Common\CPU\MemoryBlockBase.h" />
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\FileUtil.h" />
+    <ClInclude Include="..\Common\Hardware\Device6520.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
     <ClInclude Include="..\Common\IO\DeviceJoystick.h" />
@@ -54,8 +55,6 @@
     <ClInclude Include="ComputerPET2001.h" />
     <ClInclude Include="ComputerVIC20.h" />
     <ClInclude Include="CPU\CPU6502.h" />
-    <ClInclude Include="EdgeDetectLatch.h" />
-    <ClInclude Include="Hardware\Device6520.h" />
     <ClInclude Include="Hardware\Device6520PET_PIA1.h" />
     <ClInclude Include="Hardware\Device6522.h" />
     <ClInclude Include="Hardware\Device6522PET.h" />
@@ -83,6 +82,7 @@
     <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp" />
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\FileUtil.cpp" />
+    <ClCompile Include="..\Common\Hardware\Device6520.cpp" />
     <ClCompile Include="..\Common\IO\Console.cpp" />
     <ClCompile Include="..\Common\IO\DeviceJoystick.cpp" />
     <ClCompile Include="..\Common\IO\DeviceJoystickDigital.cpp" />
@@ -101,7 +101,6 @@
     <ClCompile Include="ComputerPET2001.cpp" />
     <ClCompile Include="ComputerVIC20.cpp" />
     <ClCompile Include="CPU\CPU6502.cpp" />
-    <ClCompile Include="Hardware\Device6520.cpp" />
     <ClCompile Include="Hardware\Device6520PET_PIA1.cpp" />
     <ClCompile Include="Hardware\Device6522.cpp" />
     <ClCompile Include="Hardware\Device6522VIC_VIA1.cpp" />

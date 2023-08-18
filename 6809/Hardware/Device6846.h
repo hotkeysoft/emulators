@@ -3,7 +3,7 @@
 #include <Serializable.h>
 #include <CPU/CPUCommon.h>
 #include <CPU/IOConnector.h>
-#include "../EdgeDetectLatch.h"
+#include <EdgeDetectLatch.h>
 
 using emul::IOConnector;
 using emul::BYTE;

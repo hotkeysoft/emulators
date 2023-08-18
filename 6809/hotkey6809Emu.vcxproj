@@ -32,6 +32,7 @@
     <ClInclude Include="..\Common\CPU\MemoryBlockBase.h" />
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\FileUtil.h" />
+    <ClInclude Include="..\Common\Hardware\Device6520.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
     <ClInclude Include="..\Common\IO\DeviceJoystick.h" />
@@ -63,8 +64,6 @@
     <ClInclude Include="Hardware\DevicePIAThomsonTO7.h" />
     <ClInclude Include="Hardware\PIAEventsThomson.h" />
     <ClInclude Include="IO\DeviceLightpenThomson.h" />
-    <ClInclude Include="EdgeDetectLatch.h" />
-    <ClInclude Include="Hardware\Device6520.h" />
     <ClInclude Include="Hardware\Device6520MO5_PIA.h" />
     <ClInclude Include="IO\DeviceKeyboardThomson.h" />
     <ClInclude Include="IO\Monitor6809.h" />
@@ -84,6 +83,7 @@
     <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp" />
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\FileUtil.cpp" />
+    <ClCompile Include="..\Common\Hardware\Device6520.cpp" />
     <ClCompile Include="..\Common\IO\Console.cpp" />
     <ClCompile Include="..\Common\IO\DeviceJoystick.cpp" />
     <ClCompile Include="..\Common\IO\DeviceJoystickDigital.cpp" />
@@ -106,7 +106,6 @@
     <ClCompile Include="Hardware\Device6846TO7_PIA.cpp" />
     <ClCompile Include="Hardware\DevicePIAThomsonTO7.cpp" />
     <ClCompile Include="IO\DeviceLightpenThomson.cpp" />
-    <ClCompile Include="Hardware\Device6520.cpp" />
     <ClCompile Include="Hardware\Device6520MO5_PIA.cpp" />
     <ClCompile Include="IO\DeviceKeyboardThomson.cpp" />
     <ClCompile Include="IO\Monitor6809.cpp" />

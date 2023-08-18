@@ -1,5 +1,5 @@
 #pragma once
-#include "Device6520.h"
+#include <Hardware/Device6520.h>
 
 namespace kbd { class DeviceKeyboard; }
 

@@ -79,6 +79,9 @@
     <Filter Include="Source Files\Sound">
       <UniqueIdentifier>{c1053d7d-8f6e-4477-9063-12c2f18f738e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Hardware">
+      <UniqueIdentifier>{a4d36f0d-5f8a-46ff-a71e-c7e86f0c4e2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -156,17 +159,11 @@
     <ClInclude Include="Hardware\Device6522.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="Hardware\Device6520.h">
-      <Filter>Header Files\Hardware</Filter>
-    </ClInclude>
     <ClInclude Include="Hardware\Device6522PET.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
     <ClInclude Include="Video\VideoPET2001.h">
       <Filter>Header Files\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="EdgeDetectLatch.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IO\DeviceKeyboardPET2001.h">
       <Filter>Header Files\IO</Filter>
@@ -240,6 +237,9 @@
     <ClInclude Include="..\Common\IO\InputEvents.h">
       <Filter>Common\IO</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Hardware\Device6520.h">
+      <Filter>Common\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -308,9 +308,6 @@
     <ClCompile Include="Hardware\Device6522.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
-    <ClCompile Include="Hardware\Device6520.cpp">
-      <Filter>Source Files\Hardware</Filter>
-    </ClCompile>
     <ClCompile Include="Video\VideoPET2001.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
@@ -376,6 +373,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\IO\InputEvents.cpp">
       <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Hardware\Device6520.cpp">
+      <Filter>Common\Hardware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
