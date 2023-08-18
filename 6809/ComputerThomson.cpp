@@ -12,6 +12,7 @@ using cfg::CONFIG;
 using sound::SOUND;
 using pia::thomson::Device6520MO5_PIA;
 using pia::thomson::DevicePIAThomsonTO7;
+using tape::TapeDeck;
 using namespace emul::Thomson;
 
 using ScreenRAM = pia::thomson::ScreenRAM;
@@ -36,6 +37,7 @@ namespace emul
 	ComputerThomson::~ComputerThomson()
 	{
 		delete m_pia;
+		delete m_tape;
 	}
 
 	void ComputerThomson::Reset()
@@ -49,6 +51,11 @@ namespace emul
 		{
 			m_pia->Reset();
 		}
+		if (m_tape)
+		{
+			m_tape->Reset();
+		}
+
 		m_keyboard.Reset();
 		m_lightpen.Reset();
 		OnScreenMapChange(ScreenRAM::PIXEL);
@@ -68,6 +75,7 @@ namespace emul
 
 		InitVideo();
 		InitLightpen();
+		InitTape();
 
 		SOUND().SetBaseClock(CPU_CLOCK);
 
@@ -261,6 +269,12 @@ namespace emul
 		GetInputs().InitMouse(&m_lightpen);
 	}
 
+	void ComputerThomson::InitTape()
+	{
+		m_tape = new tape::DeviceTape(CPU_CLOCK);
+		m_tape->Init(1);
+	}
+
 	void ComputerThomson::OnScreenMapChange(ScreenRAM map)
 	{
 		LogPrintf(LOG_DEBUG, "OnScreenMapChange PIXEL=%d", map);
@@ -312,14 +326,24 @@ namespace emul
 
 		uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
+		TapeDeck& tape = m_tape->GetTape(0);
 		auto& video = GetVideo();
+
 		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
 			++g_ticks;
 
 			if (!m_turbo)
 			{
-				SOUND().PlayMono(m_pia->GetBuzzer() * 4000);
+				SOUND().PlayMono(tape.GetSound() + (m_pia->GetBuzzer() * 4000));
+			}
+
+			{
+				tape.SetMotor(m_pia->GetTapeMotorState());
+				m_pia->SetCassetteInput(tape.Read() ^ tape.GetSense());
+				tape.Write(m_pia->GetCassetteOut());
+
+				m_tape->Tick();
 			}
 
 			video.Tick();

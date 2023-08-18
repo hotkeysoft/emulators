@@ -9,6 +9,7 @@
 #include "Video/VideoThomson.h"
 #include "ThomsonModel.h"
 #include <Storage/CartridgeLoader.h>
+#include <Storage/DeviceTape.h>
 
 namespace pia::thomson { class DevicePIAThomson; }
 using ThomsonModel = emul::Thomson::Model;
@@ -57,6 +58,7 @@ namespace emul
 		void InitKeyboard();
 		void InitVideo();
 		void InitLightpen();
+		void InitTape();
 
 		// Shared constants
 		static constexpr DWORD   CPU_CLOCK = 1000000;
@@ -107,6 +109,7 @@ namespace emul
 		virtual void OnScreenMapChange(pia::thomson::ScreenRAM map) override;
 		virtual void OnBorderChange(BYTE borderRGBP) override;
 
+		virtual tape::DeviceTape* GetTape() override { return m_tape; }
 		video::VideoThomson& GetVideo() { return static_cast<video::VideoThomson&>(*m_video); }
 
 		emul::MemoryBlock m_pixelRAM;
@@ -124,5 +127,6 @@ namespace emul
 		pia::thomson::DevicePIAThomson* m_pia = nullptr;
 		kbd::DeviceKeyboardThomson m_keyboard;
 		mouse::DeviceLightpenThomson m_lightpen;
+		tape::DeviceTape* m_tape = nullptr;
 	};
 }

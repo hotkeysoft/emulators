@@ -55,7 +55,7 @@ namespace tape
 		// Writes bit at current position
 		void Write(bool val) { m_currOut = val; }
 
-		WORD GetSound() const { return (m_motorEnabled && (m_currOut || m_currIn)) ? 8192 : 0; }
+		WORD GetSound() const { return (m_motorEnabled && (m_currOut ^ m_currIn)) ? 4000 : 0; }
 
 		void Tick();
 
