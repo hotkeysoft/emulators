@@ -1204,7 +1204,7 @@ namespace emul
 
 	void CPU6809::SEX()
 	{
-		m_reg.ab.A = GetLSB(m_reg.ab.B) ? 0xFF : 0;
+		m_reg.ab.A = GetMSB(m_reg.ab.B) ? 0xFF : 0;
 		AdjustNZ(m_reg.D);
 	}
 
