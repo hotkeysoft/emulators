@@ -10,47 +10,80 @@ namespace emul
 {
 	static const char hexDigits[] = "0123456789ABCDEF";
 
-	const char* Monitor68000::EffectiveAddress::BuildText() const
+	void Monitor68000::EffectiveAddress::BuildImmediate()
+	{
+		switch (m_size)
+		{
+		case EASize::Byte:
+		{
+			WORD byteImm = m_memory.Read16be(m_currAddress);
+			m_currAddress += 2;
+			m_currInstruction.AddRaw(byteImm);
+			sprintf(m_text, "#$%02X", GetLByte(byteImm));
+			break;
+		}
+		case EASize::Word:
+		{
+			WORD wordImm = m_memory.Read16be(m_currAddress);
+			m_currAddress += 2;
+			m_currInstruction.AddRaw(wordImm);
+			sprintf(m_text, "#$%04X", wordImm);
+			break;
+		}
+		case EASize::Long:
+		{
+			DWORD longImm = m_memory.Read32be(m_currAddress);
+			m_currAddress += 4;
+			m_currInstruction.AddRaw(longImm);
+			sprintf(m_text, "#$%08X", longImm);
+			break;
+		}
+		default:
+			strcpy(m_text, "[imm unknown]");
+			break;
+		}
+	}
+
+	const char* Monitor68000::EffectiveAddress::BuildText()
 	{
 		switch (m_mode)
 		{
 		case EAMode::DataRegDirect:
-			sprintf(m_text, "D%d", m_regNumber);
+			sprintf(m_text, "D%u", m_regNumber);
 			break;
 		case EAMode::AddrRegDirect:
-			sprintf(m_text, "A%d", m_regNumber);
+			sprintf(m_text, "A%u", m_regNumber);
 			break;
 		case EAMode::AddrRegIndirect:
-			sprintf(m_text, "(A%d)", m_regNumber);
+			sprintf(m_text, "(A%u)", m_regNumber);
 			break;
 		case EAMode::AddrRegIndirectPostIncrement:
-			sprintf(m_text, "(A%d)+", m_regNumber);
+			sprintf(m_text, "(A%u)+", m_regNumber);
 			break;
 		case EAMode::AddrRegIndirectPreDecrement:
-			sprintf(m_text, "-(A%d)", m_regNumber);
+			sprintf(m_text, "-(A%u)", m_regNumber);
 			break;
 		case EAMode::AddrRegIndirectDisplacement:
-			sprintf(m_text, "#$%04X(A%d)", 0x0BAD, m_regNumber); // TODO: displacement
+			sprintf(m_text, "%d(A%u)", GetDisplacementWord(), m_regNumber);
 			break;
 		case EAMode::AddrRegIndirectIndex:
-			sprintf(m_text, "#$%02X(A%d,Xi)", 0xBA, m_regNumber); // TODO: Extension word
+			strcpy(m_text, GetExtensionWord(m_regNumber));
 			break;
 		case EAMode::AbsoluteShort:
-			sprintf(m_text, "($%04X).w", m_address); // TODO: address
+			sprintf(m_text, "($%04X).w", m_address);
 			break;
 		case EAMode::AbsoluteLong:
-			sprintf(m_text, "($%08X).l", m_address); // TODO: address
+			sprintf(m_text, "($%08X).l", m_address);
 			break;
 		case EAMode::ProgramCounterDisplacement:
-			sprintf(m_text, "#$%02X(PC,Xi)", 0xBA); // TODO: Extension word
+			sprintf(m_text, "%d(PC)", GetDisplacementWord());
 			break;
 		case EAMode::ProgramCounterIndex:
-			sprintf(m_text, "#$%02X(PC,Xi)", 0xBA); // TODO: Extension word
+			strcpy(m_text, GetExtensionWord(PC));
 			break;
 		case EAMode::Immediate: // TODO: Need size
-			sprintf(m_text, "[imm]");
+			BuildImmediate();
 			break;
-
 		case EAMode::Invalid:
 			sprintf(m_text, "[eaERR]");
 			break;
@@ -59,7 +92,7 @@ namespace emul
 		return m_text;
 	}
 
-	ADDRESS Monitor68000::EffectiveAddress::ComputeEA(Memory& memory, WORD opcode, ADDRESS currAddress)
+	void Monitor68000::EffectiveAddress::ComputeEA(WORD opcode)
 	{
 		m_regNumber = opcode & 7;
 		m_size = (EASize)((opcode >> 6) & 3);
@@ -72,15 +105,20 @@ namespace emul
 		else switch (m_regNumber) // Special modes
 		{
 		case 0b000:
+		{
 			m_mode = EAMode::AbsoluteShort;
-			m_address = emul::Widen(memory.Read16be(currAddress));
-			currAddress += 2;
+			WORD shortAddress = m_memory.Read16be(m_currAddress);
+			m_currAddress += 2;
+			m_address = emul::Widen(shortAddress);
+			m_currInstruction.AddRaw(shortAddress);
 			break;
+		}
 		case 0b001:
 		{
 			m_mode = EAMode::AbsoluteLong;
-			m_address = memory.Read32be(currAddress);
-			currAddress += 4;
+			m_address = m_memory.Read32be(m_currAddress);
+			m_currAddress += 4;
+			m_currInstruction.AddRaw(m_address);
 			break;
 		}
 		case 0b010: m_mode = EAMode::ProgramCounterDisplacement; break;
@@ -88,10 +126,40 @@ namespace emul
 		case 0b100: m_mode = EAMode::Immediate; break;
 		default: m_mode = EAMode::Invalid;
 		}
-
-		return currAddress;
 	}
 
+	SWORD Monitor68000::EffectiveAddress::GetDisplacementWord()
+	{
+		WORD disp = m_memory.Read16be(m_currAddress);
+		m_currAddress += 2;
+		m_currInstruction.AddRaw(disp);
+		return SWORD(disp);
+	}
+
+	const char* Monitor68000::EffectiveAddress::GetExtensionWord(BYTE reg)
+	{
+		char addrRegName[3] = "PC";
+		if (reg != PC)
+		{
+			addrRegName[0] = 'A';
+			addrRegName[1] = reg + '0';
+		}
+
+		WORD extWord = m_memory.Read16be(m_currAddress);
+		m_currAddress += 2;
+		m_currInstruction.AddRaw(extWord);
+
+		SBYTE displacement = (SBYTE)(emul::GetLByte(extWord));
+
+		sprintf(m_extWord, "%d(%s,%c%u.%c)",
+			displacement,
+			addrRegName,
+			GetMSB(extWord) ? 'A' : 'D',
+			((extWord >> 12) & 7),
+			GetBit(extWord, 11) ? 'l' : 'w');
+
+		return m_extWord;
+	}
 
 	Monitor68000::Monitor68000(Console& console) :
 		m_console(console)
@@ -429,10 +497,10 @@ namespace emul
 		pos.x = offsetPos.x;
 		WriteValueHex((WORD)instr.address, pos);
 		pos.x = rawPos.x;
-		m_console.WriteAt(pos.x, pos.y, (const char*)instr.raw, instr.len);
-		for (int i = 0; i < rawPos.w - instr.len; ++i)
+		m_console.WriteAt(pos.x, pos.y, (const char*)instr.raw, instr.rawLen);
+		for (int i = 0; i < rawPos.w - instr.rawLen; ++i)
 		{
-			m_console.WriteAt(pos.x + instr.len + i, pos.y, 0xFAu, 8);
+			m_console.WriteAt(pos.x + instr.rawLen + i, pos.y, 0xFAu, 8);
 		}
 
 		pos.x = textPos.x;
@@ -470,7 +538,7 @@ namespace emul
 	{
 		decoded.address = address;
 		WORD data = m_memory->Read16be(address);
-
+		address += 2;
 		decoded.AddRaw(data);
 
 		// Get group from upper 4 bits
@@ -493,8 +561,6 @@ namespace emul
 			instr = m_cpu->GetInfo().GetSubOpcode(instr, op2);
 		}
 
-		address += 2;
-
 		char buf[32];
 		switch (instr.imm)
 		{
@@ -503,7 +569,6 @@ namespace emul
 			WORD imm8 = m_memory->Read16be(address);
 			address += 2;
 			decoded.AddRaw(imm8);
-
 			sprintf(buf, "$%02X", imm8);
 			Replace(text, "{i8}", buf);
 			break;
@@ -513,7 +578,6 @@ namespace emul
 			WORD imm16 = m_memory->Read16be(address);
 			address += 2;
 			decoded.AddRaw(imm16);
-
 			sprintf(buf, "$%04X", imm16);
 			Replace(text, "{i16}", buf);
 			break;
@@ -522,28 +586,57 @@ namespace emul
 		{
 			DWORD imm32 = m_memory->Read32be(address);
 			address += 4;
-
 			decoded.AddRaw(imm32);
-
 			sprintf(buf, "$%08X", imm32);
 			Replace(text, "{i32}", buf);
 			break;
 		}
-
+		case Opcode::IMM::S8: // Signed byte (show as decimal)
+		{
+			WORD imm16 = m_memory->Read16be(address);
+			address += 2;
+			decoded.AddRaw(imm16);
+			sprintf(buf, "%d", (SBYTE)GetLByte(imm16));
+			Replace(text, "{s8}", buf);
+			break;
+		}
+		case Opcode::IMM::S16: // Signed word (show as decimal)
+		{
+			WORD imm16 = m_memory->Read16be(address);
+			address += 2;
+			decoded.AddRaw(imm16);
+			sprintf(buf, "%d", (SWORD)imm16);
+			Replace(text, "{s16}", buf);
+			break;
+		}
 		default:
 			break;
 		}
 
 		// Effective address
-		if (instr.rm16)
+		if (instr.idx)
 		{
-			EffectiveAddress ea;
-			address = ea.ComputeEA(*m_memory, data, address);
-			Replace(text, "{rm16}", ea.GetText());
+			ADDRESS start = address;
+			EffectiveAddress ea(*m_memory, decoded, address);
+			ea.ComputeEA(data);
+
+			// Bit instructions (BTST, etc.) have byte length
+			// except for DataRegDirect addressing mode (where it's long)
+			if (instr.bit)
+			{
+				// override size
+				ea.SetSize((ea.GetMode() == EAMode::DataRegDirect) ? EASize::Long : EASize::Byte);
+
+				std::string width = (ea.GetMode() == EAMode::DataRegDirect) ? "l" : "b";
+				Replace(text, "{bit}", width);
+			}
+
+			ea.BuildText();
+			Replace(text, "{idx}", ea.GetText());
+			address = ea.GetCurrAddress();
 		}
 
-
-		memset(decoded.text, ' ', 32);
+		memset(decoded.text, ' ', Instruction::TEXT_LEN);
 		memcpy(decoded.text, text.c_str(), text.size());
 
 		return address;
@@ -551,17 +644,17 @@ namespace emul
 
 	void Monitor68000::Instruction::AddRaw(BYTE b)
 	{
-		this->raw[this->len++] = hexDigits[b >> 4];
-		this->raw[this->len++] = hexDigits[(b & 0x0F)];
+		raw[rawLen++] = hexDigits[b >> 4];
+		raw[rawLen++] = hexDigits[(b & 0x0F)];
 	}
 	void Monitor68000::Instruction::AddRaw(WORD w)
 	{
 		// HIGH BYTE
-		this->raw[this->len++] = hexDigits[(w >> 12) & 0x0F];
-		this->raw[this->len++] = hexDigits[(w >> 8) & 0x0F];
+		raw[rawLen++] = hexDigits[(w >> 12) & 0x0F];
+		raw[rawLen++] = hexDigits[(w >> 8) & 0x0F];
 		// LOW BYTE
-		this->raw[this->len++] = hexDigits[(w >> 4) & 0x0F];
-		this->raw[this->len++] = hexDigits[(w & 0x0F)];
+		raw[rawLen++] = hexDigits[(w >> 4) & 0x0F];
+		raw[rawLen++] = hexDigits[(w & 0x0F)];
 	}
 	void Monitor68000::Instruction::AddRaw(DWORD dw)
 	{

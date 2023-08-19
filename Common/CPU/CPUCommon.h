@@ -33,7 +33,7 @@ namespace emul
 
 	// Signed
 	typedef int8_t SBYTE;
-	typedef uint16_t SWORD;
+	typedef int16_t SWORD;
 
 	typedef uint32_t ADDRESS;
 
@@ -90,11 +90,13 @@ namespace emul
 	inline WORD RoundPowerOf2(const WORD w, const WORD mult) { assert(IsPowerOf2(mult)); return (w + (mult - 1)) & (-mult); }
 	inline DWORD RoundPowerOf2(const DWORD d, const WORD mult) { assert(IsPowerOf2(mult)); return (d + (mult - 1)) & (-(int32_t)mult); }
 
+	// Sign extend
 	inline WORD Widen(const BYTE b)
 	{
 		return WORD((int16_t)((int8_t)b));
 	}
 
+	// Sign extend
 	inline DWORD Widen(const WORD w)
 	{
 		return DWORD((int32_t)((int16_t)w));

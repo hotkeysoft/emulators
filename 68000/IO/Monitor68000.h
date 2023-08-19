@@ -32,9 +32,12 @@ namespace emul
 
 			ADDRESS address;
 			WORD offset;
-			BYTE len = 0;
-			BYTE raw[16];
-			char text[32];
+			static constexpr size_t RAW_LEN = 24;
+			static constexpr size_t TEXT_LEN = 48;
+
+			BYTE rawLen = 0;
+			BYTE raw[RAW_LEN];
+			char text[TEXT_LEN];
 		};
 		virtual ADDRESS Disassemble(ADDRESS address, Monitor68000::Instruction& decoded);
 
@@ -80,23 +83,39 @@ namespace emul
 		class EffectiveAddress
 		{
 		public:
-			EffectiveAddress() {}
+			EffectiveAddress(Memory& mem, Instruction& instr, ADDRESS currAddress) :
+				m_currInstruction(instr),
+				m_memory(mem),
+				m_currAddress(currAddress)
+			{}
 
-			ADDRESS ComputeEA(Memory& memory, WORD data, ADDRESS currAddress);
+			void ComputeEA(WORD data);
+			const char* BuildText();
 
 			EAMode GetMode() const { return m_mode; }
+			EASize GetSize() const { return m_size; }
+			void SetSize(EASize size) { m_size = size; }
 			BYTE GetRegister() const { return m_regNumber; }
-			const char* GetText() const { return m_text[0] ? m_text : BuildText(); }
+			const char* GetText() { return m_text; }
+			ADDRESS GetCurrAddress() const { return m_currAddress; }
 		private:
-			const char* BuildText() const;
+			const char* GetExtensionWord(BYTE reg);
+			SWORD GetDisplacementWord();
+			void BuildImmediate();
 
 			EASize m_size = EASize::Undef;
-			BYTE m_regNumber = 0;
+			BYTE m_regNumber = 0; // [0..7]|PC
+			static constexpr BYTE PC = BYTE(-1);
 			EAMode m_mode = EAMode::Invalid;
 
 			ADDRESS m_address = 0xDEADC0DE;
 
-			mutable char m_text[32] = ""; // Mutable because lazy evaluation
+			char m_text[64] = "";
+			char m_extWord[16] = "";
+
+			Instruction& m_currInstruction;
+			ADDRESS m_currAddress = 0;
+			emul::Memory& m_memory;
 		};
 
 		ADDRESS m_customMemView = 0;

@@ -31,6 +31,7 @@ namespace cpuInfo
 
 		bool regreg = false;  // r,r
 		bool idx = false; // indexed
+		bool bit = false; // bit instruction (68k)
 
 		bool rm8 = false;
 		bool rm16 = false;

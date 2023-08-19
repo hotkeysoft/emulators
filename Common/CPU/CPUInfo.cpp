@@ -229,6 +229,7 @@ namespace cpuInfo
 
 		ret.regreg = text.find("{r,r}") != std::string::npos;
 		ret.idx = text.find("{idx}") != std::string::npos;
+		ret.bit = text.find("{bit}") != std::string::npos;
 
 		ret.rm8 = text.find("{rm8}") != std::string::npos;
 		ret.rm16 = text.find("{rm16}") != std::string::npos;
