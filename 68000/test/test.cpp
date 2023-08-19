@@ -13,7 +13,12 @@ const path workingDirectory = "../";
 
 // Relative to workingDirectory
 const path exePath = "../x64/Debug/hotkey68000emu.exe";
-const path opcodeFile = "./test/data/opcodes.txt";
+const path opcodeFilesPath = "./test/data/";
+const std::string opcodeFileExtension = ".tst";
+const char* separator = "\n------------------------------------------\n";
+
+size_t totalCount = 0;
+size_t totalFailCount = 0;
 
 bool setup()
 {
@@ -24,9 +29,9 @@ bool setup()
 		fprintf(stderr, "exe not found: %s\n", exePath.string().c_str());
 		return false;
 	}
-	if (!exists(opcodeFile))
+	if (!exists(opcodeFilesPath))
 	{
-		fprintf(stderr, "opcode file not found: %s\n", opcodeFile.string().c_str());
+		fprintf(stderr, "opcode file(s) not found: %s\n", opcodeFilesPath.string().c_str());
 		return false;
 	}
 
@@ -46,14 +51,27 @@ struct Opcode
 };
 
 using Opcodes = std::vector<Opcode>;
-Opcodes opcodes;
 
-bool readOpcodeFile()
+struct OpcodeFile
 {
-	std::ifstream infile(opcodeFile);
+	std::string name;
+	Opcodes opcodes;
+	size_t count = 0;
+	size_t failCount = 0;
+};
+
+using OpcodeFiles = std::vector<OpcodeFile>;
+OpcodeFiles opcodeFiles;
+
+OpcodeFile readOpcodeFile(path in)
+{
+	OpcodeFile ret;
+	ret.name = in.filename().string();
+
+	std::ifstream infile(in);
 	if (!infile)
 	{
-		return false;
+		return ret;
 	}
 
 	for (std::string line; getline(infile, line); )
@@ -61,18 +79,34 @@ bool readOpcodeFile()
 		size_t pos = line.find_first_of('\t');
 		if (pos == std::string::npos)
 		{
-			return false;
+			continue;
 		}
 
 		Opcode op;
 		op.hex = line.substr(0, pos);
 		op.disassembly = line.substr(pos + 1);
 
-		opcodes.push_back(op);
+		ret.opcodes.push_back(op);
 	}
 
-	fprintf(stdout, "Loaded %zu opcodes to test", opcodes.size());
+	ret.count = ret.opcodes.size();
+	ret.failCount = 0;
 
+	fprintf(stdout, "File [%s] => Loaded %zu opcodes to test\n", ret.name.c_str(), ret.count);
+	return ret;
+}
+
+bool readOpcodeFiles()
+{
+	for (const auto& p : directory_iterator(opcodeFilesPath))
+	{
+		if (p.path().extension() == opcodeFileExtension)
+		{
+			OpcodeFile opcodeFile = readOpcodeFile(p);
+			opcodeFiles.push_back(opcodeFile);
+			totalCount += opcodeFile.count;
+		}
+	}
 	return true;
 }
 
@@ -102,9 +136,7 @@ std::string exec(const char* cmd)
 	return result;
 }
 
-size_t failCount = 0;
-
-bool testOpcode(Opcode& opcode)
+bool testOpcode(OpcodeFile& opcodeFile, Opcode& opcode)
 {
 	try
 	{
@@ -115,7 +147,8 @@ bool testOpcode(Opcode& opcode)
 		if (out != opcode.ToString())
 		{
 			fprintf(stderr, "\nFAIL!\nexpected: %s\n  actual: %s\n", opcode.ToString().c_str(), out.c_str());
-			++failCount;
+			opcodeFile.failCount += 1;
+			++totalFailCount;
 		}
 	}
 	catch (std::exception e)
@@ -127,11 +160,33 @@ bool testOpcode(Opcode& opcode)
 	return true;
 }
 
-bool testOpcodes()
+void ShowResult(std::string name, size_t total, size_t fail)
 {
-	for (auto& opcode : opcodes)
+	size_t pass = total - fail;
+	fprintf(stdout, "\n[%.40s]\n PASS: %zu\n FAIL: %zu\nTOTAL: %zu\n", name.c_str(), pass, fail, total);
+}
+
+bool testOpcodes(OpcodeFile& opcodeFile)
+{
+	fputs(separator, stdout);
+	fputs(opcodeFile.name.c_str(), stdout);
+
+	for (auto& opcode : opcodeFile.opcodes)
 	{
-		if (!testOpcode(opcode))
+		if (!testOpcode(opcodeFile, opcode))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool testOpcodeFiles()
+{
+	for (auto& opcodeFile : opcodeFiles)
+	{
+		if (!testOpcodes(opcodeFile))
 		{
 			return false;
 		}
@@ -143,14 +198,19 @@ int main()
 {
 	if (!setup())
 		return 1;
-	if (!readOpcodeFile())
+	if (!readOpcodeFiles())
 		return 2;
-	if (!testOpcodes())
+	if (!testOpcodeFiles())
 		return 3;
 
-	size_t total = opcodes.size();
-	size_t pass = total - failCount;
-	fprintf(stdout, "\nDone!\nPASS: %zu\nFAIL: %zu\nTOTAL: %zu\n", pass, failCount, total);
+	fputs(separator, stdout);
+
+	for (auto& opcodeFile : opcodeFiles)
+	{
+		ShowResult(opcodeFile.name, opcodeFile.count, opcodeFile.failCount);
+	}
+
+	ShowResult("Total", totalCount, totalFailCount);
 
 	return 0;
 }

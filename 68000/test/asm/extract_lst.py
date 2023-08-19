@@ -13,7 +13,7 @@ def readListFile(inFile, outFile):
 
             match = lineRegex.fullmatch(line)
             if match:
-                outFile.write(f'{match.group(2)}\t{match.group(4)}')
+                outFile.write(f'{match.group(2)}\t{match.group(4)}\n')
     except StopIteration:
         return None
 
