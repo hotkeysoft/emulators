@@ -183,6 +183,12 @@
     <ClInclude Include="..\Common\IO\InputEvents.h">
       <Filter>Common\IO</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\BitMask.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\EdgeDetectLatch.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">

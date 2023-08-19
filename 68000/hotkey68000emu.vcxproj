@@ -180,6 +180,7 @@
     <None Include="SDLPath.props" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\BitMask.h" />
     <ClInclude Include="..\Common\Computer\ComputerBase.h" />
     <ClInclude Include="..\Common\Config.h" />
     <ClInclude Include="..\Common\CPU\CPU.h" />
@@ -191,6 +192,7 @@
     <ClInclude Include="..\Common\CPU\MemoryBlock.h" />
     <ClInclude Include="..\Common\CPU\MemoryBlockBase.h" />
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
+    <ClInclude Include="..\Common\EdgeDetectLatch.h" />
     <ClInclude Include="..\Common\FileUtil.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
