@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hotkey68000emu", "68000\hot
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreUI", "CoreUI\CoreUI.vcxproj", "{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hotkey68000emuTest", "68000\test\hotkey68000emuTest.vcxproj", "{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -34,6 +36,14 @@ Global
 		{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}.Release|x64.Build.0 = Release|x64
 		{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}.Release|x86.ActiveCfg = Release|Win32
 		{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}.Release|x86.Build.0 = Release|Win32
+		{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}.Debug|x64.ActiveCfg = Debug|x64
+		{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}.Debug|x64.Build.0 = Debug|x64
+		{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}.Debug|x86.ActiveCfg = Debug|Win32
+		{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}.Debug|x86.Build.0 = Debug|Win32
+		{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}.Release|x64.ActiveCfg = Release|x64
+		{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}.Release|x64.Build.0 = Release|x64
+		{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}.Release|x86.ActiveCfg = Release|Win32
+		{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
