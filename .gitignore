@@ -6,6 +6,8 @@ x64
 *.bak
 *.backup
 *.log
+*.o
+*.lst
 /8086/*.bin
 /8086/data/*.txt
 /8086/*.img

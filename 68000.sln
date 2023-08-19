@@ -11,6 +11,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreUI", "CoreUI\CoreUI.vcxproj", "{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hotkey68000emuTest", "68000\test\hotkey68000emuTest.vcxproj", "{A86910F4-0F4A-47E0-97E4-B335D8C86A0E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{96C41FF4-B46A-41C6-ACD5-3D96428480CF} = {96C41FF4-B46A-41C6-ACD5-3D96428480CF}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
