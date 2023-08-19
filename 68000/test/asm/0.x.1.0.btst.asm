@@ -102,24 +102,35 @@
 	BTST.b D0,($12345678).l
 
 ; BTST.b, d16(PC) - Mode 111/010 (Program Counter with displacement)
-	BTST.b D0,$5678(PC)
+	BTST.b D0,-32768(PC)
+	BTST.b D0,0(PC)
+	BTST.b D0,32767(PC)
 
 ; BTST.b, d8(PC, Xn) - Mode 111/011 (Program Counter with displacement)
-	BTST.b D0,-128(PC,D0)
-	BTST.b D1,-128(PC,D1)
-	BTST.b D2,-128(PC,D2)
-	BTST.b D3,-128(PC,D3)
-	BTST.b D4,127(PC,D4)
-	BTST.b D5,127(PC,D5)
-	BTST.b D6,127(PC,D6)
-	BTST.b D7,127(PC,D7)
+	BTST.b D0,-128(PC,D0.w)
+	BTST.b D1,-128(PC,D1.w)
+	BTST.b D2,-128(PC,D2.w)
+	BTST.b D3,-128(PC,D3.w)
+	BTST.b D4,127(PC,D4.w)
+	BTST.b D5,127(PC,D5.w)
+	BTST.b D6,127(PC,D6.w)
+	BTST.b D7,127(PC,D7.w)
+
+	BTST.b D0,-128(PC,A0.l)
+	BTST.b D1,-128(PC,A1.l)
+	BTST.b D2,-128(PC,A2.l)
+	BTST.b D3,-128(PC,A3.l)
+	BTST.b D4,127(PC,A4.l)
+	BTST.b D5,127(PC,A5.l)
+	BTST.b D6,127(PC,A6.l)
+	BTST.b D7,127(PC,A7.l)
 
 ; BTST.b, Imm - Mode 111/100 (Immediate)
-	BTST.b D0,$12345678
-	BTST.b D1,$12345678
-	BTST.b D2,$12345678
-	BTST.b D3,$12345678
-	BTST.b D4,$12345678
-	BTST.b D5,$12345678
-	BTST.b D6,$12345678
-	BTST.b D7,$12345678
+	BTST.b D0,#$00
+	BTST.b D1,#$12
+	BTST.b D2,#$12
+	BTST.b D3,#$12
+	BTST.b D4,#$12
+	BTST.b D5,#$12
+	BTST.b D6,#$12
+	BTST.b D7,#$FF

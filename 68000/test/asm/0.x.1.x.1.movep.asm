@@ -31,24 +31,24 @@
 ; MOVEP.w (d,Ay),Dx
 ; =========================================================
 
-	MOVEP.w -56(A0),D0
-	MOVEP.w -56(A1),D1
-	MOVEP.w -56(A2),D2
-	MOVEP.w -56(A3),D3
-	MOVEP.w 156(A4),D4
-	MOVEP.w 156(A5),D5
-	MOVEP.w 156(A6),D6
-	MOVEP.w 156(A7),D7
+	MOVEP.w -128(A0),D0
+	MOVEP.w -128(A1),D1
+	MOVEP.w -128(A2),D2
+	MOVEP.w -128(A3),D3
+	MOVEP.w 127(A4),D4
+	MOVEP.w 127(A5),D5
+	MOVEP.w 127(A6),D6
+	MOVEP.w 127(A7),D7
 
 ; =========================================================
 ; MOVEP.w (d,Ay),Dx
 ; =========================================================
 
-	MOVEP.l -56(A0),D0
-	MOVEP.l -56(A1),D1
-	MOVEP.l -56(A2),D2
-	MOVEP.l -56(A3),D3
-	MOVEP.l 156(A4),D4
-	MOVEP.l 156(A5),D5
-	MOVEP.l 156(A6),D6
-	MOVEP.l 156(A7),D7
+	MOVEP.l -128(A0),D0
+	MOVEP.l -128(A1),D1
+	MOVEP.l -128(A2),D2
+	MOVEP.l -128(A3),D3
+	MOVEP.l 127(A4),D4
+	MOVEP.l 127(A5),D5
+	MOVEP.l 127(A6),D6
+	MOVEP.l 127(A7),D7

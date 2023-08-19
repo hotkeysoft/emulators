@@ -310,10 +310,14 @@
 	ORI.l #$12315678,127(A7,A7.l)
 
 ; ORI.l, (xxx).w - Mode 111/000 (Absolute Short)
+	ORI.l #$12345678,($0000).w
 	ORI.l #$12345678,($1234).w
+	ORI.l #$12345678,($7FFF).w
 
 ; ORI.l, (xxx).l - Mode 111/001 (Absolute Long)
+	ORI.l #$12345678,($00000000).l
 	ORI.l #$12345678,($12345678).l
+	ORI.l #$12345678,($FFFFFFFF).l
 
 ; ORI.l, d16(PC) - Mode 111/010 (Program Counter with displacement)
 ; ORI.l, d8(PC, Xn) - Mode 111/011 (Program Counter with displacement)

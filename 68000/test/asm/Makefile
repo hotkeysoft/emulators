@@ -8,7 +8,7 @@ OBJECTS=$(SOURCES:.asm=.o)
 all: $(OBJECTS)
 
 $(OBJECTS): %.o: %.asm
-	$(AS) -no-opt $< -o $@ -L $@.lst
+	$(AS) -no-opt $< -o $@ -Lbpl=12 -L $@.lst
  
 .PHONY: clean
 clean:

@@ -102,17 +102,28 @@
 	BTST.b #7,($12345678).l
 
 ; BTST.b, d16(PC) - Mode 111/010 (Program Counter with displacement)
-	BTST.b #7,$5678(PC)
+	BTST.b #7,-32768(PC)
+	BTST.b #7,0(PC)
+	BTST.b #7,32767(PC)
 
 ; BTST.b, d8(PC, Xn) - Mode 111/011 (Program Counter with displacement)
-	BTST.b #7,-128(PC,D0)
-	BTST.b #7,-128(PC,D1)
-	BTST.b #7,-128(PC,D2)
-	BTST.b #7,-128(PC,D3)
-	BTST.b #7,127(PC,D4)
-	BTST.b #7,127(PC,D5)
-	BTST.b #7,127(PC,D6)
-	BTST.b #7,127(PC,D7)
+	BTST.b #7,-128(PC,D0.w)
+	BTST.b #7,-128(PC,D1.w)
+	BTST.b #7,-128(PC,D2.w)
+	BTST.b #7,-128(PC,D3.w)
+	BTST.b #7,127(PC,D4.w)
+	BTST.b #7,127(PC,D5.w)
+	BTST.b #7,127(PC,D6.w)
+	BTST.b #7,127(PC,D7.w)
+
+	BTST.b #7,-128(PC,A0.l)
+	BTST.b #7,-128(PC,A1.l)
+	BTST.b #7,-128(PC,A2.l)
+	BTST.b #7,-128(PC,A3.l)
+	BTST.b #7,127(PC,A4.l)
+	BTST.b #7,127(PC,A5.l)
+	BTST.b #7,127(PC,A6.l)
+	BTST.b #7,127(PC,A7.l)
 
 ; BTST.b, Imm - Mode 111/100 (Immediate)
 	; Not supported
