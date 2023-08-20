@@ -629,22 +629,26 @@ namespace emul
 			break;
 		}
 
-		// Effective address
-		if (instr.idx)
+		// Groups [1-3] have size encoded in group number
+		EASize size = EASize::Undef;
+		switch (group)
 		{
-			ADDRESS start = address;
+		case 1: size = EASize::Byte; break;
+		case 2: size = EASize::Long; break;
+		case 3: size = EASize::Word; break;
+		default:
+			// Nothing to do
+			break;
+		}
+
+		std::string idxText;
+		if (instr.idx || instr.idxidx) 	// Effective address
+		{
 			EffectiveAddress ea(*m_memory, decoded, address);
 			ea.ComputeEA(data);
-
-			// Groups [1-3] have size encoded in group number
-			switch (group)
+			if (size != EASize::Undef)
 			{
-			case 1: ea.SetSize(EASize::Byte); break;
-			case 2: ea.SetSize(EASize::Long); break;
-			case 3: ea.SetSize(EASize::Word); break;
-			default:
-				// Nothing to do
-				break;
+				ea.SetSize(size);
 			}
 
 			// Bit instructions (BTST, etc.) have byte length
@@ -659,7 +663,35 @@ namespace emul
 			}
 
 			ea.BuildText();
-			Replace(text, "{idx}", ea.GetText());
+			idxText = ea.GetText();
+			Replace(text, "{idx}", idxText); // Won't replace anything for {idx,idx}
+			address = ea.GetCurrAddress();
+		}
+
+		// Continue with the destination part
+		if (instr.idxidx)
+		{
+			// Done with the source, replace this part
+			std::string& srcIdx = idxText;
+			Replace(text, "{idx", idxText);
+
+			// Now for the destination
+			EffectiveAddress ea(*m_memory, decoded, address);
+
+			// Need to shuffle the bits
+			// (opcode order is: 0|0| size | DestReg|DestMode | SrcMode|SrcReg)
+			WORD destMode = (data >> 3) & 0b111000;
+			WORD destReg = (data >> 9) & 0b000111;
+
+			ea.ComputeEA(destMode | destReg);
+			if (size != EASize::Undef)
+			{
+				ea.SetSize(size);
+			}
+
+			ea.BuildText();
+			idxText = ea.GetText();
+			Replace(text, "idx}", idxText); // Replace the destination part
 			address = ea.GetCurrAddress();
 		}
 

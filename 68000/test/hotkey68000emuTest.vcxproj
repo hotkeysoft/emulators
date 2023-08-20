@@ -61,8 +61,11 @@
     <None Include="asm\0.x.1.2.bclr.asm" />
     <None Include="asm\0.x.1.3.bset.asm" />
     <None Include="asm\0.x.1.x.1.movep.asm" />
+    <None Include="asm\1.x.move.b.asm" />
     <None Include="asm\2.x.1.movea.l.asm" />
+    <None Include="asm\2.x.move.l.asm" />
     <None Include="asm\3.x.1.movea.w.asm" />
+    <None Include="asm\3.x.move.w.asm" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
