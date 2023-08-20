@@ -8,6 +8,24 @@ using emul::GetBit;
 
 namespace emul
 {
+	// https://graphics.stanford.edu/~seander/bithacks.html#BitReverseTable
+	static const unsigned char BitReverseTable256[256] =
+	{
+	#   define R2(n)    n,     n + 2*64,     n + 1*64,     n + 3*64
+	#   define R4(n) R2(n), R2(n + 2*16), R2(n + 1*16), R2(n + 3*16)
+	#   define R6(n) R4(n), R4(n + 2*4 ), R4(n + 1*4 ), R4(n + 3*4 )
+		R6(0), R6(2), R6(1), R6(3)
+	};
+
+	static WORD ReverseBits(WORD in)
+	{
+		WORD out;
+		BYTE* p = (BYTE*)&in;
+		SetHByte(out, BitReverseTable256[GetLByte(in)]);
+		SetLByte(out, BitReverseTable256[GetHByte(in)]);
+		return out;
+	}
+
 	static const char hexDigits[] = "0123456789ABCDEF";
 
 	void Monitor68000::EffectiveAddress::BuildImmediate()
@@ -92,39 +110,48 @@ namespace emul
 		return m_text;
 	}
 
+	Monitor68000::EAMode Monitor68000::EffectiveAddress::GetMode(WORD opcode)
+	{
+		if ((opcode & 0b111000) != 0b111000)
+		{
+			// Normal modes (Mode != 0b111)
+			return EAMode(opcode & 0b111000);
+		}
+		else switch (opcode & 7)
+		{
+		case 0b000: return EAMode::AbsoluteShort;
+		case 0b001: return EAMode::AbsoluteLong;
+		case 0b010: return EAMode::ProgramCounterDisplacement;
+		case 0b011: return EAMode::ProgramCounterIndex;
+		case 0b100: return EAMode::Immediate;
+		default: return EAMode::Invalid;
+		}
+	}
+
 	void Monitor68000::EffectiveAddress::ComputeEA(WORD opcode)
 	{
 		m_regNumber = opcode & 7;
 		m_size = (EASize)((opcode >> 6) & 3);
+		m_mode = GetMode(opcode);
 
-		if ((opcode & 0b111000) != 0b111000)
+		// Get data for absolute modes
+		switch (m_mode)
 		{
-			// Normal modes (Mode != 0b111)
-			m_mode = EAMode(opcode & 0b111000);
-		}
-		else switch (m_regNumber) // Special modes
+		case EAMode::AbsoluteShort:
 		{
-		case 0b000:
-		{
-			m_mode = EAMode::AbsoluteShort;
 			WORD shortAddress = m_memory.Read16be(m_currAddress);
 			m_currAddress += 2;
 			m_address = emul::Widen(shortAddress);
 			m_currInstruction.AddRaw(shortAddress);
 			break;
 		}
-		case 0b001:
+		case EAMode::AbsoluteLong:
 		{
-			m_mode = EAMode::AbsoluteLong;
 			m_address = m_memory.Read32be(m_currAddress);
 			m_currAddress += 4;
 			m_currInstruction.AddRaw(m_address);
 			break;
 		}
-		case 0b010: m_mode = EAMode::ProgramCounterDisplacement; break;
-		case 0b011: m_mode = EAMode::ProgramCounterIndex; break;
-		case 0b100: m_mode = EAMode::Immediate; break;
-		default: m_mode = EAMode::Invalid;
 		}
 	}
 
@@ -590,6 +617,7 @@ namespace emul
 		}
 
 		char buf[48];
+
 		if (instr.dataReg || instr.addressReg)
 		{
 			const char* toReplace = instr.dataReg ? "{dr}" : "{ar}";
@@ -597,6 +625,17 @@ namespace emul
 			buf[1] = '0' + (data & 7);
 			buf[2] = '\0';
 			Replace(text, toReplace, buf);
+		}
+		else if (instr.regs)
+		{
+			// EA not decoded yet but we need to know if we're in predecrement mode
+			bool predecrement = (EffectiveAddress::GetMode(data) == EAMode::AddrRegIndirectPreDecrement);
+
+			// Get register bitmask
+			WORD regs = m_memory->Read16be(address);
+			address += 2;
+			decoded.AddRaw(regs);
+			Replace(text, "{regs}", DecodeRegisterBitmask(regs, predecrement));
 		}
 
 		switch (instr.imm)
@@ -663,6 +702,7 @@ namespace emul
 		}
 
 		std::string idxText;
+		bool isPredecrement = false;
 		if (instr.idx || instr.idxidx) 	// Effective address
 		{
 			EffectiveAddress ea(*m_memory, decoded, address);
@@ -682,6 +722,8 @@ namespace emul
 				std::string width = (ea.GetMode() == EAMode::DataRegDirect) ? "l" : "b";
 				Replace(text, "{bit}", width);
 			}
+
+			isPredecrement = (ea.GetMode() == EAMode::AddrRegIndirectPreDecrement);
 
 			ea.BuildText();
 			idxText = ea.GetText();
@@ -721,6 +763,111 @@ namespace emul
 
 		return address;
 	}
+
+	std::string Monitor68000::DecodeRegisterBitmask(WORD mask, bool isPredecrement)
+	{
+		// Register list bit mask :
+		//
+		//    All other modes: A7 A6 A5 A4 A3 A2 A1 A0 D7 D6 D5 D4 D3 D2 D1 D0
+		//  Predecrement mode: D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 A7
+		if (isPredecrement)
+		{
+			mask = ReverseBits(mask);
+		}
+
+		std::ostringstream os;
+		os << DecodeRegisters(GetLByte(mask), 'D');
+
+		// Add separator only if there's something in the address block
+		if (os.tellp() && (mask & 0xFF00))
+		{
+			os << '/';
+		}
+		os << DecodeRegisters(GetHByte(mask), 'A');
+
+		if (!os.tellp())
+		{
+			os << "[]";
+		}
+
+		return os.str();
+	}
+
+	//std::string Monitor68000::DecodeRegisters(BYTE mask, char prefix)
+	//{
+	//	std::ostringstream os;
+	//	bool first = true;
+	//	for (int index = 0; mask; mask >>= 1, ++index)
+	//	{
+	//		if (GetLSB(mask))
+	//		{
+	//			if (!first)
+	//			{
+	//				os << '/';
+	//			}
+	//			os << prefix << index;
+
+	//			first = false;
+	//		}
+	//	}
+
+	//	return os.str();
+	//}
+
+	std::string Monitor68000::DecodeRegisters(BYTE mask, char prefix)
+	{
+		std::ostringstream os;
+		bool first = true;
+		bool inRange = false;
+		int rangeCount = 0;
+		int lastIndex = 0;
+		for (int index = 0; mask; mask >>= 1, ++index)
+		{
+			if (GetLSB(mask))
+			{
+				if (!inRange)
+				{
+					if (!first)
+					{
+						os << '/';
+					}
+					else
+					{
+						first = false;
+					}
+
+					os << prefix << index;
+					inRange = true;
+					rangeCount = 1;
+				}
+				else
+				{
+					++rangeCount;
+					lastIndex = index;
+				}
+			}
+			else if (inRange)
+			{
+				inRange = false;
+				if (rangeCount > 1)
+				{
+					os << '-' << prefix << lastIndex;
+				}
+				lastIndex = index;
+			}
+		}
+
+		if (inRange)
+		{
+			if (rangeCount > 1)
+			{
+				os << '-' << prefix << lastIndex;
+			}
+		}
+
+		return os.str();
+	}
+
 
 	void Monitor68000::Instruction::AddRaw(BYTE b)
 	{

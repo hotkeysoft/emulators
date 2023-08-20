@@ -5,7 +5,7 @@
 ; MOVEM <ea>,<register list>
 ; =========================================================
 ; Register list bit mask :
-; All modes:   D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 A7
+; All modes:   A7 A6 A5 A4 A3 A2 A1 A0 D7 D6 D5 D4 D3 D2 D1 D0
 
 ; =========================================================
 ; MOVEM.w <ea>,<register list>
@@ -19,15 +19,15 @@
 	MOVEM.w (A1),A7
 	MOVEM.w (A2),D0
 	MOVEM.w (A3),D7
-	MOVEM.w (A4),A0/A1
-	MOVEM.w (A5),D0/D1
+	MOVEM.w (A4),A0-A1
+	MOVEM.w (A5),D0-D1
 	MOVEM.w (A6),A0
 	MOVEM.w (A7),D0/A0
 	MOVEM.w (A0),D0-D7
 	MOVEM.w (A1),A0-A7
 	MOVEM.w (A2),D0-D7/A0-A7
 	MOVEM.w (A3),D0-D3/A0-A3
-	MOVEM.w (A4),D0-A0
+	MOVEM.w (A4),D0/A7
 
 ; MOVEM.w, (An)+,<regs>
 	MOVEM.w (A5)+,A0/A5
@@ -41,7 +41,7 @@
 	MOVEM.w -32768(A2),A2
 	MOVEM.w 0(A3),A3/A5
 	MOVEM.w 1234(A4),D4
-	MOVEM.w 32767(A4),D5/D6
+	MOVEM.w 32767(A4),D5-D6
 
 ; MOVEM.w, d8(An, Xn.L|W),<regs>
 	MOVEM.w 123(A2,A3.w),A6
@@ -84,15 +84,15 @@
 	MOVEM.l (A1),A7
 	MOVEM.l (A2),D0
 	MOVEM.l (A3),D7
-	MOVEM.l (A4),A0/A1
-	MOVEM.l (A5),D0/D1
+	MOVEM.l (A4),A0-A1
+	MOVEM.l (A5),D0-D1
 	MOVEM.l (A6),A0
 	MOVEM.l (A7),D0/A0
 	MOVEM.l (A0),D0-D7
 	MOVEM.l (A1),A0-A7
 	MOVEM.l (A2),D0-D7/A0-A7
 	MOVEM.l (A3),D0-D3/A0-A3
-	MOVEM.l (A4),D0-A0
+	MOVEM.l (A4),D0/A7
 
 ; MOVEM.l, (An)+,<regs>
 	MOVEM.l (A5)+,A0

@@ -343,11 +343,11 @@ int main(int argc, char* argv[])
 			emul::Monitor68000::Instruction decoded;
 			pos = monit.Disassemble(pos, decoded);
 
-			char raw[32];
+			char raw[48];
 			memcpy(raw, decoded.raw, decoded.rawLen);
 			raw[decoded.rawLen] = 0;
 
-			fprintf(stdout, "%s\t%.48s\n", raw, decoded.text);
+			fprintf(stdout, "%s\t%.64s\n", raw, decoded.text);
 		}
 		while (pos < args::data.size());
 

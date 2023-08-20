@@ -5,8 +5,8 @@
 ; MOVEM <register list>,<ea>
 ; =========================================================
 ; Register list bit mask :
-; Predecrement mode: A7 A6 A5 A4 A3 A2 A1 A0 D7 D6 D5 D4 D3 D2 D1 D0
-; All other modes:   D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 A7
+; All other modes:   A7 A6 A5 A4 A3 A2 A1 A0 D7 D6 D5 D4 D3 D2 D1 D0
+; Predecrement mode: D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 A7
 
 ; =========================================================
 ; MOVEM.w <register list>,<ea>
@@ -20,15 +20,15 @@
 	MOVEM.w A7,(A5)
 	MOVEM.w D0,(A5)
 	MOVEM.w D7,(A5)
-	MOVEM.w A0/A1,(A5)
-	MOVEM.w D0/D1,(A5)
+	MOVEM.w A0-A1,(A5)
+	MOVEM.w D0-D1,(A5)
 	MOVEM.w A0,(A5)
 	MOVEM.w D0/A0,(A5)
 	MOVEM.w D0-D7,(A7)
 	MOVEM.w A0-A7,(A0)
 	MOVEM.w D0-D7/A0-A7,(A7)
 	MOVEM.w D0-D3/A0-A3,(A0)
-	MOVEM.w D0-A0,(A0)
+	MOVEM.w D0/A7,(A0)
 
 ; MOVEM.w, <regs>,(An)+  (not allowed for dest)
 
@@ -39,8 +39,8 @@
 	MOVEM.w A7,-(A5)
 	MOVEM.w D0,-(A5)
 	MOVEM.w D7,-(A5)
-	MOVEM.w A0/A1,-(A5)
-	MOVEM.w D0/D1,-(A5)
+	MOVEM.w A0-A1,-(A5)
+	MOVEM.w D0-D1,-(A5)
 	MOVEM.w A0,-(A5)
 	MOVEM.w D0/A0,-(A5)
 	MOVEM.w D0-D7,-(A7)

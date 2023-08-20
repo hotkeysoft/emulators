@@ -33,7 +33,7 @@ namespace emul
 			ADDRESS address;
 			WORD offset;
 			static constexpr size_t RAW_LEN = 24;
-			static constexpr size_t TEXT_LEN = 48;
+			static constexpr size_t TEXT_LEN = 64;
 
 			BYTE rawLen = 0;
 			BYTE raw[RAW_LEN];
@@ -48,6 +48,9 @@ namespace emul
 		void Update();
 
 	protected:
+		std::string DecodeRegisterBitmask(WORD mask, bool isPredecrement);
+		std::string DecodeRegisters(BYTE mask, char prefix);
+
 		enum class EASize
 		{
 			Byte  = 0b00,
@@ -92,6 +95,7 @@ namespace emul
 			void ComputeEA(WORD data);
 			const char* BuildText();
 
+			static EAMode GetMode(WORD data);
 			EAMode GetMode() const { return m_mode; }
 			EASize GetSize() const { return m_size; }
 			void SetSize(EASize size) { m_size = size; }
