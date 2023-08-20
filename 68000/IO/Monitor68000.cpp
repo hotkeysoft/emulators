@@ -542,7 +542,7 @@ namespace emul
 		decoded.AddRaw(data);
 
 		// Get group from upper 4 bits
-		BYTE group = (data >> 12) & 3;
+		BYTE group = (data >> 12) & 7;
 
 		Opcode instr = m_cpu->GetInfo().GetOpcode(group);
 		std::string text = instr.text;

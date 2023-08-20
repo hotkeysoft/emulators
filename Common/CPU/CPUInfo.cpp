@@ -447,7 +447,7 @@ namespace cpuInfo
 			const Opcode& subOpcode = m_subOpcodes[(int)parent.multi][op2];
 			std::string subOpcodeText = m_subOpcodes[(int)parent.multi][op2].text;
 
-			if (subOpcode.alt)
+			if (subOpcode.alt || subOpcode.overrideMask)
 			{
 				return subOpcode;
 			}

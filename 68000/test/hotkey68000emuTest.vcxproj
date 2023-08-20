@@ -66,6 +66,9 @@
     <None Include="asm\2.x.move.l.asm" />
     <None Include="asm\3.x.1.movea.w.asm" />
     <None Include="asm\3.x.move.w.asm" />
+    <None Include="asm\4.0.3.move.sr.asm" />
+    <None Include="asm\4.4.3.move.ccr.asm" />
+    <None Include="asm\4.6.3.move.sr.asm" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

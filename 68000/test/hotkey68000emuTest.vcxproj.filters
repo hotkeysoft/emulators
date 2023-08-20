@@ -79,5 +79,14 @@
     <None Include="asm\3.x.move.w.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="asm\4.0.3.move.sr.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.6.3.move.sr.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.4.3.move.ccr.asm">
+      <Filter>asm</Filter>
+    </None>
   </ItemGroup>
 </Project>
