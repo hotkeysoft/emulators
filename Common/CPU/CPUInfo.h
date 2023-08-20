@@ -34,6 +34,8 @@ namespace cpuInfo
 		bool idx = false; // indexed
 		bool idxidx = false; // indexed source and dest
 		bool bit = false; // bit instruction (68k)
+		bool dataReg = false; // data register
+		bool addressReg = false; // address register
 
 		bool rm8 = false;
 		bool rm16 = false;
@@ -57,7 +59,7 @@ namespace cpuInfo
 		enum class MODREGRM { NONE, W8, W16, SR } modRegRm = MODREGRM::NONE;
 		enum class IMM { NONE, W8, W8W8, W16, W16W8, W32, S8, S16, REGREG } imm = IMM::NONE;
 		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, GRP6, GRP7, GRP8,
-			GRP9, GRP10, GRP11,  GRP12, GRP13, GRP14, GARP15, GRP16, _COUNT } multi = MULTI::NONE;
+			GRP9, GRP10, GRP11, GRP12, GRP13, GRP14, GRP15, GRP16, _COUNT } multi = MULTI::NONE;
 	};
 	using OpcodeTable = std::vector<Opcode>;
 

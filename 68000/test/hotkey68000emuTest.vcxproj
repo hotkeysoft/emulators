@@ -69,10 +69,15 @@
     <None Include="asm\4.0.3.move.sr.asm" />
     <None Include="asm\4.0.x.negx.asm" />
     <None Include="asm\4.2.x.clr.asm" />
+    <None Include="asm\4.4.0.nbcd.asm" />
+    <None Include="asm\4.4.1.0.swap.asm" />
+    <None Include="asm\4.4.1.pea.asm" />
     <None Include="asm\4.4.3.move.ccr.asm" />
     <None Include="asm\4.4.x.neg.asm" />
     <None Include="asm\4.6.3.move.sr.asm" />
     <None Include="asm\4.6.x.not.asm" />
+    <None Include="asm\4.8.1.x.0.ext.asm" />
+    <None Include="asm\4.misc.asm" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

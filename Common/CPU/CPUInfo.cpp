@@ -372,6 +372,9 @@ namespace cpuInfo
 		ret.s8 = text.find("{s8}") != std::string::npos;
 		ret.s16 = text.find("{s16}") != std::string::npos;
 
+		ret.dataReg = text.find("{dr}") != std::string::npos;
+		ret.addressReg = text.find("{ar}") != std::string::npos;
+
 		bool grp1 = text.find("{grp1}") != std::string::npos;
 		bool grp2 = text.find("{grp2}") != std::string::npos;
 		bool grp3 = text.find("{grp3}") != std::string::npos;
@@ -380,6 +383,14 @@ namespace cpuInfo
 		bool grp6 = text.find("{grp6}") != std::string::npos;
 		bool grp7 = text.find("{grp7}") != std::string::npos;
 		bool grp8 = text.find("{grp8}") != std::string::npos;
+		bool grp9 = text.find("{grp9}") != std::string::npos;
+		bool grp10 = text.find("{grp10}") != std::string::npos;
+		bool grp11 = text.find("{grp11}") != std::string::npos;
+		bool grp12 = text.find("{grp12}") != std::string::npos;
+		bool grp13 = text.find("{grp13}") != std::string::npos;
+		bool grp14 = text.find("{grp14}") != std::string::npos;
+		bool grp15 = text.find("{grp15}") != std::string::npos;
+		bool grp16 = text.find("{grp16}") != std::string::npos;
 
 		if (grp1) ret.multi = Opcode::MULTI::GRP1;
 		else if (grp2) ret.multi = Opcode::MULTI::GRP2;
@@ -389,6 +400,14 @@ namespace cpuInfo
 		else if (grp6) ret.multi = Opcode::MULTI::GRP6;
 		else if (grp7) ret.multi = Opcode::MULTI::GRP7;
 		else if (grp8) ret.multi = Opcode::MULTI::GRP8;
+		else if (grp9) ret.multi = Opcode::MULTI::GRP9;
+		else if (grp10) ret.multi = Opcode::MULTI::GRP10;
+		else if (grp11) ret.multi = Opcode::MULTI::GRP11;
+		else if (grp12) ret.multi = Opcode::MULTI::GRP12;
+		else if (grp13) ret.multi = Opcode::MULTI::GRP13;
+		else if (grp14) ret.multi = Opcode::MULTI::GRP14;
+		else if (grp15) ret.multi = Opcode::MULTI::GRP15;
+		else if (grp16) ret.multi = Opcode::MULTI::GRP16;
 		else ret.multi = Opcode::MULTI::NONE;
 
 		if (ret.regreg) ret.imm = Opcode::IMM::REGREG;

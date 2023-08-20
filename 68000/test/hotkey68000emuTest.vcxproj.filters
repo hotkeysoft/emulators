@@ -100,5 +100,20 @@
     <None Include="asm\4.6.x.not.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="asm\4.8.1.x.0.ext.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.4.0.nbcd.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.4.1.0.swap.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.4.1.pea.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.misc.asm">
+      <Filter>asm</Filter>
+    </None>
   </ItemGroup>
 </Project>

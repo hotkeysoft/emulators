@@ -550,7 +550,6 @@ namespace emul
 		if (instr.multi != Opcode::MULTI::NONE)
 		{
 			// Sub opcode is next 6 bits
-			// TODO depends on group
 			BYTE op2 = (data >> 6) & 63;
 			const std::string op2Str = m_cpu->GetInfo().GetSubOpcodeStr(instr, op2);
 
@@ -559,6 +558,19 @@ namespace emul
 			Replace(text, grpLabel, op2Str);
 
 			instr = m_cpu->GetInfo().GetSubOpcode(instr, op2);
+
+			// Might be a last indirection
+			if (instr.multi != Opcode::MULTI::NONE)
+			{
+				// Sub opcode is rightmost 6 bits
+				BYTE op3 = data & 63;
+				const std::string op3Str = m_cpu->GetInfo().GetSubOpcodeStr(instr, op3);
+
+				sprintf(grpLabel, "{grp%d}", (int)instr.multi + 1);
+				Replace(text, grpLabel, op3Str);
+
+				instr = m_cpu->GetInfo().GetSubOpcode(instr, op3);
+			}
 
 			if (instr.alt && instr.altMask.IsMatch(data))
 			{
@@ -578,6 +590,15 @@ namespace emul
 		}
 
 		char buf[48];
+		if (instr.dataReg || instr.addressReg)
+		{
+			const char* toReplace = instr.dataReg ? "{dr}" : "{ar}";
+			buf[0] = instr.dataReg ? 'D' : 'A';
+			buf[1] = '0' + (data & 7);
+			buf[2] = '\0';
+			Replace(text, toReplace, buf);
+		}
+
 		switch (instr.imm)
 		{
 		case Opcode::IMM::W8:
