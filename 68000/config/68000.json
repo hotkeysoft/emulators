@@ -2,7 +2,7 @@
   "cpu": {
     "opcodes.timing": [4],
     "opcodes.grp.timing": [8],
-    "opcodes.grp": 1,
+    "opcodes.grp": 4,
     "opcodes.size": 16,
     "opcodes": [
       { "name": "{grp1}", "desc": "b0000: Immediate,Bit,MOVEP" },
@@ -92,6 +92,47 @@
       { "name": "BCLR.{bit} D7,{idx}","alt": "MOVEP.w D7,{idx}", "altMask": "1xx001xxx", "altOverrideMask": "101xxx" },
       { "name": "BSET.{bit} D7,{idx}","alt": "MOVEP.l D7,{idx}", "altMask": "1xx001xxx", "altOverrideMask": "101xxx" }
     ],
+    "opcodes.grp2.size": 64,
+    "opcodes.grp2": [
+    ],
+    "opcodes.grp3.size": 64,
+    "opcodes.grp3": [
+      "001",
+      { "name": "MOVEA.l {idx},A0" },
+      "011",
+      { "name": "MOVEA.l {idx},A1" },
+      "021",
+      { "name": "MOVEA.l {idx},A2" },
+      "031",
+      { "name": "MOVEA.l {idx},A3" },
+      "041",
+      { "name": "MOVEA.l {idx},A4" },
+      "051",
+      { "name": "MOVEA.l {idx},A5" },
+      "061",
+      { "name": "MOVEA.l {idx},A6" },
+      "071",
+      { "name": "MOVEA.l {idx},A7" }
+    ],    
+    "opcodes.grp4.size": 64,
+    "opcodes.grp4": [
+      "001",
+      { "name": "MOVEA.w {idx},A0" },
+      "011",
+      { "name": "MOVEA.w {idx},A1" },
+      "021",
+      { "name": "MOVEA.w {idx},A2" },
+      "031",
+      { "name": "MOVEA.w {idx},A3" },
+      "041",
+      { "name": "MOVEA.w {idx},A4" },
+      "051",
+      { "name": "MOVEA.w {idx},A5" },
+      "061",
+      { "name": "MOVEA.w {idx},A6" },
+      "071",
+      { "name": "MOVEA.w {idx},A7" }
+    ],    
     "misc": [
       { "name": "TRAP" },
       { "name": "IRQ" }

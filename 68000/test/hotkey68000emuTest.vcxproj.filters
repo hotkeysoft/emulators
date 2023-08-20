@@ -64,5 +64,11 @@
     <None Include="asm\0.x.1.x.1.movep.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="asm\2.x.1.movea.l.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\3.x.1.movea.w.asm">
+      <Filter>asm</Filter>
+    </None>
   </ItemGroup>
 </Project>

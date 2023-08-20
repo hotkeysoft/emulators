@@ -636,6 +636,17 @@ namespace emul
 			EffectiveAddress ea(*m_memory, decoded, address);
 			ea.ComputeEA(data);
 
+			// Groups [1-3] have size encoded in group number
+			switch (group)
+			{
+			case 1: ea.SetSize(EASize::Byte); break;
+			case 2: ea.SetSize(EASize::Long); break;
+			case 3: ea.SetSize(EASize::Word); break;
+			default:
+				// Nothing to do
+				break;
+			}
+
 			// Bit instructions (BTST, etc.) have byte length
 			// except for DataRegDirect addressing mode (where it's long)
 			if (instr.bit)
