@@ -89,6 +89,8 @@
     <None Include="asm\4.7.3.jmp.asm" />
     <None Include="asm\4.8.1.x.0.ext.asm" />
     <None Include="asm\4.misc.asm" />
+    <None Include="asm\4.x.6.chk.asm" />
+    <None Include="asm\4.x.7.lea.asm" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
