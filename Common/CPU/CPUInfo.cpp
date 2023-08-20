@@ -156,9 +156,39 @@ namespace cpuInfo
 			else if (curr.is_object()) // opcode data
 			{
 				Opcode opcode = BuildOpcode(curr["name"]);
+				SetOverrideMask(curr, opcode, "overrideMask");
+
+				// Look for alternate opcode
+				if (curr.contains("alt"))
+				{
+					std::string mask = curr.contains("altMask") ? curr["altMask"] : "";
+
+					if (mask.empty())
+					{
+						LogPrintf(LOG_ERROR, "Opcode[%02X]: Alternate opcode without mask", opcodeIndex);
+					}
+					else
+					{
+						std::shared_ptr<Opcode> altOpcode = std::make_shared<Opcode>();
+						*altOpcode = BuildOpcode(curr["alt"]);
+						SetOverrideMask(curr, *altOpcode, "altOverrideMask");
+
+						opcode.altMask.Set(mask.c_str());
+						opcode.alt = altOpcode;
+
+						// TODO: Alt Timing
+
+						LogPrintf(LOG_WARNING, "\tAltOpcode[%02X]: [%-32s], Mask: [%s]",
+							opcodeIndex,
+							altOpcode->text.c_str(),
+							opcode.altMask.ToString().c_str()
+							/*GetTimingString(timing).c_str()*/);
+					}
+				}
+
 				opcodeTable[opcodeIndex] = opcode;
 
-				OpcodeTiming timing = BuildTiming(curr);
+				OpcodeTiming timing = BuildTiming(curr, "timing");
 				timingTable[opcodeIndex] = timing;
 
 				LogPrintf(LOG_DEBUG, "\tOpcode[%02X]: [%-32s], Timing: %s",
@@ -188,15 +218,15 @@ namespace cpuInfo
 		return os.str();
 	}
 
-	OpcodeTiming CPUInfo::BuildTiming(const json& opcode) const
+	OpcodeTiming CPUInfo::BuildTiming(const json& opcode, const char* timingKey) const
 	{
 		OpcodeTiming timing = m_defaultOpcodeTiming;
-		if (!opcode.contains("timing"))
+		if (!opcode.contains(timingKey))
 		{
 			return timing;
 		}
 
-		const json& jsonTiming = opcode["timing"];
+		const json& jsonTiming = opcode[timingKey];
 		return BuildTimingDirect(jsonTiming);
 	}
 
@@ -317,10 +347,25 @@ namespace cpuInfo
 		}
 		else
 		{
+			const Opcode& subOpcode = m_subOpcodes[(int)parent.multi][op2];
 			std::string subOpcodeText = m_subOpcodes[(int)parent.multi][op2].text;
+
+			if (subOpcode.alt)
+			{
+				return subOpcode;
+			}
 
 			// There may be another level of indirection
 			return BuildOpcode(subOpcodeText);
+		}
+	}
+
+	void CPUInfo::SetOverrideMask(const json& jsonOpcode, Opcode& opcode, const char* key)
+	{
+		std::string overrideMask = jsonOpcode.contains(key) ? jsonOpcode[key] : "";
+		if (overrideMask.size())
+		{
+			opcode.overrideMask = emul::BitMaskW(overrideMask.c_str());
 		}
 	}
 

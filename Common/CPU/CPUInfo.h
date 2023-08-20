@@ -47,6 +47,11 @@ namespace cpuInfo
 		bool s8 = false; // immediate signed
 		bool s16 = false;
 
+		std::shared_ptr<Opcode> alt = nullptr; // alternate opcode
+		emul::BitMaskW altMask; // alternate opcode mask
+
+		emul::BitMaskW overrideMask; // Allows applying a mask to an opcode
+
 		enum class MODREGRM { NONE, W8, W16, SR } modRegRm = MODREGRM::NONE;
 		enum class IMM { NONE, W8, W8W8, W16, W16W8, W32, S8, S16, REGREG } imm = IMM::NONE;
 		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, GRP6, GRP7, GRP8, _COUNT } multi = MULTI::NONE;
@@ -103,10 +108,11 @@ namespace cpuInfo
 		void BuildOpcodes(const json& opcode);
 		Opcode BuildOpcode(std::string opcocode) const;
 		void BuildSubOpcodes(int index, const json& opcodes);
-		OpcodeTiming BuildTiming(const json& opcode) const;
+		OpcodeTiming BuildTiming(const json& opcode, const char* key = "timing") const;
 		OpcodeTiming BuildTimingDirect(const json& timingArray) const;
 		void AddOpcodes(const json& opcodes, Opcode opcodeTable[], OpcodeTiming timingTable[]);
 		std::string GetTimingString(const OpcodeTiming& timing) const;
+		void SetOverrideMask(const json& jsonOpcode, Opcode& opcode, const char* key);
 
 		static const size_t MAX_OPCODE = 0xFF;
 

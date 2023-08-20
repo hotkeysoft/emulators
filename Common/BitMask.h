@@ -17,16 +17,21 @@ namespace hscommon::bitUtil
 		// maskBits == '111...111': IsMatch will only return true when value == mask
 		//                          (exact match, default if not set)
 		// maskBits == '000...000': IsMatch will always return true (mask == 'xxx...xxx')
-		BitMask(T mask = 0, T maskBits = static_cast<T>(-1)) { Set(mask, maskBits); }
+		BitMask() { Clear(); }
+		BitMask(T mask, T maskBits = static_cast<T>(-1)) { Set(mask, maskBits); }
 		BitMask(const char* maskStr) { Set(maskStr); }
 
-		void Clear() { Set(0, 0); }
+		bool IsSet() const { return m_set; }
+		operator bool() const { return IsSet(); }
+
+		void Clear() { Set(0, 0); m_set = false; }
 
 		T GetMask() const { return m_mask; }
 		T GetMaskBits() const { return m_maskBits; }
 
 		void Set(T mask, T maskBits = static_cast<T>(-1))
 		{
+			m_set = true;
 			m_maskBits = maskBits;
 			m_mask = mask & m_maskBits; // Clear 'don't care' bits in mask
 		};
@@ -78,6 +83,7 @@ namespace hscommon::bitUtil
 				}
 			}
 
+			m_set = true;
 			return true;
 		};
 
@@ -93,6 +99,10 @@ namespace hscommon::bitUtil
 		}
 
 		bool IsMatch(T value) const { return (value & m_maskBits) == m_mask; }
+
+		// Applies this mask on top of a value.
+		// This will set all the 0/1 bits in the mask, and leave the 'x' bits alone.
+		T Apply(T src) const { return (src & (~m_maskBits)) | m_mask; }
 
 		std::string ToString() const
 		{
@@ -115,6 +125,7 @@ namespace hscommon::bitUtil
 
 		T m_mask = 0;
 		T m_maskBits = 0;
+		bool m_set = false;
 	};
 
 }

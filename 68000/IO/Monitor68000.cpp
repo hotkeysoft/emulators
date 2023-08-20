@@ -559,9 +559,25 @@ namespace emul
 			Replace(text, grpLabel, op2Str);
 
 			instr = m_cpu->GetInfo().GetSubOpcode(instr, op2);
+
+			if (instr.alt && instr.altMask.IsMatch(data))
+			{
+				instr = *instr.alt;
+				text = instr.text;
+			}
+		}
+		else
+		{
+			// Should not happen
+			throw std::exception("Top level instruction should be multi");
 		}
 
-		char buf[32];
+		if (instr.overrideMask)
+		{
+			data = instr.overrideMask.Apply(data);
+		}
+
+		char buf[48];
 		switch (instr.imm)
 		{
 		case Opcode::IMM::W8:
