@@ -1,0 +1,58 @@
+	mc68000
+	opt o-
+
+; =========================================================
+; OPCODE <ea>
+; =========================================================
+
+; OPCODE, Dn
+	OPCODE D0
+
+; OPCODE, An (not allowed for dest)
+
+; OPCODE, (An)
+	OPCODE (A5)
+
+; OPCODE, (An)+
+	OPCODE (A6)+
+
+; OPCODE, -(An)
+	OPCODE -(A7)
+
+; OPCODE, d16(An)
+	OPCODE -32768(A2)
+	OPCODE 0(A3)
+	OPCODE 1234(A4)
+	OPCODE 32767(A4)
+
+; OPCODE, d8(An, Xn.L|W)
+	OPCODE 123(A2,A3.w)
+	OPCODE -1(A3,D2.l)
+	OPCODE -128(A4,D3.w)
+
+; OPCODE, (xxx).w
+	OPCODE ($0000).w
+	OPCODE ($1234).w
+	OPCODE ($7FFF).w
+
+; OPCODE, (xxx).l
+	OPCODE ($00000000).l
+	OPCODE ($12345678).l
+	OPCODE ($FFFFFFFF).l
+
+; OPCODE, d16(PC)
+	OPCODE -32768(PC)
+	OPCODE 0(PC)
+	OPCODE 1234(PC)
+	OPCODE 32767(PC)
+
+; OPCODE, d8(PC, Xn)
+	OPCODE 123(PC,A3.w)
+	OPCODE -1(PC,D2.l)
+	OPCODE -128(PC,D3.w)
+
+; OPCODE, Imm
+	OPCODE #$0000
+	OPCODE #$FFFF
+	OPCODE #$7FFF
+	OPCODE #$1234

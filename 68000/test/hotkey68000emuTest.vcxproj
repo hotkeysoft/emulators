@@ -67,8 +67,12 @@
     <None Include="asm\3.x.1.movea.w.asm" />
     <None Include="asm\3.x.move.w.asm" />
     <None Include="asm\4.0.3.move.sr.asm" />
+    <None Include="asm\4.0.x.negx.asm" />
+    <None Include="asm\4.2.x.clr.asm" />
     <None Include="asm\4.4.3.move.ccr.asm" />
+    <None Include="asm\4.4.x.neg.asm" />
     <None Include="asm\4.6.3.move.sr.asm" />
+    <None Include="asm\4.6.x.not.asm" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
