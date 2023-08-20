@@ -72,10 +72,21 @@
     <None Include="asm\4.4.0.nbcd.asm" />
     <None Include="asm\4.4.1.0.swap.asm" />
     <None Include="asm\4.4.1.pea.asm" />
+    <None Include="asm\4.4.1.x.movem.asm" />
     <None Include="asm\4.4.3.move.ccr.asm" />
     <None Include="asm\4.4.x.neg.asm" />
+    <None Include="asm\4.5.3.tas.asm" />
+    <None Include="asm\4.5.x.tst.asm" />
+    <None Include="asm\4.6.1.x.movem.asm" />
     <None Include="asm\4.6.3.move.sr.asm" />
     <None Include="asm\4.6.x.not.asm" />
+    <None Include="asm\4.7.1.0.trap.asm" />
+    <None Include="asm\4.7.1.2.link.asm" />
+    <None Include="asm\4.7.1.3.unlk.asm" />
+    <None Include="asm\4.7.1.4.move.usp.asm" />
+    <None Include="asm\4.7.1.6.2.stop.asm" />
+    <None Include="asm\4.7.2.jsr.asm" />
+    <None Include="asm\4.7.3.jmp.asm" />
     <None Include="asm\4.8.1.x.0.ext.asm" />
     <None Include="asm\4.misc.asm" />
   </ItemGroup>

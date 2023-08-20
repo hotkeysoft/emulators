@@ -115,5 +115,38 @@
     <None Include="asm\4.misc.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="asm\4.5.3.tas.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.5.x.tst.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.7.1.0.trap.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.7.1.2.link.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.7.1.3.unlk.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.7.1.4.move.usp.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.7.1.6.2.stop.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.7.2.jsr.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.7.3.jmp.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.4.1.x.movem.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\4.6.1.x.movem.asm">
+      <Filter>asm</Filter>
+    </None>
   </ItemGroup>
 </Project>
