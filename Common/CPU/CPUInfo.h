@@ -57,6 +57,7 @@ namespace cpuInfo
 		enum class IMM { NONE, W8, W8W8, W16, W16W8, W32, S8, S16, REGREG } imm = IMM::NONE;
 		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, GRP6, GRP7, GRP8, _COUNT } multi = MULTI::NONE;
 	};
+	using OpcodeTable = std::vector<Opcode>;
 
 	enum class OpcodeTimingType {
 		BASE = 0, // Base number of ticks for instructions
@@ -67,6 +68,7 @@ namespace cpuInfo
 		_COUNT
 	};
 	using OpcodeTiming = std::array<BYTE, (int)OpcodeTimingType::_COUNT>;
+	using OpcodeTimingTable = std::vector<OpcodeTiming>;
 
 	struct Coord
 	{
@@ -89,6 +91,11 @@ namespace cpuInfo
 
 		const char* GetId() const { return m_id.c_str(); }
 		void LoadConfig();
+		void LoadDefaultTimings(json& cpuData);
+		void LoadMainOpcodeTable(json& cpuData);
+		void LoadOpcodeGroups(json& cpuData);
+		void LoadOpcodeGroup(json& cpuData, const char* groupName, int groupIndex);
+		void LoadMiscTimings(json& cpuData);
 
 		std::string GetANSIFile() const;
 		Coord GetCoord(const char* label) const;
@@ -106,25 +113,25 @@ namespace cpuInfo
 
 		json m_config;
 
-		void BuildOpcodes(const json& opcode);
+		void BuildOpcodes(const json& opcode, size_t tableSize);
 		Opcode BuildOpcode(std::string opcocode) const;
 		void BuildSubOpcodes(int index, const json& opcodes, Opcode* fillOpcode = nullptr, OpcodeTiming* fillTiming = nullptr);
 		OpcodeTiming BuildTiming(const json& opcode, const char* key = "timing") const;
 		OpcodeTiming BuildTimingDirect(const json& timingArray) const;
-		void AddOpcodes(const json& opcodes, Opcode opcodeTable[], OpcodeTiming timingTable[]);
+		void AddOpcodes(const json& opcodes, OpcodeTable& opcodeTable, OpcodeTimingTable& timingTable);
 		std::string GetTimingString(const OpcodeTiming& timing) const;
 		void SetOverrideMask(const json& jsonOpcode, Opcode& opcode, const char* key);
 
 		static const size_t MAX_OPCODE = 0xFF;
 
-		Opcode m_opcodes[MAX_OPCODE + 1];
-		Opcode m_subOpcodes[(int)Opcode::MULTI::_COUNT][MAX_OPCODE + 1];
+		OpcodeTable m_opcodes;
+		OpcodeTable m_subOpcodes[(int)Opcode::MULTI::_COUNT];
 
 		OpcodeTiming m_defaultOpcodeTiming = { 1, 0, 0, 0 };
 		OpcodeTiming m_defaultSubOpcodeTiming = { 1, 0, 0, 0 };
 
-		OpcodeTiming m_timing[MAX_OPCODE + 1];
-		OpcodeTiming m_subTiming[(int)Opcode::MULTI::_COUNT][MAX_OPCODE + 1];
+		OpcodeTimingTable m_timing;
+		OpcodeTimingTable m_subTiming[(int)Opcode::MULTI::_COUNT];
 		OpcodeTiming m_miscTiming[(int)MiscTiming::_COUNT];
 	};
 }

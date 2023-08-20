@@ -37,71 +37,140 @@ namespace cpuInfo
 			throw std::exception("Config File not found");
 		}
 
+		json& cpuData = m_config["cpu"];
+
+		LoadDefaultTimings(cpuData);
+		LoadMainOpcodeTable(cpuData);
+		LoadOpcodeGroups(cpuData);
+		LoadMiscTimings(cpuData);
+	}
+
+	void CPUInfo::LoadDefaultTimings(json& cpuData)
+	{
 		// Default timings
-		if (m_config["cpu"].contains("opcodes.timing"))
+		if (cpuData.contains("opcodes.timing"))
 		{
 			m_defaultOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.timing"]);
 			LogPrintf(LOG_INFO, "Default Opcode timing: %s", GetTimingString(m_defaultOpcodeTiming).c_str());
 			m_defaultSubOpcodeTiming = m_defaultOpcodeTiming;
 		}
 
-		if (m_config["cpu"].contains("opcodes.grp.timing"))
+		if (cpuData.contains("opcodes.grp.timing"))
 		{
 			m_defaultSubOpcodeTiming = BuildTimingDirect(m_config["cpu"]["opcodes.grp.timing"]);
 			LogPrintf(LOG_INFO, "Default Subopcode timing: %s", GetTimingString(m_defaultSubOpcodeTiming).c_str());
 		}
+	}
 
-		if (!m_config["cpu"].contains("opcodes"))
+	void CPUInfo::LoadMainOpcodeTable(json& cpuData)
+	{
+		if (!cpuData.contains("opcodes"))
 		{
 			throw std::exception("missing [opcodes] array");
 		}
-		BuildOpcodes(m_config["cpu"]["opcodes"]);
+
+		// Check for optional size
+		size_t opcodeCount = MAX_OPCODE + 1;
+		if (cpuData.contains("opcodes.size"))
+		{
+			opcodeCount = cpuData["opcodes.size"];
+			if (opcodeCount == 0 || opcodeCount > MAX_OPCODE)
+			{
+				LogPrintf(LOG_ERROR, "Invalid opcode.size: %d", opcodeCount);
+				throw std::exception("invalid opcode.size");
+			}
+		}
+		LogPrintf(LOG_INFO, "Opcode table, size [%d]", opcodeCount);
+
+		BuildOpcodes(cpuData["opcodes"], opcodeCount);
+	}
+
+	void CPUInfo::LoadOpcodeGroups(json& cpuData)
+	{
+		constexpr const char* OPCODES_GRP = "opcodes.grp";
 
 		int groupCount = 0;
-		if (m_config["cpu"].contains("opcodes.grp"))
+
+		if (cpuData.contains(OPCODES_GRP))
 		{
-			groupCount = m_config["cpu"]["opcodes.grp"];
+			groupCount = cpuData[OPCODES_GRP];
 		}
 
 		if (groupCount > (int)Opcode::MULTI::_COUNT)
 		{
+			LogPrintf(LOG_ERROR, "Subopcode group count > %d", (int)Opcode::MULTI::_COUNT);
 			throw std::exception("invalid opcode.grp count");
 		}
 
 		for (int i = 0; i < groupCount; ++i)
 		{
-			json& cpu = m_config["cpu"];
-			char grpName[32];
-			sprintf(grpName, "opcodes.grp%d", i + 1);
-			if (!cpu.contains(grpName))
-			{
-				throw std::exception("opcode.grp# list missing");
-			}
+			char groupName[32];
+			sprintf(groupName, "%s%d", OPCODES_GRP, i + 1);
+			LoadOpcodeGroup(cpuData, groupName, i);
+		}
+	}
 
-			// Check for fill opcode
-			std::string fill(grpName);
-			fill.append(".fill");
-			Opcode fillOpcode;
-			OpcodeTiming fillTiming;
-			bool hasFillOpcode = false;
-			if (cpu.contains(fill) && cpu[fill].contains("name"))
-			{
-				fillOpcode = BuildOpcode(cpu[fill]["name"]);
-				hasFillOpcode = fillOpcode.text.size();
+	void CPUInfo::LoadOpcodeGroup(json& cpuData, const char* groupName, int groupIndex)
+	{
+		if (!cpuData.contains(groupName))
+		{
+			LogPrintf(LOG_ERROR, "Subopcode table [%s] not found", groupName);
+			throw std::exception("opcode.grp# list missing");
+		}
 
-				fillTiming = BuildTiming(cpu[fill]);
-				BuildSubOpcodes(i, cpu[grpName], &fillOpcode, &fillTiming);
-			}
-			else
+		// Check for optional size, otherwise use MAX_OPCODE
+		std::string size(groupName);
+		size.append(".size");
+		size_t subOpcodeCount = MAX_OPCODE + 1;
+		if (cpuData.contains(size))
+		{
+			subOpcodeCount = cpuData[size];
+			if (subOpcodeCount == 0)
 			{
-				BuildSubOpcodes(i, cpu[grpName]);
+				// Empty group, skip
+				m_subOpcodes[groupIndex].clear();
+				m_subTiming[groupIndex].clear();
+				return;
+			}
+			else if (subOpcodeCount > MAX_OPCODE + 1)
+			{
+				LogPrintf(LOG_ERROR, "Subopcode table [%s] invalid size: %d", groupName, subOpcodeCount);
+				throw std::exception("invalid grp size");
 			}
 		}
 
-		// Misc timing table
-		if (m_config["cpu"].contains("misc"))
+		LogPrintf(LOG_INFO, "Subopcode table [%s], size [%d]", groupName, subOpcodeCount);
+
+		// Set opcode & timing table sizes
+		m_subOpcodes[groupIndex].resize(subOpcodeCount);
+		m_subTiming[groupIndex].resize(subOpcodeCount);
+
+		// Check for fill opcode
+		std::string fill(groupName);
+		fill.append(".fill");
+		Opcode fillOpcode;
+		OpcodeTiming fillTiming;
+		bool hasFillOpcode = false;
+		if (cpuData.contains(fill) && cpuData[fill].contains("name"))
 		{
-			size_t miscCount = m_config["cpu"]["misc"].size();
+			fillOpcode = BuildOpcode(cpuData[fill]["name"]);
+			hasFillOpcode = fillOpcode.text.size();
+
+			fillTiming = BuildTiming(cpuData[fill]);
+			BuildSubOpcodes(groupIndex, cpuData[groupName], &fillOpcode, &fillTiming);
+		}
+		else
+		{
+			BuildSubOpcodes(groupIndex, cpuData[groupName]);
+		}
+	}
+
+	void CPUInfo::LoadMiscTimings(json& cpuData)
+	{
+		// Misc timing table
+		if (cpuData.contains("misc"))
+		{
+			size_t miscCount = cpuData["misc"].size();
 
 			if (miscCount > (int)MiscTiming::_COUNT)
 			{
@@ -116,12 +185,16 @@ namespace cpuInfo
 		}
 	}
 
-	void CPUInfo::BuildOpcodes(const json& opcodes)
+
+	void CPUInfo::BuildOpcodes(const json& opcodes, size_t tableSize)
 	{
 		LogPrintf(LOG_INFO, "BuildOpcodes");
 
+		m_opcodes.resize(tableSize);
+		m_timing.resize(tableSize);
+
 		// First fill in the array so we don't have empty holes
-		for (int i = 0; i <= MAX_OPCODE; ++i)
+		for (int i = 0; i < m_opcodes.size(); ++i)
 		{
 			char buf[16];
 			sprintf(buf, "DB 0x%02X", i);
@@ -132,24 +205,26 @@ namespace cpuInfo
 		AddOpcodes(opcodes, m_opcodes, m_timing);
 	}
 
-	void CPUInfo::BuildSubOpcodes(int index, const json& opcodes, Opcode* fillOpcode, OpcodeTiming* fillTiming)
+	void CPUInfo::BuildSubOpcodes(int index, const json& opcodesJson, Opcode* fillOpcode, OpcodeTiming* fillTiming)
 	{
 		LogPrintf(LOG_INFO, "BuildSubOpcodes[%d]", index);
+		OpcodeTable& opcodes = m_subOpcodes[index];
+		OpcodeTimingTable& timings = m_subTiming[index];
 
 		// First fill in the array so we don't have empty holes
-		for (int i = 0; i <= MAX_OPCODE; ++i)
+		for (int i = 0; i < opcodes.size(); ++i)
 		{
 			char buf[16];
 			sprintf(buf, "DB 0x%02X", i);
 			Opcode defaultOpcode(buf);
-			m_subOpcodes[index][i] = fillOpcode ? (*fillOpcode) : defaultOpcode;
-			m_subTiming[index][i] = fillTiming ? (*fillTiming) : m_defaultSubOpcodeTiming;
+			opcodes[i] = fillOpcode ? (*fillOpcode) : defaultOpcode;
+			timings[i] = fillTiming ? (*fillTiming) : m_defaultSubOpcodeTiming;
 		}
 
-		AddOpcodes(opcodes, m_subOpcodes[index], m_subTiming[index]);
+		AddOpcodes(opcodesJson, opcodes, timings);
 	}
 
-	void CPUInfo::AddOpcodes(const json& opcodes, Opcode opcodeTable[], OpcodeTiming timingTable[])
+	void CPUInfo::AddOpcodes(const json& opcodes, OpcodeTable& opcodeTable, OpcodeTimingTable& timingTable)
 	{
 		// Trivial case is an array of 256 opcodes. However, to account for holes
 		// and other weirdness, it is possible to specify a new index (int or hex string e.g. "0x12")
@@ -157,10 +232,10 @@ namespace cpuInfo
 		size_t opcodeIndex = 0;
 		for (const json& curr : opcodes)
 		{
-			if (opcodeIndex < 0 || opcodeIndex > MAX_OPCODE)
+			if (opcodeIndex < 0 || opcodeIndex > (opcodeTable.size() - 1))
 			{
-				LogPrintf(LOG_ERROR, "BuildOpcodes: invalid index [%d]", opcodeIndex);
-				throw std::exception("BuildOpcodes: invalid index");
+				LogPrintf(LOG_ERROR, "AddOpcodes: invalid index [%d]", opcodeIndex);
+				throw std::exception("AddOpcodes: invalid index");
 			}
 
 			if (curr.is_number_integer()) // new index (integer)
@@ -220,7 +295,7 @@ namespace cpuInfo
 			}
 			else
 			{
-				throw std::exception("BuildOpcodes: Invalid value");
+				throw std::exception("AddOpcodes: Invalid value");
 			}
 		}
 	}
