@@ -70,13 +70,32 @@ namespace cpuInfo
 
 		for (int i = 0; i < groupCount; ++i)
 		{
+			json& cpu = m_config["cpu"];
 			char grpName[32];
 			sprintf(grpName, "opcodes.grp%d", i + 1);
-			if (!m_config["cpu"].contains(grpName))
+			if (!cpu.contains(grpName))
 			{
 				throw std::exception("opcode.grp# list missing");
 			}
-			BuildSubOpcodes(i, m_config["cpu"][grpName]);
+
+			// Check for fill opcode
+			std::string fill(grpName);
+			fill.append(".fill");
+			Opcode fillOpcode;
+			OpcodeTiming fillTiming;
+			bool hasFillOpcode = false;
+			if (cpu.contains(fill) && cpu[fill].contains("name"))
+			{
+				fillOpcode = BuildOpcode(cpu[fill]["name"]);
+				hasFillOpcode = fillOpcode.text.size();
+
+				fillTiming = BuildTiming(cpu[fill]);
+				BuildSubOpcodes(i, cpu[grpName], &fillOpcode, &fillTiming);
+			}
+			else
+			{
+				BuildSubOpcodes(i, cpu[grpName]);
+			}
 		}
 
 		// Misc timing table
@@ -113,7 +132,7 @@ namespace cpuInfo
 		AddOpcodes(opcodes, m_opcodes, m_timing);
 	}
 
-	void CPUInfo::BuildSubOpcodes(int index, const json& opcodes)
+	void CPUInfo::BuildSubOpcodes(int index, const json& opcodes, Opcode* fillOpcode, OpcodeTiming* fillTiming)
 	{
 		LogPrintf(LOG_INFO, "BuildSubOpcodes[%d]", index);
 
@@ -122,8 +141,9 @@ namespace cpuInfo
 		{
 			char buf[16];
 			sprintf(buf, "DB 0x%02X", i);
-			m_subOpcodes[index][i] = buf;
-			m_subTiming[index][i] = m_defaultSubOpcodeTiming;
+			Opcode defaultOpcode(buf);
+			m_subOpcodes[index][i] = fillOpcode ? (*fillOpcode) : defaultOpcode;
+			m_subTiming[index][i] = fillTiming ? (*fillTiming) : m_defaultSubOpcodeTiming;
 		}
 
 		AddOpcodes(opcodes, m_subOpcodes[index], m_subTiming[index]);
@@ -178,7 +198,7 @@ namespace cpuInfo
 
 						// TODO: Alt Timing
 
-						LogPrintf(LOG_WARNING, "\tAltOpcode[%02X]: [%-32s], Mask: [%s]",
+						LogPrintf(LOG_INFO, "\tAltOpcode[%02X]: [%-32s], Mask: [%s]",
 							opcodeIndex,
 							altOpcode->text.c_str(),
 							opcode.altMask.ToString().c_str()
@@ -259,6 +279,7 @@ namespace cpuInfo
 
 		ret.regreg = text.find("{r,r}") != std::string::npos;
 		ret.idx = text.find("{idx}") != std::string::npos;
+		ret.idxidx = text.find("{idx,idx}") != std::string::npos;
 		ret.bit = text.find("{bit}") != std::string::npos;
 
 		ret.rm8 = text.find("{rm8}") != std::string::npos;

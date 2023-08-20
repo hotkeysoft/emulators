@@ -93,9 +93,11 @@
       { "name": "BSET.{bit} D7,{idx}","alt": "MOVEP.l D7,{idx}", "altMask": "1xx001xxx", "altOverrideMask": "101xxx" }
     ],
     "opcodes.grp2.size": 64,
+    "opcodes.grp2.fill": { "name": "MOVE.b {idx,idx}" },
     "opcodes.grp2": [
     ],
     "opcodes.grp3.size": 64,
+    "opcodes.grp3.fill": { "name": "MOVE.l {idx,idx}" },
     "opcodes.grp3": [
       "001",
       { "name": "MOVEA.l {idx},A0" },
@@ -115,6 +117,7 @@
       { "name": "MOVEA.l {idx},A7" }
     ],    
     "opcodes.grp4.size": 64,
+    "opcodes.grp4.fill": { "name": "MOVE.w {idx,idx}" },
     "opcodes.grp4": [
       "001",
       { "name": "MOVEA.w {idx},A0" },

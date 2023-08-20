@@ -31,6 +31,7 @@ namespace cpuInfo
 
 		bool regreg = false;  // r,r
 		bool idx = false; // indexed
+		bool idxidx = false; // indexed source and dest
 		bool bit = false; // bit instruction (68k)
 
 		bool rm8 = false;
@@ -107,7 +108,7 @@ namespace cpuInfo
 
 		void BuildOpcodes(const json& opcode);
 		Opcode BuildOpcode(std::string opcocode) const;
-		void BuildSubOpcodes(int index, const json& opcodes);
+		void BuildSubOpcodes(int index, const json& opcodes, Opcode* fillOpcode = nullptr, OpcodeTiming* fillTiming = nullptr);
 		OpcodeTiming BuildTiming(const json& opcode, const char* key = "timing") const;
 		OpcodeTiming BuildTimingDirect(const json& timingArray) const;
 		void AddOpcodes(const json& opcodes, Opcode opcodeTable[], OpcodeTiming timingTable[]);
