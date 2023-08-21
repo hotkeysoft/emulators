@@ -95,6 +95,7 @@
     <None Include="asm\5.x.1.subq.asm" />
     <None Include="asm\5.x.3.1.dbcc.asm" />
     <None Include="asm\5.x.3.scc.asm" />
+    <None Include="asm\6.x.branch.asm" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

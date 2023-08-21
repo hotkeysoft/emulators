@@ -374,6 +374,7 @@ namespace cpuInfo
 
 		ret.dataReg = text.find("{dr}") != std::string::npos;
 		ret.addressReg = text.find("{ar}") != std::string::npos;
+		ret.branch = text.find("{branch}") != std::string::npos;
 
 		bool grp1 = text.find("{grp1}") != std::string::npos;
 		bool grp2 = text.find("{grp2}") != std::string::npos;

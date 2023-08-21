@@ -166,5 +166,8 @@
     <None Include="asm\5.x.3.1.dbcc.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="asm\6.x.branch.asm">
+      <Filter>asm</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -576,8 +576,11 @@ namespace emul
 
 		if (instr.multi != Opcode::MULTI::NONE)
 		{
-			// Sub opcode is next 6 bits
-			BYTE op2 = (data >> 6) & 63;
+			// Sub opcode is next 6 bits (or 4 for branch group)
+			BYTE op2 = (instr.multi == Opcode::MULTI::GRP7) ?
+				((data >> 8) & 15) :
+				((data >> 6) & 63);
+
 			const std::string op2Str = m_cpu->GetInfo().GetSubOpcodeStr(instr, op2);
 
 			char grpLabel[16] = "";
@@ -636,6 +639,26 @@ namespace emul
 			address += 2;
 			decoded.AddRaw(regs);
 			Replace(text, "{regs}", DecodeRegisterBitmask(regs, predecrement));
+		}
+		else if (instr.branch)
+		{
+			// If displacement fits in 8 bits, value is in lower byte (and op is .b)
+			// If not, value is in next word. This is indicated with lower byte == 0.
+			// This also means that encoding a zero displacement requires an extra word.
+
+			SBYTE byteDisplacement = GetLByte(data);
+			if (byteDisplacement)
+			{
+				sprintf(buf, ".b %d", byteDisplacement);
+			}
+			else
+			{
+				WORD wordDisplacement = m_memory->Read16be(address);
+				address += 2;
+				decoded.AddRaw(wordDisplacement);
+				sprintf(buf, ".w %d", (SWORD)wordDisplacement);
+			}
+			Replace(text, "{branch}", buf);
 		}
 
 		switch (instr.imm)

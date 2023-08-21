@@ -36,6 +36,7 @@ namespace cpuInfo
 		bool bit = false; // bit instruction (68k)
 		bool dataReg = false; // data register
 		bool addressReg = false; // address register
+		bool branch = false; // Branch group (68k)
 
 		bool rm8 = false;
 		bool rm16 = false;
