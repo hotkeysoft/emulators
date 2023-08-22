@@ -172,5 +172,17 @@
     <None Include="asm\7.x.0.moveq.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="asm\8.x.3.divu.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\8.x.7.divs.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\8.x.0.or.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\8.x.1.or.asm">
+      <Filter>asm</Filter>
+    </None>
   </ItemGroup>
 </Project>
