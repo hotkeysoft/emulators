@@ -671,10 +671,12 @@ namespace emul
 		else if (instr.regreg) // SBCD, ABCD
 		{
 			constexpr const char* regStr = "D%d,D%d";
-			constexpr const char* memStr = "-(A%d),-(A%d)";
+			constexpr const char* memIncStr = "(A%d)+,(A%d)+";
+			constexpr const char* memDecStr = "-(A%d),-(A%d)";
 
-			// reg/MEM = 0: Data register, 1: Address (predecrement mode)
+			// reg/MEM = 0: Data register, 1: Address (postincrement/predecrement mode)
 			bool regMEM = GetBit(data, 3);
+			const char* memStr = (group == 11) ? memIncStr : memDecStr;
 
 			const int regX = (data >> 9) & 7;
 			const int regY = data & 7;

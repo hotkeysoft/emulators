@@ -2,218 +2,126 @@
 	opt o-
 
 ; =========================================================
-; SUB.b <ea>,Dn
+; SUB.b Dn,<ea>
 ; =========================================================
 
-; SUB.b, Dn,Dn
-	SUB.b D7,D0
-	SUB.b D6,D1
-	SUB.b D5,D2
-	SUB.b D4,D3
-	SUB.b D3,D4
-	SUB.b D2,D5
-	SUB.b D1,D6
-	SUB.b D0,D7
+; SUB.b, Dn,Dn (not allowed)
+; SUB.b, Dn,An (not allowed)
 
-; SUB.b, An,(not allowed)
+; SUB.b, Dn,(An)
+	SUB.b D0,(A5)
 
-; SUB.b, (An),Dn,
-	SUB.b (A5),D0
+; SUB.b, Dn,(An)+
+	SUB.b D1,(A6)+
 
-; SUB.b, (An)+,Dn,
-	SUB.b (A6)+,D1
+; SUB.b, Dn,-(An)
+	SUB.b D2,-(A7)
 
-; SUB.b, -(An),Dn
-	SUB.b -(A7),D2
+; SUB.b, Dn,d16(An)
+	SUB.b D3,-32768(A2)
+	SUB.b D4,0(A3)
+	SUB.b D5,1234(A4)
+	SUB.b D6,32767(A4)
 
-; SUB.b, d16(An),Dn
-	SUB.b -32768(A2),D3
-	SUB.b 0(A3),D4
-	SUB.b 1234(A4),D5
-	SUB.b 32767(A4),D6
+; SUB.b, Dn,d8(An,Xn.L|W)
+	SUB.b D7,123(A2,A3.w)
+	SUB.b D0,-1(A3,D2.l)
+	SUB.b D1,-128(A4,D3.w)
 
-; SUB.b, d8(An, Xn.L|W),Dn
-	SUB.b 123(A2,A3.w),D7
-	SUB.b -1(A3,D2.l),D0
-	SUB.b -128(A4,D3.w),D1
+; SUB.b, Dn,(xxx).w
+	SUB.b D2,($0000).w
+	SUB.b D3,($1234).w
+	SUB.b D4,($7FFF).w
 
-; SUB.b, (xxx).w,Dn
-	SUB.b ($0000).w,D2
-	SUB.b ($1234).w,D3
-	SUB.b ($7FFF).w,D4
+; SUB.b, Dn,(xxx).l
+	SUB.b D5,($00000000).l
+	SUB.b D6,($12345678).l
+	SUB.b D7,($FFFFFFFF).l
 
-; SUB.b, (xxx).l,Dn
-	SUB.b ($00000000).l,D5
-	SUB.b ($12345678).l,D6
-	SUB.b ($FFFFFFFF).l,D7
-
-; SUB.b, d16(PC),Dn
-	SUB.b -32768(PC),D0
-	SUB.b 0(PC),D1
-	SUB.b 1234(PC),D2
-	SUB.b 32767(PC),D3
-
-; SUB.b, d8(PC, Xn),Dn
-	SUB.b 123(PC,A3.w),D4
-	SUB.b -1(PC,D2.l),D5
-	SUB.b -128(PC,D3.w),D6
-
+; Not allowed
+; SUB.b, Dn,d16(PC)
+; SUB.b, Dn,d8(PC,Xn)
 ; SUB.b, Dn,Imm
-	SUB.b #$00,D0
-	SUB.b #$12,D1
-	SUB.b #$AB,D2
-	SUB.b #$80,D3
-	SUB.b #$F0,D4
-	SUB.b #$AA,D5
-	SUB.b #$0F,D6
-	SUB.b #$FF,D7
 
 ; =========================================================
-; SUB.w <ea>, Dn
+; SUB.w Dn,<ea>
 ; =========================================================
 
-; SUB.w, Dn,Dn
-	SUB.w D7,D0
-	SUB.w D6,D1
-	SUB.w D5,D2
-	SUB.w D4,D3
-	SUB.w D3,D4
-	SUB.w D2,D5
-	SUB.w D1,D6
-	SUB.w D0,D7
+; SUB.w, Dn,Dn (not allowed)
+; SUB.w, Dn,An (not allowed)
 
-; SUB.w, An, Dn
-	SUB.w A7,D0
-	SUB.w A6,D1
-	SUB.w A5,D2
-	SUB.w A4,D3
-	SUB.w A3,D4
-	SUB.w A2,D5
-	SUB.w A1,D6
-	SUB.w A0,D7
+; SUB.w, Dn,(An)
+	SUB.w D0,(A5)
 
-; SUB.w, (An),Dn
-	SUB.w (A5),D0
+; SUB.w, Dn,(An)+
+	SUB.w D1,(A6)+
 
-; SUB.w, (An)+,Dn
-	SUB.w (A6)+,D1
+; SUB.w, Dn,-(An)
+	SUB.w D2,-(A7)
 
-; SUB.w, -(An),Dn
-	SUB.w -(A7),D2
+; SUB.w, Dn,d16(An)
+	SUB.w D3,-32768(A2)
+	SUB.w D4,0(A3)
+	SUB.w D5,1234(A4)
+	SUB.w D6,32767(A4)
 
-; SUB.w, d16(An),Dn
-	SUB.w -32768(A2),D3
-	SUB.w 0(A3),D4
-	SUB.w 1234(A4),D5
-	SUB.w 32767(A4),D6
+; SUB.w, Dn,d8(An,Xn.L|W)
+	SUB.w D7,123(A2,A3.w)
+	SUB.w D0,-1(A3,D2.l)
+	SUB.w D1,-128(A4,D3.w)
 
-; SUB.w, d8(An, Xn.L|W),Dn
-	SUB.w 123(A2,A3.w),D7
-	SUB.w -1(A3,D2.l),D0
-	SUB.w -128(A4,D3.w),D1
+; SUB.w, Dn,(xxx).w
+	SUB.w D2,($0000).w
+	SUB.w D3,($1234).w
+	SUB.w D4,($7FFF).w
 
-; SUB.w, (xxx).w,Dn
-	SUB.w ($0000).w,D2
-	SUB.w ($1234).w,D3
-	SUB.w ($7FFF).w,D4
+; SUB.w, Dn,(xxx).l
+	SUB.w D5,($00000000).l
+	SUB.w D6,($12345678).l
+	SUB.w D7,($FFFFFFFF).l
 
-; SUB.w, (xxx).l,Dn
-	SUB.w ($00000000).l,D5
-	SUB.w ($12345678).l,D6
-	SUB.w ($FFFFFFFF).l,D7
-
-; SUB.w, d16(PC),Dn
-	SUB.w -32768(PC),D0
-	SUB.w 0(PC),D1
-	SUB.w 1234(PC),D2
-	SUB.w 32767(PC),D3
-
-; SUB.w, d8(PC, Xn),Dn
-	SUB.w 123(PC,A3.w),D4
-	SUB.w -1(PC,D2.l),D5
-	SUB.w -128(PC,D3.w),D6
-
-; SUB.w, Imm,Dn
-	SUB.w #$0000,D0
-	SUB.w #$1234,D1
-	SUB.w #$ABCD,D2
-	SUB.w #$8000,D3
-	SUB.w #$F0F0,D4
-	SUB.w #$AA55,D5
-	SUB.w #$0F0F,D6
-	SUB.w #$FFFF,D7
+; Not allowed
+; SUB.w, Dn,d16(PC)
+; SUB.w, Dn,d8(PC,Xn)
+; SUB.w, Dn,Imm
 
 ; =========================================================
-; SUB.l <ea>, Dn
+; SUB.l Dn,<ea>
 ; =========================================================
 
-; SUB.l, Dn
-	SUB.l D7,D0
-	SUB.l D6,D1
-	SUB.l D5,D2
-	SUB.l D4,D3
-	SUB.l D3,D4
-	SUB.l D2,D5
-	SUB.l D1,D6
-	SUB.l D0,D7
+; SUB.l, Dn,Dn
+; SUB.l, Dn,An (not allowed)
 
-; SUB.l, An,Dn
-	SUB.l A7,D0
-	SUB.l A6,D1
-	SUB.l A5,D2
-	SUB.l A4,D3
-	SUB.l A3,D4
-	SUB.l A2,D5
-	SUB.l A1,D6
-	SUB.l A0,D7
+; SUB.l, Dn,(An)
+	SUB.l D0,(A5)
 
-; SUB.l, (An),Dn
-	SUB.l (A5),D0
+; SUB.l, Dn,(An)+
+	SUB.l D1,(A6)+
 
-; SUB.l, (An)+,Dn
-	SUB.l (A6)+,D1
+; SUB.l, Dn,-(An)
+	SUB.l D2,-(A7)
 
-; SUB.l, -(An),Dn
-	SUB.l -(A7),D2
+; SUB.l, Dn,d16(An)
+	SUB.l D3,-32768(A2)
+	SUB.l D4,0(A3)
+	SUB.l D5,1234(A4)
+	SUB.l D6,32767(A4)
 
-; SUB.l, d16(An),Dn
-	SUB.l -32768(A2),D3
-	SUB.l 0(A3),D4
-	SUB.l 1234(A4),D5
-	SUB.l 32767(A4),D6
+; SUB.l, Dn,d8(An,Xn.L|W)
+	SUB.l D7,123(A2,A3.w)
+	SUB.l D0,-1(A3,D2.l)
+	SUB.l D1,-128(A4,D3.w)
 
-; SUB.l, d8(An, Xn.L|W),Dn
-	SUB.l 123(A2,A3.w),D7
-	SUB.l -1(A3,D2.l),D0
-	SUB.l -128(A4,D3.w),D1
+; SUB.l, Dn,(xxx).w
+	SUB.l D2,($0000).w
+	SUB.l D3,($1234).w
+	SUB.l D4,($7FFF).w
 
-; SUB.l, (xxx).w,Dn
-	SUB.l ($0000).w,D2
-	SUB.l ($1234).w,D3
-	SUB.l ($7FFF).w,D4
+; SUB.l, Dn,(xxx).l
+	SUB.l D5,($00000000).l
+	SUB.l D6,($12345678).l
+	SUB.l D7,($FFFFFFFF).l
 
-; SUB.l, (xxx).l,Dn
-	SUB.l ($00000000).l,D5
-	SUB.l ($12345678).l,D6
-	SUB.l ($FFFFFFFF).l,D7
-
-; SUB.l, d16(PC),Dn
-	SUB.l -32768(PC),D0
-	SUB.l 0(PC),D1
-	SUB.l 1234(PC),D2
-	SUB.l 32767(PC),D3
-
-; SUB.l, d8(PC, Xn),Dn
-	SUB.l 123(PC,A3.w),D4
-	SUB.l -1(PC,D2.l),D5
-	SUB.l -128(PC,D3.w),D6
-
-; SUB.l, Imm,Dn
-	SUB.l #$00000000,D0
-	SUB.l #$12341234,D1
-	SUB.l #$ABCDABCD,D2
-	SUB.l #$80008000,D3
-	SUB.l #$F0F0F0F0,D4
-	SUB.l #$AA55AA55,D5
-	SUB.l #$0F0F0F0F,D6
-	SUB.l #$FFFFFFFF,D7
+; SUB.l, Dn,d16(PC)
+; SUB.l, Dn,d8(PC,Xn)
+; SUB.l, Dn,Imm
