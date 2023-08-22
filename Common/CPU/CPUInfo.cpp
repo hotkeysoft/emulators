@@ -366,6 +366,7 @@ namespace cpuInfo
 		ret.sr = text.find("{sr}") != std::string::npos;
 
 		ret.i8 = text.find("{i8}") != std::string::npos;
+		ret.i8opcode = text.find("{i8opcode}") != std::string::npos;
 		ret.i16 = text.find("{i16}") != std::string::npos;
 		ret.i32 = text.find("{i32}") != std::string::npos;
 
@@ -413,6 +414,7 @@ namespace cpuInfo
 
 		if (ret.regreg) ret.imm = Opcode::IMM::REGREG;
 		else if (ret.i8) ret.imm = Opcode::IMM::W8;
+		else if (ret.i8opcode) ret.imm = Opcode::IMM::W8OPCODE;
 		else if (ret.i16) ret.imm = Opcode::IMM::W16;
 		else if (ret.i32) ret.imm = Opcode::IMM::W32;
 		else if (ret.s8) ret.imm = Opcode::IMM::S8;

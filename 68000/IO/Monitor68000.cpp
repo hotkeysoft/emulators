@@ -576,10 +576,18 @@ namespace emul
 
 		if (instr.multi != Opcode::MULTI::NONE)
 		{
-			// Sub opcode is next 6 bits (or 4 for branch group)
-			BYTE op2 = (instr.multi == Opcode::MULTI::GRP7) ?
-				((data >> 8) & 15) :
-				((data >> 6) & 63);
+			// Sub opcode is next 4 or 6 bits
+			BYTE op2;
+			switch (instr.multi)
+			{
+			case Opcode::MULTI::GRP7: // 0b0110 Branch group
+			case Opcode::MULTI::GRP8: // 0b0111 MOVEP group
+				op2 = ((data >> 8) & 15);
+				break;
+			default:
+				op2 = ((data >> 6) & 63);
+				break;
+			}
 
 			const std::string op2Str = m_cpu->GetInfo().GetSubOpcodeStr(instr, op2);
 
@@ -670,6 +678,13 @@ namespace emul
 			decoded.AddRaw(imm8);
 			sprintf(buf, "$%02X", imm8);
 			Replace(text, "{i8}", buf);
+			break;
+		}
+		case Opcode::IMM::W8OPCODE:
+		{
+			BYTE imm8 = GetLByte(data);
+			sprintf(buf, "$%02X", imm8);
+			Replace(text, "{i8opcode}", buf);
 			break;
 		}
 		case Opcode::IMM::W16:

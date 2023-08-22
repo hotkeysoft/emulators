@@ -46,6 +46,7 @@ namespace cpuInfo
 		bool sr = false;
 
 		bool i8 = false;
+		bool i8opcode = false;
 		bool i16 = false;
 		bool i32 = false;
 
@@ -58,7 +59,7 @@ namespace cpuInfo
 		emul::BitMaskW overrideMask; // Allows applying a mask to an opcode
 
 		enum class MODREGRM { NONE, W8, W16, SR } modRegRm = MODREGRM::NONE;
-		enum class IMM { NONE, W8, W8W8, W16, W16W8, W32, S8, S16, REGREG } imm = IMM::NONE;
+		enum class IMM { NONE, W8, W8OPCODE, W8W8, W16, W16W8, W32, S8, S16, REGREG } imm = IMM::NONE;
 		enum class MULTI { NONE = -1, GRP1 = 0, GRP2, GRP3, GRP4, GRP5, GRP6, GRP7, GRP8,
 			GRP9, GRP10, GRP11, GRP12, GRP13, GRP14, GRP15, GRP16, _COUNT } multi = MULTI::NONE;
 	};
