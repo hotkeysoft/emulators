@@ -100,7 +100,12 @@
     <None Include="asm\8.x.0.or.asm" />
     <None Include="asm\8.x.1.or.asm" />
     <None Include="asm\8.x.3.divu.asm" />
+    <None Include="asm\8.x.4.sbcd.asm" />
     <None Include="asm\8.x.7.divs.asm" />
+    <None Include="asm\9.x.0.sub.asm" />
+    <None Include="asm\9.x.1.sub.asm" />
+    <None Include="asm\9.x.1.x.0.subx.asm" />
+    <None Include="asm\9.x.x.3.suba.asm" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

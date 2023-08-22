@@ -184,5 +184,20 @@
     <None Include="asm\8.x.1.or.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="asm\8.x.4.sbcd.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\9.x.0.sub.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\9.x.1.sub.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\9.x.x.3.suba.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\9.x.1.x.0.subx.asm">
+      <Filter>asm</Filter>
+    </None>
   </ItemGroup>
 </Project>

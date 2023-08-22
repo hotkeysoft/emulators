@@ -47,43 +47,43 @@
 ; OR.w Dn,<ea>
 ; =========================================================
 
-; OD.w, Dn,Dn (not allowed)
-; OD.w, Dn,An (not allowed)
+; OR.w, Dn,Dn (not allowed)
+; OR.w, Dn,An (not allowed)
 
-; OD.w, Dn,(An)
+; OR.w, Dn,(An)
 	OR.w D0,(A5)
 
-; OD.w, Dn,(An)+
+; OR.w, Dn,(An)+
 	OR.w D1,(A6)+
 
-; OD.w, Dn,-(An)
+; OR.w, Dn,-(An)
 	OR.w D2,-(A7)
 
-; OD.w, Dn,d16(An)
+; OR.w, Dn,d16(An)
 	OR.w D3,-32768(A2)
 	OR.w D4,0(A3)
 	OR.w D5,1234(A4)
 	OR.w D6,32767(A4)
 
-; OD.w, Dn,d8(An,Xn.L|W)
+; OR.w, Dn,d8(An,Xn.L|W)
 	OR.w D7,123(A2,A3.w)
 	OR.w D0,-1(A3,D2.l)
 	OR.w D1,-128(A4,D3.w)
 
-; OD.w, Dn,(xxx).w
+; OR.w, Dn,(xxx).w
 	OR.w D2,($0000).w
 	OR.w D3,($1234).w
 	OR.w D4,($7FFF).w
 
-; OD.w, Dn,(xxx).l
+; OR.w, Dn,(xxx).l
 	OR.w D5,($00000000).l
 	OR.w D6,($12345678).l
 	OR.w D7,($FFFFFFFF).l
 
 ; Not allowed
-; OD.w, Dn,d16(PC)
-; OD.w, Dn,d8(PC,Xn)
-; OD.w, Dn,Imm
+; OR.w, Dn,d16(PC)
+; OR.w, Dn,d8(PC,Xn)
+; OR.w, Dn,Imm
 
 ; =========================================================
 ; OR.l Dn,<ea>

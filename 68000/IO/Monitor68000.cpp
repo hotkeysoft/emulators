@@ -668,6 +668,20 @@ namespace emul
 			}
 			Replace(text, "{branch}", buf);
 		}
+		else if (instr.regreg) // SBCD, ABCD
+		{
+			constexpr const char* regStr = "D%d,D%d";
+			constexpr const char* memStr = "-(A%d),-(A%d)";
+
+			// reg/MEM = 0: Data register, 1: Address (predecrement mode)
+			bool regMEM = GetBit(data, 3);
+
+			const int regX = (data >> 9) & 7;
+			const int regY = data & 7;
+
+			sprintf(buf, regMEM ? memStr : regStr, regY, regX);
+			Replace(text, "{r,r}", buf);
+		}
 
 		switch (instr.imm)
 		{

@@ -72,7 +72,7 @@
 ; OR.w <ea>, Dn
 ; =========================================================
 
-; OD.w, Dn,Dn
+; OR.w, Dn,Dn
 	OR.w D7,D0
 	OR.w D6,D1
 	OR.w D5,D2
@@ -82,50 +82,50 @@
 	OR.w D1,D6
 	OR.w D0,D7
 
-; OD.w, An, Dn (not allowed)
+; OR.w, An, Dn (not allowed)
 
-; OD.w, (An),Dn
+; OR.w, (An),Dn
 	OR.w (A5),D0
 
-; OD.w, (An)+,Dn
+; OR.w, (An)+,Dn
 	OR.w (A6)+,D1
 
-; OD.w, -(An),Dn
+; OR.w, -(An),Dn
 	OR.w -(A7),D2
 
-; OD.w, d16(An),Dn
+; OR.w, d16(An),Dn
 	OR.w -32768(A2),D3
 	OR.w 0(A3),D4
 	OR.w 1234(A4),D5
 	OR.w 32767(A4),D6
 
-; OD.w, d8(An, Xn.L|W),Dn
+; OR.w, d8(An, Xn.L|W),Dn
 	OR.w 123(A2,A3.w),D7
 	OR.w -1(A3,D2.l),D0
 	OR.w -128(A4,D3.w),D1
 
-; OD.w, (xxx).w,Dn
+; OR.w, (xxx).w,Dn
 	OR.w ($0000).w,D2
 	OR.w ($1234).w,D3
 	OR.w ($7FFF).w,D4
 
-; OD.w, (xxx).l,Dn
+; OR.w, (xxx).l,Dn
 	OR.w ($00000000).l,D5
 	OR.w ($12345678).l,D6
 	OR.w ($FFFFFFFF).l,D7
 
-; OD.w, d16(PC),Dn
+; OR.w, d16(PC),Dn
 	OR.w -32768(PC),D0
 	OR.w 0(PC),D1
 	OR.w 1234(PC),D2
 	OR.w 32767(PC),D3
 
-; OD.w, d8(PC, Xn),Dn
+; OR.w, d8(PC, Xn),Dn
 	OR.w 123(PC,A3.w),D4
 	OR.w -1(PC,D2.l),D5
 	OR.w -128(PC,D3.w),D6
 
-; OD.w, Imm,Dn
+; OR.w, Imm,Dn
 	OR.w #$0000,D0
 	OR.w #$1234,D1
 	OR.w #$ABCD,D2
