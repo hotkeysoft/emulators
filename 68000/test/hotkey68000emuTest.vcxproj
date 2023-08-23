@@ -66,6 +66,12 @@
     <None Include="asm\11.x.1.eor.asm" />
     <None Include="asm\11.x.1.x.1.cmpm.asm" />
     <None Include="asm\11.x.x.3.cmpa.asm" />
+    <None Include="asm\12.x.0.and.asm" />
+    <None Include="asm\12.x.1.and.asm" />
+    <None Include="asm\12.x.1.x.0.exg.asm" />
+    <None Include="asm\12.x.3.mulu.asm" />
+    <None Include="asm\12.x.4.abcd.asm" />
+    <None Include="asm\12.x.7.muls.asm" />
     <None Include="asm\2.x.1.movea.l.asm" />
     <None Include="asm\2.x.move.l.asm" />
     <None Include="asm\3.x.1.movea.w.asm" />

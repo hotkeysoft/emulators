@@ -211,5 +211,23 @@
     <None Include="asm\11.x.x.3.cmpa.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="asm\12.x.0.and.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\12.x.1.and.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\12.x.3.mulu.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\12.x.4.abcd.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\12.x.7.muls.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="asm\12.x.1.x.0.exg.asm">
+      <Filter>asm</Filter>
+    </None>
   </ItemGroup>
 </Project>

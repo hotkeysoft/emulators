@@ -668,20 +668,46 @@ namespace emul
 			}
 			Replace(text, "{branch}", buf);
 		}
-		else if (instr.regreg) // SBCD, ABCD
+		else if (instr.regreg) // SBCD, ABCD, CMPM, EXG
 		{
-			constexpr const char* regStr = "D%d,D%d";
-			constexpr const char* memIncStr = "(A%d)+,(A%d)+";
-			constexpr const char* memDecStr = "-(A%d),-(A%d)";
+			constexpr const char* ddStr = "D%d,D%d";
+			constexpr const char* aaStr = "A%d,A%d";
+			constexpr const char* daStr = "D%d,A%d";
+			constexpr const char* aIncStr = "(A%d)+,(A%d)+";
+			constexpr const char* aDecStr = "-(A%d),-(A%d)";
 
-			// reg/MEM = 0: Data register, 1: Address (postincrement/predecrement mode)
+			// reg/MEM = 0: Data register, 1: Address register
 			bool regMEM = GetBit(data, 3);
-			const char* memStr = (group == 11) ? memIncStr : memDecStr;
 
-			const int regX = (data >> 9) & 7;
-			const int regY = data & 7;
+			BYTE regX = (data >> 9) & 7;
+			BYTE regY = data & 7;
 
-			sprintf(buf, regMEM ? memStr : regStr, regY, regX);
+			const char* regStr;
+			switch (group)
+			{
+			case 8: // SBCD: D,D or -(A),-(A)
+				regStr = regMEM ? aDecStr : ddStr;
+				break;
+			case 11: // CMPM: D,D or (A)+,(A)+
+				regStr = aIncStr;
+				break;
+			case 12: // EXG, ABCD: D,D or A,A (or D,A for EXG)
+				if (data & 0b11000000) // EXG
+				{
+					regStr = GetBit(data, 7) ? daStr : (regMEM ? aaStr : ddStr);
+					// Rx, Ry are swapped for EXG for some reason
+					emul::Swap(regX, regY);
+				}
+				else // ABCD
+				{
+					regStr = regMEM ? aDecStr : ddStr;
+				}
+				break;
+			default:
+				throw std::exception("Unknown {r,r} instruction");
+			}
+
+			sprintf(buf, regStr, regY, regX);
 			Replace(text, "{r,r}", buf);
 		}
 
