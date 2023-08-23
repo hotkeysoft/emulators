@@ -671,10 +671,90 @@
 	{ "name": "ADD.b D7,{idx}", "alt": "ADDX.b {r,r}", "altMask": "00xxxx" },
 	{ "name": "ADD.w D7,{idx}", "alt": "ADDX.w {r,r}", "altMask": "00xxxx" },
 	{ "name": "ADD.l D7,{idx}", "alt": "ADDX.l {r,r}", "altMask": "00xxxx" },
-	{ "name": "ADDA.l {idx},A7", "overrideMask": "10xxxxxx" }    
+	{ "name": "ADDA.l {idx},A7", "overrideMask": "10xxxxxx" }
     ],
-    "opcodes.grp14.size": 0,
-    "opcodes.grp14": [],
+    "opcodes.grp14.size": 64,
+    "opcodes.grp14": [
+        { "name": "{shift}R.b {#},{dr}" },
+        { "name": "{shift}R.w {#},{dr}" },
+        { "name": "{shift}R.l {#},{dr}" },
+        { "name": "ASR.w {idx}" },
+
+        { "name": "{shift}L.b {#},{dr}" },
+        { "name": "{shift}L.w {#},{dr}" },
+        { "name": "{shift}L.l {#},{dr}" },
+        { "name": "ASL.w {idx}" },
+
+        { "name": "{shift}R.b {#},{dr}" },
+        { "name": "{shift}R.w {#},{dr}" },
+        { "name": "{shift}R.l {#},{dr}" },
+        { "name": "LSR.w {idx}" },
+
+        { "name": "{shift}L.b {#},{dr}" },
+        { "name": "{shift}L.w {#},{dr}" },
+        { "name": "{shift}L.l {#},{dr}" },
+        { "name": "LSL.w {idx}" },
+
+        { "name": "{shift}R.b {#},{dr}" },
+        { "name": "{shift}R.w {#},{dr}" },
+        { "name": "{shift}R.l {#},{dr}" },
+        { "name": "ROXR.w {idx}" },
+
+        { "name": "{shift}L.b {#},{dr}" },
+        { "name": "{shift}L.w {#},{dr}" },
+        { "name": "{shift}L.l {#},{dr}" },
+        { "name": "ROXL.w {idx}" },
+
+        { "name": "{shift}R.b {#},{dr}" },
+        { "name": "{shift}R.w {#},{dr}" },
+        { "name": "{shift}R.l {#},{dr}" },
+        { "name": "ROR.w {idx}" },
+
+        { "name": "{shift}L.b {#},{dr}" },
+        { "name": "{shift}L.w {#},{dr}" },
+        { "name": "{shift}L.l {#},{dr}" },
+        { "name": "ROL.w {idx}" },
+
+	"040",
+        { "name": "{shift}R.b {#},{dr}" },
+        { "name": "{shift}R.w {#},{dr}" },
+        { "name": "{shift}R.l {#},{dr}" },
+
+	"044",
+        { "name": "{shift}L.b {#},{dr}" },
+        { "name": "{shift}L.w {#},{dr}" },
+        { "name": "{shift}L.l {#},{dr}" },
+
+	"050",
+        { "name": "{shift}R.b {#},{dr}" },
+        { "name": "{shift}R.w {#},{dr}" },
+        { "name": "{shift}R.l {#},{dr}" },
+
+	"054",
+        { "name": "{shift}L.b {#},{dr}" },
+        { "name": "{shift}L.w {#},{dr}" },
+        { "name": "{shift}L.l {#},{dr}" },
+
+	"060",
+        { "name": "{shift}R.b {#},{dr}" },
+        { "name": "{shift}R.w {#},{dr}" },
+        { "name": "{shift}R.l {#},{dr}" },
+
+	"064",
+        { "name": "{shift}L.b {#},{dr}" },
+        { "name": "{shift}L.w {#},{dr}" },
+        { "name": "{shift}L.l {#},{dr}" },
+
+	"070",
+        { "name": "{shift}R.b {#},{dr}" },
+        { "name": "{shift}R.w {#},{dr}" },
+        { "name": "{shift}R.l {#},{dr}" },
+
+	"074",
+        { "name": "{shift}L.b {#},{dr}" },
+        { "name": "{shift}L.w {#},{dr}" },
+        { "name": "{shift}L.l {#},{dr}" }
+    ],
     "opcodes.grp15.size": 56,
     "opcodes.grp15": [
       { "name": "TRAP #0" },

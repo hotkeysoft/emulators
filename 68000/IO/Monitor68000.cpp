@@ -711,6 +711,38 @@ namespace emul
 			Replace(text, "{r,r}", buf);
 		}
 
+		// Arithmetic/Logical Shift group
+		if (group == 14)
+		{
+			// Need to decode:
+			// 1) The shift type (in bits 4-3)
+			// 2) The shift count (data register or immediate)
+			//      This set by bit 5. Reg#/imm data is in bits 11-9
+			const char* type;
+			switch ((data >> 3) & 3)
+			{
+			case 0: type = "AS"; break;
+			case 1: type = "LS"; break;
+			case 2: type = "ROX"; break;
+			case 3: type = "RO"; break;
+			default:
+				throw std::exception("not possible");
+			}
+			Replace(text, "{shift}", type);
+
+			bool isReg = GetBit(data, 5);
+			int count = (data >> 9) & 7;
+			if (!isReg && (count == 0))
+			{
+				count = 8;
+			}
+			buf[0] = isReg ? 'D' : '#';
+			buf[1] = '0' + count;
+			buf[2] = '\0';
+
+			Replace(text, "{#}", buf);
+		}
+
 		switch (instr.imm)
 		{
 		case Opcode::IMM::W8:
@@ -872,27 +904,6 @@ namespace emul
 
 		return os.str();
 	}
-
-	//std::string Monitor68000::DecodeRegisters(BYTE mask, char prefix)
-	//{
-	//	std::ostringstream os;
-	//	bool first = true;
-	//	for (int index = 0; mask; mask >>= 1, ++index)
-	//	{
-	//		if (GetLSB(mask))
-	//		{
-	//			if (!first)
-	//			{
-	//				os << '/';
-	//			}
-	//			os << prefix << index;
-
-	//			first = false;
-	//		}
-	//	}
-
-	//	return os.str();
-	//}
 
 	std::string Monitor68000::DecodeRegisters(BYTE mask, char prefix)
 	{
