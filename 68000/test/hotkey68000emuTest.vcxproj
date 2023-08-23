@@ -72,6 +72,10 @@
     <None Include="asm\12.x.3.mulu.asm" />
     <None Include="asm\12.x.4.abcd.asm" />
     <None Include="asm\12.x.7.muls.asm" />
+    <None Include="asm\13.x.0.add.asm" />
+    <None Include="asm\13.x.1.add.asm" />
+    <None Include="asm\13.x.1.x.0.addx.asm" />
+    <None Include="asm\13.x.x.3.adda.asm" />
     <None Include="asm\2.x.1.movea.l.asm" />
     <None Include="asm\2.x.move.l.asm" />
     <None Include="asm\3.x.1.movea.w.asm" />
