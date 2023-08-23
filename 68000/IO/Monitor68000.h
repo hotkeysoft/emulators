@@ -156,7 +156,7 @@ namespace emul
 		RUNMode m_runMode = RUNMode::STEP;
 
 		enum class RAMMode { A0, A1, A2, A3, A4, A5, A6, USP, SSP, PC, CUSTOM };
-		RAMMode m_ramMode = RAMMode::A0;
+		RAMMode m_ramMode = RAMMode::PC;
 
 		enum class CODEMode { TEXT_ONLY, RAW_AND_TEXT };
 		CODEMode m_codeMode = CODEMode::RAW_AND_TEXT;

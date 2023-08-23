@@ -505,8 +505,8 @@ namespace emul
 		case RAMMode::A4: return m_cpu->m_reg.ADDR[4];
 		case RAMMode::A5: return m_cpu->m_reg.ADDR[5];
 		case RAMMode::A6: return m_cpu->m_reg.ADDR[6];
-		case RAMMode::USP: return m_cpu->m_reg.USP;
-		case RAMMode::SSP: return m_cpu->m_reg.SSP;
+		case RAMMode::USP: return m_cpu->GetUSP();
+		case RAMMode::SSP: return m_cpu->GetSSP();
 		case RAMMode::PC: return  m_cpu->GetCurrentAddress();
 		case RAMMode::CUSTOM:
 		default:
@@ -538,7 +538,7 @@ namespace emul
 			Coord pos;
 			pos.x = addrPos.x;
 			pos.y = addrPos.y + y;
-			WriteValueHex24((WORD)(adjustedOffset + (bytesPerLine * y)), pos, 8);
+			WriteValueHex24((adjustedOffset + (bytesPerLine * y)), pos, 8);
 
 			for (DWORD x = 0; x < bytesPerLine; ++x)
 			{

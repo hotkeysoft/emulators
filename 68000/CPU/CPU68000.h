@@ -33,7 +33,7 @@ namespace emul
 
 		virtual const std::string GetID() const override { return m_info.GetId(); };
 		virtual size_t GetAddressBits() const override { return CPU68000_ADDRESS_BITS; };
-		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter; }
+		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter & 0xFFFFFF; }
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
@@ -134,15 +134,23 @@ namespace emul
 			DWORD& SP = ADDR[7];
 
 			// Stack pointer is aliased to A7 but user and supervisor
-			// modes keep separate values
+			// modes keep separate values.
+			// These are updated only then supervisor mode changes so to
+			// get a "fresh" value use GetUSP()/GetSSP()
 
-			// USP (User) Stack Pointer
-			DWORD USP;
-			// SSP (Supervisor) Stack Pointer
-			DWORD SSP;
+			DWORD USP; // User Stack Pointer
+			DWORD SSP; // Supervisor Stack Pointer
 
 			WORD flags;
 		} m_reg;
+
+		DWORD GetSP() const { return m_reg.SP; }
+		DWORD GetUSP() const { return IsSupervisorMode() ? m_reg.USP : m_reg.SP; }
+		DWORD GetSSP() const { return IsSupervisorMode() ? m_reg.SP : m_reg.SSP; }
+
+		DWORD& GetSP() { return m_reg.SP; }
+		DWORD& GetUSP() { return IsSupervisorMode() ? m_reg.USP : m_reg.SP; }
+		DWORD& GetSSP() { return IsSupervisorMode() ? m_reg.SP : m_reg.SSP; }
 
 		void ClearFlags(WORD& flags);
 		void SetFlags(WORD f);
@@ -169,7 +177,6 @@ namespace emul
 		// Not used, 16 bit fetch
 		virtual BYTE FetchByte() override;
 
-		ADDRESS GetSP() const { return m_reg.SP; }
 		void Exec(WORD opcode);
 		bool InternalStep();
 
