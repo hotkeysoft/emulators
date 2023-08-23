@@ -685,7 +685,9 @@ namespace emul
 			const char* regStr;
 			switch (group)
 			{
-			case 8: // SBCD: D,D or -(A),-(A)
+			case 8:  // SBCD: D,D or -(A),-(A)
+			case 9:  // SUBX: "              "
+			case 13: // ADDX: "              "
 				regStr = regMEM ? aDecStr : ddStr;
 				break;
 			case 11: // CMPM: D,D or (A)+,(A)+
