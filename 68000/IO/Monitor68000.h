@@ -136,22 +136,30 @@ namespace emul
 		void WriteValueHex(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(WORD value, const cpuInfo::Coord& coord, WORD attr = 15);
 		void WriteValueHex(DWORD value, const cpuInfo::Coord& coord, WORD attr = 15);
+		void WriteValueHex24(DWORD value, const cpuInfo::Coord& coord, WORD attr = 15);
 
 		virtual void UpdateRegisters();
 		void UpdateTicks();
 		void UpdateFlags();
+
 		virtual ADDRESS GetRAMBase() const;
 		void UpdateRAM();
+
+		void ToggleCodeMode();
 		void PrintInstruction(short y, Instruction& instr);
 		void UpdateCode();
+		void ClearCode();
 
 		static bool Replace(std::string& str, const std::string& from, const std::string& to);
 
 		enum class RUNMode { STEP, RUN };
 		RUNMode m_runMode = RUNMode::STEP;
 
-		enum class RAMMode { ZP, SP, PC, CUSTOM };
-		RAMMode m_ramMode = RAMMode::ZP;
+		enum class RAMMode { A0, A1, A2, A3, A4, A5, A6, USP, SSP, PC, CUSTOM };
+		RAMMode m_ramMode = RAMMode::A0;
+
+		enum class CODEMode { TEXT_ONLY, RAW_AND_TEXT };
+		CODEMode m_codeMode = CODEMode::RAW_AND_TEXT;
 
 		CPU68000* m_cpu = nullptr;
 		Memory* m_memory = nullptr;

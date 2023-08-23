@@ -28,7 +28,7 @@ namespace emul
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
-		std::vector<BYTE> bootstrap = { 0x31, 0xff, 0xff, 0xc3, 0x00, 0x80 };
+		std::vector<BYTE> bootstrap = { 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x01, 0x00 };
 
 		static MemoryBlock bootstrapROM("bootstrap", bootstrap, MemoryType::ROM);
 		m_memory.Allocate(&bootstrapROM, 0);

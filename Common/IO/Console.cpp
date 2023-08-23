@@ -61,6 +61,21 @@ void Console::Clear()
 	SetConsoleCursorPosition(m_hConsole, homeCoords);
 }
 
+void Console::Clear(short x, short y, short w, short h, char ch, WORD attr)
+{
+	DWORD count;
+	DWORD cellCount;
+	COORD homeCoords = { x - 1, y - 1 };
+
+	cellCount = w;
+
+	for (auto line = 0; line < h; ++line, homeCoords.Y++)
+	{
+		FillConsoleOutputCharacterA(m_hConsole, ch, cellCount, homeCoords, &count);
+		FillConsoleOutputAttribute(m_hConsole, attr, cellCount, homeCoords, &count);
+	}
+}
+
 void Console::WaitForKey()
 {
 	HANDLE hStdIn = GetStdHandle(STD_INPUT_HANDLE);
@@ -85,7 +100,8 @@ void Console::WaitForKey()
 
 void Console::WriteAt(short x, short y, const char* text, size_t len, WORD attr)
 {
-	SetConsoleCursorPosition(m_hConsole, { x - 1 , y - 1 });
+	COORD pos = { x - 1, y - 1 };
+	SetConsoleCursorPosition(m_hConsole, pos);
 	SetConsoleTextAttribute(m_hConsole, attr);
 	DWORD written;
 	if (len == SIZE_MAX)
@@ -97,7 +113,7 @@ void Console::WriteAt(short x, short y, const char* text, size_t len, WORD attr)
 
 void Console::WriteAttrAt(short x, short y, const WORD* attr, size_t len)
 {
-	COORD pos{ x - 1, y - 1 };
+	COORD pos = { x - 1, y - 1 };
 	DWORD dummy;
 
 	WriteConsoleOutputAttribute(m_hConsole, attr, (DWORD)len, pos, &dummy);
@@ -113,7 +129,7 @@ void Console::WriteAttrAt(short x, short y, const WORD attr, size_t len)
 
 void Console::WriteAt(short x, short y, char ch, WORD attr)
 {
-	COORD pos{ x - 1, y - 1 };
+	COORD pos = { x - 1, y - 1 };
 	DWORD dummy;
 	const char data = ch;
 	WriteConsoleOutputCharacterA(m_hConsole, &ch, 1, pos, &dummy);
@@ -133,9 +149,9 @@ void Console::MoveBlockY(short x, short y, short w, short h, short newY)
 
 	SMALL_RECT src;
 	src.Top = y;
-	src.Left = x;
+	src.Left = x - 1;
 	src.Bottom = y + h - 1;
-	src.Right = x + w - 1;
+	src.Right = x + w + 1;
 
 	COORD bufferSize{ w, h };
 	COORD bufferCoord{ 0, 0 };

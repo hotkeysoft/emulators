@@ -58,11 +58,11 @@ namespace emul
 		std::fill(std::begin(m_reg.DATA), std::end(m_reg.DATA), 0);
 		std::fill(std::begin(m_reg.ADDR), std::end(m_reg.ADDR), 0);
 
-		ADDRESS reset = m_memory.Read16(GetVectorAddress(VECTOR::ResetPC));
-		ADDRESS ssp = m_memory.Read16(GetVectorAddress(VECTOR::ResetSSP));
+		ADDRESS reset = m_memory.Read32be(GetVectorAddress(VECTOR::ResetPC));
+		ADDRESS ssp = m_memory.Read32be(GetVectorAddress(VECTOR::ResetSSP));
 
-		LogPrintf(LOG_INFO, "Initial PC:  %04X", reset);
-		LogPrintf(LOG_INFO, "Initial SSP: %04X", ssp);
+		LogPrintf(LOG_INFO, "Initial PC:  %08X", reset);
+		LogPrintf(LOG_INFO, "Initial SSP: %08X", ssp);
 		m_programCounter = reset;
 		m_reg.SSP = ssp;
 
@@ -88,6 +88,30 @@ namespace emul
 		// TODO: Supervisor mode
 		SetBitMask(f, FLAG_RESERVED_OFF, false);
 		m_reg.flags = f;
+	}
+
+	void CPU68000::SetSupervisorMode(bool newMode)
+	{
+		const bool currMode = IsSupervisorMode();
+		if (newMode == currMode)
+			return; // Nothing to do
+
+		if (currMode) // Supervisor -> User
+		{
+			// Save A7 in SSP
+			m_reg.SSP = m_reg.ADDR[7];
+			// Put USP in A7
+			m_reg.ADDR[7] = m_reg.USP;
+		}
+		else // User -> Supervisor
+		{
+			// Save A7 in USP
+			m_reg.USP = m_reg.ADDR[7];
+			// Put SSP in A7
+			m_reg.ADDR[7] = m_reg.SSP;
+		}
+
+		SetFlag(FLAG_S, newMode);
 	}
 
 	// 68000 only fetches Words

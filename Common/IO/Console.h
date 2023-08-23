@@ -12,6 +12,7 @@ public:
 	void Init(short columns = 80, short fontSize = 18);
 
 	void Clear();
+	void Clear(short x, short y, short w, short h, char ch = ' ', WORD attr = 15);
 
 	void WaitForKey();
 

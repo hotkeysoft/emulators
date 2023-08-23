@@ -112,15 +112,15 @@ namespace emul
 			_FLAG_R7	= 0x0080, // 0
 			_FLAG_R6	= 0x0040, // 0
 			_FLAG_R5	= 0x0020, // 0
-			_FLAG_R4	= 0x0010, // 0
-			FLAG_X		= 0x0008, // 1 eXtend
+			FLAG_X		= 0x0010, // 1 eXtend
+			FLAG_N      = 0x0008, // 1 Negative
 			FLAG_Z		= 0x0004, // 1 Zero
 			FLAG_V		= 0x0002, // 1 Signed oVerflow
 			FLAG_C		= 0x0001  // 1 Carry (unsigned overflow)
 		};
 
 		FLAG FLAG_RESERVED_OFF = FLAG(
-			_FLAG_R4 | _FLAG_R5 | _FLAG_R6 | _FLAG_R7 |
+			_FLAG_R5 | _FLAG_R6 | _FLAG_R7 |
 			_FLAG_R11 | FLAG_R14);
 
 		ADDRESS m_programCounter = 0;
@@ -130,7 +130,7 @@ namespace emul
 			std::array<DWORD, 8> DATA; // D0..D7
 			std::array<DWORD, 8> ADDR; // A0..A7
 
-			// Alias stack pointer
+			// Alias stack pointer to A7
 			DWORD& SP = ADDR[7];
 
 			// Stack pointer is aliased to A7 but user and supervisor
@@ -153,7 +153,7 @@ namespace emul
 		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
 
 		bool IsSupervisorMode() const { return GetFlag(FLAG_S); }
-		void SetSupervisorMode(bool set) { SetFlag(FLAG_S, set); }
+		void SetSupervisorMode(bool set);
 
 		bool IsTrace() const { return GetFlag(FLAG_T); }
 		void SetTrace(bool set) { SetFlag(FLAG_T, set); }
