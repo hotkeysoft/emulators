@@ -189,6 +189,9 @@
     <ClInclude Include="..\Common\EdgeDetectLatch.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="ComputerMacintosh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">
@@ -277,6 +280,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\IO\InputEvents.cpp">
       <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputerMacintosh.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

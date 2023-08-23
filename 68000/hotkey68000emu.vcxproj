@@ -212,6 +212,7 @@
     <ClInclude Include="..\Common\Video\Video.h" />
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="Computer68000.h" />
+    <ClInclude Include="ComputerMacintosh.h" />
     <ClInclude Include="CPU\CPU68000.h" />
     <ClInclude Include="IO\Monitor68000.h" />
     <ClInclude Include="resource.h" />
@@ -244,6 +245,7 @@
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="Computer68000.cpp" />
+    <ClCompile Include="ComputerMacintosh.cpp" />
     <ClCompile Include="CPU\CPU68000.cpp" />
     <ClCompile Include="IO\Monitor68000.cpp" />
     <ClCompile Include="Main.cpp" />

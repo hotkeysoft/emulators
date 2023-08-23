@@ -14,6 +14,7 @@
 
 #include <Computer/ComputerBase.h>
 #include "Computer68000.h"
+#include "ComputerMacintosh.h"
 
 #include <conio.h>
 #include <vector>
@@ -141,6 +142,10 @@ ComputerBase* CreateComputer(std::string arch)
 	if (arch == "68000")
 	{
 		computer = new emul::Computer68000();
+	}
+	else if (arch == "mac")
+	{
+		computer = new emul::ComputerMacintosh();
 	}
 
 	return computer;
@@ -355,7 +360,7 @@ int main(int argc, char* argv[])
 	}
 #endif
 
-	InitLeakCheck();
+	//InitLeakCheck();
 
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -379,27 +384,15 @@ int main(int argc, char* argv[])
 	}
 
 	bool breakpointEnabled = false;
-	emul::ADDRESS breakpoint = CONFIG().GetValueDWORD("monitor", "breakpoint", 0xFFFFFFFF);
-	if (breakpoint <= 0xFFFF)
+	emul::ADDRESS breakpoint = CONFIG().GetValueDWORD("monitor", "breakpoint", 0xFFFFFF);
+	if (breakpoint <= 0xFFFFFF)
 	{
 		breakpointEnabled = true;
-		fprintf(stderr, "Set Breakpoint to [0x%04X]\n", breakpoint);
+		fprintf(stderr, "Set Breakpoint to [0x%06X]\n", breakpoint);
 	}
 
 	customMemoryView = CONFIG().GetValueWORD("monitor", "custommem", 0);
-	fprintf(stderr, "Set Monitor Custom Memory View to [0x%04X]\n", customMemoryView);
-
-#ifdef CPU_TEST
-	{
-		emul::Memory mem;
-		emul::CPUZ80Test testCPU(mem);
-		testCPU.Test();
-
-		fprintf(stderr, "Press any key to continue\n");
-		_getch();
-		return 0;
-	}
-#endif
+	fprintf(stderr, "Set Monitor Custom Memory View to [0x%06X]\n", customMemoryView);
 
 	MAINWND().Init("hotkey68000emu", Overlay::GetOverlayHeight());
 	InitSound();
@@ -421,14 +414,6 @@ int main(int argc, char* argv[])
 	int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 640);
 	pc->Init(baseRAM);
 	InitPC(pc, overlay);
-
-#if 0
-	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
-
-	testROMF000.LoadFromFile(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\pass\add.bin)");
-	pc->GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
-	pc->Reset(0xF000, 0);
-#endif
 
 	if (mode == Mode::MONITOR)
 	{
