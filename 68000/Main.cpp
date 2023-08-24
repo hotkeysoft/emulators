@@ -59,7 +59,7 @@ Mode mode = Mode::LOG;
 emul::ADDRESS customMemoryView = 0;
 
 Console console;
-emul::Monitor68000* monitor = nullptr;
+emul::cpu68k::Monitor68000* monitor = nullptr;
 
 const size_t BACKLOG_MAX = 1000;
 std::string backLog[BACKLOG_MAX];
@@ -164,7 +164,7 @@ void InitPC(ComputerBase* pc, Overlay& overlay, bool reset = true)
 	std::string cpuID = pc->GetCPU()->GetID();
 	if (cpuID == "68000")
 	{
-		monitor = new emul::Monitor68000(console);
+		monitor = new emul::cpu68k::Monitor68000(console);
 	}
 	else
 	{
@@ -333,19 +333,19 @@ int main(int argc, char* argv[])
 
 		emul::Memory mem(4096);
 		mem.Init(24);
-		emul::CPU68000 cpu(mem);
+		emul::cpu68k::CPU68000 cpu(mem);
 		cpu.Init();
 
 		emul::MemoryBlock testROM("TEST", args::data, emul::MemoryType::ROM);
 		mem.Allocate(&testROM, 0);
 
-		emul::Monitor68000 monit(console);
+		emul::cpu68k::Monitor68000 monit(console);
 		monit.Init(&cpu, mem);
 
 		ADDRESS pos = 0;
 		do
 		{
-			emul::Monitor68000::Instruction decoded;
+			emul::cpu68k::Monitor68000::Instruction decoded;
 			pos = monit.Disassemble(pos, decoded);
 
 			char raw[48];
@@ -441,15 +441,15 @@ int main(int argc, char* argv[])
 			{
 				switch (monitor->Run())
 				{
-				case emul::MonitorState::EXIT:
+				case emul::cpu68k::MonitorState::EXIT:
 					run = false;
 					break;
-				case emul::MonitorState::WAIT:
+				case emul::cpu68k::MonitorState::WAIT:
 					break;
-				case emul::MonitorState::RUN:
+				case emul::cpu68k::MonitorState::RUN:
 					run = pc->Step();
 					break;
-				case emul::MonitorState::SWITCH_MODE:
+				case emul::cpu68k::MonitorState::SWITCH_MODE:
 					ToggleMode();
 					break;
 				}

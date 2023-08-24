@@ -9,14 +9,43 @@
 #undef IN
 #undef OUT
 
-namespace emul
+namespace emul::cpu68k
 {
+	enum class EAMode
+	{
+		// Register Direct modes
+		DataRegDirect = 0b000000,
+		AddrRegDirect = 0b001000,
+
+		// Memory Address modes
+		AddrRegIndirect = 0b010000,
+		AddrRegIndirectPostIncrement = 0b011000,
+		AddrRegIndirectPreDecrement = 0b100000,
+		AddrRegIndirectDisplacement = 0b101000,
+		AddrRegIndirectIndex = 0b110000,
+
+		// Special Address Modes (Mode=111)
+		// (need reg# for complete decoding)
+		AbsoluteShort = 0b111000,
+		AbsoluteLong = 0b111001,
+		ProgramCounterDisplacement = 0b111010,
+		ProgramCounterIndex = 0b111011,
+		Immediate = 0b111100,
+
+		Invalid = 0b111111
+	};
+
 	static const size_t CPU68000_ADDRESS_BITS = 24;
 	static const char* CPUID_68000 = "68000";
 
 	class CPU68000 : public CPU, public PortConnector
 	{
 	public:
+		constexpr static ADDRESS ADDRESS_MASK = 0xFFFFFF;
+		constexpr static int OP_BYTE = 1;
+		constexpr static int OP_WORD = 2;
+		constexpr static int OP_LONG = 4;
+
 		CPU68000(Memory& memory);
 		virtual ~CPU68000();
 
@@ -33,7 +62,7 @@ namespace emul
 
 		virtual const std::string GetID() const override { return m_info.GetId(); };
 		virtual size_t GetAddressBits() const override { return CPU68000_ADDRESS_BITS; };
-		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter & 0xFFFFFF; }
+		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter & ADDRESS_MASK; }
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
@@ -42,8 +71,21 @@ namespace emul
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-
 		CPU68000(const char* cpuid, Memory& memory);
+
+		using OpcodeTable = std::vector<std::function<void()>>;
+
+		void InitTable(OpcodeTable& table, size_t size);
+
+		void InitGroup0(OpcodeTable& table, size_t size);
+		void InitGroup4(OpcodeTable& table, size_t size);
+		void InitGroup5(OpcodeTable& table, size_t size);
+		void InitGroup6(OpcodeTable& table, size_t size);
+		void InitGroup8(OpcodeTable& table, size_t size);
+		void InitGroup9(OpcodeTable& table, size_t size);
+		void InitGroup11(OpcodeTable& table, size_t size);
+		void InitGroup12(OpcodeTable& table, size_t size);
+		void InitGroup13(OpcodeTable& table, size_t size);
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 
@@ -86,13 +128,17 @@ namespace emul
 		ADDRESS GetIntVectorAddress(BYTE i) { assert(i <= 7); return ((ADDRESS)VECTOR::InterruptBase + i) * 4; }
 		ADDRESS GetTrapVectorAddress(BYTE t) { assert(t <= 16);  return ((ADDRESS)VECTOR::TrapBase + t) * 4; }
 
-		using OpcodeTable = std::vector<std::function<void()>>;
 		OpcodeTable m_opcodes;
-		void UnknownOpcode();
+		OpcodeTable m_subOpcodes[16];
+		void InvalidOpcode();
+		void NotImplementedOpcode(const char* name);
 
 		cpuInfo::CPUInfo m_info;
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		WORD m_opcode = 0;
+
+		WORD GetSubopcode6() const { return ((m_opcode >> 6) & 63); }
+		WORD GetSubopcode4() const { return ((m_opcode >> 8) & 15); }
 
 		virtual void Interrupt();
 
@@ -127,8 +173,11 @@ namespace emul
 
 		struct Registers
 		{
-			std::array<DWORD, 8> DATA; // D0..D7
-			std::array<DWORD, 8> ADDR; // A0..A7
+			std::array<DWORD, 16> DataAddress; // D0..D7, A0..A7
+
+			// Alias for DATA and ADDRESS registers
+			DWORD* const DATA = &DataAddress[0];
+			DWORD* const ADDR = &DataAddress[8];
 
 			// Alias stack pointer to A7
 			DWORD& SP = ADDR[7];
@@ -176,9 +225,34 @@ namespace emul
 
 		// Not used, 16 bit fetch
 		virtual BYTE FetchByte() override;
+		virtual WORD FetchWord() override;
+		DWORD FetchLong();
 
 		void Exec(WORD opcode);
+		void Exec(WORD group, WORD subOpcode);
 		bool InternalStep();
+
+		EAMode m_eaMode;
+		static EAMode GetEAMode(WORD opcode);
+		BYTE GetEAByte();
+		WORD GetEAWord();
+		DWORD GetEALong();
+		ADDRESS GetEA(int size);
+
+		// Opcodes
+		void MOVEb() { NotImplementedOpcode("MOVE.b"); }
+		void MOVEl() { NotImplementedOpcode("MOVE.l"); }
+		void MOVEw() { NotImplementedOpcode("MOVE.w"); }
+		void MOVEQ() { NotImplementedOpcode("MOVEQ"); }
+		void SHIFT() { NotImplementedOpcode("Shift ops"); }
+
+		void MOVEM_w_toMem(WORD regs) { NotImplementedOpcode("MOVEM.w (regs->mem)"); }
+		void MOVEM_l_toMem(WORD regs) { NotImplementedOpcode("MOVEM.l (regs->mem)"); }
+		void MOVEM_w_fromMem(WORD regs) { NotImplementedOpcode("MOVEM.w (mem->regs)"); }
+		void MOVEM_l_fromMem(WORD regs);
+
+		void EXTw() { NotImplementedOpcode("EXT.w"); }
+		void EXTl() { NotImplementedOpcode("EXT.l"); }
 
 		friend class Monitor68000;
 	};

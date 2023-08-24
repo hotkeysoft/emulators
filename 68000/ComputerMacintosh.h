@@ -6,7 +6,7 @@
 
 namespace emul
 {
-	class CPU68000;
+	namespace cpu68k { class CPU68000; };
 
 	class ComputerMacintosh : public ComputerBase
 	{
@@ -20,7 +20,7 @@ namespace emul
 
 		virtual bool Step() override;
 
-		CPU68000& GetCPU() const { return *((CPU68000*)m_cpu); }
+		cpu68k::CPU68000& GetCPU() const { return *((cpu68k::CPU68000*)m_cpu); }
 
 		video::VideoNull& GetVideo() { return *((video::VideoNull*)m_video); }
 

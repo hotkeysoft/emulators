@@ -65,6 +65,7 @@ namespace emul
 	inline BYTE GetHNibble(const BYTE b) { return (b >> 4) & 0b1111; }
 
 	inline BYTE GetLByte(const WORD w) { return BYTE(w); };
+	inline BYTE GetLByte(const DWORD d) { return BYTE(d); };
 	inline BYTE GetHByte(const WORD w) { return BYTE(w >> 8); };
 
 	inline void SetLByte(WORD& out, const BYTE low) { out &= 0xFF00; out |= low; }
@@ -164,6 +165,8 @@ namespace emul
 		b ^= a;
 		a ^= b;
 	}
+
+	WORD ReverseBits(WORD in);
 
 	typedef BitMask<BYTE> BitMaskB;
 	typedef BitMask<WORD> BitMaskW;

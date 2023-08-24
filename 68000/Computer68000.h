@@ -6,7 +6,7 @@
 
 namespace emul
 {
-	class CPU68000;
+	namespace cpu68k { class CPU68000; }
 
 	class Computer68000 : public ComputerBase
 	{
@@ -20,7 +20,7 @@ namespace emul
 
 		virtual bool Step() override;
 
-		CPU68000& GetCPU() const { return *((CPU68000*)m_cpu); }
+		cpu68k::CPU68000& GetCPU() const { return *((cpu68k::CPU68000*)m_cpu); }
 
 		// TODO: Temporary, put generic video
 		video::Video68000& GetVideo() { return *((video::Video68000*)m_video); }

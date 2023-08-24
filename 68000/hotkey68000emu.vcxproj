@@ -224,6 +224,7 @@
     <ClCompile Include="..\Common\Computer\ComputerBase.cpp" />
     <ClCompile Include="..\Common\Config.cpp" />
     <ClCompile Include="..\Common\CPU\CPU.cpp" />
+    <ClCompile Include="..\Common\CPU\CPUCommon.cpp" />
     <ClCompile Include="..\Common\CPU\CPUInfo.cpp" />
     <ClCompile Include="..\Common\CPU\IOBlock.cpp" />
     <ClCompile Include="..\Common\CPU\IOConnector.cpp" />

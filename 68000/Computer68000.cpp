@@ -24,7 +24,7 @@ namespace emul
 
 	void Computer68000::Init(WORD baseRAM)
 	{
-		ComputerBase::Init(CPUID_68000, baseRAM);
+		ComputerBase::Init(cpu68k::CPUID_68000, baseRAM);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
@@ -42,7 +42,7 @@ namespace emul
 
 	void Computer68000::InitCPU(const char* cpuid)
 	{
-		if (cpuid == CPUID_68000) m_cpu = new CPU68000(m_memory);
+		if (cpuid == cpu68k::CPUID_68000) m_cpu = new cpu68k::CPU68000(m_memory);
 		else
 		{
 			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);

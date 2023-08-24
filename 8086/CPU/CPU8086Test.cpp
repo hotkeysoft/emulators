@@ -42,28 +42,28 @@ namespace emul
 		LogPrintf(LOG_INFO, "Reg8");
 		m_reg.Clear(0xFF);
 
-		REG_RWR(REG8::AH, 0xFF, 0x00); 
+		REG_RWR(REG8::AH, 0xFF, 0x00);
 		REG_RWR(REG8::AH, 0x00, 0x55);
 
-		REG_RWR(REG8::AL, 0xFF, 0x00); 
+		REG_RWR(REG8::AL, 0xFF, 0x00);
 		REG_RWR(REG8::AL, 0x00, 0x55);
 
-		REG_RWR(REG8::BH, 0xFF, 0x00); 
+		REG_RWR(REG8::BH, 0xFF, 0x00);
 		REG_RWR(REG8::BH, 0x00, 0x55);
 
-		REG_RWR(REG8::BL, 0xFF, 0x00); 
+		REG_RWR(REG8::BL, 0xFF, 0x00);
 		REG_RWR(REG8::BL, 0x00, 0x55);
 
-		REG_RWR(REG8::CH, 0xFF, 0x00); 
+		REG_RWR(REG8::CH, 0xFF, 0x00);
 		REG_RWR(REG8::CH, 0x00, 0x55);
 
-		REG_RWR(REG8::CL, 0xFF, 0x00); 
+		REG_RWR(REG8::CL, 0xFF, 0x00);
 		REG_RWR(REG8::CL, 0x00, 0x55);
 
-		REG_RWR(REG8::DH, 0xFF, 0x00); 
+		REG_RWR(REG8::DH, 0xFF, 0x00);
 		REG_RWR(REG8::DH, 0x00, 0x55);
 
-		REG_RWR(REG8::DL, 0xFF, 0x00); 
+		REG_RWR(REG8::DL, 0xFF, 0x00);
 		REG_RWR(REG8::DL, 0x00, 0x55);
 
 		REG_RWR(REG8::_T0, 0xFF, 0x00);
@@ -123,10 +123,10 @@ namespace emul
 		LogPrintf(LOG_INFO, "Reg16<->8");
 		m_reg.Clear(0x00);
 
-		REG_XHL(0x1234, REG16::AX, REG8::AH, REG8::AL);
-		REG_XHL(0x5678, REG16::BX, REG8::BH, REG8::BL);
-		REG_XHL(0x9ABC, REG16::CX, REG8::CH, REG8::CL);
-		REG_XHL(0xDEF0, REG16::DX, REG8::DH, REG8::DL);
+		REG_XHL((WORD)0x1234, REG16::AX, REG8::AH, REG8::AL);
+		REG_XHL((WORD)0x5678, REG16::BX, REG8::BH, REG8::BL);
+		REG_XHL((WORD)0x9ABC, REG16::CX, REG8::CH, REG8::CL);
+		REG_XHL((WORD)0xDEF0, REG16::DX, REG8::DH, REG8::DL);
 	}
 
 	void CPU8086Test::TestArithmetic()
@@ -442,7 +442,7 @@ namespace emul
 			// RCL
 			m_reg[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, RCL, 7, 0b00101010, false, false, true);
 			m_reg[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, RCL, 7, 0b10010101, false, false, false);
-			
+
 			// RCR
 			m_reg[REG8::AL] = 0b10101010; SHIFTROTTEST8noO(true, RCR, 7, 0b10101001, false, false, false);
 			m_reg[REG8::AL] = 0b01010101; SHIFTROTTEST8noO(true, RCR, 7, 0b01010100, false, false, true);
@@ -456,13 +456,13 @@ namespace emul
 			//                                        clrf  op   n    RES     OFLOW  SIGN   ZERO   CARRY
 			//m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 0,   0xC8A7, false, false, false, false);
 			m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 1,   0x914E, false, false, false, true);
-			
+
 			m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 15,  0xB229, false, false, false, true);
 			m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 16,  0x6453, true,  false, false, true);
 
 			m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 17,  0xC8A7, true,  false, false, false);
 			m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 18,  0x914E, false, false, false, true);
-			
+
 			m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 29,  0x7645, false, false, false, false);
 			m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 30,  0xEC8A, true,  false, false, false);
 			m_reg[REG16::AX] = 0xC8A7; SHIFTROTTEST16(true, RCL, 31,  0xD914, false, false, false, true);

@@ -284,6 +284,9 @@
     <ClCompile Include="ComputerMacintosh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\CPU\CPUCommon.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\overlay16.png">

@@ -8,23 +8,7 @@ using emul::GetBit;
 
 namespace emul
 {
-	// https://graphics.stanford.edu/~seander/bithacks.html#BitReverseTable
-	static const unsigned char BitReverseTable256[256] =
-	{
-	#   define R2(n)    n,     n + 2*64,     n + 1*64,     n + 3*64
-	#   define R4(n) R2(n), R2(n + 2*16), R2(n + 1*16), R2(n + 3*16)
-	#   define R6(n) R4(n), R4(n + 2*4 ), R4(n + 1*4 ), R4(n + 3*4 )
-		R6(0), R6(2), R6(1), R6(3)
-	};
-
-	static WORD ReverseBits(WORD in)
-	{
-		WORD out;
-		BYTE* p = (BYTE*)&in;
-		SetHByte(out, BitReverseTable256[GetLByte(in)]);
-		SetLByte(out, BitReverseTable256[GetHByte(in)]);
-		return out;
-	}
+	using namespace cpu68k;
 
 	static const char hexDigits[] = "0123456789ABCDEF";
 
@@ -110,29 +94,11 @@ namespace emul
 		return m_text;
 	}
 
-	Monitor68000::EAMode Monitor68000::EffectiveAddress::GetMode(WORD opcode)
-	{
-		if ((opcode & 0b111000) != 0b111000)
-		{
-			// Normal modes (Mode != 0b111)
-			return EAMode(opcode & 0b111000);
-		}
-		else switch (opcode & 7)
-		{
-		case 0b000: return EAMode::AbsoluteShort;
-		case 0b001: return EAMode::AbsoluteLong;
-		case 0b010: return EAMode::ProgramCounterDisplacement;
-		case 0b011: return EAMode::ProgramCounterIndex;
-		case 0b100: return EAMode::Immediate;
-		default: return EAMode::Invalid;
-		}
-	}
-
 	void Monitor68000::EffectiveAddress::ComputeEA(WORD opcode)
 	{
 		m_regNumber = opcode & 7;
 		m_size = (EASize)((opcode >> 6) & 3);
-		m_mode = GetMode(opcode);
+		m_mode = CPU68000::GetEAMode(opcode);
 
 		// Get data for absolute modes
 		switch (m_mode)
@@ -708,7 +674,7 @@ namespace emul
 		else if (instr.regs)
 		{
 			// EA not decoded yet but we need to know if we're in predecrement mode
-			bool predecrement = (EffectiveAddress::GetMode(data) == EAMode::AddrRegIndirectPreDecrement);
+			bool predecrement = (CPU68000::GetEAMode(data) == EAMode::AddrRegIndirectPreDecrement);
 
 			// Get register bitmask
 			WORD regs = m_memory->Read16be(address);

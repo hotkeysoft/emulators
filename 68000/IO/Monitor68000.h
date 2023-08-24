@@ -3,12 +3,10 @@
 #include <IO/Console.h>
 #include <CPU/Memory.h>
 #include <CPU/CPUInfo.h>
+#include "CPU/CPU68000.h"
 
-namespace emul
+namespace emul::cpu68k
 {
-	class CPU;
-	class CPU68000;
-
 	enum class MonitorState { RUN, WAIT, EXIT, SWITCH_MODE };
 	class Monitor68000
 	{
@@ -59,30 +57,6 @@ namespace emul
 			Undef = 0b11
 		};
 
-		enum class EAMode
-		{
-			// Register Direct modes
-			DataRegDirect = 0b000000,
-			AddrRegDirect = 0b001000,
-
-			// Memory Address modes
-			AddrRegIndirect = 0b010000,
-			AddrRegIndirectPostIncrement = 0b011000,
-			AddrRegIndirectPreDecrement = 0b100000,
-			AddrRegIndirectDisplacement = 0b101000,
-			AddrRegIndirectIndex = 0b110000,
-
-			// Special Address Modes (Mode=111)
-			// (need reg# for complete decoding)
-			AbsoluteShort = 0b111000,
-			AbsoluteLong = 0b111001,
-			ProgramCounterDisplacement = 0b111010,
-			ProgramCounterIndex = 0b111011,
-			Immediate = 0b111100,
-
-			Invalid = 0b111111
-		};
-
 		class EffectiveAddress
 		{
 		public:
@@ -95,7 +69,6 @@ namespace emul
 			void ComputeEA(WORD data);
 			const char* BuildText();
 
-			static EAMode GetMode(WORD data);
 			EAMode GetMode() const { return m_mode; }
 			EASize GetSize() const { return m_size; }
 			void SetSize(EASize size) { m_size = size; }
@@ -159,9 +132,9 @@ namespace emul
 		RAMMode m_ramMode = RAMMode::PC;
 
 		enum class CODEMode { TEXT_ONLY, RAW_AND_TEXT };
-		CODEMode m_codeMode = CODEMode::RAW_AND_TEXT;
+		CODEMode m_codeMode = CODEMode::TEXT_ONLY;
 
-		CPU68000* m_cpu = nullptr;
+		cpu68k::CPU68000* m_cpu = nullptr;
 		Memory* m_memory = nullptr;
 		Console& m_console;
 	};
