@@ -33,17 +33,49 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClInclude Include="..\..\Common\BitMask.h" />
+    <ClInclude Include="..\..\Common\Config.h" />
+    <ClInclude Include="..\..\Common\CPU\CPU.h" />
+    <ClInclude Include="..\..\Common\CPU\CPUCommon.h" />
+    <ClInclude Include="..\..\Common\CPU\CPUInfo.h" />
+    <ClInclude Include="..\..\Common\CPU\IOBlock.h" />
+    <ClInclude Include="..\..\Common\CPU\IOConnector.h" />
+    <ClInclude Include="..\..\Common\CPU\Memory.h" />
+    <ClInclude Include="..\..\Common\CPU\MemoryBlock.h" />
+    <ClInclude Include="..\..\Common\CPU\MemoryBlockBase.h" />
+    <ClInclude Include="..\..\Common\CPU\PortConnector.h" />
+    <ClInclude Include="..\..\Common\EdgeDetectLatch.h" />
+    <ClInclude Include="..\..\Common\inipp.h" />
+    <ClInclude Include="..\..\Common\json.hpp" />
+    <ClInclude Include="..\..\Common\Logger.h" />
+    <ClInclude Include="..\..\Common\Serializable.h" />
     <ClInclude Include="..\..\Common\StringUtil.h" />
-    <ClInclude Include="pch.h" />
+    <ClInclude Include="..\CPU\CPU68000.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="testDisassembly.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Common\Config.cpp" />
+    <ClCompile Include="..\..\Common\CPU\CPU.cpp" />
+    <ClCompile Include="..\..\Common\CPU\CPUCommon.cpp" />
+    <ClCompile Include="..\..\Common\CPU\CPUInfo.cpp" />
+    <ClCompile Include="..\..\Common\CPU\IOBlock.cpp" />
+    <ClCompile Include="..\..\Common\CPU\IOConnector.cpp" />
+    <ClCompile Include="..\..\Common\CPU\Memory.cpp" />
+    <ClCompile Include="..\..\Common\CPU\MemoryBlock.cpp" />
+    <ClCompile Include="..\..\Common\CPU\MemoryBlockBase.cpp" />
+    <ClCompile Include="..\..\Common\CPU\PortConnector.cpp" />
+    <ClCompile Include="..\..\Common\Logger.cpp" />
+    <ClCompile Include="..\..\Common\Serializable.cpp" />
+    <ClCompile Include="..\CPU\CPU68000.cpp" />
     <ClCompile Include="test.cpp" />
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="testDisassembly.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="asm\0.0.0.ori.asm" />
@@ -142,7 +174,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;_MBCS;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -159,7 +191,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;_MBCS;_CRT_SECURE_NO_WARNINGS;X64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -176,7 +208,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <PreprocessorDefinitions>_WINDOWS;_MBCS;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -194,7 +226,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <PreprocessorDefinitions>_WINDOWS;_MBCS;_CRT_SECURE_NO_WARNINGS;X64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
