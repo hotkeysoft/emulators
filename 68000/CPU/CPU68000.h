@@ -14,42 +14,43 @@ namespace emul::cpu68k
 	enum class EAMode : WORD
 	{
 		// Register Direct modes
-		DataRegDirect = 1 << 0,
-		AddrRegDirect = 1 << 1,
+		DRegDirect = 1 << 0,
+		ARegDirect = 1 << 1,
 
 		// Memory Address modes
-		AddrRegIndirect = 1 << 2,
-		AddrRegIndirectPostincrement = 1 << 3,
-		AddrRegIndirectPredecrement = 1 << 4,
-		AddrRegIndirectDisplacement = 1 << 5,
-		AddrRegIndirectIndex = 1 << 6,
+		ARegIndirect = 1 << 2,
+		ARegIndirectPostinc = 1 << 3,
+		ARegIndirectPredec = 1 << 4,
+		ARegIndirectDisp = 1 << 5,
+		ARegIndirectIndex = 1 << 6,
 
 		// Special Address Modes (Mode=111)
 		// (need reg# for complete decoding)
-		AbsoluteShort = 1 << 7,
-		AbsoluteLong = 1 << 8,
-		ProgramCounterDisplacement = 1 << 9,
-		ProgramCounterIndex = 1 << 10,
+		AbsShort = 1 << 7,
+		AbsLong = 1 << 8,
+		PCDisp = 1 << 9,
+		PCIndex = 1 << 10,
 		Immediate = 1 << 11,
 
 		Invalid = 0,
 
 		// Sub groups for group modes below
-		_RegDirect = DataRegDirect | AddrRegDirect,
-		_Displacement = AddrRegIndirectDisplacement | AddrRegIndirectIndex,
-		_RegIndirect = AddrRegIndirect | AddrRegIndirectPostincrement | AddrRegIndirectPredecrement | _Displacement,
-		_Absolute = AbsoluteShort | AbsoluteLong,
-		_PC = ProgramCounterDisplacement | ProgramCounterIndex,
+		_RegDirect = DRegDirect | ARegDirect,
+		_Displacement = ARegIndirectDisp | ARegIndirectIndex,
+		_RegIndirect = ARegIndirect | ARegIndirectPostinc | ARegIndirectPredec | _Displacement,
+		_Absolute = AbsShort | AbsLong,
+		_PC = PCDisp | PCIndex,
 
 		// Address group modes for validation
-		All = _RegDirect | _RegIndirect | _Absolute | _PC | Immediate,
-		Data = DataRegDirect | _RegIndirect | _Absolute | _PC | Immediate,
-		MemoryAlterable = _RegIndirect | _Absolute,
-		DataAlterable = DataRegDirect | _RegIndirect | _Absolute,
-		Control = AddrRegIndirect | _Displacement | _Absolute | _PC,
-		ControlAlterable = AddrRegIndirect | _Displacement | _Absolute,
-		ControlAlterablePredecrement = ControlAlterable | AddrRegIndirectPredecrement,
-		ControlAlterablePostincrement = ControlAlterable | AddrRegIndirectPostincrement,
+		GroupAll = _RegDirect | _RegIndirect | _Absolute | _PC | Immediate,
+		GroupData = DRegDirect | _RegIndirect | _Absolute | _PC | Immediate,
+		GroupMemAlt = _RegIndirect | _Absolute,
+		GroupDataAlt = DRegDirect | _RegIndirect | _Absolute,
+		GroupDataAddrAlt = _RegDirect | _RegIndirect | _Absolute,
+		GroupControl = ARegIndirect | _Displacement | _Absolute | _PC,
+		GroupControlAlt = ARegIndirect | _Displacement | _Absolute,
+		GroupControlAltPredec = GroupControlAlt | ARegIndirectPredec,
+		GroupControlAltPostinc = GroupControlAlt | ARegIndirectPostinc,
 	};
 
 	static const size_t CPU68000_ADDRESS_BITS = 24;
@@ -277,10 +278,23 @@ namespace emul::cpu68k
 
 		EAMode m_eaMode;
 		static EAMode GetEAMode(WORD opcode);
-		BYTE GetEAByte();
-		WORD GetEAWord();
-		DWORD GetEALong();
-		ADDRESS GetEA(int size);
+		// Needs m_eaMode to be set
+		void EACheck(EAMode group) { if (!((WORD)m_eaMode & (WORD)group)) Exception(VECTOR::IllegalInstruction); }
+
+		BYTE GetEAByte(EAMode groupCheck);
+		WORD GetEAWord(EAMode groupCheck);
+		DWORD GetEALong(EAMode groupCheck);
+
+		// Used by GetEA(b|w|l) above
+		ADDRESS rawGetEA(int size);
+
+		ADDRESS GetEA(int size, EAMode groupCheck)
+		{
+			m_eaMode = GetEAMode(m_opcode);
+			EACheck(groupCheck);
+
+			return rawGetEA(size);
+		}
 
 		[[noreturn]] void Exception(VECTOR v);
 		void Privileged() { if (!IsSupervisorMode()) Exception(VECTOR::PrivilegeViolation); }

@@ -81,9 +81,9 @@ namespace emul::cpu68k
 		InitTable(table, size);
 
 		// CMPI #<data>, <ea>
-		table[060] = [=]() { BYTE src = FetchByte(); CMP_b(GetEAByte(), src); };
-		table[061] = [=]() { WORD src = FetchWord(); CMP_w(GetEAWord(), src); };
-		table[062] = [=]() { DWORD src = FetchLong(); CMP_l(GetEALong(), src); };
+		table[060] = [=]() { BYTE src = FetchByte(); CMP_b(GetEAByte(EAMode::GroupDataAlt), src); };
+		table[061] = [=]() { WORD src = FetchWord(); CMP_w(GetEAWord(EAMode::GroupDataAlt), src); };
+		table[062] = [=]() { DWORD src = FetchLong(); CMP_l(GetEALong(EAMode::GroupDataAlt), src); };
 
 	}
 
@@ -97,7 +97,7 @@ namespace emul::cpu68k
 		table[027] = [=]() { LEA(m_reg.ADDR[2]); }; // LEA <ea>,A2
 
 		// MOVE <ea>, SR
-		table[033] = [=]() { Privileged(); MOVE_w_toSR(GetEAWord()); };
+		table[033] = [=]() { Privileged(); MOVE_w_toSR(GetEAWord(EAMode::GroupData)); };
 
 		table[037] = [=]() { LEA(m_reg.ADDR[3]); }; // LEA <ea>,A3
 
@@ -407,54 +407,63 @@ namespace emul::cpu68k
 		SetFlag(FLAG_Z, val == 0);
 	}
 
-	BYTE CPU68000::GetEAByte()
+	BYTE CPU68000::GetEAByte(EAMode groupCheck)
 	{
+		m_eaMode = GetEAMode(m_opcode);
+		EACheck(groupCheck);
+
 		const int reg = GetOpcodeRegisterIndex();
 
 		switch (GetEAMode(m_opcode))
 		{
-		case EAMode::DataRegDirect:
+		case EAMode::DRegDirect:
 			return GetLByte(m_reg.DATA[reg]);
-		case EAMode::AddrRegDirect:
+		case EAMode::ARegDirect:
 			return GetLByte(m_reg.ADDR[reg]);
 		case EAMode::Immediate:
 			return FetchByte();
 		default:
-			return GetLByte(m_memory.Read16be(GetEA(OP_BYTE)));
+			return GetLByte(m_memory.Read16be(rawGetEA(OP_BYTE)));
 		}
 	}
 
-	WORD CPU68000::GetEAWord()
+	WORD CPU68000::GetEAWord(EAMode groupCheck)
 	{
+		m_eaMode = GetEAMode(m_opcode);
+		EACheck(groupCheck);
+
 		const int reg = GetOpcodeRegisterIndex();
 
-		switch (m_eaMode = GetEAMode(m_opcode))
+		switch (m_eaMode)
 		{
-		case EAMode::DataRegDirect:
+		case EAMode::DRegDirect:
 			return GetLWord(m_reg.DATA[reg]);
-		case EAMode::AddrRegDirect:
+		case EAMode::ARegDirect:
 			return GetLWord(m_reg.ADDR[reg]);
 		case EAMode::Immediate:
 			return FetchWord();
 		default:
-			return m_memory.Read16be(GetEA(OP_WORD));
+			return m_memory.Read16be(rawGetEA(OP_WORD));
 		}
 	}
 
-	DWORD CPU68000::GetEALong()
+	DWORD CPU68000::GetEALong(EAMode groupCheck)
 	{
+		m_eaMode = GetEAMode(m_opcode);
+		EACheck(groupCheck);
+
 		const int reg = GetOpcodeRegisterIndex();
 
-		switch (m_eaMode = GetEAMode(m_opcode))
+		switch (m_eaMode)
 		{
-		case EAMode::DataRegDirect:
+		case EAMode::DRegDirect:
 			return m_reg.DATA[reg];
-		case EAMode::AddrRegDirect:
+		case EAMode::ARegDirect:
 			return m_reg.ADDR[reg];
 		case EAMode::Immediate:
 			return FetchLong();
 		default:
-			return m_memory.Read32be(GetEA(OP_LONG));
+			return m_memory.Read32be(rawGetEA(OP_LONG));
 		}
 	}
 
@@ -479,18 +488,18 @@ namespace emul::cpu68k
 		}
 	}
 
-	ADDRESS CPU68000::GetEA(int size)
+	ADDRESS CPU68000::rawGetEA(int size)
 	{
 		assert(size == 1 || size == 2 || size == 4);
 
 		DWORD& An = m_reg.ADDR[GetOpcodeRegisterIndex()];
 
 		ADDRESS ea = 0;
-		switch (m_eaMode = GetEAMode(m_opcode))
+		switch (m_eaMode)
 		{
 		// Register Direct modes
-		case EAMode::DataRegDirect: // Data Register Direct, EA = Dn
-		case EAMode::AddrRegDirect: // Address Register Direct, EA = An
+		case EAMode::DRegDirect: // Data Register Direct, EA = Dn
+		case EAMode::ARegDirect: // Address Register Direct, EA = An
 			IllegalInstruction();
 			break;
 
@@ -498,56 +507,56 @@ namespace emul::cpu68k
 
 		// Address Register Indirect, EA = (An)
 		// TODO: Data reference except jmp and jmp to subroutine instructions
-		case EAMode::AddrRegIndirect:
+		case EAMode::ARegIndirect:
 			ea = An;
 			break;
 
 		// Address Register Indirect with Postincrement, EA=(An), An += N
 		// TODO: Data reference
-		case EAMode::AddrRegIndirectPostincrement:
+		case EAMode::ARegIndirectPostinc:
 			ea = An;
 			An += size;
 			break;
 
 		// Address Register Indirect with Predecrement, AN -= N, EA=(An)
 		// TODO: Data reference
-		case EAMode::AddrRegIndirectPredecrement:
+		case EAMode::ARegIndirectPredec:
 			An -= size;
 			ea = An;
 			break;
 
 		// Address Register Indirect with Displacement, EA = (An) + d
-		case EAMode::AddrRegIndirectDisplacement:
+		case EAMode::ARegIndirectDisp:
 			NotImplementedOpcode("GetMemAddress: Address Register Indirect with Displacement");
 			break;
 
 		// Address Register Indirect with Index, EA = (An) + (Ri) + d
-		case EAMode::AddrRegIndirectIndex:
+		case EAMode::ARegIndirectIndex:
 			NotImplementedOpcode("GetMemAddress: Address Register Indirect with Index");
 			break;
 
 		// Absolute Short Address, EA given
 		// TODO: Data reference except jmp and jmp to subroutine instructions
-		case EAMode::AbsoluteShort:
+		case EAMode::AbsShort:
 			ea = Widen(FetchWord());
 			break;
 
 		// Absolute Long Address, EA given
 		// TODO: Data reference except jmp and jmp to subroutine instructions
-		case EAMode::AbsoluteLong:
+		case EAMode::AbsLong:
 			ea = FetchLong();
 			break;
 
 		// Program Counter with Displacement, EA = (PC) + d
 		// TODO: Program reference
-		case EAMode::ProgramCounterDisplacement:
+		case EAMode::PCDisp:
 			ea = m_programCounter;
 			ea += Widen(FetchWord());
 			break;
 
 		// Program Counter with Index, EA = (PC) + (Ri) + d
 		// TODO: Program reference
-		case EAMode::ProgramCounterIndex:
+		case EAMode::PCIndex:
 			NotImplementedOpcode("GetMemAddress: Program Counter with Index");
 			break;
 
@@ -563,14 +572,14 @@ namespace emul::cpu68k
 
 	void CPU68000::LEA(DWORD& dest)
 	{
-		ADDRESS src = GetEA(OP_LONG);
+		ADDRESS src = GetEA(OP_LONG, EAMode::GroupControl);
 
 		switch (m_eaMode)
 		{
-		case EAMode::DataRegDirect:
-		case EAMode::AddrRegDirect:
-		case EAMode::AddrRegIndirectPostincrement:
-		case EAMode::AddrRegIndirectPredecrement:
+		case EAMode::DRegDirect:
+		case EAMode::ARegDirect:
+		case EAMode::ARegIndirectPostinc:
+		case EAMode::ARegIndirectPredec:
 		case EAMode::Immediate:
 			IllegalInstruction();
 			return;
@@ -581,7 +590,7 @@ namespace emul::cpu68k
 
 	void CPU68000::MOVE_w_toSR(WORD src)
 	{
-		if (m_eaMode == EAMode::AddrRegDirect)
+		if (m_eaMode == EAMode::ARegDirect)
 		{
 			IllegalInstruction();
 		}
@@ -591,26 +600,12 @@ namespace emul::cpu68k
 
 	void CPU68000::MOVEM_w_fromMem(WORD regs)
 	{
-		ADDRESS src = GetEA(OP_WORD);
+		ADDRESS src = GetEA(OP_WORD, EAMode::GroupControlAltPostinc);
 
 		// Set only for postincrement mode, where
 		// we need to update its value at the end
-		DWORD* addrReg = nullptr;
-
-		switch (m_eaMode)
-		{
-		case EAMode::AddrRegIndirectPostincrement:
-			addrReg = &m_reg.ADDR[GetOpcodeRegisterIndex()];
-			break;
-		case EAMode::DataRegDirect:
-		case EAMode::AddrRegDirect:
-		case EAMode::AddrRegIndirectPredecrement:
-		case EAMode::ProgramCounterDisplacement:
-		case EAMode::ProgramCounterIndex:
-		case EAMode::Immediate:
-			IllegalInstruction();
-			return;
-		}
+		DWORD* addrReg = (m_eaMode == EAMode::ARegIndirectPostinc) ?
+			&m_reg.ADDR[GetOpcodeRegisterIndex()] : nullptr;
 
 		DWORD* dest = m_reg.DataAddress.data();
 		for (int i = 0; i < 16; ++i, ++dest)
@@ -633,26 +628,12 @@ namespace emul::cpu68k
 
 	void CPU68000::MOVEM_l_fromMem(WORD regs)
 	{
-		ADDRESS src = GetEA(OP_LONG);
+		ADDRESS src = GetEA(OP_LONG, EAMode::GroupControlAltPredec);
 
 		// Set only for postincrement mode, where
 		// we need to update its value at the end
-		DWORD* addrReg = nullptr;
-
-		switch (m_eaMode)
-		{
-		case EAMode::AddrRegIndirectPostincrement:
-			addrReg = &m_reg.ADDR[GetOpcodeRegisterIndex()];
-			break;
-		case EAMode::DataRegDirect:
-		case EAMode::AddrRegDirect:
-		case EAMode::AddrRegIndirectPredecrement:
-		case EAMode::ProgramCounterDisplacement:
-		case EAMode::ProgramCounterIndex:
-		case EAMode::Immediate:
-			IllegalInstruction();
-			return;
-		}
+		DWORD* addrReg = (m_eaMode == EAMode::ARegIndirectPostinc) ?
+			&m_reg.ADDR[GetOpcodeRegisterIndex()] : nullptr;
 
 		DWORD* dest = m_reg.DataAddress.data();
 		for (int i = 0; i < 16; ++i, ++dest)

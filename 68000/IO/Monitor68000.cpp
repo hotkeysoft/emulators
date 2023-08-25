@@ -50,37 +50,37 @@ namespace emul
 	{
 		switch (m_mode)
 		{
-		case EAMode::DataRegDirect:
+		case EAMode::DRegDirect:
 			sprintf(m_text, "D%u", m_regNumber);
 			break;
-		case EAMode::AddrRegDirect:
+		case EAMode::ARegDirect:
 			sprintf(m_text, "A%u", m_regNumber);
 			break;
-		case EAMode::AddrRegIndirect:
+		case EAMode::ARegIndirect:
 			sprintf(m_text, "(A%u)", m_regNumber);
 			break;
-		case EAMode::AddrRegIndirectPostincrement:
+		case EAMode::ARegIndirectPostinc:
 			sprintf(m_text, "(A%u)+", m_regNumber);
 			break;
-		case EAMode::AddrRegIndirectPredecrement:
+		case EAMode::ARegIndirectPredec:
 			sprintf(m_text, "-(A%u)", m_regNumber);
 			break;
-		case EAMode::AddrRegIndirectDisplacement:
+		case EAMode::ARegIndirectDisp:
 			sprintf(m_text, "%d(A%u)", GetDisplacementWord(), m_regNumber);
 			break;
-		case EAMode::AddrRegIndirectIndex:
+		case EAMode::ARegIndirectIndex:
 			strcpy(m_text, GetExtensionWord(m_regNumber));
 			break;
-		case EAMode::AbsoluteShort:
+		case EAMode::AbsShort:
 			sprintf(m_text, "($%04X).w", m_address);
 			break;
-		case EAMode::AbsoluteLong:
+		case EAMode::AbsLong:
 			sprintf(m_text, "($%08X).l", m_address);
 			break;
-		case EAMode::ProgramCounterDisplacement:
+		case EAMode::PCDisp:
 			sprintf(m_text, "%d(PC)", GetDisplacementWord());
 			break;
-		case EAMode::ProgramCounterIndex:
+		case EAMode::PCIndex:
 			strcpy(m_text, GetExtensionWord(PC));
 			break;
 		case EAMode::Immediate: // TODO: Need size
@@ -103,7 +103,7 @@ namespace emul
 		// Get data for absolute modes
 		switch (m_mode)
 		{
-		case EAMode::AbsoluteShort:
+		case EAMode::AbsShort:
 		{
 			WORD shortAddress = m_memory.Read16be(m_currAddress);
 			m_currAddress += 2;
@@ -111,7 +111,7 @@ namespace emul
 			m_currInstruction.AddRaw(shortAddress);
 			break;
 		}
-		case EAMode::AbsoluteLong:
+		case EAMode::AbsLong:
 		{
 			m_address = m_memory.Read32be(m_currAddress);
 			m_currAddress += 4;
@@ -674,7 +674,7 @@ namespace emul
 		else if (instr.regs)
 		{
 			// EA not decoded yet but we need to know if we're in predecrement mode
-			bool predecrement = (CPU68000::GetEAMode(data) == EAMode::AddrRegIndirectPredecrement);
+			bool predecrement = (CPU68000::GetEAMode(data) == EAMode::ARegIndirectPredec);
 
 			// Get register bitmask
 			WORD regs = m_memory->Read16be(address);
@@ -861,17 +861,17 @@ namespace emul
 			}
 
 			// Bit instructions (BTST, etc.) have byte length
-			// except for DataRegDirect addressing mode (where it's long)
+			// except for DRegDirect addressing mode (where it's long)
 			if (instr.bit)
 			{
 				// override size
-				ea.SetSize((ea.GetMode() == EAMode::DataRegDirect) ? EASize::Long : EASize::Byte);
+				ea.SetSize((ea.GetMode() == EAMode::DRegDirect) ? EASize::Long : EASize::Byte);
 
-				std::string width = (ea.GetMode() == EAMode::DataRegDirect) ? "l" : "b";
+				std::string width = (ea.GetMode() == EAMode::DRegDirect) ? "l" : "b";
 				Replace(text, "{bit}", width);
 			}
 
-			isPredecrement = (ea.GetMode() == EAMode::AddrRegIndirectPredecrement);
+			isPredecrement = (ea.GetMode() == EAMode::ARegIndirectPredec);
 
 			ea.BuildText();
 			idxText = ea.GetText();

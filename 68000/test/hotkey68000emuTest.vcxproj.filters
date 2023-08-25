@@ -43,6 +43,7 @@
       <Filter>CPU</Filter>
     </ClCompile>
     <ClCompile Include="testDisassembly.cpp" />
+    <ClCompile Include="testCPU.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -101,6 +102,7 @@
       <Filter>CPU</Filter>
     </ClInclude>
     <ClInclude Include="testDisassembly.h" />
+    <ClInclude Include="testCPU.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Common">

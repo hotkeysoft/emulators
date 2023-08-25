@@ -12,8 +12,6 @@
 
 using namespace std::filesystem;
 
-const path workingDirectory = "../";
-
 // Relative to workingDirectory
 const path exePath = "../x64/Debug/hotkey68000emu.exe";
 const path opcodeFilesPath = "./test/data/";
@@ -25,8 +23,6 @@ size_t totalFailCount = 0;
 
 bool setup()
 {
-	current_path(workingDirectory);
-
 	if (!exists(exePath))
 	{
 		fprintf(stderr, "exe not found: %s\n", exePath.string().c_str());
