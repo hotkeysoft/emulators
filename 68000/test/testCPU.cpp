@@ -6,6 +6,8 @@
 
 using emul::cpu68k::EAMode;
 using emul::cpu68k::CPU68000;
+using emul::GetLByte;
+using emul::GetLWord;
 
 class CPU68000Test : public CPU68000
 {
@@ -13,6 +15,7 @@ public:
 	CPU68000Test(emul::Memory& mem) : CPU68000(mem), Logger("CPU68000Test") {}
 
 	friend class EAModeTester;
+	friend class RegisterTester;
 };
 
 class TesterBase : public Logger
@@ -45,9 +48,171 @@ public:
 		LogPrintf(LOG_INFO, "END %s", id);
 	}
 
+	template <typename T>
+	void ExpectEqual(T expect, T actual, const char* msg = nullptr)
+	{
+		static_assert(
+			std::is_same<T, emul::BYTE>::value ||
+			std::is_same<T, emul::WORD>::value ||
+			std::is_same<T, emul::DWORD>::value);
+		if (expect != actual)
+		{
+			LogPrintf(LOG_ERROR, "ExpectEqual failed: expect(%X) != actual(%X) [%s]", expect, actual, msg ? msg : "");
+		}
+	}
+
 protected:
 	emul::Memory m_memory;
 	CPU68000Test* m_cpu = nullptr;
+};
+
+class RegisterTester : public TesterBase
+{
+public:
+	RegisterTester() : TesterBase("TEST_REG") {}
+
+	constexpr static emul::DWORD initValues[] = {
+		0x00008888,
+		0x11119999,
+		0x2222AAAA,
+		0x3333BBBB,
+		0x4444CCCC,
+		0x5555DDDD,
+		0x6666EEEE,
+		0x7777FFFF
+	};
+
+	void resetRegisters()
+	{
+		m_cpu->m_reg.ADDR[0] = initValues[0];
+		m_cpu->m_reg.ADDR[1] = initValues[1];
+		m_cpu->m_reg.ADDR[2] = initValues[2];
+		m_cpu->m_reg.ADDR[3] = initValues[3];
+		m_cpu->m_reg.ADDR[4] = initValues[4];
+		m_cpu->m_reg.ADDR[5] = initValues[5];
+		m_cpu->m_reg.ADDR[6] = initValues[6];
+		m_cpu->m_reg.ADDR[7] = initValues[7];
+
+		m_cpu->m_reg.DATA[0] = ~initValues[0];
+		m_cpu->m_reg.DATA[1] = ~initValues[1];
+		m_cpu->m_reg.DATA[2] = ~initValues[2];
+		m_cpu->m_reg.DATA[3] = ~initValues[3];
+		m_cpu->m_reg.DATA[4] = ~initValues[4];
+		m_cpu->m_reg.DATA[5] = ~initValues[5];
+		m_cpu->m_reg.DATA[6] = ~initValues[6];
+		m_cpu->m_reg.DATA[7] = ~initValues[7];
+	}
+
+	void testRegisters()
+	{
+		resetRegisters();
+
+		for (int i = 0; i < 8; ++i)
+		{
+			if (m_cpu->m_reg.DATA[i] != ~initValues[i])
+			{
+				LogPrintf(LOG_ERROR, "Data Register mismatch at index %d", i);
+			}
+			if (m_cpu->m_reg.ADDR[i] != initValues[i])
+			{
+				LogPrintf(LOG_ERROR, "Data Register mismatch at index %d", i);
+			}
+		}
+	}
+
+	void testAliasLongR()
+	{
+		resetRegisters();
+
+		ExpectEqual(initValues[0], m_cpu->m_reg.A0, "A0");
+		ExpectEqual(initValues[1], m_cpu->m_reg.A1, "A1");
+		ExpectEqual(initValues[2], m_cpu->m_reg.A2, "A2");
+		ExpectEqual(initValues[3], m_cpu->m_reg.A3, "A3");
+		ExpectEqual(initValues[4], m_cpu->m_reg.A4, "A4");
+		ExpectEqual(initValues[5], m_cpu->m_reg.A5, "A5");
+		ExpectEqual(initValues[6], m_cpu->m_reg.A6, "A6");
+		ExpectEqual(initValues[7], m_cpu->m_reg.A7, "A7");
+
+		ExpectEqual(~initValues[0], m_cpu->m_reg.D0, "D0");
+		ExpectEqual(~initValues[1], m_cpu->m_reg.D1, "D1");
+		ExpectEqual(~initValues[2], m_cpu->m_reg.D2, "D2");
+		ExpectEqual(~initValues[3], m_cpu->m_reg.D3, "D3");
+		ExpectEqual(~initValues[4], m_cpu->m_reg.D4, "D4");
+		ExpectEqual(~initValues[5], m_cpu->m_reg.D5, "D5");
+		ExpectEqual(~initValues[6], m_cpu->m_reg.D6, "D6");
+		ExpectEqual(~initValues[7], m_cpu->m_reg.D7, "D7");
+	}
+
+	void testAliasWordR()
+	{
+		resetRegisters();
+
+		ExpectEqual(GetLWord(initValues[0]), m_cpu->m_reg.A0w, "A0w");
+		ExpectEqual(GetLWord(initValues[1]), m_cpu->m_reg.A1w, "A1w");
+		ExpectEqual(GetLWord(initValues[2]), m_cpu->m_reg.A2w, "A2w");
+		ExpectEqual(GetLWord(initValues[3]), m_cpu->m_reg.A3w, "A3w");
+		ExpectEqual(GetLWord(initValues[4]), m_cpu->m_reg.A4w, "A4w");
+		ExpectEqual(GetLWord(initValues[5]), m_cpu->m_reg.A5w, "A5w");
+		ExpectEqual(GetLWord(initValues[6]), m_cpu->m_reg.A6w, "A6w");
+		ExpectEqual(GetLWord(initValues[7]), m_cpu->m_reg.A7w, "A7w");
+
+		ExpectEqual(GetLWord(~initValues[0]), m_cpu->m_reg.D0w, "D0w");
+		ExpectEqual(GetLWord(~initValues[1]), m_cpu->m_reg.D1w, "D1w");
+		ExpectEqual(GetLWord(~initValues[2]), m_cpu->m_reg.D2w, "D2w");
+		ExpectEqual(GetLWord(~initValues[3]), m_cpu->m_reg.D3w, "D3w");
+		ExpectEqual(GetLWord(~initValues[4]), m_cpu->m_reg.D4w, "D4w");
+		ExpectEqual(GetLWord(~initValues[5]), m_cpu->m_reg.D5w, "D5w");
+		ExpectEqual(GetLWord(~initValues[6]), m_cpu->m_reg.D6w, "D6w");
+		ExpectEqual(GetLWord(~initValues[7]), m_cpu->m_reg.D7w, "D7w");
+	}
+
+	void testAliasByteR()
+	{
+		resetRegisters();
+
+		ExpectEqual(GetLByte(~initValues[0]), m_cpu->m_reg.D0b, "D0b");
+		ExpectEqual(GetLByte(~initValues[1]), m_cpu->m_reg.D1b, "D1b");
+		ExpectEqual(GetLByte(~initValues[2]), m_cpu->m_reg.D2b, "D2b");
+		ExpectEqual(GetLByte(~initValues[3]), m_cpu->m_reg.D3b, "D3b");
+		ExpectEqual(GetLByte(~initValues[4]), m_cpu->m_reg.D4b, "D4b");
+		ExpectEqual(GetLByte(~initValues[5]), m_cpu->m_reg.D5b, "D5b");
+		ExpectEqual(GetLByte(~initValues[6]), m_cpu->m_reg.D6b, "D6b");
+		ExpectEqual(GetLByte(~initValues[7]), m_cpu->m_reg.D7b, "D7b");
+	}
+
+	void testAliasWrite()
+	{
+		resetRegisters();
+
+		m_cpu->m_reg.A0 = 0x12345678;
+		ExpectEqual((emul::DWORD)0x12345678, m_cpu->m_reg.A0);
+
+		m_cpu->m_reg.A0w = 0xAAAA;
+		ExpectEqual((emul::DWORD)0x1234AAAA, m_cpu->m_reg.A0);
+
+		m_cpu->m_reg.D7 = 0xAABBCCDD;
+		ExpectEqual((emul::DWORD)0xAABBCCDD, m_cpu->m_reg.D7);
+
+		m_cpu->m_reg.D7w = 0x00FF;
+		ExpectEqual((emul::BYTE)0xFF, m_cpu->m_reg.D7b);
+		ExpectEqual((emul::WORD)0x00FF, m_cpu->m_reg.D7w);
+		ExpectEqual((emul::DWORD)0xAABB00FF, m_cpu->m_reg.D7);
+
+		m_cpu->m_reg.D7b = 0x55;
+		ExpectEqual((emul::BYTE)0x55, m_cpu->m_reg.D7b);
+		ExpectEqual((emul::WORD)0x0055, m_cpu->m_reg.D7w);
+		ExpectEqual((emul::DWORD)0xAABB0055, m_cpu->m_reg.D7);
+	}
+
+	virtual void test() override
+	{
+		RunTest("Test Registers", (TestFunc)(&RegisterTester::testRegisters));
+		RunTest("Test alias LONG (Read)", (TestFunc)(&RegisterTester::testAliasLongR));
+		RunTest("Test alias WORD (Read)", (TestFunc)(&RegisterTester::testAliasWordR));
+		RunTest("Test alias BYTE (Read)", (TestFunc)(&RegisterTester::testAliasByteR));
+		RunTest("Test alias Write", (TestFunc)(&RegisterTester::testAliasWrite));
+	}
+
 };
 
 class EAModeTester : public TesterBase
@@ -176,6 +341,11 @@ void testCPU()
 
 	{
 		EAModeTester tester;
+		tester.test();
+	}
+
+	{
+		RegisterTester tester;
 		tester.test();
 	}
 

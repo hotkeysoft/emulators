@@ -70,6 +70,7 @@ namespace emul
 	inline BYTE GetHByte(const WORD w) { return BYTE(w >> 8); };
 
 	inline void SetLByte(WORD& out, const BYTE low) { out &= 0xFF00; out |= low; }
+	inline void SetLByte(DWORD& out, const BYTE low) { out &= 0xFFFFFF00; out |= low; }
 	inline void SetHByte(WORD& out, const BYTE hi) { out &= 0x00FF; out |= (hi << 8); }
 
 	inline WORD GetLWord(const DWORD d) { return WORD(d & 0x0000FFFF); };
@@ -96,6 +97,10 @@ namespace emul
 	inline WORD Widen(const BYTE b)
 	{
 		return WORD((int16_t)((int8_t)b));
+	}
+	inline DWORD DoubleWiden(const BYTE b)
+	{
+		return DWORD((int32_t)((int8_t)b));
 	}
 
 	// Sign extend

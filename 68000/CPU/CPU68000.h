@@ -9,6 +9,9 @@
 #undef IN
 #undef OUT
 
+#define BYTE_REG(src, idx) *(((BYTE*)src) + (idx * 4))
+#define WORD_REG(src, idx) *(((WORD*)src) + (idx * 2))
+
 namespace emul::cpu68k
 {
 	enum class EAMode : WORD
@@ -219,6 +222,34 @@ namespace emul::cpu68k
 			DWORD* const DATA = &DataAddress[0];
 			DWORD* const ADDR = &DataAddress[8];
 
+			// Handy aliases
+			BYTE& D0b = BYTE_REG(DATA, 0);
+			BYTE& D1b = BYTE_REG(DATA, 1);
+			BYTE& D2b = BYTE_REG(DATA, 2);
+			BYTE& D3b = BYTE_REG(DATA, 3);
+			BYTE& D4b = BYTE_REG(DATA, 4);
+			BYTE& D5b = BYTE_REG(DATA, 5);
+			BYTE& D6b = BYTE_REG(DATA, 6);
+			BYTE& D7b = BYTE_REG(DATA, 7);
+
+			WORD& D0w = WORD_REG(DATA, 0); WORD& A0w = WORD_REG(ADDR, 0);
+			WORD& D1w = WORD_REG(DATA, 1); WORD& A1w = WORD_REG(ADDR, 1);
+			WORD& D2w = WORD_REG(DATA, 2); WORD& A2w = WORD_REG(ADDR, 2);
+			WORD& D3w = WORD_REG(DATA, 3); WORD& A3w = WORD_REG(ADDR, 3);
+			WORD& D4w = WORD_REG(DATA, 4); WORD& A4w = WORD_REG(ADDR, 4);
+			WORD& D5w = WORD_REG(DATA, 5); WORD& A5w = WORD_REG(ADDR, 5);
+			WORD& D6w = WORD_REG(DATA, 6); WORD& A6w = WORD_REG(ADDR, 6);
+			WORD& D7w = WORD_REG(DATA, 7); WORD& A7w = WORD_REG(ADDR, 7);
+
+			DWORD& D0 = DATA[0]; DWORD& A0 = ADDR[0];
+			DWORD& D1 = DATA[1]; DWORD& A1 = ADDR[1];
+			DWORD& D2 = DATA[2]; DWORD& A2 = ADDR[2];
+			DWORD& D3 = DATA[3]; DWORD& A3 = ADDR[3];
+			DWORD& D4 = DATA[4]; DWORD& A4 = ADDR[4];
+			DWORD& D5 = DATA[5]; DWORD& A5 = ADDR[5];
+			DWORD& D6 = DATA[6]; DWORD& A6 = ADDR[6];
+			DWORD& D7 = DATA[7]; DWORD& A7 = ADDR[7];
+
 			// Alias stack pointer to A7
 			DWORD& SP = ADDR[7];
 
@@ -267,6 +298,15 @@ namespace emul::cpu68k
 		virtual WORD FetchWord() override;
 		DWORD FetchLong();
 
+		static bool IsWordAligned(ADDRESS addr) { return !GetLSB(addr); }
+
+		void WriteB(ADDRESS dest, BYTE value) { m_memory.Write8(dest, value); }
+		void WriteW(ADDRESS dest, BYTE value) { Aligned(dest); m_memory.Write16be(dest, value); }
+		//void WriteL(ADDRESS dest, BYTE value) { Aligned(dest); m_memory.Write32be(dest, value); }
+		BYTE ReadB(ADDRESS src) const { return m_memory.Read8(src); }
+		WORD ReadW(ADDRESS src) { Aligned(src); return m_memory.Read16be(src); }
+		DWORD ReadL(ADDRESS src) { Aligned(src); return m_memory.Read32be(src); }
+
 		void Exec(WORD opcode);
 		void Exec(WORD group, WORD subOpcode);
 		bool InternalStep();
@@ -276,10 +316,10 @@ namespace emul::cpu68k
 		void AdjustNZ(WORD val);
 		void AdjustNZ(DWORD val);
 
-		EAMode m_eaMode;
+		EAMode m_eaMode = EAMode::Invalid;
 		static EAMode GetEAMode(WORD opcode);
 		// Needs m_eaMode to be set
-		void EACheck(EAMode group) { if (!((WORD)m_eaMode & (WORD)group)) Exception(VECTOR::IllegalInstruction); }
+		void EACheck(EAMode group) { if (!((WORD)m_eaMode & (WORD)group)) IllegalInstruction(); }
 
 		BYTE GetEAByte(EAMode groupCheck);
 		WORD GetEAWord(EAMode groupCheck);
@@ -298,6 +338,7 @@ namespace emul::cpu68k
 
 		[[noreturn]] void Exception(VECTOR v);
 		void Privileged() { if (!IsSupervisorMode()) Exception(VECTOR::PrivilegeViolation); }
+		void Aligned(ADDRESS addr) { if (!IsWordAligned(addr)) Exception(VECTOR::AddressError); }
 
 		// Opcodes
 
@@ -305,22 +346,34 @@ namespace emul::cpu68k
 
 		// Branching
 		void BRA(bool cond = true);
+		void JMP();
 
-		void MOVE_b() { NotImplementedOpcode("MOVE.b"); }
+		void MOVE_b();
 		void MOVE_l() { NotImplementedOpcode("MOVE.l"); }
 		void MOVE_w() { NotImplementedOpcode("MOVE.w"); }
-		void MOVEQ() { NotImplementedOpcode("MOVEQ"); }
+		void MOVEQ();
 		void SHIFT() { NotImplementedOpcode("Shift ops"); }
 
 		void MOVE_w_toSR(WORD src);
 
-		void MOVEM_w_toMem(WORD regs) { NotImplementedOpcode("MOVEM.w (regs->mem)"); }
-		void MOVEM_l_toMem(WORD regs) { NotImplementedOpcode("MOVEM.l (regs->mem)"); }
-		void MOVEM_w_fromMem(WORD regs);
-		void MOVEM_l_fromMem(WORD regs);
+		void MOVEM_w_toEA(WORD regs) { NotImplementedOpcode("MOVEM.w (regs -> <ea>)"); }
+		void MOVEM_l_toEA(WORD regs) { NotImplementedOpcode("MOVEM.l (regs -> <ea>)"); }
+		void MOVEM_w_fromEA(WORD regs);
+		void MOVEM_l_fromEA(WORD regs);
 
 		void EXT_w() { NotImplementedOpcode("EXT.w"); }
 		void EXT_l() { NotImplementedOpcode("EXT.l"); }
+
+		// Logic
+		void ANDb_fromEA(BYTE& dest);
+		void ANDw_fromEA(WORD& dest);
+		void ANDl_fromEA(DWORD& dest);
+
+		void ANDb_toEA(BYTE src);
+		void ANDw_toEA(WORD src);
+		void ANDl_toEA(DWORD src);
+
+		// Arithmetic
 
 		// dest' <- dest + src
 		void ADD_b(BYTE& dest, BYTE src);

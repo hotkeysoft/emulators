@@ -2,7 +2,6 @@
 #include "CPU68000.h"
 
 using cpuInfo::Opcode;
-using emul::Widen;
 
 namespace emul::cpu68k
 {
@@ -102,18 +101,21 @@ namespace emul::cpu68k
 		table[037] = [=]() { LEA(m_reg.ADDR[3]); }; // LEA <ea>,A3
 
 		// MOVEM <register list>, <ea>
-		table[042] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXT_w() : MOVEM_w_toMem(FetchWord()); };
-		table[043] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXT_w() : MOVEM_l_toMem(FetchWord()); };
+		table[042] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXT_w() : MOVEM_w_toEA(FetchWord()); };
+		table[043] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXT_w() : MOVEM_l_toEA(FetchWord()); };
 
 		table[047] = [=]() { LEA(m_reg.ADDR[4]); }; // LEA <ea>,A4
 		table[057] = [=]() { LEA(m_reg.ADDR[5]); }; // LEA <ea>,A5
 
 		// MOVEM <ea>, <register list>
-		table[062] = [=]() { MOVEM_w_fromMem(FetchWord()); };
-		table[063] = [=]() { MOVEM_l_fromMem(FetchWord()); };
+		table[062] = [=]() { MOVEM_w_fromEA(FetchWord()); };
+		table[063] = [=]() { MOVEM_l_fromEA(FetchWord()); };
 
 		table[067] = [=]() { LEA(m_reg.ADDR[6]); }; // LEA <ea>,A6
 		table[077] = [=]() { LEA(m_reg.ADDR[7]); }; // LEA <ea>,A7
+
+//		table[072] = [=]() { JSR(); }; // JSR <ea>
+		table[073] = [=]() { JMP(); }; // JMP <ea>
 
 	}
 
@@ -168,6 +170,14 @@ namespace emul::cpu68k
 	void CPU68000::InitGroup12(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
+
+		table[000] = [=]() { ANDb_fromEA(m_reg.D0b); }; // AND.b <ea>,D0
+		table[001] = [=]() { ANDw_fromEA(m_reg.D0w); }; // AND.w <ea>,D0
+		table[002] = [=]() { ANDl_fromEA(m_reg.D0); }; // AND.l <ea>,D0
+
+		table[004] = [=]() { ANDb_toEA(m_reg.D0b); }; // AND.b D0,<ea>
+		table[005] = [=]() { ANDw_toEA(m_reg.D0w); }; // AND.b D0,<ea>
+		table[006] = [=]() { ANDl_toEA(m_reg.D0); }; // AND.b D0,<ea>
 	}
 
 	// b1101: ADD,ADDX,ADDA
@@ -186,8 +196,8 @@ namespace emul::cpu68k
 
 		std::fill(std::begin(m_reg.DataAddress), std::end(m_reg.DataAddress), 0);
 
-		ADDRESS reset = m_memory.Read32be(GetVectorAddress(VECTOR::ResetPC));
-		ADDRESS ssp = m_memory.Read32be(GetVectorAddress(VECTOR::ResetSSP));
+		ADDRESS reset = ReadL(GetVectorAddress(VECTOR::ResetPC));
+		ADDRESS ssp = ReadL(GetVectorAddress(VECTOR::ResetSSP));
 
 		LogPrintf(LOG_INFO, "Initial PC:  %08X", reset);
 		LogPrintf(LOG_INFO, "Initial SSP: %08X", ssp);
@@ -229,16 +239,16 @@ namespace emul::cpu68k
 		if (currMode) // Supervisor -> User
 		{
 			// Save A7 in SSP
-			m_reg.SSP = m_reg.ADDR[7];
+			m_reg.SSP = m_reg.A7;
 			// Put USP in A7
-			m_reg.ADDR[7] = m_reg.USP;
+			m_reg.A7 = m_reg.USP;
 		}
 		else // User -> Supervisor
 		{
 			// Save A7 in USP
-			m_reg.USP = m_reg.ADDR[7];
+			m_reg.USP = m_reg.A7;
 			// Put SSP in A7
-			m_reg.ADDR[7] = m_reg.SSP;
+			m_reg.A7 = m_reg.SSP;
 		}
 
 		SetFlag(FLAG_S, newMode);
@@ -246,7 +256,7 @@ namespace emul::cpu68k
 
 	WORD CPU68000::FetchWord()
 	{
-		WORD w = m_memory.Read16be(GetCurrentAddress());
+		WORD w = ReadW(GetCurrentAddress());
 		m_programCounter += 2;
 		m_programCounter &= ADDRESS_MASK;
 		return w;
@@ -254,7 +264,7 @@ namespace emul::cpu68k
 
 	DWORD CPU68000::FetchLong()
 	{
-		DWORD dw = m_memory.Read32be(GetCurrentAddress());
+		DWORD dw = ReadL(GetCurrentAddress());
 		m_programCounter += 4;
 		m_programCounter &= ADDRESS_MASK;
 		return dw;
@@ -340,8 +350,7 @@ namespace emul::cpu68k
 	void CPU68000::IllegalInstruction()
 	{
 		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%04X) at address 0x%08X", m_opcode, m_programCounter);
-		Dump();
-		throw std::exception("Unknown opcode");
+		Exception(VECTOR::IllegalInstruction);
 	}
 
 	// TODO: Temp
@@ -423,7 +432,7 @@ namespace emul::cpu68k
 		case EAMode::Immediate:
 			return FetchByte();
 		default:
-			return GetLByte(m_memory.Read16be(rawGetEA(OP_BYTE)));
+			return ReadB(rawGetEA(OP_BYTE));
 		}
 	}
 
@@ -443,7 +452,7 @@ namespace emul::cpu68k
 		case EAMode::Immediate:
 			return FetchWord();
 		default:
-			return m_memory.Read16be(rawGetEA(OP_WORD));
+			return ReadW(rawGetEA(OP_WORD));
 		}
 	}
 
@@ -463,7 +472,7 @@ namespace emul::cpu68k
 		case EAMode::Immediate:
 			return FetchLong();
 		default:
-			return m_memory.Read32be(rawGetEA(OP_LONG));
+			return ReadL(rawGetEA(OP_LONG));
 		}
 	}
 
@@ -588,6 +597,48 @@ namespace emul::cpu68k
 		dest = src;
 	}
 
+	void CPU68000::MOVEQ()
+	{
+		if (GetBit(m_opcode, 8))
+		{
+			IllegalInstruction();
+		}
+
+		int reg = (m_opcode >> 9) & 7;
+		DWORD value = DoubleWiden(GetLByte(m_opcode));
+		AdjustNZ(value);
+		SetFlag(FLAG_V, false);
+		SetFlag(FLAG_C, false);
+
+		m_reg.DATA[reg] = value;
+	}
+
+	void CPU68000::MOVE_b()
+	{
+		BYTE source = GetEAByte(EAMode::GroupData);
+		AdjustNZ(source);
+		SetFlag(FLAG_V, false);
+		SetFlag(FLAG_C, false);
+
+		// For destination, need to shuffle the bits
+		// (opcode order is: 0|0| size | DestReg|DestMode | SrcMode|SrcReg)
+		const WORD destMode = (m_opcode >> 3) & 0b111000;
+		const WORD destReg = (m_opcode >> 9) & 0b000111;
+
+		// dest == Data reg
+		if (destMode == 0)
+		{
+			SetLByte(m_reg.DATA[destReg], source);
+		}
+		else // Dest is an address
+		{
+			m_opcode = destMode | destReg;
+			ADDRESS dest = GetEA(OP_BYTE, EAMode::GroupDataAlt);
+			WriteB(dest, source);
+		}
+	}
+
+
 	void CPU68000::MOVE_w_toSR(WORD src)
 	{
 		if (m_eaMode == EAMode::ARegDirect)
@@ -598,7 +649,7 @@ namespace emul::cpu68k
 		SetFlags(src);
 	}
 
-	void CPU68000::MOVEM_w_fromMem(WORD regs)
+	void CPU68000::MOVEM_w_fromEA(WORD regs)
 	{
 		ADDRESS src = GetEA(OP_WORD, EAMode::GroupControlAltPostinc);
 
@@ -612,7 +663,7 @@ namespace emul::cpu68k
 		{
 			if (GetLSB(regs))
 			{
-				SetLWord(*dest, m_memory.Read16be(src));
+				SetLWord(*dest, ReadW(src));
 				src += 2;
 			}
 
@@ -626,7 +677,7 @@ namespace emul::cpu68k
 		}
 	}
 
-	void CPU68000::MOVEM_l_fromMem(WORD regs)
+	void CPU68000::MOVEM_l_fromEA(WORD regs)
 	{
 		ADDRESS src = GetEA(OP_LONG, EAMode::GroupControlAltPredec);
 
@@ -640,7 +691,7 @@ namespace emul::cpu68k
 		{
 			if (GetLSB(regs))
 			{
-				*dest = m_memory.Read32be(src);
+				*dest = ReadL(src);
 				src += 4;
 			}
 
@@ -656,7 +707,7 @@ namespace emul::cpu68k
 
 	void CPU68000::BRA(bool cond)
 	{
-		DWORD rel = Widen(Widen(GetLByte(m_opcode)));
+		DWORD rel = DoubleWiden(GetLByte(m_opcode));
 		if (rel == 0)
 		{
 			rel = Widen(FetchWord());
@@ -667,6 +718,39 @@ namespace emul::cpu68k
 			m_programCounter += rel;
 			m_programCounter &= ADDRESS_MASK;
 		}
+	}
+
+	void CPU68000::JMP()
+	{
+		DWORD addr = GetEA(OP_LONG, EAMode::GroupControl);
+		m_programCounter = addr;
+	}
+
+
+	void CPU68000::ANDb_fromEA(BYTE& dest)
+	{
+
+	}
+	void CPU68000::ANDw_fromEA(WORD& dest)
+	{
+
+	}
+	void CPU68000::ANDl_fromEA(DWORD& dest)
+	{
+
+	}
+
+	void CPU68000::ANDb_toEA(BYTE src)
+	{
+
+	}
+	void CPU68000::ANDw_toEA(WORD src)
+	{
+
+	}
+	void CPU68000::ANDl_toEA(DWORD src)
+	{
+
 	}
 
 	void CPU68000::ADD_b(BYTE& dest, BYTE src)
