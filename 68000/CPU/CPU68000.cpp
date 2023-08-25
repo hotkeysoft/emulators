@@ -2,6 +2,7 @@
 #include "CPU68000.h"
 
 using cpuInfo::Opcode;
+using emul::Widen;
 
 namespace emul::cpu68k
 {
@@ -41,21 +42,21 @@ namespace emul::cpu68k
 		InitTable(m_opcodes, 16);
 
 		m_opcodes[0b0000] = [=]() { Exec(0, GetSubopcode6()); }; // Immediate,Bit,MOVEP
-		m_opcodes[0b0001] = [=]() { MOVEb(); }; // MOVE.b
-		m_opcodes[0b0010] = [=]() { MOVEl(); }; // MOVE.l, MOVEA.l
-		m_opcodes[0b0011] = [=]() { MOVEw(); }; // MOVE.w,MOVEA.w
+		m_opcodes[0b0001] = [=]() { MOVE_b(); }; // MOVE.b
+		m_opcodes[0b0010] = [=]() { MOVE_l(); }; // MOVE.l, MOVEA.l
+		m_opcodes[0b0011] = [=]() { MOVE_w(); }; // MOVE.w, MOVEA.w
 		m_opcodes[0b0100] = [=]() { Exec(4, GetSubopcode6()); }; // Misc
 		m_opcodes[0b0101] = [=]() { Exec(5, GetSubopcode6()); }; // ADDQ,SUBQ,Scc,DBcc
 		m_opcodes[0b0110] = [=]() { Exec(6, GetSubopcode4()); }; // BRA,BSR,Bcc
 		m_opcodes[0b0111] = [=]() { MOVEQ(); };
 		m_opcodes[0b1000] = [=]() { Exec(8, GetSubopcode6()); }; // DIVU,DIVS,SBCD,OR
 		m_opcodes[0b1001] = [=]() { Exec(9, GetSubopcode6()); }; // SUB,SUBX,SUBA
-		m_opcodes[0b1010] = [=]() { InvalidOpcode(); };
+		m_opcodes[0b1010] = [=]() { IllegalInstruction(); };
 		m_opcodes[0b1011] = [=]() { Exec(11, GetSubopcode6()); }; // EOR,CMPM,CMP,CMPA
 		m_opcodes[0b1100] = [=]() { Exec(12, GetSubopcode6()); }; // MULU,MULS,ABCD,EXG,AND
 		m_opcodes[0b1101] = [=]() { Exec(13, GetSubopcode6()); }; // ADD,ADDX,ADDA
 		m_opcodes[0b1110] = [=]() { SHIFT(); }; // Shift, Rotate
-		m_opcodes[0b1111] = [=]() { InvalidOpcode(); };
+		m_opcodes[0b1111] = [=]() { IllegalInstruction(); };
 
 		InitGroup0(m_subOpcodes[0], 64);
 		InitGroup4(m_subOpcodes[4], 64);
@@ -71,13 +72,19 @@ namespace emul::cpu68k
 	void CPU68000::InitTable(OpcodeTable& table, size_t size)
 	{
 		table.resize(size);
-		std::fill(table.begin(), table.end(), [=]() { InvalidOpcode(); });
+		std::fill(table.begin(), table.end(), [=]() { IllegalInstruction(); });
 	}
 
 	// b0000: Immediate,Bit,MOVEP
 	void CPU68000::InitGroup0(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
+
+		// CMPI #<data>, <ea>
+		table[060] = [=]() { BYTE src = FetchByte(); CMP_b(GetEAByte(), src); };
+		table[061] = [=]() { WORD src = FetchWord(); CMP_w(GetEAWord(), src); };
+		table[062] = [=]() { DWORD src = FetchLong(); CMP_l(GetEALong(), src); };
+
 	}
 
 	// b0100: Misc
@@ -85,13 +92,29 @@ namespace emul::cpu68k
 	{
 		InitTable(table, size);
 
+		table[007] = [=]() { LEA(m_reg.ADDR[0]); }; // LEA <ea>,A0
+		table[017] = [=]() { LEA(m_reg.ADDR[1]); }; // LEA <ea>,A1
+		table[027] = [=]() { LEA(m_reg.ADDR[2]); }; // LEA <ea>,A2
+
+		// MOVE <ea>, SR
+		table[033] = [=]() { Privileged(); MOVE_w_toSR(GetEAWord()); };
+
+		table[037] = [=]() { LEA(m_reg.ADDR[3]); }; // LEA <ea>,A3
+
 		// MOVEM <register list>, <ea>
-		table[042] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXTw() : MOVEM_w_toMem(FetchWord()); };
-		table[043] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXTw() : MOVEM_l_toMem(FetchWord()); };
+		table[042] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXT_w() : MOVEM_w_toMem(FetchWord()); };
+		table[043] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXT_w() : MOVEM_l_toMem(FetchWord()); };
+
+		table[047] = [=]() { LEA(m_reg.ADDR[4]); }; // LEA <ea>,A4
+		table[057] = [=]() { LEA(m_reg.ADDR[5]); }; // LEA <ea>,A5
 
 		// MOVEM <ea>, <register list>
 		table[062] = [=]() { MOVEM_w_fromMem(FetchWord()); };
 		table[063] = [=]() { MOVEM_l_fromMem(FetchWord()); };
+
+		table[067] = [=]() { LEA(m_reg.ADDR[6]); }; // LEA <ea>,A6
+		table[077] = [=]() { LEA(m_reg.ADDR[7]); }; // LEA <ea>,A7
+
 	}
 
 	// b0101: ADDQ,SUBQ,Scc,DBcc
@@ -104,6 +127,23 @@ namespace emul::cpu68k
 	void CPU68000::InitGroup6(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
+
+		table[000] = [=]() { BRA(); }; // BRA
+		//table[001] = [=]() { BSR(); }; // BSR
+		table[002] = [=]() { BRA(FlagHI()); }; // BHI
+		table[003] = [=]() { BRA(FlagLS()); }; // BLS
+		table[004] = [=]() { BRA(FlagCC()); }; // BCC
+		table[005] = [=]() { BRA(FlagCS()); }; // BCS
+		table[006] = [=]() { BRA(FlagNE()); }; // BNE
+		table[007] = [=]() { BRA(FlagEQ()); }; // BEQ
+		table[010] = [=]() { BRA(FlagVC()); }; // BVC
+		table[011] = [=]() { BRA(FlagVS()); }; // BVS
+		table[012] = [=]() { BRA(FlagPL()); }; // BPL
+		table[013] = [=]() { BRA(FlagMI()); }; // BMI
+		table[014] = [=]() { BRA(FlagGE()); }; // BGE
+		table[015] = [=]() { BRA(FlagLT()); }; // BLT
+		table[016] = [=]() { BRA(FlagGT()); }; // BGT
+		table[017] = [=]() { BRA(FlagLE()); }; // BLE
 	}
 
 	// b1000: DIVU,DIVS,SBCD,OR
@@ -204,13 +244,6 @@ namespace emul::cpu68k
 		SetFlag(FLAG_S, newMode);
 	}
 
-	// 68000 only fetches Words
-	BYTE CPU68000::FetchByte()
-	{
-		throw std::exception("No Byte Access allowed");
-		return 0;
-	}
-
 	WORD CPU68000::FetchWord()
 	{
 		WORD w = m_memory.Read16be(GetCurrentAddress());
@@ -304,11 +337,19 @@ namespace emul::cpu68k
 		throw std::exception("Not implemented");
 	}
 
-	void CPU68000::InvalidOpcode()
+	void CPU68000::IllegalInstruction()
 	{
 		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%04X) at address 0x%08X", m_opcode, m_programCounter);
 		Dump();
 		throw std::exception("Unknown opcode");
+	}
+
+	// TODO: Temp
+	void CPU68000::Exception(VECTOR v)
+	{
+		LogPrintf(LOG_ERROR, "CPU: Exception (%d) at address 0x%08X", v, m_programCounter);
+
+		throw std::exception("Exception");
 	}
 
 	void CPU68000::Exec(WORD opcode)
@@ -348,10 +389,27 @@ namespace emul::cpu68k
 
 	}
 
+	void CPU68000::AdjustNZ(BYTE val)
+	{
+		SetFlag(FLAG_N, GetMSB(val));
+		SetFlag(FLAG_Z, val == 0);
+	}
+
+	void CPU68000::AdjustNZ(WORD val)
+	{
+		SetFlag(FLAG_N, GetMSB(val));
+		SetFlag(FLAG_Z, val == 0);
+	}
+
+	void CPU68000::AdjustNZ(DWORD val)
+	{
+		SetFlag(FLAG_N, GetMSB(val));
+		SetFlag(FLAG_Z, val == 0);
+	}
+
 	BYTE CPU68000::GetEAByte()
 	{
-		constexpr WORD RegisterMask = 0b000111;
-		const WORD reg = m_opcode & RegisterMask;
+		const int reg = GetOpcodeRegisterIndex();
 
 		switch (GetEAMode(m_opcode))
 		{
@@ -360,16 +418,15 @@ namespace emul::cpu68k
 		case EAMode::AddrRegDirect:
 			return GetLByte(m_reg.ADDR[reg]);
 		case EAMode::Immediate:
-			return FetchLong();
-
-		default: return GetLByte(m_memory.Read16be(GetEA(OP_BYTE)));
+			return FetchByte();
+		default:
+			return GetLByte(m_memory.Read16be(GetEA(OP_BYTE)));
 		}
 	}
 
 	WORD CPU68000::GetEAWord()
 	{
-		constexpr WORD RegisterMask = 0b000111;
-		const WORD reg = m_opcode & RegisterMask;
+		const int reg = GetOpcodeRegisterIndex();
 
 		switch (m_eaMode = GetEAMode(m_opcode))
 		{
@@ -378,16 +435,15 @@ namespace emul::cpu68k
 		case EAMode::AddrRegDirect:
 			return GetLWord(m_reg.ADDR[reg]);
 		case EAMode::Immediate:
-			return FetchLong();
-
-		default: return m_memory.Read16be(GetEA(OP_WORD));
+			return FetchWord();
+		default:
+			return m_memory.Read16be(GetEA(OP_WORD));
 		}
 	}
 
 	DWORD CPU68000::GetEALong()
 	{
-		constexpr WORD RegisterMask = 0b000111;
-		const WORD reg = m_opcode & RegisterMask;
+		const int reg = GetOpcodeRegisterIndex();
 
 		switch (m_eaMode = GetEAMode(m_opcode))
 		{
@@ -397,8 +453,8 @@ namespace emul::cpu68k
 			return m_reg.ADDR[reg];
 		case EAMode::Immediate:
 			return FetchLong();
-
-		default: return m_memory.Read32be(GetEA(OP_LONG));
+		default:
+			return m_memory.Read32be(GetEA(OP_LONG));
 		}
 	}
 
@@ -428,10 +484,7 @@ namespace emul::cpu68k
 	{
 		assert(size == 1 || size == 2 || size == 4);
 
-		constexpr WORD RegisterMask = 0b000111;
-		const WORD reg = m_opcode & RegisterMask;
-
-		DWORD& An = m_reg.ADDR[reg];
+		DWORD& An = m_reg.ADDR[GetOpcodeRegisterIndex()];
 
 		ADDRESS ea = 0;
 		switch (m_eaMode = GetEAMode(m_opcode))
@@ -439,7 +492,7 @@ namespace emul::cpu68k
 		// Register Direct modes
 		case EAMode::DataRegDirect: // Data Register Direct, EA = Dn
 		case EAMode::AddrRegDirect: // Address Register Direct, EA = An
-			InvalidOpcode();
+			IllegalInstruction();
 			break;
 
 		// Memory Address modes
@@ -489,7 +542,8 @@ namespace emul::cpu68k
 		// Program Counter with Displacement, EA = (PC) + d
 		// TODO: Program reference
 		case EAMode::ProgramCounterDisplacement:
-			NotImplementedOpcode("GetMemAddress: Program Counter with Displacement");
+			ea = m_programCounter;
+			ea += Widen(FetchWord());
 			break;
 
 		// Program Counter with Index, EA = (PC) + (Ri) + d
@@ -501,31 +555,103 @@ namespace emul::cpu68k
 		// Immediate Data
 		case EAMode::Immediate:
 		default:
-			InvalidOpcode();
+			IllegalInstruction();
 			break;
 		}
 
 		return ea & ADDRESS_MASK;
 	}
 
+	void CPU68000::LEA(DWORD& dest)
+	{
+		ADDRESS src = GetEA(OP_LONG);
+
+		switch (m_eaMode)
+		{
+		case EAMode::DataRegDirect:
+		case EAMode::AddrRegDirect:
+		case EAMode::AddrRegIndirectPostIncrement:
+		case EAMode::AddrRegIndirectPreDecrement:
+		case EAMode::Immediate:
+			IllegalInstruction();
+			return;
+		}
+
+		dest = src;
+	}
+
+	void CPU68000::MOVE_w_toSR(WORD src)
+	{
+		if (m_eaMode == EAMode::AddrRegDirect)
+		{
+			IllegalInstruction();
+		}
+
+		SetFlags(src);
+	}
+
+	void CPU68000::MOVEM_w_fromMem(WORD regs)
+	{
+		ADDRESS src = GetEA(OP_WORD);
+
+		// Set only for postincrement mode, where
+		// we need to update its value at the end
+		DWORD* addrReg = nullptr;
+
+		switch (m_eaMode)
+		{
+		case EAMode::AddrRegIndirectPostIncrement:
+			addrReg = &m_reg.ADDR[GetOpcodeRegisterIndex()];
+			break;
+		case EAMode::DataRegDirect:
+		case EAMode::AddrRegDirect:
+		case EAMode::AddrRegIndirectPreDecrement:
+		case EAMode::ProgramCounterDisplacement:
+		case EAMode::ProgramCounterIndex:
+		case EAMode::Immediate:
+			IllegalInstruction();
+			return;
+		}
+
+		DWORD* dest = m_reg.DataAddress.data();
+		for (int i = 0; i < 16; ++i, ++dest)
+		{
+			if (GetLSB(regs))
+			{
+				SetLWord(*dest, m_memory.Read16be(src));
+				src += 2;
+			}
+
+			regs >>= 1;
+		}
+
+		// Adjust the An register to point to the new address
+		if (addrReg)
+		{
+			*addrReg = src;
+		}
+	}
+
 	void CPU68000::MOVEM_l_fromMem(WORD regs)
 	{
 		ADDRESS src = GetEA(OP_LONG);
 
-		bool predecrement = false;
+		// Set only for postincrement mode, where
+		// we need to update its value at the end
+		DWORD* addrReg = nullptr;
 
 		switch (m_eaMode)
 		{
-		case EAMode::AddrRegIndirectPreDecrement:
-			ReverseBits(regs);
+		case EAMode::AddrRegIndirectPostIncrement:
+			addrReg = &m_reg.ADDR[GetOpcodeRegisterIndex()];
 			break;
 		case EAMode::DataRegDirect:
 		case EAMode::AddrRegDirect:
-		case EAMode::AddrRegIndirectPostIncrement:
+		case EAMode::AddrRegIndirectPreDecrement:
 		case EAMode::ProgramCounterDisplacement:
 		case EAMode::ProgramCounterIndex:
 		case EAMode::Immediate:
-			InvalidOpcode();
+			IllegalInstruction();
 			return;
 		}
 
@@ -540,12 +666,111 @@ namespace emul::cpu68k
 
 			regs >>= 1;
 		}
+
+		// Adjust the An register to point to the new address
+		if (addrReg)
+		{
+			*addrReg = src;
+		}
+	}
+
+	void CPU68000::BRA(bool cond)
+	{
+		DWORD rel = Widen(Widen(GetLByte(m_opcode)));
+		if (rel == 0)
+		{
+			rel = Widen(FetchWord());
+		}
+
+		if (cond)
+		{
+			m_programCounter += rel;
+			m_programCounter &= ADDRESS_MASK;
+		}
+	}
+
+	void CPU68000::ADD_b(BYTE& dest, BYTE src)
+	{
+		BYTE oldDest = dest;
+
+		WORD temp = dest + src;
+
+		dest = (BYTE)temp;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_CX, (temp > 0xFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
+	}
+
+	void CPU68000::ADD_w(WORD& dest, WORD src)
+	{
+		WORD oldDest = dest;
+
+		DWORD temp = dest + src;
+
+		dest = (WORD)temp;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_CX, (temp > 0xFFFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
+	}
+
+	void CPU68000::ADD_l(DWORD& dest, DWORD src)
+	{
+		DWORD oldDest = dest;
+
+		QWORD temp = (uint64_t)dest + src;
+
+		dest = (DWORD)temp;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_CX, (temp > 0xFFFFFFFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
+	}
+
+	void CPU68000::SUB_b(BYTE& dest, BYTE src, FLAG carryFlag)
+	{
+		BYTE oldDest = dest;
+
+		WORD temp = dest - src;
+
+		dest = (BYTE)temp;
+
+		AdjustNZ(dest);
+		SetFlag(carryFlag, (temp > 0xFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
+	}
+
+	void CPU68000::SUB_w(WORD& dest, WORD src, FLAG carryFlag)
+	{
+		WORD oldDest = dest;
+
+		DWORD temp = dest - src;
+
+		dest = (WORD)temp;
+
+		AdjustNZ(dest);
+		SetFlag(carryFlag, (temp > 0xFFFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
+	}
+
+	void CPU68000::SUB_l(DWORD& dest, DWORD src, FLAG carryFlag)
+	{
+		DWORD oldDest = dest;
+
+		QWORD temp = (QWORD)dest - src;
+
+		dest = (DWORD)temp;
+
+		AdjustNZ(dest);
+		SetFlag(carryFlag, (temp > 0xFFFFFFFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
 	}
 
 	void CPU68000::Serialize(json& to)
 	{
 		to["opcode"] = m_opcode;
-		to["dataAddress"] = m_reg.DataAddress;
+		to["registers"] = m_reg.DataAddress;
 		to["usp"] = m_reg.USP;
 		to["ssp"] = m_reg.SSP;
 		to["flags"] = m_reg.flags;
@@ -554,7 +779,7 @@ namespace emul::cpu68k
 	void CPU68000::Deserialize(const json& from)
 	{
 		m_opcode = from["opcode"];
-		m_reg.DataAddress = from["dataAddress"];
+		m_reg.DataAddress = from["registers"];
 		m_reg.USP = from["usp"];
 		m_reg.SSP = from["ssp"];
 		m_reg.flags = from["flags"];

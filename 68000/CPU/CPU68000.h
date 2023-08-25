@@ -114,14 +114,14 @@ namespace emul::cpu68k
 			SpuriousInterrupt      = 24,
 
 			// 25-31 Level 1-7 Interrupt Autovector
-			InterruptBase      = 25,
+			InterruptBase          = 25,
 
 			// 32-47 TRAP Instructions vectors (32 + n)
-			TrapBase              = 32,
+			TrapBase               = 32,
 
 			// 48-63 Reserved
 			// 64-255 User Interrupt Vectors
-			USER_INT_BASE     = 64
+			USER_INT_BASE          = 64
 		};
 
 		ADDRESS GetVectorAddress(VECTOR v) { return (ADDRESS)v * 4; }
@@ -130,12 +130,13 @@ namespace emul::cpu68k
 
 		OpcodeTable m_opcodes;
 		OpcodeTable m_subOpcodes[16];
-		void InvalidOpcode();
-		void NotImplementedOpcode(const char* name);
+		[[noreturn]] void IllegalInstruction();
+		[[noreturn]] void NotImplementedOpcode(const char* name);
 
 		cpuInfo::CPUInfo m_info;
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		WORD m_opcode = 0;
+		int GetOpcodeRegisterIndex() const { return m_opcode & 0b111; }
 
 		WORD GetSubopcode6() const { return ((m_opcode >> 6) & 63); }
 		WORD GetSubopcode4() const { return ((m_opcode >> 8) & 15); }
@@ -162,12 +163,33 @@ namespace emul::cpu68k
 			FLAG_N      = 0x0008, // 1 Negative
 			FLAG_Z		= 0x0004, // 1 Zero
 			FLAG_V		= 0x0002, // 1 Signed oVerflow
-			FLAG_C		= 0x0001  // 1 Carry (unsigned overflow)
+			FLAG_C		= 0x0001,  // 1 Carry (unsigned overflow)
+
+			// Pseudo-flags
+			FLAG_CX = FLAG_C | FLAG_X
 		};
 
 		FLAG FLAG_RESERVED_OFF = FLAG(
 			_FLAG_R5 | _FLAG_R6 | _FLAG_R7 |
 			_FLAG_R11 | FLAG_R14);
+
+		bool FlagHI() const { return !GetFlag(FLAG_C) && !GetFlag(FLAG_Z); }
+		bool FlagLS() const { return !FlagHI(); }
+		bool FlagCC() const { return !GetFlag(FLAG_C); }
+		bool FlagCS() const { return GetFlag(FLAG_C); }
+		bool FlagNE() const { return !GetFlag(FLAG_Z); }
+		bool FlagEQ() const { return GetFlag(FLAG_Z); }
+		bool FlagVC() const { return !GetFlag(FLAG_V); }
+		bool FlagVS() const { return GetFlag(FLAG_V); }
+		bool FlagPL() const { return !GetFlag(FLAG_N); }
+		bool FlagMI() const { return GetFlag(FLAG_N); }
+		bool FlagGE() const { return
+			(GetFlag(FLAG_N) && GetFlag(FLAG_V)) ||
+			(!GetFlag(FLAG_N) && !GetFlag(FLAG_V));
+		}
+		bool FlagLT() const { return !FlagGE(); }
+		bool FlagGT() const { return !FlagEQ() && FlagGE(); }
+		bool FlagLE() const { return FlagEQ() || FlagLT(); };
 
 		ADDRESS m_programCounter = 0;
 
@@ -223,14 +245,18 @@ namespace emul::cpu68k
 			SetFlag(FLAG_I2, GetBit(mask, 2));
 		}
 
-		// Not used, 16 bit fetch
-		virtual BYTE FetchByte() override;
+		virtual BYTE FetchByte() override { return GetLByte(FetchWord()); }
 		virtual WORD FetchWord() override;
 		DWORD FetchLong();
 
 		void Exec(WORD opcode);
 		void Exec(WORD group, WORD subOpcode);
 		bool InternalStep();
+
+		// Adjust negative and zero flag
+		void AdjustNZ(BYTE val);
+		void AdjustNZ(WORD val);
+		void AdjustNZ(DWORD val);
 
 		EAMode m_eaMode;
 		static EAMode GetEAMode(WORD opcode);
@@ -239,20 +265,48 @@ namespace emul::cpu68k
 		DWORD GetEALong();
 		ADDRESS GetEA(int size);
 
+		[[noreturn]] void Exception(VECTOR v);
+		void Privileged() { if (!IsSupervisorMode()) Exception(VECTOR::PrivilegeViolation); }
+
 		// Opcodes
-		void MOVEb() { NotImplementedOpcode("MOVE.b"); }
-		void MOVEl() { NotImplementedOpcode("MOVE.l"); }
-		void MOVEw() { NotImplementedOpcode("MOVE.w"); }
+
+		void LEA(DWORD& dest);
+
+		// Branching
+		void BRA(bool cond = true);
+
+		void MOVE_b() { NotImplementedOpcode("MOVE.b"); }
+		void MOVE_l() { NotImplementedOpcode("MOVE.l"); }
+		void MOVE_w() { NotImplementedOpcode("MOVE.w"); }
 		void MOVEQ() { NotImplementedOpcode("MOVEQ"); }
 		void SHIFT() { NotImplementedOpcode("Shift ops"); }
 
+		void MOVE_w_toSR(WORD src);
+
 		void MOVEM_w_toMem(WORD regs) { NotImplementedOpcode("MOVEM.w (regs->mem)"); }
 		void MOVEM_l_toMem(WORD regs) { NotImplementedOpcode("MOVEM.l (regs->mem)"); }
-		void MOVEM_w_fromMem(WORD regs) { NotImplementedOpcode("MOVEM.w (mem->regs)"); }
+		void MOVEM_w_fromMem(WORD regs);
 		void MOVEM_l_fromMem(WORD regs);
 
-		void EXTw() { NotImplementedOpcode("EXT.w"); }
-		void EXTl() { NotImplementedOpcode("EXT.l"); }
+		void EXT_w() { NotImplementedOpcode("EXT.w"); }
+		void EXT_l() { NotImplementedOpcode("EXT.l"); }
+
+		// dest' <- dest + src
+		void ADD_b(BYTE& dest, BYTE src);
+		void ADD_w(WORD& dest, WORD src);
+		void ADD_l(DWORD& dest, DWORD src);
+
+		// dest' <- dest - src
+		void SUB_b(BYTE& dest, BYTE src, FLAG carryFlag = FLAG_CX);
+		void SUB_w(WORD& dest, WORD src, FLAG carryFlag = FLAG_CX);
+		void SUB_l(DWORD& dest, DWORD src, FLAG carryFlag = FLAG_CX);
+
+		// dest by value so it's not modified
+		// (void) <- dest - src
+		// (doesn't set X flag)
+		void CMP_b(BYTE dest, BYTE src) { return SUB_b(dest, src, FLAG_C); }
+		void CMP_w(WORD dest, WORD src) { return SUB_w(dest, src, FLAG_C); }
+		void CMP_l(DWORD dest, DWORD src) { return SUB_l(dest, src, FLAG_C); }
 
 		friend class Monitor68000;
 	};
