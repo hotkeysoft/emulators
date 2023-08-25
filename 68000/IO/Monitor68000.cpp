@@ -59,10 +59,10 @@ namespace emul
 		case EAMode::AddrRegIndirect:
 			sprintf(m_text, "(A%u)", m_regNumber);
 			break;
-		case EAMode::AddrRegIndirectPostIncrement:
+		case EAMode::AddrRegIndirectPostincrement:
 			sprintf(m_text, "(A%u)+", m_regNumber);
 			break;
-		case EAMode::AddrRegIndirectPreDecrement:
+		case EAMode::AddrRegIndirectPredecrement:
 			sprintf(m_text, "-(A%u)", m_regNumber);
 			break;
 		case EAMode::AddrRegIndirectDisplacement:
@@ -674,7 +674,7 @@ namespace emul
 		else if (instr.regs)
 		{
 			// EA not decoded yet but we need to know if we're in predecrement mode
-			bool predecrement = (CPU68000::GetEAMode(data) == EAMode::AddrRegIndirectPreDecrement);
+			bool predecrement = (CPU68000::GetEAMode(data) == EAMode::AddrRegIndirectPredecrement);
 
 			// Get register bitmask
 			WORD regs = m_memory->Read16be(address);
@@ -871,7 +871,7 @@ namespace emul
 				Replace(text, "{bit}", width);
 			}
 
-			isPredecrement = (ea.GetMode() == EAMode::AddrRegIndirectPreDecrement);
+			isPredecrement = (ea.GetMode() == EAMode::AddrRegIndirectPredecrement);
 
 			ea.BuildText();
 			idxText = ea.GetText();

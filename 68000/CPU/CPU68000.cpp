@@ -467,16 +467,15 @@ namespace emul::cpu68k
 
 		if (mode != ModeMask)
 		{
-			return EAMode(mode);
+			return EAMode(1 << (mode >> 3));
 		}
-		else switch (opcode & ExtModeMask)
+		else if (WORD extMode = (opcode & ExtModeMask); extMode <= 4)
 		{
-		case 0b000: return EAMode::AbsoluteShort;
-		case 0b001: return EAMode::AbsoluteLong;
-		case 0b010: return EAMode::ProgramCounterDisplacement;
-		case 0b011: return EAMode::ProgramCounterIndex;
-		case 0b100: return EAMode::Immediate;
-		default: return EAMode::Invalid;
+			return EAMode(1 << (extMode + 7));
+		}
+		else
+		{
+			return EAMode::Invalid;
 		}
 	}
 
@@ -505,14 +504,14 @@ namespace emul::cpu68k
 
 		// Address Register Indirect with Postincrement, EA=(An), An += N
 		// TODO: Data reference
-		case EAMode::AddrRegIndirectPostIncrement:
+		case EAMode::AddrRegIndirectPostincrement:
 			ea = An;
 			An += size;
 			break;
 
 		// Address Register Indirect with Predecrement, AN -= N, EA=(An)
 		// TODO: Data reference
-		case EAMode::AddrRegIndirectPreDecrement:
+		case EAMode::AddrRegIndirectPredecrement:
 			An -= size;
 			ea = An;
 			break;
@@ -570,8 +569,8 @@ namespace emul::cpu68k
 		{
 		case EAMode::DataRegDirect:
 		case EAMode::AddrRegDirect:
-		case EAMode::AddrRegIndirectPostIncrement:
-		case EAMode::AddrRegIndirectPreDecrement:
+		case EAMode::AddrRegIndirectPostincrement:
+		case EAMode::AddrRegIndirectPredecrement:
 		case EAMode::Immediate:
 			IllegalInstruction();
 			return;
@@ -600,12 +599,12 @@ namespace emul::cpu68k
 
 		switch (m_eaMode)
 		{
-		case EAMode::AddrRegIndirectPostIncrement:
+		case EAMode::AddrRegIndirectPostincrement:
 			addrReg = &m_reg.ADDR[GetOpcodeRegisterIndex()];
 			break;
 		case EAMode::DataRegDirect:
 		case EAMode::AddrRegDirect:
-		case EAMode::AddrRegIndirectPreDecrement:
+		case EAMode::AddrRegIndirectPredecrement:
 		case EAMode::ProgramCounterDisplacement:
 		case EAMode::ProgramCounterIndex:
 		case EAMode::Immediate:
@@ -642,12 +641,12 @@ namespace emul::cpu68k
 
 		switch (m_eaMode)
 		{
-		case EAMode::AddrRegIndirectPostIncrement:
+		case EAMode::AddrRegIndirectPostincrement:
 			addrReg = &m_reg.ADDR[GetOpcodeRegisterIndex()];
 			break;
 		case EAMode::DataRegDirect:
 		case EAMode::AddrRegDirect:
-		case EAMode::AddrRegIndirectPreDecrement:
+		case EAMode::AddrRegIndirectPredecrement:
 		case EAMode::ProgramCounterDisplacement:
 		case EAMode::ProgramCounterIndex:
 		case EAMode::Immediate:

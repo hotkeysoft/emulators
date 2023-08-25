@@ -11,28 +11,45 @@
 
 namespace emul::cpu68k
 {
-	enum class EAMode
+	enum class EAMode : WORD
 	{
 		// Register Direct modes
-		DataRegDirect = 0b000000,
-		AddrRegDirect = 0b001000,
+		DataRegDirect = 1 << 0,
+		AddrRegDirect = 1 << 1,
 
 		// Memory Address modes
-		AddrRegIndirect = 0b010000,
-		AddrRegIndirectPostIncrement = 0b011000,
-		AddrRegIndirectPreDecrement = 0b100000,
-		AddrRegIndirectDisplacement = 0b101000,
-		AddrRegIndirectIndex = 0b110000,
+		AddrRegIndirect = 1 << 2,
+		AddrRegIndirectPostincrement = 1 << 3,
+		AddrRegIndirectPredecrement = 1 << 4,
+		AddrRegIndirectDisplacement = 1 << 5,
+		AddrRegIndirectIndex = 1 << 6,
 
 		// Special Address Modes (Mode=111)
 		// (need reg# for complete decoding)
-		AbsoluteShort = 0b111000,
-		AbsoluteLong = 0b111001,
-		ProgramCounterDisplacement = 0b111010,
-		ProgramCounterIndex = 0b111011,
-		Immediate = 0b111100,
+		AbsoluteShort = 1 << 7,
+		AbsoluteLong = 1 << 8,
+		ProgramCounterDisplacement = 1 << 9,
+		ProgramCounterIndex = 1 << 10,
+		Immediate = 1 << 11,
 
-		Invalid = 0b111111
+		Invalid = 0,
+
+		// Sub groups for group modes below
+		_RegDirect = DataRegDirect | AddrRegDirect,
+		_Displacement = AddrRegIndirectDisplacement | AddrRegIndirectIndex,
+		_RegIndirect = AddrRegIndirect | AddrRegIndirectPostincrement | AddrRegIndirectPredecrement | _Displacement,
+		_Absolute = AbsoluteShort | AbsoluteLong,
+		_PC = ProgramCounterDisplacement | ProgramCounterIndex,
+
+		// Address group modes for validation
+		All = _RegDirect | _RegIndirect | _Absolute | _PC | Immediate,
+		Data = DataRegDirect | _RegIndirect | _Absolute | _PC | Immediate,
+		MemoryAlterable = _RegIndirect | _Absolute,
+		DataAlterable = DataRegDirect | _RegIndirect | _Absolute,
+		Control = AddrRegIndirect | _Displacement | _Absolute | _PC,
+		ControlAlterable = AddrRegIndirect | _Displacement | _Absolute,
+		ControlAlterablePredecrement = ControlAlterable | AddrRegIndirectPredecrement,
+		ControlAlterablePostincrement = ControlAlterable | AddrRegIndirectPostincrement,
 	};
 
 	static const size_t CPU68000_ADDRESS_BITS = 24;
