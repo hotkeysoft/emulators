@@ -47,6 +47,7 @@ namespace emul::cpu68k
 		// Address group modes for validation
 		GroupAll = _RegDirect | _RegIndirect | _Absolute | _PC | Immediate,
 		GroupData = DRegDirect | _RegIndirect | _Absolute | _PC | Immediate,
+		GroupDataNoImm = DRegDirect | _RegIndirect | _Absolute | _PC,
 		GroupMemAlt = _RegIndirect | _Absolute,
 		GroupDataAlt = DRegDirect | _RegIndirect | _Absolute,
 		GroupDataAddrAlt = _RegDirect | _RegIndirect | _Absolute,
@@ -373,9 +374,28 @@ namespace emul::cpu68k
 		void MOVEMwFromEA(WORD regs);
 		void MOVEMlFromEA(WORD regs);
 
+		void MOVEPwToReg(WORD& dest) { NotImplementedOpcode("MOVEP.w (<ea> -> reg)"); }
+		void MOVEPlToReg(DWORD& dest) { NotImplementedOpcode("MOVEP.l (<ea> -> reg)"); }
+
+		void MOVEPwFromReg(WORD src) { NotImplementedOpcode("MOVEP.w (reg -> <ea>)"); }
+		void MOVEPlFromReg(DWORD src) { NotImplementedOpcode("MOVEP.l (reg -> <ea>)"); }
+
 		void EXGl() { NotImplementedOpcode("EXG.l"); }
 
-		// Logic
+		// Bit, Logic
+		void BTSTimm();
+		void BCHGimm() { BitOps(BitOp::CHANGE); }
+		void BCLRimm() { BitOps(BitOp::CLEAR); }
+		void BSETimm() { BitOps(BitOp::SET); }
+
+		enum class BitOp { SET, CLEAR, CHANGE };
+		void BitOps(BitOp bitop);
+
+		void BTST(DWORD src) { NotImplementedOpcode("BTST Dn, <ea>"); }
+		void BCHG(DWORD src) { NotImplementedOpcode("BCHG Dn, <ea>"); }
+		void BCLR(DWORD src) { NotImplementedOpcode("BCLR Dn, <ea>"); }
+		void BSET(DWORD src) { NotImplementedOpcode("BSET Dn, <ea>"); }
+
 		void TSTb();
 		void TSTw();
 		void TSTl();
@@ -391,6 +411,10 @@ namespace emul::cpu68k
 		void SHIFT() { NotImplementedOpcode("Shift ops"); }
 
 		// Arithmetic
+
+		void CLRb();
+		void CLRw();
+		void CLRl();
 
 		void EXTw() { NotImplementedOpcode("EXT.w"); }
 		void EXTl() { NotImplementedOpcode("EXT.l"); }
