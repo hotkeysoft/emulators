@@ -1,5 +1,5 @@
 #pragma once
-#include "Device6522.h"
+#include <Hardware/Device6522.h>
 
 namespace joy { class DeviceJoystick; }
 namespace joy { class DeviceJoystickDigital; }
