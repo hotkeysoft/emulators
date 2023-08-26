@@ -1,5 +1,12 @@
 #pragma once
 
+#ifdef _DEBUG
+// This code is supposed to be unreachable, so assert
+# define NODEFAULT   assert(0); throw("Unreachable code");
+#else
+# define NODEFAULT   __assume(0)
+#endif
+
 #define PRINTF_BIN_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
 #define PRINTF_BYTE_TO_BIN_INT8(i)    \
     (((i) & 0x80ll) ? '1' : '0'), \

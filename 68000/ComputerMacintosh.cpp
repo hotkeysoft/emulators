@@ -15,7 +15,7 @@ namespace emul
 
 	ComputerMacintosh::ComputerMacintosh() :
 		Logger("ComputerMac"),
-		ComputerBase(m_memory),
+		ComputerBase(m_memory, 4096),
 		m_baseRAM("RAM", 0x20000, emul::MemoryType::RAM),
 		m_rom("ROM", 0x10000, emul::MemoryType::ROM)
 	{
@@ -30,6 +30,18 @@ namespace emul
 		m_rom.LoadFromFile("./data/Macintosh/mac.128k.bin");
 		m_memory.Allocate(&m_rom, 0x400000);
 		m_memory.MapWindow(0x400000, 0, 0x10000);
+
+		m_memory.Allocate(&m_baseRAM, 0x600000);
+
+		// Temp RAM blocks instead of io to check instructions
+		MemoryBlock* SCCr = new MemoryBlock("SCCr", 0x100000);
+		SCCr->Clear(0x90);
+		m_memory.Allocate(SCCr, 0x900000);
+
+		m_via.EnableLog(CONFIG().GetLogLevel("via"));
+		m_via.Init();
+		m_ioVIA.Init(&m_via);
+		m_memory.Allocate(&m_ioVIA, 0xE80000);
 
 		InitInputs(CPU_CLK);
 		InitVideo();

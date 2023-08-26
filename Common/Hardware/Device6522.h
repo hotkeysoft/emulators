@@ -41,7 +41,7 @@ namespace via
 	public:
 		VIAPort(std::string id);
 
-		void Init(Device6522* parent, bool isPortB);
+		void Init(Device6522* parent, bool isPortB, bool initIO = true);
 
 		void Reset();
 
@@ -64,9 +64,6 @@ namespace via
 		void SetC1InterruptActiveEdge(ActiveEdge edge);
 		void SetC2Operation(C2Operation op);
 
-	protected:
-		Device6522* m_parent = nullptr;
-
 		// CPU IO Access
 		// -------------
 
@@ -82,6 +79,9 @@ namespace via
 		// F - Port A: ORA/IRA with no handshake
 		BYTE ReadInputRegisterNoHandshake();
 		void WriteOutputRegisterNoHandshake(BYTE value);
+
+	protected:
+		Device6522* m_parent = nullptr;
 
 		// Registers
 		// ---------
@@ -114,7 +114,7 @@ namespace via
 		Device6522(Device6522&&) = delete;
 		Device6522& operator=(Device6522&&) = delete;
 
-		virtual void Init();
+		virtual void Init() { Init(true); }
 		virtual void Reset();
 		virtual void EnableLog(SEVERITY minSev = LOG_INFO) override;
 
@@ -132,6 +132,8 @@ namespace via
 		virtual void Deserialize(const json& from) override;
 
 	protected:
+		void Init(bool initIO);
+
 		// 4 - T1C-L: T1 Low-Order Counter
 		BYTE ReadT1CounterL();
 

@@ -194,6 +194,7 @@
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\EdgeDetectLatch.h" />
     <ClInclude Include="..\Common\FileUtil.h" />
+    <ClInclude Include="..\Common\Hardware\Device6522.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
     <ClInclude Include="..\Common\IO\InputEventHandler.h" />
@@ -214,6 +215,8 @@
     <ClInclude Include="Computer68000.h" />
     <ClInclude Include="ComputerMacintosh.h" />
     <ClInclude Include="CPU\CPU68000.h" />
+    <ClInclude Include="Hardware\Device6522Mac.h" />
+    <ClInclude Include="Hardware\IOBlockVIAMac.h" />
     <ClInclude Include="IO\Monitor68000.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -233,6 +236,7 @@
     <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp" />
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\FileUtil.cpp" />
+    <ClCompile Include="..\Common\Hardware\Device6522.cpp" />
     <ClCompile Include="..\Common\IO\Console.cpp" />
     <ClCompile Include="..\Common\IO\InputEvents.cpp" />
     <ClCompile Include="..\Common\Logger.cpp" />

@@ -61,6 +61,15 @@
     <Filter Include="config">
       <UniqueIdentifier>{27e88852-7e7c-4792-8318-5fe5b6b9e398}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Hardware">
+      <UniqueIdentifier>{bd336089-ca99-4a8d-8912-1187c78acef9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Hardware">
+      <UniqueIdentifier>{81252ca2-1318-4f46-9bf9-a61468f23a3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Hardware">
+      <UniqueIdentifier>{88400878-ba7f-4601-8f2e-a9a30284d9b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDLPath.props" />
@@ -192,6 +201,15 @@
     <ClInclude Include="ComputerMacintosh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\Device6522Mac.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Hardware\Device6522.h">
+      <Filter>Common\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\IOBlockVIAMac.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">
@@ -286,6 +304,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\CPU\CPUCommon.cpp">
       <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Hardware\Device6522.cpp">
+      <Filter>Common\Hardware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

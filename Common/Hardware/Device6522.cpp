@@ -19,7 +19,7 @@ namespace via
 		case C2Operation::OUT_PULSE:       return "OUTPUT, Pulse";
 		case C2Operation::OUT_LOW:         return "OUTPUT, LOW";
 		case C2Operation::OUT_HIGH:        return "OUTPUT, HIGH";
-		default: throw std::exception("Not possible");
+		default: NODEFAULT;
 		}
 	}
 
@@ -35,7 +35,7 @@ namespace via
 		case ShiftRegisterMode::SHIFT_OUT_T2:      return "OUTPUT, T2";
 		case ShiftRegisterMode::SHIFT_OUT_CLK:     return "OUTPUT, CLK";
 		case ShiftRegisterMode::SHIFT_OUT_EXTCLK:  return "OUTPUT, EXT CLK";
-		default: throw std::exception("Not possible");
+		default: NODEFAULT;
 		}
 	}
 
@@ -45,24 +45,27 @@ namespace via
 	{
 	}
 
-	void VIAPort::Init(Device6522* parent, bool isPortB)
+	void VIAPort::Init(Device6522* parent, bool isPortB, bool initIO)
 	{
 		assert(parent);
 		m_parent = parent;
 
 		Reset();
 
-		WORD offset = isPortB ? 0 : 1;
-		Connect(0 + offset, static_cast<IOConnector::READFunction>(&VIAPort::ReadInputRegister));
-		Connect(0 + offset, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteOutputRegister));
-
-		Connect(2 + offset, static_cast<IOConnector::READFunction>(&VIAPort::ReadDataDirectionRegister));
-		Connect(2 + offset, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteDataDirectionRegister));
-
-		if (!isPortB)
+		if (initIO)
 		{
-			Connect(0xF, static_cast<IOConnector::READFunction>(&VIAPort::ReadInputRegisterNoHandshake));
-			Connect(0xF, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteOutputRegisterNoHandshake));
+			WORD offset = isPortB ? 0 : 1;
+			Connect(0 + offset, static_cast<IOConnector::READFunction>(&VIAPort::ReadInputRegister));
+			Connect(0 + offset, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteOutputRegister));
+
+			Connect(2 + offset, static_cast<IOConnector::READFunction>(&VIAPort::ReadDataDirectionRegister));
+			Connect(2 + offset, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteDataDirectionRegister));
+
+			if (!isPortB)
+			{
+				Connect(0xF, static_cast<IOConnector::READFunction>(&VIAPort::ReadInputRegisterNoHandshake));
+				Connect(0xF, static_cast<IOConnector::WRITEFunction>(&VIAPort::WriteOutputRegisterNoHandshake));
+			}
 		}
 	}
 
@@ -189,40 +192,43 @@ namespace via
 	{
 	}
 
-	void Device6522::Init()
+	void Device6522::Init(bool initIO)
 	{
 		Reset();
 
-		m_portA.Init(this, false);
-		m_portB.Init(this, true);
+		m_portA.Init(this, false, initIO);
+		m_portB.Init(this, true, initIO);
 
-		// Attach connections made in children objects
-		Attach(m_portA);
-		Attach(m_portB);
+		if (initIO)
+		{
+			// Attach connections made in children objects
+			Attach(m_portA);
+			Attach(m_portB);
 
-		Connect(0x4, static_cast<IOConnector::READFunction>(&Device6522::ReadT1CounterL));
-		Connect(0x5, static_cast<IOConnector::READFunction>(&Device6522::ReadT1CounterH));
-		Connect(0x6, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchL));
-		Connect(0x7, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchH));
-		Connect(0x8, static_cast<IOConnector::READFunction>(&Device6522::ReadT2CounterL));
-		Connect(0x9, static_cast<IOConnector::READFunction>(&Device6522::ReadT2CounterH));
-		Connect(0xA, static_cast<IOConnector::READFunction>(&Device6522::ReadSR));
-		Connect(0xB, static_cast<IOConnector::READFunction>(&Device6522::ReadACR));
-		Connect(0xC, static_cast<IOConnector::READFunction>(&Device6522::ReadPCR));
-		Connect(0xD, static_cast<IOConnector::READFunction>(&Device6522::ReadIFR));
-		Connect(0xE, static_cast<IOConnector::READFunction>(&Device6522::ReadIER));
+			Connect(0x4, static_cast<IOConnector::READFunction>(&Device6522::ReadT1CounterL));
+			Connect(0x5, static_cast<IOConnector::READFunction>(&Device6522::ReadT1CounterH));
+			Connect(0x6, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchL));
+			Connect(0x7, static_cast<IOConnector::READFunction>(&Device6522::ReadT1LatchH));
+			Connect(0x8, static_cast<IOConnector::READFunction>(&Device6522::ReadT2CounterL));
+			Connect(0x9, static_cast<IOConnector::READFunction>(&Device6522::ReadT2CounterH));
+			Connect(0xA, static_cast<IOConnector::READFunction>(&Device6522::ReadSR));
+			Connect(0xB, static_cast<IOConnector::READFunction>(&Device6522::ReadACR));
+			Connect(0xC, static_cast<IOConnector::READFunction>(&Device6522::ReadPCR));
+			Connect(0xD, static_cast<IOConnector::READFunction>(&Device6522::ReadIFR));
+			Connect(0xE, static_cast<IOConnector::READFunction>(&Device6522::ReadIER));
 
-		Connect(0x4, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchL));
-		Connect(0x5, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1CounterH));
-		Connect(0x6, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchL));
-		Connect(0x7, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchH));
-		Connect(0x8, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2LatchL));
-		Connect(0x9, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2CounterH));
-		Connect(0xA, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteSR));
-		Connect(0xB, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteACR));
-		Connect(0xC, static_cast<IOConnector::WRITEFunction>(&Device6522::WritePCR));
-		Connect(0xD, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteIFR));
-		Connect(0xE, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteIER));
+			Connect(0x4, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchL));
+			Connect(0x5, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1CounterH));
+			Connect(0x6, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchL));
+			Connect(0x7, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT1LatchH));
+			Connect(0x8, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2LatchL));
+			Connect(0x9, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteT2CounterH));
+			Connect(0xA, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteSR));
+			Connect(0xB, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteACR));
+			Connect(0xC, static_cast<IOConnector::WRITEFunction>(&Device6522::WritePCR));
+			Connect(0xD, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteIFR));
+			Connect(0xE, static_cast<IOConnector::WRITEFunction>(&Device6522::WriteIER));
+		}
 	}
 
 	void Device6522::Reset()

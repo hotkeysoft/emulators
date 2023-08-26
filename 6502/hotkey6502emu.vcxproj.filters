@@ -156,9 +156,6 @@
     <ClInclude Include="..\Common\CPU\IOConnector.h">
       <Filter>Common\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="Hardware\Device6522.h">
-      <Filter>Header Files\Hardware</Filter>
-    </ClInclude>
     <ClInclude Include="Hardware\Device6522PET.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
@@ -237,6 +234,9 @@
     <ClInclude Include="..\Common\IO\InputEvents.h">
       <Filter>Common\IO</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Hardware\Device6522.h">
+      <Filter>Common\Hardware</Filter>
+    </ClInclude>
     <ClInclude Include="..\Common\Hardware\Device6520.h">
       <Filter>Common\Hardware</Filter>
     </ClInclude>
@@ -305,9 +305,6 @@
     <ClCompile Include="..\Common\CPU\IOConnector.cpp">
       <Filter>Common\CPU</Filter>
     </ClCompile>
-    <ClCompile Include="Hardware\Device6522.cpp">
-      <Filter>Source Files\Hardware</Filter>
-    </ClCompile>
     <ClCompile Include="Video\VideoPET2001.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
@@ -373,6 +370,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\IO\InputEvents.cpp">
       <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Hardware\Device6522.cpp">
+      <Filter>Common\Hardware</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\Hardware\Device6520.cpp">
       <Filter>Common\Hardware</Filter>

@@ -3,6 +3,8 @@
 #include <Computer/ComputerBase.h>
 #include "IO/InputEvents.h"
 #include <Video/VideoNull.h>
+#include "Hardware/Device6522Mac.h"
+#include "Hardware/IOBlockVIAMac.h"
 
 namespace emul
 {
@@ -31,5 +33,9 @@ namespace emul
 
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;
+
+		via::IOBlockVIAMac m_ioVIA;
+
+		via::Device6522Mac m_via;
 	};
 }
