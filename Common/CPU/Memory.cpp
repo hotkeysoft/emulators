@@ -356,6 +356,12 @@ namespace emul
 		Write8(address + 1, GetLByte(value));
 	}
 
+	void Memory::Write32be(ADDRESS address, DWORD value)
+	{
+		Write16(address, GetHWord(value));
+		Write16(address + 2, GetLWord(value));
+	}
+
 	void Memory::Dump(ADDRESS start, DWORD len, const char* outFile)
 	{
 		const MemorySlot& slot = FindBlock(start);

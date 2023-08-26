@@ -187,7 +187,8 @@ namespace emul::cpu68k
 			FLAG_C		= 0x0001,  // 1 Carry (unsigned overflow)
 
 			// Pseudo-flags
-			FLAG_CX = FLAG_C | FLAG_X
+			FLAG_CX = FLAG_C | FLAG_X,
+			FLAG_VC = FLAG_V | FLAG_C
 		};
 
 		FLAG FLAG_RESERVED_OFF = FLAG(
@@ -232,6 +233,9 @@ namespace emul::cpu68k
 			BYTE& D6b = BYTE_REG(DATA, 6);
 			BYTE& D7b = BYTE_REG(DATA, 7);
 
+			BYTE& GetDATAb(int index) { return BYTE_REG(DATA, index); }
+			BYTE& GetADDRb(int index) { return BYTE_REG(ADDR, index); }
+
 			WORD& D0w = WORD_REG(DATA, 0); WORD& A0w = WORD_REG(ADDR, 0);
 			WORD& D1w = WORD_REG(DATA, 1); WORD& A1w = WORD_REG(ADDR, 1);
 			WORD& D2w = WORD_REG(DATA, 2); WORD& A2w = WORD_REG(ADDR, 2);
@@ -240,6 +244,9 @@ namespace emul::cpu68k
 			WORD& D5w = WORD_REG(DATA, 5); WORD& A5w = WORD_REG(ADDR, 5);
 			WORD& D6w = WORD_REG(DATA, 6); WORD& A6w = WORD_REG(ADDR, 6);
 			WORD& D7w = WORD_REG(DATA, 7); WORD& A7w = WORD_REG(ADDR, 7);
+
+			WORD& GetDATAw(int index) { return WORD_REG(DATA, index); }
+			WORD& GetADDRw(int index) { return WORD_REG(ADDR, index); }
 
 			DWORD& D0 = DATA[0]; DWORD& A0 = ADDR[0];
 			DWORD& D1 = DATA[1]; DWORD& A1 = ADDR[1];
@@ -301,8 +308,8 @@ namespace emul::cpu68k
 		static bool IsWordAligned(ADDRESS addr) { return !GetLSB(addr); }
 
 		void WriteB(ADDRESS dest, BYTE value) { m_memory.Write8(dest, value); }
-		void WriteW(ADDRESS dest, BYTE value) { Aligned(dest); m_memory.Write16be(dest, value); }
-		//void WriteL(ADDRESS dest, BYTE value) { Aligned(dest); m_memory.Write32be(dest, value); }
+		void WriteW(ADDRESS dest, WORD value) { Aligned(dest); m_memory.Write16be(dest, value); }
+		void WriteL(ADDRESS dest, DWORD value) { Aligned(dest); m_memory.Write32be(dest, value); }
 		BYTE ReadB(ADDRESS src) const { return m_memory.Read8(src); }
 		WORD ReadW(ADDRESS src) { Aligned(src); return m_memory.Read16be(src); }
 		DWORD ReadL(ADDRESS src) { Aligned(src); return m_memory.Read32be(src); }
@@ -348,49 +355,80 @@ namespace emul::cpu68k
 		void BRA(bool cond = true);
 		void JMP();
 
-		void MOVE_b();
-		void MOVE_l() { NotImplementedOpcode("MOVE.l"); }
-		void MOVE_w() { NotImplementedOpcode("MOVE.w"); }
+		void DBccw(bool cond);
+		void Sccb(bool cond) { NotImplementedOpcode("Scc.b <ea>"); }
+
+		// MOVE
+
+		void MOVEb();
+		void MOVEw();
+		void MOVEl();
+
 		void MOVEQ();
-		void SHIFT() { NotImplementedOpcode("Shift ops"); }
 
 		void MOVE_w_toSR(WORD src);
 
-		void MOVEM_w_toEA(WORD regs) { NotImplementedOpcode("MOVEM.w (regs -> <ea>)"); }
-		void MOVEM_l_toEA(WORD regs) { NotImplementedOpcode("MOVEM.l (regs -> <ea>)"); }
-		void MOVEM_w_fromEA(WORD regs);
-		void MOVEM_l_fromEA(WORD regs);
+		void MOVEMwToEA(WORD regs) { NotImplementedOpcode("MOVEM.w (regs -> <ea>)"); }
+		void MOVEMlToEA(WORD regs) { NotImplementedOpcode("MOVEM.l (regs -> <ea>)"); }
+		void MOVEMwFromEA(WORD regs);
+		void MOVEMlFromEA(WORD regs);
 
-		void EXT_w() { NotImplementedOpcode("EXT.w"); }
-		void EXT_l() { NotImplementedOpcode("EXT.l"); }
+		void EXGl() { NotImplementedOpcode("EXG.l"); }
 
 		// Logic
-		void ANDb_fromEA(BYTE& dest);
-		void ANDw_fromEA(WORD& dest);
-		void ANDl_fromEA(DWORD& dest);
+		void TSTb();
+		void TSTw();
+		void TSTl();
 
-		void ANDb_toEA(BYTE src);
-		void ANDw_toEA(WORD src);
-		void ANDl_toEA(DWORD src);
+		void ANDbToEA(BYTE src);
+		void ANDwToEA(WORD src);
+		void ANDlToEA(DWORD src);
+
+		void ANDb(BYTE& dest, BYTE src);
+		void ANDw(WORD& dest, WORD src);
+		void ANDl(DWORD& dest, DWORD src);
+
+		void SHIFT() { NotImplementedOpcode("Shift ops"); }
 
 		// Arithmetic
 
+		void EXTw() { NotImplementedOpcode("EXT.w"); }
+		void EXTl() { NotImplementedOpcode("EXT.l"); }
+
+		void ABCDb() { NotImplementedOpcode("ABCD.b"); }
+
+		void ADDXb() { NotImplementedOpcode("ADDX.b"); }
+		void ADDXw() { NotImplementedOpcode("ADDX.w"); }
+		void ADDXl() { NotImplementedOpcode("ADDX.l"); }
+
+		void ADDQb(BYTE imm);
+		void ADDQw(WORD imm);
+		void ADDQl(DWORD imm);
+
+		void SUBQb(BYTE imm);
+		void SUBQw(WORD imm);
+		void SUBQl(DWORD imm);
+
+		void ADDbToEA(BYTE src);
+		void ADDwToEA(WORD src);
+		void ADDlToEA(DWORD src);
+
 		// dest' <- dest + src
-		void ADD_b(BYTE& dest, BYTE src);
-		void ADD_w(WORD& dest, WORD src);
-		void ADD_l(DWORD& dest, DWORD src);
+		void ADDb(BYTE& dest, BYTE src);
+		void ADDw(WORD& dest, WORD src);
+		void ADDl(DWORD& dest, DWORD src);
 
 		// dest' <- dest - src
-		void SUB_b(BYTE& dest, BYTE src, FLAG carryFlag = FLAG_CX);
-		void SUB_w(WORD& dest, WORD src, FLAG carryFlag = FLAG_CX);
-		void SUB_l(DWORD& dest, DWORD src, FLAG carryFlag = FLAG_CX);
+		void SUBb(BYTE& dest, BYTE src, FLAG carryFlag = FLAG_CX);
+		void SUBw(WORD& dest, WORD src, FLAG carryFlag = FLAG_CX);
+		void SUBl(DWORD& dest, DWORD src, FLAG carryFlag = FLAG_CX);
 
 		// dest by value so it's not modified
 		// (void) <- dest - src
 		// (doesn't set X flag)
-		void CMP_b(BYTE dest, BYTE src) { return SUB_b(dest, src, FLAG_C); }
-		void CMP_w(WORD dest, WORD src) { return SUB_w(dest, src, FLAG_C); }
-		void CMP_l(DWORD dest, DWORD src) { return SUB_l(dest, src, FLAG_C); }
+		void CMPb(BYTE dest, BYTE src) { return SUBb(dest, src, FLAG_C); }
+		void CMPw(WORD dest, WORD src) { return SUBw(dest, src, FLAG_C); }
+		void CMPl(DWORD dest, DWORD src) { return SUBl(dest, src, FLAG_C); }
 
 		friend class Monitor68000;
 	};

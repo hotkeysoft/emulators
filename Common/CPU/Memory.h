@@ -58,6 +58,7 @@ namespace emul
 		void Write8(ADDRESS address, BYTE value);
 		void Write16(ADDRESS address, WORD value);
 		void Write16be(ADDRESS address, WORD value); // big-endian
+		void Write32be(ADDRESS address, DWORD value); // big-endian
 
 		void Clear(BYTE filler = 0);
 
