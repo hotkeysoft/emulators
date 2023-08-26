@@ -372,6 +372,8 @@ int main(int argc, char* argv[])
 	std::string logFileName = CONFIG().GetValueStr("debug", "logfile");
 	if (logFileName.size())
 	{
+		Logger::EnableColors(false);
+
 		fprintf(stdout, "Logging to output file: %s\n", logFileName.c_str());
 
 		bool flush = CONFIG().GetValueBool("debug", "logfile.flush");

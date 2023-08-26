@@ -19,6 +19,8 @@ public:
 
 	virtual void EnableLog(SEVERITY minSev = LOG_INFO);
 
+	static void EnableColors(bool enable = true) { m_enableColors = enable; }
+
 	static void RegisterLogCallback(void(*)(const char *));
 
 protected:
@@ -39,7 +41,7 @@ private:
 	std::string m_moduleID;
 
 	static ModuleList m_moduleList;
-
+	static bool m_enableColors;
 	static char m_logBuffer[1024];
 
 	static void(*m_logCallbackFunc)(const char *str);

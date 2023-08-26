@@ -2,8 +2,10 @@
 #include "Logger.h"
 
 void(*Logger::m_logCallbackFunc)(const char *str);
+bool Logger::m_enableColors = true;
 char Logger::m_logBuffer[1024];
 Logger::ModuleList Logger::m_moduleList;
+
 
 Logger::Logger(const char* moduleID) :
 	m_moduleID(moduleID),
@@ -36,41 +38,84 @@ void Logger::RegisterLogCallback(void(*logCallbackFunc)(const char *))
 	m_logCallbackFunc = logCallbackFunc;
 }
 
+constexpr const char* BLK = "\x1B[0;30m";
+constexpr const char* RED = "\x1B[0;31m";
+constexpr const char* GRN = "\x1B[0;32m";
+constexpr const char* YEL = "\x1B[0;33m";
+constexpr const char* BLU = "\x1B[0;34m";
+constexpr const char* MAG = "\x1B[0;35m";
+constexpr const char* CYN = "\x1B[0;36m";
+constexpr const char* WHT = "\x1B[0;37m";
+
+constexpr const char* HBLK = "\x1B[0;90m";
+constexpr const char* HRED = "\x1B[0;91m";
+constexpr const char* HGRN = "\x1B[0;92m";
+constexpr const char* HYEL = "\x1B[0;93m";
+constexpr const char* HBLU = "\x1B[0;94m";
+constexpr const char* HMAG = "\x1B[0;95m";
+constexpr const char* HCYN = "\x1B[0;96m";
+constexpr const char* HWHT = "\x1B[0;97m";
+constexpr int COLOR_SIZE = 7;
+
+constexpr const char* COLOR_RESET = "\x1B[0m";
+constexpr int COLOR_RESET_SIZE = 4;
+
+constexpr const char* LOG_LEVEL_STRINGS[] = { "TRC", "DBG", "INF", "WRN", "ERR" };
+constexpr const char* LOG_LEVEL_COLORS[] = { HBLK, CYN, GRN, YEL, RED };
+
+static void AddStr(char*& dest, const std::string& s, const char* color = nullptr)
+{
+	if (color)
+	{
+		memcpy(dest, color, COLOR_SIZE);
+		dest += COLOR_SIZE;
+	}
+	const auto size = s.size();
+	memcpy(dest, s.c_str(), size);
+	dest+= size;
+	if (color)
+	{
+		memcpy(dest, COLOR_RESET, COLOR_RESET_SIZE);
+		dest += COLOR_RESET_SIZE;
+	}
+}
+
+static void AddChar(char*& dest, char ch)
+{
+	*(dest++) = ch;
+}
+
 void Logger::_LogPrintf(SEVERITY sev, const char *msg, ...) const
 {
-	va_list args;
-	va_start(args, msg);
-
-	m_logBuffer[0] = 0;
-	char* pos = m_logBuffer + sprintf(m_logBuffer, "[%s]", m_moduleID.c_str());
-
 	switch (sev)
 	{
 	case LOG_TRACE:
-		pos = strcat(pos, "[TRC]") + 5;
-		break;
 	case LOG_DEBUG:
-		pos = strcat(pos, "[DBG]") + 5;
-		break;
 	case LOG_INFO:
-		pos = strcat(pos, "[INF]") + 5;
-		break;
 	case LOG_WARNING:
-		pos = strcat(pos, "[WRN]") + 5;
-		break;
 	case LOG_ERROR:
-		pos = strcat(pos, "[ERR]") + 5;
 		break;
-	case LOG_OFF: // Should not really be used...
-		pos = strcat(pos, "[OFF]") + 5;
-		break;
+	default:
+		throw std::exception("Invalid log level");
 	}
 
-	vsprintf(pos, msg, args);
+	va_list args;
+	va_start(args, msg);
+
+	char* pos = m_logBuffer;
+	AddChar(pos, '[');
+	AddStr(pos, m_moduleID, m_enableColors ? HBLK : nullptr);
+	AddChar(pos, ']');
+	AddChar(pos, '[');
+	AddStr(pos, LOG_LEVEL_STRINGS[int(sev)], m_enableColors ? LOG_LEVEL_COLORS[int(sev)] : nullptr);
+	AddChar(pos, ']');
+
+	pos += vsprintf(pos, msg, args);
 
 	va_end(args);
 
-	strcat(m_logBuffer, "\n");
+	AddChar(pos, '\n');
+	AddChar(pos, '\0');
 
 	if (m_logCallbackFunc)
 	{
