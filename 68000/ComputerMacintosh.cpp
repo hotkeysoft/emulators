@@ -18,8 +18,8 @@ namespace emul
 	ComputerMacintosh::ComputerMacintosh() :
 		Logger("ComputerMac"),
 		ComputerBase(m_memory, 4096),
-		m_baseRAM("RAM", 0x20000, emul::MemoryType::RAM),
-		m_rom("ROM", 0x10000, emul::MemoryType::ROM),
+		m_baseRAM("RAM", RAM_SIZE, emul::MemoryType::RAM),
+		m_rom("ROM", ROM_SIZE, emul::MemoryType::ROM),
 		m_sound(m_memory)
 	{
 	}
@@ -31,8 +31,6 @@ namespace emul
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
 		m_rom.LoadFromFile("./data/Macintosh/mac.128k.bin");
-		m_memory.Allocate(&m_rom, 0x400000);
-		m_memory.MapWindow(0x400000, 0, 0x10000);
 
 		m_memory.Allocate(&m_baseRAM, 0x600000);
 		// RAM mirror images
@@ -48,6 +46,7 @@ namespace emul
 
 		m_via.EnableLog(CONFIG().GetLogLevel("via"));
 		m_via.Init();
+		m_via.SetEventHandler(this);
 		m_ioVIA.Init(&m_via);
 		m_memory.Allocate(&m_ioVIA, 0xE80000);
 
@@ -57,6 +56,17 @@ namespace emul
 		SOUND().SetBaseClock(CPU_CLK);
 		m_sound.SetBufferBase(0x600000 + 0x1FD00);
 		m_sound.ResetBufferPos();
+		m_sound.Enable(true);
+	}
+
+	void ComputerMacintosh::Reset()
+	{
+		// Neds to be done before CPU reset so that memory is in the right place
+		SetROMOverlayMode(true);
+
+		ComputerBase::Reset();
+
+		m_via.Reset();
 	}
 
 	void ComputerMacintosh::InitCPU(const char* cpuid)
@@ -76,18 +86,92 @@ namespace emul
 		GetVideo().SetEventHandler(this);
 	}
 
+	void ComputerMacintosh::SetROMOverlayMode(bool overlay)
+	{
+		LogPrintf(LOG_INFO, "Set ROM Overlay mode: [%s]", overlay ? "OVERLAY" : "NORMAL");
+		m_ramBaseAddress = overlay ? RAM_BASE_OVERLAY : RAM_BASE;
+
+		LogPrintf(LOG_DEBUG, "Deallocate RAM and ROM blocks");
+		m_memory.Free(&m_baseRAM);
+		m_memory.Free(&m_rom);
+
+		// Image at 400000 is always present
+		LogPrintf(LOG_DEBUG, "Allocate ROM at [%06X]", ROM_BASE);
+		m_memory.Allocate(&m_rom, ROM_BASE);
+
+		// 15 mirror images right above
+		for (int i = 1; i < 16; ++i)
+		{
+			m_memory.MapWindow(ROM_BASE, ROM_BASE + (i * ROM_SIZE), ROM_SIZE);
+		}
+
+		if (overlay)
+		{
+			LogPrintf(LOG_DEBUG, "Overlay ROM at [%06X]", ROM_BASE_OVERLAY);
+			// Overlay 16 images starting at bottom of memory
+			for (int i = 0; i < 16; ++i)
+			{
+				m_memory.MapWindow(ROM_BASE, ROM_BASE_OVERLAY + (i * ROM_SIZE), ROM_SIZE);
+			}
+		}
+
+		// Another 16 shadow images of the ROM, at 200000 or 600000
+		ADDRESS shadowROMBase = overlay ? ROM_MIRROR_BASE_OVERLAY : ROM_MIRROR_BASE;
+		LogPrintf(LOG_DEBUG, "Shadow ROM at [%06X]", shadowROMBase);
+		for (int i = 0; i < 16; ++i)
+		{
+			m_memory.MapWindow(ROM_BASE, shadowROMBase + (i * ROM_SIZE), ROM_SIZE);
+		}
+
+		ADDRESS ramBase = overlay ? RAM_BASE_OVERLAY : RAM_BASE;
+		LogPrintf(LOG_DEBUG, "Allocate RAM at [%06X]", ramBase);
+		m_memory.Allocate(&m_baseRAM, ramBase, RAM_SIZE);
+		// 15 mirror images right above
+		// TODO: Number will probably change on 512K config
+		for (int i = 1; i < 16; ++i)
+		{
+			m_memory.MapWindow(ramBase, ramBase + (i * RAM_SIZE), RAM_SIZE);
+		}
+	}
+
 	void ComputerMacintosh::OnHBlankStart()
 	{
-		m_via.SetHSync(false);
-		m_via.SetHSync(true);
+		m_via.SetHBlank(false);
+		m_via.SetHBlank(true);
 		m_sound.BufferWord();
 	}
 
 	void ComputerMacintosh::OnVBlankStart()
 	{
 		m_sound.ResetBufferPos();
-		m_via.SetVSync(false);
-		m_via.SetVSync(true);
+		m_via.SetVBlank(false);
+		m_via.SetVBlank(true);
+	}
+
+	void ComputerMacintosh::OnSoundResetChange(bool reset)
+	{
+		LogPrintf(LOG_INFO, "Set Sound Reset: %d", reset);
+		m_sound.Enable(!reset);
+	}
+	void ComputerMacintosh::OnSoundBufferChange(bool mainBuffer)
+	{
+		LogPrintf(LOG_INFO, "Set Sound Buffer: [%s]", mainBuffer ? "MAIN" : "ALT");
+		m_sound.SetBufferBase(m_ramBaseAddress +
+			(mainBuffer ? RAM_SOUND_PAGE1_OFFSET : RAM_SOUND_PAGE2_OFFSET));
+	}
+	void ComputerMacintosh::OnVideoPageChange(bool mainBuffer)
+	{
+		LogPrintf(LOG_INFO, "Set Video Buffer : [%s]", mainBuffer ? "MAIN" : "ALT");
+		GetVideo().SetBaseAddress(m_ramBaseAddress +
+			(mainBuffer ? RAM_VIDEO_PAGE1_OFFSET : RAM_VIDEO_PAGE2_OFFSET));
+	}
+	void ComputerMacintosh::OnHeadSelChange(bool selectedHead)
+	{
+		LogPrintf(LOG_INFO, "Set Selected Head: %d", selectedHead);
+	}
+	void ComputerMacintosh::OnROMOverlayModeChange(bool overlay)
+	{
+		SetROMOverlayMode(overlay);
 	}
 
 	bool ComputerMacintosh::Step()

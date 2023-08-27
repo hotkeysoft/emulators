@@ -1,30 +1,44 @@
 #pragma once
 #include <Hardware/Device6522.h>
 
-namespace via
+namespace via::mac
 {
+	class EventHandler
+	{
+	public:
+		virtual void OnSoundResetChange(bool reset) {}
+		virtual void OnSoundBufferChange(bool mainBuffer) {}
+		virtual void OnVideoPageChange(bool mainBuffer) {}
+		virtual void OnHeadSelChange(bool selectedHead) {}
+		virtual void OnROMOverlayModeChange(bool overlay) {}
+	};
+
 	class Device6522Mac : public Device6522
 	{
 	public:
-		Device6522Mac(std::string id = "VIA") : Device6522(id), Logger(id.c_str()) {}
+		Device6522Mac(std::string id = "VIA");
 
 		void Init()
 		{
 			Device6522::Init(false);
 		}
 
+		virtual void Reset() override;
+
+		void SetEventHandler(via::mac::EventHandler* handler) { assert(handler); m_events = handler; }
+
 		// Port A Outputs
 		BYTE GetSoundVolume() { return m_portA.GetOutput() % 7; }
-		bool IsSoundBufferPage2() const { return !emul::GetBit(m_portA.GetOutput(), 3); }
+		bool IsMainSoundBuffer() const { return emul::GetBit(m_portA.GetOutput(), 3); }
 		bool IsOverlay() const { return emul::GetBit(m_portA.GetOutput(), 4); }
 		bool GetDiskHeadSelect() const { return emul::GetBit(m_portA.GetOutput(), 5); }
-		bool IsVideoPage2() const { return !emul::GetBit(m_portA.GetOutput(), 6); }
+		bool IsMainVideoBuffer() const { return emul::GetBit(m_portA.GetOutput(), 6); }
 
 		// Port A Input
 		void SetSCCWriteRequest(bool set) { m_portA.SetInputBit(7, !set); }
 
-		// CA1 VSync Input // TODO: VSync or VBlank?
-		void SetVSync(bool set) { m_portA.SetC1(set); }
+		// CA1 VBlank Input
+		void SetVBlank(bool set) { m_portA.SetC1(set); }
 
 		// CA2 1-Second clock Input
 		void SetSecondClock(bool set) { m_portA.SetC2(set); }
@@ -33,14 +47,14 @@ namespace via
 		bool GetRTCData() const { return emul::GetBit(m_portB.GetOutput(), 0); } // I/O
 		bool GetRTCClock() const { return emul::GetBit(m_portB.GetOutput(), 1); }
 		bool GetRTCEnable() const { return !emul::GetBit(m_portB.GetOutput(), 2); }
-		bool IsSoundReset() const { return !emul::GetBit(m_portB.GetOutput(), 7); }
+		bool IsSoundReset() const { return emul::GetBit(m_portB.GetOutput(), 7); }
 
 		// PORT B Inputs
 		void SetRTCData(bool set) { m_portB.SetInputBit(0, set); }
 		void SetMouseSwitchPressed(bool set) { m_portB.SetInputBit(3, !set); }
 		void SetMouseX2(bool set) { m_portB.SetInputBit(4, !set); }
 		void SetMouseY2(bool set) { m_portB.SetInputBit(5, !set); }
-		void SetHSync(bool set) { m_portB.SetInputBit(6, !set); } // TODO: HSync or HBlank?
+		void SetHBlank(bool set) { m_portB.SetInputBit(6, !set); }
 
 		// CB1 Input/Output
 		bool GetKeyboardClock() const { return m_portB.GetC1(); }
@@ -101,6 +115,15 @@ namespace via
 		}
 
 	protected:
+		bool m_soundReset = false;
+		bool m_videoPageMain = false;
+		bool m_soundBufferMain = false;
+		bool m_headSelect = false;
+		bool m_romOverlayMode = false;
+
+		virtual void OnWritePort(VIAPort* src);
+
+		via::mac::EventHandler* m_events = nullptr;
 	};
 }
 

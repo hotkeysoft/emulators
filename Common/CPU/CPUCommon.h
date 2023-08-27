@@ -179,6 +179,15 @@ namespace emul
 		a ^= b;
 	}
 
+	inline void SetLSB(BYTE& b, bool set) { SetBit(b, 0, set); }
+	inline void SetMSB(BYTE& b, bool set) { SetBit(b, 7, set); }
+
+	inline void SetLSB(WORD& b, bool set) { SetBit(b, 0, set); }
+	inline void SetMSB(WORD& b, bool set) { SetBit(b, 15, set); }
+
+	inline void SetLSB(DWORD& b, bool set) { SetBit(b, 0, set); }
+	inline void SetMSB(DWORD& b, bool set) { SetBit(b, 31, set); }
+
 	WORD ReverseBits(WORD in);
 
 	typedef BitMask<BYTE> BitMaskB;

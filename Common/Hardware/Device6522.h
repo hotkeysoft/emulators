@@ -125,7 +125,8 @@ namespace via
 
 		void Tick();
 
-		virtual void OnReadPort(VIAPort* src) {};
+		virtual void OnReadPort(VIAPort* src) {}
+		virtual void OnWritePort(VIAPort* src) {}
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;

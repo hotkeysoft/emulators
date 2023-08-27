@@ -105,6 +105,7 @@ namespace via
 
 		LogPrintf(LOG_DEBUG, "Write OutputRegister, value=%02X", value);
 		OR = value;
+		m_parent->OnWritePort(this);
 	}
 
 	BYTE VIAPort::ReadInputRegisterNoHandshake()

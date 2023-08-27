@@ -2,7 +2,7 @@
 #include <CPU/MemoryBlockBase.h>
 #include "Device6522Mac.h"
 
-namespace via
+namespace via::mac
 {
 	// VIA is mapped to addresses $E00000-$EFFFFF
 	// But E00000-$E7FFFF collide with Phase Read

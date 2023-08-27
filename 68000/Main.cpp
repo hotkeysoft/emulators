@@ -393,7 +393,7 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Set Breakpoint to [0x%06X]\n", breakpoint);
 	}
 
-	customMemoryView = CONFIG().GetValueWORD("monitor", "custommem", 0);
+	customMemoryView = CONFIG().GetValueDWORD("monitor", "custommem", 0);
 	fprintf(stderr, "Set Monitor Custom Memory View to [0x%06X]\n", customMemoryView);
 
 	MAINWND().Init("hotkey68000emu", Overlay::GetOverlayHeight());

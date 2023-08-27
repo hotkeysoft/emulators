@@ -11,7 +11,10 @@ namespace emul
 {
 	namespace cpu68k { class CPU68000; };
 
-	class ComputerMacintosh : public ComputerBase, public video::mac::EventHandler
+	class ComputerMacintosh :
+		public ComputerBase,
+		public video::mac::EventHandler,
+		public via::mac::EventHandler
 	{
 	public:
 		ComputerMacintosh();
@@ -20,6 +23,7 @@ namespace emul
 		virtual std::string_view GetID() const override { return "mac"; };
 
 		virtual void Init(WORD baseRAM) override;
+		virtual void Reset() override;
 
 		virtual bool Step() override;
 
@@ -32,15 +36,43 @@ namespace emul
 
 		void InitVideo();
 
+		void SetROMOverlayMode(bool overlay);
+
 		// video::mac::EventHandler
 		virtual void OnHBlankStart() override;
 		virtual void OnVBlankStart() override;
 
+		// via::mac::EventHandler
+		virtual void OnSoundResetChange(bool reset) override;
+		virtual void OnSoundBufferChange(bool mainBuffer) override;
+		virtual void OnVideoPageChange(bool mainBuffer) override;
+		virtual void OnHeadSelChange(bool selectedHead) override;
+		virtual void OnROMOverlayModeChange(bool overlay) override;
+
+		constexpr static ADDRESS RAM_SIZE = 0x20000;
+		constexpr static ADDRESS ROM_SIZE = 0x10000;
+
+		constexpr static ADDRESS ROM_BASE = 0x400000;
+		constexpr static ADDRESS ROM_BASE_OVERLAY = 0x000000;
+
+		constexpr static ADDRESS ROM_MIRROR_BASE = 0x600000;
+		constexpr static ADDRESS ROM_MIRROR_BASE_OVERLAY = 0x200000;
+
+		constexpr static ADDRESS RAM_BASE = 0x000000;
+		constexpr static ADDRESS RAM_BASE_OVERLAY = 0x600000;
+
+		constexpr static ADDRESS RAM_VIDEO_PAGE1_OFFSET = 0x01A700;
+		constexpr static ADDRESS RAM_VIDEO_PAGE2_OFFSET = 0x012700;
+		constexpr static ADDRESS RAM_SOUND_PAGE1_OFFSET = 0x01FD00;
+		constexpr static ADDRESS RAM_SOUND_PAGE2_OFFSET = 0x01A100;
+
+		ADDRESS m_ramBaseAddress = RAM_BASE;
+
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;
 
-		via::IOBlockVIAMac m_ioVIA;
-		via::Device6522Mac m_via;
+		via::mac::IOBlockVIAMac m_ioVIA;
+		via::mac::Device6522Mac m_via;
 
 		sound::mac::SoundMac m_sound;
 	};

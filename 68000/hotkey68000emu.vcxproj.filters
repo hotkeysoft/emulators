@@ -314,6 +314,9 @@
     <ClCompile Include="Video\VideoMac.cpp">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
+    <ClCompile Include="Hardware\Device6522Mac.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\overlay16.png">
