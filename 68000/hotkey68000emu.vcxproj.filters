@@ -180,9 +180,6 @@
     <ClInclude Include="Computer68000.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Video\Video68000.h">
-      <Filter>Header Files\Video</Filter>
-    </ClInclude>
     <ClInclude Include="CPU\CPU68000.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
@@ -209,6 +206,9 @@
     </ClInclude>
     <ClInclude Include="Hardware\IOBlockVIAMac.h">
       <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\VideoMac.h">
+      <Filter>Header Files\Video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -287,9 +287,6 @@
     <ClCompile Include="Computer68000.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Video\Video68000.cpp">
-      <Filter>Source Files\Video</Filter>
-    </ClCompile>
     <ClCompile Include="CPU\CPU68000.cpp">
       <Filter>Source Files\CPU</Filter>
     </ClCompile>
@@ -307,6 +304,9 @@
     </ClCompile>
     <ClCompile Include="..\Common\Hardware\Device6522.cpp">
       <Filter>Common\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\VideoMac.cpp">
+      <Filter>Source Files\Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

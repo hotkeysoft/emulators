@@ -2,15 +2,15 @@
 
 #include <Computer/ComputerBase.h>
 #include "IO/InputEvents.h"
-#include <Video/VideoNull.h>
 #include "Hardware/Device6522Mac.h"
 #include "Hardware/IOBlockVIAMac.h"
+#include "Video/VideoMac.h"
 
 namespace emul
 {
 	namespace cpu68k { class CPU68000; };
 
-	class ComputerMacintosh : public ComputerBase
+	class ComputerMacintosh : public ComputerBase, public video::mac::EventHandler
 	{
 	public:
 		ComputerMacintosh();
@@ -24,12 +24,16 @@ namespace emul
 
 		cpu68k::CPU68000& GetCPU() const { return *((cpu68k::CPU68000*)m_cpu); }
 
-		video::VideoNull& GetVideo() { return *((video::VideoNull*)m_video); }
+		video::mac::VideoMac& GetVideo() { return *((video::mac::VideoMac*)m_video); }
 
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 
 		void InitVideo();
+
+		// video::mac::EventHandler
+		virtual void OnHBlankStart() override;
+		virtual void OnVBlankStart() override;
 
 		emul::MemoryBlock m_baseRAM;
 		emul::MemoryBlock m_rom;

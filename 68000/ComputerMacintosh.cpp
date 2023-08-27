@@ -2,15 +2,17 @@
 
 #include "ComputerMacintosh.h"
 #include <Config.h>
+#include <Sound/Sound.h>
 #include "IO/Console.h"
 #include "CPU/CPU68000.h"
 
 using cfg::CONFIG;
+using sound::SOUND;
 
 namespace emul
 {
-	const size_t MAIN_CLK = 14000000; // 14 MHz Main crystal
-	const size_t PIXEL_CLK = MAIN_CLK / 2;
+	const size_t MAIN_CLK = 15667200; // 15.7 MHz Main crystal
+	const size_t PIXEL_CLK = MAIN_CLK;
 	const size_t CPU_CLK = PIXEL_CLK / 2;
 
 	ComputerMacintosh::ComputerMacintosh() :
@@ -32,6 +34,11 @@ namespace emul
 		m_memory.MapWindow(0x400000, 0, 0x10000);
 
 		m_memory.Allocate(&m_baseRAM, 0x600000);
+		// RAM mirror images
+		for (int i = 0; i < 16; ++i)
+		{
+			m_memory.MapWindow(0x600000, 0x600000 + (i * 0x20000), 0x20000);
+		}
 
 		// Temp RAM blocks instead of io to check instructions
 		MemoryBlock* SCCr = new MemoryBlock("SCCr", 0x100000);
@@ -45,6 +52,8 @@ namespace emul
 
 		InitInputs(CPU_CLK);
 		InitVideo();
+
+		SOUND().SetBaseClock(CPU_CLK);
 	}
 
 	void ComputerMacintosh::InitCPU(const char* cpuid)
@@ -59,8 +68,17 @@ namespace emul
 
 	void ComputerMacintosh::InitVideo()
 	{
-		m_video = new video::VideoNull();
+		m_video = new video::mac::VideoMac();
 		m_video->Init(&m_memory, nullptr);
+		GetVideo().SetEventHandler(this);
+	}
+
+	void ComputerMacintosh::OnHBlankStart()
+	{
+	}
+
+	void ComputerMacintosh::OnVBlankStart()
+	{
 	}
 
 	bool ComputerMacintosh::Step()
@@ -74,6 +92,11 @@ namespace emul
 		cpuTicks += GetCPU().GetInstructionTicks();
 
 		++g_ticks;
+
+		if (!m_turbo)
+		{
+			SOUND().PlayMono(0);
+		}
 
 		GetInputs().Tick();
 		if (GetInputs().IsQuit())

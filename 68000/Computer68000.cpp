@@ -4,7 +4,6 @@
 #include <Config.h>
 #include "IO/Console.h"
 #include "CPU/CPU68000.h"
-#include "Video/Video68000.h"
 
 using cfg::CONFIG;
 
@@ -52,7 +51,7 @@ namespace emul
 
 	void Computer68000::InitVideo()
 	{
-		m_video = new video::Video68000();
+		m_video = new video::VideoNull();
 		m_video->Init(&m_memory, nullptr);
 	}
 

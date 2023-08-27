@@ -2,7 +2,7 @@
 
 #include <Computer/ComputerBase.h>
 #include "IO/InputEvents.h"
-#include "Video/Video68000.h"
+#include <Video/VideoNull.h>
 
 namespace emul
 {
@@ -23,7 +23,7 @@ namespace emul
 		cpu68k::CPU68000& GetCPU() const { return *((cpu68k::CPU68000*)m_cpu); }
 
 		// TODO: Temporary, put generic video
-		video::Video68000& GetVideo() { return *((video::Video68000*)m_video); }
+		video::VideoNull& GetVideo() { return *((video::VideoNull*)m_video); }
 
 		void PrintChar(BYTE value);
 		void DummyOut(BYTE value) {}
