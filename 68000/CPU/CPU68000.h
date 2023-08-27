@@ -9,8 +9,8 @@
 #undef IN
 #undef OUT
 
-#define BYTE_REG(src, idx) *(((BYTE*)src) + (idx * 4))
-#define WORD_REG(src, idx) *(((WORD*)src) + (idx * 2))
+#define BYTE_REG(src, idx) *(((BYTE*)src) + (idx << 2))
+#define WORD_REG(src, idx) *(((WORD*)src) + (idx << 1))
 
 namespace emul::cpu68k
 {
@@ -110,6 +110,7 @@ namespace emul::cpu68k
 		void InitGroup13(OpcodeTable& table, size_t size);
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
+		inline void TICKn(int t) { m_opTicks += t; }
 
 		// Hardware vectors
 		enum class VECTOR : BYTE
@@ -408,7 +409,38 @@ namespace emul::cpu68k
 		void ANDw(WORD& dest, WORD src);
 		void ANDl(DWORD& dest, DWORD src);
 
-		void SHIFT() { NotImplementedOpcode("Shift ops"); }
+		void SHIFT();
+
+		void SHIFTb(BYTE& dest, int count, bool left, int operation);
+		void SHIFTw(WORD& dest, int count, bool left, int operation);
+		void SHIFTl(DWORD& dest, int count, bool left, int operation);
+
+		void ASLw()  { NotImplementedOpcode("ADL.w <ea>"); }
+		void ASRw()  { NotImplementedOpcode("ASR.w <ea>"); }
+		void LSLw()  { NotImplementedOpcode("LSL.w <ea>"); }
+		void LSRw()  { NotImplementedOpcode("LSR.w <ea>"); }
+		void ROXLw() { NotImplementedOpcode("ROXL.w <ea>"); }
+		void ROXRw() { NotImplementedOpcode("ROXR.w <ea>"); }
+		void ROLw()  { NotImplementedOpcode("ROL.w <ea>"); }
+		void RORw()  { NotImplementedOpcode("ROR.w <ea>"); }
+
+		void ASLw(WORD& dest, int count);
+		void ASRw(WORD& dest, int count);
+		void LSLw(WORD& dest, int count);
+		void LSRw(WORD& dest, int count);
+		void ROXLw(WORD& dest, int count);
+		void ROXRw(WORD& dest, int count);
+		void ROLw(WORD& dest, int count);
+		void RORw(WORD& dest, int count);
+
+		void ASLl(DWORD& dest, int count);
+		void ASRl(DWORD& dest, int count);
+		void LSLl(DWORD& dest, int count);
+		void LSRl(DWORD& dest, int count);
+		void ROXLl(DWORD& dest, int count);
+		void ROXRl(DWORD& dest, int count);
+		void ROLl(DWORD& dest, int count);
+		void RORl(DWORD& dest, int count);
 
 		// Arithmetic
 

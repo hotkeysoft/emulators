@@ -11,6 +11,7 @@ namespace emul::cpu68k
 	static const BitMaskW Mask_ADDX("00xxxx");
 	static const BitMaskW Mask_DB("001xxx");
 	static const BitMaskW Mask_MOVEP("1xx001xxx");
+	static const BitMaskW Mask_SHIFT_MEM("11xxxxxx");
 
 	CPU68000::CPU68000(Memory& memory) : CPU68000("68000", memory)
 	{
@@ -304,6 +305,47 @@ namespace emul::cpu68k
 	void CPU68000::InitGroup11(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
+
+		// D0
+		table[000] = [=]() { CMPb(m_reg.D0b, GetEAByte(EAMode::GroupData)); }; // CMP.b <ea>,D0
+		table[001] = [=]() { CMPw(m_reg.D0w, GetEAWord(EAMode::GroupAll)); }; // CMP.w <ea>,D0
+		table[002] = [=]() { CMPl(m_reg.D0, GetEALong(EAMode::GroupAll)); }; // CMP.l <ea>,D0
+
+		// D1
+		table[010] = [=]() { CMPb(m_reg.D1b, GetEAByte(EAMode::GroupData)); }; // CMP.b <ea>,D1
+		table[011] = [=]() { CMPw(m_reg.D1w, GetEAWord(EAMode::GroupAll)); }; // CMP.w <ea>,D1
+		table[012] = [=]() { CMPl(m_reg.D1, GetEALong(EAMode::GroupAll)); }; // CMP.l <ea>,D1
+
+		// D2
+		table[020] = [=]() { CMPb(m_reg.D2b, GetEAByte(EAMode::GroupData)); }; // CMP.b <ea>,D2
+		table[021] = [=]() { CMPw(m_reg.D2w, GetEAWord(EAMode::GroupAll)); }; // CMP.w <ea>,D2
+		table[022] = [=]() { CMPl(m_reg.D2, GetEALong(EAMode::GroupAll)); }; // CMP.l <ea>,D2
+
+		// D3
+		table[030] = [=]() { CMPb(m_reg.D3b, GetEAByte(EAMode::GroupData)); }; // CMP.b <ea>,D3
+		table[031] = [=]() { CMPw(m_reg.D3w, GetEAWord(EAMode::GroupAll)); }; // CMP.w <ea>,D3
+		table[032] = [=]() { CMPl(m_reg.D3, GetEALong(EAMode::GroupAll)); }; // CMP.l <ea>,D3
+
+		// D4
+		table[040] = [=]() { CMPb(m_reg.D4b, GetEAByte(EAMode::GroupData)); }; // CMP.b <ea>,D4
+		table[041] = [=]() { CMPw(m_reg.D4w, GetEAWord(EAMode::GroupAll)); }; // CMP.w <ea>,D4
+		table[042] = [=]() { CMPl(m_reg.D4, GetEALong(EAMode::GroupAll)); }; // CMP.l <ea>,D4
+
+		// D5
+		table[050] = [=]() { CMPb(m_reg.D5b, GetEAByte(EAMode::GroupData)); }; // CMP.b <ea>,D5
+		table[051] = [=]() { CMPw(m_reg.D5w, GetEAWord(EAMode::GroupAll)); }; // CMP.w <ea>,D5
+		table[052] = [=]() { CMPl(m_reg.D5, GetEALong(EAMode::GroupAll)); }; // CMP.l <ea>,D5
+
+		// D6
+		table[060] = [=]() { CMPb(m_reg.D6b, GetEAByte(EAMode::GroupData)); }; // CMP.b <ea>,D6
+		table[061] = [=]() { CMPw(m_reg.D6w, GetEAWord(EAMode::GroupAll)); }; // CMP.w <ea>,D6
+		table[062] = [=]() { CMPl(m_reg.D6, GetEALong(EAMode::GroupAll)); }; // CMP.l <ea>,D6
+
+		// D7
+		table[070] = [=]() { CMPb(m_reg.D7b, GetEAByte(EAMode::GroupData)); }; // CMP.b <ea>,D7
+		table[071] = [=]() { CMPw(m_reg.D7w, GetEAWord(EAMode::GroupAll)); }; // CMP.w <ea>,D7
+		table[072] = [=]() { CMPl(m_reg.D7, GetEALong(EAMode::GroupAll)); }; // CMP.l <ea>,D7
+
 	}
 
 	// b1100: MULU,MULS,ABCD,EXG,AND
@@ -715,6 +757,7 @@ namespace emul::cpu68k
 		case EAMode::ARegDirect:
 			return m_reg.GetADDRb(reg);
 		case EAMode::Immediate:
+			TICKn(4);
 			return FetchByte();
 		default:
 			return ReadB(rawGetEA(OP_BYTE));
@@ -735,6 +778,7 @@ namespace emul::cpu68k
 		case EAMode::ARegDirect:
 			return m_reg.GetADDRw(reg);
 		case EAMode::Immediate:
+			TICKn(4);
 			return FetchWord();
 		default:
 			return ReadW(rawGetEA(OP_WORD));
@@ -755,6 +799,7 @@ namespace emul::cpu68k
 		case EAMode::ARegDirect:
 			return m_reg.ADDR[reg];
 		case EAMode::Immediate:
+			TICKn(8);
 			return FetchLong();
 		default:
 			return ReadL(rawGetEA(OP_LONG));
@@ -788,6 +833,8 @@ namespace emul::cpu68k
 
 		DWORD& An = m_reg.ADDR[GetOpcodeRegisterIndex()];
 
+		int timePenalty = 0;
+
 		ADDRESS ea = 0;
 		switch (m_eaMode)
 		{
@@ -803,6 +850,7 @@ namespace emul::cpu68k
 		// TODO: Data reference except jmp and jmp to subroutine instructions
 		case EAMode::ARegIndirect:
 			ea = An;
+			timePenalty = 4;
 			break;
 
 		// Address Register Indirect with Postincrement, EA=(An), An += N
@@ -810,6 +858,7 @@ namespace emul::cpu68k
 		case EAMode::ARegIndirectPostinc:
 			ea = An;
 			An += size;
+			timePenalty = 4;
 			break;
 
 		// Address Register Indirect with Predecrement, AN -= N, EA=(An)
@@ -817,29 +866,34 @@ namespace emul::cpu68k
 		case EAMode::ARegIndirectPredec:
 			An -= size;
 			ea = An;
+			timePenalty = 6;
 			break;
 
 		// Address Register Indirect with Displacement, EA = (An) + d
 		case EAMode::ARegIndirectDisp:
 			ea = An;
 			ea += Widen(FetchWord());
+			timePenalty = 8;
 			break;
 
 		// Address Register Indirect with Index, EA = (An) + (Ri) + d
 		case EAMode::ARegIndirectIndex:
 			NotImplementedOpcode("GetMemAddress: Address Register Indirect with Index");
+			timePenalty = 10;
 			break;
 
 		// Absolute Short Address, EA given
 		// TODO: Data reference except jmp and jmp to subroutine instructions
 		case EAMode::AbsShort:
 			ea = Widen(FetchWord());
+			timePenalty = 8;
 			break;
 
 		// Absolute Long Address, EA given
 		// TODO: Data reference except jmp and jmp to subroutine instructions
 		case EAMode::AbsLong:
 			ea = FetchLong();
+			timePenalty = 12;
 			break;
 
 		// Program Counter with Displacement, EA = (PC) + d
@@ -847,12 +901,14 @@ namespace emul::cpu68k
 		case EAMode::PCDisp:
 			ea = m_programCounter;
 			ea += Widen(FetchWord());
+			timePenalty = 8;
 			break;
 
 		// Program Counter with Index, EA = (PC) + (Ri) + d
 		// TODO: Program reference
 		case EAMode::PCIndex:
 			NotImplementedOpcode("GetMemAddress: Program Counter with Index");
+			timePenalty = 10;
 			break;
 
 		// Immediate Data
@@ -860,6 +916,11 @@ namespace emul::cpu68k
 		default:
 			IllegalInstruction();
 			break;
+		}
+
+		if (timePenalty)
+		{
+			TICKn(timePenalty + ((size == 4) ? 4 : 0));
 		}
 
 		return ea & ADDRESS_MASK;
@@ -1070,18 +1131,28 @@ namespace emul::cpu68k
 
 	void CPU68000::DBccw(bool cond)
 	{
+		TICKn(6); // TODO: base instruction timings currently hardcoded at 4
+		//TICKn(10);
 		if (!cond)
 		{
+			// PC will be changed by FetchWord()
+			ADDRESS pc = m_programCounter;
+
 			WORD& reg = m_reg.GetDATAw(GetOpcodeRegisterIndex());
 			DWORD rel = Widen(FetchWord());
 			if (--reg != 0xFFFF)
 			{
-				m_programCounter += rel;
+				m_programCounter = pc + rel;
 				m_programCounter &= ADDRESS_MASK;
+			}
+			else
+			{
+				TICKn(4);
 			}
 		}
 		else
 		{
+			TICKn(2);
 			// fall through to next instruction
 			m_programCounter += 2;
 			m_programCounter &= ADDRESS_MASK;
@@ -1102,11 +1173,14 @@ namespace emul::cpu68k
 		}
 		else
 		{
+			// TODO: timings
+			TICKn(4);
+
 			// Byte only
 			BYTE src = GetEAByte(EAMode::GroupDataNoImm);
-			testBit = GetBit(src, bitNumber & 8);
+			testBit = GetBit(src, bitNumber % 8);
 		}
-		SetFlag(FLAG_Z, testBit);
+		SetFlag(FLAG_Z, !testBit);
 	}
 
 	void CPU68000::BitOps(BitOp bitOp)
@@ -1264,6 +1338,151 @@ namespace emul::cpu68k
 			WriteL(ea, dest);
 		}
 	}
+
+	// Shift, Rotate
+	void CPU68000::SHIFT()
+	{
+		// Shift direction
+		bool left = GetBit(m_opcode, 8);
+
+		// Bits 11-9 Contain either operation type (for mem shifts),
+		// A data register index, or an immediate value
+		int reg_imm_op = (m_opcode >> 9) & 7;
+
+		// Mem or register
+		if (Mask_SHIFT_MEM.IsMatch(m_opcode))
+		{
+			// <SHIFTop>.w <ea>
+
+			// Determine the operation (Bits 11-9)
+			switch (reg_imm_op)
+			{
+			case 0: left ? ASLw()  : ASRw(); break;
+			case 1: left ? LSLw()  : LSRw(); break;
+			case 2: left ? ROXLw() : ROXRw(); break;
+			case 3: left ? ROLw()  : RORw(); break;
+			default: IllegalInstruction();
+			}
+		}
+		else // Register Shifts
+		{
+			// [  15-12  |       11-9       |     8     | 7-6  |   5   |    4-3    |   2-0    ]
+			// [ 1 1 1 0 | Count / Register | direction | Size | i / r | operation | register ]
+
+			int rotCount;
+			// Rotation amount can be in instruction, or in data register.
+			// This is determined with bit 5
+			if (GetBit(m_opcode, 5)) // <Shiftop>.size Dx, Dy
+			{
+				// Register shift count (Dx mod 64)
+				rotCount = m_reg.DATA[reg_imm_op] % 64;
+			}
+			else // <SHIFTop>.size #<data>, Dy
+			{
+				// Immediate shift count (where 0 means 8)
+				rotCount = reg_imm_op ? reg_imm_op : 8;
+			}
+
+			//
+			int operation = (m_opcode >> 3) & 3;
+
+			const int reg = GetOpcodeRegisterIndex();
+
+			// Get size of operation
+			switch ((m_opcode >> 6) & 3)
+			{
+			case 0: SHIFTb(m_reg.GetDATAb(reg), rotCount, left, operation); break;
+			case 1: SHIFTw(m_reg.GetDATAw(reg), rotCount, left, operation); break;
+			case 2: SHIFTl(m_reg.DATA[reg], rotCount, left, operation); break;
+
+			default: // 0b11 already handled, it's the <ea> version above
+				NODEFAULT;
+			}
+		}
+	}
+
+	void CPU68000::SHIFTb(BYTE& dest, int count, bool left, int operation)
+	{
+		NotImplementedOpcode("SHIFTb, Dn");
+	}
+	void CPU68000::SHIFTw(WORD& dest, int count, bool left, int operation)
+	{
+		switch (operation)
+		{
+		case 0: left ? ASLw(dest, count) : ASRw(dest, count); break;
+		case 1: left ? LSLw(dest, count) : LSRw(dest, count); break;
+		case 2: left ? ROXLw(dest, count) : ROXRw(dest, count); break;
+		case 3: left ? ROLw(dest, count) : RORw(dest, count); break;
+		default:
+			NODEFAULT;
+		}
+	}
+	void CPU68000::SHIFTl(DWORD& dest, int count, bool left, int operation)
+	{
+		switch (operation)
+		{
+		case 0: left ? ASLl(dest, count)  : ASRl(dest, count); break;
+		case 1: left ? LSLl(dest, count)  : LSRl(dest, count); break;
+		case 2: left ? ROXLl(dest, count) : ROXRl(dest, count); break;
+		case 3: left ? ROLl(dest, count)  : RORl(dest, count); break;
+		default:
+			NODEFAULT;
+		}
+	}
+
+	void CPU68000::ASLw(WORD& dest, int count) { NotImplementedOpcode("ADL.w n,Dy"); }
+	void CPU68000::ASRw(WORD& dest, int count)
+	{
+		bool sign = GetMSB(dest);
+		bool carry = false;
+
+		for (int i = 0; i < count; ++i)
+		{
+			carry = GetLSB(dest);
+
+			dest >>= 1;
+			SetMSB(dest, sign);
+		}
+
+		SetFlag(FLAG_V, false); // MSB never changes for ASR
+		SetFlag(FLAG_C, carry);
+		if (count)
+		{
+			SetFlag(FLAG_X, carry);
+		}
+
+		AdjustNZ(dest);
+	}
+	void CPU68000::LSLw(WORD& dest, int count) { NotImplementedOpcode("LSL.w n,Dy"); }
+	void CPU68000::LSRw(WORD& dest, int count) { NotImplementedOpcode("LSR.w n,Dy"); }
+	void CPU68000::ROXLw(WORD& dest, int count) { NotImplementedOpcode("ROXL.w n,Dy"); }
+	void CPU68000::ROXRw(WORD& dest, int count) { NotImplementedOpcode("ROXR.w n,Dy"); }
+	void CPU68000::ROLw(WORD& dest, int count) { NotImplementedOpcode("ROL.w n,Dy"); }
+	void CPU68000::RORw(WORD& dest, int count) { NotImplementedOpcode("ROR.w n,Dy"); }
+
+	void CPU68000::ASLl(DWORD& dest, int count) { NotImplementedOpcode("ADL.l n,Dy"); }
+	void CPU68000::ASRl(DWORD& dest, int count) { NotImplementedOpcode("ASR.l n,Dy"); }
+	void CPU68000::LSLl(DWORD& dest, int count) { NotImplementedOpcode("LSL.l n,Dy"); }
+	void CPU68000::LSRl(DWORD& dest, int count)
+	{
+		bool lsb = GetLSB(dest);
+		dest >>= count;
+
+		AdjustNZ(dest);
+		if (count)
+		{
+			SetFlag(FLAG_CX, lsb);
+		}
+		else
+		{
+			SetFlag(FLAG_C, false);
+		}
+	}
+	void CPU68000::ROXLl(DWORD& dest, int count) { NotImplementedOpcode("ROXL.l n,Dy"); }
+	void CPU68000::ROXRl(DWORD& dest, int count) { NotImplementedOpcode("ROXR.l n,Dy"); }
+	void CPU68000::ROLl(DWORD& dest, int count) { NotImplementedOpcode("ROL.l n,Dy"); }
+	void CPU68000::RORl(DWORD& dest, int count) { NotImplementedOpcode("ROR.l n,Dy"); }
+
 
 	// Add Dn, <ea>
 	void CPU68000::ADDbToEA(BYTE src)
