@@ -70,6 +70,9 @@
     <Filter Include="Source Files\Hardware">
       <UniqueIdentifier>{88400878-ba7f-4601-8f2e-a9a30284d9b3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Sound">
+      <UniqueIdentifier>{e9298e3c-d7fe-4ab9-b2f7-2a03776062d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDLPath.props" />
@@ -209,6 +212,9 @@
     </ClInclude>
     <ClInclude Include="Video\VideoMac.h">
       <Filter>Header Files\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound\SoundMac.h">
+      <Filter>Header Files\Sound</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

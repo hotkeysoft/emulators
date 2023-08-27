@@ -5,6 +5,7 @@
 #include "Hardware/Device6522Mac.h"
 #include "Hardware/IOBlockVIAMac.h"
 #include "Video/VideoMac.h"
+#include "Sound/SoundMac.h"
 
 namespace emul
 {
@@ -39,7 +40,8 @@ namespace emul
 		emul::MemoryBlock m_rom;
 
 		via::IOBlockVIAMac m_ioVIA;
-
 		via::Device6522Mac m_via;
+
+		sound::mac::SoundMac m_sound;
 	};
 }

@@ -22,3 +22,6 @@ x64
 /6809/*.bin
 /6809/dump
 /6809/snapshots
+/68000/*.bin
+/68000/dump
+/68000/snapshots

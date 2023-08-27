@@ -19,7 +19,8 @@ namespace emul
 		Logger("ComputerMac"),
 		ComputerBase(m_memory, 4096),
 		m_baseRAM("RAM", 0x20000, emul::MemoryType::RAM),
-		m_rom("ROM", 0x10000, emul::MemoryType::ROM)
+		m_rom("ROM", 0x10000, emul::MemoryType::ROM),
+		m_sound(m_memory)
 	{
 	}
 
@@ -54,6 +55,8 @@ namespace emul
 		InitVideo();
 
 		SOUND().SetBaseClock(CPU_CLK);
+		m_sound.SetBufferBase(0x600000 + 0x1FD00);
+		m_sound.ResetBufferPos();
 	}
 
 	void ComputerMacintosh::InitCPU(const char* cpuid)
@@ -75,10 +78,16 @@ namespace emul
 
 	void ComputerMacintosh::OnHBlankStart()
 	{
+		m_via.SetHSync(false);
+		m_via.SetHSync(true);
+		m_sound.BufferWord();
 	}
 
 	void ComputerMacintosh::OnVBlankStart()
 	{
+		m_sound.ResetBufferPos();
+		m_via.SetVSync(false);
+		m_via.SetVSync(true);
 	}
 
 	bool ComputerMacintosh::Step()
@@ -88,30 +97,34 @@ namespace emul
 			return false;
 		}
 
-		static uint32_t cpuTicks = 0;
-		cpuTicks += GetCPU().GetInstructionTicks();
+		static uint32_t cpuTicks = GetCPU().GetInstructionTicks();
 
-		++g_ticks;
-
-		if (!m_turbo)
+		for (uint32_t i = 0; i < cpuTicks; ++i)
 		{
-			SOUND().PlayMono(0);
+			++g_ticks;
+
+			if (!m_turbo)
+			{
+				WORD sound = GetHByte(m_sound.GetBufferWord()) * m_via.GetSoundVolume();
+				SOUND().PlayMono(sound * 2);
+			}
+
+			GetInputs().Tick();
+			if (GetInputs().IsQuit())
+			{
+				return false;
+			}
+
+			GetInputs().Tick();
+			if (GetInputs().IsQuit())
+			{
+				return false;
+			}
+
+			GetVideo().Tick();
+
+			m_via.Tick();
 		}
-
-		GetInputs().Tick();
-		if (GetInputs().IsQuit())
-		{
-			return false;
-		}
-
-		GetInputs().Tick();
-		if (GetInputs().IsQuit())
-		{
-			return false;
-		}
-
-		GetVideo().Tick();
-
 		return true;
 	}
 }
