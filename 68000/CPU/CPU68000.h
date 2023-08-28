@@ -334,6 +334,8 @@ namespace emul::cpu68k
 		WORD GetEAWord(EAMode groupCheck);
 		DWORD GetEALong(EAMode groupCheck);
 
+		ADDRESS GetExtensionWordDisp();
+
 		// Used by GetEA(b|w|l) above
 		ADDRESS rawGetEA(int size);
 
@@ -404,6 +406,13 @@ namespace emul::cpu68k
 		void ANDbToEA(BYTE src);
 		void ANDwToEA(WORD src);
 		void ANDlToEA(DWORD src);
+
+		void ANDIbToCCR() { NotImplementedOpcode("AND.b #imm, CCR"); }
+		void ANDIwToSR() { NotImplementedOpcode("AND.w #imm, SR"); }
+
+		void ANDIb();
+		void ANDIw();
+		void ANDIl();
 
 		void ANDb(BYTE& dest, BYTE src);
 		void ANDw(WORD& dest, WORD src);
@@ -499,6 +508,8 @@ namespace emul::cpu68k
 		void CMPMb() { NotImplementedOpcode("CMPM.b"); }
 		void CMPMw() { NotImplementedOpcode("CMPM.w"); }
 		void CMPMl() { NotImplementedOpcode("CMPM.l"); }
+
+		void MULUw(DWORD& dest);
 
 		friend class Monitor68000;
 	};
