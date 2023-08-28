@@ -215,7 +215,19 @@ namespace emul
 			case 60: // F2
 			case 64: // F6
 			case 65: // F7
+				break;
 			case 67: // F9
+				if (IsBreakpoint())
+				{
+					m_breakpointEnabled = false;
+				}
+				else
+				{
+					m_breakpointEnabled = true;
+					m_breakpoint = m_cpu->GetCurrentAddress();
+				}
+				UpdateCode();
+				break;
 			case 68: // F10
 			default:
 				break;
@@ -534,7 +546,10 @@ namespace emul
 
 		// Write address
 		pos.x = addressPos.x;
-		WriteValueHex24(instr.address, pos, 8);
+
+		bool isBreakpoint = m_breakpointEnabled && (instr.address == m_breakpoint);
+
+		WriteValueHex24(instr.address, pos, isBreakpoint ? (4 << 4) | 15 : 8 );
 
 		// Write raw (if needed)
 		if (m_codeMode == CODEMode::RAW_AND_TEXT)

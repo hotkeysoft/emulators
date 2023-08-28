@@ -98,7 +98,15 @@ void ShowMonitor()
 		console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
 	}
 	monitor->SetCustomMemoryView(customMemoryView);
-	monitor->Show();
+
+	if (mode != Mode::MONITOR)
+	{
+		monitor->Show();
+	}
+	else
+	{
+		monitor->SetStepMode();
+	}
 }
 
 void ToggleMode()
@@ -417,6 +425,15 @@ int main(int argc, char* argv[])
 	pc->Init(baseRAM);
 	InitPC(pc, overlay);
 
+	if (breakpointEnabled)
+	{
+		monitor->SetBreakpoint(breakpoint);
+	}
+	else
+	{
+		monitor->ClearBreakpoint();
+	}
+
 	if (mode == Mode::MONITOR)
 	{
 		ShowMonitor();
@@ -432,8 +449,7 @@ int main(int argc, char* argv[])
 
 		while (run)
 		{
-			if (breakpointEnabled &&
-				(pc->GetCPU()->GetCurrentAddress() == breakpoint))
+			if (monitor->IsBreakpoint())
 			{
 				ShowMonitor();
 				mode = Mode::MONITOR;

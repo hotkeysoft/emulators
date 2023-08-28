@@ -40,9 +40,13 @@ namespace emul::cpu68k
 		virtual ADDRESS Disassemble(ADDRESS address, Monitor68000::Instruction& decoded);
 
 		void SetCustomMemoryView(ADDRESS address) { m_customMemView = address; }
+		void SetBreakpoint(ADDRESS address) { m_breakpoint = address; m_breakpointEnabled = true; }
+		void ClearBreakpoint() { m_breakpointEnabled = false; }
+		bool IsBreakpoint() const { return m_breakpointEnabled && m_cpu->GetCurrentAddress() == m_breakpoint; }
 
 		void Show();
 		MonitorState Run();
+		void SetStepMode() { m_runMode = RUNMode::STEP; }
 		void Update();
 
 	protected:
@@ -96,6 +100,8 @@ namespace emul::cpu68k
 		};
 
 		ADDRESS m_customMemView = 0;
+		ADDRESS m_breakpoint = 0;
+		bool m_breakpointEnabled = false;
 
 		MonitorState ProcessKey();
 
