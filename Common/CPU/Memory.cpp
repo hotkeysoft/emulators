@@ -358,8 +358,8 @@ namespace emul
 
 	void Memory::Write32be(ADDRESS address, DWORD value)
 	{
-		Write16(address, GetHWord(value));
-		Write16(address + 2, GetLWord(value));
+		Write16be(address, GetHWord(value));
+		Write16be(address + 2, GetLWord(value));
 	}
 
 	void Memory::Dump(ADDRESS start, DWORD len, const char* outFile)

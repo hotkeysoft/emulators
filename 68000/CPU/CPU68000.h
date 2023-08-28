@@ -370,8 +370,8 @@ namespace emul::cpu68k
 
 		void MOVE_w_toSR(WORD src);
 
-		void MOVEMwToEA(WORD regs) { NotImplementedOpcode("MOVEM.w (regs -> <ea>)"); }
-		void MOVEMlToEA(WORD regs) { NotImplementedOpcode("MOVEM.l (regs -> <ea>)"); }
+		void MOVEMwToEA(WORD regs);
+		void MOVEMlToEA(WORD regs);
 		void MOVEMwFromEA(WORD regs);
 		void MOVEMlFromEA(WORD regs);
 
@@ -408,6 +408,14 @@ namespace emul::cpu68k
 		void ANDb(BYTE& dest, BYTE src);
 		void ANDw(WORD& dest, WORD src);
 		void ANDl(DWORD& dest, DWORD src);
+
+		void EORbToEA(BYTE src);
+		void EORwToEA(WORD src);
+		void EORlToEA(DWORD src);
+
+		void EORb(BYTE& dest, BYTE src);
+		void EORw(WORD& dest, WORD src);
+		void EORl(DWORD& dest, DWORD src);
 
 		void SHIFT();
 
@@ -448,6 +456,8 @@ namespace emul::cpu68k
 		void CLRw();
 		void CLRl();
 
+		void SWAPw();
+
 		void EXTw() { NotImplementedOpcode("EXT.w"); }
 		void EXTl() { NotImplementedOpcode("EXT.l"); }
 
@@ -485,6 +495,10 @@ namespace emul::cpu68k
 		void CMPb(BYTE dest, BYTE src) { return SUBb(dest, src, FLAG_C); }
 		void CMPw(WORD dest, WORD src) { return SUBw(dest, src, FLAG_C); }
 		void CMPl(DWORD dest, DWORD src) { return SUBl(dest, src, FLAG_C); }
+
+		void CMPMb() { NotImplementedOpcode("CMPM.b"); }
+		void CMPMw() { NotImplementedOpcode("CMPM.w"); }
+		void CMPMl() { NotImplementedOpcode("CMPM.l"); }
 
 		friend class Monitor68000;
 	};
