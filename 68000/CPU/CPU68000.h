@@ -115,18 +115,18 @@ namespace emul::cpu68k
 		// Hardware vectors
 		enum class VECTOR : BYTE
 		{
-			ResetSSP               = 0, // Reset, Initial SSP (Supervisor Stack Pointer)
-			ResetPC                = 1, // Reset, Initial PC (Program Counter)
-			BusError               = 2,
-			AddressError           = 3,
-			IllegalInstruction     = 4,
-			ZeroDivide             = 5,
-			CHK_Instruction        = 6,
-			TRAPV_Instruction      = 7,
-			PrivilegeViolation     = 8,
-			Trace                  = 9,
-			Line1010Emulator       = 10,
-			Line1111Emulator       = 11,
+			ResetSSP = 0, // Reset, Initial SSP (Supervisor Stack Pointer)
+			ResetPC = 1, // Reset, Initial PC (Program Counter)
+			BusError = 2,
+			AddressError = 3,
+			IllegalInstruction = 4,
+			ZeroDivide = 5,
+			CHK_Instruction = 6,
+			TRAPV_Instruction = 7,
+			PrivilegeViolation = 8,
+			Trace = 9,
+			Line1010Emulator = 10,
+			Line1111Emulator = 11,
 
 			// (12-14 Reserved)
 
@@ -134,17 +134,17 @@ namespace emul::cpu68k
 
 			// (16-23 Reserved)
 
-			SpuriousInterrupt      = 24,
+			SpuriousInterrupt = 24,
 
 			// 25-31 Level 1-7 Interrupt Autovector
-			InterruptBase          = 25,
+			InterruptBase = 25,
 
 			// 32-47 TRAP Instructions vectors (32 + n)
-			TrapBase               = 32,
+			TrapBase = 32,
 
 			// 48-63 Reserved
 			// 64-255 User Interrupt Vectors
-			USER_INT_BASE          = 64
+			USER_INT_BASE = 64
 		};
 
 		ADDRESS GetVectorAddress(VECTOR v) { return (ADDRESS)v * 4; }
@@ -169,24 +169,24 @@ namespace emul::cpu68k
 		enum FLAG : WORD
 		{
 			// Supervisor mode flags (R/O in user mode)
-			FLAG_T		= 0x8000, // 1 Trace mode
-			FLAG_R14	= 0x4000, // 0
-			FLAG_S		= 0x2000, // 1 Supervisor mode
-			_FLAG_R12	= 0x1000, // 0
-			_FLAG_R11	= 0x0800, // 0
-			FLAG_I2 	= 0x0400, // I[0..2], interrupt mask
-			FLAG_I1		= 0x0200, // ""
-			FLAG_I0		= 0x0100, // ""
+			FLAG_T = 0x8000, // 1 Trace mode
+			FLAG_R14 = 0x4000, // 0
+			FLAG_S = 0x2000, // 1 Supervisor mode
+			_FLAG_R12 = 0x1000, // 0
+			_FLAG_R11 = 0x0800, // 0
+			FLAG_I2 = 0x0400, // I[0..2], interrupt mask
+			FLAG_I1 = 0x0200, // ""
+			FLAG_I0 = 0x0100, // ""
 
 			// User mode R/W
-			_FLAG_R7	= 0x0080, // 0
-			_FLAG_R6	= 0x0040, // 0
-			_FLAG_R5	= 0x0020, // 0
-			FLAG_X		= 0x0010, // 1 eXtend
-			FLAG_N      = 0x0008, // 1 Negative
-			FLAG_Z		= 0x0004, // 1 Zero
-			FLAG_V		= 0x0002, // 1 Signed oVerflow
-			FLAG_C		= 0x0001,  // 1 Carry (unsigned overflow)
+			_FLAG_R7 = 0x0080, // 0
+			_FLAG_R6 = 0x0040, // 0
+			_FLAG_R5 = 0x0020, // 0
+			FLAG_X = 0x0010, // 1 eXtend
+			FLAG_N = 0x0008, // 1 Negative
+			FLAG_Z = 0x0004, // 1 Zero
+			FLAG_V = 0x0002, // 1 Signed oVerflow
+			FLAG_C = 0x0001,  // 1 Carry (unsigned overflow)
 
 			// Pseudo-flags
 			FLAG_CX = FLAG_C | FLAG_X,
@@ -207,9 +207,10 @@ namespace emul::cpu68k
 		bool FlagVS() const { return GetFlag(FLAG_V); }
 		bool FlagPL() const { return !GetFlag(FLAG_N); }
 		bool FlagMI() const { return GetFlag(FLAG_N); }
-		bool FlagGE() const { return
-			(GetFlag(FLAG_N) && GetFlag(FLAG_V)) ||
-			(!GetFlag(FLAG_N) && !GetFlag(FLAG_V));
+		bool FlagGE() const {
+			return
+				(GetFlag(FLAG_N) && GetFlag(FLAG_V)) ||
+				(!GetFlag(FLAG_N) && !GetFlag(FLAG_V));
 		}
 		bool FlagLT() const { return !FlagGE(); }
 		bool FlagGT() const { return !FlagEQ() && FlagGE(); }
@@ -224,6 +225,7 @@ namespace emul::cpu68k
 			// Alias for DATA and ADDRESS registers
 			DWORD* const DATA = &DataAddress[0];
 			DWORD* const ADDR = &DataAddress[8];
+
 
 			// Handy aliases
 			BYTE& D0b = BYTE_REG(DATA, 0);
@@ -247,6 +249,7 @@ namespace emul::cpu68k
 			WORD& D6w = WORD_REG(DATA, 6); WORD& A6w = WORD_REG(ADDR, 6);
 			WORD& D7w = WORD_REG(DATA, 7); WORD& A7w = WORD_REG(ADDR, 7);
 
+
 			WORD& GetDATAw(int index) { return WORD_REG(DATA, index); }
 			WORD& GetADDRw(int index) { return WORD_REG(ADDR, index); }
 
@@ -258,6 +261,16 @@ namespace emul::cpu68k
 			DWORD& D5 = DATA[5]; DWORD& A5 = ADDR[5];
 			DWORD& D6 = DATA[6]; DWORD& A6 = ADDR[6];
 			DWORD& D7 = DATA[7]; DWORD& A7 = ADDR[7];
+
+			template <typename SIZE> SIZE& GetDATA(int index);
+			template <> BYTE& GetDATA(int index) { return BYTE_REG(DATA, index); }
+			template <> WORD& GetDATA(int index) { return WORD_REG(DATA, index); }
+			template <> DWORD& GetDATA(int index) { return DATA[index]; }
+
+			template <typename SIZE> SIZE& GetADDR(int index);
+			template <> BYTE& GetADDR(int index) { return BYTE_REG(ADDR, index); }
+			template <> WORD& GetADDR(int index) { return WORD_REG(ADDR, index); }
+			template <> DWORD& GetADDR(int index) { return ADDR[index]; }
 
 			// Alias stack pointer to A7
 			DWORD& SP = ADDR[7];
@@ -303,49 +316,57 @@ namespace emul::cpu68k
 			SetFlag(FLAG_I2, GetBit(mask, 2));
 		}
 
+		template <typename SIZE> SIZE Fetch();
+		template<> BYTE Fetch() { return FetchByte(); }
+		template<> WORD Fetch() { return FetchWord(); }
+		template<> DWORD Fetch() { return FetchLong(); }
+
 		virtual BYTE FetchByte() override { return GetLByte(FetchWord()); }
 		virtual WORD FetchWord() override;
 		DWORD FetchLong();
 
 		static bool IsWordAligned(ADDRESS addr) { return !GetLSB(addr); }
 
-		void WriteB(ADDRESS dest, BYTE value) { m_memory.Write8(dest, value); }
-		void WriteW(ADDRESS dest, WORD value) { Aligned(dest); m_memory.Write16be(dest, value); }
-		void WriteL(ADDRESS dest, DWORD value) { Aligned(dest); m_memory.Write32be(dest, value); }
+		template<typename SIZE> void Write(ADDRESS src, SIZE value);
+		template<> void Write(ADDRESS dest, BYTE value) { m_memory.Write8(dest, value); }
+		template<> void Write(ADDRESS dest, WORD value) { Aligned(dest); m_memory.Write16be(dest, value); }
+		template<> void Write(ADDRESS dest, DWORD value) { Aligned(dest); m_memory.Write32be(dest, value); }
 
-		BYTE ReadB(ADDRESS src) const { return m_memory.Read8(src); }
-		WORD ReadW(ADDRESS src) { Aligned(src); return m_memory.Read16be(src); }
-		DWORD ReadL(ADDRESS src) { Aligned(src); return m_memory.Read32be(src); }
+		template<typename SIZE> SIZE Read(ADDRESS src);
+		template<> BYTE Read(ADDRESS src) { return m_memory.Read8(src); }
+		template<> WORD Read(ADDRESS src) { Aligned(src); return m_memory.Read16be(src); }
+		template<> DWORD Read(ADDRESS src) { Aligned(src); return m_memory.Read32be(src); }
 
 		void Exec(WORD opcode);
 		void Exec(WORD group, WORD subOpcode);
 		bool InternalStep();
 
 		// Adjust negative and zero flag
-		void AdjustNZ(BYTE val);
-		void AdjustNZ(WORD val);
-		void AdjustNZ(DWORD val);
+		template <typename SIZE>
+		void AdjustNZ(SIZE val)
+		{
+			SetFlag(FLAG_N, GetMSB(val));
+			SetFlag(FLAG_Z, val == 0);
+		}
 
 		EAMode m_eaMode = EAMode::Invalid;
 		static EAMode GetEAMode(WORD opcode);
 		// Needs m_eaMode to be set
 		void EACheck(EAMode group) { if (!((WORD)m_eaMode & (WORD)group)) IllegalInstruction(); }
 
-		BYTE GetEAByte(EAMode groupCheck);
-		WORD GetEAWord(EAMode groupCheck);
-		DWORD GetEALong(EAMode groupCheck);
+		template<typename SIZE> SIZE GetEAValue(EAMode groupCheck);
 
 		ADDRESS GetExtensionWordDisp();
 
-		// Used by GetEA(b|w|l) above
-		ADDRESS rawGetEA(int size);
+		template<typename SIZE> ADDRESS rawGetEA();
 
-		ADDRESS GetEA(int size, EAMode groupCheck)
+		template<typename SIZE>
+		ADDRESS GetEA(EAMode groupCheck)
 		{
 			m_eaMode = GetEAMode(m_opcode);
 			EACheck(groupCheck);
 
-			return rawGetEA(size);
+			return rawGetEA<SIZE>();
 		}
 
 		[[noreturn]] void Exception(VECTOR v);
@@ -373,10 +394,8 @@ namespace emul::cpu68k
 
 		void MOVE_w_toSR(WORD src);
 
-		void MOVEMwToEA(WORD regs);
-		void MOVEMlToEA(WORD regs);
-		void MOVEMwFromEA(WORD regs);
-		void MOVEMlFromEA(WORD regs);
+		template<typename SIZE> void MOVEMToEA(WORD regs);
+		template<typename SIZE> void MOVEMFromEA(WORD regs);
 
 		void MOVEPwToReg(WORD& dest) { NotImplementedOpcode("MOVEP.w (<ea> -> reg)"); }
 		void MOVEPlToReg(DWORD& dest) { NotImplementedOpcode("MOVEP.l (<ea> -> reg)"); }
@@ -400,9 +419,7 @@ namespace emul::cpu68k
 		void BCLR(DWORD src) { NotImplementedOpcode("BCLR Dn, <ea>"); }
 		void BSET(DWORD src) { NotImplementedOpcode("BSET Dn, <ea>"); }
 
-		void TSTb();
-		void TSTw();
-		void TSTl();
+		template<typename SIZE> void TST();
 
 		void ANDbToEA(BYTE src);
 		void ANDwToEA(WORD src);
@@ -411,70 +428,46 @@ namespace emul::cpu68k
 		void ANDIbToCCR() { NotImplementedOpcode("AND.b #imm, CCR"); }
 		void ANDIwToSR() { NotImplementedOpcode("AND.w #imm, SR"); }
 
-		void ANDIb();
-		void ANDIw();
-		void ANDIl();
+		template<typename SIZE> void ANDI();
+		template<typename SIZE> void AND(SIZE& dest, SIZE src);
 
-		void ANDb(BYTE& dest, BYTE src);
-		void ANDw(WORD& dest, WORD src);
-		void ANDl(DWORD& dest, DWORD src);
+		template<typename SIZE> void OR(SIZE& dest, SIZE src);
 
-		void ORb(BYTE& dest, BYTE src);
-		void ORw(WORD& dest, WORD src);
-		void ORl(DWORD& dest, DWORD src);
-
-		void EORbToEA(BYTE src);
-		void EORwToEA(WORD src);
-		void EORlToEA(DWORD src);
-
-		void EORb(BYTE& dest, BYTE src);
-		void EORw(WORD& dest, WORD src);
-		void EORl(DWORD& dest, DWORD src);
+		template<typename SIZE> void EOR(SIZE& dest, SIZE src);
+		template<typename SIZE> void EORToEA(SIZE src);
 
 		void SHIFT();
+
+		template<typename SIZE> void SHIFT(SIZE& dest, int count, bool left, int operation);
 
 		void SHIFTb(BYTE& dest, int count, bool left, int operation);
 		void SHIFTw(WORD& dest, int count, bool left, int operation);
 		void SHIFTl(DWORD& dest, int count, bool left, int operation);
 
-		void ASLw()  { NotImplementedOpcode("ADL.w <ea>"); }
-		void ASRw()  { NotImplementedOpcode("ASR.w <ea>"); }
-		void LSLw()  { NotImplementedOpcode("LSL.w <ea>"); }
-		void LSRw()  { NotImplementedOpcode("LSR.w <ea>"); }
+		void ASLw() { NotImplementedOpcode("ADL.w <ea>"); }
+		void ASRw() { NotImplementedOpcode("ASR.w <ea>"); }
+		void LSLw() { NotImplementedOpcode("LSL.w <ea>"); }
+		void LSRw() { NotImplementedOpcode("LSR.w <ea>"); }
 		void ROXLw() { NotImplementedOpcode("ROXL.w <ea>"); }
 		void ROXRw() { NotImplementedOpcode("ROXR.w <ea>"); }
-		void ROLw()  { NotImplementedOpcode("ROL.w <ea>"); }
-		void RORw()  { NotImplementedOpcode("ROR.w <ea>"); }
+		void ROLw() { NotImplementedOpcode("ROL.w <ea>"); }
+		void RORw() { NotImplementedOpcode("ROR.w <ea>"); }
 
-		void ASLw(WORD& dest, int count);
-		void ASLl(DWORD& dest, int count);
+		template<typename SIZE> void ASL(SIZE& dest, int count);
+		template<typename SIZE> void ASR(SIZE& dest, int count);
 
-		void ASRw(WORD& dest, int count);
-		void ASRl(DWORD& dest, int count);
+		template<typename SIZE> void LSL(SIZE& dest, int count);
+		template<typename SIZE> void LSR(SIZE& dest, int count);
 
-		void LSLw(WORD& dest, int count);
-		void LSLl(DWORD& dest, int count);
+		template<typename SIZE> void ROL(SIZE& dest, int count);
+		template<typename SIZE> void ROR(SIZE& dest, int count);
 
-		void LSRw(WORD& dest, int count);
-		void LSRl(DWORD& dest, int count);
-
-		void ROLw(WORD& dest, int count);
-		void ROLl(DWORD& dest, int count);
-
-		void RORw(WORD& dest, int count);
-		void RORl(DWORD& dest, int count);
-
-		void ROXLw(WORD& dest, int count);
-		void ROXLl(DWORD& dest, int count);
-
-		void ROXRw(WORD& dest, int count);
-		void ROXRl(DWORD& dest, int count);
+		template<typename SIZE> void ROXL(SIZE& dest, int count);
+		template<typename SIZE> void ROXR(SIZE& dest, int count);
 
 		// Arithmetic
 
-		void CLRb();
-		void CLRw();
-		void CLRl();
+		template<class SIZE> void CLR();
 
 		void SWAPw();
 
@@ -487,34 +480,33 @@ namespace emul::cpu68k
 		void ADDXw() { NotImplementedOpcode("ADDX.w"); }
 		void ADDXl() { NotImplementedOpcode("ADDX.l"); }
 
-		void ADDQb(BYTE imm);
-		void ADDQw(WORD imm);
-		void ADDQl(DWORD imm);
+		template<typename SIZE> void ADDQ(SIZE imm);
 
-		void SUBQb(BYTE imm);
-		void SUBQw(WORD imm);
-		void SUBQl(DWORD imm);
+		void ADDA(WORD& dest, WORD src) { dest += Widen(src); }
+		void ADDA(DWORD& dest, DWORD src) { dest += src; }
+
+		void SUBA(WORD& dest, WORD src) { dest -= Widen(src); }
+		void SUBA(DWORD& dest, DWORD src) { dest -= src; }
+
+		template<typename SIZE> void SUBQ(SIZE imm);
 
 		void ADDbToEA(BYTE src);
 		void ADDwToEA(WORD src);
 		void ADDlToEA(DWORD src);
 
 		// dest' <- dest + src
-		void ADDb(BYTE& dest, BYTE src);
-		void ADDw(WORD& dest, WORD src);
-		void ADDl(DWORD& dest, DWORD src);
+		template<typename SIZE>
+		void ADD(SIZE& dest, SIZE src);
 
 		// dest' <- dest - src
-		void SUBb(BYTE& dest, BYTE src, FLAG carryFlag = FLAG_CX);
-		void SUBw(WORD& dest, WORD src, FLAG carryFlag = FLAG_CX);
-		void SUBl(DWORD& dest, DWORD src, FLAG carryFlag = FLAG_CX);
+		template<typename SIZE>
+		void SUB(SIZE& dest, SIZE src, FLAG carryFlag = FLAG_CX);
 
 		// dest by value so it's not modified
 		// (void) <- dest - src
 		// (doesn't set X flag)
-		void CMPb(BYTE dest, BYTE src) { return SUBb(dest, src, FLAG_C); }
-		void CMPw(WORD dest, WORD src) { return SUBw(dest, src, FLAG_C); }
-		void CMPl(DWORD dest, DWORD src) { return SUBl(dest, src, FLAG_C); }
+		template<typename SIZE>
+		void CMP(SIZE dest, SIZE src) { return SUB<SIZE>(dest, src, FLAG_C); }
 
 		void CMPMb() { NotImplementedOpcode("CMPM.b"); }
 		void CMPMw() { NotImplementedOpcode("CMPM.w"); }

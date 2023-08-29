@@ -115,6 +115,12 @@ namespace emul
 	{
 		return DWORD((int32_t)((int16_t)w));
 	}
+	// No-op Widen (useful in some templates)
+	// TODO: Might be an issue when if we ever need to widen to QWORDs
+	inline DWORD Widen(const DWORD d)
+	{
+		return d;
+	}
 
 	inline bool GetBit(const BYTE b, const BYTE bit)
 	{
