@@ -301,6 +301,46 @@ namespace emul::cpu68k
 	void CPU68000::InitGroup8(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
+
+		// D0
+		table[000] = [=]() { ORb(m_reg.D0b, GetEAByte(EAMode::GroupData)); }; // OR.b <ea>,D0
+		table[001] = [=]() { ORw(m_reg.D0w, GetEAWord(EAMode::GroupData)); }; // OR.w <ea>,D0
+		table[002] = [=]() { ORl(m_reg.D0 , GetEALong(EAMode::GroupData)); }; // OR.l <ea>,D0
+
+		// D1
+		table[010] = [=]() { ORb(m_reg.D1b, GetEAByte(EAMode::GroupData)); }; // OR.b <ea>,D1
+		table[011] = [=]() { ORw(m_reg.D1w, GetEAWord(EAMode::GroupData)); }; // OR.w <ea>,D1
+		table[012] = [=]() { ORl(m_reg.D1,  GetEALong(EAMode::GroupData)); }; // OR.l <ea>,D1
+
+		// D2
+		table[020] = [=]() { ORb(m_reg.D2b, GetEAByte(EAMode::GroupData)); }; // OR.b <ea>,D2
+		table[021] = [=]() { ORw(m_reg.D2w, GetEAWord(EAMode::GroupData)); }; // OR.w <ea>,D2
+		table[022] = [=]() { ORl(m_reg.D2,  GetEALong(EAMode::GroupData)); }; // OR.l <ea>,D2
+
+		// D3
+		table[030] = [=]() { ORb(m_reg.D3b, GetEAByte(EAMode::GroupData)); }; // OR.b <ea>,D3
+		table[031] = [=]() { ORw(m_reg.D3w, GetEAWord(EAMode::GroupData)); }; // OR.w <ea>,D3
+		table[032] = [=]() { ORl(m_reg.D3,  GetEALong(EAMode::GroupData)); }; // OR.l <ea>,D3
+
+		// D4
+		table[040] = [=]() { ORb(m_reg.D4b, GetEAByte(EAMode::GroupData)); }; // OR.b <ea>,D4
+		table[041] = [=]() { ORw(m_reg.D4w, GetEAWord(EAMode::GroupData)); }; // OR.w <ea>,D4
+		table[042] = [=]() { ORl(m_reg.D4,  GetEALong(EAMode::GroupData)); }; // OR.l <ea>,D4
+
+		// D5
+		table[050] = [=]() { ORb(m_reg.D5b, GetEAByte(EAMode::GroupData)); }; // OR.b <ea>,D5
+		table[051] = [=]() { ORw(m_reg.D5w, GetEAWord(EAMode::GroupData)); }; // OR.w <ea>,D5
+		table[052] = [=]() { ORl(m_reg.D5,  GetEALong(EAMode::GroupData)); }; // OR.l <ea>,D5
+
+		// D6
+		table[060] = [=]() { ORb(m_reg.D6b, GetEAByte(EAMode::GroupData)); }; // OR.b <ea>,D6
+		table[061] = [=]() { ORw(m_reg.D6w, GetEAWord(EAMode::GroupData)); }; // OR.w <ea>,D6
+		table[062] = [=]() { ORl(m_reg.D6,  GetEALong(EAMode::GroupData)); }; // OR.l <ea>,D6
+
+		// D7
+		table[070] = [=]() { ORb(m_reg.D7b, GetEAByte(EAMode::GroupData)); }; // OR.b <ea>,D7
+		table[071] = [=]() { ORw(m_reg.D7w, GetEAWord(EAMode::GroupData)); }; // OR.w <ea>,D7
+		table[072] = [=]() { ORl(m_reg.D7,  GetEALong(EAMode::GroupData)); }; // OR.l <ea>,D7
 	}
 
 	// b1001: SUB,SUBX,SUBA
@@ -1497,6 +1537,28 @@ namespace emul::cpu68k
 		NotImplementedOpcode("AND.l Dn -> <ea>");
 	}
 
+	void CPU68000::ORb(BYTE& dest, BYTE src)
+	{
+		dest |= src;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_VC, false);
+	}
+	void CPU68000::ORw(WORD& dest, WORD src)
+	{
+		dest |= src;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_VC, false);
+	}
+	void CPU68000::ORl(DWORD& dest, DWORD src)
+	{
+		dest |= src;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_VC, false);
+	}
+
 	void CPU68000::EORb(BYTE& dest, BYTE src)
 	{
 		dest ^= src;
@@ -1765,7 +1827,26 @@ namespace emul::cpu68k
 
 		AdjustNZ(dest);
 	}
-	void CPU68000::LSLw(WORD& dest, int count) { NotImplementedOpcode("LSL.w n,Dy"); }
+	void CPU68000::LSLw(WORD& dest, int count)
+	{
+		bool carry = false;
+
+		for (int i = 0; i < count; ++i)
+		{
+			carry = GetMSB(dest);
+
+			dest <<= 1;
+		}
+
+		SetFlag(FLAG_V, false); // Always cleared for LSL
+		SetFlag(FLAG_C, carry);
+		if (count)
+		{
+			SetFlag(FLAG_X, carry);
+		}
+
+		AdjustNZ(dest);
+	}
 	void CPU68000::LSRw(WORD& dest, int count)
 	{
 		bool carry = false;

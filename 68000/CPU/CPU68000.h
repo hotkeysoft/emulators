@@ -418,6 +418,10 @@ namespace emul::cpu68k
 		void ANDw(WORD& dest, WORD src);
 		void ANDl(DWORD& dest, DWORD src);
 
+		void ORb(BYTE& dest, BYTE src);
+		void ORw(WORD& dest, WORD src);
+		void ORl(DWORD& dest, DWORD src);
+
 		void EORbToEA(BYTE src);
 		void EORwToEA(WORD src);
 		void EORlToEA(DWORD src);
