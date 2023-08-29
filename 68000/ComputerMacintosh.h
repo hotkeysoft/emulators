@@ -4,6 +4,8 @@
 #include "IO/InputEvents.h"
 #include "Hardware/Device6522Mac.h"
 #include "Hardware/IOBlockVIAMac.h"
+#include "Hardware/DeviceIWM.h"
+#include "Hardware/IOBlockIWMMac.h"
 #include "Video/VideoMac.h"
 #include "Sound/SoundMac.h"
 
@@ -33,6 +35,8 @@ namespace emul
 
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
+		void InitVIA();
+		void InitFloppy();
 
 		void InitVideo();
 
@@ -73,6 +77,9 @@ namespace emul
 
 		via::mac::IOBlockVIAMac m_ioVIA;
 		via::mac::Device6522Mac m_via;
+
+		floppy::woz::IOBlockIWMMac m_ioIWM;
+		floppy::woz::DeviceIWM m_floppy;
 
 		sound::mac::SoundMac m_sound;
 	};

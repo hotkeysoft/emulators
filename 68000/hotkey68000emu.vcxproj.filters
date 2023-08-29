@@ -216,6 +216,12 @@
     <ClInclude Include="Sound\SoundMac.h">
       <Filter>Header Files\Sound</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\DeviceIWM.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\IOBlockIWMMac.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">
@@ -315,6 +321,9 @@
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="Hardware\Device6522Mac.cpp">
+      <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\DeviceIWM.cpp">
       <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>

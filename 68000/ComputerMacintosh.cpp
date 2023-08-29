@@ -32,26 +32,17 @@ namespace emul
 
 		m_rom.LoadFromFile("./data/Macintosh/mac.128k.bin");
 
-		m_memory.Allocate(&m_baseRAM, 0x600000);
-		// RAM mirror images
-		for (int i = 0; i < 16; ++i)
-		{
-			m_memory.MapWindow(0x600000, 0x600000 + (i * 0x20000), 0x20000);
-		}
+		m_baseRAM.Clear(0x5A);
 
 		// Temp RAM blocks instead of io to check instructions
 		MemoryBlock* SCCr = new MemoryBlock("SCCr", 0x100000);
 		SCCr->Clear(0x90);
 		m_memory.Allocate(SCCr, 0x900000);
 
-		m_via.EnableLog(CONFIG().GetLogLevel("via"));
-		m_via.Init();
-		m_via.SetEventHandler(this);
-		m_ioVIA.Init(&m_via);
-		m_memory.Allocate(&m_ioVIA, 0xE80000);
-
 		InitInputs(CPU_CLK);
 		InitVideo();
+		InitVIA();
+		InitFloppy();
 
 		SOUND().SetBaseClock(CPU_CLK);
 		m_sound.SetBufferBase(0x600000 + 0x1FD00);
@@ -67,6 +58,8 @@ namespace emul
 		ComputerBase::Reset();
 
 		m_via.Reset();
+		m_sound.ResetBufferPos();
+		m_sound.Enable(true);
 	}
 
 	void ComputerMacintosh::InitCPU(const char* cpuid)
@@ -77,6 +70,22 @@ namespace emul
 			LogPrintf(LOG_ERROR, "CPUType not supported: [%s]", cpuid);
 			throw std::exception("CPUType not supported");
 		}
+	}
+
+	void ComputerMacintosh::InitFloppy()
+	{
+		m_floppy.EnableLog(CONFIG().GetLogLevel("floppy"));
+		m_ioIWM.Init(&m_floppy);
+		m_memory.Allocate(&m_ioIWM, 0xD00000);
+	}
+
+	void ComputerMacintosh::InitVIA()
+	{
+		m_via.EnableLog(CONFIG().GetLogLevel("via"));
+		m_via.Init();
+		m_via.SetEventHandler(this);
+		m_ioVIA.Init(&m_via);
+		m_memory.Allocate(&m_ioVIA, 0xE80000);
 	}
 
 	void ComputerMacintosh::InitVideo()
