@@ -1805,6 +1805,8 @@ namespace emul::cpu68k
 	}
 
 	void CPU68000::ASLw(WORD& dest, int count) { NotImplementedOpcode("ADL.w n,Dy"); }
+	void CPU68000::ASLl(DWORD& dest, int count) { NotImplementedOpcode("ADL.l n,Dy"); }
+
 	void CPU68000::ASRw(WORD& dest, int count)
 	{
 		bool sign = GetMSB(dest);
@@ -1827,6 +1829,8 @@ namespace emul::cpu68k
 
 		AdjustNZ(dest);
 	}
+	void CPU68000::ASRl(DWORD& dest, int count) { NotImplementedOpcode("ASR.l n,Dy"); }
+
 	void CPU68000::LSLw(WORD& dest, int count)
 	{
 		bool carry = false;
@@ -1847,34 +1851,6 @@ namespace emul::cpu68k
 
 		AdjustNZ(dest);
 	}
-	void CPU68000::LSRw(WORD& dest, int count)
-	{
-		bool carry = false;
-
-		for (int i = 0; i < count; ++i)
-		{
-			carry = GetLSB(dest);
-
-			dest >>= 1;
-		}
-
-		SetFlag(FLAG_V, false); // Always cleared for LSR
-		SetFlag(FLAG_C, carry);
-		if (count)
-		{
-			SetFlag(FLAG_X, carry);
-		}
-
-		AdjustNZ(dest);
-	}
-	void CPU68000::ROXLw(WORD& dest, int count) { NotImplementedOpcode("ROXL.w n,Dy"); }
-	void CPU68000::ROXRw(WORD& dest, int count) { NotImplementedOpcode("ROXR.w n,Dy"); }
-	void CPU68000::ROLw(WORD& dest, int count) { NotImplementedOpcode("ROL.w n,Dy"); }
-	void CPU68000::RORw(WORD& dest, int count) { NotImplementedOpcode("ROR.w n,Dy"); }
-
-	void CPU68000::ASLl(DWORD& dest, int count) { NotImplementedOpcode("ADL.l n,Dy"); }
-	void CPU68000::ASRl(DWORD& dest, int count) { NotImplementedOpcode("ASR.l n,Dy"); }
-
 	void CPU68000::LSLl(DWORD& dest, int count)
 	{
 		bool carry = false;
@@ -1887,6 +1863,27 @@ namespace emul::cpu68k
 		}
 
 		SetFlag(FLAG_V, false); // Always cleared for LSL
+		SetFlag(FLAG_C, carry);
+		if (count)
+		{
+			SetFlag(FLAG_X, carry);
+		}
+
+		AdjustNZ(dest);
+	}
+
+	void CPU68000::LSRw(WORD& dest, int count)
+	{
+		bool carry = false;
+
+		for (int i = 0; i < count; ++i)
+		{
+			carry = GetLSB(dest);
+
+			dest >>= 1;
+		}
+
+		SetFlag(FLAG_V, false); // Always cleared for LSR
 		SetFlag(FLAG_C, carry);
 		if (count)
 		{
@@ -1911,9 +1908,23 @@ namespace emul::cpu68k
 		}
 	}
 
-	void CPU68000::ROXLl(DWORD& dest, int count) { NotImplementedOpcode("ROXL.l n,Dy"); }
-	void CPU68000::ROXRl(DWORD& dest, int count) { NotImplementedOpcode("ROXR.l n,Dy"); }
+	void CPU68000::ROLw(WORD& dest, int count)
+	{
+		bool carry = GetFlag(FLAG_C);
 
+		for (int i = 0; i < count; ++i)
+		{
+			bool msb = GetMSB(dest);
+			dest <<= 1;
+			SetBit(dest, 0, carry);
+			carry = msb;
+		}
+
+		SetFlag(FLAG_C, carry);
+		SetFlag(FLAG_V, false); // Always cleared for ROL
+
+		AdjustNZ(dest);
+	}
 	void CPU68000::ROLl(DWORD& dest, int count)
 	{
 		bool carry = GetFlag(FLAG_C);
@@ -1931,8 +1942,15 @@ namespace emul::cpu68k
 
 		AdjustNZ(dest);
 	}
+
+	void CPU68000::RORw(WORD& dest, int count) { NotImplementedOpcode("ROR.w n,Dy"); }
 	void CPU68000::RORl(DWORD& dest, int count) { NotImplementedOpcode("ROR.l n,Dy"); }
 
+	void CPU68000::ROXLw(WORD& dest, int count) { NotImplementedOpcode("ROXL.w n,Dy"); }
+	void CPU68000::ROXLl(DWORD& dest, int count) { NotImplementedOpcode("ROXL.l n,Dy"); }
+
+	void CPU68000::ROXRw(WORD& dest, int count) { NotImplementedOpcode("ROXR.w n,Dy"); }
+	void CPU68000::ROXRl(DWORD& dest, int count) { NotImplementedOpcode("ROXR.l n,Dy"); }
 
 	// Add Dn, <ea>
 	void CPU68000::ADDbToEA(BYTE src)

@@ -312,6 +312,7 @@ namespace emul::cpu68k
 		void WriteB(ADDRESS dest, BYTE value) { m_memory.Write8(dest, value); }
 		void WriteW(ADDRESS dest, WORD value) { Aligned(dest); m_memory.Write16be(dest, value); }
 		void WriteL(ADDRESS dest, DWORD value) { Aligned(dest); m_memory.Write32be(dest, value); }
+
 		BYTE ReadB(ADDRESS src) const { return m_memory.Read8(src); }
 		WORD ReadW(ADDRESS src) { Aligned(src); return m_memory.Read16be(src); }
 		DWORD ReadL(ADDRESS src) { Aligned(src); return m_memory.Read32be(src); }
@@ -446,22 +447,28 @@ namespace emul::cpu68k
 		void RORw()  { NotImplementedOpcode("ROR.w <ea>"); }
 
 		void ASLw(WORD& dest, int count);
-		void ASRw(WORD& dest, int count);
-		void LSLw(WORD& dest, int count);
-		void LSRw(WORD& dest, int count);
-		void ROXLw(WORD& dest, int count);
-		void ROXRw(WORD& dest, int count);
-		void ROLw(WORD& dest, int count);
-		void RORw(WORD& dest, int count);
-
 		void ASLl(DWORD& dest, int count);
+
+		void ASRw(WORD& dest, int count);
 		void ASRl(DWORD& dest, int count);
+
+		void LSLw(WORD& dest, int count);
 		void LSLl(DWORD& dest, int count);
+
+		void LSRw(WORD& dest, int count);
 		void LSRl(DWORD& dest, int count);
-		void ROXLl(DWORD& dest, int count);
-		void ROXRl(DWORD& dest, int count);
+
+		void ROLw(WORD& dest, int count);
 		void ROLl(DWORD& dest, int count);
+
+		void RORw(WORD& dest, int count);
 		void RORl(DWORD& dest, int count);
+
+		void ROXLw(WORD& dest, int count);
+		void ROXLl(DWORD& dest, int count);
+
+		void ROXRw(WORD& dest, int count);
+		void ROXRl(DWORD& dest, int count);
 
 		// Arithmetic
 
