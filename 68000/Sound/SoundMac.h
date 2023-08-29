@@ -22,6 +22,7 @@ namespace sound::mac
 		// TODO: Find better doc about sound module
 		void Enable(bool enable)
 		{
+			m_enabled = enable;
 			if (!m_enabled)
 			{
 				ResetBufferPos();
