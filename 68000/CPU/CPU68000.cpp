@@ -98,63 +98,63 @@ namespace emul::cpu68k
 		table[001] = [=]() { Mask_ORI_SR.IsMatch(m_opcode)  ? ORIwToSR()  : ORI<WORD>(); };
 		table[002] = [=]() { ORI<DWORD>(); };
 
-		table[004] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D0w) : BTST(m_reg.D0); };
-		table[005] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D0)  : BCHG(m_reg.D0); };
-		table[006] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D0w) : BCLR(m_reg.D0); };
-		table[007] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D0)  : BSET(m_reg.D0); };
+		table[004] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D0w) : BTST(m_reg.D0b); };
+		table[005] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D0)  : BCHG(m_reg.D0b); };
+		table[006] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D0w) : BCLR(m_reg.D0b); };
+		table[007] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D0)  : BSET(m_reg.D0b); };
 
 		table[010] = [=]() { Mask_ANDI_CCR.IsMatch(m_opcode) ? ANDIbToCCR() : ANDI<BYTE>(); }; // ANDI #imm, <ea>
 		table[011] = [=]() { Mask_ANDI_SR.IsMatch(m_opcode)  ? ANDIwToSR()  : ANDI<WORD>(); };
 		table[012] = [=]() { ANDI<DWORD>(); };
 
-		table[014] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D1w) : BTST(m_reg.D1); };
-		table[015] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D1)  : BCHG(m_reg.D1); };
-		table[016] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D1w) : BCLR(m_reg.D1); };
-		table[017] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D1)  : BSET(m_reg.D1); };
+		table[014] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D1w) : BTST(m_reg.D1b); };
+		table[015] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D1)  : BCHG(m_reg.D1b); };
+		table[016] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D1w) : BCLR(m_reg.D1b); };
+		table[017] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D1)  : BSET(m_reg.D1b); };
 
-		table[024] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D2w) : BTST(m_reg.D2); };
-		table[025] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D2)  : BCHG(m_reg.D2); };
-		table[026] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D2w) : BCLR(m_reg.D2); };
-		table[027] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D2)  : BSET(m_reg.D2); };
+		table[024] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D2w) : BTST(m_reg.D2b); };
+		table[025] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D2)  : BCHG(m_reg.D2b); };
+		table[026] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D2w) : BCLR(m_reg.D2b); };
+		table[027] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D2)  : BSET(m_reg.D2b); };
 
-		table[034] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D3w) : BTST(m_reg.D3); };
-		table[035] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D3)  : BCHG(m_reg.D3); };
-		table[036] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D3w) : BCLR(m_reg.D3); };
-		table[037] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D3)  : BSET(m_reg.D3); };
+		table[034] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D3w) : BTST(m_reg.D3b); };
+		table[035] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D3)  : BCHG(m_reg.D3b); };
+		table[036] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D3w) : BCLR(m_reg.D3b); };
+		table[037] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D3)  : BSET(m_reg.D3b); };
 
 		table[040] = [=]() { BTSTimm(); };
 		table[041] = [=]() { BCHGimm(); };
 		table[042] = [=]() { BCLRimm(); };
 		table[043] = [=]() { BSETimm(); };
 
-		table[044] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D4w) : BTST(m_reg.D4); };
-		table[045] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D4)  : BCHG(m_reg.D4); };
-		table[046] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D4w) : BCLR(m_reg.D4); };
-		table[047] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D4)  : BSET(m_reg.D4); };
+		table[044] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D4w) : BTST(m_reg.D4b); };
+		table[045] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D4)  : BCHG(m_reg.D4b); };
+		table[046] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D4w) : BCLR(m_reg.D4b); };
+		table[047] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D4)  : BSET(m_reg.D4b); };
 
 		table[050] = [=]() { Mask_EORI_CCR.IsMatch(m_opcode) ? EORIbToCCR() : EORI<BYTE>(); }; // EORI #imm, <ea>
 		table[051] = [=]() { Mask_EORI_SR.IsMatch(m_opcode) ? EORIwToSR() : EORI<WORD>(); };
 		table[052] = [=]() { EORI<DWORD>(); };
 
-		table[054] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D5w) : BTST(m_reg.D5); };
-		table[055] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D5)  : BCHG(m_reg.D5); };
-		table[056] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D5w) : BCLR(m_reg.D5); };
-		table[057] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D5)  : BSET(m_reg.D5); };
+		table[054] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D5w) : BTST(m_reg.D5b); };
+		table[055] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D5)  : BCHG(m_reg.D5b); };
+		table[056] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D5w) : BCLR(m_reg.D5b); };
+		table[057] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D5)  : BSET(m_reg.D5b); };
 
 		// CMPI #<data>, <ea>
 		table[060] = [=]() { BYTE src = FetchByte(); CMP(GetEAValue<BYTE>(EAMode::GroupDataAlt), src); };
 		table[061] = [=]() { WORD src = FetchWord(); CMP(GetEAValue<WORD>(EAMode::GroupDataAlt), src); };
 		table[062] = [=]() { DWORD src = FetchLong(); CMP(GetEAValue<DWORD>(EAMode::GroupDataAlt), src); };
 
-		table[064] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D6w) : BTST(m_reg.D6); };
-		table[065] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D6)  : BCHG(m_reg.D6); };
-		table[066] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D6w) : BCLR(m_reg.D6); };
-		table[067] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D6)  : BSET(m_reg.D6); };
+		table[064] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D6w) : BTST(m_reg.D6b); };
+		table[065] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D6)  : BCHG(m_reg.D6b); };
+		table[066] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D6w) : BCLR(m_reg.D6b); };
+		table[067] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D6)  : BSET(m_reg.D6b); };
 
-		table[074] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D7w) : BTST(m_reg.D7); };
-		table[075] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D7)  : BCHG(m_reg.D7); };
-		table[076] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D7w) : BCLR(m_reg.D7); };
-		table[077] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D7)  : BSET(m_reg.D7); };
+		table[074] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D7w) : BTST(m_reg.D7b); };
+		table[075] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D7)  : BCHG(m_reg.D7b); };
+		table[076] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D7w) : BCLR(m_reg.D7b); };
+		table[077] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D7)  : BSET(m_reg.D7b); };
 
 	}
 
@@ -649,6 +649,7 @@ namespace emul::cpu68k
 	{
 		InitTable(table, size);
 
+		table[063] = [=]() { RTE(); }; // RTE
 		table[065] = [=]() { RTS(); }; // RTS
 	}
 
@@ -1198,7 +1199,7 @@ namespace emul::cpu68k
 		}
 
 		DWORD* dest = m_reg.DataAddress.data();
-		for (int i = 0; i < 16; ++i, ++dest)
+		while(regs)
 		{
 			if (GetLSB(regs))
 			{
@@ -1215,6 +1216,7 @@ namespace emul::cpu68k
 			}
 
 			regs >>= 1;
+			++dest;
 		}
 	}
 
@@ -1242,7 +1244,7 @@ namespace emul::cpu68k
 
 		// Go backwards through register list in predecrement mode
 		int direction = addrReg ? -1 : 1;
-		for (int i = 0; i < 16; ++i, src += direction)
+		while(regs)
 		{
 			if (GetLSB(regs))
 			{
@@ -1259,6 +1261,7 @@ namespace emul::cpu68k
 			}
 
 			regs >>= 1;
+			src += direction;
 		}
 	}
 
@@ -1329,15 +1332,18 @@ namespace emul::cpu68k
 
 	void CPU68000::BSR()
 	{
+		// Save PC here because it can be incremented by FetchWord()
+		ADDRESS pc = m_programCounter;
+
 		ADDRESS disp = DoubleWiden(GetLByte(m_opcode));
 		if (disp == 0)
 		{
 			disp = Widen(FetchWord());
 		}
 
-		PUSH(m_programCounter);
+		PUSHl(m_programCounter);
 
-		m_programCounter += disp;
+		m_programCounter = pc + disp;
 		m_programCounter &= ADDRESS_MASK;
 	}
 
@@ -1345,35 +1351,51 @@ namespace emul::cpu68k
 	{
 		DWORD addr = GetEA<DWORD>(EAMode::GroupControl);
 
-		PUSH(m_programCounter);
+		PUSHl(m_programCounter);
 
 		m_programCounter = addr;
 	}
 
-
 	void CPU68000::RTS()
 	{
-		m_programCounter = POP();
+		m_programCounter = POPl();
 	}
 
-	DWORD CPU68000::POP()
+	void CPU68000::RTE()
+	{
+		Privileged();
+		SetFlags(POPw());
+		m_programCounter = POPl();
+	}
+
+	WORD CPU68000::POPw()
+	{
+		WORD val = Read<WORD>(m_reg.SP);
+		m_reg.SP += 2;
+		return val;
+	}
+	DWORD CPU68000::POPl()
 	{
 		DWORD val = Read<DWORD>(m_reg.SP);
 		m_reg.SP += 4;
 		return val;
 	}
 
-	void CPU68000::PUSH(DWORD src)
+	void CPU68000::PUSHw(WORD src)
+	{
+		m_reg.SP -= 2;
+		Write(m_reg.SP, src);
+	}
+	void CPU68000::PUSHl(DWORD src)
 	{
 		m_reg.SP -= 4;
 		Write(m_reg.SP, src);
 	}
 
-	void CPU68000::BTSTimm()
+	// BTST (bitcount: imm/Dn), <ea>
+	void CPU68000::BitTst(BYTE bitNumber)
 	{
 		m_eaMode = GetEAMode(m_opcode);
-
-		BYTE bitNumber = FetchByte();
 
 		bool testBit;
 		if (m_eaMode == EAMode::DRegDirect)
@@ -1393,11 +1415,10 @@ namespace emul::cpu68k
 		SetFlag(FLAG_Z, !testBit);
 	}
 
-	void CPU68000::BitOps(BitOp bitOp)
+	// B[CHG|CLR|SET] (bitcount: imm/Dn), <ea>
+	void CPU68000::BitOps(BYTE bitNumber, BitOp bitOp)
 	{
 		m_eaMode = GetEAMode(m_opcode);
-
-		BYTE bitNumber = FetchByte();
 
 		bool testBit;
 		if (m_eaMode == EAMode::DRegDirect)

@@ -403,10 +403,14 @@ namespace emul::cpu68k
 		void BSR();
 		void JSR();
 		void RTS();
+		void RTE();
 
 		// Stack
-		void PUSH(DWORD src);
-		DWORD POP();
+		void PUSHl(DWORD src);
+		void PUSHw(WORD src);
+
+		DWORD POPl();
+		WORD POPw();
 
 		// MOVE
 
@@ -432,18 +436,21 @@ namespace emul::cpu68k
 		void EXGl() { NotImplementedOpcode("EXG.l"); }
 
 		// Bit, Logic
-		void BTSTimm();
-		void BCHGimm() { BitOps(BitOp::CHANGE); }
-		void BCLRimm() { BitOps(BitOp::CLEAR); }
-		void BSETimm() { BitOps(BitOp::SET); }
-
 		enum class BitOp { SET, CLEAR, CHANGE };
-		void BitOps(BitOp bitop);
+		void BitOps(BYTE bitNumber, BitOp bitop);
+		void BitTst(BYTE bitNumber);
 
-		void BTST(DWORD src) { NotImplementedOpcode("BTST Dn, <ea>"); }
-		void BCHG(DWORD src) { NotImplementedOpcode("BCHG Dn, <ea>"); }
-		void BCLR(DWORD src) { NotImplementedOpcode("BCLR Dn, <ea>"); }
-		void BSET(DWORD src) { NotImplementedOpcode("BSET Dn, <ea>"); }
+		// Imm source
+		void BTSTimm() { BitTst(FetchByte()); }
+		void BCHGimm() { BitOps(FetchByte(), BitOp::CHANGE); }
+		void BCLRimm() { BitOps(FetchByte(), BitOp::CLEAR); }
+		void BSETimm() { BitOps(FetchByte(), BitOp::SET); }
+
+		// Reg source
+		void BTST(BYTE src) { BitTst(src); }
+		void BCHG(BYTE src) { BitOps(src, BitOp::CHANGE); }
+		void BCLR(BYTE src) { BitOps(src, BitOp::CLEAR); }
+		void BSET(BYTE src) { BitOps(src, BitOp::SET);; }
 
 		template<typename SIZE> void TST();
 
