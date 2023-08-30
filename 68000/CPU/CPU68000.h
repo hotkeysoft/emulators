@@ -99,15 +99,30 @@ namespace emul::cpu68k
 
 		void InitTable(OpcodeTable& table, size_t size);
 
-		void InitGroup0(OpcodeTable& table, size_t size);
-		void InitGroup4(OpcodeTable& table, size_t size);
-		void InitGroup5(OpcodeTable& table, size_t size);
-		void InitGroup6(OpcodeTable& table, size_t size);
-		void InitGroup8(OpcodeTable& table, size_t size);
-		void InitGroup9(OpcodeTable& table, size_t size);
-		void InitGroup11(OpcodeTable& table, size_t size);
-		void InitGroup12(OpcodeTable& table, size_t size);
-		void InitGroup13(OpcodeTable& table, size_t size);
+		enum class SubOpcodeGroup {
+			b0000 = 0,
+			b0100,
+			b0101,
+			b0110,
+			b1000,
+			b1001,
+			b1011,
+			b1100,
+			b1101,
+			misc,
+			_MAX,
+		};
+
+		void InitGroupB0000(OpcodeTable& table, size_t size);
+		void InitGroupB0100(OpcodeTable& table, size_t size);
+		void InitGroupB0101(OpcodeTable& table, size_t size);
+		void InitGroupB0110(OpcodeTable& table, size_t size);
+		void InitGroupB1000(OpcodeTable& table, size_t size);
+		void InitGroupB1001(OpcodeTable& table, size_t size);
+		void InitGroupB1011(OpcodeTable& table, size_t size);
+		void InitGroupB1100(OpcodeTable& table, size_t size);
+		void InitGroupB1101(OpcodeTable& table, size_t size);
+		void InitGroupMisc(OpcodeTable& table, size_t size);
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		inline void TICKn(int t) { m_opTicks += t; }
@@ -152,7 +167,7 @@ namespace emul::cpu68k
 		ADDRESS GetTrapVectorAddress(BYTE t) { assert(t <= 16);  return ((ADDRESS)VECTOR::TrapBase + t) * 4; }
 
 		OpcodeTable m_opcodes;
-		OpcodeTable m_subOpcodes[16];
+		OpcodeTable m_subOpcodes[(int)SubOpcodeGroup::_MAX];
 		[[noreturn]] void IllegalInstruction();
 		[[noreturn]] void NotImplementedOpcode(const char* name);
 
@@ -162,6 +177,7 @@ namespace emul::cpu68k
 		int GetOpcodeRegisterIndex() const { return m_opcode & 0b111; }
 
 		WORD GetSubopcode6() const { return ((m_opcode >> 6) & 63); }
+		WORD GetSubopcodeLow6() const { return m_opcode & 63; }
 		WORD GetSubopcode4() const { return ((m_opcode >> 8) & 15); }
 
 		virtual void Interrupt();
@@ -338,7 +354,7 @@ namespace emul::cpu68k
 		template<> DWORD Read(ADDRESS src) { Aligned(src); return m_memory.Read32be(src); }
 
 		void Exec(WORD opcode);
-		void Exec(WORD group, WORD subOpcode);
+		void Exec(SubOpcodeGroup group, WORD subOpcode);
 		bool InternalStep();
 
 		// Adjust negative and zero flag
@@ -384,6 +400,14 @@ namespace emul::cpu68k
 		void DBccw(bool cond);
 		void Sccb(bool cond) { NotImplementedOpcode("Scc.b <ea>"); }
 
+		void BSR();
+		void JSR();
+		void RTS();
+
+		// Stack
+		void PUSH(DWORD src);
+		DWORD POP();
+
 		// MOVE
 
 		void MOVEb();
@@ -400,7 +424,7 @@ namespace emul::cpu68k
 		void MOVEPwToReg(WORD& dest) { NotImplementedOpcode("MOVEP.w (<ea> -> reg)"); }
 		void MOVEPlToReg(DWORD& dest) { NotImplementedOpcode("MOVEP.l (<ea> -> reg)"); }
 
-		void MOVEPwFromReg(WORD src) { NotImplementedOpcode("MOVEP.w (reg -> <ea>)"); }
+		void MOVEPwFromReg(WORD src);
 		void MOVEPlFromReg(DWORD src) { NotImplementedOpcode("MOVEP.l (reg -> <ea>)"); }
 
 		void EXGl() { NotImplementedOpcode("EXG.l"); }
@@ -425,14 +449,18 @@ namespace emul::cpu68k
 		void ANDwToEA(WORD src);
 		void ANDlToEA(DWORD src);
 
-		void ANDIbToCCR() { NotImplementedOpcode("AND.b #imm, CCR"); }
-		void ANDIwToSR() { NotImplementedOpcode("AND.w #imm, SR"); }
+		void ANDIbToCCR() { NotImplementedOpcode("ANDI.b #imm, CCR"); }
+		void ANDIwToSR() { NotImplementedOpcode("ANDI.w #imm, SR"); }
 
 		template<typename SIZE> void ANDI();
 		template<typename SIZE> void AND(SIZE& dest, SIZE src);
 
 		template<typename SIZE> void OR(SIZE& dest, SIZE src);
 
+		void EORIbToCCR() { NotImplementedOpcode("EORI.b #imm, CCR"); }
+		void EORIwToSR() { NotImplementedOpcode("EORI.w #imm, SR"); }
+
+		template<typename SIZE> void EORI();
 		template<typename SIZE> void EOR(SIZE& dest, SIZE src);
 		template<typename SIZE> void EORToEA(SIZE src);
 

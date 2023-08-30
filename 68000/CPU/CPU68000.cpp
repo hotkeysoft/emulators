@@ -16,6 +16,8 @@ namespace emul::cpu68k
 	static const BitMaskW Mask_SWAP("000xxx");
 	static const BitMaskW Mask_ANDI_CCR("00111100");
 	static const BitMaskW Mask_ANDI_SR("01111100");
+	static const BitMaskW Mask_EORI_CCR("00111100");
+	static const BitMaskW Mask_EORI_SR("01111100");
 
 	CPU68000::CPU68000(Memory& memory) : CPU68000("68000", memory)
 	{
@@ -50,32 +52,33 @@ namespace emul::cpu68k
 	{
 		InitTable(m_opcodes, 16);
 
-		m_opcodes[0b0000] = [=]() { Exec(0, GetSubopcode6()); }; // Immediate,Bit,MOVEP
+		m_opcodes[0b0000] = [=]() { Exec(SubOpcodeGroup::b0000, GetSubopcode6()); }; // Immediate,Bit,MOVEP
 		m_opcodes[0b0001] = [=]() { MOVEb(); }; // MOVE.b
 		m_opcodes[0b0010] = [=]() { MOVEl(); }; // MOVE.l, MOVEA.l
 		m_opcodes[0b0011] = [=]() { MOVEw(); }; // MOVE.w, MOVEA.w
-		m_opcodes[0b0100] = [=]() { Exec(4, GetSubopcode6()); }; // Misc
-		m_opcodes[0b0101] = [=]() { Exec(5, GetSubopcode6()); }; // ADDQ,SUBQ,Scc,DBcc
-		m_opcodes[0b0110] = [=]() { Exec(6, GetSubopcode4()); }; // BRA,BSR,Bcc
+		m_opcodes[0b0100] = [=]() { Exec(SubOpcodeGroup::b0100, GetSubopcode6()); }; // Misc
+		m_opcodes[0b0101] = [=]() { Exec(SubOpcodeGroup::b0101, GetSubopcode6()); }; // ADDQ,SUBQ,Scc,DBcc
+		m_opcodes[0b0110] = [=]() { Exec(SubOpcodeGroup::b0110, GetSubopcode4()); }; // BRA,BSR,Bcc
 		m_opcodes[0b0111] = [=]() { MOVEQ(); };
-		m_opcodes[0b1000] = [=]() { Exec(8, GetSubopcode6()); }; // DIVU,DIVS,SBCD,OR
-		m_opcodes[0b1001] = [=]() { Exec(9, GetSubopcode6()); }; // SUB,SUBX,SUBA
+		m_opcodes[0b1000] = [=]() { Exec(SubOpcodeGroup::b1000, GetSubopcode6()); }; // DIVU,DIVS,SBCD,OR
+		m_opcodes[0b1001] = [=]() { Exec(SubOpcodeGroup::b1001, GetSubopcode6()); }; // SUB,SUBX,SUBA
 		m_opcodes[0b1010] = [=]() { IllegalInstruction(); };
-		m_opcodes[0b1011] = [=]() { Exec(11, GetSubopcode6()); }; // EOR,CMPM,CMP,CMPA
-		m_opcodes[0b1100] = [=]() { Exec(12, GetSubopcode6()); }; // MULU,MULS,ABCD,EXG,AND
-		m_opcodes[0b1101] = [=]() { Exec(13, GetSubopcode6()); }; // ADD,ADDX,ADDA
+		m_opcodes[0b1011] = [=]() { Exec(SubOpcodeGroup::b1011, GetSubopcode6()); }; // EOR,CMPM,CMP,CMPA
+		m_opcodes[0b1100] = [=]() { Exec(SubOpcodeGroup::b1100, GetSubopcode6()); }; // MULU,MULS,ABCD,EXG,AND
+		m_opcodes[0b1101] = [=]() { Exec(SubOpcodeGroup::b1101, GetSubopcode6()); }; // ADD,ADDX,ADDA
 		m_opcodes[0b1110] = [=]() { SHIFT(); }; // Shift, Rotate
 		m_opcodes[0b1111] = [=]() { IllegalInstruction(); };
 
-		InitGroup0(m_subOpcodes[0], 64);
-		InitGroup4(m_subOpcodes[4], 64);
-		InitGroup5(m_subOpcodes[5], 64);
-		InitGroup6(m_subOpcodes[6], 16);
-		InitGroup8(m_subOpcodes[8], 64);
-		InitGroup9(m_subOpcodes[9], 64);
-		InitGroup11(m_subOpcodes[11], 64);
-		InitGroup12(m_subOpcodes[12], 64);
-		InitGroup13(m_subOpcodes[13], 64);
+		InitGroupB0000(m_subOpcodes[(int)SubOpcodeGroup::b0000], 64);
+		InitGroupB0100(m_subOpcodes[(int)SubOpcodeGroup::b0100], 64);
+		InitGroupB0101(m_subOpcodes[(int)SubOpcodeGroup::b0101], 64);
+		InitGroupB0110(m_subOpcodes[(int)SubOpcodeGroup::b0110], 16);
+		InitGroupB1000(m_subOpcodes[(int)SubOpcodeGroup::b1000], 64);
+		InitGroupB1001(m_subOpcodes[(int)SubOpcodeGroup::b1001], 64);
+		InitGroupB1011(m_subOpcodes[(int)SubOpcodeGroup::b1011], 64);
+		InitGroupB1100(m_subOpcodes[(int)SubOpcodeGroup::b1100], 64);
+		InitGroupB1101(m_subOpcodes[(int)SubOpcodeGroup::b1101], 64);
+		InitGroupMisc(m_subOpcodes[(int)SubOpcodeGroup::misc], 56);
 	}
 
 	void CPU68000::InitTable(OpcodeTable& table, size_t size)
@@ -85,7 +88,7 @@ namespace emul::cpu68k
 	}
 
 	// b0000: Immediate,Bit,MOVEP
-	void CPU68000::InitGroup0(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB0000(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
@@ -123,6 +126,10 @@ namespace emul::cpu68k
 		table[046] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D4w) : BCLR(m_reg.D4); };
 		table[047] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D4)  : BSET(m_reg.D4); };
 
+		table[050] = [=]() { Mask_EORI_CCR.IsMatch(m_opcode) ? EORIbToCCR() : EORI<BYTE>(); }; // EORI #imm, <ea>
+		table[051] = [=]() { Mask_EORI_SR.IsMatch(m_opcode) ? EORIwToSR() : EORI<WORD>(); };
+		table[052] = [=]() { EORI<DWORD>(); };
+
 		table[054] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D5w) : BTST(m_reg.D5); };
 		table[055] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D5)  : BCHG(m_reg.D5); };
 		table[056] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D5w) : BCLR(m_reg.D5); };
@@ -146,7 +153,7 @@ namespace emul::cpu68k
 	}
 
 	// b0100: Misc
-	void CPU68000::InitGroup4(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB0100(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
@@ -183,13 +190,13 @@ namespace emul::cpu68k
 		table[067] = [=]() { LEA(m_reg.A6); }; // LEA <ea>,A6
 		table[077] = [=]() { LEA(m_reg.A7); }; // LEA <ea>,A7
 
-//		table[072] = [=]() { JSR(); }; // JSR <ea>
+		table[071] = [=]() { Exec(SubOpcodeGroup::misc, GetSubopcodeLow6()); };
+		table[072] = [=]() { JSR(); }; // JSR <ea>
 		table[073] = [=]() { JMP(); }; // JMP <ea>
-
 	}
 
 	// b0101: ADDQ,SUBQ,Scc,DBcc
-	void CPU68000::InitGroup5(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB0101(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
@@ -275,12 +282,12 @@ namespace emul::cpu68k
 	}
 
 	// b0110: BRA,BSR,Bcc
-	void CPU68000::InitGroup6(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB0110(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
 		table[000] = [=]() { BRA(); }; // BRA
-		//table[001] = [=]() { BSR(); }; // BSR
+		table[001] = [=]() { BSR(); }; // BSR
 		table[002] = [=]() { BRA(FlagHI()); }; // BHI
 		table[003] = [=]() { BRA(FlagLS()); }; // BLS
 		table[004] = [=]() { BRA(FlagCC()); }; // BCC
@@ -298,7 +305,7 @@ namespace emul::cpu68k
 	}
 
 	// b1000: DIVU,DIVS,SBCD,OR
-	void CPU68000::InitGroup8(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB1000(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
@@ -344,7 +351,7 @@ namespace emul::cpu68k
 	}
 
 	// b1001: SUB,SUBX,SUBA
-	void CPU68000::InitGroup9(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB1001(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
@@ -382,7 +389,7 @@ namespace emul::cpu68k
 	}
 
 	// b1011: EOR,CMPM,CMP,CMPA
-	void CPU68000::InitGroup11(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB1011(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
@@ -460,7 +467,7 @@ namespace emul::cpu68k
 	}
 
 	// b1100: MULU,MULS,ABCD,EXG,AND
-	void CPU68000::InitGroup12(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB1100(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
@@ -535,11 +542,10 @@ namespace emul::cpu68k
 		table[074] = [=]() { Mask_ABCD.IsMatch(m_opcode) ? ABCDb() : ANDbToEA(m_reg.D7b); }; // AND.b D7,<ea>
 		table[075] = [=]() { Mask_EXG.IsMatch(m_opcode)  ? EXGl()  : ANDwToEA(m_reg.D7w); }; // AND.b D7,<ea>
 		table[076] = [=]() { Mask_EXG.IsMatch(m_opcode)  ? EXGl()  : ANDlToEA(m_reg.D7); };  // AND.b D7,<ea>
-
 	}
 
 	// b1101: ADD,ADDX,ADDA
-	void CPU68000::InitGroup13(OpcodeTable& table, size_t size)
+	void CPU68000::InitGroupB1101(OpcodeTable& table, size_t size)
 	{
 		InitTable(table, size);
 
@@ -622,6 +628,13 @@ namespace emul::cpu68k
 		table[075] = [=]() { Mask_ADDX.IsMatch(m_opcode) ? ADDXw() : ADDwToEA(m_reg.D7w); }; // ADD.b D7,<ea>
 		table[076] = [=]() { Mask_ADDX.IsMatch(m_opcode) ? ADDXl() : ADDlToEA(m_reg.D7); };  // ADD.b D7,<ea>
 		table[077] = [=]() { ADDA(m_reg.A7, GetEAValue<DWORD>(EAMode::GroupAll)); }; // ADDA.l <ea>,A7
+	}
+
+	void CPU68000::InitGroupMisc(OpcodeTable& table, size_t size)
+	{
+		InitTable(table, size);
+
+		table[065] = [=]() { RTS(); }; // RTS
 	}
 
 	void CPU68000::Reset()
@@ -825,9 +838,9 @@ namespace emul::cpu68k
 		}
 	}
 
-	void CPU68000::Exec(WORD group, WORD subOpcode)
+	void CPU68000::Exec(SubOpcodeGroup group, WORD subOpcode)
 	{
-		auto& opFunc = m_subOpcodes[group][subOpcode];
+		auto& opFunc = m_subOpcodes[(int)group][subOpcode];
 		opFunc();
 	}
 
@@ -1141,6 +1154,15 @@ namespace emul::cpu68k
 		DWORD* addrReg = (m_eaMode == EAMode::ARegIndirectPostinc) ?
 			&m_reg.ADDR[GetOpcodeRegisterIndex()] : nullptr;
 
+		if (addrReg)
+		{
+			// Postincrement was already done in GetEA but we handle things manually here
+			// (alternative would be to call GetEA() for each iteration
+
+			// TODO: Check address pos when no bits set
+			*addrReg -= increment;
+		}
+
 		DWORD* dest = m_reg.DataAddress.data();
 		for (int i = 0; i < 16; ++i, ++dest)
 		{
@@ -1173,8 +1195,20 @@ namespace emul::cpu68k
 		DWORD* addrReg = (m_eaMode == EAMode::ARegIndirectPredec) ?
 			&m_reg.ADDR[GetOpcodeRegisterIndex()] : nullptr;
 
-		DWORD* src = m_reg.DataAddress.data();
-		for (int i = 0; i < 16; ++i, ++src)
+		if (addrReg)
+		{
+			// Predecrement was already done in GetEA but we handle things manually here
+			// (alternative would be to call GetEA() for each iteration
+			// TODO: Check address pos when no bits set
+			*addrReg += incdec;
+		}
+
+		// Start from the end in predecrement mode
+		DWORD* src = m_reg.DataAddress.data() + (addrReg ? 15 : 0);
+
+		// Go backwards through register list in predecrement mode
+		int direction = addrReg ? -1 : 1;
+		for (int i = 0; i < 16; ++i, src += direction)
 		{
 			if (GetLSB(regs))
 			{
@@ -1194,9 +1228,20 @@ namespace emul::cpu68k
 		}
 	}
 
+	// MOVEP.w Dx, d(Ay)
+	void CPU68000::MOVEPwFromReg(WORD src)
+	{
+		const int addrIndex = m_opcode & 7;
+		const WORD disp = FetchWord();
+		const ADDRESS dest = m_reg.ADDR[addrIndex] + Widen(disp);
+
+		Write<BYTE>(dest, GetHByte(src));
+		Write<BYTE>(dest + 2, GetLByte(src));
+	}
+
 	void CPU68000::BRA(bool cond)
 	{
-		DWORD rel = DoubleWiden(GetLByte(m_opcode));
+		ADDRESS rel = DoubleWiden(GetLByte(m_opcode));
 
 		// Save PC here because it can be incremented by FetchWord()
 		ADDRESS pc = m_programCounter;
@@ -1246,6 +1291,48 @@ namespace emul::cpu68k
 			m_programCounter += 2;
 			m_programCounter &= ADDRESS_MASK;
 		}
+	}
+
+	void CPU68000::BSR()
+	{
+		ADDRESS disp = DoubleWiden(GetLByte(m_opcode));
+		if (disp == 0)
+		{
+			disp = Widen(FetchWord());
+		}
+
+		PUSH(m_programCounter);
+
+		m_programCounter += disp;
+		m_programCounter &= ADDRESS_MASK;
+	}
+
+	void CPU68000::JSR()
+	{
+		DWORD addr = GetEA<DWORD>(EAMode::GroupControl);
+
+		PUSH(m_programCounter);
+
+		m_programCounter = addr;
+	}
+
+
+	void CPU68000::RTS()
+	{
+		m_programCounter = POP();
+	}
+
+	DWORD CPU68000::POP()
+	{
+		DWORD val = Read<DWORD>(m_reg.SP);
+		m_reg.SP += 4;
+		return val;
+	}
+
+	void CPU68000::PUSH(DWORD src)
+	{
+		m_reg.SP -= 4;
+		Write(m_reg.SP, src);
 	}
 
 	void CPU68000::BTSTimm()
@@ -1368,6 +1455,29 @@ namespace emul::cpu68k
 
 		AdjustNZ(dest);
 		SetFlag(FLAG_VC, false);
+	}
+
+	// EORI #imm, <ea>
+	template<typename SIZE>
+	void CPU68000::EORI()
+	{
+		SIZE imm = Fetch<SIZE>();
+
+		m_eaMode = GetEAMode(m_opcode);
+
+		if (m_eaMode == EAMode::DRegDirect)
+		{
+			SIZE& dest = m_reg.GetDATA<SIZE>(GetOpcodeRegisterIndex());
+			EOR<SIZE>(dest, imm);
+		}
+		else
+		{
+			ADDRESS ea = GetEA<SIZE>(EAMode::GroupDataAlt);
+
+			SIZE dest = Read<SIZE>(ea);
+			EOR<SIZE>(dest, imm);
+			Write<SIZE>(ea, dest);
+		}
 	}
 
 	template<typename SIZE>
@@ -1514,7 +1624,29 @@ namespace emul::cpu68k
 	template<typename SIZE>
 	void CPU68000::ASL(SIZE& dest, int count)
 	{
-		NotImplementedOpcode("ASL n,Dy");
+		bool carry = false;
+		bool msbChanged = false;
+
+		for (int i = 0; i < count; ++i)
+		{
+			carry = GetMSB(dest);
+
+			dest <<= 1;
+
+			if (GetMSB(dest) != carry)
+			{
+				msbChanged = true;
+			}
+		}
+
+		SetFlag(FLAG_V, msbChanged);
+		SetFlag(FLAG_C, carry);
+		if (count)
+		{
+			SetFlag(FLAG_X, carry);
+		}
+
+		AdjustNZ(dest);
 	}
 	template<typename SIZE>
 	void CPU68000::ASR(SIZE& dest, int count)
