@@ -416,7 +416,8 @@ namespace emul::cpu68k
 
 		void MOVEQ();
 
-		void MOVE_w_toSR(WORD src);
+		void MOVEwToSR(WORD src);
+		void MOVEwFromSR();
 
 		template<typename SIZE> void MOVEMToEA(WORD regs);
 		template<typename SIZE> void MOVEMFromEA(WORD regs);
@@ -426,6 +427,7 @@ namespace emul::cpu68k
 
 		void MOVEPwFromReg(WORD src);
 		void MOVEPlFromReg(DWORD src) { NotImplementedOpcode("MOVEP.l (reg -> <ea>)"); }
+
 
 		void EXGl() { NotImplementedOpcode("EXG.l"); }
 
@@ -445,17 +447,19 @@ namespace emul::cpu68k
 
 		template<typename SIZE> void TST();
 
-		void ANDbToEA(BYTE src);
-		void ANDwToEA(WORD src);
-		void ANDlToEA(DWORD src);
-
 		void ANDIbToCCR() { NotImplementedOpcode("ANDI.b #imm, CCR"); }
 		void ANDIwToSR() { NotImplementedOpcode("ANDI.w #imm, SR"); }
 
 		template<typename SIZE> void ANDI();
 		template<typename SIZE> void AND(SIZE& dest, SIZE src);
+		template<typename SIZE> void ANDToEA(SIZE src);
 
+		void ORIbToCCR();
+		void ORIwToSR();
+
+		template<typename SIZE> void ORI();
 		template<typename SIZE> void OR(SIZE& dest, SIZE src);
+		template<typename SIZE> void ORToEA(SIZE src);
 
 		void EORIbToCCR() { NotImplementedOpcode("EORI.b #imm, CCR"); }
 		void EORIwToSR() { NotImplementedOpcode("EORI.w #imm, SR"); }
