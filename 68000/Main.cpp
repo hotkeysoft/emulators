@@ -113,16 +113,12 @@ void ToggleMode()
 {
 	switch (mode)
 	{
-	case Mode::MONITOR: mode = Mode::LOG; break;
-	case Mode::LOG: mode = Mode::MONITOR; break;
-	}
-
-	switch (mode)
-	{
-	case Mode::MONITOR:
-		ShowMonitor();
-		break;
 	case Mode::LOG:
+		ShowMonitor();
+		mode = Mode::MONITOR;
+		break;
+	case Mode::MONITOR:
+		mode = Mode::LOG;
 		console.Clear();
 		DumpBackLog(24);
 		break;

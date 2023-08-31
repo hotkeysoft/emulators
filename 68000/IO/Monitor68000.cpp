@@ -204,12 +204,21 @@ namespace emul
 				UpdateRunMode();
 				return MonitorState::RUN;
 
+			case 91: // SHIFT-F8
+			{
+				Instruction decoded;
+				// Set breakpoint at next instruction
+				ADDRESS next = Disassemble(m_cpu->GetCurrentAddress(), decoded);
+				m_breakpointEnabled = true;
+				m_breakpoint = next;
+				m_runMode = RUNMode::RUN;
+				break;
+			}
 			case 98: // CTRL-F5
 				m_runMode = RUNMode::STEP;
 				m_cpu->Reset();
 				Update();
 				break;
-
 				// Not implemented, ignore
 			case 59: // F1
 			case 60: // F2
