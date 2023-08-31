@@ -398,7 +398,6 @@ namespace emul::cpu68k
 		void JMP();
 
 		void DBccw(bool cond);
-		void Sccb(bool cond) { NotImplementedOpcode("Scc.b <ea>"); }
 
 		void BSR();
 		void JSR();
@@ -436,6 +435,8 @@ namespace emul::cpu68k
 		void EXGl() { NotImplementedOpcode("EXG.l"); }
 
 		// Bit, Logic
+		void Sccb(bool cond);
+
 		enum class BitOp { SET, CLEAR, CHANGE };
 		void BitOps(BYTE bitNumber, BitOp bitop);
 		void BitTst(BYTE bitNumber);
@@ -510,8 +511,8 @@ namespace emul::cpu68k
 
 		void SWAPw();
 
-		void EXTw() { NotImplementedOpcode("EXT.w"); }
-		void EXTl() { NotImplementedOpcode("EXT.l"); }
+		void EXTw();
+		void EXTl();
 
 		void ABCDb() { NotImplementedOpcode("ABCD.b"); }
 
@@ -547,9 +548,8 @@ namespace emul::cpu68k
 		template<typename SIZE>
 		void CMP(SIZE dest, SIZE src) { return SUB<SIZE>(dest, src, FLAG_C); }
 
-		void CMPMb() { NotImplementedOpcode("CMPM.b"); }
-		void CMPMw() { NotImplementedOpcode("CMPM.w"); }
-		void CMPMl() { NotImplementedOpcode("CMPM.l"); }
+		template<typename SIZE>
+		void CMPM();
 
 		void MULUw(DWORD& dest);
 
