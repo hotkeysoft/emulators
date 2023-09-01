@@ -222,6 +222,9 @@
     <ClInclude Include="Hardware\IOBlockIWMMac.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="CPU\TrapsMac.h">
+      <Filter>Header Files\CPU</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">

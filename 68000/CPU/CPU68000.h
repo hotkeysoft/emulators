@@ -14,6 +14,8 @@
 
 namespace emul::cpu68k
 {
+	using TrapList = std::map<WORD, std::string>;
+
 	enum class EAMode : WORD
 	{
 		// Register Direct modes
@@ -87,6 +89,8 @@ namespace emul::cpu68k
 		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter & ADDRESS_MASK; }
 
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
+
+		void SetTrapList(TrapList list) { m_trapList = list; };
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -165,6 +169,8 @@ namespace emul::cpu68k
 		ADDRESS GetVectorAddress(VECTOR v) { return (ADDRESS)v * 4; }
 		ADDRESS GetIntVectorAddress(BYTE i) { assert(i <= 7); return ((ADDRESS)VECTOR::InterruptBase + i) * 4; }
 		ADDRESS GetTrapVectorAddress(BYTE t) { assert(t <= 16);  return ((ADDRESS)VECTOR::TrapBase + t) * 4; }
+
+		TrapList m_trapList;
 
 		OpcodeTable m_opcodes;
 		OpcodeTable m_subOpcodes[(int)SubOpcodeGroup::_MAX];

@@ -5,6 +5,7 @@
 #include <Sound/Sound.h>
 #include "IO/Console.h"
 #include "CPU/CPU68000.h"
+#include "CPU/TrapsMac.h"
 
 using cfg::CONFIG;
 using sound::SOUND;
@@ -28,11 +29,11 @@ namespace emul
 	{
 		ComputerBase::Init(cpu68k::CPUID_68000, baseRAM);
 
+		GetCPU().SetTrapList(cpu68k::mac::s_trapsMac128k);
+
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
 		m_rom.LoadFromFile("./data/Macintosh/mac.128k.bin");
-
-		m_baseRAM.Clear(0x5A);
 
 		// Temp RAM blocks instead of io to check instructions
 		MemoryBlock* SCCr = new MemoryBlock("SCCr", 0x100000);
@@ -91,6 +92,7 @@ namespace emul
 	void ComputerMacintosh::InitVideo()
 	{
 		m_video = new video::mac::VideoMac();
+		m_video->EnableLog(CONFIG().GetLogLevel("video"));
 		m_video->Init(&m_memory, nullptr);
 		GetVideo().SetEventHandler(this);
 	}
@@ -201,7 +203,7 @@ namespace emul
 			if (!m_turbo)
 			{
 				WORD sound = GetHByte(m_sound.GetBufferWord()) * m_via.GetSoundVolume();
-				sound = 0; //TODO: TEMP
+				//sound = 0; //TODO: TEMP
 				SOUND().PlayMono(sound * 2);
 			}
 

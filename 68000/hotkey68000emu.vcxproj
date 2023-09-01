@@ -215,6 +215,7 @@
     <ClInclude Include="Computer68000.h" />
     <ClInclude Include="ComputerMacintosh.h" />
     <ClInclude Include="CPU\CPU68000.h" />
+    <ClInclude Include="CPU\TrapsMac.h" />
     <ClInclude Include="Hardware\Device6522Mac.h" />
     <ClInclude Include="Hardware\DeviceIWM.h" />
     <ClInclude Include="Hardware\IOBlockIWMMac.h" />

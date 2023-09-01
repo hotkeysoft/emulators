@@ -956,8 +956,14 @@ namespace emul::cpu68k
 		{
 		case VECTOR::Line1010Emulator:
 		case VECTOR::Line1111Emulator:
-			LogPrintf(LOG_INFO, "CPU: Exception (%d)[%04X] at address 0x%08X", v, m_opcode, m_programCounter);
+		{
+			const auto trapItem = m_trapList.find(m_opcode);
+			std::string trapName = "";
+			if (trapItem != m_trapList.end())
+				trapName = trapItem->second;
+			LogPrintf(LOG_INFO, "CPU: Exception (%d)[%04X][%s] at address 0x%08X", v, m_opcode, trapName.c_str(), m_programCounter);
 			break;
+		}
 		default:
 			LogPrintf(LOG_WARNING, "CPU: Exception (%d) at address 0x%08X", v, m_programCounter);
 			throw std::exception("Exception");
