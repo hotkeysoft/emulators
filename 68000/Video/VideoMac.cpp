@@ -64,8 +64,6 @@ namespace video::mac
 		// Read a word (and draw it) every 16 pixels
 		if (m_currX % 16 == 0)
 		{
-			m_currAddress += 2;
-
 			if (IsDisplayArea())
 			{
 				Draw();
@@ -74,6 +72,7 @@ namespace video::mac
 			{
 				DrawBackground(16, 0xFF000000);
 			}
+			m_currAddress += 2;
 		}
 	}
 
