@@ -38,6 +38,7 @@ namespace video::mac
         uint32_t GetY() const { return m_currY - TOP_BORDER; }
 
         void SetBaseAddress(ADDRESS base) { m_baseAddress = base; }
+        void SetPageOffset(ADDRESS offset) { m_pageOffset = offset; }
 
     protected:
         void Draw();
@@ -80,7 +81,8 @@ namespace video::mac
         uint32_t m_currX = 0;
         uint32_t m_currY = 0;
 
-        ADDRESS m_baseAddress = 0x61A700;
+        ADDRESS m_baseAddress = 0x600000;
+        ADDRESS m_pageOffset = 0x1A700;
 
         // Only valid while IsDisplayArea()
         ADDRESS m_currAddress = 0;

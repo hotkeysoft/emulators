@@ -141,6 +141,10 @@ namespace emul
 		{
 			m_memory.MapWindow(ramBase, ramBase + (i * RAM_SIZE), RAM_SIZE);
 		}
+
+		// Adjust base offsets for sound + video buffers
+		GetVideo().SetBaseAddress(m_ramBaseAddress);
+		m_sound.SetBufferBase(m_ramBaseAddress);
 	}
 
 	void ComputerMacintosh::OnHBlankStart()
@@ -165,14 +169,12 @@ namespace emul
 	void ComputerMacintosh::OnSoundBufferChange(bool mainBuffer)
 	{
 		LogPrintf(LOG_INFO, "Set Sound Buffer: [%s]", mainBuffer ? "MAIN" : "ALT");
-		m_sound.SetBufferBase(m_ramBaseAddress +
-			(mainBuffer ? RAM_SOUND_PAGE1_OFFSET : RAM_SOUND_PAGE2_OFFSET));
+		m_sound.SetBufferOffset(mainBuffer ? RAM_SOUND_PAGE1_OFFSET : RAM_SOUND_PAGE2_OFFSET);
 	}
 	void ComputerMacintosh::OnVideoPageChange(bool mainBuffer)
 	{
 		LogPrintf(LOG_INFO, "Set Video Buffer : [%s]", mainBuffer ? "MAIN" : "ALT");
-		GetVideo().SetBaseAddress(m_ramBaseAddress +
-			(mainBuffer ? RAM_VIDEO_PAGE1_OFFSET : RAM_VIDEO_PAGE2_OFFSET));
+		GetVideo().SetPageOffset(mainBuffer ? RAM_VIDEO_PAGE1_OFFSET : RAM_VIDEO_PAGE2_OFFSET);
 	}
 	void ComputerMacintosh::OnHeadSelChange(bool selectedHead)
 	{
@@ -199,6 +201,7 @@ namespace emul
 			if (!m_turbo)
 			{
 				WORD sound = GetHByte(m_sound.GetBufferWord()) * m_via.GetSoundVolume();
+				sound = 0; //TODO: TEMP
 				SOUND().PlayMono(sound * 2);
 			}
 

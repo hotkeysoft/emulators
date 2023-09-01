@@ -30,10 +30,12 @@ namespace sound::mac
 		}
 
 		void SetBufferBase(emul::ADDRESS base) { m_bufferBase = base; }
+		void SetBufferOffset(emul::ADDRESS offset) { m_bufferOffset = offset; }
+
 		void ResetBufferPos() { m_bufferPos = 0; }
 		void BufferWord()
 		{
-			m_word = m_memory.Read16be(m_bufferBase + m_bufferPos);
+			m_word = m_memory.Read16be(m_bufferBase + m_bufferOffset + m_bufferPos);
 			m_bufferPos += m_enabled ? 2 : 0;
 		}
 
@@ -44,6 +46,7 @@ namespace sound::mac
 
 		emul::WORD m_word = 0;
 
+		emul::ADDRESS m_bufferOffset = 0;
 		emul::ADDRESS m_bufferBase = 0;
 		emul::ADDRESS m_bufferPos = 0;
 

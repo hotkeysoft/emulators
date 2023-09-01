@@ -96,7 +96,7 @@ namespace video::mac
 
 	void VideoMac::Draw()
 	{
-		const emul::DWORD pixels = m_memory->Read16be(m_baseAddress + m_currAddress);
+		const emul::DWORD pixels = m_memory->Read16be(m_baseAddress + m_pageOffset + m_currAddress);
 
 		for (int i = 0; i < 16; ++i)
 		{
