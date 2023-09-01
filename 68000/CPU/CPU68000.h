@@ -411,6 +411,11 @@ namespace emul::cpu68k
 		DWORD POPl();
 		WORD POPw();
 
+		void PEAl();
+
+		void LINKw(DWORD& dest);
+		void UNLK(DWORD& dest);
+
 		// MOVE
 		template<typename SIZE> void MOVE();
 		template<typename SIZE> void MOVEA();
@@ -519,7 +524,12 @@ namespace emul::cpu68k
 		void ADDXw() { NotImplementedOpcode("ADDX.w"); }
 		void ADDXl() { NotImplementedOpcode("ADDX.l"); }
 
+		void SUBXb() { NotImplementedOpcode("SUBX.b"); }
+		void SUBXw() { NotImplementedOpcode("SUBX.w"); }
+		void SUBXl() { NotImplementedOpcode("SUBX.l"); }
+
 		template<typename SIZE> void ADDQ(SIZE imm);
+		template<typename SIZE> void SUBQ(SIZE imm);
 
 		void ADDA(WORD& dest, WORD src) { dest += Widen(src); }
 		void ADDA(DWORD& dest, DWORD src) { dest += src; }
@@ -527,32 +537,28 @@ namespace emul::cpu68k
 		void SUBA(WORD& dest, WORD src) { dest -= Widen(src); }
 		void SUBA(DWORD& dest, DWORD src) { dest -= src; }
 
-		template<typename SIZE> void SUBQ(SIZE imm);
-
 		// dest' <- dest + src
-		template<typename SIZE>
-		void ADD(SIZE& dest, SIZE src);
-
-		template<typename SIZE>
-		void ADDToEA(SIZE src);
+		template<typename SIZE> void ADD(SIZE& dest, SIZE src);
+		template<typename SIZE> void ADDI();
+		template<typename SIZE> void ADDToEA(SIZE src);
 
 		// dest' <- dest - src
-		template<typename SIZE>
-		void SUB(SIZE& dest, SIZE src, FLAG carryFlag = FLAG_CX);
+		template<typename SIZE> void SUB(SIZE& dest, SIZE src, FLAG carryFlag = FLAG_CX);
+		template<typename SIZE> void SUBI();
+		template<typename SIZE> void SUBToEA(SIZE src);
 
 		// dest by value so it's not modified
 		// (void) <- dest - src
 		// (doesn't set X flag)
-		template<typename SIZE>
-		void CMP(SIZE dest, SIZE src) { return SUB<SIZE>(dest, src, FLAG_C); }
+		template<typename SIZE> void CMP(SIZE dest, SIZE src) { return SUB<SIZE>(dest, src, FLAG_C); }
 
-		template<typename SIZE>
-		void CMPM();
+		template<typename SIZE> void CMPM();
 
-		template<typename SIZE>
-		void NEG();
+		template<typename SIZE> void NEG();
 
 		void MULUw(DWORD& dest);
+		void DIVUw(DWORD& dest);
+		void DIVSw(DWORD& dest);
 
 		friend class Monitor68000;
 	};

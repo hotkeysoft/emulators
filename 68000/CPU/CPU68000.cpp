@@ -10,6 +10,7 @@ namespace emul::cpu68k
 	static const BitMaskW Mask_ABCD("00xxxx");
 	static const BitMaskW Mask_SBCD("00xxxx");
 	static const BitMaskW Mask_ADDX("00xxxx");
+	static const BitMaskW Mask_SUBX("00xxxx");
 	static const BitMaskW Mask_DB("001xxx");
 	static const BitMaskW Mask_MOVEP("1xx001xxx");
 	static const BitMaskW Mask_SHIFT_MEM("11xxxxxx");
@@ -114,10 +115,18 @@ namespace emul::cpu68k
 		table[016] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D1w) : BCLR(m_reg.D1b); };
 		table[017] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D1)  : BSET(m_reg.D1b); };
 
+		table[020] = [=]() { SUBI<BYTE>(); };
+		table[021] = [=]() { SUBI<WORD>(); };
+		table[022] = [=]() { SUBI<DWORD>(); };
+
 		table[024] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D2w) : BTST(m_reg.D2b); };
 		table[025] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D2)  : BCHG(m_reg.D2b); };
 		table[026] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPwFromReg(m_reg.D2w) : BCLR(m_reg.D2b); };
 		table[027] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ? MOVEPlFromReg(m_reg.D2)  : BSET(m_reg.D2b); };
+
+		table[030] = [=]() { ADDI<BYTE>(); };
+		table[031] = [=]() { ADDI<WORD>(); };
+		table[032] = [=]() { ADDI<DWORD>(); };
 
 		table[034] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPwToReg(m_reg.D3w) : BTST(m_reg.D3b); };
 		table[035] = [=]() { Mask_MOVEP.IsMatch(m_opcode) ?   MOVEPlToReg(m_reg.D3)  : BCHG(m_reg.D3b); };
@@ -189,7 +198,7 @@ namespace emul::cpu68k
 
 		table[037] = [=]() { LEA(m_reg.A3); }; // LEA <ea>,A3
 
-		table[041] = [=]() { Mask_SWAP.IsMatch(m_opcode) ? SWAPw() : NotImplementedOpcode("PEA.l {idx}"); }; // SWAP
+		table[041] = [=]() { Mask_SWAP.IsMatch(m_opcode) ? SWAPw() : PEAl(); }; // SWAP, PEAl
 		table[042] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXTw() : MOVEMToEA<WORD>(FetchWord()); }; // MOVEM <register list>, <ea>
 		table[043] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXTl() : MOVEMToEA<DWORD>(FetchWord()); }; // MOVEM <register list>, <ea>
 
@@ -331,73 +340,81 @@ namespace emul::cpu68k
 		table[000] = [=]() { OR(m_reg.D0b, GetEAValue<BYTE>(EAMode::GroupData)); }; // OR.b <ea>,D0
 		table[001] = [=]() { OR(m_reg.D0w, GetEAValue<WORD>(EAMode::GroupData)); }; // OR.w <ea>,D0
 		table[002] = [=]() { OR(m_reg.D0, GetEAValue<DWORD>(EAMode::GroupData)); }; // OR.l <ea>,D0
-
+		table[003] = [=]() { DIVUw(m_reg.D0); }; // DIVU.w <ea>, D0
 		table[004] = [=]() { Mask_SBCD.IsMatch(m_opcode) ? SBCDb() : ORToEA(m_reg.D0b); }; // OR.b D0,<ea>
 		table[005] = [=]() { ORToEA(m_reg.D0w); }; // OR.w D0,<ea>
 		table[006] = [=]() { ORToEA(m_reg.D0 ); }; // OR.l D0,<ea>
+		table[007] = [=]() { DIVSw(m_reg.D0); }; // DIVS.w <ea>, D0
 
 		// D1
 		table[010] = [=]() { OR(m_reg.D1b, GetEAValue<BYTE>(EAMode::GroupData)); }; // OR.b <ea>,D1
 		table[011] = [=]() { OR(m_reg.D1w, GetEAValue<WORD>(EAMode::GroupData)); }; // OR.w <ea>,D1
 		table[012] = [=]() { OR(m_reg.D1, GetEAValue<DWORD>(EAMode::GroupData)); }; // OR.l <ea>,D1
-
+		table[013] = [=]() { DIVUw(m_reg.D1); }; // DIVU.w <ea>, D1
 		table[014] = [=]() { Mask_SBCD.IsMatch(m_opcode) ? SBCDb() : ORToEA(m_reg.D1b); }; // OR.b D1,<ea>
 		table[015] = [=]() { ORToEA(m_reg.D1w); }; // OR.w D1,<ea>
 		table[016] = [=]() { ORToEA(m_reg.D1); }; // OR.l D1,<ea>
+		table[017] = [=]() { DIVSw(m_reg.D1); }; // DIVS.w <ea>, D1
 
 		// D2
 		table[020] = [=]() { OR(m_reg.D2b, GetEAValue<BYTE>(EAMode::GroupData)); }; // OR.b <ea>,D2
 		table[021] = [=]() { OR(m_reg.D2w, GetEAValue<WORD>(EAMode::GroupData)); }; // OR.w <ea>,D2
 		table[022] = [=]() { OR(m_reg.D2, GetEAValue<DWORD>(EAMode::GroupData)); }; // OR.l <ea>,D2
-
+		table[023] = [=]() { DIVUw(m_reg.D2); }; // DIVU.w <ea>, D2
 		table[024] = [=]() { Mask_SBCD.IsMatch(m_opcode) ? SBCDb() : ORToEA(m_reg.D2b); }; // OR.b D2,<ea>
 		table[025] = [=]() { ORToEA(m_reg.D2w); }; // OR.w D2,<ea>
 		table[026] = [=]() { ORToEA(m_reg.D2); }; // OR.l D2,<ea>
+		table[027] = [=]() { DIVSw(m_reg.D2); }; // DIVS.w <ea>, D2
 
 		// D3
 		table[030] = [=]() { OR(m_reg.D3b, GetEAValue<BYTE>(EAMode::GroupData)); }; // OR.b <ea>,D3
 		table[031] = [=]() { OR(m_reg.D3w, GetEAValue<WORD>(EAMode::GroupData)); }; // OR.w <ea>,D3
 		table[032] = [=]() { OR(m_reg.D3, GetEAValue<DWORD>(EAMode::GroupData)); }; // OR.l <ea>,D3
-
+		table[033] = [=]() { DIVUw(m_reg.D3); }; // DIVU.w <ea>, D3
 		table[034] = [=]() { Mask_SBCD.IsMatch(m_opcode) ? SBCDb() : ORToEA(m_reg.D3b); }; // OR.b D3,<ea>
 		table[035] = [=]() { ORToEA(m_reg.D3w); }; // OR.w D3,<ea>
 		table[036] = [=]() { ORToEA(m_reg.D3); }; // OR.l D3,<ea>
+		table[037] = [=]() { DIVSw(m_reg.D3); }; // DIVS.w <ea>, D3
 
 		// D4
 		table[040] = [=]() { OR(m_reg.D4b, GetEAValue<BYTE>(EAMode::GroupData)); }; // OR.b <ea>,D4
 		table[041] = [=]() { OR(m_reg.D4w, GetEAValue<WORD>(EAMode::GroupData)); }; // OR.w <ea>,D4
 		table[042] = [=]() { OR(m_reg.D4, GetEAValue<DWORD>(EAMode::GroupData)); }; // OR.l <ea>,D4
-
+		table[043] = [=]() { DIVUw(m_reg.D4); }; // DIVU.w <ea>, D4
 		table[044] = [=]() { Mask_SBCD.IsMatch(m_opcode) ? SBCDb() : ORToEA(m_reg.D4b); }; // OR.b D4,<ea>
 		table[045] = [=]() { ORToEA(m_reg.D4w); }; // OR.w D4,<ea>
 		table[046] = [=]() { ORToEA(m_reg.D4); }; // OR.l D4,<ea>
+		table[047] = [=]() { DIVSw(m_reg.D4); }; // DIVS.w <ea>, D4
 
 		// D5
 		table[050] = [=]() { OR(m_reg.D5b, GetEAValue<BYTE>(EAMode::GroupData)); }; // OR.b <ea>,D5
 		table[051] = [=]() { OR(m_reg.D5w, GetEAValue<WORD>(EAMode::GroupData)); }; // OR.w <ea>,D5
 		table[052] = [=]() { OR(m_reg.D5, GetEAValue<DWORD>(EAMode::GroupData)); }; // OR.l <ea>,D5
-
+		table[053] = [=]() { DIVUw(m_reg.D5); }; // DIVU.w <ea>, D5
 		table[054] = [=]() { Mask_SBCD.IsMatch(m_opcode) ? SBCDb() : ORToEA(m_reg.D5b); }; // OR.b D5,<ea>
 		table[055] = [=]() { ORToEA(m_reg.D5w); }; // OR.w D5,<ea>
 		table[056] = [=]() { ORToEA(m_reg.D5); }; // OR.l D5,<ea>
+		table[057] = [=]() { DIVSw(m_reg.D5); }; // DIVS.w <ea>, D5
 
 		// D6
 		table[060] = [=]() { OR(m_reg.D6b, GetEAValue<BYTE>(EAMode::GroupData)); }; // OR.b <ea>,D6
 		table[061] = [=]() { OR(m_reg.D6w, GetEAValue<WORD>(EAMode::GroupData)); }; // OR.w <ea>,D6
 		table[062] = [=]() { OR(m_reg.D6, GetEAValue<DWORD>(EAMode::GroupData)); }; // OR.l <ea>,D6
-
+		table[063] = [=]() { DIVUw(m_reg.D6); }; // DIVU.w <ea>, D6
 		table[064] = [=]() { Mask_SBCD.IsMatch(m_opcode) ? SBCDb() : ORToEA(m_reg.D6b); }; // OR.b D6,<ea>
 		table[065] = [=]() { ORToEA(m_reg.D6w); }; // OR.w D6,<ea>
 		table[066] = [=]() { ORToEA(m_reg.D6); }; // OR.l D6,<ea>
+		table[067] = [=]() { DIVSw(m_reg.D6); }; // DIVS.w <ea>, D6
 
 		// D7
 		table[070] = [=]() { OR(m_reg.D7b, GetEAValue<BYTE>(EAMode::GroupData)); }; // OR.b <ea>,D7
 		table[071] = [=]() { OR(m_reg.D7w, GetEAValue<WORD>(EAMode::GroupData)); }; // OR.w <ea>,D7
 		table[072] = [=]() { OR(m_reg.D7, GetEAValue<DWORD>(EAMode::GroupData)); }; // OR.l <ea>,D7
-
+		table[073] = [=]() { DIVUw(m_reg.D7); }; // DIVU.w <ea>, D7
 		table[074] = [=]() { Mask_SBCD.IsMatch(m_opcode) ? SBCDb() : ORToEA(m_reg.D7b); }; // OR.b D7,<ea>
 		table[075] = [=]() { ORToEA(m_reg.D7w); }; // OR.w D7,<ea>
 		table[076] = [=]() { ORToEA(m_reg.D7); }; // OR.l D7,<ea>
+		table[077] = [=]() { DIVSw(m_reg.D7); }; // DIVS.w <ea>, D7
 	}
 
 	// b1001: SUB,SUBX,SUBA
@@ -410,6 +427,9 @@ namespace emul::cpu68k
 		table[001] = [=]() { SUB(m_reg.D0w, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUB.w <ea>,D0
 		table[002] = [=]() { SUB(m_reg.D0,  GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUB.l <ea>,D0
 		table[003] = [=]() { SUBA(m_reg.A0, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUBA.w <ea>,A0
+		table[004] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXb() : SUBToEA(m_reg.D0b); }; // SUB.b D0,<ea>
+		table[005] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXw() : SUBToEA(m_reg.D0w); }; // SUB.w D0,<ea>
+		table[006] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXl() : SUBToEA(m_reg.D0); };  // SUB.l D0,<ea>
 		table[007] = [=]() { SUBA(m_reg.A0, GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUBA.l <ea>,A0
 
 		// D1/A1
@@ -417,6 +437,9 @@ namespace emul::cpu68k
 		table[011] = [=]() { SUB(m_reg.D1w, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUB.w <ea>,D1
 		table[012] = [=]() { SUB(m_reg.D1,  GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUB.l <ea>,D1
 		table[013] = [=]() { SUBA(m_reg.A1, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUBA.w <ea>,A1
+		table[014] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXb() : SUBToEA(m_reg.D1b); }; // SUB.b D1,<ea>
+		table[015] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXw() : SUBToEA(m_reg.D1w); }; // SUB.w D1,<ea>
+		table[016] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXl() : SUBToEA(m_reg.D1); };  // SUB.l D1,<ea>
 		table[017] = [=]() { SUBA(m_reg.A1, GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUBA.l <ea>,A1
 
 		// D2/A2
@@ -424,6 +447,9 @@ namespace emul::cpu68k
 		table[021] = [=]() { SUB(m_reg.D2w, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUB.w <ea>,D2
 		table[022] = [=]() { SUB(m_reg.D2,  GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUB.l <ea>,D2
 		table[023] = [=]() { SUBA(m_reg.A2, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUBA.w <ea>,A2
+		table[024] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXb() : SUBToEA(m_reg.D2b); }; // SUB.b D2,<ea>
+		table[025] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXw() : SUBToEA(m_reg.D2w); }; // SUB.w D2,<ea>
+		table[026] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXl() : SUBToEA(m_reg.D2); };  // SUB.l D2,<ea>
 		table[027] = [=]() { SUBA(m_reg.A2, GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUBA.l <ea>,A2
 
 		// D3/A3
@@ -431,6 +457,9 @@ namespace emul::cpu68k
 		table[031] = [=]() { SUB(m_reg.D3w, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUB.w <ea>,D3
 		table[032] = [=]() { SUB(m_reg.D3,  GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUB.l <ea>,D3
 		table[033] = [=]() { SUBA(m_reg.A3, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUBA.w <ea>,A3
+		table[034] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXb() : SUBToEA(m_reg.D3b); }; // SUB.b D3,<ea>
+		table[035] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXw() : SUBToEA(m_reg.D3w); }; // SUB.w D3,<ea>
+		table[036] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXl() : SUBToEA(m_reg.D3); };  // SUB.l D3,<ea>
 		table[037] = [=]() { SUBA(m_reg.A3, GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUBA.l <ea>,A3
 
 		// D4/A4
@@ -438,6 +467,9 @@ namespace emul::cpu68k
 		table[041] = [=]() { SUB(m_reg.D4w, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUB.w <ea>,D4
 		table[042] = [=]() { SUB(m_reg.D4,  GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUB.l <ea>,D4
 		table[043] = [=]() { SUBA(m_reg.A4, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUBA.w <ea>,A4
+		table[044] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXb() : SUBToEA(m_reg.D4b); }; // SUB.b D4,<ea>
+		table[045] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXw() : SUBToEA(m_reg.D4w); }; // SUB.w D4,<ea>
+		table[046] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXl() : SUBToEA(m_reg.D4); };  // SUB.l D4,<ea>
 		table[047] = [=]() { SUBA(m_reg.A4, GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUBA.l <ea>,A4
 
 		// D5/A5
@@ -445,6 +477,9 @@ namespace emul::cpu68k
 		table[051] = [=]() { SUB(m_reg.D5w, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUB.w <ea>,D5
 		table[052] = [=]() { SUB(m_reg.D5,  GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUB.l <ea>,D5
 		table[053] = [=]() { SUBA(m_reg.A5, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUBA.w <ea>,A5
+		table[054] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXb() : SUBToEA(m_reg.D5b); }; // SUB.b D5,<ea>
+		table[055] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXw() : SUBToEA(m_reg.D5w); }; // SUB.w D5,<ea>
+		table[056] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXl() : SUBToEA(m_reg.D5); };  // SUB.l D5,<ea>
 		table[057] = [=]() { SUBA(m_reg.A5, GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUBA.l <ea>,A5
 
 		// D6/A6
@@ -452,6 +487,9 @@ namespace emul::cpu68k
 		table[061] = [=]() { SUB(m_reg.D6w, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUB.w <ea>,D6
 		table[062] = [=]() { SUB(m_reg.D6,  GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUB.l <ea>,D6
 		table[063] = [=]() { SUBA(m_reg.A6, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUBA.w <ea>,A6
+		table[064] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXb() : SUBToEA(m_reg.D6b); }; // SUB.b D6,<ea>
+		table[065] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXw() : SUBToEA(m_reg.D6w); }; // SUB.w D6,<ea>
+		table[066] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXl() : SUBToEA(m_reg.D6); };  // SUB.l D6,<ea>
 		table[067] = [=]() { SUBA(m_reg.A6, GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUBA.l <ea>,A6
 
 		// D7/A7
@@ -459,6 +497,9 @@ namespace emul::cpu68k
 		table[071] = [=]() { SUB(m_reg.D7w, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUB.w <ea>,D7
 		table[072] = [=]() { SUB(m_reg.D7,  GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUB.l <ea>,D7
 		table[073] = [=]() { SUBA(m_reg.A7, GetEAValue<WORD>(EAMode::GroupAll)); }; // SUBA.w <ea>,A7
+		table[074] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXb() : SUBToEA(m_reg.D7b); }; // SUB.b D7,<ea>
+		table[075] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXw() : SUBToEA(m_reg.D7w); }; // SUB.w D7,<ea>
+		table[076] = [=]() { Mask_SUBX.IsMatch(m_opcode) ? SUBXl() : SUBToEA(m_reg.D7); };  // SUB.l D7,<ea>
 		table[077] = [=]() { SUBA(m_reg.A7, GetEAValue<DWORD>(EAMode::GroupAll)); }; // SUBA.l <ea>,A7
 	}
 
@@ -716,6 +757,24 @@ namespace emul::cpu68k
 	{
 		InitTable(table, size);
 
+		table[020] = [=]() { LINKw(m_reg.A0); }; // LINKw A0, #<disp>
+		table[021] = [=]() { LINKw(m_reg.A1); }; // LINKw A1, #<disp>
+		table[022] = [=]() { LINKw(m_reg.A2); }; // LINKw A2, #<disp>
+		table[023] = [=]() { LINKw(m_reg.A3); }; // LINKw A3, #<disp>
+		table[024] = [=]() { LINKw(m_reg.A4); }; // LINKw A4, #<disp>
+		table[025] = [=]() { LINKw(m_reg.A5); }; // LINKw A5, #<disp>
+		table[026] = [=]() { LINKw(m_reg.A6); }; // LINKw A6, #<disp>
+		table[027] = [=]() { LINKw(m_reg.A7); }; // LINKw A7, #<disp>
+
+		table[030] = [=]() { UNLK(m_reg.A0); }; // UNLK A0
+		table[031] = [=]() { UNLK(m_reg.A1); }; // UNLK A1
+		table[032] = [=]() { UNLK(m_reg.A2); }; // UNLK A2
+		table[033] = [=]() { UNLK(m_reg.A3); }; // UNLK A3
+		table[034] = [=]() { UNLK(m_reg.A4); }; // UNLK A4
+		table[035] = [=]() { UNLK(m_reg.A5); }; // UNLK A5
+		table[036] = [=]() { UNLK(m_reg.A6); }; // UNLK A6
+		table[037] = [=]() { UNLK(m_reg.A7); }; // UNLK A7
+
 		table[061] = [=]() { /* nothing */ }; // NOP
 		table[063] = [=]() { RTE(); }; // RTE
 		table[065] = [=]() { RTS(); }; // RTS
@@ -890,7 +949,20 @@ namespace emul::cpu68k
 
 	void CPU68000::Exception(VECTOR v)
 	{
-		LogPrintf(LOG_WARNING, "CPU: Exception (%d) at address 0x%08X", v, m_programCounter);
+		// TODO: Temp
+		bool fatal = false;
+
+		switch (v)
+		{
+		case VECTOR::Line1010Emulator:
+		case VECTOR::Line1111Emulator:
+			LogPrintf(LOG_INFO, "CPU: Exception (%d)[%04X] at address 0x%08X", v, m_opcode, m_programCounter);
+			break;
+		default:
+			LogPrintf(LOG_WARNING, "CPU: Exception (%d) at address 0x%08X", v, m_programCounter);
+			throw std::exception("Exception");
+			break;
+		}
 
 		WORD flags = m_reg.flags;
 
@@ -902,16 +974,6 @@ namespace emul::cpu68k
 		PUSHw(flags);
 
 		m_programCounter = handler;
-
-		switch (v)
-		{
-		case VECTOR::Line1010Emulator:
-		case VECTOR::Line1111Emulator:
-			// Nothing
-			break;
-		default:
-			throw std::exception("Exception");
-		}
 	}
 
 	void CPU68000::Exec(WORD opcode)
@@ -1007,7 +1069,9 @@ namespace emul::cpu68k
 		assert(size == 1 || size == 2 || size == 4);
 
 		DWORD& An = m_reg.ADDR[GetOpcodeRegisterIndex()];
-		// TODO: Stack pointer & byte in postincrement/decrement modes
+
+		// Byte operations on stack pointer increment by word in -(An) or (An)+ modes
+		int incrModeSize = ((size == 1) && (&An == &m_reg.A7)) ? 2 : size;
 
 		int timePenalty = 0;
 
@@ -1031,13 +1095,13 @@ namespace emul::cpu68k
 			// Address Register Indirect with Postincrement, EA=(An), An += N
 		case EAMode::ARegIndirectPostinc:
 			ea = An;
-			An += size;
+			An += incrModeSize;
 			timePenalty = 4;
 			break;
 
 			// Address Register Indirect with Predecrement, AN -= N, EA=(An)
 		case EAMode::ARegIndirectPredec:
-			An -= size;
+			An -= incrModeSize;
 			ea = An;
 			timePenalty = 6;
 			break;
@@ -1416,6 +1480,26 @@ namespace emul::cpu68k
 	{
 		m_reg.SP -= 4;
 		Write(m_reg.SP, src);
+	}
+
+	void CPU68000::PEAl()
+	{
+		PUSHl(GetEA<DWORD>(EAMode::GroupControl));
+	}
+
+	void CPU68000::LINKw(DWORD& dest)
+	{
+		DWORD displacement = Widen(FetchWord());
+
+		PUSHl(dest);
+		dest = m_reg.SP;
+		m_reg.SP += displacement; // TODO: odd number?
+	}
+
+	void CPU68000::UNLK(DWORD& dest)
+	{
+		m_reg.SP = dest; // TODO: odd number?
+		dest = POPl();
 	}
 
 	// Scc.b <ea>
@@ -1977,6 +2061,22 @@ namespace emul::cpu68k
 		AdjustNZ(dest);
 	}
 
+	template<typename SIZE>
+	void CPU68000::ADD(SIZE& dest, SIZE src)
+	{
+		constexpr size_t size_max = std::numeric_limits<SIZE>::max();
+
+		SIZE oldDest = dest;
+
+		QWORD temp = (QWORD)dest + src;
+
+		dest = (SIZE)temp;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_CX, (temp > size_max));
+		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
+	}
+
 	// ADD Dn, <ea>
 	template<typename SIZE>
 	void CPU68000::ADDToEA(SIZE src)
@@ -1987,6 +2087,7 @@ namespace emul::cpu68k
 		Write<SIZE>(ea, dest);
 	}
 
+	// ADDQ #<data>, <ea>
 	template<typename SIZE>
 	void CPU68000::ADDQ(SIZE imm)
 	{
@@ -1999,7 +2100,7 @@ namespace emul::cpu68k
 		// Address Register Direct only for WORD and LONG
 		else if ((m_eaMode == EAMode::ARegDirect) && (sizeof(SIZE) > 1))
 		{
-			// Behaves like SUBA
+			// Behaves like ADDA
 			ADDA(m_reg.ADDR[GetOpcodeRegisterIndex()], imm);
 		}
 		else
@@ -2009,6 +2110,53 @@ namespace emul::cpu68k
 			ADD<SIZE>(dest, imm);
 			Write<SIZE>(ea, dest);
 		}
+	}
+
+	// ADDI #<data>, <ea>
+	template<typename SIZE>
+	void CPU68000::ADDI()
+	{
+		SIZE src = Fetch<SIZE>();
+
+		m_eaMode = GetEAMode(m_opcode);
+
+		if (m_eaMode == EAMode::DRegDirect)
+		{
+			ADD<SIZE>(m_reg.GetDATA<SIZE>(GetOpcodeRegisterIndex()), src);
+		}
+		else
+		{
+			ADDRESS ea = GetEA<SIZE>(EAMode::GroupDataAlt);
+			SIZE dest = Read<SIZE>(ea);
+			ADD<SIZE>(dest, src);
+			Write<SIZE>(ea, dest);
+		}
+	}
+
+	template<typename SIZE>
+	void CPU68000::SUB(SIZE& dest, SIZE src, FLAG carryFlag)
+	{
+		constexpr size_t size_max = std::numeric_limits<SIZE>::max();
+
+		SIZE oldDest = dest;
+
+		QWORD temp = (QWORD)dest - src;
+
+		dest = (SIZE)temp;
+
+		AdjustNZ(dest);
+		SetFlag(carryFlag, (temp > size_max));
+		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
+	}
+
+	// SUB Dn, <ea>
+	template<typename SIZE>
+	void CPU68000::SUBToEA(SIZE src)
+	{
+		ADDRESS ea = GetEA<SIZE>(EAMode::GroupMemAlt);
+		SIZE dest = Read<SIZE>(ea);
+		SUB<SIZE>(dest, src);
+		Write<SIZE>(ea, dest);
 	}
 
 	template<typename SIZE>
@@ -2035,36 +2183,25 @@ namespace emul::cpu68k
 		}
 	}
 
+	// SUBI #<data>, <ea>
 	template<typename SIZE>
-	void CPU68000::ADD(SIZE& dest, SIZE src)
+	void CPU68000::SUBI()
 	{
-		constexpr size_t size_max = std::numeric_limits<SIZE>::max();
+		SIZE src = Fetch<SIZE>();
 
-		SIZE oldDest = dest;
+		m_eaMode = GetEAMode(m_opcode);
 
-		QWORD temp = (QWORD)dest + src;
-
-		dest = (SIZE)temp;
-
-		AdjustNZ(dest);
-		SetFlag(FLAG_CX, (temp > size_max));
-		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
-	}
-
-	template<typename SIZE>
-	void CPU68000::SUB(SIZE& dest, SIZE src, FLAG carryFlag)
-	{
-		constexpr size_t size_max = std::numeric_limits<SIZE>::max();
-
-		SIZE oldDest = dest;
-
-		QWORD temp = (QWORD)dest - src;
-
-		dest = (SIZE)temp;
-
-		AdjustNZ(dest);
-		SetFlag(carryFlag, (temp > size_max));
-		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
+		if (m_eaMode == EAMode::DRegDirect)
+		{
+			SUB<SIZE>(m_reg.GetDATA<SIZE>(GetOpcodeRegisterIndex()), src);
+		}
+		else
+		{
+			ADDRESS ea = GetEA<SIZE>(EAMode::GroupDataAlt);
+			SIZE dest = Read<SIZE>(ea);
+			SUB<SIZE>(dest, src);
+			Write<SIZE>(ea, dest);
+		}
 	}
 
 	template<typename SIZE>
@@ -2122,6 +2259,65 @@ namespace emul::cpu68k
 		dest = op1 * op2;
 		AdjustNZ(dest);
 		SetFlag(FLAG_VC, false);
+	}
+
+	void CPU68000::DIVUw(DWORD& dest)
+	{
+		WORD src = GetEAValue<WORD>(EAMode::GroupData);
+
+		if (src == 0)
+		{
+			Exception(VECTOR::ZeroDivide);
+		}
+
+		DWORD quotient = dest / src;
+		WORD remainder = dest % src;
+
+		// overflow
+		if (quotient > 0xFFFF)
+		{
+			SetFlag(FLAG_V, true);
+		}
+		else
+		{
+			SetLWord(dest, (WORD)quotient);
+			SetHWord(dest, remainder);
+
+			AdjustNZ((WORD)quotient);
+			SetFlag(FLAG_VC, false);
+		}
+	}
+
+	void CPU68000::DIVSw(DWORD& dest)
+	{
+		int16_t src = (int16_t)GetEAValue<WORD>(EAMode::GroupData);
+
+		if (src == 0)
+		{
+			Exception(VECTOR::ZeroDivide);
+		}
+
+		// TODO: Triple check this
+		int32_t quotient = dest / src;
+		int32_t remainder = abs((int32_t)(dest % src)); // Modulo sign is not defined
+		if (quotient < 0)
+		{
+			remainder = -remainder; // Sign of the remainder is same as the dividend
+		}
+
+		// overflow
+		if ((quotient > 32767) || (quotient < -32768))
+		{
+			SetFlag(FLAG_V, true);
+		}
+		else
+		{
+			SetLWord(dest, (WORD)quotient);
+			SetHWord(dest, (WORD)remainder);
+
+			AdjustNZ((WORD)quotient);
+			SetFlag(FLAG_VC, false);
+		}
 	}
 
 	void CPU68000::Serialize(json& to)
