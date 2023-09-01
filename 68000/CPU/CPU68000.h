@@ -412,10 +412,8 @@ namespace emul::cpu68k
 		WORD POPw();
 
 		// MOVE
-
-		void MOVEb();
-		void MOVEw();
-		void MOVEl();
+		template<typename SIZE> void MOVE();
+		template<typename SIZE> void MOVEA();
 
 		void MOVEQ();
 
@@ -430,7 +428,6 @@ namespace emul::cpu68k
 
 		void MOVEPwFromReg(WORD src);
 		void MOVEPlFromReg(DWORD src) { NotImplementedOpcode("MOVEP.l (reg -> <ea>)"); }
-
 
 		void EXGl() { NotImplementedOpcode("EXG.l"); }
 
@@ -453,6 +450,7 @@ namespace emul::cpu68k
 		void BCLR(BYTE src) { BitOps(src, BitOp::CLEAR); }
 		void BSET(BYTE src) { BitOps(src, BitOp::SET);; }
 
+		template<typename SIZE> void NOT();
 		template<typename SIZE> void TST();
 
 		void ANDIbToCCR() { NotImplementedOpcode("ANDI.b #imm, CCR"); }
@@ -515,6 +513,7 @@ namespace emul::cpu68k
 		void EXTl();
 
 		void ABCDb() { NotImplementedOpcode("ABCD.b"); }
+		void SBCDb() { NotImplementedOpcode("SBCD.b"); }
 
 		void ADDXb() { NotImplementedOpcode("ADDX.b"); }
 		void ADDXw() { NotImplementedOpcode("ADDX.w"); }
@@ -530,13 +529,12 @@ namespace emul::cpu68k
 
 		template<typename SIZE> void SUBQ(SIZE imm);
 
-		void ADDbToEA(BYTE src);
-		void ADDwToEA(WORD src);
-		void ADDlToEA(DWORD src);
-
 		// dest' <- dest + src
 		template<typename SIZE>
 		void ADD(SIZE& dest, SIZE src);
+
+		template<typename SIZE>
+		void ADDToEA(SIZE src);
 
 		// dest' <- dest - src
 		template<typename SIZE>
@@ -550,6 +548,9 @@ namespace emul::cpu68k
 
 		template<typename SIZE>
 		void CMPM();
+
+		template<typename SIZE>
+		void NEG();
 
 		void MULUw(DWORD& dest);
 
