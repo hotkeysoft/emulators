@@ -168,8 +168,8 @@ namespace emul::cpu68k
 
 		OpcodeTable m_opcodes;
 		OpcodeTable m_subOpcodes[(int)SubOpcodeGroup::_MAX];
-		[[noreturn]] void IllegalInstruction();
-		[[noreturn]] void NotImplementedOpcode(const char* name);
+		void IllegalInstruction();
+		void NotImplementedOpcode(const char* name);
 
 		cpuInfo::CPUInfo m_info;
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
@@ -385,7 +385,7 @@ namespace emul::cpu68k
 			return rawGetEA<SIZE>();
 		}
 
-		[[noreturn]] void Exception(VECTOR v);
+		void Exception(VECTOR v);
 		void Privileged() { if (!IsSupervisorMode()) Exception(VECTOR::PrivilegeViolation); }
 		void Aligned(ADDRESS addr) { if (!IsWordAligned(addr)) Exception(VECTOR::AddressError); }
 
