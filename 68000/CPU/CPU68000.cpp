@@ -1184,11 +1184,6 @@ namespace emul::cpu68k
 	{
 		Privileged();
 
-		if (m_eaMode == EAMode::ARegDirect)
-		{
-			IllegalInstruction();
-		}
-
 		SetFlags(src);
 	}
 
@@ -1443,7 +1438,7 @@ namespace emul::cpu68k
 		}
 	}
 
-	// BTST (bitcount: imm/Dn), <ea>
+	// BTST (bitNumber: imm/Dn), <ea>
 	void CPU68000::BitTst(BYTE bitNumber)
 	{
 		m_eaMode = GetEAMode(m_opcode);
@@ -1495,7 +1490,7 @@ namespace emul::cpu68k
 
 			Write<BYTE>(addr, dest);
 		}
-		SetFlag(FLAG_Z, testBit);
+		SetFlag(FLAG_Z, !testBit);
 	}
 
 	// NOT <ea>
