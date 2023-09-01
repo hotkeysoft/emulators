@@ -1366,6 +1366,39 @@ namespace emul::cpu68k
 		Write<BYTE>(dest + 2, GetLByte(src));
 	}
 
+	void CPU68000::EXGl()
+	{
+		int yIndex = GetOpcodeRegisterIndex();
+		int xIndex = (m_opcode >> 9) & 7;
+
+		int opmode = (m_opcode >> 3) & 0b11111;
+
+		DWORD* yReg;
+		DWORD* xReg;
+
+		switch (opmode)
+		{
+		case 0b01000: // Dx, Dy
+			yReg = m_reg.DATA + yIndex;
+			xReg = m_reg.DATA + xIndex;
+			break;
+		case 0b01001: // Ax, Ay
+			yReg = m_reg.ADDR + yIndex;
+			xReg = m_reg.ADDR + xIndex;
+			break;
+		case 0b10001: // Dx, Ay
+			yReg = m_reg.ADDR + yIndex;
+			xReg = m_reg.DATA + xIndex;
+			break;
+		default:
+			NODEFAULT;
+		}
+
+		DWORD temp = *yReg;
+		*yReg = *xReg;
+		*xReg = temp;
+	}
+
 	void CPU68000::BRA(bool cond)
 	{
 		ADDRESS rel = DoubleWiden(GetLByte(m_opcode));
@@ -1651,6 +1684,16 @@ namespace emul::cpu68k
 		SIZE dest = Read<SIZE>(ea);
 		AND<SIZE>(dest, src);
 		Write<SIZE>(ea, dest);
+	}
+
+	void CPU68000::ANDIwToSR()
+	{
+		Privileged();
+
+		WORD imm = Fetch<WORD>();
+		WORD newFlags = m_reg.flags & imm;
+
+		SetFlags(newFlags);
 	}
 
 	template<typename SIZE>
@@ -2062,13 +2105,13 @@ namespace emul::cpu68k
 	}
 
 	template<typename SIZE>
-	void CPU68000::ADD(SIZE& dest, SIZE src)
+	void CPU68000::ADD(SIZE& dest, SIZE src, bool carry)
 	{
 		constexpr size_t size_max = std::numeric_limits<SIZE>::max();
 
 		SIZE oldDest = dest;
 
-		QWORD temp = (QWORD)dest + src;
+		QWORD temp = (QWORD)dest + src + carry;
 
 		dest = (SIZE)temp;
 
@@ -2133,14 +2176,44 @@ namespace emul::cpu68k
 		}
 	}
 
+	void CPU68000::ADDXl()
+	{
+		bool regMem = GetBit(m_opcode, 3);
+
+		int srcIndex = GetOpcodeRegisterIndex();
+		int destIndex = (m_opcode >> 9) & 7;
+
+		if (!regMem) // ADDX Dy, Dx
+		{
+			DWORD& dest = m_reg.DATA[destIndex];
+			DWORD src = m_reg.DATA[srcIndex];
+
+			ADD(dest, src, GetFlag(FLAG_X));
+		}
+		else // ADDX -(Ay), -(Ax)
+		{
+			DWORD& destAddr = m_reg.ADDR[destIndex];
+			DWORD& srcAddr = m_reg.ADDR[srcIndex];
+
+			// TODO: Order? Important if same register (for sub)
+			destAddr -= 4;
+			DWORD dest = Read<DWORD>(destAddr);
+			srcAddr -= 4;
+			DWORD src = Read<DWORD>(srcAddr);
+
+			ADD(dest, src, GetFlag(FLAG_X));
+			Write<DWORD>(destAddr, dest);
+		}
+	}
+
 	template<typename SIZE>
-	void CPU68000::SUB(SIZE& dest, SIZE src, FLAG carryFlag)
+	void CPU68000::SUB(SIZE& dest, SIZE src, FLAG carryFlag, bool borrow)
 	{
 		constexpr size_t size_max = std::numeric_limits<SIZE>::max();
 
 		SIZE oldDest = dest;
 
-		QWORD temp = (QWORD)dest - src;
+		QWORD temp = (QWORD)dest - src - borrow;
 
 		dest = (SIZE)temp;
 
@@ -2201,6 +2274,36 @@ namespace emul::cpu68k
 			SIZE dest = Read<SIZE>(ea);
 			SUB<SIZE>(dest, src);
 			Write<SIZE>(ea, dest);
+		}
+	}
+
+	void CPU68000::SUBXl()
+	{
+		bool regMem = GetBit(m_opcode, 3);
+
+		int srcIndex = GetOpcodeRegisterIndex();
+		int destIndex = (m_opcode >> 9) & 7;
+
+		if (!regMem) // SUB Dy, Dx
+		{
+			DWORD& dest = m_reg.DATA[destIndex];
+			DWORD src = m_reg.DATA[srcIndex];
+
+			SUB(dest, src, FLAG_CX, GetFlag(FLAG_X));
+		}
+		else // SUB -(Ay), -(Ax)
+		{
+			DWORD& destAddr = m_reg.ADDR[destIndex];
+			DWORD& srcAddr = m_reg.ADDR[srcIndex];
+
+			// TODO: Order? Important if same register (for sub)
+			destAddr -= 4;
+			DWORD dest = Read<DWORD>(destAddr);
+			srcAddr -= 4;
+			DWORD src = Read<DWORD>(srcAddr);
+
+			SUB(dest, src, FLAG_CX, GetFlag(FLAG_X));
+			Write<DWORD>(destAddr, dest);
 		}
 	}
 

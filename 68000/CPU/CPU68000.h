@@ -434,7 +434,7 @@ namespace emul::cpu68k
 		void MOVEPwFromReg(WORD src);
 		void MOVEPlFromReg(DWORD src) { NotImplementedOpcode("MOVEP.l (reg -> <ea>)"); }
 
-		void EXGl() { NotImplementedOpcode("EXG.l"); }
+		void EXGl();
 
 		// Bit, Logic
 		void Sccb(bool cond);
@@ -459,7 +459,7 @@ namespace emul::cpu68k
 		template<typename SIZE> void TST();
 
 		void ANDIbToCCR() { NotImplementedOpcode("ANDI.b #imm, CCR"); }
-		void ANDIwToSR() { NotImplementedOpcode("ANDI.w #imm, SR"); }
+		void ANDIwToSR();
 
 		template<typename SIZE> void ANDI();
 		template<typename SIZE> void AND(SIZE& dest, SIZE src);
@@ -522,11 +522,11 @@ namespace emul::cpu68k
 
 		void ADDXb() { NotImplementedOpcode("ADDX.b"); }
 		void ADDXw() { NotImplementedOpcode("ADDX.w"); }
-		void ADDXl() { NotImplementedOpcode("ADDX.l"); }
+		void ADDXl();
 
 		void SUBXb() { NotImplementedOpcode("SUBX.b"); }
 		void SUBXw() { NotImplementedOpcode("SUBX.w"); }
-		void SUBXl() { NotImplementedOpcode("SUBX.l"); }
+		void SUBXl();
 
 		template<typename SIZE> void ADDQ(SIZE imm);
 		template<typename SIZE> void SUBQ(SIZE imm);
@@ -538,12 +538,12 @@ namespace emul::cpu68k
 		void SUBA(DWORD& dest, DWORD src) { dest -= src; }
 
 		// dest' <- dest + src
-		template<typename SIZE> void ADD(SIZE& dest, SIZE src);
+		template<typename SIZE> void ADD(SIZE& dest, SIZE src, bool carry = false);
 		template<typename SIZE> void ADDI();
 		template<typename SIZE> void ADDToEA(SIZE src);
 
 		// dest' <- dest - src
-		template<typename SIZE> void SUB(SIZE& dest, SIZE src, FLAG carryFlag = FLAG_CX);
+		template<typename SIZE> void SUB(SIZE& dest, SIZE src, FLAG carryFlag = FLAG_CX, bool borrow = false);
 		template<typename SIZE> void SUBI();
 		template<typename SIZE> void SUBToEA(SIZE src);
 
