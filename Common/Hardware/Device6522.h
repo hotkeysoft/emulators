@@ -61,6 +61,9 @@ namespace via
 		void SetC1(bool set) { C1.Set(set); }
 		void SetC2(bool set) { C2 = set; }
 
+		void ResetC1() { C1.ResetLatch(); }
+		void ResetC2() { C2 = 0; } // TODO
+
 		void SetC1InterruptActiveEdge(ActiveEdge edge);
 		void SetC2Operation(C2Operation op);
 
@@ -189,6 +192,7 @@ namespace via
 			void ClearInterrupt(InterruptFlag flag) { emul::SetBit(m_interruptFlags, (int)flag, false); }
 
 			bool IsInterruptEnabled(InterruptFlag flag) const { return emul::GetBit(m_interruptEnable, (int)flag); }
+			static bool IsInterruptEnabled(BYTE ints, InterruptFlag flag) { return emul::GetBit(ints, (int)flag); }
 			bool IsInterruptSet(InterruptFlag flag) const { return emul::GetBit(GetIFR(), (int)flag); }
 
 			bool IsIRQ() const { return (m_interruptEnable & m_interruptFlags) != 0; }
@@ -249,7 +253,7 @@ namespace via
 			enum class T1Mode { ONE_SHOT, CONTINUOUS };
 			T1Mode GetTimer1Mode() const { return (T1Mode)emul::GetBit(m_data, 6); }
 
-			enum class T2Mode { TIMED_INTERRUPT, PULSE_PB6 };
+			enum class T2Mode { ONE_SHOT, PULSE_COUNTER_PB6 };
 			T2Mode GetTimer2Mode() const { return (T2Mode)emul::GetBit(m_data, 5); }
 
 			ShiftRegisterMode GetShiftRegisterMode() const { return (ShiftRegisterMode)((m_data >> 2) & 7); }

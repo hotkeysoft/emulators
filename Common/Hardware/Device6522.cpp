@@ -420,6 +420,14 @@ namespace via
 		LogPrintf(LOG_DEBUG, "WriteIFR, value=%02X", value);
 		m_interrupt.SetIFR(value);
 		UpdateIFR();
+
+		if (Interrupt::IsInterruptEnabled(value, InterruptFlag::TIMER1)) TIMER1.Disarm();
+		if (Interrupt::IsInterruptEnabled(value, InterruptFlag::TIMER2)) TIMER2.Disarm();
+		if (Interrupt::IsInterruptEnabled(value, InterruptFlag::CB1)) m_portB.ResetC1();
+		if (Interrupt::IsInterruptEnabled(value, InterruptFlag::CB2)) m_portB.ResetC2();
+		// TODO: SR
+		if (Interrupt::IsInterruptEnabled(value, InterruptFlag::CA1)) m_portA.ResetC1();
+		if (Interrupt::IsInterruptEnabled(value, InterruptFlag::CA2)) m_portA.ResetC2();
 	}
 
 	// E - IER: Interrupt Enable Register
@@ -441,7 +449,7 @@ namespace via
 		LogPrintf(LOG_INFO, "Auxiliary Control Register");
 		LogPrintf(LOG_INFO, " T1 Output on PB7: %d", ACR.GetPB7TimerOutput());
 		LogPrintf(LOG_INFO, " T1 Mode         : %s", ACR.GetTimer1Mode() == AuxControl::T1Mode::CONTINUOUS ? "CONTINUOUS" : "ONE SHOT");
-		LogPrintf(LOG_INFO, " T2 Mode         : %s", ACR.GetTimer2Mode() == AuxControl::T2Mode::TIMED_INTERRUPT ? "INTERRUPT" : "PULSE PB6");
+		LogPrintf(LOG_INFO, " T2 Mode         : %s", ACR.GetTimer2Mode() == AuxControl::T2Mode::ONE_SHOT? "ONE SHOT" : "PULSE PB6");
 
 		ShiftRegisterMode srMode = ACR.GetShiftRegisterMode();
 		LogPrintf(LOG_INFO, " Shift Reg Mode  : %s", GetShiftRegisterModeStr(srMode));
@@ -454,9 +462,9 @@ namespace via
 		{
 			LogPrintf(LOG_WARNING, "ACR: T1 Output on PB7 not implemented");
 		}
-		if (ACR.GetTimer2Mode() == AuxControl::T2Mode::PULSE_PB6)
+		if (ACR.GetTimer2Mode() == AuxControl::T2Mode::PULSE_COUNTER_PB6)
 		{
-			LogPrintf(LOG_WARNING, "ACR: T2 Pulse Mode not implemented");
+			LogPrintf(LOG_WARNING, "ACR: T2 Pulse Counter Mode not implemented");
 		}
 
 		switch (srMode)
@@ -583,12 +591,12 @@ namespace via
 	{
 		if (m_portA.GetC1())
 		{
-			LogPrintf(LOG_DEBUG, "CA1 Interrupt set");
+			LogPrintf(LOG_TRACE, "CA1 Interrupt set");
 			m_interrupt.SetInterrupt(InterruptFlag::CA1);
 		}
 		if (m_portB.GetC1())
 		{
-			LogPrintf(LOG_DEBUG, "CB1 Interrupt set");
+			LogPrintf(LOG_TRACE, "CB1 Interrupt set");
 			m_interrupt.SetInterrupt(InterruptFlag::CB1);
 		}
 
