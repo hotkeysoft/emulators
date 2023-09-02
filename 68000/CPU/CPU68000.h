@@ -49,7 +49,6 @@ namespace emul::cpu68k
 		// Address group modes for validation
 		GroupAll = _RegDirect | _RegIndirect | _Absolute | _PC | Immediate,
 		GroupData = DRegDirect | _RegIndirect | _Absolute | _PC | Immediate,
-		GroupDataNoImm = DRegDirect | _RegIndirect | _Absolute | _PC,
 		GroupMemAlt = _RegIndirect | _Absolute,
 		GroupDataAlt = DRegDirect | _RegIndirect | _Absolute,
 		GroupDataAddrAlt = _RegDirect | _RegIndirect | _Absolute,
@@ -321,6 +320,7 @@ namespace emul::cpu68k
 
 		void ClearFlags(WORD& flags);
 		void SetFlags(WORD f);
+		void SetCC(BYTE f);
 
 		// Flag Helpers
 		bool GetFlag(FLAG f) const { return (m_reg.flags & f) ? true : false; };
@@ -412,6 +412,7 @@ namespace emul::cpu68k
 		void JSR();
 		void RTS();
 		void RTE();
+		void RTR();
 
 		// Stack
 		void PUSHl(DWORD src);
@@ -431,22 +432,27 @@ namespace emul::cpu68k
 
 		void MOVEQ();
 
+		void MOVEwToCCR(WORD src);
 		void MOVEwToSR(WORD src);
 		void MOVEwFromSR();
+		void MOVEfromUSP(DWORD& dest);
+		void MOVEtoUSP(DWORD src);
 
 		template<typename SIZE> void MOVEMToEA(WORD regs);
 		template<typename SIZE> void MOVEMFromEA(WORD regs);
 
-		void MOVEPwToReg(WORD& dest) { NotImplementedOpcode("MOVEP.w (<ea> -> reg)"); }
-		void MOVEPlToReg(DWORD& dest) { NotImplementedOpcode("MOVEP.l (<ea> -> reg)"); }
+		void MOVEPwToReg(WORD& dest);
+		void MOVEPlToReg(DWORD& dest);
 
 		void MOVEPwFromReg(WORD src);
-		void MOVEPlFromReg(DWORD src) { NotImplementedOpcode("MOVEP.l (reg -> <ea>)"); }
+		void MOVEPlFromReg(DWORD src);
 
 		void EXGl();
 
 		// Bit, Logic
 		void Sccb(bool cond);
+
+		void TASb();
 
 		enum class BitOp { SET, CLEAR, CHANGE };
 		void BitOps(BYTE bitNumber, BitOp bitop);
@@ -467,7 +473,7 @@ namespace emul::cpu68k
 		template<typename SIZE> void NOT();
 		template<typename SIZE> void TST();
 
-		void ANDIbToCCR() { NotImplementedOpcode("ANDI.b #imm, CCR"); }
+		void ANDIbToCCR();
 		void ANDIwToSR();
 
 		template<typename SIZE> void ANDI();
@@ -481,8 +487,8 @@ namespace emul::cpu68k
 		template<typename SIZE> void OR(SIZE& dest, SIZE src);
 		template<typename SIZE> void ORToEA(SIZE src);
 
-		void EORIbToCCR() { NotImplementedOpcode("EORI.b #imm, CCR"); }
-		void EORIwToSR() { NotImplementedOpcode("EORI.w #imm, SR"); }
+		void EORIbToCCR();
+		void EORIwToSR();
 
 		template<typename SIZE> void EORI();
 		template<typename SIZE> void EOR(SIZE& dest, SIZE src);
@@ -492,18 +498,14 @@ namespace emul::cpu68k
 
 		template<typename SIZE> void SHIFT(SIZE& dest, int count, bool left, int operation);
 
-		void SHIFTb(BYTE& dest, int count, bool left, int operation);
-		void SHIFTw(WORD& dest, int count, bool left, int operation);
-		void SHIFTl(DWORD& dest, int count, bool left, int operation);
-
-		void ASLw() { NotImplementedOpcode("ADL.w <ea>"); }
-		void ASRw() { NotImplementedOpcode("ASR.w <ea>"); }
-		void LSLw() { NotImplementedOpcode("LSL.w <ea>"); }
-		void LSRw() { NotImplementedOpcode("LSR.w <ea>"); }
-		void ROXLw() { NotImplementedOpcode("ROXL.w <ea>"); }
-		void ROXRw() { NotImplementedOpcode("ROXR.w <ea>"); }
-		void ROLw() { NotImplementedOpcode("ROL.w <ea>"); }
-		void RORw() { NotImplementedOpcode("ROR.w <ea>"); }
+		void ASLw();
+		void ASRw();
+		void LSLw();
+		void LSRw();
+		void ROXLw();
+		void ROXRw();
+		void ROLw();
+		void RORw();
 
 		template<typename SIZE> void ASL(SIZE& dest, int count);
 		template<typename SIZE> void ASR(SIZE& dest, int count);
@@ -519,6 +521,8 @@ namespace emul::cpu68k
 
 		// Arithmetic
 
+		void CHK(SWORD src);
+
 		template<class SIZE> void CLR();
 
 		void SWAPw();
@@ -528,17 +532,6 @@ namespace emul::cpu68k
 
 		void ABCDb() { NotImplementedOpcode("ABCD.b"); }
 		void SBCDb() { NotImplementedOpcode("SBCD.b"); }
-
-		void ADDXb() { NotImplementedOpcode("ADDX.b"); }
-		void ADDXw() { NotImplementedOpcode("ADDX.w"); }
-		void ADDXl();
-
-		void SUBXb() { NotImplementedOpcode("SUBX.b"); }
-		void SUBXw() { NotImplementedOpcode("SUBX.w"); }
-		void SUBXl();
-
-		template<typename SIZE> void ADDQ(SIZE imm);
-		template<typename SIZE> void SUBQ(SIZE imm);
 
 		void ADDA(WORD& dest, WORD src) { dest += Widen(src); }
 		void ADDA(DWORD& dest, DWORD src) { dest += src; }
@@ -550,11 +543,15 @@ namespace emul::cpu68k
 		template<typename SIZE> void ADD(SIZE& dest, SIZE src, bool carry = false);
 		template<typename SIZE> void ADDI();
 		template<typename SIZE> void ADDToEA(SIZE src);
+		template<typename SIZE> void ADDX();
+		template<typename SIZE> void ADDQ(SIZE imm);
 
 		// dest' <- dest - src
 		template<typename SIZE> void SUB(SIZE& dest, SIZE src, FLAG carryFlag = FLAG_CX, bool borrow = false);
 		template<typename SIZE> void SUBI();
 		template<typename SIZE> void SUBToEA(SIZE src);
+		template<typename SIZE> void SUBX();
+		template<typename SIZE> void SUBQ(SIZE imm);
 
 		// dest by value so it's not modified
 		// (void) <- dest - src
@@ -564,8 +561,10 @@ namespace emul::cpu68k
 		template<typename SIZE> void CMPM();
 
 		template<typename SIZE> void NEG();
+		template<typename SIZE> void NEGX();
 
 		void MULUw(DWORD& dest);
+		void MULSw(DWORD& dest);
 		void DIVUw(DWORD& dest);
 		void DIVSw(DWORD& dest);
 
