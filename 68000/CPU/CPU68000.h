@@ -92,6 +92,8 @@ namespace emul::cpu68k
 
 		void SetTrapList(TrapList list) { m_trapList = list; };
 
+		void SetInterruptLevel(BYTE level) { m_interruptLevel = level & 7; }
+
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
@@ -167,7 +169,7 @@ namespace emul::cpu68k
 		};
 
 		ADDRESS GetVectorAddress(VECTOR v) { return (ADDRESS)v * 4; }
-		ADDRESS GetIntVectorAddress(BYTE i) { assert(i <= 7); return ((ADDRESS)VECTOR::InterruptBase + i) * 4; }
+		ADDRESS GetIntVectorAddress(BYTE i) { assert(i > 0 && i <= 7); return ((ADDRESS)VECTOR::InterruptBase + i - 1) * 4; }
 		ADDRESS GetTrapVectorAddress(BYTE t) { assert(t <= 16);  return ((ADDRESS)VECTOR::TrapBase + t) * 4; }
 
 		TrapList m_trapList;
@@ -187,6 +189,7 @@ namespace emul::cpu68k
 		WORD GetSubopcode4() const { return ((m_opcode >> 8) & 15); }
 
 		virtual void Interrupt();
+		BYTE m_interruptLevel = 0;
 
 		enum FLAG : WORD
 		{
@@ -330,7 +333,7 @@ namespace emul::cpu68k
 		bool IsTrace() const { return GetFlag(FLAG_T); }
 		void SetTrace(bool set) { SetFlag(FLAG_T, set); }
 
-		BYTE GetInterruptMask() const { return (m_reg.flags >> 8) | 7; }
+		BYTE GetInterruptMask() const { return (m_reg.flags >> 8) & 7; }
 		void SetInterruptMask(BYTE mask) {
 			assert(mask < 8);
 			SetFlag(FLAG_I0, GetBit(mask, 0));

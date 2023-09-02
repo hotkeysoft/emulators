@@ -222,6 +222,8 @@ namespace emul
 			GetVideo().Tick();
 
 			m_via.Tick();
+
+			GetCPU().SetInterruptLevel(m_via.GetIRQ() ? 1 : 0);
 		}
 		return true;
 	}

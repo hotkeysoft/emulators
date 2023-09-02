@@ -800,6 +800,7 @@ namespace emul::cpu68k
 
 		ClearFlags(m_reg.flags);
 		SetSupervisorMode(true);
+		SetInterruptLevel(0);
 		SetInterruptMask(7);
 		SetTrace(false);
 	}
@@ -1016,7 +1017,22 @@ namespace emul::cpu68k
 
 	void CPU68000::Interrupt()
 	{
+		if (m_interruptLevel <= GetInterruptMask())
+		{
+			return;
+		}
 
+		WORD flags = m_reg.flags;
+
+		SetFlag(FLAG_S, true); // Set supervisor mode
+		SetFlag(FLAG_T, false); // Clear trace flag
+		SetInterruptMask(m_interruptLevel);
+
+		ADDRESS handler = Read<DWORD>(GetIntVectorAddress(m_interruptLevel));
+		PUSHl(m_programCounter);
+		PUSHw(flags);
+
+		m_programCounter = handler;
 	}
 
 	EAMode CPU68000::GetEAMode(WORD opcode)
