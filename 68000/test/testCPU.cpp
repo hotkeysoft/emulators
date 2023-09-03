@@ -349,29 +349,6 @@ public:
 		return s;
 	}
 
-	//void testABCD()
-	//{
-	//	FILE* f = fopen("abcd.txt", "w");
-	//	for (int y = 0; y < 256; ++y)
-	//	{
-	//		for (int x = 0; x < 256; ++x)
-	//		{
-	//			for (int xFlag = 0; xFlag < 2; ++xFlag)
-	//			{
-	//				for (int zFlag = 0; zFlag < 2; ++zFlag)
-	//				{
-	//					m_cpu->m_reg.flags = 0;
-	//					m_cpu->SetFlag((CPU68000::FLAG)0x0004, zFlag);
-	//					BYTE dest = (BYTE)x;
-	//					m_cpu->ABCD(dest, (BYTE)y, xFlag);
-	//					fprintf(f, "%02x + %02x + X%d (Z%d) = %02x flags: %s\n", y, x, xFlag, zFlag, dest, flagsToStr());
-	//				}
-	//			}
-	//		}
-	//	}
-	//	fclose(f);
-	//}
-
 #pragma pack(push, 1)
 	struct testRecBCD_xy
 	{
@@ -381,6 +358,15 @@ public:
 		BYTE result;
 		BYTE flagsPost;
 	};
+
+	struct testRecNBCD
+	{
+		BYTE y;
+		BYTE flagsPre;
+		BYTE result;
+		BYTE flagsPost;
+	};
+
 #pragma pack(pop)
 
 	enum class TestMode { ABCD, SBCD, NBCD };
@@ -400,52 +386,91 @@ public:
 		}
 
 		testRecBCD_xy record;
+		testRecNBCD recordNBCD;
 		size_t elements;
 		int tests = 0;
 		int failValue = 0;
 		int failFlags = 0;
 		while(true)
 		{
-			elements = fread(&record, sizeof(record), 1, f);
+			if (mode == TestMode::NBCD)
+			{
+				elements = fread(&recordNBCD, sizeof(recordNBCD), 1, f);
+			}
+			else
+			{
+				elements = fread(&record, sizeof(record), 1, f);
+			}
+
 			if (!elements)
 				break;
 
-			m_cpu->m_reg.flags = record.flagsPre;
 			BYTE dest;
 
-			char op;
+			char op = 0;
 			switch (mode)
 			{
 			case TestMode::ABCD:
 				dest = (BYTE)record.x;
+				m_cpu->m_reg.flags = record.flagsPre;
 				m_cpu->ABCD(dest, (BYTE)record.y, emul::GetBit(record.flagsPre, 4));
 				op = '+';
 				break;
 			case TestMode::SBCD:
 				dest = (BYTE)record.y;
+				m_cpu->m_reg.flags = record.flagsPre;
 				m_cpu->SBCD(dest, (BYTE)record.x, emul::GetBit(record.flagsPre, 4));
 				op = '-';
+				break;
+			case TestMode::NBCD:
+				dest = (BYTE)recordNBCD.y;
+				m_cpu->m_reg.flags = recordNBCD.flagsPre;
+				m_cpu->NBCD(dest, emul::GetBit(recordNBCD.flagsPre, 4));
+				break;
+			default:
+				throw std::exception("Invalid mode");
 			}
 
-			if (dest != record.result)
+			if (mode == TestMode::NBCD)
 			{
-				LogPrintf(LOG_ERROR, "Test FAIL value: %02x %c %02x != %02x (got %02x)",
-					record.x,
-					op,
-					record.y,
-					record.result,
-					dest);
+				if (dest != recordNBCD.result)
+				{
+					LogPrintf(LOG_ERROR, "Test FAIL value: NEG(%02x) != %02x (got %02x)",
+						recordNBCD.y,
+						recordNBCD.result,
+						dest);
+				}
 
-				++failValue;
+				BYTE newFlags = (BYTE)m_cpu->m_reg.flags;
+				if (m_cpu->m_reg.flags != recordNBCD.flagsPost)
+				{
+					LogPrintf(LOG_ERROR, "Test FAIL flags: %s != %s",
+						flagsToStr(newFlags).c_str(),
+						flagsToStr(recordNBCD.flagsPost).c_str());
+					++failFlags;
+				}
 			}
-
-			BYTE newFlags = (BYTE)m_cpu->m_reg.flags;
-			if (m_cpu->m_reg.flags != record.flagsPost)
+			else
 			{
-				LogPrintf(LOG_ERROR, "Test FAIL flags: %s != %s",
-					flagsToStr(newFlags).c_str(),
-					flagsToStr(record.flagsPost).c_str());
-				++failFlags;
+				if (dest != record.result)
+				{
+					LogPrintf(LOG_ERROR, "Test FAIL value: %02x %c %02x != %02x (got %02x)",
+						record.x,
+						op,
+						record.y,
+						record.result,
+						dest);
+					++failValue;
+				}
+
+				BYTE newFlags = (BYTE)m_cpu->m_reg.flags;
+				if (m_cpu->m_reg.flags != record.flagsPost)
+				{
+					LogPrintf(LOG_ERROR, "Test FAIL flags: %s != %s",
+						flagsToStr(newFlags).c_str(),
+						flagsToStr(record.flagsPost).c_str());
+					++failFlags;
+				}
 			}
 
 			++tests;
@@ -463,11 +488,15 @@ public:
 	{
 		testTable("./test/tables/sbcdTable.bin", TestMode::SBCD);
 	}
-
+	void testNBCD()
+	{
+		testTable("./test/tables/nbcdTable.bin", TestMode::NBCD);
+	}
 	virtual void test() override
 	{
 		RunTest("Test ABCD", (TestFunc)(&BCDTester::testABCD));
 		RunTest("Test SBCD", (TestFunc)(&BCDTester::testSBCD));
+		RunTest("Test NBCD", (TestFunc)(&BCDTester::testNBCD));
 	}
 };
 
