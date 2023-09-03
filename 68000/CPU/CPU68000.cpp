@@ -208,6 +208,7 @@ namespace emul::cpu68k
 		table[036] = [=]() { CHK((SWORD)m_reg.D3w); }; // CHK.w <ea>,D3
 		table[037] = [=]() { LEA(m_reg.A3); }; // LEA <ea>,A3
 
+		table[040] = [=]() { NBCDb(); }; // NBCD.b <ea>
 		table[041] = [=]() { Mask_SWAP.IsMatch(m_opcode) ? SWAPw() : PEAl(); }; // SWAP, PEAl
 		table[042] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXTw() : MOVEMToEA<WORD>(FetchWord()); }; // MOVEM <register list>, <ea>
 		table[043] = [=]() { Mask_EXT.IsMatch(m_opcode) ? EXTl() : MOVEMToEA<DWORD>(FetchWord()); }; // MOVEM <register list>, <ea>
@@ -2716,6 +2717,137 @@ namespace emul::cpu68k
 		if (restoreZFlag)
 		{
 			SetFlag(FLAG_Z, zFlag);
+		}
+	}
+
+	void CPU68000::ABCD(BYTE& dest, BYTE src, bool carry)
+	{
+		BYTE lowNibble = (dest & 0x0F) + (src & 0x0F) + carry;
+		bool halfCarry = (lowNibble > 0x0F);
+		lowNibble &= 0x0F;
+
+		int adjust = 0;
+		// Low nibble BCD adjust
+		if (lowNibble > 9 || halfCarry)
+		{
+			adjust = 6;
+		}
+
+		// Uncorrected add
+		WORD uncorrected = dest + src + carry;
+
+		if (uncorrected > 0x99)
+		{
+			adjust |= 0x60;
+		}
+
+		bool oldMSB = GetBit(uncorrected, 7);
+		uncorrected += adjust;
+		bool newMSB = GetBit(uncorrected, 7);
+		SetFlag(FLAG_V, !oldMSB && newMSB);
+		SetFlag(FLAG_CX, (uncorrected > 0x9F));
+		SetFlag(FLAG_N, newMSB);
+
+		dest = (BYTE)uncorrected;
+
+
+		// Don't change Z flag if zero (like the ADDX/etc functions)
+		if (dest)
+		{
+			SetFlag(FLAG_Z, false);
+		}
+	}
+
+	void CPU68000::ABCDb()
+	{
+		bool regMem = GetBit(m_opcode, 3);
+
+		int srcIndex = GetOpcodeRegisterIndex();
+		int destIndex = (m_opcode >> 9) & 7;
+
+		if (!regMem) // ABCD Dy, Dx
+		{
+			BYTE& dest = m_reg.GetDATA<BYTE>(destIndex);
+			BYTE src = m_reg.GetDATA<BYTE>(srcIndex);
+
+			ABCD(dest, src, GetFlag(FLAG_X));
+		}
+		else // ABCD -(Ay), -(Ax)
+		{
+			DWORD& destAddr = m_reg.ADDR[destIndex];
+			DWORD& srcAddr = m_reg.ADDR[srcIndex];
+
+			// TODO: Order? Important if same register (for sub)
+			BYTE dest = Read<BYTE>(--destAddr);
+			BYTE src = Read<BYTE>(--srcAddr);
+
+			ABCD(dest, src, GetFlag(FLAG_X));
+			Write<BYTE>(destAddr, dest);
+		}
+	}
+
+	void CPU68000::SBCD(BYTE& dest, BYTE src, bool borrow)
+	{
+		BYTE lowNibble = (dest & 0x0F) - (src & 0x0F) - borrow;
+		bool halfCarry = (lowNibble > 0x0F);
+		lowNibble &= 0x0F;
+
+		int adjust = 0;
+		// Low nibble BCD adjust
+		if (lowNibble > 15 || halfCarry)
+		{
+			adjust = 6;
+		}
+
+		// Uncorrected substract
+		WORD uncorrected = dest - src - borrow;
+
+		if (uncorrected > 0xFF)
+		{
+			adjust |= 0x60;
+		}
+
+		bool oldMSB = GetBit(uncorrected, 7);
+		uncorrected -= adjust;
+		bool newMSB = GetBit(uncorrected, 7);
+		SetFlag(FLAG_V, oldMSB && !newMSB);
+		SetFlag(FLAG_CX, (uncorrected > 0xFF));
+		SetFlag(FLAG_N, newMSB);
+
+		dest = (BYTE)uncorrected;
+
+		// Don't change Z flag if zero (like the ADDX/etc functions)
+		if (dest)
+		{
+			SetFlag(FLAG_Z, false);
+		}
+	}
+
+	void CPU68000::SBCDb()
+	{
+		bool regMem = GetBit(m_opcode, 3);
+
+		int srcIndex = GetOpcodeRegisterIndex();
+		int destIndex = (m_opcode >> 9) & 7;
+
+		if (!regMem) // SBCD Dy, Dx
+		{
+			BYTE& dest = m_reg.GetDATA<BYTE>(destIndex);
+			BYTE src = m_reg.GetDATA<BYTE>(srcIndex);
+
+			SBCD(dest, src, GetFlag(FLAG_X));
+		}
+		else // SBCD -(Ay), -(Ax)
+		{
+			DWORD& destAddr = m_reg.ADDR[destIndex];
+			DWORD& srcAddr = m_reg.ADDR[srcIndex];
+
+			// TODO: Order? Important if same register (for sub)
+			BYTE dest = Read<BYTE>(--destAddr);
+			BYTE src = Read<BYTE>(--srcAddr);
+
+			SBCD(dest, src, GetFlag(FLAG_X));
+			Write<BYTE>(destAddr, dest);
 		}
 	}
 

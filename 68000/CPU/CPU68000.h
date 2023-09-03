@@ -530,8 +530,9 @@ namespace emul::cpu68k
 		void EXTw();
 		void EXTl();
 
-		void ABCDb() { NotImplementedOpcode("ABCD.b"); }
-		void SBCDb() { NotImplementedOpcode("SBCD.b"); }
+		void ABCDb();
+		void SBCDb();
+		void NBCDb() { NotImplementedOpcode("NBCD"); };
 
 		void ADDA(WORD& dest, WORD src) { dest += Widen(src); }
 		void ADDA(DWORD& dest, DWORD src) { dest += src; }
@@ -562,6 +563,9 @@ namespace emul::cpu68k
 
 		template<typename SIZE> void NEG();
 		template<typename SIZE> void NEGX();
+
+		void ABCD(BYTE& dest, BYTE src, bool carry = false);
+		void SBCD(BYTE& dest, BYTE src, bool borrow = false);
 
 		void MULUw(DWORD& dest);
 		void MULSw(DWORD& dest);
