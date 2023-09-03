@@ -532,7 +532,7 @@ namespace emul::cpu68k
 
 		void ABCDb();
 		void SBCDb();
-		void NBCDb() { NotImplementedOpcode("NBCD"); };
+		void NBCDb();
 
 		void ADDA(WORD& dest, WORD src) { dest += Widen(src); }
 		void ADDA(DWORD& dest, DWORD src) { dest += src; }
@@ -566,6 +566,7 @@ namespace emul::cpu68k
 
 		void ABCD(BYTE& dest, BYTE src, bool carry = false);
 		void SBCD(BYTE& dest, BYTE src, bool borrow = false);
+		void NBCD(BYTE& dest, bool borrow = false);
 
 		void MULUw(DWORD& dest);
 		void MULSw(DWORD& dest);

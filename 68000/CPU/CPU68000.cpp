@@ -2851,6 +2851,35 @@ namespace emul::cpu68k
 		}
 	}
 
+	void CPU68000::NBCD(BYTE& dest, bool borrow)
+	{
+		BYTE negated = 0;
+		SBCD(negated, dest, borrow);
+		dest = negated;
+	}
+
+	void CPU68000::NBCDb()
+	{
+		m_eaMode = GetEAMode(m_opcode);
+
+		if (m_eaMode == EAMode::DRegDirect)
+		{
+			BYTE& dest = m_reg.GetDATA<BYTE>(GetOpcodeRegisterIndex());
+
+			NBCD(dest, GetFlag(FLAG_X));
+		}
+		else // NBCD <ea>
+		{
+			ADDRESS ea = GetEA<BYTE>(EAMode::GroupDataAlt);
+
+			BYTE dest = Read<BYTE>(ea);
+
+			NBCD(dest, GetFlag(FLAG_X));
+
+			Write<BYTE>(ea, dest);
+		}
+	}
+
 	void CPU68000::MULUw(DWORD& dest)
 	{
 		const WORD op1 = GetEAValue<WORD>(EAMode::GroupData);
