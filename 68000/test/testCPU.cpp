@@ -16,6 +16,7 @@ public:
 
 	friend class EAModeTester;
 	friend class RegisterTester;
+	friend class BCDTester;
 };
 
 class TesterBase : public Logger
@@ -330,6 +331,146 @@ public:
 	}
 };
 
+class BCDTester : public TesterBase
+{
+public:
+	BCDTester() : TesterBase("TEST_BCD") {}
+
+	std::string flagsToStr(BYTE flags)
+	{
+		std::string s;
+
+		s.append(1, emul::GetBit(flags, 4) ? 'X' : 'x');
+		s.append(1, emul::GetBit(flags, 3) ? 'N' : 'n');
+		s.append(1, emul::GetBit(flags, 2) ? 'Z' : 'z');
+		s.append(1, emul::GetBit(flags, 1) ? 'V' : 'v');
+		s.append(1, emul::GetBit(flags, 0) ? 'C' : 'c');
+
+		return s;
+	}
+
+	//void testABCD()
+	//{
+	//	FILE* f = fopen("abcd.txt", "w");
+	//	for (int y = 0; y < 256; ++y)
+	//	{
+	//		for (int x = 0; x < 256; ++x)
+	//		{
+	//			for (int xFlag = 0; xFlag < 2; ++xFlag)
+	//			{
+	//				for (int zFlag = 0; zFlag < 2; ++zFlag)
+	//				{
+	//					m_cpu->m_reg.flags = 0;
+	//					m_cpu->SetFlag((CPU68000::FLAG)0x0004, zFlag);
+	//					BYTE dest = (BYTE)x;
+	//					m_cpu->ABCD(dest, (BYTE)y, xFlag);
+	//					fprintf(f, "%02x + %02x + X%d (Z%d) = %02x flags: %s\n", y, x, xFlag, zFlag, dest, flagsToStr());
+	//				}
+	//			}
+	//		}
+	//	}
+	//	fclose(f);
+	//}
+
+#pragma pack(push, 1)
+	struct testRecBCD_xy
+	{
+		BYTE x;
+		BYTE y;
+		BYTE flagsPre;
+		BYTE result;
+		BYTE flagsPost;
+	};
+#pragma pack(pop)
+
+	enum class TestMode { ABCD, SBCD, NBCD };
+
+	void testTable(const char* tableFile, TestMode mode)
+	{
+		// Bin file format is (all bytes): x, y, flags(before), result, flags(after)
+
+		// A full table for ABCD/SBCD will have 256 x 256 x 2 entries (for X flag),
+		// twice that if we want to test the before/after Z flag
+		FILE* f = fopen(tableFile, "rb");
+
+		if (!f)
+		{
+			LogPrintf(LOG_ERROR, "Can't open table file");
+			return;
+		}
+
+		testRecBCD_xy record;
+		size_t elements;
+		int tests = 0;
+		int failValue = 0;
+		int failFlags = 0;
+		while(true)
+		{
+			elements = fread(&record, sizeof(record), 1, f);
+			if (!elements)
+				break;
+
+			m_cpu->m_reg.flags = record.flagsPre;
+			BYTE dest;
+
+			char op;
+			switch (mode)
+			{
+			case TestMode::ABCD:
+				dest = (BYTE)record.x;
+				m_cpu->ABCD(dest, (BYTE)record.y, emul::GetBit(record.flagsPre, 4));
+				op = '+';
+				break;
+			case TestMode::SBCD:
+				dest = (BYTE)record.y;
+				m_cpu->SBCD(dest, (BYTE)record.x, emul::GetBit(record.flagsPre, 4));
+				op = '-';
+			}
+
+			if (dest != record.result)
+			{
+				LogPrintf(LOG_ERROR, "Test FAIL value: %02x %c %02x != %02x (got %02x)",
+					record.x,
+					op,
+					record.y,
+					record.result,
+					dest);
+
+				++failValue;
+			}
+
+			BYTE newFlags = (BYTE)m_cpu->m_reg.flags;
+			if (m_cpu->m_reg.flags != record.flagsPost)
+			{
+				LogPrintf(LOG_ERROR, "Test FAIL flags: %s != %s",
+					flagsToStr(newFlags).c_str(),
+					flagsToStr(record.flagsPost).c_str());
+				++failFlags;
+			}
+
+			++tests;
+		}
+		fclose(f);
+		LogPrintf(LOG_INFO, "Total tests: %d", tests);
+		LogPrintf(LOG_INFO, "Value fail: %d, flag fail: %d", failValue, failFlags);
+	}
+
+	void testABCD()
+	{
+		testTable("./test/tables/abcdTable.bin", TestMode::ABCD);
+	}
+	void testSBCD()
+	{
+		testTable("./test/tables/sbcdTable.bin", TestMode::SBCD);
+	}
+
+	virtual void test() override
+	{
+		RunTest("Test ABCD", (TestFunc)(&BCDTester::testABCD));
+		RunTest("Test SBCD", (TestFunc)(&BCDTester::testSBCD));
+	}
+};
+
 void LogCallback(const char* str)
 {
 	fprintf(stdout, str);
@@ -346,6 +487,11 @@ void testCPU()
 
 	{
 		RegisterTester tester;
+		tester.test();
+	}
+
+	{
+		BCDTester tester;
 		tester.test();
 	}
 
