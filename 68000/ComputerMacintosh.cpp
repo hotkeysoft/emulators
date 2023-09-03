@@ -180,7 +180,8 @@ namespace emul
 	}
 	void ComputerMacintosh::OnHeadSelChange(bool selectedHead)
 	{
-		LogPrintf(LOG_INFO, "Set Selected Head: %d", selectedHead);
+		LogPrintf(LOG_INFO, "Set Drive SEL line: %d", selectedHead);
+		m_floppy.SetSel(selectedHead);
 	}
 	void ComputerMacintosh::OnROMOverlayModeChange(bool overlay)
 	{

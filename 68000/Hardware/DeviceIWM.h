@@ -20,6 +20,8 @@ namespace floppy::woz
 
 		void SetStateRegister(BYTE a3a2a1a0);
 
+		void SetSel(bool sel) { LogPrintf(LOG_INFO, "Set SEL: %d", sel); m_sel = sel; }
+
 		void Write(BYTE value);
 		BYTE Read();
 
@@ -31,6 +33,8 @@ namespace floppy::woz
 		BYTE ReadStatus();
 		BYTE ReadData();
 		BYTE ReadWriteHandshake();
+
+		void WriteRegister();
 
 		void WriteMode(BYTE value);
 		void WriteData(BYTE value);
@@ -52,6 +56,7 @@ namespace floppy::woz
 		BYTE m_statusRegister = 0;
 		BYTE m_writeHandshakeRegister = 0;
 		BYTE m_modeRegister = 0;
+		bool m_sel = false;
 	};
 }
 
