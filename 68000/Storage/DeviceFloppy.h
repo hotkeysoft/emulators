@@ -44,10 +44,9 @@ namespace fdd
 
 	class DeviceFloppy : public emul::Serializable, public Logger
 	{
-	protected:
-		DeviceFloppy(uint32_t clockSpeedHz);
 
 	public:
+		DeviceFloppy(uint32_t clockSpeedHz, bool connected = true);
 		virtual ~DeviceFloppy() {};
 
 		DeviceFloppy() = delete;
@@ -67,7 +66,13 @@ namespace fdd
 
 		//const FloppyDisk& GetImageInfo(BYTE drive) { assert(drive < 4); return m_images[drive]; }
 
-		virtual bool IsActive() const { return IsDiskLoaded() && IsMotorEnabled(); }
+		// TODO: Add IsDiskLoaded() later
+		virtual bool IsActive() const { return /*IsDiskLoaded() &&*/ IsMotorEnabled(); }
+
+		// ==========
+		// Drive
+		// ==========
+		bool IsConnected() const { return m_connected; }
 
 		// ==========
 		// Disk
@@ -138,6 +143,7 @@ namespace fdd
 
 	protected:
 		const uint32_t m_clockSpeed;
+		const bool m_connected = true;
 
 		uint32_t DelayToTicks(uint32_t millis) { return millis * m_clockSpeed / 1000; }
 

@@ -3,6 +3,8 @@
 #include <CPU/Memory.h>
 #include <Logger.h>
 
+namespace fdd { class DeviceFloppy; }
+
 namespace floppy::woz
 {
 	class DeviceIWM : public Logger
@@ -18,9 +20,11 @@ namespace floppy::woz
 
 		void Reset();
 
+		void Init(fdd::DeviceFloppy* floppy1, fdd::DeviceFloppy* floppy2);
+
 		void SetStateRegister(BYTE a3a2a1a0);
 
-		void SetSel(bool sel) { LogPrintf(LOG_INFO, "Set SEL: %d", sel); m_sel = sel; }
+		void SetSel(bool sel) { LogPrintf(LOG_TRACE, "Set SEL: %d", sel); m_sel = sel; }
 
 		void Write(BYTE value);
 		BYTE Read();
@@ -57,6 +61,16 @@ namespace floppy::woz
 		BYTE m_writeHandshakeRegister = 0;
 		BYTE m_modeRegister = 0;
 		bool m_sel = false;
+
+		fdd::DeviceFloppy* GetFloppy()
+		{
+			// TODO: Temp
+			return m_floppy1;
+			//return GetDriveSel() ? m_floppy1 : m_floppy2;
+		}
+
+		fdd::DeviceFloppy* m_floppy1 = nullptr;
+		fdd::DeviceFloppy* m_floppy2 = nullptr;
 	};
 }
 

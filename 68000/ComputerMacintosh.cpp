@@ -21,7 +21,9 @@ namespace emul
 		ComputerBase(m_memory, 4096),
 		m_baseRAM("RAM", RAM_SIZE, emul::MemoryType::RAM),
 		m_rom("ROM", ROM_SIZE, emul::MemoryType::ROM),
-		m_sound(m_memory)
+		m_sound(m_memory),
+		m_floppyInternal(CPU_CLK),
+		m_floppyExternal(CPU_CLK)
 	{
 	}
 
@@ -61,6 +63,8 @@ namespace emul
 		m_via.Reset();
 		m_sound.ResetBufferPos();
 		m_sound.Enable(true);
+		m_floppyInternal.Reset();
+		m_floppyExternal.Reset();
 	}
 
 	void ComputerMacintosh::InitCPU(const char* cpuid)
@@ -75,8 +79,19 @@ namespace emul
 
 	void ComputerMacintosh::InitFloppy()
 	{
-		m_floppy.EnableLog(CONFIG().GetLogLevel("floppy"));
-		m_ioIWM.Init(&m_floppy);
+		m_floppyController.EnableLog(CONFIG().GetLogLevel("floppy.iwm"));
+		m_floppyController.Init(&m_floppyInternal, &m_floppyExternal);
+
+		m_floppyInternal.EnableLog(CONFIG().GetLogLevel("floppy"));
+		m_floppyInternal.SetTrackCount(80);
+		m_floppyInternal.SetStepDelay(12);
+
+		m_floppyExternal.EnableLog(CONFIG().GetLogLevel("floppy"));
+		m_floppyExternal.SetTrackCount(80);
+		m_floppyExternal.SetStepDelay(12);
+
+		m_ioIWM.Init(&m_floppyController);
+
 		m_memory.Allocate(&m_ioIWM, 0xD00000);
 	}
 
@@ -181,7 +196,7 @@ namespace emul
 	void ComputerMacintosh::OnHeadSelChange(bool selectedHead)
 	{
 		LogPrintf(LOG_INFO, "Set Drive SEL line: %d", selectedHead);
-		m_floppy.SetSel(selectedHead);
+		m_floppyController.SetSel(selectedHead);
 	}
 	void ComputerMacintosh::OnROMOverlayModeChange(bool overlay)
 	{
@@ -223,6 +238,9 @@ namespace emul
 			GetVideo().Tick();
 
 			m_via.Tick();
+
+			m_floppyInternal.Tick();
+			m_floppyExternal.Tick();
 
 			GetCPU().SetInterruptLevel(m_via.GetIRQ() ? 1 : 0);
 		}

@@ -80,7 +80,9 @@ namespace emul
 		via::mac::Device6522Mac m_via;
 
 		floppy::woz::IOBlockIWMMac m_ioIWM;
-		floppy::woz::DeviceIWM m_floppy;
+		floppy::woz::DeviceIWM m_floppyController;
+		fdd::DeviceFloppy m_floppyInternal;
+		fdd::DeviceFloppy m_floppyExternal;
 
 		sound::mac::SoundMac m_sound;
 	};

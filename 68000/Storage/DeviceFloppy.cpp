@@ -9,15 +9,28 @@ using emul::GetBit;
 
 namespace fdd
 {
-	DeviceFloppy::DeviceFloppy(uint32_t clockSpeedHz) :
+	const char* GetStepDirectionStr(StepDirection dir)
+	{
+		switch (dir)
+		{
+		case StepDirection::OUTER: return "OUTER";
+		case StepDirection::INNER: return "INNER";
+		default:
+			NODEFAULT;
+		}
+	}
+
+	DeviceFloppy::DeviceFloppy(uint32_t clockSpeedHz, bool connected) :
 		Logger("fdd"),
-		m_clockSpeed(clockSpeedHz)
+		m_clockSpeed(clockSpeedHz),
+		m_connected(connected)
 	{
 	}
 
 	void DeviceFloppy::Reset()
 	{
 		LogPrintf(LOG_INFO, "Reset");
+		LogPrintf(LOG_INFO, "Clock Speed = %d, connected = %d", m_clockSpeed, m_connected);
 		
 		Logger::SEVERITY oldSev = GetLogLevel();
 		EnableLog(LOG_OFF);
@@ -25,27 +38,15 @@ namespace fdd
 		m_diskLoaded = false;
 		m_diskChanged = false;
 		m_motorEnabled = false;
-		m_motorSpeed = DEFAULT_RPM;
-		m_ticksPerRotation = UINT32_MAX;
 		m_motorPulseCounter = UINT32_MAX;
 		m_motorPulse = false;
-		m_stepDelay = DEFAULT_STEP_MS;
-		m_ticksPerTrack = UINT32_MAX;
 		m_seekCounter = UINT32_MAX;
 		m_isSeeking = false;
 		m_isCalibrating = false;
 		m_stepDirection = StepDirection::INNER;
-		m_trackCount = DEFAULT_TRACK_COUNT;
 		m_currTrack = 0;
 		m_currSector = 0;
-		m_headCount = DEFAULT_HEAD_COUNT;
 		m_currHead = 0;
-
-		SetMotorSpeed(DEFAULT_RPM);
-		SetStepDelay(DEFAULT_STEP_MS);
-		SetTrackCount(DEFAULT_TRACK_COUNT);
-		SetHeadCount(DEFAULT_HEAD_COUNT);
-		SelectHead(0);
 
 		ClearDiskChanged();
 
@@ -54,6 +55,9 @@ namespace fdd
 
 	void DeviceFloppy::Tick()
 	{
+		if (!m_connected)
+			return;
+
 		if (m_motorEnabled && (--m_motorPulseCounter == 0))
 		{
 			ResetPulseCounter();
@@ -78,6 +82,11 @@ namespace fdd
 
 	void DeviceFloppy::EnableMotor(bool enable)
 	{
+		if (!m_connected)
+			return;
+
+		LogPrintf(LOG_INFO, "Motor: %s", enable ? "ON" : "OFF");
+
 		if (enable && !m_motorEnabled)
 		{
 			ResetPulseCounter();
@@ -87,6 +96,9 @@ namespace fdd
 
 	void DeviceFloppy::SetMotorSpeed(WORD rpm) 
 	{ 
+		if (!m_connected)
+			return;
+
 		LogPrintf(LOG_INFO, "Set Motor Speed: %d rpm", rpm);
 		m_motorSpeed = std::clamp(rpm, MIN_RPM, MAX_RPM);
 		if (m_motorSpeed != rpm)
@@ -104,6 +116,9 @@ namespace fdd
 
 	void DeviceFloppy::SetHeadCount(WORD heads)
 	{
+		if (!m_connected)
+			return;
+
 		LogPrintf(LOG_INFO, "Set Head Count: %d", heads);
 		m_headCount = std::clamp(heads, MIN_HEADS, MAX_HEADS);
 		if (m_headCount != heads)
@@ -115,6 +130,9 @@ namespace fdd
 	// Heads are numbered [0..HeadCount-1]
 	void DeviceFloppy::SelectHead(WORD head)
 	{
+		if (!m_connected)
+			return;
+
 		LogPrintf(LOG_INFO, "Select Head: %d", head);
 		if (head >= m_headCount)
 		{
@@ -129,6 +147,9 @@ namespace fdd
 
 	void DeviceFloppy::SetTrackCount(WORD tracks)
 	{
+		if (!m_connected)
+			return;
+
 		LogPrintf(LOG_INFO, "Set Track Count: %d", tracks);
 		m_trackCount = std::clamp(tracks, MIN_TRACKS, MAX_TRACKS);
 		if (m_trackCount != tracks)
@@ -140,6 +161,9 @@ namespace fdd
 
 	void DeviceFloppy::SetStepDelay(WORD millis)
 	{
+		if (!m_connected)
+			return;
+
 		LogPrintf(LOG_INFO, "Set Step Delay: %d ms", millis);
 		m_stepDelay = std::clamp(millis, MIN_STEP_MS, MAX_STEP_MS);
 		if (m_stepDelay != millis)
@@ -158,15 +182,28 @@ namespace fdd
 
 	void DeviceFloppy::SetStepDirection(StepDirection dir)
 	{ 
-		LogPrintf(LOG_INFO, "Set Step Direction: %s", (dir == StepDirection::INNER) ? "INNER" : "OUTER");
+		if (!m_connected)
+			return;
+
+		LogPrintf(LOG_INFO, "Set Step Direction: %s", GetStepDirectionStr(dir));
 		m_stepDirection = dir; 
 	}
 
 	void DeviceFloppy::Step()
 	{
+		if (!m_connected)
+			return;
+
+		LogPrintf(LOG_INFO, "Step one track in [%s] direction", GetStepDirectionStr(m_stepDirection));
+
 		if (m_isSeeking)
 		{
 			LogPrintf(LOG_WARNING, "Step: Already seeking, ignored");
+			return;
+		}
+		else if ((m_currTrack == 0) && (m_stepDirection == StepDirection::OUTER))
+		{
+			LogPrintf(LOG_WARNING, "Step: Already at track 0, ignored");
 			return;
 		}
 

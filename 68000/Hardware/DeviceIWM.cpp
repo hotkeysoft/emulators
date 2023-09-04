@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "DeviceIWM.h"
+#include "Storage/DeviceFloppy.h"
 
 using emul::GetBit;
+using fdd::StepDirection;
 
 namespace floppy::woz
 {
@@ -14,6 +16,15 @@ namespace floppy::woz
 		m_writeHandshakeRegister = 0;
 		m_modeRegister = 0;
 		m_sel = 0;
+	}
+
+	void DeviceIWM::Init(fdd::DeviceFloppy* floppy1, fdd::DeviceFloppy* floppy2)
+	{
+		assert(floppy1);
+		assert(floppy2);
+
+		m_floppy1 = floppy1;
+		m_floppy2 = floppy2;
 	}
 
 	void DeviceIWM::SetStateRegister(BYTE a3a2a1a0)
@@ -90,16 +101,20 @@ namespace floppy::woz
 		switch (((m_stateRegister & 7) << 1) | (m_sel ? 1 : 0))
 		{
 		case 0b0000: LogPrintf(LOG_INFO, "Read [Step direction]");
+			statusBit = (GetFloppy()->GetStepDirection() == StepDirection::OUTER);
 			break;
-		case 0b0001: LogPrintf(LOG_INFO, "Read [Disk in place]"); statusBit = false;
+		case 0b0001: LogPrintf(LOG_INFO, "Read [Disk in place]"); statusBit = false; // TODO
 			break;
 		case 0b0010: LogPrintf(LOG_INFO, "Read [Step]");
+			statusBit = !GetFloppy()->IsSeeking();
 			break;
 		case 0b0011: LogPrintf(LOG_INFO, "Read [Write Protect]"); statusBit = false;
 			break;
-		case 0b0100: LogPrintf(LOG_INFO, "Read [Motor ON]"); statusBit = false;
+		case 0b0100: LogPrintf(LOG_INFO, "Read [Motor ON]");
+			statusBit = !GetFloppy()->IsMotorEnabled();
 			break;
-		case 0b0101: LogPrintf(LOG_INFO, "Read [Track 0]"); statusBit = false;
+		case 0b0101: LogPrintf(LOG_INFO, "Read [Is Track 0]");
+			statusBit = !GetFloppy()->IsTrack0();
 			break;
 		case 0b0110: LogPrintf(LOG_INFO, "Read [Eject]"); statusBit = true; // Always returns 1
 			break;
@@ -178,10 +193,13 @@ namespace floppy::woz
 		switch (((m_stateRegister & 3) << 1) | (m_sel ? 1 : 0))
 		{
 		case 0b000: LogPrintf(LOG_INFO, "Write [Direction]: %s", value ? "Inner (to 80)" : "Outer (to 0)");
+			GetFloppy()->SetStepDirection(value ? StepDirection::INNER : StepDirection::OUTER);
 			break;
 		case 0b010: LogPrintf(LOG_INFO, "Write [Step]: %d", value);
+			GetFloppy()->Step();
 			break;
 		case 0b100: LogPrintf(LOG_INFO, "Write [Motor]: %s", value ? "OFF" : "ON");
+			GetFloppy()->EnableMotor(!value);
 			break;
 		case 0b110: LogPrintf(LOG_INFO, "Write [Eject]: %s", value ? "EJECT" : "No");
 			break;
