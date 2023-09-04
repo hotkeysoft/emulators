@@ -33,8 +33,9 @@ namespace fdd
 		m_ticksPerTrack = UINT32_MAX;
 		m_seekCounter = UINT32_MAX;
 		m_isSeeking = false;
-		m_stepDirection = StepDirection::OUTER;
-		m_maxTrack = MAX_TRACK;
+		m_isCalibrating = false;
+		m_stepDirection = StepDirection::INNER;
+		m_trackCount = DEFAULT_TRACK_COUNT;
 		m_currTrack = 0;
 		m_currSector = 0;
 		m_headCount = DEFAULT_HEAD_COUNT;
@@ -42,6 +43,7 @@ namespace fdd
 
 		SetMotorSpeed(DEFAULT_RPM);
 		SetStepDelay(DEFAULT_STEP_MS);
+		SetTrackCount(DEFAULT_TRACK_COUNT);
 		SetHeadCount(DEFAULT_HEAD_COUNT);
 		SelectHead(0);
 
@@ -52,14 +54,25 @@ namespace fdd
 
 	void DeviceFloppy::Tick()
 	{
-		if (!m_motorEnabled)
-			return;
-
-		--m_motorPulseCounter;
-		if (m_motorPulseCounter == 0)
+		if (m_motorEnabled && (--m_motorPulseCounter == 0))
 		{
 			ResetPulseCounter();
 			m_motorPulse = !m_motorPulse;
+		}
+
+		if (m_isSeeking && (--m_seekCounter == 0))
+		{
+			ResetSeekCounter();
+			m_isSeeking = false;
+			int newTrack = m_currTrack + (int)m_stepDirection;
+			// Allow one more inner track to signify "out of bounds"
+			m_currTrack = std::clamp(newTrack, 0, (int)m_trackCount); 
+			if (newTrack != m_currTrack)
+			{
+				LogPrintf(LOG_WARNING, "Seek past endpoint");
+			}
+
+			LogPrintf(LOG_INFO, "Seek End, new track: [%d]", m_currTrack);
 		}
 	}
 
@@ -114,6 +127,17 @@ namespace fdd
 		}
 	}
 
+	void DeviceFloppy::SetTrackCount(WORD tracks)
+	{
+		LogPrintf(LOG_INFO, "Set Track Count: %d", tracks);
+		m_trackCount = std::clamp(tracks, MIN_TRACKS, MAX_TRACKS);
+		if (m_trackCount != tracks)
+		{
+			LogPrintf(LOG_WARNING, "Track Count clamped to %d", m_headCount);
+		}
+		m_currTrack = 0;
+	}
+
 	void DeviceFloppy::SetStepDelay(WORD millis)
 	{
 		LogPrintf(LOG_INFO, "Set Step Delay: %d ms", millis);
@@ -132,9 +156,22 @@ namespace fdd
 		}
 	}
 
+	void DeviceFloppy::SetStepDirection(StepDirection dir)
+	{ 
+		LogPrintf(LOG_INFO, "Set Step Direction: %s", (dir == StepDirection::INNER) ? "INNER" : "OUTER");
+		m_stepDirection = dir; 
+	}
+
 	void DeviceFloppy::Step()
 	{
+		if (m_isSeeking)
+		{
+			LogPrintf(LOG_WARNING, "Step: Already seeking, ignored");
+			return;
+		}
 
+		m_isSeeking = true;
+		ResetSeekCounter();
 	}
 
 	void DeviceFloppy::Serialize(json& to)

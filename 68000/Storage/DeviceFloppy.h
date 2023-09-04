@@ -100,12 +100,13 @@ namespace fdd
 		void SetStepDelay(WORD millis);
 		WORD GetStepDelay() const { return m_stepDelay; }
 
+		// Set head direction (OUTER = towards track 0)
+		StepDirection GetStepDirection() const { return m_stepDirection; }
+		void SetStepDirection(StepDirection dir);
+
 		// Step one track in the current StepDirection
 		// (disk doesn't need to be present)
 		void Step(); 
-
-		// Set head direction (OUTER = towards track 0)
-		void SetStepDirection(StepDirection dir) { m_stepDirection = dir; }
 
 		// True if the head is currently moving between tracks
 		bool IsSeeking() const { return m_isSeeking; }
@@ -113,13 +114,23 @@ namespace fdd
 		// True if the head is currently stopped at track zero
 		bool IsTrack0() const { return IsActive() && !m_isSeeking && (m_currTrack == 0) ; }
 
+		// Tracks are numbered [0..TrackCount - 1]
+		WORD GetTrackCount() const { return m_trackCount; }
+		void SetTrackCount(WORD tracks); // Set number of tracks
+
 		WORD GetCurrentTrack() const { return m_currTrack; }
+
 		WORD GetCurrentSector() const { return m_currSector; }
-		WORD GetCurrentHead() const { return m_currHead; }
 
 		WORD GetHeadCount() const { return m_headCount; }
 		void SetHeadCount(WORD heads); // Select single or double sided (1 or 2)
+
+		WORD GetCurrentHead() const { return m_currHead; }
 		void SelectHead(WORD head); // Heads are numbered [0..HeadCount-1]
+
+		bool IsCalibrating() const { return m_isCalibrating; }
+		// Launch drive calibration (seek to inner and back to track zero)
+		void Calibrate();
 
 		// emul::Serializable
 		virtual void Serialize(json& to);
@@ -147,25 +158,30 @@ namespace fdd
 		bool m_motorPulse = false; // Ticks on/off 60 times per revolution
 
 		// Head
-		static constexpr WORD MIN_TRACK = 0;
-		static constexpr WORD MAX_TRACK = 100;
 		static constexpr WORD MIN_STEP_MS = 1;
 		static constexpr WORD MAX_STEP_MS = 100;
-		static constexpr WORD DEFAULT_STEP_MS = 20;
 		static constexpr WORD MIN_HEADS = 1;
 		static constexpr WORD MAX_HEADS = 2;
+		static constexpr WORD MIN_TRACKS = 10;
+		static constexpr WORD MAX_TRACKS = 100;
+		static constexpr WORD DEFAULT_STEP_MS = 20;
 		static constexpr WORD DEFAULT_HEAD_COUNT = 1;
+		static constexpr WORD DEFAULT_TRACK_COUNT = 40;
 
 		WORD m_stepDelay = DEFAULT_STEP_MS;
 		uint32_t m_ticksPerTrack = UINT32_MAX;
 		uint32_t m_seekCounter = UINT32_MAX;
 		void ResetSeekCounter() { m_seekCounter = m_ticksPerTrack; }
-		
+
+		bool m_isCalibrating = false;
 		bool m_isSeeking = false;
-		StepDirection m_stepDirection = StepDirection::OUTER;
-		WORD m_maxTrack = MAX_TRACK;
+		StepDirection m_stepDirection = StepDirection::INNER;
+
+		WORD m_trackCount = DEFAULT_TRACK_COUNT;
 		WORD m_currTrack = 0;
+
 		WORD m_currSector = 0;
+
 		WORD m_headCount = DEFAULT_HEAD_COUNT;
 		WORD m_currHead = 0;
 	};
