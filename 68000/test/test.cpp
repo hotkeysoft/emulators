@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include "gtest/gtest.h"
+#include <Logger.h>
 
 using namespace std::filesystem;
 
@@ -13,11 +14,19 @@ const path workingDirectory = "../";
 
 int testDisassembly();
 int testCPU();
-int testFloppy();
+
+void LogCallback(const char* str)
+{
+	fprintf(stdout, str);
+}
+
+extern Logger::SEVERITY TEST_FLOPPY_LOG_LEVEL;
 
 int main(int argc, char* argv[])
 {
 	current_path(workingDirectory);
+
+	Logger::RegisterLogCallback(LogCallback);
 
 #if TEST_DISASSEMBLY
 	testDisassembly();
@@ -27,9 +36,7 @@ int main(int argc, char* argv[])
 	testCPU();
 #endif
 
-#if TEST_FLOPPY
-	testFloppy();
-#endif
+	TEST_FLOPPY_LOG_LEVEL = Logger::LOG_INFO;
 
 	testing::InitGoogleTest(&argc, argv);
 	RUN_ALL_TESTS();

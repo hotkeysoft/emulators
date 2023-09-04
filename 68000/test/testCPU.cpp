@@ -499,14 +499,8 @@ public:
 	}
 };
 
-void LogCallback(const char* str)
-{
-	fprintf(stdout, str);
-}
-
 int testCPU()
 {
-	Logger::RegisterLogCallback(LogCallback);
 
 	{
 		EAModeTester tester;
