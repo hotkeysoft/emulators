@@ -44,6 +44,10 @@
     </ClCompile>
     <ClCompile Include="testDisassembly.cpp" />
     <ClCompile Include="testCPU.cpp" />
+    <ClCompile Include="testFloppy.cpp" />
+    <ClCompile Include="..\Storage\DeviceFloppy.cpp">
+      <Filter>Storage</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -101,8 +105,9 @@
     <ClInclude Include="..\CPU\CPU68000.h">
       <Filter>CPU</Filter>
     </ClInclude>
-    <ClInclude Include="testDisassembly.h" />
-    <ClInclude Include="testCPU.h" />
+    <ClInclude Include="..\Storage\DeviceFloppy.h">
+      <Filter>Storage</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Common">
@@ -116,6 +121,9 @@
     </Filter>
     <Filter Include="CPU">
       <UniqueIdentifier>{342db0eb-14f4-4772-885c-a8acc843d445}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Storage">
+      <UniqueIdentifier>{a8710f57-79e2-48a6-b93f-ca446d451343}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -389,5 +397,6 @@
     <None Include="asm\14.x.1.x.x.3.rol.asm">
       <Filter>asm</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

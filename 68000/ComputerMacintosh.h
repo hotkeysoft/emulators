@@ -8,6 +8,7 @@
 #include "Hardware/IOBlockIWMMac.h"
 #include "Video/VideoMac.h"
 #include "Sound/SoundMac.h"
+#include "Storage/DeviceFloppy.h"
 
 namespace emul
 {

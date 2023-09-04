@@ -73,6 +73,12 @@
     <Filter Include="Header Files\Sound">
       <UniqueIdentifier>{e9298e3c-d7fe-4ab9-b2f7-2a03776062d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Storage">
+      <UniqueIdentifier>{3ab2c5ab-bb25-45ec-ab49-e78ef41dc02a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Storage">
+      <UniqueIdentifier>{5795520a-a1b5-4c26-9552-ef093c6fb347}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDLPath.props" />
@@ -225,6 +231,9 @@
     <ClInclude Include="CPU\TrapsMac.h">
       <Filter>Header Files\CPU</Filter>
     </ClInclude>
+    <ClInclude Include="Storage\DeviceFloppy.h">
+      <Filter>Header Files\Storage</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">
@@ -328,6 +337,9 @@
     </ClCompile>
     <ClCompile Include="Hardware\DeviceIWM.cpp">
       <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="Storage\DeviceFloppy.cpp">
+      <Filter>Source Files\Storage</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

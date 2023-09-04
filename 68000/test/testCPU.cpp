@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "testCPU.h"
 
 #include "../CPU/CPU68000.h"
 #include <functional>
@@ -505,7 +504,7 @@ void LogCallback(const char* str)
 	fprintf(stdout, str);
 }
 
-void testCPU()
+int testCPU()
 {
 	Logger::RegisterLogCallback(LogCallback);
 
@@ -524,4 +523,5 @@ void testCPU()
 		tester.test();
 	}
 
+	return 0;
 }

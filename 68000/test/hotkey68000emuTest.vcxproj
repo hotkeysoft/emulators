@@ -30,7 +30,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Label="Shared" />
-  <ImportGroup Label="PropertySheets" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="..\..\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets" Condition="Exists('..\..\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets')" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
     <ClInclude Include="..\..\Common\BitMask.h" />
@@ -51,9 +53,8 @@
     <ClInclude Include="..\..\Common\Serializable.h" />
     <ClInclude Include="..\..\Common\StringUtil.h" />
     <ClInclude Include="..\CPU\CPU68000.h" />
+    <ClInclude Include="..\Storage\DeviceFloppy.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="testCPU.h" />
-    <ClInclude Include="testDisassembly.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Common\Config.cpp" />
@@ -69,6 +70,7 @@
     <ClCompile Include="..\..\Common\Logger.cpp" />
     <ClCompile Include="..\..\Common\Serializable.cpp" />
     <ClCompile Include="..\CPU\CPU68000.cpp" />
+    <ClCompile Include="..\Storage\DeviceFloppy.cpp" />
     <ClCompile Include="test.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -78,6 +80,7 @@
     </ClCompile>
     <ClCompile Include="testCPU.cpp" />
     <ClCompile Include="testDisassembly.cpp" />
+    <ClCompile Include="testFloppy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="asm\0.0.0.ori.asm" />
@@ -170,6 +173,7 @@
     <None Include="asm\9.x.1.sub.asm" />
     <None Include="asm\9.x.1.x.0.subx.asm" />
     <None Include="asm\9.x.x.3.suba.asm" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
@@ -243,4 +247,10 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
   </ItemDefinitionGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets'))" />
+  </Target>
 </Project>

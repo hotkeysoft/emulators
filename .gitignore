@@ -8,6 +8,8 @@ x64
 *.log
 *.o
 *.lst
+packages/**/*
+!packages/repositories.config
 /8086/*.bin
 /8086/data/*.txt
 /8086/*.img
