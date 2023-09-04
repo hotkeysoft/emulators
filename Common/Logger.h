@@ -17,6 +17,8 @@ public:
 
 	enum SEVERITY { LOG_TRACE = 0, LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_OFF = 999 };
 
+	SEVERITY GetLogLevel() const { return m_minSeverity; }
+
 	virtual void EnableLog(SEVERITY minSev = LOG_INFO);
 
 	static void EnableColors(bool enable = true) { m_enableColors = enable; }
