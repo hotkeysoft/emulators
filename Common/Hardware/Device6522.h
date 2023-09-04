@@ -126,7 +126,7 @@ namespace via
 
 		bool GetIRQ() const { return m_interrupt.IsIRQ(); }
 
-		void Tick();
+		virtual void Tick();
 
 		virtual void OnReadPort(VIAPort* src) {}
 		virtual void OnWritePort(VIAPort* src) {}

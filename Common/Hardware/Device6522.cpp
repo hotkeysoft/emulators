@@ -412,7 +412,7 @@ namespace via
 	BYTE Device6522::ReadIFR()
 	{
 		BYTE value = m_interrupt.GetIFR();
-		LogPrintf(LOG_DEBUG, "ReadIFR, value=%02X", value);
+		LogPrintf(LOG_TRACE, "ReadIFR, value=%02X", value);
 		return value;
 	}
 	void Device6522::WriteIFR(BYTE value)

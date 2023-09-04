@@ -23,6 +23,18 @@ namespace via::mac
 			Device6522::Init(false);
 		}
 
+		static constexpr int TICK_DIVIDER = 10;
+		// Runs at 1/10 the rate of main clk
+		virtual void Tick() override
+		{
+			static int tickCooldown = TICK_DIVIDER;
+			if (--tickCooldown == 0)
+			{
+				Device6522::Tick();
+				tickCooldown = TICK_DIVIDER;
+			}
+		}
+
 		virtual void Reset() override;
 
 		void SetEventHandler(via::mac::EventHandler* handler) { assert(handler); m_events = handler; }

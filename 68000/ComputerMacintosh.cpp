@@ -12,9 +12,10 @@ using sound::SOUND;
 
 namespace emul
 {
-	const size_t MAIN_CLK = 15667200; // 15.7 MHz Main crystal
-	const size_t PIXEL_CLK = MAIN_CLK;
-	const size_t CPU_CLK = PIXEL_CLK / 2;
+	constexpr int MAIN_CLK = 15667200; // 15.7 MHz Main crystal
+	constexpr int PIXEL_CLK = MAIN_CLK;
+	constexpr int CPU_CLK = PIXEL_CLK / 2;
+	constexpr int VIA_CLK = CPU_CLK / 10;
 
 	ComputerMacintosh::ComputerMacintosh() :
 		Logger("ComputerMac"),
@@ -84,11 +85,11 @@ namespace emul
 
 		m_floppyInternal.EnableLog(CONFIG().GetLogLevel("floppy"));
 		m_floppyInternal.SetTrackCount(80);
-		m_floppyInternal.SetStepDelay(12);
+		m_floppyInternal.SetStepDelay(10);
 
 		m_floppyExternal.EnableLog(CONFIG().GetLogLevel("floppy"));
 		m_floppyExternal.SetTrackCount(80);
-		m_floppyExternal.SetStepDelay(12);
+		m_floppyExternal.SetStepDelay(10);
 
 		m_ioIWM.Init(&m_floppyController);
 
