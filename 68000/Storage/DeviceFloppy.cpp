@@ -38,7 +38,6 @@ namespace fdd
 		m_diskLoaded = false;
 		m_diskChanged = false;
 		m_motorEnabled = false;
-		m_motorPulseCounter = UINT32_MAX;
 		m_motorPulse = false;
 		m_seekCounter = UINT32_MAX;
 		m_isSeeking = false;
@@ -47,6 +46,17 @@ namespace fdd
 		m_currTrack = 0;
 		m_currSector = 0;
 		m_currHead = 0;
+
+		// Set only if never uninitialized
+		if (m_ticksPerRotation == UINT32_MAX)
+		{
+			SetMotorSpeed(DEFAULT_RPM, true);
+		}
+
+		if (m_ticksPerTrack == UINT32_MAX)
+		{
+			SetStepDelay(DEFAULT_STEP_MS);
+		}
 
 		ClearDiskChanged();
 
@@ -94,9 +104,9 @@ namespace fdd
 		m_motorEnabled = enable;
 	}
 
-	void DeviceFloppy::SetMotorSpeed(WORD rpm) 
+	void DeviceFloppy::SetMotorSpeed(WORD rpm, bool force) 
 	{ 
-		if (!m_connected)
+		if (!force && (!m_connected || (rpm == m_motorSpeed)))
 			return;
 
 		LogPrintf(LOG_INFO, "Set Motor Speed: %d rpm", rpm);
@@ -201,14 +211,25 @@ namespace fdd
 			LogPrintf(LOG_WARNING, "Step: Already seeking, ignored");
 			return;
 		}
-		else if ((m_currTrack == 0) && (m_stepDirection == StepDirection::OUTER))
-		{
-			LogPrintf(LOG_WARNING, "Step: Already at track 0, ignored");
-			return;
-		}
 
 		m_isSeeking = true;
 		ResetSeekCounter();
+	}
+
+	static const BYTE buf[] = { 0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF, // Header sync field
+		0xD5, 0xAA, 0x96, 0x96, 0x96, 0x96, 0x9A, 0x9A, 0xDE, 0xAA, 0x00 };
+
+	BYTE DeviceFloppy::ReadByte()
+	{
+		static const BYTE* pos = buf;
+
+		if (*pos == 0) pos = buf;
+
+		BYTE value = *pos++;
+
+		LogPrintf(LOG_DEBUG, "Read Data, value = %02X", value);
+
+		return value;
 	}
 
 	void DeviceFloppy::Serialize(json& to)

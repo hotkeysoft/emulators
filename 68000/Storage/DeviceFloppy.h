@@ -91,7 +91,7 @@ namespace fdd
 		bool IsMotorEnabled() const { return m_motorEnabled; }
 
 		// Sets the speed of the motor (in RPM)
-		void SetMotorSpeed(WORD rpm);
+		void SetMotorSpeed(WORD rpm, bool force = false);
 		WORD GetMotorSpeed() const { return m_motorSpeed; }
 
 		// Pulses on and off 60 times per rotation
@@ -137,6 +137,11 @@ namespace fdd
 		// Launch drive calibration (seek to inner and back to track zero)
 		void Calibrate();
 
+		// ==========
+		// Data
+		// ==========
+		BYTE ReadByte();
+
 		// emul::Serializable
 		virtual void Serialize(json& to);
 		virtual void Deserialize(const json& from);
@@ -170,7 +175,7 @@ namespace fdd
 		static constexpr WORD MAX_HEADS = 2;
 		static constexpr WORD MIN_TRACKS = 10;
 		static constexpr WORD MAX_TRACKS = 100;
-		static constexpr WORD DEFAULT_STEP_MS = 20;
+		static constexpr WORD DEFAULT_STEP_MS = 10;
 		static constexpr WORD DEFAULT_HEAD_COUNT = 1;
 		static constexpr WORD DEFAULT_TRACK_COUNT = 40;
 

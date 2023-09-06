@@ -19,6 +19,8 @@ namespace sound::mac
 		SoundMac(SoundMac&&) = delete;
 		SoundMac& operator=(SoundMac&&) = delete;
 
+		bool IsEnabled() const { return m_enabled; }
+
 		// TODO: Find better doc about sound module
 		void Enable(bool enable)
 		{
@@ -36,7 +38,7 @@ namespace sound::mac
 		void BufferWord()
 		{
 			m_word = m_memory.Read16be(m_bufferBase + m_bufferOffset + m_bufferPos);
-			m_bufferPos += m_enabled ? 2 : 0;
+			m_bufferPos += 2;
 		}
 
 		emul::WORD GetBufferWord() const { return m_word; }

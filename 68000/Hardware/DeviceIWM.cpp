@@ -118,7 +118,8 @@ namespace floppy::woz
 			break;
 		case 0b0110: LogPrintf(LOG_INFO, "Read [Eject]"); statusBit = true; // Always returns 1
 			break;
-		case 0b0111: LogPrintf(LOG_INFO, "Read [Tachometer]");
+		case 0b0111: LogPrintf(LOG_DEBUG, "Read [Tachometer][%d]", GetFloppy()->GetMotorPulse());
+			statusBit = GetFloppy()->GetMotorPulse();
 			break;
 		case 0b1000: LogPrintf(LOG_INFO, "Read [Head 0 Data]");
 			break;
@@ -147,18 +148,12 @@ namespace floppy::woz
 		return value;
 	}
 
-	static const BYTE buf[] = { 0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF,
-		0xDA, 0xAA, 0x96, 0x96, 0x96, 0x96, 0x9A, 0x9A, 0xDE, 0xAA, 0x00 };
-
-
 	BYTE DeviceIWM::ReadData()
 	{
-		static const BYTE* pos = buf;
+		BYTE value = GetFloppy()->ReadByte();
 
-		if (*pos == 0) pos = buf;
-
-		BYTE value = *pos++;
 		LogPrintf(LOG_DEBUG, "Read Data, value = %02X", value);
+
 		return value;
 	}
 
@@ -192,8 +187,8 @@ namespace floppy::woz
 
 		switch (((m_stateRegister & 3) << 1) | (m_sel ? 1 : 0))
 		{
-		case 0b000: LogPrintf(LOG_INFO, "Write [Direction]: %s", value ? "Inner (to 80)" : "Outer (to 0)");
-			GetFloppy()->SetStepDirection(value ? StepDirection::INNER : StepDirection::OUTER);
+		case 0b000: LogPrintf(LOG_INFO, "Write [Direction]: %s", value ? "Outer (to 0)" : "Inner (to 80)");
+			GetFloppy()->SetStepDirection(value ? StepDirection::OUTER : StepDirection::INNER);
 			break;
 		case 0b010: LogPrintf(LOG_INFO, "Write [Step]: %d", value);
 			GetFloppy()->Step();

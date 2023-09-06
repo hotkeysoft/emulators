@@ -148,7 +148,7 @@ TEST(TestFloppy, TestStepDelay)
 {
 	TestFloppy floppy;
 
-	EXPECT_EQ(20, floppy.GetStepDelay()) << "Default";
+	EXPECT_EQ(10, floppy.GetStepDelay()) << "Default";
 
 	floppy.SetStepDelay(0);
 	EXPECT_EQ(1, floppy.GetStepDelay()) << "Should clamp to 1 ms";

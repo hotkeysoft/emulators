@@ -43,6 +43,8 @@ namespace emul
 
 		void SetROMOverlayMode(bool overlay);
 
+		void SetFloppySpeed(int pwm);
+
 		// video::mac::EventHandler
 		virtual void OnHBlankStart() override;
 		virtual void OnVBlankStart() override;

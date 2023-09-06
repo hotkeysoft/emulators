@@ -12,6 +12,18 @@ using sound::SOUND;
 
 namespace emul
 {
+	// Reverse lookup table for PWM table value -> speed
+	constexpr BYTE PWMReverseLookup[] = {
+		0x00, 0x00, 0x3A, 0x01, 0x3B, 0x27, 0x35, 0x02,
+		0x3C, 0x1F, 0x30, 0x28, 0x36, 0x12, 0x22, 0x03,
+		0x3D, 0x33, 0x1D, 0x20, 0x31, 0x0B, 0x0D, 0x29,
+		0x37, 0x0F, 0x1A, 0x13, 0x23, 0x16, 0x2B, 0x04,
+		0x3E, 0x39, 0x26, 0x34, 0x1E, 0x2F, 0x11, 0x21,
+		0x32, 0x1C, 0x0A, 0x0C, 0x0E, 0x19, 0x15, 0x2A,
+		0x38, 0x25, 0x2E, 0x10, 0x1B, 0x09, 0x18, 0x14,
+		0x24, 0x2D, 0x08, 0x17, 0x2C, 0x07, 0x06, 0x05,
+	};
+
 	constexpr int MAIN_CLK = 15667200; // 15.7 MHz Main crystal
 	constexpr int PIXEL_CLK = MAIN_CLK;
 	constexpr int CPU_CLK = PIXEL_CLK / 2;
@@ -37,6 +49,17 @@ namespace emul
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 
 		m_rom.LoadFromFile("./data/Macintosh/mac.128k.bin");
+
+		// Uncomment to make patches in the ROM
+		// NOP = 0x4E71
+		// Bypass checksum verification
+		//m_rom.Fill(0xE2, { 0x4E, 0x71, 0x4E, 0x71, 0x4E, 0x71 });
+
+		// Original low speed  00 80
+		// Original high speed 01 00
+		
+		//m_rom.Fill(0x1e86, { 0x02, 0x00 });
+		//m_rom.Fill(0x1e90, { 0x04, 0x00 });
 
 		// Temp RAM blocks instead of io to check instructions
 		MemoryBlock* SCCr = new MemoryBlock("SCCr", 0x100000);
@@ -170,11 +193,39 @@ namespace emul
 		m_via.SetHBlank(false);
 		m_via.SetHBlank(true);
 		m_sound.BufferWord();
+
+		// Update speed every 10 PWM values
+		constexpr int PWM_SAMPLES = 10;
+		static WORD pwmData = 0;
+		static int pwmSamples = PWM_SAMPLES;
+
+		pwmData += PWMReverseLookup[GetLByte(m_sound.GetBufferWord()) & 63];
+
+		if (--pwmSamples == 0)
+		{
+			pwmSamples = PWM_SAMPLES;
+			SetFloppySpeed(pwmData);
+			pwmData = 0;
+		}
+	}
+
+	void ComputerMacintosh::SetFloppySpeed(int pwmSpeed)
+	{
+		// Speed is out of ~400 (10 samples from 0..39)
+		// PWM = 0% should be ~300 RPM
+		// PWM = 100% should be ~700 RPM
+		// 
+		// Computing RPM = (4 * PWM%) + 300
+		const int rpm = pwmSpeed + 300;
+
+		m_floppyInternal.SetMotorSpeed(rpm);
+		//m_floppyExternal.SetMotorSpeed(rpm);
 	}
 
 	void ComputerMacintosh::OnVBlankStart()
 	{
 		m_sound.ResetBufferPos();
+		
 		m_via.SetVBlank(false);
 		m_via.SetVBlank(true);
 	}
@@ -196,7 +247,7 @@ namespace emul
 	}
 	void ComputerMacintosh::OnHeadSelChange(bool selectedHead)
 	{
-		LogPrintf(LOG_INFO, "Set Drive SEL line: %d", selectedHead);
+		LogPrintf(LOG_DEBUG, "Set Drive SEL line: %d", selectedHead);
 		m_floppyController.SetSel(selectedHead);
 	}
 	void ComputerMacintosh::OnROMOverlayModeChange(bool overlay)
@@ -219,8 +270,8 @@ namespace emul
 
 			if (!m_turbo)
 			{
-				WORD sound = GetHByte(m_sound.GetBufferWord()) * m_via.GetSoundVolume();
-				//sound = 0; //TODO: TEMP
+				WORD sound = m_sound.IsEnabled() ? GetHByte(m_sound.GetBufferWord()) * m_via.GetSoundVolume() : 0;
+				sound = 0; //TODO: TEMP
 				SOUND().PlayMono(sound * 2);
 			}
 
