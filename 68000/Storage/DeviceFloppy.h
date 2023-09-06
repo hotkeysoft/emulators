@@ -11,6 +11,14 @@ using emul::BYTE;
 
 namespace fdd
 {
+	constexpr int SECTOR_TAG_SIZE = 12;
+	constexpr int SECTOR_DATA_SIZE = 512; 
+	struct SectorData
+	{
+		BYTE tag[SECTOR_TAG_SIZE];
+		BYTE data[SECTOR_DATA_SIZE];
+	};
+
 	struct Geometry
 	{
 		const char* name = nullptr;
@@ -150,6 +158,11 @@ namespace fdd
 		const uint32_t m_clockSpeed;
 		const bool m_connected = true;
 
+		// Add with carry, returns carry out
+		bool ADC(BYTE& dest, BYTE src, bool carryIn);
+		// Rotate left, returns rotated bit out
+		bool ROL(BYTE& dest);
+
 		uint32_t DelayToTicks(uint32_t millis) { return millis * m_clockSpeed / 1000; }
 
 		// Disk
@@ -195,5 +208,25 @@ namespace fdd
 
 		WORD m_headCount = DEFAULT_HEAD_COUNT;
 		WORD m_currHead = 0;
+
+		// Data
+		enum class DiskFormat { Mac400K = 0x02, Mac800K = 0x22 };
+
+		using DATA = std::vector<BYTE>;
+		DATA BuildHeader(BYTE track, BYTE sector, BYTE side, DiskFormat format);
+		DATA BuildData(BYTE sector, const SectorData& rawData);
+
+		// TODO: temp
+		DATA m_trackData;	
+		
+		void ResetChecksum() { m_checksumA = m_checksumB = m_checksumC = 0; }
+		DATA EncodeDataBlock(const BYTE data[], int size);
+		void Encode3To4(BYTE encodedOut[4], BYTE byteA, BYTE byteB, BYTE byteC);
+
+		// Running checksum for data block
+		BYTE m_checksumA = 0;
+		BYTE m_checksumB = 0;
+		BYTE m_checksumC = 0;
+	
 	};
 }
