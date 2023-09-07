@@ -11,41 +11,48 @@ using emul::BYTE;
 
 namespace fdd
 {
+	enum class DiskFormat { Mac400K = 0x02, Mac800K = 0x22 };
+	using DATA = std::vector<BYTE>;
+
 	constexpr int SECTOR_TAG_SIZE = 12;
 	constexpr int SECTOR_DATA_SIZE = 512; 
 	struct SectorData
 	{
-		BYTE tag[SECTOR_TAG_SIZE];
-		BYTE data[SECTOR_DATA_SIZE];
+		BYTE tag[SECTOR_TAG_SIZE] = { 0 };
+		BYTE data[SECTOR_DATA_SIZE] = { 0 };
 	};
+	using Sectors = std::vector<SectorData>;
 
-	struct Geometry
-	{
-		const char* name = nullptr;
-		BYTE head = 0;
-		BYTE cyl = 0 ;
-		BYTE sect = 0;
-		BYTE sectOffset = 0;
-
-		bool IsSet() const { return name && GetImageSize(); }
-		uint32_t GetImageSize() const { return 512 * head * cyl * sect; }
-		uint32_t CHS2A(BYTE c, BYTE h, BYTE s) const { return 512 * ((c * head + h) * sect + (s - sectOffset) - 1); }
-	};
-
-	class FloppyDisk
+	class FloppyDisk : public Logger
 	{
 	public:
+		FloppyDisk() : Logger("disk") {}
 		void Clear()
 		{
 			path.clear();
 			loaded = false;
-			data.clear();
+			m_tracks.clear();
 		}
+
+		void Init(DiskFormat format);
+		bool Load(std::filesystem::path);
 
 		std::filesystem::path path;
 		bool loaded = false;
-		Geometry geometry;
-		std::vector<BYTE> data;
+		
+
+		const Sectors& GetTrack(int track);
+		int GetTrackCount() const { return (int)m_tracks.size(); }
+
+		using Interleave = std::vector<int>;
+		const Interleave& GetInterleave(int track) const;
+		int GetSectorCount(int track) const;
+
+	protected:
+		using Tracks = std::vector<Sectors>;
+		Tracks m_tracks;
+
+		static const Interleave s_speedGroups[5];	
 	};
 
 	enum class StepDirection { OUTER = -1, INNER = 1 };
@@ -63,13 +70,15 @@ namespace fdd
 		DeviceFloppy(DeviceFloppy&&) = delete;
 		DeviceFloppy& operator=(DeviceFloppy&&) = delete;
 
+		virtual void EnableLog(Logger::SEVERITY minSev = Logger::LOG_INFO) override;
+
 		virtual void Init() { Reset(); };
 		virtual void Reset();
 
 		virtual void Tick();
 
-		virtual bool ClearDiskImage() { return false; };
-		virtual bool LoadDiskImage(const char* path) { return false; }
+		virtual bool ClearDiskImage() { m_disk.Clear(); return true; };
+		virtual bool LoadDiskImage(const char* path);
 		virtual bool SaveDiskImage(const char* path) { return false; }
 
 		//const FloppyDisk& GetImageInfo(BYTE drive) { assert(drive < 4); return m_images[drive]; }
@@ -210,16 +219,14 @@ namespace fdd
 		WORD m_currHead = 0;
 
 		// Data
-		enum class DiskFormat { Mac400K = 0x02, Mac800K = 0x22 };
-
-		using DATA = std::vector<BYTE>;
 		DATA BuildHeader(BYTE track, BYTE sector, BYTE side, DiskFormat format);
 		DATA BuildData(BYTE sector, const SectorData& rawData);
-
-		// TODO: temp
-		DATA m_trackData;	
+	
+		std::vector<DATA> m_trackData;
+		DATA* m_currTrackData = nullptr;
+		int m_currTrackPos = 0;
 		
-		void ResetChecksum() { m_checksumA = m_checksumB = m_checksumC = 0; }
+		void ResetChecksum() { m_checksumA = 0; m_checksumB = 0; m_checksumC = 0; }
 		DATA EncodeDataBlock(const BYTE data[], int size);
 		void Encode3To4(BYTE encodedOut[4], BYTE byteA, BYTE byteB, BYTE byteC);
 
@@ -228,5 +235,7 @@ namespace fdd
 		BYTE m_checksumB = 0;
 		BYTE m_checksumC = 0;
 	
+		// Disk
+		FloppyDisk m_disk;
 	};
 }

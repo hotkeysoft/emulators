@@ -115,8 +115,16 @@ namespace emul
 		m_floppyExternal.SetStepDelay(10);
 
 		m_ioIWM.Init(&m_floppyController);
-
 		m_memory.Allocate(&m_ioIWM, 0xD00000);
+
+		std::string image = CONFIG().GetValueStr("floppy", "floppy.1");
+		if (image.size())
+		{
+			if (!m_floppyInternal.LoadDiskImage(image.c_str()))
+			{
+				LogPrintf(LOG_ERROR, "Error loading image file: %s", image.c_str());
+			}
+		}
 	}
 
 	void ComputerMacintosh::InitVIA()
