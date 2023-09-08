@@ -16,17 +16,30 @@ namespace fdd
 
 	constexpr int SECTOR_TAG_SIZE = 12;
 	constexpr int SECTOR_DATA_SIZE = 512; 
-	struct SectorData
+
+#pragma pack(push, 1)
+	struct RawSectorTag
 	{
-		BYTE tag[SECTOR_TAG_SIZE] = { 0 };
+		DWORD fileNumber = 0;
+		WORD flags = 0;
+		WORD blockNumber = 0;
+		DWORD timestamp = 0;
+	};
+#pragma pack(pop)
+	static_assert(sizeof(RawSectorTag) == SECTOR_TAG_SIZE);
+
+	struct RawSectorData
+	{
+		RawSectorTag tag;
 		BYTE data[SECTOR_DATA_SIZE] = { 0 };
 	};
-	using Sectors = std::vector<SectorData>;
+	using RawSectors = std::vector<RawSectorData>;
 
 	class FloppyDisk : public Logger
 	{
 	public:
 		FloppyDisk() : Logger("disk") {}
+
 		void Clear()
 		{
 			path.clear();
@@ -41,7 +54,7 @@ namespace fdd
 		bool loaded = false;
 		
 
-		const Sectors& GetTrack(int track);
+		const RawSectors& GetTrack(int track);
 		int GetTrackCount() const { return (int)m_tracks.size(); }
 
 		using Interleave = std::vector<int>;
@@ -49,7 +62,7 @@ namespace fdd
 		int GetSectorCount(int track) const;
 
 	protected:
-		using Tracks = std::vector<Sectors>;
+		using Tracks = std::vector<RawSectors>;
 		Tracks m_tracks;
 
 		static const Interleave s_speedGroups[5];	
@@ -142,7 +155,7 @@ namespace fdd
 
 		WORD GetCurrentTrack() const { return m_currTrack; }
 
-		WORD GetCurrentSector() const { return m_currSector; }
+		WORD GetCurrentSector() const { return m_currSectorData->sector; }
 
 		WORD GetHeadCount() const { return m_headCount; }
 		void SetHeadCount(WORD heads); // Select single or double sided (1 or 2)
@@ -212,23 +225,36 @@ namespace fdd
 
 		WORD m_trackCount = DEFAULT_TRACK_COUNT;
 		WORD m_currTrack = 0;
+		void NewTrack(WORD track);
 
-		WORD m_currSector = 0;
+		// The index in the array of sectors for a track. This will be different
+		// from the actual "data" sector id due to interleaving
+		WORD m_currSectorIndex = 0;
+		void NextSector();
 
 		WORD m_headCount = DEFAULT_HEAD_COUNT;
 		WORD m_currHead = 0;
 
 		// Data
 		DATA BuildHeader(BYTE track, BYTE sector, BYTE side, DiskFormat format);
-		DATA BuildData(BYTE sector, const SectorData& rawData);
+		DATA BuildData(BYTE sector, const RawSectorData& rawData);
 	
-		std::vector<DATA> m_trackData;
-		DATA* m_currTrackData = nullptr;
-		int m_currTrackPos = 0;
+		static constexpr int ENCODED_SECTOR_SIZE = 750;
+		struct EncodedSector
+		{
+			int sector = 0;
+			DATA data;
+		};
+		using EncodedTrack = std::vector<EncodedSector>;
+
+		using EncodedTracks = std::vector<EncodedTrack>;
+		EncodedTracks m_trackData;
+		EncodedSector* m_currSectorData = nullptr;
+		int m_currSectorPos = 0;	
 		
 		void ResetChecksum() { m_checksumA = 0; m_checksumB = 0; m_checksumC = 0; }
 		DATA EncodeDataBlock(const BYTE data[], int size);
-		void Encode3To4(BYTE encodedOut[4], BYTE byteA, BYTE byteB, BYTE byteC);
+		void Encode3To4(BYTE encodedOut[4], BYTE byteA, BYTE byteB, BYTE byteC, bool lastBlock = false);
 
 		// Running checksum for data block
 		BYTE m_checksumA = 0;

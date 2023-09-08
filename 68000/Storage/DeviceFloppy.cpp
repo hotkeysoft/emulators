@@ -12,7 +12,7 @@ using emul::SetLSB;
 
 namespace fdd
 {
-	static constexpr std::array<BYTE, 6> SYNC_FIELD = { 0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF };
+	static constexpr std::array<BYTE, 6> SYNC_FIELD = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 	static constexpr std::array<BYTE, 3> HEADER_BEGIN = { 0xD5, 0xAA, 0x96 };
 	static constexpr std::array<BYTE, 3> HEADER_END = { 0xDE, 0xAA, 0x00 };
 	static constexpr std::array<BYTE, 3> DATA_BEGIN = { 0xD5, 0xAA, 0xAD };
@@ -94,14 +94,17 @@ namespace fdd
 		Init(DiskFormat::Mac400K);
 		hscommon::fileUtil::File imageFile(imageFilePath.string().c_str(), "rb");
 
+		WORD block = 0;
+
 		for (int i = 0; i < m_tracks.size(); ++i)
 		{
 			const int sectorsPerTrack = GetSectorCount(i);
 			LogPrintf(LOG_INFO, "Track [%d]: Loading [%d] sectors", i, sectorsPerTrack);
-			std::vector<SectorData> sectors;
+			RawSectors sectors;
 			for (int s = 0; s < sectorsPerTrack; ++s)
 			{
-				SectorData sector;
+				RawSectorData sector;
+				sector.tag.blockNumber = block++;
 				size_t ret = fread(sector.data, SECTOR_DATA_SIZE, 1, imageFile);
 				if (ret != 1)
 				{
@@ -116,7 +119,7 @@ namespace fdd
 		return true;
 	}
 
-	const Sectors& FloppyDisk::GetTrack(int track)
+	const RawSectors& FloppyDisk::GetTrack(int track)
 	{
 		if (track < 0 || track >= m_tracks.size())
 		{
@@ -156,8 +159,8 @@ namespace fdd
 		m_isCalibrating = false;
 		m_stepDirection = StepDirection::INNER;
 		m_currTrack = 0;
-		m_currSector = 0;
 		m_currHead = 0;
+		m_currSectorIndex = 0;
 
 		// Set only if never uninitialized
 		if (m_ticksPerRotation == UINT32_MAX)
@@ -192,15 +195,14 @@ namespace fdd
 			m_isSeeking = false;
 			int newTrack = m_currTrack + (int)m_stepDirection;
 			// Allow one more inner track to signify "out of bounds"
-			m_currTrack = std::clamp(newTrack, 0, (int)m_trackCount); 
-			if (newTrack != m_currTrack)
+			int adjustedTrack =  std::clamp(newTrack, 0, (int)m_trackCount); 
+			if (newTrack != adjustedTrack)
 			{
 				LogPrintf(LOG_WARNING, "Seek past endpoint");
 			}
 
-			LogPrintf(LOG_INFO, "Seek End, new track: [%d]", m_currTrack);
-			m_currTrackData = &m_trackData[m_currTrack];
-			m_currTrackPos = 0;
+			LogPrintf(LOG_INFO, "Seek End, new track: [%d]", adjustedTrack);
+			NewTrack(adjustedTrack);
 		}
 	}
 
@@ -219,34 +221,43 @@ namespace fdd
 			const auto& interleave = m_disk.GetInterleave(track);
 			const auto& rawTrackData = m_disk.GetTrack(track);
 
-			//for (int sector = 0; sector < sectorCount; ++sector)
+			EncodedTrack encodedTrack;
+			encodedTrack.reserve(12);
+
 			for (int sector : interleave)
 			{
 				LogPrintf(LOG_INFO, "Prepare data for track %d sector %d", track, sector);
 
+				EncodedSector encodedSector;
+				encodedSector.sector = sector;
+
+				auto& data = encodedSector.data;
+				data.reserve(800);
+
 				// Padding
-				currTrack.insert(currTrack.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
+				data.insert(data.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
 
 				// Sector Header
 				DATA header = BuildHeader(track, sector, 0, DiskFormat::Mac400K);
-				currTrack.insert(currTrack.end(), header.begin(), header.end());
+				data.insert(data.end(), header.begin(), header.end());
 
 				// Padding
-				currTrack.insert(currTrack.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
+				data.insert(data.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
 
 				// Sector Data
-				DATA data = BuildData(sector, rawTrackData[sector]);
-				currTrack.insert(currTrack.end(), data.begin(), data.end());
+				DATA sectorData = BuildData(sector, rawTrackData[sector]);
+				data.insert(data.end(), sectorData.begin(), sectorData.end());
 
 				// Padding
-				currTrack.insert(currTrack.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
+				data.insert(data.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
+
+				encodedTrack.push_back(encodedSector);
 			}
 
-			m_trackData.push_back(currTrack);
+			m_trackData.push_back(encodedTrack);
 		}
 
-		m_currTrackData = &m_trackData[0];
-		m_currTrackPos = 0;
+		NewTrack(0);
 
 		return true;
 	}
@@ -270,7 +281,7 @@ namespace fdd
 		if (!force && (!m_connected || (rpm == m_motorSpeed)))
 			return;
 
-		LogPrintf(LOG_INFO, "Set Motor Speed: %d rpm", rpm);
+		LogPrintf(LOG_DEBUG, "Set Motor Speed: %d rpm", rpm);
 		m_motorSpeed = std::clamp(rpm, MIN_RPM, MAX_RPM);
 		if (m_motorSpeed != rpm)
 		{
@@ -377,14 +388,42 @@ namespace fdd
 		ResetSeekCounter();
 	}
 
+	void DeviceFloppy::NewTrack(WORD track)
+	{
+		LogPrintf(LOG_INFO, "NewTrack [%d]", track);
+		m_currTrack = track;
+
+		m_currSectorPos = 0;
+		m_currSectorIndex = 0;
+		m_currSectorData = &m_trackData[track][0];
+		LogPrintf(LOG_INFO, "Begin Sector [%d]", m_currSectorData->sector);
+	}
+
+	void DeviceFloppy::NextSector()
+	{
+		auto& currTrack = m_trackData[m_currTrack];
+
+		++m_currSectorIndex;
+		if (m_currSectorIndex == currTrack.size())
+		{
+			m_currSectorIndex = 0;
+		}
+
+		LogPrintf(LOG_INFO, "Begin Sector [%d]", currTrack[m_currSectorIndex].sector);
+		m_currSectorPos = 0;
+		m_currSectorData = &currTrack[m_currSectorIndex];
+	}
+
 	BYTE DeviceFloppy::ReadByte()
 	{
 		// TODO: Feed bytes at proper speed
-		BYTE value = m_currTrackData->at(m_currTrackPos++);
-		if (m_currTrackPos >= m_currTrackData->size())
+
+		if (m_currSectorPos == m_currSectorData->data.size())
 		{
-			m_currTrackPos = 0;
+			NextSector();
 		}
+
+		BYTE value = m_currSectorData->data.at(m_currSectorPos++);
 
 		LogPrintf(LOG_DEBUG, "Read Data, value = %02X", value);
 
@@ -464,7 +503,7 @@ namespace fdd
 		return data;
 	}
 
-	DATA DeviceFloppy::BuildData(BYTE sector, const SectorData& rawData)
+	DATA DeviceFloppy::BuildData(BYTE sector, const RawSectorData& rawData)
 	{
 		if (sector > 63)
 		{
@@ -487,7 +526,7 @@ namespace fdd
 		ResetChecksum();
 		// Sector Tag (12 bytes)
 		{
-			DATA encodedTag = EncodeDataBlock(rawData.tag, SECTOR_TAG_SIZE);
+			DATA encodedTag = EncodeDataBlock((BYTE*)&rawData.tag, SECTOR_TAG_SIZE);
 			if (encodedTag.size() != 16)
 			{
 				LogPrintf(LOG_ERROR, "Data Tag should encode to 16 bytes");
@@ -524,7 +563,7 @@ namespace fdd
 		return data;
 	}
 
-	void DeviceFloppy::Encode3To4(BYTE encodedOut[4], BYTE byteA, BYTE byteB, BYTE byteC)
+	void DeviceFloppy::Encode3To4(BYTE encodedOut[4], BYTE byteA, BYTE byteB, BYTE byteC, bool lastBlock)
 	{
 		// 1. Rotate CSUMC left
 		bool carry1 = ROL(m_checksumC);
@@ -541,11 +580,14 @@ namespace fdd
 		// 5. BYTEB <- BYTEB xor CSUMA
 		byteB ^= m_checksumA;
 
-		// 6. CSUMC <- CSUMC + BYTEC + carry from step 4
-		bool carry6 = ADC(m_checksumC, byteC, carry4);
+		if (!lastBlock)
+		{
+			// 6. CSUMC <- CSUMC + BYTEC + carry from step 4
+			bool carry6 = ADC(m_checksumC, byteC, carry4);
 
-		// 7. BYTEB <- BYTEC xor CSUMB
-		byteC ^= m_checksumB;
+			// 7. BYTEB <- BYTEC xor CSUMB
+			byteC ^= m_checksumB;
+		}
 
 		// 8. convert BYTEA, BYTEB and BYTEC to 6 bit nibbles
 		//   NIBL1 <- A7 A6 B7 B6 C7 C6 : High bits of the bytes
@@ -572,11 +614,11 @@ namespace fdd
 		int pos = 0;
 
 		BYTE encodedBlock[4];
-		while (pos < size)
+		while (pos < (size / 3) * 3)
 		{
 			BYTE byteA = data[pos++];
-			BYTE byteB = (pos == size) ? 0 : data[pos++];
-			BYTE byteC = (pos == size) ? 0 : data[pos++];
+			BYTE byteB = data[pos++];
+			BYTE byteC = data[pos++];
 
 			Encode3To4(encodedBlock, byteA, byteB, byteC);
 
@@ -586,11 +628,23 @@ namespace fdd
 			encoded.push_back(Encode6and2(encodedBlock[3]));
 		}
 
-		// Remove one or two encoded bytes depending on the size of the last block
-		int lastBlock = size % 3;
-		if (lastBlock)
+		// Possible last block of 2 bytes (sector = 512 bytes == 170 * 3 + 2)
+		int left = size - pos;
+		if (left == 1)
 		{
-			encoded.resize(encoded.size() - (3 - lastBlock));
+			// Should not happen with the sizes we're dealing with
+			throw std::exception("Invalid block size");
+		}
+		else if (left == 2)
+		{
+			BYTE byteA = data[pos++];
+			BYTE byteB = data[pos++];
+
+			Encode3To4(encodedBlock, byteA, byteB, 0, true);
+
+			encoded.push_back(Encode6and2(encodedBlock[0]));
+			encoded.push_back(Encode6and2(encodedBlock[1]));
+			encoded.push_back(Encode6and2(encodedBlock[2]));
 		}
 
 		return encoded;
