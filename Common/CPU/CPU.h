@@ -24,6 +24,7 @@ namespace emul
 		virtual const std::string GetID() const = 0;
 		virtual size_t GetAddressBits() const = 0;
 		virtual ADDRESS GetCurrentAddress() const = 0;
+		virtual ADDRESS GetLastAddress() const { return m_lastAddress; }
 		virtual void Exec(BYTE opcode) = 0;
 
 		virtual void Init() = 0;
@@ -48,6 +49,7 @@ namespace emul
 		Memory& m_memory;
 
 		uint32_t m_opTicks = 0;
+		ADDRESS m_lastAddress = 0;
 		inline void TICK(uint32_t count) { m_opTicks += count; }
 	};
 }

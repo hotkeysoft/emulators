@@ -922,6 +922,7 @@ namespace emul::cpu68k
 		try
 		{
 			m_opTicks = 0;
+			m_lastAddress = GetCurrentAddress();
 
 			// Fetch opcode
 			m_state = CPUState::RUN;

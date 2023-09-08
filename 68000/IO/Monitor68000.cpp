@@ -601,6 +601,11 @@ namespace emul
 		static Coord codePos = m_cpu->GetInfo().GetCoord("CODE");
 
 		m_console.Clear(codePos.x, codePos.y, codePos.w, codePos.h);
+
+		// Show last instruction
+		Instruction decoded;
+		Disassemble(m_cpu->GetLastAddress(), decoded);
+		PrintInstruction(4, decoded);
 	}
 
 	bool Monitor68000::Replace(std::string& str, const std::string& from, const std::string& to)
