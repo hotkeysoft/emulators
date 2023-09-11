@@ -64,9 +64,7 @@ namespace floppy::woz
 
 		fdd::DeviceFloppy* GetFloppy()
 		{
-			// TODO: Temp
-			return m_floppy1;
-			//return GetDriveSel() ? m_floppy1 : m_floppy2;
+			return GetDriveSel() ? m_floppy2 : m_floppy1;
 		}
 
 		fdd::DeviceFloppy* m_floppy1 = nullptr;

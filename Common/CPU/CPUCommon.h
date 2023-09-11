@@ -7,6 +7,13 @@
 # define NODEFAULT   __assume(0)
 #endif
 
+#define PRINTF_BIN_PATTERN_INT4 "%c%c%c%c"
+#define PRINTF_BYTE_TO_BIN_INT4(i)    \
+    (((i) & 0x08ll) ? '1' : '0'), \
+    (((i) & 0x04ll) ? '1' : '0'), \
+    (((i) & 0x02ll) ? '1' : '0'), \
+    (((i) & 0x01ll) ? '1' : '0')
+
 #define PRINTF_BIN_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
 #define PRINTF_BYTE_TO_BIN_INT8(i)    \
     (((i) & 0x80ll) ? '1' : '0'), \

@@ -106,10 +106,12 @@ namespace emul
 		m_floppyController.EnableLog(CONFIG().GetLogLevel("floppy.iwm"));
 		m_floppyController.Init(&m_floppyInternal, &m_floppyExternal);
 
+		m_floppyInternal.Init(true);
 		m_floppyInternal.EnableLog(CONFIG().GetLogLevel("floppy"));
 		m_floppyInternal.SetTrackCount(80);
 		m_floppyInternal.SetStepDelay(10);
 
+		m_floppyExternal.Init(true);
 		m_floppyExternal.EnableLog(CONFIG().GetLogLevel("floppy"));
 		m_floppyExternal.SetTrackCount(80);
 		m_floppyExternal.SetStepDelay(10);
@@ -121,6 +123,15 @@ namespace emul
 		if (image.size())
 		{
 			if (!m_floppyInternal.LoadDiskImage(image.c_str()))
+			{
+				LogPrintf(LOG_ERROR, "Error loading image file: %s", image.c_str());
+			}
+		}
+
+		image = CONFIG().GetValueStr("floppy", "floppy.2");
+		if (image.size())
+		{
+			if (!m_floppyExternal.LoadDiskImage(image.c_str()))
 			{
 				LogPrintf(LOG_ERROR, "Error loading image file: %s", image.c_str());
 			}
@@ -227,7 +238,7 @@ namespace emul
 		const int rpm = pwmSpeed + 300;
 
 		m_floppyInternal.SetMotorSpeed(rpm);
-		//m_floppyExternal.SetMotorSpeed(rpm);
+		m_floppyExternal.SetMotorSpeed(rpm);
 	}
 
 	void ComputerMacintosh::OnVBlankStart()
@@ -279,7 +290,6 @@ namespace emul
 			if (!m_turbo)
 			{
 				WORD sound = m_sound.IsEnabled() ? GetHByte(m_sound.GetBufferWord()) * m_via.GetSoundVolume() : 0;
-				sound = 0; //TODO: TEMP
 				SOUND().PlayMono(sound * 2);
 			}
 

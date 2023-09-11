@@ -543,11 +543,7 @@ int main(int argc, char* argv[])
 							char buf[128];
 							sprintf(buf, "dump/RAM_%zu.bin", time(nullptr));
 							fprintf(stderr, "Dump RAM to %s\n", buf);
-							pc->GetMemory().Dump(0x0000, 0, buf);
-
-							sprintf(buf, "dump/VRAM_%zu.bin", time(nullptr));
-							fprintf(stderr, "Dump VRAM to %s\n", buf);
-							pc->GetMemory().Dump(0x8000, 0, buf);
+							pc->GetMemory().Dump(0, 0x20000, buf);
 							break;
 						}
 						case FKEY + 6:

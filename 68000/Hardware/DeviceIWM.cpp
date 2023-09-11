@@ -48,7 +48,7 @@ namespace floppy::woz
 
 	void DeviceIWM::Write(BYTE value)
 	{
-		LogPrintf(LOG_DEBUG, "Write, value=%02X", value);
+		LogPrintf(LOG_TRACE, "Write, value=%02X", value);
 
 		switch (m_currState)
 		{
@@ -58,7 +58,7 @@ namespace floppy::woz
 	}
 	BYTE DeviceIWM::Read()
 	{
-		LogPrintf(LOG_DEBUG, "Read");
+		LogPrintf(LOG_TRACE, "Read");
 
 		switch (m_currState)
 		{
@@ -103,12 +103,14 @@ namespace floppy::woz
 		case 0b0000: LogPrintf(LOG_INFO, "Read [Step direction]");
 			statusBit = (GetFloppy()->GetStepDirection() == StepDirection::OUTER);
 			break;
-		case 0b0001: LogPrintf(LOG_INFO, "Read [Disk in place]"); statusBit = false; // TODO
+		case 0b0001: LogPrintf(LOG_INFO, "Read [Disk in place]"); 
+			statusBit = !GetFloppy()->IsDiskLoaded();
 			break;
 		case 0b0010: LogPrintf(LOG_INFO, "Read [Step]");
 			statusBit = !GetFloppy()->IsSeeking();
 			break;
-		case 0b0011: LogPrintf(LOG_INFO, "Read [Write Protect]"); statusBit = false;
+		case 0b0011: LogPrintf(LOG_INFO, "Read [Write Protect]"); 
+			statusBit = false; // TODO
 			break;
 		case 0b0100: LogPrintf(LOG_INFO, "Read [Motor ON]");
 			statusBit = !GetFloppy()->IsMotorEnabled();
@@ -116,22 +118,30 @@ namespace floppy::woz
 		case 0b0101: LogPrintf(LOG_INFO, "Read [Is Track 0]");
 			statusBit = !GetFloppy()->IsTrack0();
 			break;
-		case 0b0110: LogPrintf(LOG_INFO, "Read [Eject]"); statusBit = true; // Always returns 1
+		case 0b0110: LogPrintf(LOG_INFO, "Read [Eject]"); 
+			statusBit = true; // Always returns 1
 			break;
 		case 0b0111: LogPrintf(LOG_DEBUG, "Read [Tachometer][%d]", GetFloppy()->GetMotorPulse());
 			statusBit = GetFloppy()->GetMotorPulse();
 			break;
 		case 0b1000: LogPrintf(LOG_INFO, "Read [Head 0 Data]");
+			// TODO: Switches head
 			break;
 		case 0b1001: LogPrintf(LOG_INFO, "Read [Head 1 Data]");
+			// TODO: Switches head
 			break;
-		case 0b1100: LogPrintf(LOG_INFO, "Read [Sides]"); statusBit = false;
+		case 0b1100: LogPrintf(LOG_INFO, "Read [Sides]"); 
+			// TODO: 800k drive
+			statusBit = false;
 			break;
-		case 0b1101: LogPrintf(LOG_INFO, "Read [Reserved 1101]"); statusBit = false;
+		case 0b1101: LogPrintf(LOG_INFO, "Read [Reserved 1101]"); 
+			statusBit = false;
 			break;
-		case 0b1110: LogPrintf(LOG_INFO, "Read [Drive Installed]"); statusBit = false;
+		case 0b1110: LogPrintf(LOG_INFO, "Read [Drive Installed]"); 
+			statusBit = !GetFloppy()->IsConnected();
 			break;
-		case 0b1111: LogPrintf(LOG_INFO, "Read [Reserved 1111]"); statusBit = false;
+		case 0b1111: LogPrintf(LOG_INFO, "Read [Reserved 1111]"); 
+			statusBit = false;
 			break;
 		default:
 			LogPrintf(LOG_WARNING, "ReadStatus: Invalid register");
@@ -143,7 +153,7 @@ namespace floppy::woz
 			(0) << 6 | // MZ, Reserved, reads 0
 			(statusBit) << 7; // Sense input
 
-		LogPrintf(LOG_DEBUG, "Read Status, value = %2X", value);
+		LogPrintf(LOG_TRACE, "Read Status, value = %2X", value);
 
 		return value;
 	}
@@ -152,7 +162,7 @@ namespace floppy::woz
 	{
 		BYTE value = GetFloppy()->ReadByte();
 
-		LogPrintf(LOG_DEBUG, "Read Data, value = %02X", value);
+		LogPrintf(LOG_TRACE, "Read Data, value = %02X", value);
 
 		return value;
 	}

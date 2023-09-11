@@ -104,7 +104,9 @@ namespace fdd
 			for (int s = 0; s < sectorsPerTrack; ++s)
 			{
 				RawSectorData sector;
-				sector.tag.blockNumber = block++;
+
+				sector.tag.blockNumber = _byteswap_ushort(block++);
+
 				size_t ret = fread(sector.data, SECTOR_DATA_SIZE, 1, imageFile);
 				if (ret != 1)
 				{
@@ -129,10 +131,9 @@ namespace fdd
 		return m_tracks[track];
 	}
 
-	DeviceFloppy::DeviceFloppy(uint32_t clockSpeedHz, bool connected) :
+	DeviceFloppy::DeviceFloppy(uint32_t clockSpeedHz) :
 		Logger("fdd"),
-		m_clockSpeed(clockSpeedHz),
-		m_connected(connected)
+		m_clockSpeed(clockSpeedHz)
 	{
 	}
 
@@ -150,7 +151,6 @@ namespace fdd
 		Logger::SEVERITY oldSev = GetLogLevel();
 		EnableLog(LOG_OFF);
 
-		m_diskLoaded = false;
 		m_diskChanged = false;
 		m_motorEnabled = false;
 		m_motorPulse = false;
@@ -208,7 +208,9 @@ namespace fdd
 
 	bool DeviceFloppy::LoadDiskImage(const char* path)
 	{
-		if (!m_disk.Load(path))
+		ClearDiskImage();
+
+		if (!m_connected || !m_disk.Load(path))
 		{
 			return false;
 		}
@@ -236,6 +238,7 @@ namespace fdd
 
 				// Padding
 				data.insert(data.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
+				data.insert(data.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
 
 				// Sector Header
 				DATA header = BuildHeader(track, sector, 0, DiskFormat::Mac400K);
@@ -250,7 +253,8 @@ namespace fdd
 
 				// Padding
 				data.insert(data.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
-
+				data.insert(data.end(), SYNC_FIELD.begin(), SYNC_FIELD.end());
+				
 				encodedTrack.push_back(encodedSector);
 			}
 
@@ -258,6 +262,7 @@ namespace fdd
 		}
 
 		NewTrack(0);
+		m_diskLoaded = true;
 
 		return true;
 	}
@@ -373,7 +378,7 @@ namespace fdd
 
 	void DeviceFloppy::Step()
 	{
-		if (!m_connected)
+		if (!m_connected || !m_diskLoaded)
 			return;
 
 		LogPrintf(LOG_INFO, "Step one track in [%s] direction", GetStepDirectionStr(m_stepDirection));
@@ -416,6 +421,9 @@ namespace fdd
 
 	BYTE DeviceFloppy::ReadByte()
 	{
+		if (!m_connected || !m_diskLoaded)
+			return 0xFF;
+
 		// TODO: Feed bytes at proper speed
 
 		if (m_currSectorPos == m_currSectorData->data.size())

@@ -74,7 +74,7 @@ namespace fdd
 	{
 
 	public:
-		DeviceFloppy(uint32_t clockSpeedHz, bool connected = true);
+		DeviceFloppy(uint32_t clockSpeedHz);
 		virtual ~DeviceFloppy() {};
 
 		DeviceFloppy() = delete;
@@ -85,19 +85,18 @@ namespace fdd
 
 		virtual void EnableLog(Logger::SEVERITY minSev = Logger::LOG_INFO) override;
 
-		virtual void Init() { Reset(); };
+		virtual void Init(bool connected = true) { m_connected = connected;  Reset(); };
 		virtual void Reset();
 
 		virtual void Tick();
 
-		virtual bool ClearDiskImage() { m_disk.Clear(); return true; };
+		virtual bool ClearDiskImage() { m_diskLoaded = false; m_disk.Clear(); return true; };
 		virtual bool LoadDiskImage(const char* path);
 		virtual bool SaveDiskImage(const char* path) { return false; }
 
 		//const FloppyDisk& GetImageInfo(BYTE drive) { assert(drive < 4); return m_images[drive]; }
 
-		// TODO: Add IsDiskLoaded() later
-		virtual bool IsActive() const { return /*IsDiskLoaded() &&*/ IsMotorEnabled(); }
+		virtual bool IsActive() const { return IsDiskLoaded() && IsMotorEnabled(); }
 
 		// ==========
 		// Drive
@@ -178,7 +177,7 @@ namespace fdd
 
 	protected:
 		const uint32_t m_clockSpeed;
-		const bool m_connected = true;
+		bool m_connected = false;
 
 		// Add with carry, returns carry out
 		bool ADC(BYTE& dest, BYTE src, bool carryIn);
