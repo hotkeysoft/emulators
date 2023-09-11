@@ -316,7 +316,7 @@ namespace emul::cpu68k
 		table[074] = [=]() { SUBQ<BYTE>(7); }; // SUBQ.b #7, <ea>
 		table[075] = [=]() { SUBQ<WORD>(7); }; // SUBQ.w #7, <ea>
 		table[076] = [=]() { SUBQ<DWORD>(7); }; // SUBQ.l #7, <ea>
-		table[073] = [=]() { Mask_DB.IsMatch(m_opcode) ? DBccw(FlagLE()) : Sccb(FlagLE()); }; // SLE.b <ea> / DBLE.w Dn,disp
+		table[077] = [=]() { Mask_DB.IsMatch(m_opcode) ? DBccw(FlagLE()) : Sccb(FlagLE()); }; // SLE.b <ea> / DBLE.w Dn,disp
 	}
 
 	// b0110: BRA,BSR,Bcc

@@ -87,6 +87,9 @@ namespace emul::cpu68k
 		virtual size_t GetAddressBits() const override { return CPU68000_ADDRESS_BITS; };
 		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter & ADDRESS_MASK; }
 
+		DWORD GetRegData(int index) const { return m_reg.DATA[index]; }
+		DWORD GetRegAddr(int index) const { return m_reg.ADDR[index]; }
+
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
 		void SetTrapList(TrapList list) { m_trapList = list; };
@@ -250,7 +253,6 @@ namespace emul::cpu68k
 			DWORD* const DATA = &DataAddress[0];
 			DWORD* const ADDR = &DataAddress[8];
 
-
 			// Handy aliases
 			BYTE& D0b = BYTE_REG(DATA, 0);
 			BYTE& D1b = BYTE_REG(DATA, 1);
@@ -272,7 +274,6 @@ namespace emul::cpu68k
 			WORD& D5w = WORD_REG(DATA, 5); WORD& A5w = WORD_REG(ADDR, 5);
 			WORD& D6w = WORD_REG(DATA, 6); WORD& A6w = WORD_REG(ADDR, 6);
 			WORD& D7w = WORD_REG(DATA, 7); WORD& A7w = WORD_REG(ADDR, 7);
-
 
 			WORD& GetDATAw(int index) { return WORD_REG(DATA, index); }
 			WORD& GetADDRw(int index) { return WORD_REG(ADDR, index); }
