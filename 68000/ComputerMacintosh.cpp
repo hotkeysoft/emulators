@@ -65,6 +65,7 @@ namespace emul
 		InitVideo();
 		InitVIA();
 		InitSCC();
+		InitMouse();		
 		InitFloppy();
 
 		SOUND().SetBaseClock(CPU_CLK);
@@ -82,6 +83,7 @@ namespace emul
 
 		m_via.Reset();
 		m_scc.Reset();
+		m_mouse.Reset();
 		m_sound.ResetBufferPos();
 		m_sound.Enable(true);
 		m_floppyInternal.Reset();
@@ -159,6 +161,14 @@ namespace emul
 		m_video->EnableLog(CONFIG().GetLogLevel("video"));
 		m_video->Init(&m_memory, nullptr);
 		GetVideo().SetEventHandler(this);
+	}
+
+	void ComputerMacintosh::InitMouse()
+	{
+		m_mouse.EnableLog(CONFIG().GetLogLevel("mouse"));
+		m_mouse.SetVIA(&m_via);
+		m_mouse.SetSCC(&m_scc);
+		GetInputs().InitMouse(&m_mouse);
 	}
 
 	void ComputerMacintosh::SetROMOverlayMode(bool overlay)

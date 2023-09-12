@@ -240,6 +240,9 @@
     <ClInclude Include="Hardware\Device8530.h">
       <Filter>Header Files\Hardware</Filter>
     </ClInclude>
+    <ClInclude Include="IO\DeviceMouseMac.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">
@@ -349,6 +352,9 @@
     </ClCompile>
     <ClCompile Include="Hardware\Device8530.cpp">
       <Filter>Source Files\Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceMouseMac.cpp">
+      <Filter>Source Files\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

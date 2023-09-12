@@ -8,6 +8,7 @@
 #include "Hardware/IOBlockIWMMac.h"
 #include "Hardware/Device8530.h"
 #include "Hardware/IOBlockSCCMac.h"
+#include "IO/DeviceMouseMac.h"
 #include "Video/VideoMac.h"
 #include "Sound/SoundMac.h"
 #include "Storage/DeviceFloppy.h"
@@ -41,6 +42,7 @@ namespace emul
 		void InitVIA();
 		void InitSCC();
 		void InitFloppy();
+		void InitMouse();
 
 		void InitVideo();
 
@@ -91,6 +93,8 @@ namespace emul
 
 		scc::mac::IOBlockSCCMac m_ioSCC;
 		scc::Device8530 m_scc;
+
+		mouse::mac::DeviceMouseMac m_mouse;
 
 		sound::mac::SoundMac m_sound;
 	};
