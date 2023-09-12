@@ -37,7 +37,6 @@ namespace scc
 	protected:
 		void WR0(BYTE value);
 		void WR1(BYTE value);
-		void WR2(BYTE value);
 		void WR3(BYTE value);
 		void WR4(BYTE value);
 		void WR5(BYTE value);
@@ -54,6 +53,17 @@ namespace scc
 		emul::BYTE RR1();
 		emul::BYTE RR3();
 		emul::BYTE RR10();
+
+		struct Registers
+		{
+			BYTE WR0 = 0;
+			BYTE WR1 = 0;
+			BYTE WR3 = 0;
+			BYTE WR4 = 0;
+			BYTE WR15 = 0;
+
+			BYTE RR0 = 0;
+		} m_regs;
 
 		Device8530* m_parent = nullptr;
 	};
@@ -91,6 +101,7 @@ namespace scc
 		SCCChannel m_channelA;
 		SCCChannel m_channelB;
 
+		void WR2(BYTE value);
 		void WR9(BYTE value);
 
 		void SetCurrRegister(int reg) { assert(reg >= 0 && reg < REG_COUNT); m_currRegister = reg; }
@@ -101,6 +112,7 @@ namespace scc
 
 		struct Registers
 		{
+			BYTE WR2 = 0;
 			BYTE WR9 = 0;
 		} m_regs;
 

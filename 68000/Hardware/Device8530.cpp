@@ -23,10 +23,10 @@ namespace scc
 	{
 		LogPrintf(LOG_INFO, "Reset (%s)", hard ? "hardware" : "channel");
 
-		//Mask("00000000").Apply(WR0);
-		//Mask("00x00x00").Apply(WR1);
-		//Mask("xxxxxxx0").Apply(WR3);
-		//Mask("xxxxx1xx").Apply(WR4);
+		Mask("00000000").Apply(m_regs.WR0);
+		Mask("00x00x00").Apply(m_regs.WR1);
+		Mask("xxxxxxx0").Apply(m_regs.WR3);
+		Mask("xxxxx1xx").Apply(m_regs.WR4);
 		//Mask("0xx0000x").Apply(WR5);
 		//Mask("xxxxxxxx").Apply(WR6);
 		//Mask("xxxxxxxx").Apply(WR7);
@@ -35,9 +35,9 @@ namespace scc
 		//Mask("xxxxxxxx").Apply(WR12);
 		//Mask("xxxxxxxx").Apply(WR13);
 		//Mask(hard ? "xx100000" : "xx1000xx").Apply(WR14);
-		//Mask("11111000").Apply(WR15);
+		Mask("11111000").Apply(m_regs.WR15);
 
-		//Mask("01xxx100").Apply(RR0);
+		Mask("01xxx100").Apply(m_regs.RR0);
 		//Mask("00000110").Apply(RR1);
 		//Mask("00000000").Apply(RR3);
 		//Mask("00000000").Apply(RR10);
@@ -55,7 +55,7 @@ namespace scc
 
 	BYTE SCCChannel::ReadControl() 
 	{ 
-		LogPrintf(LOG_INFO, "ReadControl");
+		LogPrintf(LOG_TRACE, "ReadControl");
 
 		BYTE value = 0xFF;
 		switch (m_parent->GetCurrRegister())
@@ -81,7 +81,7 @@ namespace scc
 		{
 		case 0:  WR0(value); resetCurrRegister = false; break;
 		case 1:  WR1(value); break;
-		case 2:  WR2(value); break;
+		case 2:  m_parent->WR2(value); break;
 		case 3:  WR3(value); break;
 		case 4:  WR4(value); break;
 		case 5:  WR5(value); break;
@@ -104,8 +104,10 @@ namespace scc
 		}
 	}
 
+	// Command Register
 	void SCCChannel::WR0(BYTE value) 
 	{
+		m_regs.WR0 = value;
 		LogPrintf(LOG_DEBUG, "WR0(%02X)", value);
 
 		int selRegister = value & 7;
@@ -160,21 +162,96 @@ namespace scc
 		LogPrintf(LOG_DEBUG, "WR0: SetCurrRegister %d", selRegister);
 		m_parent->SetCurrRegister(selRegister);
 	}
+
+	// Transmit/Receive Interrupt and Data Transfer Mode Definition
 	void SCCChannel::WR1(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WR1(%02X)", value);
+		LogPrintf(LOG_DEBUG, "WR1(%02X)", value);
+
+		LogPrintf(LOG_INFO, "WR1: Tx/Rx Interrupt and Data Transfer Mode");
+
+		LogPrintf(LOG_INFO, " Wait/DMA Request Enable     : %d", GetBit(value, 7));
+		LogPrintf(LOG_INFO, " Wait/DMA Request Function   : %d", GetBit(value, 6));
+		LogPrintf(LOG_INFO, " Wait/DMA Request on Rx/Tx   : %d", GetBit(value, 5));
+		switch ((value >> 3) & 3)
+		{
+		case 0: LogPrintf(LOG_INFO, " Rx Interrupt                : Disable"); break;
+		case 1: LogPrintf(LOG_INFO, " Rx Interrupt                : First char | Special Condition"); break;
+		case 2: LogPrintf(LOG_INFO, " Rx Interrupt                : All chars | Special Condition"); break;
+		case 3: LogPrintf(LOG_INFO, " Rx Interrupt                : Special Condition only"); break;
+		default:
+			NODEFAULT;
+		}
+		LogPrintf(LOG_INFO, " Parity is special condition : %d", GetBit(value, 2));
+		LogPrintf(LOG_INFO, " Tx int enable               : %d", GetBit(value, 1));
+		LogPrintf(LOG_INFO, " External int enable         : %d", GetBit(value, 0));
 	}
-	void SCCChannel::WR2(BYTE value)
-	{
-		LogPrintf(LOG_INFO, "WR2(%02X)", value);
-	}
+
+	// Receiver Bits/Character
 	void SCCChannel::WR3(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WR3(%02X)", value);
+		LogPrintf(LOG_DEBUG, "WR3(%02X)", value);
+		m_regs.WR3 = value;
+
+		LogPrintf(LOG_INFO, "WR3: Receiver Bits/Character");
+		switch ((value >> 6) & 3)
+		{
+		case 0: LogPrintf(LOG_INFO, " Bits/Character : 5"); break;
+		case 1: LogPrintf(LOG_INFO, " Bits/Character : 7"); break;
+		case 2: LogPrintf(LOG_INFO, " Bits/Character : 6"); break;
+		case 3: LogPrintf(LOG_INFO, " Bits/Character : 8"); break;
+		default:
+			NODEFAULT;
+		}
+
+		LogPrintf(LOG_INFO, " Auto Enables                 : %d", GetBit(value, 5));
+		LogPrintf(LOG_INFO, " Enter Hunt Mode              : %d", GetBit(value, 4));
+		LogPrintf(LOG_INFO, " Rx CRC Enable                : %d", GetBit(value, 3));
+		LogPrintf(LOG_INFO, " Address Search Mode (SDLC)   : %d", GetBit(value, 2));
+		LogPrintf(LOG_INFO, " Sync Character Load Inhibit  : %d", GetBit(value, 1));
+		LogPrintf(LOG_INFO, " Rx Enable                    : %d", GetBit(value, 0));
 	}
+
+	// Transmit/Receiver misc parameters and modes
 	void SCCChannel::WR4(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WR4(%02X)", value);
+		LogPrintf(LOG_DEBUG, "WR4(%02X)", value);
+		m_regs.WR4 = value;
+
+		LogPrintf(LOG_INFO, "WR4: Transmit/Receiver misc parameters and modes");
+		switch ((value >> 6) & 3)
+		{
+		case 0: LogPrintf(LOG_INFO, " Clock Mode : x1"); break;
+		case 1: LogPrintf(LOG_INFO, " Clock Mode : x16"); break;
+		case 2: LogPrintf(LOG_INFO, " Clock Mode : x32"); break;
+		case 3: LogPrintf(LOG_INFO, " Clock Mode : x64"); break;
+		default:
+			NODEFAULT;
+		}
+
+		switch ((value >> 2) & 3)
+		{
+		case 0: // Sync modes
+		{
+			switch ((value >> 4) & 3)
+			{
+			case 0: LogPrintf(LOG_INFO, " Sync Mode  : 8 bit sync character"); break;
+			case 1: LogPrintf(LOG_INFO, " Sync Mode  : 16 bit sync character"); break;
+			case 2: LogPrintf(LOG_INFO, " Sync Mode  : SDLC"); break;
+			case 3: LogPrintf(LOG_INFO, " Sync Mode  : External"); break;
+			default:
+				NODEFAULT;
+			}
+		}
+		case 1: LogPrintf(LOG_INFO, " Stop Mode  : 2 stop bit"); break;
+		case 2: LogPrintf(LOG_INFO, " Stop Mode  : 1.5 stop bits"); break;
+		case 3: LogPrintf(LOG_INFO, " Stop Mode  : 2 stop bits"); break;
+		default:
+			NODEFAULT;
+		}
+
+		LogPrintf(LOG_INFO, " Parity     : %s", 
+			GetBit(value, 0) ? (GetBit(value, 1) ? "Even" : "Odd") : "None");
 	}
 	void SCCChannel::WR5(BYTE value)
 	{
@@ -210,13 +287,24 @@ namespace scc
 	}
 	void SCCChannel::WR15(BYTE value)
 	{
-		LogPrintf(LOG_INFO, "WR15(%02X)", value);
+		LogPrintf(LOG_DEBUG, "WR15(%02X)", value);
+		m_regs.WR15 = value;
+
+		LogPrintf(LOG_INFO, "WR15: External/Status Interrupt Control");
+
+		LogPrintf(LOG_INFO, " IE - Break/Abort     : %d", GetBit(value, 7));
+		LogPrintf(LOG_INFO, " IE - Tx Underrun/EOM : %d", GetBit(value, 6));
+		LogPrintf(LOG_INFO, " IE - CTS             : %d", GetBit(value, 5));
+		LogPrintf(LOG_INFO, " IE - Sync/Hunt       : %d", GetBit(value, 4));
+		LogPrintf(LOG_INFO, " IE - DCD             : %d", GetBit(value, 3));
+		LogPrintf(LOG_INFO, " IE - Zero Count      : %d", GetBit(value, 1));
 	}
 
+	// Transmit/Receive buffer Status and External Status
 	BYTE SCCChannel::RR0()
 	{
-		LogPrintf(LOG_INFO, "RR0");
-		return 0xFF;
+		LogPrintf(LOG_DEBUG, "RR0");
+		return m_regs.RR0;
 	}
 	BYTE SCCChannel::RR1()
 	{
@@ -273,6 +361,12 @@ namespace scc
 		Mask(hard ? "110000xx" : "xx0xxxxx").Apply(m_regs.WR9);
 	}
 
+	void Device8530::WR2(BYTE value)
+	{
+		m_regs.WR2 = value;
+		LogPrintf(LOG_INFO, "WR2: Interrupt Vector [%02X]", value);
+	}
+
 	// Master Interrupt Control
 	void Device8530::WR9(BYTE value)
 	{
@@ -280,12 +374,13 @@ namespace scc
 
 		LogPrintf(LOG_TRACE, "WR9(%02X)", value);
 
-		LogPrintf(LOG_INFO, "WR9 STATUS[%c] MIE[%d] DLC[%d] NV[%d] VIS[%d]",
-			GetBit(value, 4) ? 'H' : 'L',
-			GetBit(value, 3),
-			GetBit(value, 2),
-			GetBit(value, 1),
-			GetBit(value, 0));
+		LogPrintf(LOG_INFO, "WR9: Master Interrupt Control");
+
+		LogPrintf(LOG_INFO, " Master Interrupt Enable : %d", GetBit(value, 3));
+		LogPrintf(LOG_INFO, " Disable Lower Chain     : %d", GetBit(value, 2));
+		LogPrintf(LOG_INFO, " No Vector               : %d", GetBit(value, 1));
+		LogPrintf(LOG_INFO, " Vector Status High/Low  : %c", GetBit(value, 4) ? 'H' : 'L');
+		LogPrintf(LOG_INFO, " Vector Includes Status  : %d", GetBit(value, 0));
 
 		switch ((value >> 6) & 3)
 		{
