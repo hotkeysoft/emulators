@@ -6,6 +6,7 @@ using hscommon::EdgeDetectLatch;
 using Mask = emul::BitMaskB;
 using emul::BYTE;
 using emul::GetBit;
+using emul::SetBit;
 
 namespace scc
 {
@@ -41,6 +42,8 @@ namespace scc
 		//Mask("00000110").Apply(RR1);
 		//Mask("00000000").Apply(RR3);
 		//Mask("00000000").Apply(RR10);
+
+		m_DCD = false;
 	}
 
 	BYTE SCCChannel::ReadData() 
@@ -62,8 +65,13 @@ namespace scc
 		{
 		case 0:  value = RR0(); break;
 		case 1:  value = RR1(); break;
+		case 2:  value = m_parent->RR2(this); break;
 		case 3:  value = RR3(); break;
+		case 8:  value = RR8(); break;
 		case 10: value = RR10(); break;
+		case 12: value = RR12(); break;
+		case 13: value = RR13(); break;
+		case 15: value = RR15(); break;
 		default:
 			LogPrintf(LOG_WARNING, "ReadControl: Invalid read register %d", m_parent->GetCurrRegister());
 		}
@@ -104,6 +112,26 @@ namespace scc
 		}
 	}
 
+	// TODO: Taking lots of shortcuts because we only care about
+	// the DCD interrupt for the mouse
+	bool SCCChannel::IsInterrupt() const
+	{	
+		return GetBit(m_regs.WR1, 0) && // External int enable
+			GetBit(m_regs.WR15, 3) && // DCD int enable
+			m_DCDInt; // DVD int
+	}
+
+	void SCCChannel::SetDCD(bool set)
+	{
+		if (m_DCD != set)
+		{
+			m_DCDInt = true;
+			m_extStatusChange = true;
+			SetBit(m_regs.RR0, 3, set);
+		}
+		m_DCD = set;
+	}
+
 	// Command Register
 	void SCCChannel::WR0(BYTE value) 
 	{
@@ -122,7 +150,9 @@ namespace scc
 			selRegister += 8;
 			break;
 		case 2: // Reset ext/status interrupts
-			LogPrintf(LOG_WARNING, "WR0: Reset ext/status interrupts (not implemented)");
+			LogPrintf(LOG_DEBUG, "WR0: Reset ext/status interrupts");
+			m_DCDInt = false;
+			m_extStatusChange = false;
 			break;
 		case 3: // Sent abort (SDLC)
 			LogPrintf(LOG_WARNING, "WR0: Sent abort (SDLC) (not implemented)");
@@ -167,6 +197,7 @@ namespace scc
 	void SCCChannel::WR1(BYTE value)
 	{
 		LogPrintf(LOG_DEBUG, "WR1(%02X)", value);
+		m_regs.WR1 = value;
 
 		LogPrintf(LOG_INFO, "WR1: Tx/Rx Interrupt and Data Transfer Mode");
 
@@ -303,7 +334,7 @@ namespace scc
 	// Transmit/Receive buffer Status and External Status
 	BYTE SCCChannel::RR0()
 	{
-		LogPrintf(LOG_DEBUG, "RR0");
+		LogPrintf(LOG_INFO, "RR0");
 		return m_regs.RR0;
 	}
 	BYTE SCCChannel::RR1()
@@ -316,9 +347,31 @@ namespace scc
 		LogPrintf(LOG_INFO, "RR3");
 		return 0xFF;
 	}
+	emul::BYTE SCCChannel::RR8()
+	{
+		LogPrintf(LOG_INFO, "RR8");
+		return 0xFF;
+	}
 	BYTE SCCChannel::RR10()
 	{
 		LogPrintf(LOG_INFO, "RR10");
+		return 0xFF;
+	}
+	emul::BYTE SCCChannel::RR12()
+	{
+		LogPrintf(LOG_INFO, "RR12");
+		return 0xFF;
+	}
+
+	emul::BYTE SCCChannel::RR13()
+	{
+		LogPrintf(LOG_INFO, "RR13");
+		return 0xFF;
+	}
+
+	emul::BYTE SCCChannel::RR15()
+	{
+		LogPrintf(LOG_INFO, "RR15");
 		return 0xFF;
 	}
 
@@ -396,6 +449,44 @@ namespace scc
 			Reset(false);
 			break;
 		}
+
+		if (!GetBit(value, 1))
+		{
+			LogPrintf(LOG_ERROR, "Vector: Not supported");
+		}
+
+		if (GetBit(value, 4))
+		{
+			LogPrintf(LOG_ERROR, "Vector Status High: Not supported");
+		}
+	}
+
+	emul::BYTE Device8530::RR2(SCCChannel* ch)
+	{
+		LogPrintf(LOG_INFO, "RR2");
+
+		BYTE vector = m_regs.WR2;
+
+		// Channel B modifies bits of the vector
+		if (ch == &m_channelB)
+		{
+			// TODO: Only V3/V2/V1 change suppported
+			BYTE condBits = 0b011;
+
+			if (m_channelB.IsExternalStatusChange())
+			{
+				condBits = 0b001;
+			}
+			else if (m_channelA.IsExternalStatusChange())
+			{
+				condBits = 0b101;
+			}
+
+			vector &= 0b11110001;
+			vector |= (condBits << 1);
+		}
+
+		return vector;
 	}
 
 	void Device8530::Serialize(json& to)

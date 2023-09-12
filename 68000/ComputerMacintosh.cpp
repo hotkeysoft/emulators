@@ -35,8 +35,8 @@ namespace emul
 		m_baseRAM("RAM", RAM_SIZE, emul::MemoryType::RAM),
 		m_rom("ROM", ROM_SIZE, emul::MemoryType::ROM),
 		m_sound(m_memory),
-		m_floppyInternal(CPU_CLK),
-		m_floppyExternal(CPU_CLK)
+		m_floppyInternal(CPU_CLK, "fdd.1"),
+		m_floppyExternal(CPU_CLK, "fdd.2")
 	{
 	}
 
@@ -328,7 +328,9 @@ namespace emul
 			m_floppyInternal.Tick();
 			m_floppyExternal.Tick();
 
-			GetCPU().SetInterruptLevel(m_via.GetIRQ() ? 1 : 0);
+			const BYTE irqLevel = m_scc.GetIRQ() ? 2 : (m_via.GetIRQ() ? 1 : 0);
+
+			GetCPU().SetInterruptLevel(irqLevel);
 		}
 		return true;
 	}

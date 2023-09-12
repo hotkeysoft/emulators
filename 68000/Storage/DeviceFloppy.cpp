@@ -131,8 +131,8 @@ namespace fdd
 		return m_tracks[track];
 	}
 
-	DeviceFloppy::DeviceFloppy(uint32_t clockSpeedHz) :
-		Logger("fdd"),
+	DeviceFloppy::DeviceFloppy(uint32_t clockSpeedHz, const char* id) :
+		Logger(id),
 		m_clockSpeed(clockSpeedHz)
 	{
 	}

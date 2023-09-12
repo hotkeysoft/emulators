@@ -74,7 +74,7 @@ namespace fdd
 	{
 
 	public:
-		DeviceFloppy(uint32_t clockSpeedHz);
+		DeviceFloppy(uint32_t clockSpeedHz, const char* id = "fdd");
 		virtual ~DeviceFloppy() {};
 
 		DeviceFloppy() = delete;

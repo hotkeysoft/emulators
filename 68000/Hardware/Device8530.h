@@ -30,11 +30,21 @@ namespace scc
 		BYTE ReadControl();
 		void WriteControl(BYTE value);
 
+		bool GetDCD() const { return m_DCD; }
+		void SetDCD(bool set);
+
+		bool IsExternalStatusChange() const { return m_extStatusChange; }
+		bool IsInterrupt() const;
+
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
 	protected:
+		bool m_extStatusChange = false;
+		bool m_DCD = false;
+		bool m_DCDInt = false;
+
 		void WR0(BYTE value);
 		void WR1(BYTE value);
 		void WR3(BYTE value);
@@ -52,7 +62,11 @@ namespace scc
 		emul::BYTE RR0();
 		emul::BYTE RR1();
 		emul::BYTE RR3();
+		emul::BYTE RR8();
 		emul::BYTE RR10();
+		emul::BYTE RR12();
+		emul::BYTE RR13();
+		emul::BYTE RR15();
 
 		struct Registers
 		{
@@ -93,6 +107,8 @@ namespace scc
 		virtual void OnReadChannel (SCCChannel* src) {};
 		virtual void OnWriteChannel(SCCChannel* src) {};
 
+		bool GetIRQ() const { return m_channelA.IsInterrupt() || m_channelB.IsInterrupt(); }
+
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
@@ -103,6 +119,8 @@ namespace scc
 
 		void WR2(BYTE value);
 		void WR9(BYTE value);
+
+		emul::BYTE RR2(SCCChannel* ch);
 
 		void SetCurrRegister(int reg) { assert(reg >= 0 && reg < REG_COUNT); m_currRegister = reg; }
 		int GetCurrRegister() const { return m_currRegister; }
