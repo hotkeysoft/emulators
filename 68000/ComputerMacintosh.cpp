@@ -61,14 +61,10 @@ namespace emul
 		//m_rom.Fill(0x1e86, { 0x02, 0x00 });
 		//m_rom.Fill(0x1e90, { 0x04, 0x00 });
 
-		// Temp RAM blocks instead of io to check instructions
-		MemoryBlock* SCCr = new MemoryBlock("SCCr", 0x100000);
-		SCCr->Clear(0x90);
-		m_memory.Allocate(SCCr, 0x900000);
-
 		InitInputs(CPU_CLK);
 		InitVideo();
 		InitVIA();
+		InitSCC();
 		InitFloppy();
 
 		SOUND().SetBaseClock(CPU_CLK);
@@ -85,6 +81,7 @@ namespace emul
 		ComputerBase::Reset();
 
 		m_via.Reset();
+		m_scc.Reset();
 		m_sound.ResetBufferPos();
 		m_sound.Enable(true);
 		m_floppyInternal.Reset();
@@ -145,6 +142,15 @@ namespace emul
 		m_via.SetEventHandler(this);
 		m_ioVIA.Init(&m_via);
 		m_memory.Allocate(&m_ioVIA, 0xE80000);
+	}
+
+	void ComputerMacintosh::InitSCC()
+	{
+		m_ioSCC.EnableLog(CONFIG().GetLogLevel("scc"));
+		m_scc.EnableLog(CONFIG().GetLogLevel("scc"));
+		m_scc.Init();
+		m_ioSCC.Init(&m_scc);
+		m_memory.Allocate(&m_ioSCC, 0x800000);
 	}
 
 	void ComputerMacintosh::InitVideo()

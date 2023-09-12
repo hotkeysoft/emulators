@@ -234,6 +234,12 @@
     <ClInclude Include="Storage\DeviceFloppy.h">
       <Filter>Header Files\Storage</Filter>
     </ClInclude>
+    <ClInclude Include="Hardware\IOBlockSCCMac.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="Hardware\Device8530.h">
+      <Filter>Header Files\Hardware</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">
@@ -340,6 +346,9 @@
     </ClCompile>
     <ClCompile Include="Storage\DeviceFloppy.cpp">
       <Filter>Source Files\Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="Hardware\Device8530.cpp">
+      <Filter>Source Files\Hardware</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

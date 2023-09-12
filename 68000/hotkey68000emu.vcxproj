@@ -217,8 +217,10 @@
     <ClInclude Include="CPU\CPU68000.h" />
     <ClInclude Include="CPU\TrapsMac.h" />
     <ClInclude Include="Hardware\Device6522Mac.h" />
+    <ClInclude Include="Hardware\Device8530.h" />
     <ClInclude Include="Hardware\DeviceIWM.h" />
     <ClInclude Include="Hardware\IOBlockIWMMac.h" />
+    <ClInclude Include="Hardware\IOBlockSCCMac.h" />
     <ClInclude Include="Hardware\IOBlockVIAMac.h" />
     <ClInclude Include="IO\Monitor68000.h" />
     <ClInclude Include="resource.h" />
@@ -258,6 +260,7 @@
     <ClCompile Include="ComputerMacintosh.cpp" />
     <ClCompile Include="CPU\CPU68000.cpp" />
     <ClCompile Include="Hardware\Device6522Mac.cpp" />
+    <ClCompile Include="Hardware\Device8530.cpp" />
     <ClCompile Include="Hardware\DeviceIWM.cpp" />
     <ClCompile Include="IO\Monitor68000.cpp" />
     <ClCompile Include="Main.cpp" />

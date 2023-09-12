@@ -6,6 +6,8 @@
 #include "Hardware/IOBlockVIAMac.h"
 #include "Hardware/DeviceIWM.h"
 #include "Hardware/IOBlockIWMMac.h"
+#include "Hardware/Device8530.h"
+#include "Hardware/IOBlockSCCMac.h"
 #include "Video/VideoMac.h"
 #include "Sound/SoundMac.h"
 #include "Storage/DeviceFloppy.h"
@@ -37,6 +39,7 @@ namespace emul
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 		void InitVIA();
+		void InitSCC();
 		void InitFloppy();
 
 		void InitVideo();
@@ -85,6 +88,9 @@ namespace emul
 		floppy::woz::DeviceIWM m_floppyController;
 		fdd::DeviceFloppy m_floppyInternal;
 		fdd::DeviceFloppy m_floppyExternal;
+
+		scc::mac::IOBlockSCCMac m_ioSCC;
+		scc::Device8530 m_scc;
 
 		sound::mac::SoundMac m_sound;
 	};

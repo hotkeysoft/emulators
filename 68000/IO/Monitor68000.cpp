@@ -687,7 +687,7 @@ namespace emul
 
 		if (instr.overrideMask)
 		{
-			data = instr.overrideMask.Apply(data);
+			instr.overrideMask.Apply(data);
 		}
 
 		char buf[48];

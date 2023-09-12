@@ -6,20 +6,27 @@
 
 namespace hscommon::bitUtil
 {
-	template <typename T,
-		typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
-		class BitMask
+	template <typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+	class BitMask
 	{
 	public:
+		BitMask() { Clear(); }
+
+		// Initialize a Bit Mask with a string
+		// [0|1] : exact bit match
+		// [x|X|.] : don't care bit
+		//
+		// BitMask("10x00"): will match 0b10000 | 0b10100
+		// BitMask("1xx"): will match 0b100 | 0b111 | etc.
+		BitMask(const char* maskStr) { Set(maskStr); }
+
 		// maskBits: '1' bit indicate exact bit match
 		//           '0' bit indicate don't care ('x')
 		//
 		// maskBits == '111...111': IsMatch will only return true when value == mask
 		//                          (exact match, default if not set)
 		// maskBits == '000...000': IsMatch will always return true (mask == 'xxx...xxx')
-		BitMask() { Clear(); }
 		BitMask(T mask, T maskBits = static_cast<T>(-1)) { Set(mask, maskBits); }
-		BitMask(const char* maskStr) { Set(maskStr); }
 
 		bool IsSet() const { return m_set; }
 		operator bool() const { return IsSet(); }
@@ -60,6 +67,7 @@ namespace hscommon::bitUtil
 					m_mask |= 1;
 					m_maskBits |= 1;
 					break;
+				case '.':
 				case 'x':
 				case 'X':
 					m_maskBits &= ~1;
@@ -102,7 +110,7 @@ namespace hscommon::bitUtil
 
 		// Applies this mask on top of a value.
 		// This will set all the 0/1 bits in the mask, and leave the 'x' bits alone.
-		T Apply(T src) const { return (src & (~m_maskBits)) | m_mask; }
+		void Apply(T& dest) const { dest &= (~m_maskBits); dest |= m_mask; }
 
 		std::string ToString() const
 		{
