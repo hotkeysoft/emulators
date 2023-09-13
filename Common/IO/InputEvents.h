@@ -56,6 +56,10 @@ namespace events
 		kbd::DeviceKeyboard* GetKeyboard() const { return m_keyboard; }
 		joy::DeviceJoystick* GetJoystick() const { return m_joystick; }
 
+		void CaptureMouse(bool capture);
+		void ToggleMouseCapture() { CaptureMouse(!m_mouseCaptured); };
+		bool IsMouseCaptured() const { return m_mouseCaptured; }
+
 		void Tick();
 
 		bool IsQuit() { return m_quit; }
@@ -78,6 +82,7 @@ namespace events
 
 		joy::DeviceJoystick* m_joystick = nullptr;
 
+		bool m_mouseCaptured = false;
 		mouse::DeviceMouse* m_mouse = nullptr;
 		mouse::DeviceMouse m_nullMouse;
 

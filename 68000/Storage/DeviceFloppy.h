@@ -45,14 +45,15 @@ namespace fdd
 			path.clear();
 			loaded = false;
 			m_tracks.clear();
+			format = "N/A";
 		}
 
 		void Init(DiskFormat format);
 		bool Load(std::filesystem::path);
 
 		std::filesystem::path path;
-		bool loaded = false;
-		
+		bool loaded = false;	
+		std::string format = "N/A";
 
 		const RawSectors& GetTrack(int track);
 		int GetTrackCount() const { return (int)m_tracks.size(); }
@@ -94,7 +95,7 @@ namespace fdd
 		virtual bool LoadDiskImage(const char* path);
 		virtual bool SaveDiskImage(const char* path) { return false; }
 
-		//const FloppyDisk& GetImageInfo(BYTE drive) { assert(drive < 4); return m_images[drive]; }
+		const FloppyDisk& GetImageInfo() { return m_disk; }
 
 		virtual bool IsActive() const { return IsDiskLoaded() && IsMotorEnabled(); }
 

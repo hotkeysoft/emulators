@@ -118,6 +118,26 @@ namespace events
 		}
 	}
 
+	void InputEvents::CaptureMouse(bool capture)
+	{
+		bool oldState = m_mouseCaptured;
+		if (!m_mouse)
+		{
+			m_mouseCaptured = false;
+		}
+		else
+		{
+			m_mouseCaptured = capture;
+		}
+
+		if (oldState != m_mouseCaptured)
+		{
+			LogPrintf(LOG_WARNING, "Capture mouse [%s]", m_mouseCaptured ? "ON" : "OFF");
+		}
+
+		SDL_SetRelativeMouseMode(m_mouseCaptured ? SDL_TRUE : SDL_FALSE);
+	}
+
 	void InputEvents::Tick()
 	{
 		if (--m_cooldown)

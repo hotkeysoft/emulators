@@ -37,6 +37,8 @@ namespace emul
 
 		video::mac::VideoMac& GetVideo() { return *((video::mac::VideoMac*)m_video); }
 
+		fdd::DeviceFloppy& GetFloppy(int index) { return index ? m_floppyExternal : m_floppyInternal; }
+
 	protected:
 		virtual void InitCPU(const char* cpuid) override;
 		void InitVIA();

@@ -79,6 +79,12 @@
     <Filter Include="Source Files\Storage">
       <UniqueIdentifier>{5795520a-a1b5-4c26-9552-ef093c6fb347}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{0983df1d-dc21-40d6-9dc0-8d39b5dd2cce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{9082eb29-843c-4178-bfe7-4a33275a8e36}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDLPath.props" />
@@ -243,6 +249,9 @@
     <ClInclude Include="IO\DeviceMouseMac.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="UI\OverlayMac.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">
@@ -355,6 +364,9 @@
     </ClCompile>
     <ClCompile Include="IO\DeviceMouseMac.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\OverlayMac.cpp">
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

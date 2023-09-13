@@ -331,6 +331,8 @@ namespace emul
 			const BYTE irqLevel = m_scc.GetIRQ() ? 2 : (m_via.GetIRQ() ? 1 : 0);
 
 			GetCPU().SetInterruptLevel(irqLevel);
+
+			m_mouse.Tick();
 		}
 		return true;
 	}

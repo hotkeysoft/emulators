@@ -82,6 +82,9 @@ namespace fdd
 	bool FloppyDisk::Load(std::filesystem::path imageFilePath)
 	{
 		size_t size = std::filesystem::file_size(imageFilePath);
+		path = imageFilePath;
+		loaded = false;
+		format = "N/A";
 
 		// TODO
 		constexpr size_t IMAGE_SIZE_400k = 800 * 512;
@@ -90,6 +93,7 @@ namespace fdd
 			LogPrintf(LOG_ERROR, "Image size mismatch (expected %zu, got %zu)", IMAGE_SIZE_400k, size);
 			return false;
 		}
+		format = "400KB";
 
 		Init(DiskFormat::Mac400K);
 		hscommon::fileUtil::File imageFile(imageFilePath.string().c_str(), "rb");
@@ -117,6 +121,8 @@ namespace fdd
 			}
 			m_tracks[i] = sectors;
 		}
+
+		loaded = true;
 
 		return true;
 	}

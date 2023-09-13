@@ -3,7 +3,7 @@
 #include <Config.h>
 #include <FileUtil.h>
 #include <UI/MainWindow.h>
-#include "UI/Overlay.h"
+#include "UI/OverlayMac.h"
 #include <Sound/Sound.h>
 
 #include <CPU/Memory.h>
@@ -49,6 +49,7 @@ using emul::ComputerBase;
 using sound::SOUND;
 using ui::MAINWND;
 using ui::Overlay;
+using ui::OverlayMac;
 
 size_t emul::g_ticks = 0;
 
@@ -404,7 +405,7 @@ int main(int argc, char* argv[])
 	InitSound();
 
 	// TODO: switchable overlay
-	Overlay overlay;
+	OverlayMac overlay;
 	overlay.Init();
 	overlay.SetNewComputerCallback(NewComputerCallback);
 	bool showOverlay = true;
@@ -549,9 +550,15 @@ int main(int argc, char* argv[])
 						case FKEY + 6:
 						case FKEY + 7:
 						case FKEY + 8:
-						case FKEY + 9:
-						case FKEY + 10:
 							break;
+						case FKEY + 9:
+							fprintf(stderr, "Capture mouse ON\n");
+							pc->GetInputs().CaptureMouse(true);
+							break;
+						case FKEY + 10:
+							fprintf(stderr, "Capture mouse OFF\n");
+							pc->GetInputs().CaptureMouse(false);
+							break;							break;
 						default:
 							fprintf(stderr, "Unknown extended keycode: [0][%d]\n", ch);
 						}
