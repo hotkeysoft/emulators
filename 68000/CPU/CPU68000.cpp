@@ -62,12 +62,12 @@ namespace emul::cpu68k
 		m_opcodes[0b0111] = [=]() { MOVEQ(); };
 		m_opcodes[0b1000] = [=]() { Exec(SubOpcodeGroup::b1000, GetSubopcode6()); }; // DIVU,DIVS,SBCD,OR
 		m_opcodes[0b1001] = [=]() { Exec(SubOpcodeGroup::b1001, GetSubopcode6()); }; // SUB,SUBX,SUBA
-		m_opcodes[0b1010] = [=]() { Exception(VECTOR::Line1010Emulator); };
+		m_opcodes[0b1010] = [=]() { throw CPUException(VECTOR::Line1010Emulator); };
 		m_opcodes[0b1011] = [=]() { Exec(SubOpcodeGroup::b1011, GetSubopcode6()); }; // EOR,CMPM,CMP,CMPA
 		m_opcodes[0b1100] = [=]() { Exec(SubOpcodeGroup::b1100, GetSubopcode6()); }; // MULU,MULS,ABCD,EXG,AND
 		m_opcodes[0b1101] = [=]() { Exec(SubOpcodeGroup::b1101, GetSubopcode6()); }; // ADD,ADDX,ADDA
 		m_opcodes[0b1110] = [=]() { SHIFT(); }; // Shift, Rotate
-		m_opcodes[0b1111] = [=]() { Exception(VECTOR::Line1111Emulator); };
+		m_opcodes[0b1111] = [=]() { throw CPUException(VECTOR::Line1111Emulator); };
 
 		InitGroupB0000(m_subOpcodes[(int)SubOpcodeGroup::b0000], 64);
 		InitGroupB0100(m_subOpcodes[(int)SubOpcodeGroup::b0100], 64);
@@ -815,7 +815,7 @@ namespace emul::cpu68k
 		table[061] = [=]() { /* nothing */ }; // NOP
 		table[063] = [=]() { RTE(); }; // RTE
 		table[065] = [=]() { RTS(); }; // RTS
-		table[066] = [=]() { if (GetFlag(FLAG_V)) Exception(VECTOR::TRAPV_Instruction); }; // TRAPV
+		table[066] = [=]() { if (GetFlag(FLAG_V)) throw CPUException(VECTOR::TRAPV_Instruction); }; // TRAPV
 		table[067] = [=]() { RTR(); }; // RTR
 	}
 
@@ -919,24 +919,15 @@ namespace emul::cpu68k
 
 	bool CPU68000::InternalStep()
 	{
-		try
-		{
-			m_opTicks = 0;
-			m_lastAddress = GetCurrentAddress();
+		m_opTicks = 0;
+		m_lastAddress = GetCurrentAddress();
 
-			// Fetch opcode
-			m_state = CPUState::RUN;
+		// Fetch opcode
+		m_state = CPUState::RUN;
 
-			// Execute instruction
-			WORD op = FetchWord();
-			Exec(op);
-		}
-		catch (std::exception e)
-		{
-			EnableLog(LOG_ERROR);
-			LogPrintf(LOG_ERROR, "Error processing instruction at 0x%04X! [%s] Stopping CPU.\n", GetCurrentAddress(), e.what());
-			m_state = CPUState::STOP;
-		}
+		// Execute instruction
+		WORD op = FetchWord();
+		Exec(op);
 
 		return (m_state == CPUState::RUN);
 	}
@@ -992,16 +983,19 @@ namespace emul::cpu68k
 	void CPU68000::IllegalInstruction()
 	{
 		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%04X) at address 0x%08X", m_opcode, m_programCounter);
-		Exception(VECTOR::IllegalInstruction);
+		throw CPUException(VECTOR::IllegalInstruction);
 	}
 
-	void CPU68000::Exception(VECTOR v, ADDRESS addr)
+	void CPU68000::HandleException(const CPUException& e)
 	{
 		// TODO: Temp
 		bool fatal = false;
 		int exceptionGroup = 2;
 
-		switch (v)
+		VECTOR v = e.GetVector();
+		ADDRESS addr = e.GetAddress();
+
+		switch (e.GetVector())
 		{
 		case VECTOR::AddressError:
 			LogPrintf(LOG_INFO, "CPU: Exception (%d)[Address error][%08X] at PC 0x%08X", v, addr, m_programCounter);
@@ -1073,9 +1067,14 @@ namespace emul::cpu68k
 
 			TICK();
 		}
+		catch (CPUException e)
+		{
+			HandleException(e);
+		}
 		catch (std::exception e)
 		{
-			LogPrintf(LOG_ERROR, "CPU: Exception at address 0x%08X! Stopping CPU", m_programCounter);
+			EnableLog(LOG_ERROR);
+			LogPrintf(LOG_ERROR, "CPU: Exception at address 0x%08X! [%s] Stopping CPU", m_programCounter, e.what());
 			m_state = CPUState::STOP;
 		}
 	}
@@ -2070,12 +2069,12 @@ namespace emul::cpu68k
 		if (src < 0)
 		{
 			SetFlag(FLAG_N, true);
-			Exception(VECTOR::CHK_Instruction);
+			throw CPUException(VECTOR::CHK_Instruction);
 		}
 		else if (src > upperBound)
 		{
 			SetFlag(FLAG_N, false);
-			Exception(VECTOR::CHK_Instruction);
+			throw CPUException(VECTOR::CHK_Instruction);
 		}
 	}
 
@@ -2086,8 +2085,6 @@ namespace emul::cpu68k
 		m_eaMode = GetEAMode(m_opcode);
 
 		const SIZE src = 0;
-		AdjustNZ(src);
-		SetFlag(FLAG_VC, false);
 
 		if (m_eaMode == EAMode::DRegDirect)
 		{
@@ -2102,6 +2099,9 @@ namespace emul::cpu68k
 			dest = src;
 			Write<SIZE>(ea, dest);
 		}
+
+		AdjustNZ(src);
+		SetFlag(FLAG_VC, false);
 	}
 
 	// Shift, Rotate
@@ -2919,7 +2919,7 @@ namespace emul::cpu68k
 
 		if (src == 0)
 		{
-			Exception(VECTOR::ZeroDivide);
+			throw CPUException(VECTOR::ZeroDivide);
 		}
 
 		DWORD quotient = dest / src;
@@ -2946,7 +2946,7 @@ namespace emul::cpu68k
 
 		if (src == 0)
 		{
-			Exception(VECTOR::ZeroDivide);
+			throw CPUException(VECTOR::ZeroDivide);
 		}
 
 		// TODO: Triple check this

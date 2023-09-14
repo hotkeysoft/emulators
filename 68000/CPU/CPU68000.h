@@ -170,6 +170,17 @@ namespace emul::cpu68k
 			USER_INT_BASE = 64
 		};
 
+		class CPUException : public std::exception
+		{
+		public:
+			CPUException(VECTOR vect, ADDRESS addr = 0) : std::exception("CPU Exception"), m_vect(vect), m_addr(addr) {}
+			VECTOR GetVector() const { return m_vect; }
+			ADDRESS GetAddress() const { return m_addr; }
+		protected:
+			VECTOR m_vect;
+			ADDRESS m_addr = 0;
+		};
+
 		ADDRESS GetVectorAddress(VECTOR v) { return (ADDRESS)v * 4; }
 		ADDRESS GetIntVectorAddress(BYTE i) { assert(i > 0 && i <= 7); return ((ADDRESS)VECTOR::InterruptBase + i - 1) * 4; }
 		ADDRESS GetTrapVectorAddress(BYTE t) { assert(t <= 16);  return ((ADDRESS)VECTOR::TrapBase + t) * 4; }
@@ -395,9 +406,9 @@ namespace emul::cpu68k
 			return rawGetEA<SIZE>();
 		}
 
-		void Exception(VECTOR v, ADDRESS addr = 0);
-		void Privileged() { if (!IsSupervisorMode()) Exception(VECTOR::PrivilegeViolation); }
-		void Aligned(ADDRESS addr) { if (!IsWordAligned(addr)) Exception(VECTOR::AddressError, addr); }
+		void HandleException(const CPUException& e);
+		void Privileged() { if (!IsSupervisorMode()) throw CPUException(VECTOR::PrivilegeViolation); }
+		void Aligned(ADDRESS addr) { if (!IsWordAligned(addr)) throw CPUException(VECTOR::AddressError, addr); }
 
 		// Opcodes
 
