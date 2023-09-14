@@ -7,8 +7,8 @@
 using namespace std::filesystem;
 
 #define TEST_DISASSEMBLY 0
-#define TEST_CPU 0
-#define TEST_FLOPPY 0
+#define TEST_CPU 1
+#define TEST_GTESTS 0
 
 const path workingDirectory = "../";
 
@@ -36,10 +36,12 @@ int main(int argc, char* argv[])
 	testCPU();
 #endif
 
+#if TEST_GTESTS
 	TEST_FLOPPY_LOG_LEVEL = Logger::LOG_INFO;
 
 	testing::InitGoogleTest(&argc, argv);
 	RUN_ALL_TESTS();
+#endif
 
 	return 0;
 }

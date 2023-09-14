@@ -7,6 +7,15 @@ using emul::cpu68k::EAMode;
 using emul::cpu68k::CPU68000;
 using emul::GetLByte;
 using emul::GetLWord;
+using namespace std::filesystem;
+
+// JSONTester class runs the processor tests from https://github.com/TomHarte/ProcessorTests/tree/main/680x0/68000/v1
+// 
+// Set path to json test cases here:
+const path testCaseFilesPath = "P:/68000/";
+
+const std::string testCaseFileExtension = ".json";
+static constexpr const char* separator = "------------------------------------------";
 
 class CPU68000Test : public CPU68000
 {
@@ -16,6 +25,7 @@ public:
 	friend class EAModeTester;
 	friend class RegisterTester;
 	friend class BCDTester;
+	friend class JSONTester;
 };
 
 class TesterBase : public Logger
@@ -37,6 +47,7 @@ public:
 		delete m_cpu;
 		LogPrintf(LOG_INFO, "Creating New 68000 CPU");
 		m_cpu = new CPU68000Test(m_memory);
+		m_cpu->Init();
 	}
 
 	using TestFunc = void (TesterBase::*)();
@@ -49,7 +60,7 @@ public:
 	}
 
 	template <typename T>
-	void ExpectEqual(T expect, T actual, const char* msg = nullptr)
+	bool ExpectEqual(T expect, T actual, const char* msg = nullptr)
 	{
 		static_assert(
 			std::is_same<T, emul::BYTE>::value ||
@@ -58,7 +69,9 @@ public:
 		if (expect != actual)
 		{
 			LogPrintf(LOG_ERROR, "ExpectEqual failed: expect(%X) != actual(%X) [%s]", expect, actual, msg ? msg : "");
+			return false;
 		}
+		return true;
 	}
 
 protected:
@@ -499,21 +512,201 @@ public:
 	}
 };
 
+class JSONTester : public TesterBase
+{
+public:
+	JSONTester() : TesterBase("TEST_JSON"), m_ram("RAM", 16 * 1024 * 1024)
+	{
+	}
+
+	void setRegisters(const json& state)
+	{
+		m_cpu->m_reg.D0 = state["d0"];
+		m_cpu->m_reg.D1 = state["d1"];
+		m_cpu->m_reg.D2 = state["d2"];
+		m_cpu->m_reg.D3 = state["d3"];
+		m_cpu->m_reg.D4 = state["d4"];
+		m_cpu->m_reg.D5 = state["d5"];
+		m_cpu->m_reg.D6 = state["d6"];
+		m_cpu->m_reg.D7 = state["d7"];
+
+		m_cpu->m_reg.A0 = state["a0"];
+		m_cpu->m_reg.A1 = state["a1"];
+		m_cpu->m_reg.A2 = state["a2"];
+		m_cpu->m_reg.A3 = state["a3"];
+		m_cpu->m_reg.A4 = state["a4"];
+		m_cpu->m_reg.A5 = state["a5"];
+		m_cpu->m_reg.A6 = state["a6"];
+
+		m_cpu->m_programCounter = state["pc"];
+		m_cpu->SetFlags(state["sr"]);
+
+		m_cpu->GetUSP() = state["usp"];
+		m_cpu->GetSSP() = state["ssp"];
+	}
+
+	bool validateRegisters(const json& expected)
+	{
+		bool ret = true;
+		ret &= ExpectEqual((emul::DWORD)expected["d0"], m_cpu->m_reg.D0, "D0");
+		ret &= ExpectEqual((emul::DWORD)expected["d1"], m_cpu->m_reg.D1, "D1");
+		ret &= ExpectEqual((emul::DWORD)expected["d2"], m_cpu->m_reg.D2, "D2");
+		ret &= ExpectEqual((emul::DWORD)expected["d3"], m_cpu->m_reg.D3, "D3");
+		ret &= ExpectEqual((emul::DWORD)expected["d4"], m_cpu->m_reg.D4, "D4");
+		ret &= ExpectEqual((emul::DWORD)expected["d5"], m_cpu->m_reg.D5, "D5");
+		ret &= ExpectEqual((emul::DWORD)expected["d6"], m_cpu->m_reg.D6, "D6");
+		ret &= ExpectEqual((emul::DWORD)expected["d7"], m_cpu->m_reg.D7, "D7");
+		ret &= ExpectEqual((emul::DWORD)expected["a0"], m_cpu->m_reg.A0, "A0");
+		ret &= ExpectEqual((emul::DWORD)expected["a1"], m_cpu->m_reg.A1, "A1");
+		ret &= ExpectEqual((emul::DWORD)expected["a2"], m_cpu->m_reg.A2, "A2");
+		ret &= ExpectEqual((emul::DWORD)expected["a3"], m_cpu->m_reg.A3, "A3");
+		ret &= ExpectEqual((emul::DWORD)expected["a4"], m_cpu->m_reg.A4, "A4");
+		ret &= ExpectEqual((emul::DWORD)expected["a5"], m_cpu->m_reg.A5, "A5");
+		ret &= ExpectEqual((emul::DWORD)expected["a6"], m_cpu->m_reg.A6, "A6");
+		ret &= ExpectEqual((emul::DWORD)expected["ssp"], m_cpu->GetSSP(), "SSP");
+		ret &= ExpectEqual((emul::DWORD)expected["usp"], m_cpu->GetUSP(), "USP");
+		ret &= ExpectEqual((emul::ADDRESS)expected["pc"], m_cpu->GetCurrentAddress(), "PC");
+		ret &= ExpectEqual((emul::WORD)expected["sr"], m_cpu->m_reg.flags, "flags");
+
+		return ret;
+	}
+
+	void setRAM(const json& state)
+	{
+		for (auto& values : state["ram"])
+		{
+			emul::ADDRESS addr = values[0];
+			BYTE value = values[1];
+
+			m_memory.Write8(addr, value);
+		}
+
+		// Don't have prefetch so write prefetch values @PC
+		WORD prefetch0 = state["prefetch"][0];
+		WORD prefetch1 = state["prefetch"][1];
+
+		m_memory.Write16be(m_cpu->m_programCounter, prefetch0);
+		m_memory.Write16be(m_cpu->m_programCounter + 2, prefetch1);
+	}
+
+	void testJSON()
+	{
+		json testCases;
+
+		std::ifstream configFile(m_currPath);
+		if (configFile)
+		{
+			configFile >> testCases;
+		}
+		else
+		{
+			LogPrintf(LOG_ERROR, "Error loading test case file: [%s]", m_currPath.string().c_str());
+			return;
+		}
+
+		if (!testCases.is_array())
+		{
+			LogPrintf(LOG_ERROR, "Expected array");
+			return;
+		}
+
+		int tests = (int)testCases.size();
+		int fail = 0;
+		for (auto& testCase : testCases)
+		{
+			std::string name = testCase["name"];
+			json& initial = testCase["initial"];
+			json& final = testCase["final"];
+
+			setRegisters(initial);
+			setRAM(initial);
+			
+			m_cpu->Step();
+
+			if (!validateRegisters(final))
+			{
+				LogPrintf(LOG_ERROR, "... while testing case [%s]", name.c_str());
+				LogPrintf(LOG_INFO, separator);
+				++fail;
+			}
+		}
+		LogPrintf(LOG_INFO, separator);
+		LogPrintf(LOG_INFO, "Total tests: %d", tests);
+		LogPrintf(LOG_INFO, "Fail: %d", fail);
+	}
+
+	virtual void test() override
+	{
+		m_memory.Allocate(&m_ram, 0);
+		for (auto& testCaseFile : m_testCaseFiles)
+		{
+			m_currPath = testCaseFile;
+			std::string testName = "Test [" + testCaseFile.stem().string() + "]";
+			RunTest(testName.c_str(), (TestFunc)(&JSONTester::testJSON));
+		}
+	}
+
+	bool readTestcaseFiles()
+	{
+		for (const auto& p : directory_iterator(testCaseFilesPath))
+		{
+			if (p.path().extension() == testCaseFileExtension)
+			{
+				m_testCaseFiles.push_back(p);
+			}
+		}
+		LogPrintf(LOG_INFO, "Found %d test case files", m_testCaseFiles.size());
+		return true;
+	}
+
+	bool setup()
+	{
+		if (!exists(testCaseFilesPath))
+		{			
+			LogPrintf(LOG_ERROR, "test case(s) not found: %s\n", testCaseFilesPath.string().c_str());
+			return false;
+		}
+
+		m_cpu->EnableLog(LOG_ERROR);
+
+		return true;
+	}
+
+	emul::MemoryBlock m_ram;
+	std::vector<path> m_testCaseFiles;
+	path m_currPath;
+};
+
+
 int testCPU()
 {
 
-	{
-		EAModeTester tester;
-		tester.test();
-	}
+	//{
+	//	EAModeTester tester;
+	//	tester.test();
+	//}
+
+	//{
+	//	RegisterTester tester;
+	//	tester.test();
+	//}
+
+	//{
+	//	BCDTester tester;
+	//	tester.test();
+	//}
 
 	{
-		RegisterTester tester;
-		tester.test();
-	}
+		JSONTester tester;
+		if (!tester.setup())
+		{
+			return 1;
+		}
+		if (!tester.readTestcaseFiles())
+		{
+			return 2;
+		}
 
-	{
-		BCDTester tester;
 		tester.test();
 	}
 
