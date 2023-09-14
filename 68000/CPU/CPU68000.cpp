@@ -2048,8 +2048,8 @@ namespace emul::cpu68k
 
 	void CPU68000::EXTw()
 	{
-		DWORD& reg = m_reg.DATA[GetOpcodeRegisterIndex()];
-		reg = DoubleWiden(GetLByte(reg));
+		WORD& reg = m_reg.GetDATAw(GetOpcodeRegisterIndex());
+		reg = Widen(GetLByte(reg));
 		AdjustNZ(reg);
 		SetFlag(FLAG_VC, false);
 	}
