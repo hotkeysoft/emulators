@@ -14,10 +14,10 @@ namespace emul::cpu68k
 	static const BitMaskW Mask_X("00xxxx");
 	static const BitMaskW Mask_CCR("00111100");
 	static const BitMaskW Mask_SR("01111100");
-	static const BitMaskW Mask_MOVEA   ("001xxxxxx");
-	static const BitMaskW Mask_MOVEP   ("1xx001xxx");
+	static const BitMaskW Mask_MOVEA("001xxxxxx");
+	static const BitMaskW Mask_MOVEP("1xx001xxx");
 	static const BitMaskW Mask_SHIFT_MEM("11xxxxxx");
-	static const BitMaskW Mask_ILLEGAL    ("111100");
+	static const BitMaskW Mask_ILLEGAL("111100");
 
 	CPU68000::CPU68000(Memory& memory) : CPU68000("68000", memory)
 	{
@@ -899,7 +899,6 @@ namespace emul::cpu68k
 	{
 		WORD w = Read<WORD>(GetCurrentAddress());
 		m_programCounter += 2;
-		m_programCounter &= ADDRESS_MASK;
 		return w;
 	}
 
@@ -907,7 +906,6 @@ namespace emul::cpu68k
 	{
 		DWORD dw = Read<DWORD>(GetCurrentAddress());
 		m_programCounter += 4;
-		m_programCounter &= ADDRESS_MASK;
 		return dw;
 	}
 
@@ -1001,6 +999,9 @@ namespace emul::cpu68k
 			LogPrintf(LOG_INFO, "CPU: Exception (%d)[Address error][%08X] at PC 0x%08X", v, addr, m_programCounter);
 			exceptionGroup = 0;
 			break;
+		case VECTOR::IllegalInstruction:
+			LogPrintf(LOG_INFO, "CPU: Exception (%d)[Illegal Instruction] at address 0x%08X", v, m_programCounter);
+			break;
 		case VECTOR::Line1010Emulator:
 		case VECTOR::Line1111Emulator:
 		{
@@ -1012,6 +1013,9 @@ namespace emul::cpu68k
 			LogPrintf(LOG_INFO, "CPU: Exception (%d)[%04X][%s] at address 0x%08X", v, m_opcode, trapName.c_str(), m_programCounter);
 			break;
 		}
+		case VECTOR::ZeroDivide:
+			LogPrintf(LOG_INFO, "CPU: Exception (%d)[DIV0] at address 0x%08X", v, m_programCounter);
+			break;
 		case VECTOR::CHK_Instruction:
 			LogPrintf(LOG_INFO, "CPU: Exception (%d)[CHECK] at address 0x%08X", v, m_programCounter);
 			break;
@@ -1250,7 +1254,7 @@ namespace emul::cpu68k
 			TICKn(timePenalty + ((size == 4) ? 4 : 0));
 		}
 
-		return ea & ADDRESS_MASK;
+		return ea;
 	}
 
 	ADDRESS CPU68000::GetExtensionWordDisp()
@@ -1359,7 +1363,7 @@ namespace emul::cpu68k
 
 		if (m_eaMode == EAMode::DRegDirect)
 		{
-			m_reg.DATA[GetOpcodeRegisterIndex()] = m_reg.flags;
+			m_reg.GetDATAw(GetOpcodeRegisterIndex()) = m_reg.flags;
 		}
 		else
 		{
@@ -1384,7 +1388,7 @@ namespace emul::cpu68k
 	void CPU68000::MOVEMFromEA(WORD regs)
 	{
 		constexpr int increment = sizeof(SIZE);
-		ADDRESS src = GetEA<SIZE>(EAMode::GroupControlAltPostinc);
+		ADDRESS src = GetEA<SIZE>(EAMode::GroupControlPostinc);
 
 		// Set only for postincrement mode, where
 		// we need we iterate directly through the address reg
@@ -1586,7 +1590,6 @@ namespace emul::cpu68k
 		if (cond)
 		{
 			m_programCounter = pc + rel;
-			m_programCounter &= ADDRESS_MASK;
 		}
 	}
 
@@ -1610,7 +1613,6 @@ namespace emul::cpu68k
 			if (--reg != 0xFFFF)
 			{
 				m_programCounter = pc + rel;
-				m_programCounter &= ADDRESS_MASK;
 			}
 			else
 			{
@@ -1622,7 +1624,6 @@ namespace emul::cpu68k
 			TICKn(2);
 			// fall through to next instruction
 			m_programCounter += 2;
-			m_programCounter &= ADDRESS_MASK;
 		}
 	}
 
@@ -1640,7 +1641,6 @@ namespace emul::cpu68k
 		PUSHl(m_programCounter);
 
 		m_programCounter = pc + disp;
-		m_programCounter &= ADDRESS_MASK;
 	}
 
 	void CPU68000::JSR()
@@ -2511,12 +2511,12 @@ namespace emul::cpu68k
 
 			DWORD& destAddr = m_reg.ADDR[destIndex];
 			DWORD& srcAddr = m_reg.ADDR[srcIndex];
-
-			// TODO: Order? Important if same register (for sub)
-			destAddr -= size;
-			SIZE dest = Read<SIZE>(destAddr);
+			
 			srcAddr -= size;
 			SIZE src = Read<SIZE>(srcAddr);
+
+			destAddr -= size;
+			SIZE dest = Read<SIZE>(destAddr);
 
 			ADD<SIZE>(dest, src, GetFlag(FLAG_X));
 			Write<SIZE>(destAddr, dest);
@@ -2629,11 +2629,11 @@ namespace emul::cpu68k
 			DWORD& destAddr = m_reg.ADDR[destIndex];
 			DWORD& srcAddr = m_reg.ADDR[srcIndex];
 
-			// TODO: Order? Important if same register (for sub)
-			destAddr -= size;
-			SIZE dest = Read<SIZE>(destAddr);
 			srcAddr -= size;
 			SIZE src = Read<SIZE>(srcAddr);
+
+			destAddr -= size;
+			SIZE dest = Read<SIZE>(destAddr);
 
 			SUB<SIZE>(dest, src, FLAG_CX, GetFlag(FLAG_X));
 			Write<SIZE>(destAddr, dest);
@@ -2652,15 +2652,16 @@ namespace emul::cpu68k
 		constexpr int size = sizeof(SIZE);
 
 		DWORD& sourceReg = m_reg.ADDR[GetOpcodeRegisterIndex()];
-		DWORD& destReg = m_reg.ADDR[(m_opcode >> 9) & 7];
+		DWORD sourceAddr = sourceReg;
 
-		// TODO: Order of read/increment is important if source and
-		// dest are same register. Can't find doc about this.
-		SIZE src = Read<SIZE>(sourceReg);
 		sourceReg += size;
+		SIZE src = Read<SIZE>(sourceAddr);
 
-		SIZE dest = Read<SIZE>(destReg);
+		DWORD& destReg = m_reg.ADDR[(m_opcode >> 9) & 7];
+		DWORD destAddr = destReg;
+
 		destReg += size;
+		SIZE dest = Read<SIZE>(destAddr);
 
 		CMP<SIZE>(dest, src);
 	}
@@ -2936,8 +2937,9 @@ namespace emul::cpu68k
 			SetHWord(dest, remainder);
 
 			AdjustNZ((WORD)quotient);
-			SetFlag(FLAG_VC, false);
+			SetFlag(FLAG_V, false);
 		}
+		SetFlag(FLAG_C, false);
 	}
 
 	void CPU68000::DIVSw(DWORD& dest)
@@ -2949,13 +2951,9 @@ namespace emul::cpu68k
 			throw CPUException(VECTOR::ZeroDivide);
 		}
 
-		// TODO: Triple check this
-		int32_t quotient = dest / src;
-		int32_t remainder = abs((int32_t)(dest % src)); // Modulo sign is not defined
-		if (quotient < 0)
-		{
-			remainder = -remainder; // Sign of the remainder is same as the dividend
-		}
+		int32_t sdest = (int32_t)dest;
+		int32_t quotient =  sdest / src;
+		int32_t remainder = sdest % src;
 
 		// overflow
 		if ((quotient > 32767) || (quotient < -32768))
@@ -2968,8 +2966,9 @@ namespace emul::cpu68k
 			SetHWord(dest, (WORD)remainder);
 
 			AdjustNZ((WORD)quotient);
-			SetFlag(FLAG_VC, false);
+			SetFlag(FLAG_V, false);
 		}
+		SetFlag(FLAG_C, false);
 	}
 
 	void CPU68000::Serialize(json& to)

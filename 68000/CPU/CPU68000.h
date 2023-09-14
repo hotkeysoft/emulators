@@ -55,7 +55,7 @@ namespace emul::cpu68k
 		GroupControl = ARegIndirect | _Displacement | _Absolute | _PC,
 		GroupControlAlt = ARegIndirect | _Displacement | _Absolute,
 		GroupControlAltPredec = GroupControlAlt | ARegIndirectPredec,
-		GroupControlAltPostinc = GroupControlAlt | ARegIndirectPostinc,
+		GroupControlPostinc = GroupControl | ARegIndirectPostinc,
 	};
 
 	static const size_t CPU68000_ADDRESS_BITS = 24;
