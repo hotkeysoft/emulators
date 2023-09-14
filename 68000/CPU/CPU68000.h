@@ -395,9 +395,9 @@ namespace emul::cpu68k
 			return rawGetEA<SIZE>();
 		}
 
-		void Exception(VECTOR v);
+		void Exception(VECTOR v, ADDRESS addr = 0);
 		void Privileged() { if (!IsSupervisorMode()) Exception(VECTOR::PrivilegeViolation); }
-		void Aligned(ADDRESS addr) { if (!IsWordAligned(addr)) Exception(VECTOR::AddressError); }
+		void Aligned(ADDRESS addr) { if (!IsWordAligned(addr)) Exception(VECTOR::AddressError, addr); }
 
 		// Opcodes
 
@@ -535,11 +535,13 @@ namespace emul::cpu68k
 		void SBCDb();
 		void NBCDb();
 
-		void ADDA(WORD& dest, WORD src) { dest += Widen(src); }
-		void ADDA(DWORD& dest, DWORD src) { dest += src; }
+		template<typename SIZE> void ADDA(DWORD& dest, SIZE src) { throw std::exception("invalid SIZE"); }
+		template<> void ADDA(DWORD& dest, WORD src) { dest += Widen(src); }
+		template<> void ADDA(DWORD& dest, DWORD src) { dest += src; }
 
-		void SUBA(WORD& dest, WORD src) { dest -= Widen(src); }
-		void SUBA(DWORD& dest, DWORD src) { dest -= src; }
+		template<typename SIZE> void SUBA(DWORD& dest, SIZE src) { throw std::exception("invalid SIZE"); }
+		template<> void SUBA(DWORD& dest, WORD src) { dest -= Widen(src); }
+		template<> void SUBA(DWORD& dest, DWORD src) { dest -= src; }
 
 		// dest' <- dest + src
 		template<typename SIZE> void ADD(SIZE& dest, SIZE src, bool carry = false);

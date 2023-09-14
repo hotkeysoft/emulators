@@ -995,13 +995,18 @@ namespace emul::cpu68k
 		Exception(VECTOR::IllegalInstruction);
 	}
 
-	void CPU68000::Exception(VECTOR v)
+	void CPU68000::Exception(VECTOR v, ADDRESS addr)
 	{
 		// TODO: Temp
 		bool fatal = false;
+		int exceptionGroup = 2;
 
 		switch (v)
 		{
+		case VECTOR::AddressError:
+			LogPrintf(LOG_INFO, "CPU: Exception (%d)[Address error][%08X] at PC 0x%08X", v, addr, m_programCounter);
+			exceptionGroup = 0;
+			break;
 		case VECTOR::Line1010Emulator:
 		case VECTOR::Line1111Emulator:
 		{
@@ -1033,6 +1038,18 @@ namespace emul::cpu68k
 		ADDRESS handler = Read<DWORD>(GetVectorAddress(v));
 		PUSHl(m_programCounter);
 		PUSHw(flags);
+
+		if (exceptionGroup == 0)
+		{
+			// Instruction Register 
+			PUSHw(m_opcode);
+
+			// Access Address
+			PUSHl(addr);
+
+			// R/W, I/N, Function Code
+			PUSHw(0); // TODO
+		}
 
 		m_programCounter = handler;
 	}
@@ -2434,7 +2451,7 @@ namespace emul::cpu68k
 		else if ((m_eaMode == EAMode::ARegDirect) && (sizeof(SIZE) > 1))
 		{
 			// Behaves like ADDA
-			ADDA(m_reg.ADDR[GetOpcodeRegisterIndex()], imm);
+			ADDA<SIZE>(m_reg.ADDR[GetOpcodeRegisterIndex()], imm);
 		}
 		else
 		{
@@ -2551,7 +2568,7 @@ namespace emul::cpu68k
 		else if ((m_eaMode == EAMode::ARegDirect) && (sizeof(SIZE) > 1))
 		{
 			// Behaves like SUBA
-			SUBA(m_reg.ADDR[GetOpcodeRegisterIndex()], imm);
+			SUBA<SIZE>(m_reg.ADDR[GetOpcodeRegisterIndex()], imm);
 		}
 		else
 		{

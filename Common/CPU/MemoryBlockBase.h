@@ -33,6 +33,6 @@ namespace emul
 		MemoryType m_type;
 
 		inline static WORD s_blockGranularity = 1024;
-		const ADDRESS m_maxBlockSize = 1024*1024;
+		static constexpr ADDRESS m_maxBlockSize = 16 * 1024 * 1024;
 	};
 }
