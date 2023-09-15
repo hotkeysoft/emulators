@@ -208,7 +208,7 @@ namespace emul::cpu68k
 		{
 			// Supervisor mode flags (R/O in user mode)
 			FLAG_T = 0x8000, // 1 Trace mode
-			FLAG_R14 = 0x4000, // 0
+			_FLAG_R14 = 0x4000, // 0
 			FLAG_S = 0x2000, // 1 Supervisor mode
 			_FLAG_R12 = 0x1000, // 0
 			_FLAG_R11 = 0x0800, // 0
@@ -233,7 +233,7 @@ namespace emul::cpu68k
 
 		FLAG FLAG_RESERVED_OFF = FLAG(
 			_FLAG_R5 | _FLAG_R6 | _FLAG_R7 |
-			_FLAG_R11 | FLAG_R14);
+			_FLAG_R11 | _FLAG_R12 | _FLAG_R14);
 
 		bool FlagHI() const { return !GetFlag(FLAG_C) && !GetFlag(FLAG_Z); }
 		bool FlagLS() const { return !FlagHI(); }

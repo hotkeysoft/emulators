@@ -1030,7 +1030,7 @@ namespace emul::cpu68k
 
 		WORD flags = m_reg.flags;
 
-		SetFlag(FLAG_S, true); // Set supervisor mode
+		SetSupervisorMode(true); // Set supervisor mode
 		SetFlag(FLAG_T, false); // Clear trace flag
 
 		ADDRESS handler = Read<DWORD>(GetVectorAddress(v));
@@ -1098,7 +1098,7 @@ namespace emul::cpu68k
 
 		WORD flags = m_reg.flags;
 
-		SetFlag(FLAG_S, true); // Set supervisor mode
+		SetSupervisorMode(true);
 		SetFlag(FLAG_T, false); // Clear trace flag
 		SetInterruptMask(m_interruptLevel);
 
@@ -1659,6 +1659,7 @@ namespace emul::cpu68k
 		if (cond)
 		{
 			m_programCounter = pc + rel;
+			Aligned(m_programCounter);
 		}
 	}
 
@@ -1666,6 +1667,7 @@ namespace emul::cpu68k
 	{
 		DWORD addr = GetEA<DWORD>(EAMode::GroupControl);
 		m_programCounter = addr;
+		Aligned(m_programCounter);
 	}
 
 	void CPU68000::DBccw(bool cond)
@@ -1682,6 +1684,7 @@ namespace emul::cpu68k
 			if (--reg != 0xFFFF)
 			{
 				m_programCounter = pc + rel;
+				Aligned(m_programCounter);
 			}
 			else
 			{
@@ -1710,11 +1713,13 @@ namespace emul::cpu68k
 		PUSHl(m_programCounter);
 
 		m_programCounter = pc + disp;
+		Aligned(m_programCounter);
 	}
 
 	void CPU68000::JSR()
 	{
 		DWORD addr = GetEA<DWORD>(EAMode::GroupControl);
+		Aligned(addr);
 
 		PUSHl(m_programCounter);
 
@@ -1724,13 +1729,18 @@ namespace emul::cpu68k
 	void CPU68000::RTS()
 	{
 		m_programCounter = POPl();
+		Aligned(m_programCounter);
 	}
 
 	void CPU68000::RTE()
 	{
 		Privileged();
-		SetFlags(POPw());
-		m_programCounter = POPl();
+		WORD flags = POPw();
+		ADDRESS addr = POPl();
+		SetFlags(flags);
+		Aligned(addr);
+
+		m_programCounter = addr;
 	}
 
 	void CPU68000::RTR()
@@ -1738,6 +1748,7 @@ namespace emul::cpu68k
 		Privileged();
 		SetCC(GetLByte(POPw()));
 		m_programCounter = POPl();
+		Aligned(m_programCounter);
 	}
 
 	WORD CPU68000::POPw()
