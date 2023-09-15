@@ -252,6 +252,9 @@
     <ClInclude Include="UI\OverlayMac.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
+    <ClInclude Include="CPU\CPU68000Events.h">
+      <Filter>Header Files\CPU</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Config.cpp">

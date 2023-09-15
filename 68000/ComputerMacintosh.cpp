@@ -45,6 +45,7 @@ namespace emul
 		ComputerBase::Init(cpu68k::CPUID_68000, baseRAM);
 
 		GetCPU().SetTrapList(cpu68k::mac::s_trapsMac128k);
+		GetCPU().SetEventHandler(this);
 
 		GetMemory().EnableLog(CONFIG().GetLogLevel("memory"));
 

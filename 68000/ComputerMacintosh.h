@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Computer/ComputerBase.h>
+#include "CPU/CPU68000Events.h"
 #include "IO/InputEvents.h"
 #include "Hardware/Device6522Mac.h"
 #include "Hardware/IOBlockVIAMac.h"
@@ -20,7 +21,8 @@ namespace emul
 	class ComputerMacintosh :
 		public ComputerBase,
 		public video::mac::EventHandler,
-		public via::mac::EventHandler
+		public via::mac::EventHandler,
+		public emul::cpu68k::EventHandler
 	{
 	public:
 		ComputerMacintosh();
@@ -62,6 +64,9 @@ namespace emul
 		virtual void OnVideoPageChange(bool mainBuffer) override;
 		virtual void OnHeadSelChange(bool selectedHead) override;
 		virtual void OnROMOverlayModeChange(bool overlay) override;
+
+		// emul::cpu68k::EventHandler
+		virtual void OnReset() override { Reset(); }
 
 		constexpr static ADDRESS RAM_SIZE = 0x20000;
 		constexpr static ADDRESS ROM_SIZE = 0x10000;

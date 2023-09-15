@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "CPU68000.h"
+#include "CPU68000Events.h"
 
 using cpuInfo::Opcode;
 
@@ -19,6 +20,8 @@ namespace emul::cpu68k
 	static const BitMaskW Mask_SHIFT_MEM("11xxxxxx");
 	static const BitMaskW Mask_ILLEGAL("111100");
 
+	static emul::cpu68k::EventHandler s_defaultHandler;
+
 	CPU68000::CPU68000(Memory& memory) : CPU68000("68000", memory)
 	{
 	}
@@ -26,6 +29,7 @@ namespace emul::cpu68k
 	CPU68000::CPU68000(const char* cpuid, Memory& memory) :
 		CPU(CPU68000_ADDRESS_BITS, memory),
 		m_info(cpuid),
+		m_events(&s_defaultHandler),
 		Logger(cpuid)
 	{
 		try
@@ -830,6 +834,7 @@ namespace emul::cpu68k
 		table[056] = [=]() { MOVEfromUSP(m_reg.A6); }; // MOVE.l USP, A6
 		table[057] = [=]() { MOVEfromUSP(m_reg.A7); }; // MOVE.l USP, A7
 
+		table[060] = [=]() { m_events->OnReset(); }; // RESET
 		table[061] = [=]() { /* nothing */ }; // NOP
 		table[063] = [=]() { RTE(); }; // RTE
 		table[065] = [=]() { RTS(); }; // RTS
@@ -1482,7 +1487,7 @@ namespace emul::cpu68k
 		ADDRESS src = GetEA<SIZE>(EAMode::GroupControlPostinc);
 
 		// Set only for postincrement mode, where
-		// we need we iterate directly through the address reg
+		// we need we need to update the address reg
 		DWORD* addrReg = (m_eaMode == EAMode::ARegIndirectPostinc) ?
 			&m_reg.ADDR[GetOpcodeRegisterIndex()] : nullptr;
 
@@ -1492,7 +1497,9 @@ namespace emul::cpu68k
 			// (alternative would be to call GetEA() for each iteration
 
 			// TODO: Check address pos when no bits set
+			Aligned(*addrReg);
 			*addrReg -= increment;
+			src = *addrReg;
 		}
 
 		DWORD* dest = m_reg.DataAddress.data();
@@ -1500,31 +1507,29 @@ namespace emul::cpu68k
 		{
 			if (GetLSB(regs))
 			{
-				if (addrReg)
-				{
-					*dest = Widen(Read<SIZE>(*addrReg));
-					*addrReg += increment;
-				}
-				else
-				{
-					*dest = Widen(Read<SIZE>(src));
-					src += increment;
-				}
+				//*dest = Widen(ReadPostIncrement<SIZE>(dest))
+				*dest = Widen(Read<SIZE>(src));
+				src += increment;
 			}
 
 			regs >>= 1;
 			++dest;
+		}
+
+		if (addrReg)
+		{
+			*addrReg = src;
 		}
 	}
 
 	template<typename SIZE>
 	void CPU68000::MOVEMToEA(WORD regs)
 	{
-		constexpr int incdec = sizeof(SIZE);
+		int incdec = sizeof(SIZE);
 		ADDRESS dest = GetEA<SIZE>(EAMode::GroupControlAltPredec);
 
 		// Set only for predecrement mode, where
-		// we need to update its value at the end
+		// we need we need to update the address reg
 		DWORD* addrReg = (m_eaMode == EAMode::ARegIndirectPredec) ?
 			&m_reg.ADDR[GetOpcodeRegisterIndex()] : nullptr;
 
@@ -1534,6 +1539,8 @@ namespace emul::cpu68k
 			// (alternative would be to call GetEA() for each iteration
 			// TODO: Check address pos when no bits set
 			*addrReg += incdec;
+			Aligned(*addrReg);
+			dest = *addrReg;
 		}
 
 		// Start from the end in predecrement mode
@@ -1547,8 +1554,8 @@ namespace emul::cpu68k
 			{
 				if (addrReg)
 				{
-					*addrReg -= incdec;
-					Write<SIZE>(*addrReg, SIZE(*src));
+					dest -= incdec;
+					Write<SIZE>(dest, SIZE(*src));
 				}
 				else
 				{
@@ -1559,6 +1566,11 @@ namespace emul::cpu68k
 
 			regs >>= 1;
 			src += direction;
+		}
+
+		if (addrReg)
+		{
+			*addrReg = dest;
 		}
 	}
 

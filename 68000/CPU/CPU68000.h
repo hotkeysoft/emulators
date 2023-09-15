@@ -14,6 +14,8 @@
 
 namespace emul::cpu68k
 {
+	class EventHandler;
+
 	using TrapList = std::map<WORD, std::string>;
 
 	enum class EAMode : WORD
@@ -74,6 +76,8 @@ namespace emul::cpu68k
 
 		virtual void Init();
 
+		void SetEventHandler(emul::cpu68k::EventHandler* handler) { assert(handler); m_events = handler; }
+
 		void Dump();
 
 		virtual void Reset();
@@ -102,6 +106,8 @@ namespace emul::cpu68k
 
 	protected:
 		CPU68000(const char* cpuid, Memory& memory);
+
+		emul::cpu68k::EventHandler* m_events = nullptr;
 
 		using OpcodeTable = std::vector<std::function<void()>>;
 
