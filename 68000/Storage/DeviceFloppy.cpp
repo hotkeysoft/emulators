@@ -157,6 +157,7 @@ namespace fdd
 		Logger::SEVERITY oldSev = GetLogLevel();
 		EnableLog(LOG_OFF);
 
+		m_selected = false;
 		m_diskChanged = false;
 		m_motorEnabled = false;
 		m_motorPulse = false;
@@ -186,7 +187,7 @@ namespace fdd
 
 	void DeviceFloppy::Tick()
 	{
-		if (!m_connected)
+		if (!m_selected || !m_connected)
 			return;
 
 		if (m_motorEnabled && (--m_motorPulseCounter == 0))
@@ -384,7 +385,7 @@ namespace fdd
 
 	void DeviceFloppy::Step()
 	{
-		if (!m_connected || !m_diskLoaded)
+		if (!m_selected || !m_connected || !m_diskLoaded)
 			return;
 
 		LogPrintf(LOG_INFO, "Step one track in [%s] direction", GetStepDirectionStr(m_stepDirection));

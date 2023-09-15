@@ -34,15 +34,31 @@ namespace floppy::woz
 		LogPrintf(LOG_DEBUG, "SetStateRegister, set bit[%d] = %d", address, a0);
 		emul::SetBit(m_stateRegister, address, a0);
 
-		if (address == 6 || address == 7)
+		switch (address)
 		{
+		case 6:
+		case 7:
 			UpdateState();
-		}
-
-		// LSTRB high
-		if (address == 3 && a0)
-		{
-			WriteRegister();
+			break;
+		case 3:
+			if (a0) // LSTRB high
+			{
+				WriteRegister();
+			}
+			break;
+		case 4: // Drive selection
+		case 5:
+			if (!IsMotorOn())
+			{
+				m_floppy1->SetSelected(false);
+				m_floppy2->SetSelected(false);
+			}
+			else
+			{
+				m_floppy1->SetSelected(!GetDriveSel());
+				m_floppy2->SetSelected(GetDriveSel());
+			}
+			break;
 		}
 	}
 

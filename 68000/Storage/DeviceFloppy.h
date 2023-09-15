@@ -97,7 +97,10 @@ namespace fdd
 
 		const FloppyDisk& GetImageInfo() { return m_disk; }
 
-		virtual bool IsActive() const { return IsDiskLoaded() && IsMotorEnabled(); }
+		void SetSelected(bool sel) { m_selected = sel; }
+		bool IsSelected() const { return m_selected; }
+
+		virtual bool IsActive() const { return IsSelected() && IsDiskLoaded() && IsMotorEnabled(); }
 
 		// ==========
 		// Drive
@@ -179,6 +182,7 @@ namespace fdd
 	protected:
 		const uint32_t m_clockSpeed;
 		bool m_connected = false;
+		bool m_selected = false;
 
 		// Add with carry, returns carry out
 		bool ADC(BYTE& dest, BYTE src, bool carryIn);
