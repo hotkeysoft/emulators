@@ -364,15 +364,25 @@ namespace emul::cpu68k
 
 		static bool IsWordAligned(ADDRESS addr) { return !GetLSB(addr); }
 
-		template<typename SIZE> void Write(ADDRESS src, SIZE value);
+		template<typename SIZE> void Write(ADDRESS src, SIZE value) { throw std::exception("invalid SIZE"); }
 		template<> void Write(ADDRESS dest, BYTE value) { m_memory.Write8(dest, value); }
 		template<> void Write(ADDRESS dest, WORD value) { Aligned(dest); m_memory.Write16be(dest, value); }
 		template<> void Write(ADDRESS dest, DWORD value) { Aligned(dest); m_memory.Write32be(dest, value); }
 
-		template<typename SIZE> SIZE Read(ADDRESS src);
+		template<typename SIZE> SIZE Read(ADDRESS src) { throw std::exception("invalid SIZE"); }
 		template<> BYTE Read(ADDRESS src) { return m_memory.Read8(src); }
 		template<> WORD Read(ADDRESS src) { Aligned(src); return m_memory.Read16be(src); }
 		template<> DWORD Read(ADDRESS src) { Aligned(src); return m_memory.Read32be(src); }
+
+		template<typename SIZE> SIZE ReadPredecrement(DWORD& addrReg) { throw std::exception("invalid SIZE"); }
+		template<> BYTE ReadPredecrement(DWORD& addrReg);
+		template<> WORD ReadPredecrement(DWORD& addrReg);
+		template<> DWORD ReadPredecrement(DWORD& addrReg);
+
+		template<typename SIZE> SIZE ReadPostincrement(DWORD& addrReg) { throw std::exception("invalid SIZE"); }
+		template<> BYTE ReadPostincrement(DWORD& addrReg);
+		template<> WORD ReadPostincrement(DWORD& addrReg);
+		template<> DWORD ReadPostincrement(DWORD& addrReg);
 
 		void Exec(WORD opcode);
 		void Exec(SubOpcodeGroup group, WORD subOpcode);

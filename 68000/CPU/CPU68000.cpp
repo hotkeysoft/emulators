@@ -1109,6 +1109,75 @@ namespace emul::cpu68k
 		m_programCounter = handler;
 	}
 
+	template<> BYTE CPU68000::ReadPredecrement(DWORD& addrReg)
+	{
+		// Byte operations on stack pointer increment by word in -(An) or (An)+ modes
+		const int size = (&addrReg == &m_reg.A7) ? 2 : 1;
+
+		addrReg -= size;
+		if (size == 2)
+		{
+			Aligned(addrReg);
+		}
+		return Read<BYTE>(addrReg);
+	}
+	
+	template<> WORD CPU68000::ReadPredecrement(DWORD& addrReg)
+	{
+		constexpr int size = 2;
+
+		addrReg -= size;
+		Aligned(addrReg);
+		return m_memory.Read16be(addrReg);
+	}
+
+	template<> DWORD CPU68000::ReadPredecrement(DWORD& addrReg)
+	{
+		constexpr int size = 2;
+
+		addrReg -= size;
+		Aligned(addrReg);
+		addrReg -= size;
+
+		// TODO: Should be read in two parts I guess but meh.
+		return m_memory.Read32be(addrReg);
+	}
+
+	template<> BYTE CPU68000::ReadPostincrement(DWORD& addrReg)
+	{
+		// Byte operations on stack pointer increment by word in -(An) or (An)+ modes
+		const int size = (&addrReg == &m_reg.A7) ? 2 : 1;
+
+		if (size == 2)
+		{
+			Aligned(addrReg);
+		}
+		BYTE value = Read<BYTE>(addrReg);
+		addrReg += size;
+
+		return value;
+	}
+
+	template<> WORD CPU68000::ReadPostincrement(DWORD& addrReg)
+	{
+		constexpr int size = 2;
+
+		WORD value = m_memory.Read16be(addrReg);
+		addrReg += size;
+		Aligned(addrReg);
+		return value;
+	}
+
+	template<> DWORD CPU68000::ReadPostincrement(DWORD& addrReg)
+	{
+		constexpr int size = 4;
+
+		DWORD value = m_memory.Read32be(addrReg);
+		addrReg += size;
+		Aligned(addrReg);
+		return value;
+	}
+
 	EAMode CPU68000::GetEAMode(WORD opcode)
 	{
 		constexpr WORD ModeMask = 0b111000;
@@ -2066,6 +2135,9 @@ namespace emul::cpu68k
 	{
 		SWORD upperBound = (SWORD)GetEAValue<WORD>(EAMode::GroupData);
 
+		SetFlag(FLAG_VC, false);
+		SetFlag(FLAG_Z, upperBound == 0);
+
 		if (src < 0)
 		{
 			SetFlag(FLAG_N, true);
@@ -2507,19 +2579,14 @@ namespace emul::cpu68k
 		}
 		else // ADDX -(Ay), -(Ax)
 		{
-			constexpr int size = sizeof(SIZE);
-
-			DWORD& destAddr = m_reg.ADDR[destIndex];
-			DWORD& srcAddr = m_reg.ADDR[srcIndex];
+			DWORD& destReg = m_reg.ADDR[destIndex];
+			DWORD& srcReg = m_reg.ADDR[srcIndex];
 			
-			srcAddr -= size;
-			SIZE src = Read<SIZE>(srcAddr);
-
-			destAddr -= size;
-			SIZE dest = Read<SIZE>(destAddr);
+			SIZE src = ReadPredecrement<SIZE>(srcReg);
+			SIZE dest = ReadPredecrement<SIZE>(destReg);
 
 			ADD<SIZE>(dest, src, GetFlag(FLAG_X));
-			Write<SIZE>(destAddr, dest);
+			Write<SIZE>(destReg, dest);
 			restoreZFlag = (dest == 0);
 		}
 
@@ -2624,19 +2691,14 @@ namespace emul::cpu68k
 		}
 		else // SUB -(Ay), -(Ax)
 		{
-			constexpr int size = sizeof(SIZE);
+			DWORD& destReg = m_reg.ADDR[destIndex];
+			DWORD& srcReg = m_reg.ADDR[srcIndex];
 
-			DWORD& destAddr = m_reg.ADDR[destIndex];
-			DWORD& srcAddr = m_reg.ADDR[srcIndex];
-
-			srcAddr -= size;
-			SIZE src = Read<SIZE>(srcAddr);
-
-			destAddr -= size;
-			SIZE dest = Read<SIZE>(destAddr);
+			SIZE src = ReadPredecrement<SIZE>(srcReg);
+			SIZE dest = ReadPredecrement<SIZE>(destReg);
 
 			SUB<SIZE>(dest, src, FLAG_CX, GetFlag(FLAG_X));
-			Write<SIZE>(destAddr, dest);
+			Write<SIZE>(destReg, dest);
 			restoreZFlag = (dest == 0);
 		}
 
@@ -2652,16 +2714,10 @@ namespace emul::cpu68k
 		constexpr int size = sizeof(SIZE);
 
 		DWORD& sourceReg = m_reg.ADDR[GetOpcodeRegisterIndex()];
-		DWORD sourceAddr = sourceReg;
-
-		sourceReg += size;
-		SIZE src = Read<SIZE>(sourceAddr);
-
 		DWORD& destReg = m_reg.ADDR[(m_opcode >> 9) & 7];
-		DWORD destAddr = destReg;
 
-		destReg += size;
-		SIZE dest = Read<SIZE>(destAddr);
+		SIZE src = ReadPostincrement<SIZE>(sourceReg);
+		SIZE dest = ReadPostincrement<SIZE>(destReg);
 
 		CMP<SIZE>(dest, src);
 	}
@@ -2712,7 +2768,7 @@ namespace emul::cpu68k
 			SIZE negated = 0;
 			SUB<SIZE>(negated, dest, FLAG_CX, GetFlag(FLAG_X));
 			dest = negated;
-			restoreZFlag = (dest == 0);
+			restoreZFlag = (negated == 0);
 		}
 		else
 		{
@@ -2724,7 +2780,7 @@ namespace emul::cpu68k
 			SUB<SIZE>(negated, dest, FLAG_CX, GetFlag(FLAG_X));
 
 			Write<SIZE>(ea, negated);
-			restoreZFlag = (dest == 0);
+			restoreZFlag = (negated == 0);
 		}
 
 		if (restoreZFlag)
@@ -2787,12 +2843,11 @@ namespace emul::cpu68k
 		}
 		else // ABCD -(Ay), -(Ax)
 		{
-			DWORD& destAddr = m_reg.ADDR[destIndex];
 			DWORD& srcAddr = m_reg.ADDR[srcIndex];
+			DWORD& destAddr = m_reg.ADDR[destIndex];
 
-			// TODO: Order? Important if same register (for sub)
-			BYTE dest = Read<BYTE>(--destAddr);
-			BYTE src = Read<BYTE>(--srcAddr);
+			BYTE src = ReadPredecrement<BYTE>(srcAddr);
+			BYTE dest = ReadPredecrement<BYTE>(destAddr);
 
 			ABCD(dest, src, GetFlag(FLAG_X));
 			Write<BYTE>(destAddr, dest);
@@ -2852,12 +2907,11 @@ namespace emul::cpu68k
 		}
 		else // SBCD -(Ay), -(Ax)
 		{
-			DWORD& destAddr = m_reg.ADDR[destIndex];
 			DWORD& srcAddr = m_reg.ADDR[srcIndex];
+			DWORD& destAddr = m_reg.ADDR[destIndex];
 
-			// TODO: Order? Important if same register (for sub)
-			BYTE dest = Read<BYTE>(--destAddr);
-			BYTE src = Read<BYTE>(--srcAddr);
+			BYTE src = ReadPredecrement<BYTE>(srcAddr);
+			BYTE dest = ReadPredecrement<BYTE>(destAddr);
 
 			SBCD(dest, src, GetFlag(FLAG_X));
 			Write<BYTE>(destAddr, dest);
@@ -2918,8 +2972,13 @@ namespace emul::cpu68k
 	{
 		WORD src = GetEAValue<WORD>(EAMode::GroupData);
 
+		SetFlag(FLAG_VC, false);
+		
 		if (src == 0)
 		{
+			SetFlag(FLAG_N, false);
+			SetFlag(FLAG_Z, false);
+
 			throw CPUException(VECTOR::ZeroDivide);
 		}
 
@@ -2937,17 +2996,21 @@ namespace emul::cpu68k
 			SetHWord(dest, remainder);
 
 			AdjustNZ((WORD)quotient);
-			SetFlag(FLAG_V, false);
 		}
-		SetFlag(FLAG_C, false);
+
 	}
 
 	void CPU68000::DIVSw(DWORD& dest)
 	{
 		int16_t src = (int16_t)GetEAValue<WORD>(EAMode::GroupData);
 
+		SetFlag(FLAG_VC, false);
+
 		if (src == 0)
 		{
+			SetFlag(FLAG_N, false);
+			SetFlag(FLAG_Z, false);
+
 			throw CPUException(VECTOR::ZeroDivide);
 		}
 
@@ -2966,9 +3029,7 @@ namespace emul::cpu68k
 			SetHWord(dest, (WORD)remainder);
 
 			AdjustNZ((WORD)quotient);
-			SetFlag(FLAG_V, false);
 		}
-		SetFlag(FLAG_C, false);
 	}
 
 	void CPU68000::Serialize(json& to)
