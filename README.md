@@ -25,24 +25,44 @@ All components/modules/projects are a work in progress and by no means feature c
     - Load/Save to tape (barely, see PET)
     - Compatibility
       - Tested with multiples game cartridges, a lot of games seem to work fine
-- 🆕**6809** (wip)
+- 6809 (wip)
   - CPU Mostly complete (a few missing opcodes such as DAA)
-  - 🆕**Thomson Computers Emulation**
-      - 🆕**Thomson MO5**
+  - Thomson Computers Emulation
+      - Thomson MO5
           - Video (custom gate array)
           - Sound (1 bit square wave)
           - Light pen
           - Cartridges
           - Tape emulation, glitchy
-      - 🆕**Thomson TO7**
+      - Thomson TO7
           - Pretty much same features implemented as MO5
           - 8 KB + optional 16KB RAM extension
           - Light pen *not* working (yet)
+- 🆕**68000** (wip)
+  - CPU Instructions mostly complete
+    - Next to no timings 
+    - Very not cycle accurate
+  - 🆕**Macintosh 128k** (wip)
+    - Completely boots to desktop with stock ROM
+    - Some apps work
+      - A lot crash with an address error... (including MacPaint)
+    - Video
+    - Sound (PCM)
+    - Mouse (a bit glitchy)
+    - No keyboard yet
+    - No RTC yet
+    - VIA (partial)
+    - SCC (bare minimum for mouse support)
+    - 400k floppy drive emulation (internal & external)
+      - IWM, PWM speed control
+      - Loads raw image files
+      - Read speed probably not accurate
+      - No write
 - Z80
   - CPU Mostly complete, passes standard test suite
   - Barebones ZX80 emulation
   - Barebones ZX Spectrum emulation
-  - 🆕**Amstrad CPC Emulation**
+  - Amstrad CPC Emulation
     - CPC464, CPC664, CPC6128
       - 64K/128K+ configurations
     - Digital joystick (single)
