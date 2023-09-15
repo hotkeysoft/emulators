@@ -296,7 +296,7 @@ public:
 			{ "Control", EAMode::GroupControl },
 			{ "Control Alterable", EAMode::GroupControlAlt },
 			{ "Control Alterable with Predecrement", EAMode::GroupControlAltPredec },
-			{ "Control Alterable with Postincrement", EAMode::GroupControlAltPostinc }
+			{ "Control with Postincrement", EAMode::GroupControlPostinc }
 		};
 
 		constexpr int testVectors[12][9]{
@@ -309,8 +309,8 @@ public:
 			{ 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // AddrRegIndirectIndex
 			{ 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // AbsoluteShort
 			{ 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // AbsoluteLong
-			{ 1, 1, 0, 0, 0, 1, 0, 0, 0 }, // ProgramCounterDisplacement
-			{ 1, 1, 0, 0, 0, 1, 0, 0, 0 }, // ProgramCounterIndex
+			{ 1, 1, 0, 0, 0, 1, 0, 0, 1 }, // ProgramCounterDisplacement
+			{ 1, 1, 0, 0, 0, 1, 0, 0, 1 }, // ProgramCounterIndex
 			{ 1, 1, 0, 0, 0, 0, 0, 0, 0 }, // Immediate
 		};
 
@@ -565,7 +565,7 @@ public:
 		ret &= ExpectEqual((emul::DWORD)expected["a6"], m_cpu->m_reg.A6, "A6");
 		ret &= ExpectEqual((emul::DWORD)expected["ssp"], m_cpu->GetSSP(), "SSP");
 		ret &= ExpectEqual((emul::DWORD)expected["usp"], m_cpu->GetUSP(), "USP");
-		ret &= ExpectEqual((emul::ADDRESS)expected["pc"], m_cpu->GetCurrentAddress(), "PC");
+		ret &= ExpectEqual((emul::ADDRESS)expected["pc"], m_cpu->m_programCounter, "PC");
 		ret &= ExpectEqual((emul::WORD)expected["sr"], m_cpu->m_reg.flags, "flags");
 
 		return ret;
@@ -667,7 +667,7 @@ public:
 			return false;
 		}
 
-		m_cpu->EnableLog(LOG_ERROR);
+		m_cpu->EnableLog(LOG_WARNING);
 
 		return true;
 	}
