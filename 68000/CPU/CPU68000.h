@@ -183,7 +183,6 @@ namespace emul::cpu68k
 
 		ADDRESS GetVectorAddress(VECTOR v) { return (ADDRESS)v * 4; }
 		ADDRESS GetIntVectorAddress(BYTE i) { assert(i > 0 && i <= 7); return ((ADDRESS)VECTOR::InterruptBase + i - 1) * 4; }
-		ADDRESS GetTrapVectorAddress(BYTE t) { assert(t <= 16);  return ((ADDRESS)VECTOR::TrapBase + t) * 4; }
 
 		TrapList m_trapList;
 
@@ -421,6 +420,8 @@ namespace emul::cpu68k
 		void Aligned(ADDRESS addr) { if (!IsWordAligned(addr)) throw CPUException(VECTOR::AddressError, addr); }
 
 		// Opcodes
+
+		void TRAP(int trap) { throw CPUException(VECTOR::TrapBase, trap); }
 
 		void LEA(DWORD& dest);
 

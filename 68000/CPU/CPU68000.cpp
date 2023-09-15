@@ -776,6 +776,24 @@ namespace emul::cpu68k
 	{
 		InitTable(table, size);
 
+		table[000] = [=]() { TRAP(0); }; // TRAP 0
+		table[001] = [=]() { TRAP(1); }; // TRAP 1
+		table[002] = [=]() { TRAP(2); }; // TRAP 2
+		table[003] = [=]() { TRAP(3); }; // TRAP 3
+		table[004] = [=]() { TRAP(4); }; // TRAP 4
+		table[005] = [=]() { TRAP(5); }; // TRAP 5
+		table[006] = [=]() { TRAP(6); }; // TRAP 6
+		table[007] = [=]() { TRAP(7); }; // TRAP 7
+
+		table[010] = [=]() { TRAP(8); }; // TRAP 8
+		table[011] = [=]() { TRAP(9); }; // TRAP 9
+		table[012] = [=]() { TRAP(10); }; // TRAP 10
+		table[013] = [=]() { TRAP(11); }; // TRAP 11
+		table[014] = [=]() { TRAP(12); }; // TRAP 12
+		table[015] = [=]() { TRAP(13); }; // TRAP 13
+		table[016] = [=]() { TRAP(14); }; // TRAP 14
+		table[017] = [=]() { TRAP(15); }; // TRAP 15
+
 		table[020] = [=]() { LINKw(m_reg.A0); }; // LINKw A0, #<disp>
 		table[021] = [=]() { LINKw(m_reg.A1); }; // LINKw A1, #<disp>
 		table[022] = [=]() { LINKw(m_reg.A2); }; // LINKw A2, #<disp>
@@ -1021,6 +1039,10 @@ namespace emul::cpu68k
 			break;
 		case VECTOR::TRAPV_Instruction:
 			LogPrintf(LOG_INFO, "CPU: Exception (%d)[TRAPV] at address 0x%08X", v, m_programCounter);
+			break;
+		case VECTOR::TrapBase:
+			v = (VECTOR)(int(v) + addr);
+			LogPrintf(LOG_INFO, "CPU: Exception (%d)[TRAP] at address 0x%08X", v, m_programCounter);
 			break;
 		default:
 			LogPrintf(LOG_WARNING, "CPU: Exception (%d) at address 0x%08X", v, m_programCounter);
