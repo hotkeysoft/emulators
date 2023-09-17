@@ -316,12 +316,6 @@ namespace emul
 				return false;
 			}
 
-			GetInputs().Tick();
-			if (GetInputs().IsQuit())
-			{
-				return false;
-			}
-
 			GetVideo().Tick();
 
 			m_via.Tick();
