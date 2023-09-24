@@ -2135,8 +2135,9 @@ namespace emul
 	void CPU8086::PUSH(WORD w)
 	{
 		SegmentOffset h(SEGREG::SS, --m_reg[REG16::SP]);
-		m_memory.Write8(GetAddress(h), GetHByte(w));
 		SegmentOffset l(SEGREG::SS, --m_reg[REG16::SP]);
+
+		m_memory.Write8(GetAddress(h), GetHByte(w));
 		m_memory.Write8(GetAddress(l), GetLByte(w));
 	}
 
@@ -2147,9 +2148,10 @@ namespace emul
 
 	WORD CPU8086::POP()
 	{
-		WORD popped = m_memory.Read16(GetAddress(SegmentOffset(SEGREG::SS, m_reg[REG16::SP])));
-		m_reg[REG16::SP] += 2;
-		return popped;
+		SegmentOffset l(SEGREG::SS, m_reg[REG16::SP]++);
+		SegmentOffset h(SEGREG::SS, m_reg[REG16::SP]++);
+
+		return MakeWord(m_memory.Read8(GetAddress(h)), m_memory.Read8(GetAddress(l)));
 	}
 
 	void CPU8086::PUSHF()
