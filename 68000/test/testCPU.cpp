@@ -571,6 +571,24 @@ public:
 		return ret;
 	}
 
+	bool validateRAM(const json& expected)
+	{
+		bool ret = true;
+		for (auto& values : expected["ram"])
+		{
+			emul::ADDRESS addr = values[0];
+			BYTE expected = values[1];
+
+			static char buf[32];
+			sprintf(buf, "RAM[%06X]", addr);
+
+			BYTE actual = m_memory.Read8(addr);
+			ret &= ExpectEqual(expected, actual, buf);
+		}
+
+		return ret;
+	}
+
 	void setRAM(const json& state)
 	{
 		for (auto& values : state["ram"])
@@ -623,7 +641,10 @@ public:
 			
 			m_cpu->Step();
 
-			if (!validateRegisters(final))
+			bool res = true;
+			res &= validateRegisters(final);
+			res &= validateRAM(final);
+			if (!res)
 			{
 				LogPrintf(LOG_ERROR, "... while testing case [%s]", name.c_str());
 				LogPrintf(LOG_INFO, separator);

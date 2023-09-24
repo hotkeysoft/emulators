@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="testCPU.cpp" />
+    <ClCompile Include="..\..\Common\Config.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\CPUCommon.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\CPUInfo.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\CPU.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\IOBlock.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\IOConnector.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\Logger.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\Memory.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\MemoryBlock.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\MemoryBlockBase.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\CPU\PortConnector.cpp">
+      <Filter>Common\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\Serializable.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CPU\CPU8086.cpp">
+      <Filter>CPU</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="..\..\Common\BitMask.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\Config.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\CPUCommon.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\CPUInfo.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\CPU.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\EdgeDetectLatch.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\inipp.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\IOBlock.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\IOConnector.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\json.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\Logger.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\Memory.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\MemoryBlock.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\MemoryBlockBase.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\CPU\PortConnector.h">
+      <Filter>Common\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\Serializable.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\StringUtil.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CPU\CPU8086.h">
+      <Filter>CPU</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{0ea357df-92dd-457f-abf1-1d8996c0ec55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\CPU">
+      <UniqueIdentifier>{62335717-32d0-47a4-9cda-3104c191cb5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPU">
+      <UniqueIdentifier>{792ced58-b57b-4ee0-b829-a224cef2c5b1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
