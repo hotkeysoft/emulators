@@ -197,7 +197,13 @@ public:
 			setRegisters(initial);
 			setRAM(initial);
 			
-			m_cpu->Step();
+			m_cpu->inSegOverride = false;
+			m_cpu->inRep = false;
+			do
+			{
+				m_cpu->Step();
+			} 
+			while (m_cpu->inRep);
 
 			bool res = true;
 			res &= validateRegisters(final);
@@ -232,13 +238,31 @@ public:
 			m_flagMask = 0xFFFF;
 
 			std::string key = m_currPath.stem().string();
+			std::string subKey;
+			size_t dot = key.find('.');
+			if (dot != std::string::npos)
+			{
+				subKey = key.substr(dot + 1);
+				key.erase(dot);
+			}
 
-			std::string testName = "Test [" + key + "]";
+			std::string testName = "Test [" + key;
+			if (subKey.size())
+			{
+				testName.append(".");
+				testName.append(subKey);
+			}
+			testName.append("]");
 
 			// Look for this test in summary file
 			if (m_testSummary.contains(key))
 			{
-				const json& testInfo = m_testSummary[key];
+				json testInfo = m_testSummary[key];
+				if (subKey.size() && testInfo.contains("reg"))
+				{
+					testInfo = testInfo["reg"][subKey];
+				}
+
 				if (testInfo.contains("status"))
 				{
 					testName.append("[");

@@ -805,7 +805,7 @@ namespace emul
 			TICK();
 
 			// Disable override after next instruction
-			if (clearSegOverride)
+			if (clearSegOverride && !inRep)
 			{
 				inSegOverride = false;
 			}
