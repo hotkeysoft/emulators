@@ -93,23 +93,28 @@ void ShowMonitor()
 		console.Init(CONSOLE_COLS, CONSOLE_FONT_SIZE);
 	}
 	monitor->SetCustomMemoryView(customMemoryView);
-	monitor->Show();
+
+	if (mode != Mode::MONITOR)
+	{
+		mode = Mode::MONITOR;
+		monitor->Show();
+	}
+	else
+	{
+		monitor->SetStepMode();
+	}
 }
 
 void ToggleMode()
 {
 	switch (mode)
 	{
-	case Mode::MONITOR: mode = Mode::LOG; break;
-	case Mode::LOG: mode = Mode::MONITOR; break;
-	}
-
-	switch (mode)
-	{
-	case Mode::MONITOR:
-		ShowMonitor();
-		break;
 	case Mode::LOG:
+		ShowMonitor();
+		mode = Mode::MONITOR;
+		break;
+	case Mode::MONITOR:
+		mode = Mode::LOG;
 		console.Clear();
 		DumpBackLog(24);
 		break;
@@ -161,13 +166,13 @@ void InitPC(ComputerBase* pc, Overlay& overlay, bool reset = true)
 	delete monitor;
 
 	std::string cpuID = pc->GetCPU()->GetID();
-	if (cpuID == "6502")
+	if (cpuID == "6502" || cpuID == "6507")
 	{
 		monitor = new emul::Monitor6502(console);
 	}
 	else
 	{
-		throw std::exception("Unkwown cpuID");
+		throw std::exception("Unknown cpuID");
 	}
 
 	monitor->Init(pc->GetCPU(), pc->GetMemory());
@@ -323,18 +328,6 @@ int main(int argc, char* args[])
 	customMemoryView = CONFIG().GetValueWORD("monitor", "custommem", 0);
 	fprintf(stderr, "Set Monitor Custom Memory View to [0x%04X]\n", customMemoryView);
 
-#ifdef CPU_TEST
-	{
-		emul::Memory mem;
-		emul::CPUZ80Test testCPU(mem);
-		testCPU.Test();
-
-		fprintf(stderr, "Press any key to continue\n");
-		_getch();
-		return 0;
-	}
-#endif
-
 	MAINWND().Init("hotkey6502emu", Overlay::GetOverlayHeight());
 	InitSound();
 
@@ -356,13 +349,14 @@ int main(int argc, char* args[])
 	pc->Init(baseRAM);
 	InitPC(pc, overlay);
 
-#if 0
-	emul::MemoryBlock testROMF000("TEST", 0x10000, emul::MemoryType::ROM);
-
-	testROMF000.LoadFromFile(R"(C:\Users\hotkey\Actual Documents\electro\PC\80186_tests\pass\add.bin)");
-	pc->GetMemory().Allocate(&testROMF000, emul::S2A(0xF000));
-	pc->Reset(0xF000, 0);
-#endif
+	if (breakpointEnabled)
+	{
+		monitor->SetBreakpoint(breakpoint);
+	}
+	else
+	{
+		monitor->ClearBreakpoint();
+	}
 
 	if (mode == Mode::MONITOR)
 	{
@@ -379,8 +373,7 @@ int main(int argc, char* args[])
 
 		while (run)
 		{
-			if (breakpointEnabled &&
-				(pc->GetCPU()->GetCurrentAddress() == breakpoint))
+			if (monitor->IsBreakpoint())
 			{
 				ShowMonitor();
 				mode = Mode::MONITOR;

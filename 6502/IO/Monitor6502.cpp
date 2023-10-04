@@ -43,12 +43,12 @@ namespace emul
 		{
 			switch (ch = _getch())
 			{
-			case 63: // F5
-				ToggleRunMode();
-				break;
-
 			case 62: // F4
 				ToggleRAMMode();
+				break;
+
+			case 63: // F5
+				ToggleRunMode();
 				break;
 
 			case 66: // F8
@@ -56,6 +56,16 @@ namespace emul
 				UpdateRunMode();
 				return MonitorState::RUN;
 
+			case 91: // SHIFT-F8
+			{
+				Instruction decoded;
+				// Set breakpoint at next instruction
+				ADDRESS next = Disassemble(m_cpu->GetCurrentAddress(), decoded);
+				m_breakpointEnabled = true;
+				m_breakpoint = next;
+				m_runMode = RUNMode::RUN;
+				break;
+			}
 			case 98: // CTRL-F5
 				m_runMode = RUNMode::STEP;
 				m_cpu->Reset();
@@ -68,7 +78,19 @@ namespace emul
 			case 61: // F3
 			case 64: // F6
 			case 65: // F7
+				break;
 			case 67: // F9
+				if (IsBreakpoint())
+				{
+					m_breakpointEnabled = false;
+				}
+				else
+				{
+					m_breakpointEnabled = true;
+					m_breakpoint = m_cpu->GetCurrentAddress();
+				}
+				UpdateCode();
+				break;
 			case 68: // F10
 			default:
 				break;
@@ -101,6 +123,7 @@ namespace emul
 		UpdateRunMode();
 		UpdateRAMMode();
 		UpdateCPUType();
+		ClearCode();
 	}
 
 	void Monitor6502::WriteValueNibble(BYTE value, const cpuInfo::Coord& coord, WORD attr)
@@ -150,10 +173,9 @@ namespace emul
 
 	void Monitor6502::ToggleRunMode()
 	{
-		if (m_runMode == RUNMode::RUN) m_runMode = RUNMode::STEP;
-		else m_runMode = RUNMode::RUN;
-
+		m_runMode = (m_runMode == RUNMode::RUN) ? RUNMode::STEP : RUNMode::RUN;
 		UpdateRunMode();
+
 	}
 
 	void Monitor6502::UpdateRunMode()
@@ -260,58 +282,80 @@ namespace emul
 		static Coord addrPos = m_cpu->GetInfo().GetCoord("ram.ADDR");
 		static Coord hexPos = m_cpu->GetInfo().GetCoord("ram.HEX");
 		static Coord charPos = m_cpu->GetInfo().GetCoord("ram.CHAR");
-		static int bytesPerLine = charPos.w;
-		static int bytesTotal = charPos.w * charPos.h;
+		static unsigned bytesPerLine = charPos.w;
+		static unsigned bytesTotal = charPos.w * charPos.h;
 
 		// Adjust position so the view doesn't move around too much
-		WORD offset = GetRAMBase();
+		ADDRESS addr = GetRAMBase();
 
-		WORD adjustedOffset = (offset / bytesPerLine) * bytesPerLine;
-
-		// Check for end of segment
-		if (((DWORD)adjustedOffset + bytesTotal) >= 0x10000)
+		ADDRESS adjustedAddress = (addr / bytesPerLine) * bytesPerLine;
+		if (adjustedAddress >= bytesPerLine)
 		{
-			adjustedOffset = 0x10000 - bytesTotal;
-		}
-		else if (adjustedOffset >= bytesPerLine)
-		{
-			adjustedOffset -= bytesPerLine; // Show one row before when possible
+			adjustedAddress -= bytesPerLine; // Show one row before when possible
 		}
 
-		ADDRESS curr = offset;
-		ADDRESS data = adjustedOffset;
+		ADDRESS curr = addr;
+		ADDRESS data = adjustedAddress;
 		for (int y = 0; y < hexPos.h; ++y)
 		{
 			Coord pos;
 			pos.x = addrPos.x;
 			pos.y = addrPos.y + y;
-			WriteValueHex((WORD)(adjustedOffset + (bytesPerLine * y)), pos);
+			WriteValueHex((WORD)(adjustedAddress + (bytesPerLine * y)), pos, 8);
 
-			for (int x = 0; x < bytesPerLine; ++x)
+			ADDRESS a = (data + (bytesPerLine * y)) & m_memory->GetAddressMask();
+			auto& block = m_memory->FindBlock(a);
+			enum class MemBlockType { UNALLOCATED, IO, MEM } type = MemBlockType::UNALLOCATED;
+
+			if (block.blockR)
 			{
-				ADDRESS a = data + (bytesPerLine * y) + x;
-				BYTE ch = m_memory->Read8(a);
+				type = (block.blockR->GetType() == emul::MemoryType::IO) ? MemBlockType::IO : MemBlockType::MEM;
+			}
+
+			for (unsigned x = 0; x < bytesPerLine; ++x)
+			{
 				pos.x = hexPos.x + (3 * x);
-				WriteValueHex(ch, pos, (a==curr) ? 15 + (1<<4) : 7);
+				BYTE ch = 0;
+
+				switch (type)
+				{
+				case MemBlockType::UNALLOCATED:
+					m_console.WriteAt(pos.x, pos.y, "..", 2, 8);
+					break;
+				case MemBlockType::IO:
+					m_console.WriteAt(pos.x, pos.y, "IO", 2, 8);
+					break;
+				case MemBlockType::MEM:
+				{
+					ch = m_memory->Read8(a);
+					WriteValueHex(ch, pos, (a == curr) ? 15 + (1 << 4) : 7);
+					break;
+				}
+				default:
+					NODEFAULT;
+				}
 
 				m_console.WriteAt(charPos.x + x, pos.y, ch ? ch : 0xFA, ch ? 7 : 8);
+				++a;
 			}
 		}
 	}
 
 	void Monitor6502::PrintInstruction(short y, Instruction& instr)
 	{
-		static Coord offsetPos = m_cpu->GetInfo().GetCoord("CODE.offset");
+		static Coord addressPos = m_cpu->GetInfo().GetCoord("CODE.address");
 		static Coord rawPos = m_cpu->GetInfo().GetCoord("CODE.raw");
 		static Coord textPos = m_cpu->GetInfo().GetCoord("CODE.text");
-		static short baseY = offsetPos.y;
+		static short baseY = addressPos.y;
 
 		// TODO: Horribly inefficient
 		Coord pos;
 		pos.y = baseY + y;
 
-		pos.x = offsetPos.x;
-		WriteValueHex((WORD)instr.address, pos);
+		// Write address
+		pos.x = addressPos.x;
+		bool isBreakpoint = m_breakpointEnabled && (instr.address == m_breakpoint);
+		WriteValueHex((WORD)instr.address, pos, isBreakpoint ? (4 << 4) | 15 : 8 );
 		pos.x = rawPos.x;
 		m_console.WriteAt(pos.x, pos.y, (const char*)instr.raw, instr.len);
 		for (int i = 0; i < rawPos.w - instr.len; ++i)
@@ -319,6 +363,7 @@ namespace emul
 			m_console.WriteAt(pos.x + instr.len + i, pos.y, 0xFAu, 8);
 		}
 
+		// Write text (disassembly)
 		pos.x = textPos.x;
 		m_console.WriteAt(pos.x, pos.y, instr.text, textPos.w);
 	}
@@ -329,7 +374,7 @@ namespace emul
 
 		ADDRESS address = m_cpu->GetCurrentAddress();
 
-		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w - 1, 4, codePos.y - 1);
+		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w, 4, codePos.y - 1);
 
 		for (int i = 0; i < 8; ++i)
 		{
@@ -337,6 +382,18 @@ namespace emul
 			address = Disassemble(address, decoded);
 			PrintInstruction(i+4, decoded);
 		}
+	}
+
+	void Monitor6502::ClearCode()
+	{
+		static Coord codePos = m_cpu->GetInfo().GetCoord("CODE");
+
+		m_console.Clear(codePos.x, codePos.y, codePos.w, codePos.h);
+
+		// Show last instruction
+		Instruction decoded;
+		Disassemble(m_cpu->GetLastAddress(), decoded);
+		PrintInstruction(4, decoded);
 	}
 
 	bool Monitor6502::Replace(std::string& str, const std::string& from, const std::string& to)

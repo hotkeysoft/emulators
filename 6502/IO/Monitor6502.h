@@ -3,11 +3,11 @@
 #include <IO/Console.h>
 #include <CPU/Memory.h>
 #include <CPU/CPUInfo.h>
+#include "CPU/CPU6502.h"
 
 namespace emul
 {
 	class CPU;
-	class CPU6502;
 
 	enum class MonitorState { RUN, WAIT, EXIT, SWITCH_MODE };
 	class Monitor6502
@@ -25,14 +25,16 @@ namespace emul
 		virtual void Init(CPU* cpu, Memory& memory);
 
 		void SetCustomMemoryView(ADDRESS address) { m_customMemView = address; }
+		void SetBreakpoint(ADDRESS address) { m_breakpoint = address; m_breakpointEnabled = true; }
+		void ClearBreakpoint() { m_breakpointEnabled = false; }
+		bool IsBreakpoint() const { return m_breakpointEnabled && m_cpu->GetCurrentAddress() == m_breakpoint; }
 
 		void Show();
 		MonitorState Run();
+		void SetStepMode() { m_runMode = RUNMode::STEP; }
 		void Update();
 
 	protected:
-		ADDRESS m_customMemView = 0;
-
 		struct Instruction
 		{
 			void AddRaw(BYTE b);
@@ -44,6 +46,10 @@ namespace emul
 			BYTE raw[16];
 			char text[32];
 		};
+
+		ADDRESS m_customMemView = 0;
+		ADDRESS m_breakpoint = 0;
+		bool m_breakpointEnabled = false;
 
 		MonitorState ProcessKey();
 
@@ -64,6 +70,7 @@ namespace emul
 		void UpdateRAM();
 		void PrintInstruction(short y, Instruction& instr);
 		void UpdateCode();
+		void ClearCode();
 
 		static bool Replace(std::string& str, const std::string& from, const std::string& to);
 
