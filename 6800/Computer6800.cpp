@@ -21,7 +21,7 @@ namespace emul
 	void Computer6800::Reset()
 	{
 		ComputerBase::Reset();
-		GetCPU().Reset(0xE000); // Override reset vector
+		GetCPU().Reset(0xE0D0); // Override reset vector
 	}
 
 	void Computer6800::Init(WORD baseRAM)

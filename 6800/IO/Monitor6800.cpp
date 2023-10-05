@@ -439,12 +439,20 @@ namespace emul
 		}
 		case Opcode::IMM::W16:
 		{
-			WORD imm16 = m_memory->Read16(++address);
+			WORD imm16 = m_memory->Read16be(++address);
 			++address;
 			decoded.AddRaw(imm16);
 
 			sprintf(buf, "$%04X", imm16);
 			Replace(text, "{i16}", buf);
+			break;
+		}
+		case Opcode::IMM::S8: // Signed byte (show as decimal)
+		{
+			BYTE imm8 = m_memory->Read8(++address);
+			decoded.AddRaw(imm8);
+			sprintf(buf, "%d", (SBYTE)imm8);
+			Replace(text, "{s8}", buf);
 			break;
 		}
 		default:
@@ -466,11 +474,11 @@ namespace emul
 	}
 	void Monitor6800::Instruction::AddRaw(WORD w)
 	{
-		// LOW BYTE
-		this->raw[this->len++] = hexDigits[(w >> 4) & 0x0F];
-		this->raw[this->len++] = hexDigits[(w & 0x0F)];
 		// HIGH BYTE
 		this->raw[this->len++] = hexDigits[(w >> 12) & 0x0F];
 		this->raw[this->len++] = hexDigits[(w >> 8) & 0x0F];
+		// LOW BYTE
+		this->raw[this->len++] = hexDigits[(w >> 4) & 0x0F];
+		this->raw[this->len++] = hexDigits[(w & 0x0F)];
 	}
 }
