@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34024.191
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hotkey6502emu", "6502\hotkey6502emu.vcxproj", "{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hotkey6800Emu", "6800\hotkey6800Emu.vcxproj", "{48913726-6FB2-4170-B015-A35C69BD38D8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreUI", "..\emulators\CoreUI\CoreUI.vcxproj", "{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreUI", "CoreUI\CoreUI.vcxproj", "{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,14 +15,14 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Debug|x64.ActiveCfg = Debug|x64
-		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Debug|x64.Build.0 = Debug|x64
-		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Debug|x86.ActiveCfg = Debug|Win32
-		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Debug|x86.Build.0 = Debug|Win32
-		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Release|x64.ActiveCfg = Release|x64
-		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Release|x64.Build.0 = Release|x64
-		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Release|x86.ActiveCfg = Release|Win32
-		{FB234D39-EDA5-4F58-8048-9C9A1ED710A5}.Release|x86.Build.0 = Release|Win32
+		{48913726-6FB2-4170-B015-A35C69BD38D8}.Debug|x64.ActiveCfg = Debug|x64
+		{48913726-6FB2-4170-B015-A35C69BD38D8}.Debug|x64.Build.0 = Debug|x64
+		{48913726-6FB2-4170-B015-A35C69BD38D8}.Debug|x86.ActiveCfg = Debug|Win32
+		{48913726-6FB2-4170-B015-A35C69BD38D8}.Debug|x86.Build.0 = Debug|Win32
+		{48913726-6FB2-4170-B015-A35C69BD38D8}.Release|x64.ActiveCfg = Release|x64
+		{48913726-6FB2-4170-B015-A35C69BD38D8}.Release|x64.Build.0 = Release|x64
+		{48913726-6FB2-4170-B015-A35C69BD38D8}.Release|x86.ActiveCfg = Release|Win32
+		{48913726-6FB2-4170-B015-A35C69BD38D8}.Release|x86.Build.0 = Release|Win32
 		{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}.Debug|x64.ActiveCfg = Debug|x64
 		{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}.Debug|x64.Build.0 = Debug|x64
 		{83E70E1A-F130-4DA9-A8CB-CBD10A5821A0}.Debug|x86.ActiveCfg = Debug|Win32
@@ -36,6 +36,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {3C622395-DFF9-4070-8446-A4E469DC2630}
+		SolutionGuid = {8479C4FE-99EA-482B-B402-378209D5A20E}
 	EndGlobalSection
 EndGlobal

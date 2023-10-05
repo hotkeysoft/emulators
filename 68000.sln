@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.33328.57
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34024.191
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hotkey68000emu", "68000\hotkey68000emu.vcxproj", "{96C41FF4-B46A-41C6-ACD5-3D96428480CF}"
 	ProjectSection(ProjectDependencies) = postProject
