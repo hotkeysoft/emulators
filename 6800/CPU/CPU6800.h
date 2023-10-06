@@ -69,6 +69,12 @@ namespace emul
 		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
 		BYTE m_opcode = 0;
 
+		// NMI is edge sensitive
+		hscommon::EdgeDetectLatch m_nmi;
+
+		// IRQ is level sensitive
+		bool m_irq = false;
+
 		virtual void Interrupt();
 
 		enum FLAG : BYTE
@@ -86,6 +92,9 @@ namespace emul
 		FLAG FLAG_RESERVED_ON = FLAG(_FLAG_R6 | _FLAG_R7);
 
 		ADDRESS m_programCounter = 0;
+
+		// Alias when we need a WORD version of the program counter
+		WORD& m_PC = *((WORD*)&m_programCounter);
 
 		struct Registers
 		{
@@ -105,14 +114,58 @@ namespace emul
 		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); };
 		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
 
+		// Misc helpers
+		ADDRESS GetDirect() { return FetchByte(); }
+		ADDRESS GetIndexed() { return m_reg.IX + FetchByte(); }
+		ADDRESS GetExtended() { return FetchWord(); }
+
 		virtual BYTE FetchByte() override;
+		virtual WORD FetchWord() override;
+
+		SBYTE FetchSignedByte() { return (SBYTE)FetchByte(); }
+		SWORD FetchSignedWord() { return (SWORD)FetchWord(); }
+
+		BYTE GetMemDirectByte() { return m_memory.Read8(GetDirect()); }
+		WORD GetMemDirectWord() { return m_memory.Read16be(GetDirect()); }
+
+		BYTE GetMemIndexedByte() { return m_memory.Read8(GetIndexed()); }
+		WORD GetMemIndexedWord() { return m_memory.Read16be(GetIndexed()); }
+
+		BYTE GetMemExtendedByte() { return m_memory.Read8(GetExtended()); }
+		WORD GetMemExtendedWord() { return m_memory.Read16be(GetExtended()); }
 
 		// Addressing Modes
 		// ----------------
 
+		// Adjust negative and zero flag
 		void AdjustNZ(BYTE val);
+		void AdjustNZ(WORD val);
+
+		// raw push/pop
+		void pushB(BYTE value);
+		void pushW(WORD value);
+		BYTE popB();
+		WORD popW();
+
+		void pushAll();
+		void popAll();
 
 		// Opcodes
+
+		// Branching
+		void BRA(bool condition);
+
+		void JMP(ADDRESS dest) { m_programCounter = dest; }
+		void JSR(ADDRESS dest);
+		void RTS();
+
+		// Load
+		void LD8(BYTE& dest, BYTE src);
+		void LD16(WORD& dest, WORD src);
+
+		// Store
+		void ST8(ADDRESS dest, BYTE src);
+		void ST16(ADDRESS dest, WORD src);
 
 		friend class Monitor6800;
 	};
