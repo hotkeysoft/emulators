@@ -186,8 +186,8 @@ namespace emul
 		void exec(OpcodeTable& table, BYTE opcode);
 
 		// Misc helpers
-		ADDRESS GetDirect(BYTE low) { return MakeWord(m_reg.DP, low); }
-		ADDRESS GetIndexed(BYTE idx);
+		ADDRESS GetDirect() { return MakeWord(m_reg.DP, FetchByte()); }
+		ADDRESS GetIndexed();
 		ADDRESS GetExtended() { return FetchWord(); }
 		WORD& GetIndexedRegister(BYTE idx);
 
@@ -197,14 +197,14 @@ namespace emul
 		SBYTE FetchSignedByte() { return (SBYTE)FetchByte(); }
 		SWORD FetchSignedWord() { return (SWORD)FetchWord(); }
 
-		BYTE GetMemDirectByte();
-		WORD GetMemDirectWord();
+		BYTE GetMemDirectByte() { return m_memory.Read8(GetDirect()); }
+		WORD GetMemDirectWord() { return m_memory.Read16be(GetDirect()); }
 
-		BYTE GetMemIndexedByte();
-		WORD GetMemIndexedWord();
+		BYTE GetMemIndexedByte() { return m_memory.Read8(GetIndexed()); }
+		WORD GetMemIndexedWord() { return m_memory.Read16be(GetIndexed()); }
 
-		BYTE GetMemExtendedByte();
-		WORD GetMemExtendedWord();
+		BYTE GetMemExtendedByte() { return m_memory.Read8(GetExtended()); }
+		WORD GetMemExtendedWord() { return m_memory.Read16be(GetExtended()); }
 
 		// Register helpers
 		//
