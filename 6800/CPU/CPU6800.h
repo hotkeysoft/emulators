@@ -134,6 +134,10 @@ namespace emul
 		BYTE GetMemExtendedByte() { return m_memory.Read8(GetExtended()); }
 		WORD GetMemExtendedWord() { return m_memory.Read16be(GetExtended()); }
 
+		void MEMDirectOp(std::function<void(CPU6800*, BYTE&)> func);
+		void MEMIndexedOp(std::function<void(CPU6800*, BYTE&)> func);
+		void MEMExtendedOp(std::function<void(CPU6800*, BYTE&)> func);
+
 		// Addressing Modes
 		// ----------------
 
@@ -154,8 +158,8 @@ namespace emul
 
 		// Branching
 		void BRA(bool condition);
-
 		void JMP(ADDRESS dest) { m_programCounter = dest; }
+		void BSR();
 		void JSR(ADDRESS dest);
 		void RTS();
 
@@ -166,6 +170,33 @@ namespace emul
 		// Store
 		void ST8(ADDRESS dest, BYTE src);
 		void ST16(ADDRESS dest, WORD src);
+
+		// dest by value so it's not modified
+		//void BIT(BYTE dest, BYTE src) { return AND(dest, src); }
+
+		void CLR(BYTE& dest); // Clear
+		void COM(BYTE& dest); // Complement
+		void INC(BYTE& dest); // Increment
+		void DEC(BYTE& dest); // Decrement
+		void TST(const BYTE dest); // Sets N & Z flags
+
+		// Arithmetic
+
+		// dest' <- dest + src (+ carry)
+		void ADD8(BYTE& dest, BYTE src, bool carry = false);
+		void ADD16(WORD& dest, WORD src, bool carry = false);
+
+		// dest' <- dest - src (- borrow)
+		void SUB8(BYTE& dest, BYTE src, bool borrow = false);
+		void SUB16(WORD& dest, WORD src, bool borrow = false);
+
+		// dest by value so it's not modified
+		// (void) <- dest - src
+		void CMP8(BYTE dest, BYTE src) { return SUB8(dest, src); }
+		void CMP16(WORD dest, WORD src) { return SUB16(dest, src); }
+
+		// Negate operand, dest' <- (0 - dest)
+		void NEG(BYTE& dest);
 
 		friend class Monitor6800;
 	};

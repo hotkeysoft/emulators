@@ -62,6 +62,9 @@ namespace emul
 
 		//TODO m_opcodes[0x1B] = [=]() {}; // ABA
 
+		// Jump / Branch
+		// ---------------------
+
 		m_opcodes[0x20] = [=]() { BRA(true); }; // BRA
 
 		m_opcodes[0x22] = [=]() { BRA((GetFlag(FLAG_Z) == false) && (GetFlag(FLAG_C) == false)); }; // BHI
@@ -78,6 +81,23 @@ namespace emul
 		m_opcodes[0x2D] = [=]() { BRA(GetFlag(FLAG_N) != GetFlag(FLAG_V)); }; // BLT
 		m_opcodes[0x2E] = [=]() { BRA((GetFlag(FLAG_N) == GetFlag(FLAG_V)) && (GetFlag(FLAG_Z) == false)); }; // BGT
 		m_opcodes[0x2F] = [=]() { BRA((GetFlag(FLAG_N) != GetFlag(FLAG_V)) || (GetFlag(FLAG_Z) == true)); }; // BLE
+
+		// JSR
+		m_opcodes[0xAD] = [=]() { JSR(GetIndexed()); }; // JSR idx
+		m_opcodes[0xBD] = [=]() { JSR(GetExtended()); }; // JSR ext
+
+		// JMP
+		m_opcodes[0x6E] = [=]() { JMP(GetIndexed()); }; // JMP idx
+		m_opcodes[0x7E] = [=]() { JMP(GetExtended()); }; // JMP ext
+
+		// RTS
+		m_opcodes[0x39] = [=]() { RTS(); }; // RTS
+
+		// BSR
+		m_opcodes[0x8D] = [=]() { BSR(); }; // BSR rel
+
+		// Load / Store
+		// ---------------------
 
 		// LDA A
 		m_opcodes[0x86] = [=]() { LD8(m_reg.A, FetchByte()); }; // LDA A imm
@@ -101,17 +121,6 @@ namespace emul
 		m_opcodes[0xE7] = [=]() { ST8(GetIndexed(), m_reg.B); }; // STA B idx
 		m_opcodes[0xF7] = [=]() { ST8(GetExtended(), m_reg.B); }; // STA B ext
 
-		// RTS
-		m_opcodes[0x39] = [=]() { RTS(); }; // RTS
-
-		// JSR
-		m_opcodes[0xAD] = [=]() { JSR(GetIndexed()); }; // JSR idx
-		m_opcodes[0xBD] = [=]() { JSR(GetExtended()); }; // JSR ext
-
-		// JMP
-		m_opcodes[0x6E] = [=]() { JMP(GetIndexed()); }; // JMP idx
-		m_opcodes[0x7E] = [=]() { JMP(GetExtended()); }; // JMP ext
-
 		// LDS
 		m_opcodes[0x8E] = [=]() { LD16(m_reg.SP, FetchWord()); }; // LDS imm
 		m_opcodes[0x9E] = [=]() { LD16(m_reg.SP, GetMemDirectWord()); }; // LDS dir
@@ -134,6 +143,106 @@ namespace emul
 		m_opcodes[0xEF] = [=]() { ST16(GetIndexed(), m_reg.IX); }; // STX idx
 		m_opcodes[0xFF] = [=]() { ST16(GetExtended(), m_reg.IX); }; // STX ext
 
+		// Arithmetic
+		// ---------------------
+
+		// BIT/CLR/COM/INC/DEC/TST
+
+		// COM
+		m_opcodes[0x43] = [=]() { COM(m_reg.A); }; // CLR A
+		m_opcodes[0x53] = [=]() { COM(m_reg.B); }; // COM B
+		m_opcodes[0x63] = [=]() { MEMIndexedOp(&CPU6800::COM); }; // COM idx
+		m_opcodes[0x73] = [=]() { MEMExtendedOp(&CPU6800::COM); }; // COM ext
+
+		// DEC
+		m_opcodes[0x4A] = [=]() { DEC(m_reg.A); }; // DEC A
+		m_opcodes[0x5A] = [=]() { DEC(m_reg.B); }; // DEC B
+		m_opcodes[0x6A] = [=]() { MEMIndexedOp(&CPU6800::DEC); }; // DEC idx
+		m_opcodes[0x7A] = [=]() { MEMExtendedOp(&CPU6800::DEC); }; // DEC ext
+
+		// INC
+		m_opcodes[0x4C] = [=]() { INC(m_reg.A); }; // INC A
+		m_opcodes[0x5C] = [=]() { INC(m_reg.B); }; // INC B
+		m_opcodes[0x6C] = [=]() { MEMIndexedOp(&CPU6800::INC); }; // INC idx
+		m_opcodes[0x7C] = [=]() { MEMExtendedOp(&CPU6800::INC); }; // INC ext
+
+		// TST
+		m_opcodes[0x4D] = [=]() { TST(m_reg.A); }; // TST A
+		m_opcodes[0x5D] = [=]() { TST(m_reg.B); }; // TST B
+		m_opcodes[0x6D] = [=]() { MEMIndexedOp(&CPU6800::TST); }; // TST idx
+		m_opcodes[0x7D] = [=]() { MEMExtendedOp(&CPU6800::TST); }; // TST ext
+
+		// CLR
+		m_opcodes[0x4F] = [=]() { CLR(m_reg.A); }; // CLR A
+		m_opcodes[0x5F] = [=]() { CLR(m_reg.B); }; // CLR B
+		m_opcodes[0x6F] = [=]() { MEMIndexedOp(&CPU6800::CLR); }; // CLR idx
+		m_opcodes[0x7F] = [=]() { MEMExtendedOp(&CPU6800::CLR); }; // CLR ext
+
+		// SUB A
+		m_opcodes[0x80] = [=]() { SUB8(m_reg.A, FetchByte()); }; // SUB A imm
+		m_opcodes[0x90] = [=]() { SUB8(m_reg.A, GetMemDirectByte()); }; // SUB A dir
+		m_opcodes[0xA0] = [=]() { SUB8(m_reg.A, GetMemIndexedByte()); }; // SUB A idx
+		m_opcodes[0xB0] = [=]() { SUB8(m_reg.A, GetMemExtendedByte()); }; // SUB A ext
+
+		// SUB B
+		m_opcodes[0xC0] = [=]() { SUB8(m_reg.B, FetchByte()); }; // SUB B imm
+		m_opcodes[0xD0] = [=]() { SUB8(m_reg.B, GetMemDirectByte()); }; // SUB B dir
+		m_opcodes[0xE0] = [=]() { SUB8(m_reg.B, GetMemIndexedByte()); }; // SUB B idx
+		m_opcodes[0xF0] = [=]() { SUB8(m_reg.B, GetMemExtendedByte()); }; // SUB B ext
+
+		// CMP A
+		m_opcodes[0x81] = [=]() { CMP8(m_reg.A, FetchByte()); }; // CMP A imm
+		m_opcodes[0x91] = [=]() { CMP8(m_reg.A, GetMemDirectByte()); }; // CMP A dir
+		m_opcodes[0xA1] = [=]() { CMP8(m_reg.A, GetMemIndexedByte()); }; // CMP A idx
+		m_opcodes[0xB1] = [=]() { CMP8(m_reg.A, GetMemExtendedByte()); }; // CMP A ext
+
+		// CMP B
+		m_opcodes[0xC1] = [=]() { CMP8(m_reg.B, FetchByte()); }; // CMP B imm
+		m_opcodes[0xD1] = [=]() { CMP8(m_reg.B, GetMemDirectByte()); }; // CMP B dir
+		m_opcodes[0xE1] = [=]() { CMP8(m_reg.B, GetMemIndexedByte()); }; // CMP B idx
+		m_opcodes[0xF1] = [=]() { CMP8(m_reg.B, GetMemExtendedByte()); }; // CMP B ext
+
+		// SBC A
+		m_opcodes[0x82] = [=]() { SUB8(m_reg.A, FetchByte(), GetFlag(FLAG_C)); }; // SBC A imm
+		m_opcodes[0x92] = [=]() { SUB8(m_reg.A, GetMemDirectByte(), GetFlag(FLAG_C)); }; // SBC A dir
+		m_opcodes[0xA2] = [=]() { SUB8(m_reg.A, GetMemIndexedByte(), GetFlag(FLAG_C)); }; // SBC A idx
+		m_opcodes[0xB2] = [=]() { SUB8(m_reg.A, GetMemExtendedByte(), GetFlag(FLAG_C)); }; // SBC A ext
+
+		// SBC B
+		m_opcodes[0xC2] = [=]() { SUB8(m_reg.B, FetchByte(), GetFlag(FLAG_C)); }; // SBC B imm
+		m_opcodes[0xD2] = [=]() { SUB8(m_reg.B, GetMemDirectByte(), GetFlag(FLAG_C)); }; // SBC B dir
+		m_opcodes[0xE2] = [=]() { SUB8(m_reg.B, GetMemIndexedByte(), GetFlag(FLAG_C)); }; // SBC B idx
+		m_opcodes[0xF2] = [=]() { SUB8(m_reg.B, GetMemExtendedByte(), GetFlag(FLAG_C)); }; // SBC B ext
+
+		// ADC A
+		m_opcodes[0x89] = [=]() { ADD8(m_reg.A, FetchByte(), GetFlag(FLAG_C)); }; // ADC A imm
+		m_opcodes[0x99] = [=]() { ADD8(m_reg.A, GetMemDirectByte(), GetFlag(FLAG_C)); }; // ADC A dir
+		m_opcodes[0xA9] = [=]() { ADD8(m_reg.A, GetMemIndexedByte(), GetFlag(FLAG_C)); }; // ADC A idx
+		m_opcodes[0xB9] = [=]() { ADD8(m_reg.A, GetMemExtendedByte(), GetFlag(FLAG_C)); }; // ADC A ext
+
+		// ADC B
+		m_opcodes[0xC9] = [=]() { ADD8(m_reg.B, FetchByte(), GetFlag(FLAG_C)); }; // ADC B imm
+		m_opcodes[0xD9] = [=]() { ADD8(m_reg.B, GetMemDirectByte(), GetFlag(FLAG_C)); }; // ADC B dir
+		m_opcodes[0xE9] = [=]() { ADD8(m_reg.B, GetMemIndexedByte(), GetFlag(FLAG_C)); }; // ADC B idx
+		m_opcodes[0xF9] = [=]() { ADD8(m_reg.B, GetMemExtendedByte(), GetFlag(FLAG_C)); }; // ADC B ext
+
+		// ADD A
+		m_opcodes[0x8B] = [=]() { ADD8(m_reg.A, FetchByte()); }; // ADD A imm
+		m_opcodes[0x9B] = [=]() { ADD8(m_reg.A, GetMemDirectByte()); }; // ADD A dir
+		m_opcodes[0xAB] = [=]() { ADD8(m_reg.A, GetMemIndexedByte()); }; // ADD A idx
+		m_opcodes[0xBB] = [=]() { ADD8(m_reg.A, GetMemExtendedByte()); }; // ADD A ext
+
+		// ADD B
+		m_opcodes[0xCB] = [=]() { ADD8(m_reg.B, FetchByte()); }; // ADD B imm
+		m_opcodes[0xDB] = [=]() { ADD8(m_reg.B, GetMemDirectByte()); }; // ADD B dir
+		m_opcodes[0xEB] = [=]() { ADD8(m_reg.B, GetMemIndexedByte()); }; // ADD B idx
+		m_opcodes[0xFB] = [=]() { ADD8(m_reg.B, GetMemExtendedByte()); }; // ADD B ext
+
+		// CPX
+		m_opcodes[0x8C] = [=]() { CMP16(m_reg.IX, FetchWord()); }; // CPX imm
+		m_opcodes[0x9C] = [=]() { CMP16(m_reg.IX, GetMemDirectWord()); }; // CPX dir
+		m_opcodes[0xAC] = [=]() { CMP16(m_reg.IX, GetMemIndexedWord()); }; // CPX idx
+		m_opcodes[0xBC] = [=]() { CMP16(m_reg.IX, GetMemExtendedWord()); }; // CPX ext
 	}
 
 	CPU6800::~CPU6800()
@@ -185,6 +294,30 @@ namespace emul
 		BYTE l = FetchByte();
 
 		return MakeWord(h, l);
+	}
+
+	void CPU6800::MEMDirectOp(std::function<void(CPU6800*, BYTE&)> func)
+	{
+		const ADDRESS dest = GetDirect();
+		BYTE value = m_memory.Read8(dest);
+		func(this, value);
+		m_memory.Write8(dest, value);
+	}
+
+	void CPU6800::MEMIndexedOp(std::function<void(CPU6800*, BYTE&)> func)
+	{
+		const ADDRESS dest = GetIndexed();
+		BYTE value = m_memory.Read8(dest);
+		func(this, value);
+		m_memory.Write8(dest, value);
+	}
+
+	void CPU6800::MEMExtendedOp(std::function<void(CPU6800*, BYTE&)> func)
+	{
+		const ADDRESS dest = GetExtended();
+		BYTE value = m_memory.Read8(dest);
+		func(this, value);
+		m_memory.Write8(dest, value);
 	}
 
 	bool CPU6800::Step()
@@ -338,11 +471,19 @@ namespace emul
 		}
 	}
 
-
 	void CPU6800::JSR(ADDRESS dest)
 	{
 		pushW(m_PC);
 		m_programCounter = dest;
+	}
+
+	void CPU6800::BSR()
+	{
+		SBYTE rel = FetchSignedByte();
+
+		pushW(m_PC);
+
+		m_PC += rel;
 	}
 
 	void CPU6800::RTS()
@@ -378,6 +519,105 @@ namespace emul
 
 		AdjustNZ(src);
 		SetFlag(FLAG::FLAG_V, false);
+	}
+
+	void CPU6800::COM(BYTE& dest)
+	{
+		dest = ~dest;
+		AdjustNZ(dest);
+		SetFlag(FLAG_V, false);
+		SetFlag(FLAG_C, true);
+	}
+
+	void CPU6800::CLR(BYTE& dest)
+	{
+		dest = 0;
+		AdjustNZ(dest);
+		SetFlag(FLAG_V, false);
+		SetFlag(FLAG_C, false);
+	}
+
+	void CPU6800::INC(BYTE& dest)
+	{
+		SetFlag(FLAG_V, dest == 0b01111111);
+		++dest;
+		AdjustNZ(dest);
+	}
+
+	void CPU6800::DEC(BYTE& dest)
+	{
+		SetFlag(FLAG_V, dest == 0b10000000);
+		--dest;
+		AdjustNZ(dest);
+	}
+
+	void CPU6800::TST(const BYTE dest)
+	{
+		AdjustNZ(dest);
+		SetFlag(FLAG_V, false);
+	}
+
+	void CPU6800::ADD8(BYTE& dest, BYTE src, bool carry)
+	{
+		BYTE oldDest = dest;
+
+		// Half carry flag
+		BYTE loNibble = (dest & 0x0F) + (src & 0x0F) + carry;
+		SetFlag(FLAG_H, (loNibble > 0x0F));
+
+		WORD temp = dest + src + carry;
+
+		dest = (BYTE)temp;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_C, (temp > 0xFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
+	}
+
+	void CPU6800::ADD16(WORD& dest, WORD src, bool carry)
+	{
+		WORD oldDest = dest;
+
+		DWORD temp = dest + src + carry;
+
+		dest = (WORD)temp;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_C, (temp > 0xFFFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
+	}
+
+	void CPU6800::SUB8(BYTE& dest, BYTE src, bool borrow)
+	{
+		BYTE oldDest = dest;
+
+		WORD temp = dest - src - borrow;
+
+		dest = (BYTE)temp;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_C, (temp > 0xFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
+	}
+
+	void CPU6800::SUB16(WORD& dest, WORD src, bool borrow)
+	{
+		WORD oldDest = dest;
+
+		DWORD temp = dest - src - borrow;
+
+		dest = (WORD)temp;
+
+		AdjustNZ(dest);
+		SetFlag(FLAG_C, (temp > 0xFFFF));
+		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
+	}
+
+	void CPU6800::NEG(BYTE& dest)
+	{
+		BYTE tempDest = 0;
+		SUB8(tempDest, dest);
+		dest = tempDest;
 	}
 
 	void CPU6800::Serialize(json& to)
