@@ -41,28 +41,36 @@ namespace emul
 		m_opcodes[0x06] = [=]() { SetFlags(m_reg.A); }; // TAP
 		m_opcodes[0x07] = [=]() { m_reg.A = m_reg.flags; }; // TPA
 
+		m_opcodes[0x30] = [=]() { m_reg.IX = m_reg.SP + 1; }; // TSX
+		m_opcodes[0x35] = [=]() { m_reg.SP = m_reg.IX - 1; }; // TXS
+
 		m_opcodes[0x08] = [=]() { ++m_reg.IX; SetFlag(FLAG_Z, m_reg.IX == 0); }; // INX
 		m_opcodes[0x09] = [=]() { --m_reg.IX; SetFlag(FLAG_Z, m_reg.IX == 0); }; // DEX
+
+		m_opcodes[0x31] = [=]() { ++m_reg.SP; }; // INS
+		m_opcodes[0x34] = [=]() { --m_reg.SP; }; // DES
+
+		// Stack
+		m_opcodes[0x32] = [=]() { m_reg.A = popB(); }; // PUL A
+		m_opcodes[0x33] = [=]() { m_reg.B = popB(); }; // PUL B
+
+		m_opcodes[0x36] = [=]() { pushB(m_reg.A); }; // PSH A
+		m_opcodes[0x37] = [=]() { pushB(m_reg.B); }; // PSH B
 
 		// Flags
 		m_opcodes[0x0A] = [=]() { SetFlag(FLAG_V, false); }; // CLV
 		m_opcodes[0x0B] = [=]() { SetFlag(FLAG_V, true); }; // SEV
 		m_opcodes[0x0C] = [=]() { SetFlag(FLAG_C, false); }; // CLC
 		m_opcodes[0x0D] = [=]() { SetFlag(FLAG_C, true); }; // SEC
-		m_opcodes[0x0E] = [=]() { SetFlag(FLAG_I, false); }; // CLI // TODO: Apply at next instruction
+		m_opcodes[0x0E] = [=]() { m_clearIntMask = true; }; // CLI
 		m_opcodes[0x0F] = [=]() { SetFlag(FLAG_I, true); }; // SEI
-
-		//TODO m_opcodes[0x10] = [=]() {}; // SBA
-		//TODO m_opcodes[0x11] = [=]() {}; // CBA
 
 		m_opcodes[0x16] = [=]() { m_reg.B = m_reg.A; AdjustNZ(m_reg.B); SetFlag(FLAG_V, false); }; // TAB
 		m_opcodes[0x17] = [=]() { m_reg.A = m_reg.B; AdjustNZ(m_reg.A); SetFlag(FLAG_V, false); }; // TBA
 
 		//TODO m_opcodes[0x19] = [=]() {}; // DAA
 
-		//TODO m_opcodes[0x1B] = [=]() {}; // ABA
-
-		// Jump / Branch
+		// Program Control
 		// ---------------------
 
 		m_opcodes[0x20] = [=]() { BRA(true); }; // BRA
@@ -82,19 +90,21 @@ namespace emul
 		m_opcodes[0x2E] = [=]() { BRA((GetFlag(FLAG_N) == GetFlag(FLAG_V)) && (GetFlag(FLAG_Z) == false)); }; // BGT
 		m_opcodes[0x2F] = [=]() { BRA((GetFlag(FLAG_N) != GetFlag(FLAG_V)) || (GetFlag(FLAG_Z) == true)); }; // BLE
 
-		// JSR
-		m_opcodes[0xAD] = [=]() { JSR(GetIndexed()); }; // JSR idx
-		m_opcodes[0xBD] = [=]() { JSR(GetExtended()); }; // JSR ext
-
 		// JMP
 		m_opcodes[0x6E] = [=]() { JMP(GetIndexed()); }; // JMP idx
 		m_opcodes[0x7E] = [=]() { JMP(GetExtended()); }; // JMP ext
 
-		// RTS
-		m_opcodes[0x39] = [=]() { RTS(); }; // RTS
+		// JSR
+		m_opcodes[0xAD] = [=]() { JSR(GetIndexed()); }; // JSR idx
+		m_opcodes[0xBD] = [=]() { JSR(GetExtended()); }; // JSR ext
 
 		// BSR
 		m_opcodes[0x8D] = [=]() { BSR(); }; // BSR rel
+
+		m_opcodes[0x39] = [=]() { RTS(); }; // RTS
+		m_opcodes[0x3B] = [=]() { RTI(); }; // RTI
+		m_opcodes[0x3E] = [=]() { WAI(); }; // WAI
+		m_opcodes[0x3F] = [=]() { SWI(); }; // SWI
 
 		// Load / Store
 		// ---------------------
@@ -178,6 +188,18 @@ namespace emul
 		m_opcodes[0x6F] = [=]() { MEMIndexedOp(&CPU6800::CLR); }; // CLR idx
 		m_opcodes[0x7F] = [=]() { MEMExtendedOp(&CPU6800::CLR); }; // CLR ext
 
+		// ADD/SUB/CMP/NEG
+
+		m_opcodes[0x10] = [=]() { SUB8(m_reg.A, m_reg.B); }; // SBA
+		m_opcodes[0x11] = [=]() { CMP8(m_reg.A, m_reg.B); }; // CBA
+		m_opcodes[0x1B] = [=]() { ADD8(m_reg.A, m_reg.B); }; // ABA
+
+		// NEG
+		m_opcodes[0x40] = [=]() { NEG(m_reg.A); }; // NEG A
+		m_opcodes[0x50] = [=]() { NEG(m_reg.B); }; // NEG B
+		m_opcodes[0x60] = [=]() { MEMIndexedOp(&CPU6800::NEG); }; // NEG idx
+		m_opcodes[0x70] = [=]() { MEMExtendedOp(&CPU6800::NEG); }; // NEG ext
+
 		// SUB A
 		m_opcodes[0x80] = [=]() { SUB8(m_reg.A, FetchByte()); }; // SUB A imm
 		m_opcodes[0x90] = [=]() { SUB8(m_reg.A, GetMemDirectByte()); }; // SUB A dir
@@ -243,6 +265,91 @@ namespace emul
 		m_opcodes[0x9C] = [=]() { CMP16(m_reg.IX, GetMemDirectWord()); }; // CPX dir
 		m_opcodes[0xAC] = [=]() { CMP16(m_reg.IX, GetMemIndexedWord()); }; // CPX idx
 		m_opcodes[0xBC] = [=]() { CMP16(m_reg.IX, GetMemExtendedWord()); }; // CPX ext
+
+		// Logic
+		// ---------------------
+
+		// AND/BIT/EOR/ORA
+
+		// AND A
+		m_opcodes[0x84] = [=]() { AND(m_reg.A, FetchByte()); }; // AND A imm
+		m_opcodes[0x94] = [=]() { AND(m_reg.A, GetMemDirectByte()); }; // AND A dir
+		m_opcodes[0xA4] = [=]() { AND(m_reg.A, GetMemIndexedByte()); }; // AND A idx
+		m_opcodes[0xB4] = [=]() { AND(m_reg.A, GetMemExtendedByte()); }; // AND A ext
+
+		// AND B
+		m_opcodes[0xC4] = [=]() { AND(m_reg.B, FetchByte()); }; // AND B imm
+		m_opcodes[0xD4] = [=]() { AND(m_reg.B, GetMemDirectByte()); }; // AND B dir
+		m_opcodes[0xE4] = [=]() { AND(m_reg.B, GetMemIndexedByte()); }; // AND B idx
+		m_opcodes[0xF4] = [=]() { AND(m_reg.B, GetMemExtendedByte()); }; // AND B ext
+
+		// BIT A
+		m_opcodes[0x85] = [=]() { BIT(m_reg.A, FetchByte()); }; // BIT A imm
+		m_opcodes[0x95] = [=]() { BIT(m_reg.A, GetMemDirectByte()); }; // BIT A dir
+		m_opcodes[0xA5] = [=]() { BIT(m_reg.A, GetMemIndexedByte()); }; // BIT A idx
+		m_opcodes[0xB5] = [=]() { BIT(m_reg.A, GetMemExtendedByte()); }; // BIT A ext
+
+		// BIT B
+		m_opcodes[0xC5] = [=]() { BIT(m_reg.B, FetchByte()); }; // BIT B imm
+		m_opcodes[0xD5] = [=]() { BIT(m_reg.B, GetMemDirectByte()); }; // BIT B dir
+		m_opcodes[0xE5] = [=]() { BIT(m_reg.B, GetMemIndexedByte()); }; // BIT B idx
+		m_opcodes[0xF5] = [=]() { BIT(m_reg.B, GetMemExtendedByte()); }; // BIT B ext
+
+		// EOR A
+		m_opcodes[0x88] = [=]() { EOR(m_reg.A, FetchByte()); }; // EOR A imm
+		m_opcodes[0x98] = [=]() { EOR(m_reg.A, GetMemDirectByte()); }; // EOR A dir
+		m_opcodes[0xA8] = [=]() { EOR(m_reg.A, GetMemIndexedByte()); }; // EOR A idx
+		m_opcodes[0xB8] = [=]() { EOR(m_reg.A, GetMemExtendedByte()); }; // EOR A ext
+
+		// EOR B
+		m_opcodes[0xC8] = [=]() { EOR(m_reg.B, FetchByte()); }; // EOR B imm
+		m_opcodes[0xD8] = [=]() { EOR(m_reg.B, GetMemDirectByte()); }; // EOR B dir
+		m_opcodes[0xE8] = [=]() { EOR(m_reg.B, GetMemIndexedByte()); }; // EOR B idx
+		m_opcodes[0xF8] = [=]() { EOR(m_reg.B, GetMemExtendedByte()); }; // EOR B ext
+
+		// ORA A
+		m_opcodes[0x8A] = [=]() { OR(m_reg.A, FetchByte()); }; // ORA A imm
+		m_opcodes[0x9A] = [=]() { OR(m_reg.A, GetMemDirectByte()); }; // ORA A dir
+		m_opcodes[0xAA] = [=]() { OR(m_reg.A, GetMemIndexedByte()); }; // ORA A idx
+		m_opcodes[0xBA] = [=]() { OR(m_reg.A, GetMemExtendedByte()); }; // ORA A ext
+
+		// ORA B
+		m_opcodes[0xCA] = [=]() { OR(m_reg.B, FetchByte()); }; // ORA B imm
+		m_opcodes[0xDA] = [=]() { OR(m_reg.B, GetMemDirectByte()); }; // ORA B dir
+		m_opcodes[0xEA] = [=]() { OR(m_reg.B, GetMemIndexedByte()); }; // ORA B idx
+		m_opcodes[0xFA] = [=]() { OR(m_reg.B, GetMemExtendedByte()); }; // ORA B ext
+
+		// Shift/Rot
+
+		// LSR
+		m_opcodes[0x44] = [=]() { LSR(m_reg.A); }; // LSR A
+		m_opcodes[0x54] = [=]() { LSR(m_reg.B); }; // LSR B
+		m_opcodes[0x64] = [=]() { MEMIndexedOp(&CPU6800::LSR); }; // LSR idx
+		m_opcodes[0x74] = [=]() { MEMExtendedOp(&CPU6800::LSR); }; // LSR ext
+
+		// ROR
+		m_opcodes[0x46] = [=]() { ROR(m_reg.A); }; // ROR A
+		m_opcodes[0x56] = [=]() { ROR(m_reg.B); }; // ROR B
+		m_opcodes[0x66] = [=]() { MEMIndexedOp(&CPU6800::ROR); }; // ROR idx
+		m_opcodes[0x76] = [=]() { MEMExtendedOp(&CPU6800::ROR); }; // ROR ext
+
+		// ASR
+		m_opcodes[0x47] = [=]() { ASR(m_reg.A); }; // ASR A
+		m_opcodes[0x57] = [=]() { ASR(m_reg.B); }; // ASR B
+		m_opcodes[0x67] = [=]() { MEMIndexedOp(&CPU6800::ASR); }; // ASR idx
+		m_opcodes[0x77] = [=]() { MEMExtendedOp(&CPU6800::ASR); }; // ASR ext
+
+		// ASL
+		m_opcodes[0x48] = [=]() { ASL(m_reg.A); }; // ASL A
+		m_opcodes[0x58] = [=]() { ASL(m_reg.B); }; // ASL B
+		m_opcodes[0x68] = [=]() { MEMIndexedOp(&CPU6800::ASL); }; // ASL idx
+		m_opcodes[0x78] = [=]() { MEMExtendedOp(&CPU6800::ASL); }; // ASL ext
+
+		// ROL
+		m_opcodes[0x49] = [=]() { ROL(m_reg.A); }; // ROL A
+		m_opcodes[0x59] = [=]() { ROL(m_reg.B); }; // ROL B
+		m_opcodes[0x69] = [=]() { MEMIndexedOp(&CPU6800::ROL); }; // ROL idx
+		m_opcodes[0x79] = [=]() { MEMExtendedOp(&CPU6800::ROL); }; // ROL ext
 	}
 
 	CPU6800::~CPU6800()
@@ -260,6 +367,8 @@ namespace emul
 
 		ClearFlags(m_reg.flags);
 		SetFlag(FLAG_I, true);
+
+		m_clearIntMask = false;
 	}
 
 	void CPU6800::Reset(ADDRESS overrideAddress)
@@ -368,6 +477,8 @@ namespace emul
 
 		m_currTiming = &m_info.GetOpcodeTiming(opcode);
 
+		bool clearIntMask = m_clearIntMask;
+
 		try
 		{
 			// Fetch the function corresponding to the opcode and run it
@@ -382,6 +493,12 @@ namespace emul
 		{
 			LogPrintf(LOG_ERROR, "CPU: Exception at address 0x%04X! Stopping CPU", m_programCounter);
 			m_state = CPUState::STOP;
+		}
+		
+		if (clearIntMask)
+		{
+			m_clearIntMask = false;
+			SetFlag(FLAG_I, false);
 		}
 	}
 
@@ -490,7 +607,25 @@ namespace emul
 	{
 		m_programCounter = popW();
 	}
-	
+
+	void CPU6800::RTI()
+	{
+		popAll();
+	}
+
+	void CPU6800::WAI()
+	{
+		pushAll();
+		Halt();
+	}
+
+	void CPU6800::SWI()
+	{
+		pushAll();
+		SetFlag(FLAG_I, true);   // Disable IRQ
+		m_programCounter = m_memory.Read16be(ADDR_SWI);
+	}
+
 	void CPU6800::LD8(BYTE& dest, BYTE src)
 	{
 		dest = src;
@@ -537,6 +672,81 @@ namespace emul
 		SetFlag(FLAG_C, false);
 	}
 
+	void CPU6800::ASL(BYTE& dest)
+	{
+		bool carry = GetMSB(dest);
+		SetFlag(FLAG_V, GetBit(dest, 6) ^ carry);
+		SetFlag(FLAG_C, carry);
+
+		dest <<= 1;
+
+		AdjustNZ(dest);
+	}
+
+	void CPU6800::ASR(BYTE& dest)
+	{
+		bool sign = GetMSB(dest);
+		bool carry = GetLSB(dest);
+		SetFlag(FLAG_C, carry);
+
+		dest >>= 1;
+		SetBit(dest, 7, sign);
+
+		AdjustNZ(dest);
+	}
+
+	void CPU6800::LSR(BYTE& dest)
+	{
+		bool lsb = GetLSB(dest);
+		dest >>= 1;
+
+		SetFlag(FLAG_C, lsb);
+		AdjustNZ(dest);
+	}
+
+	void CPU6800::ROL(BYTE& dest)
+	{
+		bool oldCarry = GetFlag(FLAG_C);
+		bool msb = GetMSB(dest);
+		SetFlag(FLAG_V, GetBit(dest, 6) ^ msb);
+		SetFlag(FLAG_C, msb);
+
+		dest <<= 1;
+		SetBit(dest, 0, oldCarry);
+
+		AdjustNZ(dest);
+	}
+
+	void CPU6800::ROR(BYTE& dest)
+	{
+		bool oldCarry = GetFlag(FLAG_C);
+		SetFlag(FLAG_C, GetLSB(dest));
+
+		dest >>= 1;
+		SetBit(dest, 7, oldCarry);
+
+		AdjustNZ(dest);
+	}
+
+	void CPU6800::EOR(BYTE& dest, BYTE src)
+	{
+		dest ^= src;
+		AdjustNZ(dest);
+		SetFlag(FLAG_V, false);
+	}
+	void CPU6800::OR(BYTE& dest, BYTE src)
+	{
+		dest |= src;
+		AdjustNZ(dest);
+		SetFlag(FLAG_V, false);
+	}
+	void CPU6800::AND(BYTE& dest, BYTE src)
+	{
+		dest &= src;
+		AdjustNZ(dest);
+		SetFlag(FLAG_V, false);
+	}
+
 	void CPU6800::INC(BYTE& dest)
 	{
 		SetFlag(FLAG_V, dest == 0b01111111);
@@ -557,60 +767,52 @@ namespace emul
 		SetFlag(FLAG_V, false);
 	}
 
+	// Get 'MSB' of low nibble (bit 3)
+	inline bool GetHMSB(BYTE nib) { return GetBit(nib, 3); }
+
 	void CPU6800::ADD8(BYTE& dest, BYTE src, bool carry)
 	{
-		BYTE oldDest = dest;
-
-		// Half carry flag
-		BYTE loNibble = (dest & 0x0F) + (src & 0x0F) + carry;
-		SetFlag(FLAG_H, (loNibble > 0x0F));
-
-		WORD temp = dest + src + carry;
-
-		dest = (BYTE)temp;
+		BYTE res = dest + src + carry;
 
 		AdjustNZ(dest);
-		SetFlag(FLAG_C, (temp > 0xFF));
-		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
+		SetFlag(FLAG_C, (GetMSB(dest) && GetMSB(src)) || (!GetMSB(res) && (GetMSB(src) || GetMSB(dest))));
+		SetFlag(FLAG_H, (GetHMSB(dest) && GetHMSB(src)) || (!GetHMSB(res) && (GetHMSB(src) || GetHMSB(dest))));
+		SetFlag(FLAG_V, (GetMSB(dest) == GetMSB(src)) && (GetMSB(res) != GetMSB(src)));
+
+		dest = res;
 	}
 
 	void CPU6800::ADD16(WORD& dest, WORD src, bool carry)
 	{
-		WORD oldDest = dest;
-
-		DWORD temp = dest + src + carry;
-
-		dest = (WORD)temp;
+		WORD res = dest + src + carry;
 
 		AdjustNZ(dest);
-		SetFlag(FLAG_C, (temp > 0xFFFF));
-		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
+		SetFlag(FLAG_C, (GetMSB(dest) && GetMSB(src)) || (!GetMSB(res) && (GetMSB(src) || GetMSB(dest))));
+		SetFlag(FLAG_V, (GetMSB(dest) == GetMSB(src)) && (GetMSB(res) != GetMSB(src)));
+
+		dest = res;
 	}
 
 	void CPU6800::SUB8(BYTE& dest, BYTE src, bool borrow)
 	{
-		BYTE oldDest = dest;
-
-		WORD temp = dest - src - borrow;
-
-		dest = (BYTE)temp;
+		BYTE res = dest - src - borrow;
 
 		AdjustNZ(dest);
-		SetFlag(FLAG_C, (temp > 0xFF));
-		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
+		SetFlag(FLAG_C, (GetMSB(res) && GetMSB(src)) || (!GetMSB(dest) && (GetMSB(src) || GetMSB(res))));
+		SetFlag(FLAG_V, (GetMSB(dest) != GetMSB(src)) && (GetMSB(res) == GetMSB(src)));
+
+		dest = res;
 	}
 
 	void CPU6800::SUB16(WORD& dest, WORD src, bool borrow)
 	{
-		WORD oldDest = dest;
-
-		DWORD temp = dest - src - borrow;
-
-		dest = (WORD)temp;
+		WORD res = dest - src - borrow;
 
 		AdjustNZ(dest);
-		SetFlag(FLAG_C, (temp > 0xFFFF));
-		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
+		SetFlag(FLAG_C, (GetMSB(res) && GetMSB(src)) || (!GetMSB(dest) && (GetMSB(src) || GetMSB(res))));
+		SetFlag(FLAG_V, (GetMSB(dest) != GetMSB(src)) && (GetMSB(res) == GetMSB(src)));
+
+		dest = res;
 	}
 
 	void CPU6800::NEG(BYTE& dest)

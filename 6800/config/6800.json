@@ -141,7 +141,7 @@
       { "name": "ADC A #{i8}",  "timing": [2] },
       { "name": "ORA A #{i8}",  "timing": [2] },
       { "name": "ADD A #{i8}",  "timing": [2] },
-      { "name": "CPX #{i16}",  "timing": [3] },
+      { "name": "CPX #{i16}",   "timing": [3] },
       { "name": "BSR {s8}",     "timing": [2] },
       { "name": "LDS #{i16}",   "timing": [3] },
 

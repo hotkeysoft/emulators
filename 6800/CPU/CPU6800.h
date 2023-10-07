@@ -38,8 +38,8 @@ namespace emul
 		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
 
 		// Interrupts
-		//void SetIRQ(bool irq) { m_irq = irq; }
-		//void SetNMI(bool nmi) { m_nmi.Set(nmi); }
+		void SetIRQ(bool irq) { m_irq = irq; }
+		void SetNMI(bool nmi) { m_nmi.Set(nmi); }
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
@@ -52,7 +52,6 @@ namespace emul
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
 		// Use third timing conditional penalty (2nd value not used)
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
-		inline void TICKPAGE() { CPU::TICK(1); } // Page crossing penalty
 		inline void TICKINT() { CPU::TICK(m_info.GetMiscTiming(cpuInfo::MiscTiming::TRAP)[0]); }
 
 		// Hardware vectors
@@ -74,6 +73,8 @@ namespace emul
 
 		// IRQ is level sensitive
 		bool m_irq = false;
+
+		bool m_clearIntMask = false;
 
 		virtual void Interrupt();
 
@@ -163,6 +164,10 @@ namespace emul
 		void JSR(ADDRESS dest);
 		void RTS();
 
+		void WAI();
+		void SWI();
+		void RTI();
+
 		// Load
 		void LD8(BYTE& dest, BYTE src);
 		void LD16(WORD& dest, WORD src);
@@ -171,8 +176,18 @@ namespace emul
 		void ST8(ADDRESS dest, BYTE src);
 		void ST16(ADDRESS dest, WORD src);
 
+		// Logical
+		void ASL(BYTE& dest); // Arithmetic Shift Left
+		void ASR(BYTE& dest); // Arithmetic Shift Right
+		void LSR(BYTE& dest); // Logical Shift Right
+		void ROL(BYTE& dest); // Rotate Left Through Carry
+		void ROR(BYTE& dest); // Rotate Right Through Carry
+		void EOR(BYTE& dest, BYTE src); // Logical XOR
+		void OR(BYTE& dest, BYTE src); // Logical OR
+		void AND(BYTE& dest, BYTE src); // Logical AND
+
 		// dest by value so it's not modified
-		//void BIT(BYTE dest, BYTE src) { return AND(dest, src); }
+		void BIT(BYTE dest, BYTE src) { return AND(dest, src); }
 
 		void CLR(BYTE& dest); // Clear
 		void COM(BYTE& dest); // Complement
