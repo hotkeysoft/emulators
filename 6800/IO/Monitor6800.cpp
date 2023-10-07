@@ -10,14 +10,14 @@ namespace emul
 {
 	static const char hexDigits[] = "0123456789ABCDEF";
 
-	Monitor6800::Monitor6800(Console& console) :
-		m_console(console)
+	Monitor6800::Monitor6800(Console& console) : MonitorBase(console)
 	{
 	}
 
 	void Monitor6800::Init(CPU* cpu, Memory& memory)
 	{
-		m_cpu = dynamic_cast<CPU6800*>(cpu);
+		assert(dynamic_cast<CPU6800*>(cpu));
+		m_cpu = cpu;
 		m_memory = &memory;
 	}
 
@@ -60,7 +60,7 @@ namespace emul
 			{
 				Instruction decoded;
 				// Set breakpoint at next instruction
-				ADDRESS next = Disassemble(m_cpu->GetCurrentAddress(), decoded);
+				ADDRESS next = Disassemble(GetCPU()->GetCurrentAddress(), decoded);
 				m_breakpointEnabled = true;
 				m_breakpoint = next;
 				m_runMode = RUNMode::RUN;
@@ -68,7 +68,7 @@ namespace emul
 			}
 			case 98: // CTRL-F5
 				m_runMode = RUNMode::STEP;
-				m_cpu->Reset();
+				GetCPU()->Reset();
 				Update();
 				break;
 
@@ -87,7 +87,7 @@ namespace emul
 				else
 				{
 					m_breakpointEnabled = true;
-					m_breakpoint = m_cpu->GetCurrentAddress();
+					m_breakpoint = GetCPU()->GetCurrentAddress();
 				}
 				UpdateCode();
 				break;
@@ -112,7 +112,7 @@ namespace emul
 
 	void Monitor6800::Show()
 	{
-		std::string ansiFile = m_cpu->GetInfo().GetANSIFile();
+		std::string ansiFile = GetCPU()->GetInfo().GetANSIFile();
 
 		if (ansiFile.size())
 		{
@@ -123,34 +123,6 @@ namespace emul
 		UpdateRunMode();
 		UpdateRAMMode();
 		UpdateCPUType();
-	}
-
-	void Monitor6800::WriteValueNibble(BYTE value, const cpuInfo::Coord& coord, WORD attr)
-	{
-		static char hex[1];
-		hex[0] = hexDigits[(value & 0x0F)];
-
-		m_console.WriteAt(coord.x, coord.y, hex, 1, attr);
-	}
-
-	void Monitor6800::WriteValueHex(BYTE value, const Coord& coord, WORD attr)
-	{
-		static char hex[2];
-		hex[0] = hexDigits[value >> 4];
-		hex[1] = hexDigits[(value & 0x0F)];
-
-		m_console.WriteAt(coord.x, coord.y, hex, 2, attr);
-	}
-
-	void Monitor6800::WriteValueHex(WORD value, const Coord& coord, WORD attr)
-	{
-		static char hex[4];
-		hex[0] = hexDigits[(value >> 12) & 0x0F];
-		hex[1] = hexDigits[(value >> 8) & 0x0F];
-		hex[2] = hexDigits[(value >> 4) & 0x0F];
-		hex[3] = hexDigits[(value & 0x0F)];
-
-		m_console.WriteAt(coord.x, coord.y, hex, 4, attr);
 	}
 
 	void Monitor6800::Update()
@@ -164,9 +136,9 @@ namespace emul
 
 	void Monitor6800::UpdateCPUType()
 	{
-		static Coord cpuId = m_cpu->GetInfo().GetCoord("CPUID");
+		static Coord cpuId = GetCPU()->GetInfo().GetCoord("CPUID");
 		std::ostringstream os;
-		os << std::setw(cpuId.w) << m_cpu->GetInfo().GetId();
+		os << std::setw(cpuId.w) << GetCPU()->GetInfo().GetId();
 		m_console.WriteAt(cpuId.x, cpuId.y, os.str().c_str());
 	}
 
@@ -174,15 +146,14 @@ namespace emul
 	{
 		m_runMode = (m_runMode == RUNMode::RUN) ? RUNMode::STEP : RUNMode::RUN;
 		UpdateRunMode();
-
 	}
 
 	void Monitor6800::UpdateRunMode()
 	{
 		const WORD highlight = (3 << 4) | 14;
 		const WORD regular = (1 << 4) | 14;
-		static Coord run = m_cpu->GetInfo().GetCoord("status.RUN");
-		static Coord stop = m_cpu->GetInfo().GetCoord("status.STOP");
+		static Coord run = GetCPU()->GetInfo().GetCoord("status.RUN");
+		static Coord stop = GetCPU()->GetInfo().GetCoord("status.STOP");
 
 		m_console.WriteAttrAt(run.x, run.y, (m_runMode == RUNMode::RUN) ? highlight : regular, run.w);
 		m_console.WriteAttrAt(stop.x, stop.y, (m_runMode == RUNMode::STEP) ? highlight : regular, stop.w);
@@ -206,11 +177,11 @@ namespace emul
 	{
 		const WORD highlight = (3 << 4) | 14;
 		const WORD regular = (0 << 4) | 8;
-		static Coord ramZP = m_cpu->GetInfo().GetCoord("ram.ZP");
-		static Coord ramIX = m_cpu->GetInfo().GetCoord("ram.IX");
-		static Coord ramPC = m_cpu->GetInfo().GetCoord("ram.PC");
-		static Coord ramSTACK = m_cpu->GetInfo().GetCoord("ram.SP");
-		static Coord ramCustom = m_cpu->GetInfo().GetCoord("ram.CUSTOM");
+		static Coord ramZP = GetCPU()->GetInfo().GetCoord("ram.ZP");
+		static Coord ramIX = GetCPU()->GetInfo().GetCoord("ram.IX");
+		static Coord ramPC = GetCPU()->GetInfo().GetCoord("ram.PC");
+		static Coord ramSTACK = GetCPU()->GetInfo().GetCoord("ram.SP");
+		static Coord ramCustom = GetCPU()->GetInfo().GetCoord("ram.CUSTOM");
 
 		m_console.WriteAttrAt(ramZP.x, ramZP.y, (m_ramMode == RAMMode::ZP) ? highlight : regular, ramZP.w);
 		m_console.WriteAttrAt(ramIX.x, ramIX.y, (m_ramMode == RAMMode::IX) ? highlight : regular, ramIX.w);
@@ -229,41 +200,41 @@ namespace emul
 
 	void Monitor6800::UpdateRegisters()
 	{
-		static Coord regA = m_cpu->GetInfo().GetCoord("A");
-		static Coord regB = m_cpu->GetInfo().GetCoord("B");
-		static Coord regIX = m_cpu->GetInfo().GetCoord("IX");
-		static Coord regPC = m_cpu->GetInfo().GetCoord("PC");
-		static Coord regSP = m_cpu->GetInfo().GetCoord("SP");
+		static Coord regA = GetCPU()->GetInfo().GetCoord("A");
+		static Coord regB = GetCPU()->GetInfo().GetCoord("B");
+		static Coord regIX = GetCPU()->GetInfo().GetCoord("IX");
+		static Coord regPC = GetCPU()->GetInfo().GetCoord("PC");
+		static Coord regSP = GetCPU()->GetInfo().GetCoord("SP");
 
-		WriteValueHex(m_cpu->m_reg.A, regA);
-		WriteValueHex(m_cpu->m_reg.B, regB);
-		WriteValueHex(m_cpu->m_reg.IX, regIX);
+		WriteValueHex(GetCPU()->m_reg.A, regA);
+		WriteValueHex(GetCPU()->m_reg.B, regB);
+		WriteValueHex(GetCPU()->m_reg.IX, regIX);
 
-		WriteValueHex((WORD)m_cpu->m_reg.SP, regSP);
-		WriteValueHex((WORD)m_cpu->GetCurrentAddress(), regPC);
+		WriteValueHex((WORD)GetCPU()->m_reg.SP, regSP);
+		WriteValueHex((WORD)GetCPU()->GetCurrentAddress(), regPC);
 	}
 
 	void Monitor6800::UpdateTicks()
 	{
-		uint32_t ticks = m_cpu->GetInstructionTicks();
+		uint32_t ticks = GetCPU()->GetInstructionTicks();
 		static char buf[5];
 		sprintf(buf, "%4d", (BYTE)ticks);
 
-		static Coord coord = m_cpu->GetInfo().GetCoord("TICKS");
+		static Coord coord = GetCPU()->GetInfo().GetCoord("TICKS");
 
 		m_console.WriteAt(coord.x, coord.y, buf, 4);
 	}
 
 	void Monitor6800::UpdateFlags()
 	{
-		static Coord coord = m_cpu->GetInfo().GetCoord("FLAGS");
+		static Coord coord = GetCPU()->GetInfo().GetCoord("FLAGS");
 		int width = coord.w;
 
 		static WORD attr[8];
 
 		for (int i = 0; i < width; ++i)
 		{
-			attr[width-i-1] = GetBit(m_cpu->m_reg.flags, i) ? 15 : 8;
+			attr[width-i-1] = GetBit(GetCPU()->m_reg.flags, i) ? 15 : 8;
 		}
 
 		m_console.WriteAttrAt(coord.x, coord.y, attr, width);
@@ -276,9 +247,9 @@ namespace emul
 		case RAMMode::ZP:
 			return 0;
 		case RAMMode::SP:
-			return  m_cpu->m_reg.SP;
+			return  GetCPU()->m_reg.SP;
 		case RAMMode::PC:
-			return  m_cpu->GetCurrentAddress();
+			return  GetCPU()->GetCurrentAddress();
 		case RAMMode::CUSTOM:
 		default:
 			return m_customMemView;
@@ -287,9 +258,9 @@ namespace emul
 
 	void Monitor6800::UpdateRAM()
 	{
-		static Coord addrPos = m_cpu->GetInfo().GetCoord("ram.ADDR");
-		static Coord hexPos = m_cpu->GetInfo().GetCoord("ram.HEX");
-		static Coord charPos = m_cpu->GetInfo().GetCoord("ram.CHAR");
+		static Coord addrPos = GetCPU()->GetInfo().GetCoord("ram.ADDR");
+		static Coord hexPos = GetCPU()->GetInfo().GetCoord("ram.HEX");
+		static Coord charPos = GetCPU()->GetInfo().GetCoord("ram.CHAR");
 		static unsigned bytesPerLine = charPos.w;
 		static unsigned bytesTotal = charPos.w * charPos.h;
 
@@ -351,9 +322,9 @@ namespace emul
 
 	void Monitor6800::PrintInstruction(short y, Instruction& instr)
 	{
-		static Coord addressPos = m_cpu->GetInfo().GetCoord("CODE.address");
-		static Coord rawPos = m_cpu->GetInfo().GetCoord("CODE.raw");
-		static Coord textPos = m_cpu->GetInfo().GetCoord("CODE.text");
+		static Coord addressPos = GetCPU()->GetInfo().GetCoord("CODE.address");
+		static Coord rawPos = GetCPU()->GetInfo().GetCoord("CODE.raw");
+		static Coord textPos = GetCPU()->GetInfo().GetCoord("CODE.text");
 		static short baseY = addressPos.y;
 
 		// TODO: Horribly inefficient
@@ -378,9 +349,9 @@ namespace emul
 
 	void Monitor6800::UpdateCode()
 	{
-		static Coord codePos = m_cpu->GetInfo().GetCoord("CODE");
+		static Coord codePos = GetCPU()->GetInfo().GetCoord("CODE");
 
-		ADDRESS address = m_cpu->GetCurrentAddress();
+		ADDRESS address = GetCPU()->GetCurrentAddress();
 
 		m_console.MoveBlockY(codePos.x, codePos.y, codePos.w, 4, codePos.y - 1);
 
@@ -394,25 +365,14 @@ namespace emul
 
 	void Monitor6800::ClearCode()
 	{
-		static Coord codePos = m_cpu->GetInfo().GetCoord("CODE");
+		static Coord codePos = GetCPU()->GetInfo().GetCoord("CODE");
 
 		m_console.Clear(codePos.x, codePos.y, codePos.w, codePos.h);
 
 		// Show last instruction
 		Instruction decoded;
-		Disassemble(m_cpu->GetLastAddress(), decoded);
+		Disassemble(GetCPU()->GetLastAddress(), decoded);
 		PrintInstruction(4, decoded);
-	}
-
-	bool Monitor6800::Replace(std::string& str, const std::string& from, const std::string& to)
-	{
-		size_t start = str.find(from);
-		if (start == std::string::npos)
-		{
-			return false;
-		}
-		str.replace(start, from.size(), to);
-		return true;
 	}
 
 	ADDRESS Monitor6800::Disassemble(ADDRESS address, Monitor6800::Instruction& decoded)
@@ -422,7 +382,7 @@ namespace emul
 
 		decoded.AddRaw(data);
 
-		Opcode instr = m_cpu->GetInfo().GetOpcode(data);
+		Opcode instr = GetCPU()->GetInfo().GetOpcode(data);
 		std::string text = instr.text;
 
 		char buf[32];

@@ -10,10 +10,14 @@
 #include <CPU/MemoryBlock.h>
 
 #include "IO/Console.h"
+#include "IO/MonitorBase.h"
 #include "IO/Monitor6800.h"
+#include "IO/Monitor6809.h"
 
 #include <Computer/ComputerBase.h>
 #include "Computer6800.h"
+#include "Computer6809.h"
+#include "ComputerThomson.h"
 
 #include <conio.h>
 #include <vector>
@@ -27,6 +31,10 @@
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
+
+#ifdef CPU_TEST
+#include "CPU/CPU6809Test.h"
+#endif
 
 namespace fs = std::filesystem;
 
@@ -45,7 +53,7 @@ Mode mode = Mode::LOG;
 emul::ADDRESS customMemoryView = 0;
 
 Console console;
-emul::Monitor6800* monitor = nullptr;
+emul::MonitorBase* monitor = nullptr;
 
 const size_t BACKLOG_MAX = 1000;
 std::string backLog[BACKLOG_MAX];
@@ -134,6 +142,14 @@ ComputerBase* CreateComputer(std::string arch)
 	{
 		computer = new emul::Computer6800();
 	}
+	else if (arch == "6809")
+	{
+		computer = new emul::Computer6809();
+	}
+	else if (arch == "thomson")
+	{
+		computer = new emul::ComputerThomson();
+	}
 
 	return computer;
 }
@@ -153,6 +169,10 @@ void InitPC(ComputerBase* pc, Overlay& overlay, bool reset = true)
 	{
 		monitor = new emul::Monitor6800(console);
 	}
+	else if (cpuID == "6809")
+	{
+		monitor = new emul::Monitor6809(console);
+	}	
 	else
 	{
 		throw std::exception("Unknown cpuID");
@@ -239,7 +259,7 @@ ComputerBase* RestoreNewComputerFromSnapshot()
 			// Starting here, anything failing is non-recoverable
 			failureIsFatal = true;
 
-			int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram", 640);
+			int32_t baseRAM = CONFIG().GetValueInt32("core", "baseram");
 			newPC->Init(baseRAM);
 
 			newPC->SetSerializationDir(snapshotDir);
@@ -455,10 +475,6 @@ int main(int argc, char* args[])
 							sprintf(buf, "dump/RAM_%zu.bin", time(nullptr));
 							fprintf(stderr, "Dump RAM to %s\n", buf);
 							pc->GetMemory().Dump(0x0000, 0, buf);
-
-							sprintf(buf, "dump/VRAM_%zu.bin", time(nullptr));
-							fprintf(stderr, "Dump VRAM to %s\n", buf);
-							pc->GetMemory().Dump(0x8000, 0, buf);
 							break;
 						}
 						case FKEY + 6:

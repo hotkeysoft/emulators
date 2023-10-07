@@ -32,11 +32,13 @@
     <ClInclude Include="..\Common\CPU\MemoryBlockBase.h" />
     <ClInclude Include="..\Common\CPU\PortConnector.h" />
     <ClInclude Include="..\Common\FileUtil.h" />
+    <ClInclude Include="..\Common\Hardware\Device6520.h" />
     <ClInclude Include="..\Common\inipp.h" />
     <ClInclude Include="..\Common\IO\Console.h" />
     <ClInclude Include="..\Common\IO\DeviceJoystick.h" />
     <ClInclude Include="..\Common\IO\DeviceJoystickDigital.h" />
     <ClInclude Include="..\Common\IO\DeviceKeyboard.h" />
+    <ClInclude Include="..\Common\IO\DeviceMouse.h" />
     <ClInclude Include="..\Common\IO\InputEvents.h" />
     <ClInclude Include="..\Common\json.hpp" />
     <ClInclude Include="..\Common\Logger.h" />
@@ -53,9 +55,25 @@
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="..\Common\Video\VideoNull.h" />
     <ClInclude Include="Computer6800.h" />
+    <ClInclude Include="Computer6809.h" />
+    <ClInclude Include="ComputerThomson.h" />
     <ClInclude Include="CPU\CPU6800.h" />
+    <ClInclude Include="CPU\CPU6809.h" />
+    <ClInclude Include="Hardware\Device6520TO7_PIA.h" />
+    <ClInclude Include="Hardware\Device6846.h" />
+    <ClInclude Include="Hardware\Device6846TO7_PIA.h" />
+    <ClInclude Include="Hardware\DevicePIAThomson.h" />
+    <ClInclude Include="Hardware\DevicePIAThomsonTO7.h" />
+    <ClInclude Include="Hardware\PIAEventsThomson.h" />
+    <ClInclude Include="IO\DeviceLightpenThomson.h" />
+    <ClInclude Include="Hardware\Device6520MO5_PIA.h" />
+    <ClInclude Include="IO\DeviceKeyboardThomson.h" />
     <ClInclude Include="IO\Monitor6800.h" />
+    <ClInclude Include="IO\Monitor6809.h" />
+    <ClInclude Include="IO\MonitorBase.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ThomsonModel.h" />
+    <ClInclude Include="Video\VideoThomson.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Computer\ComputerBase.cpp" />
@@ -69,6 +87,7 @@
     <ClCompile Include="..\Common\CPU\MemoryBlockBase.cpp" />
     <ClCompile Include="..\Common\CPU\PortConnector.cpp" />
     <ClCompile Include="..\Common\FileUtil.cpp" />
+    <ClCompile Include="..\Common\Hardware\Device6520.cpp" />
     <ClCompile Include="..\Common\IO\Console.cpp" />
     <ClCompile Include="..\Common\IO\DeviceJoystick.cpp" />
     <ClCompile Include="..\Common\IO\DeviceJoystickDigital.cpp" />
@@ -84,8 +103,20 @@
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="Computer6800.cpp" />
+    <ClCompile Include="Computer6809.cpp" />
+    <ClCompile Include="ComputerThomson.cpp" />
     <ClCompile Include="CPU\CPU6800.cpp" />
+    <ClCompile Include="CPU\CPU6809.cpp" />
+    <ClCompile Include="Hardware\Device6520TO7_PIA.cpp" />
+    <ClCompile Include="Hardware\Device6846.cpp" />
+    <ClCompile Include="Hardware\Device6846TO7_PIA.cpp" />
+    <ClCompile Include="Hardware\DevicePIAThomsonTO7.cpp" />
+    <ClCompile Include="IO\DeviceLightpenThomson.cpp" />
+    <ClCompile Include="Hardware\Device6520MO5_PIA.cpp" />
+    <ClCompile Include="IO\DeviceKeyboardThomson.cpp" />
     <ClCompile Include="IO\Monitor6800.cpp" />
+    <ClCompile Include="IO\Monitor6809.cpp" />
+    <ClCompile Include="IO\MonitorBase.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -93,12 +124,19 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Video\VideoThomson.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config\6800.ans">
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="config\6800.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="config\6809.ans">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="config\6809.json">
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="config\config.ini">

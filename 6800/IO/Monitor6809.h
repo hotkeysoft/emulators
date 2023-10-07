@@ -1,16 +1,14 @@
 #pragma once
 
+#include "MonitorBase.h"
 #include <IO/Console.h>
 #include <CPU/Memory.h>
 #include <CPU/CPUInfo.h>
+#include "CPU/CPU6809.h"
 
 namespace emul
 {
-	class CPU;
-	class CPU6809;
-
-	enum class MonitorState { RUN, WAIT, EXIT, SWITCH_MODE };
-	class Monitor6809
+	class Monitor6809 : public MonitorBase
 	{
 	public:
 		Monitor6809(Console& console);
@@ -22,24 +20,19 @@ namespace emul
 		Monitor6809(Monitor6809&&) = delete;
 		Monitor6809& operator=(Monitor6809&&) = delete;
 
-		virtual void Init(CPU* cpu, Memory& memory);
+		virtual void Init(CPU* cpu, Memory& memory) override;
 
-		void SetCustomMemoryView(ADDRESS address) { m_customMemView = address; }
-
-		void Show();
-		MonitorState Run();
-		void Update();
+		virtual void Show() override;
+		virtual MonitorState Run() override;
+		virtual void Update() override;
 
 	protected:
-		ADDRESS m_customMemView = 0;
-
 		struct Instruction
 		{
 			void AddRaw(BYTE b);
 			void AddRaw(WORD w);
 
 			ADDRESS address;
-			WORD offset;
 			BYTE len = 0;
 			BYTE raw[16];
 			char text[32];
@@ -53,10 +46,6 @@ namespace emul
 		virtual void UpdateRAMMode();
 		void UpdateCPUType();
 
-		void WriteValueNibble(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
-		void WriteValueHex(BYTE value, const cpuInfo::Coord& coord, WORD attr = 15);
-		void WriteValueHex(WORD value, const cpuInfo::Coord& coord, WORD attr = 15);
-
 		virtual void UpdateRegisters();
 		void UpdateTicks();
 		void UpdateFlags();
@@ -64,21 +53,15 @@ namespace emul
 		void UpdateRAM();
 		void PrintInstruction(short y, Instruction& instr);
 		void UpdateCode();
-
-		static bool Replace(std::string& str, const std::string& from, const std::string& to);
+		void ClearCode();
 
 		virtual ADDRESS Disassemble(ADDRESS address, Monitor6809::Instruction& decoded);
 		void DecodeIndexedInstruction(cpuInfo::Opcode& opcode, BYTE idx);
 		void DecodeStackRegs(char* buf, BYTE regs, bool isU);
 
-		enum class RUNMode { STEP, RUN };
-		RUNMode m_runMode = RUNMode::STEP;
-
 		enum class RAMMode { DP, X, Y, SP, USP, PC, CUSTOM };
 		RAMMode m_ramMode = RAMMode::DP;
 
-		CPU6809* m_cpu = nullptr;
-		Memory* m_memory = nullptr;
-		Console& m_console;
+		CPU6809* GetCPU() const { return dynamic_cast<CPU6809*>(m_cpu); }
 	};
 }
