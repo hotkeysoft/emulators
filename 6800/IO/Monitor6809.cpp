@@ -256,7 +256,7 @@ namespace emul
 
 		for (int i = 0; i < width; ++i)
 		{
-			attr[width-i-1] = GetBit(GetCPU()->m_reg.flags, i) ? 15 : 8;
+			attr[width-i-1] = GetBit(GetCPU()->m_flags, i) ? 15 : 8;
 		}
 
 		m_console.WriteAttrAt(coord.x, coord.y, attr, width);

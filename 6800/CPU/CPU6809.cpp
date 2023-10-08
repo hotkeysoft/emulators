@@ -5,32 +5,12 @@ using cpuInfo::Opcode;
 
 namespace emul
 {
-	CPU6809::CPU6809(Memory& memory) : CPU6809("6809", memory)
+	CPU6809::CPU6809(Memory& memory) : CPU6800("6809", memory), Logger("6809")
 	{
 		static_assert(sizeof(m_reg.D) == 2);
 		static_assert(sizeof(m_reg.ab.A) == 1);
 		static_assert(sizeof(m_reg.ab.B) == 1);
-	}
-
-	CPU6809::CPU6809(const char* cpuid, Memory& memory) :
-		CPU(CPU6809_ADDRESS_BITS, memory),
-		m_info(cpuid),
-		Logger(cpuid)
-	{
-		try
-		{
-			m_info.LoadConfig();
-		}
-		catch (nlohmann::detail::exception e)
-		{
-			LogPrintf(LOG_ERROR, "Fatal json error loading config: %s", e.what());
-			throw;
-		}
-		catch (std::exception e)
-		{
-			LogPrintf(LOG_ERROR, "Fatal error loading config: %s", e.what());
-			throw;
-		}
+		FLAG_RESERVED_ON = (FLAG)0;
 	}
 
 	void CPU6809::Init()
@@ -60,9 +40,9 @@ namespace emul
 		m_opcodes[0x12] = [=]() { }; // NOP
 		m_opcodes[0x16] = [=]() { LBRA(true); }; // LBRA
 		m_opcodes[0x17] = [=]() { LBSR(); }; // LBSR
-		m_opcodes[0x1A] = [=]() { m_reg.flags |= FetchByte(); }; // ORCC imm
+		m_opcodes[0x1A] = [=]() { m_flags |= FetchByte(); }; // ORCC imm
 		m_opcodes[0x1B] = [=]() {}; // NOP (undocumented)
-		m_opcodes[0x1C] = [=]() { m_reg.flags &= FetchByte(); }; // ANDCC imm
+		m_opcodes[0x1C] = [=]() { m_flags &= FetchByte(); }; // ANDCC imm
 		m_opcodes[0x1D] = [=]() { SEX(); }; // SEX
 		m_opcodes[0x1E] = [=]() { EXG(FetchByte()); }; // EXG r0,r1
 		m_opcodes[0x1F] = [=]() { TFR(FetchByte()); }; // TFR r0,r1
@@ -92,7 +72,7 @@ namespace emul
 		m_opcodes[0x35] = [=]() { PUL(STACK::S, FetchByte()); }; // PULS
 		m_opcodes[0x36] = [=]() { PSH(STACK::U, FetchByte()); }; // PSHU
 		m_opcodes[0x37] = [=]() { PUL(STACK::U, FetchByte()); }; // PULU
-		m_opcodes[0x38] = [=]() { m_reg.flags &= FetchByte(); }; // ANDCC imm (undocumented)
+		m_opcodes[0x38] = [=]() { m_flags &= FetchByte(); }; // ANDCC imm (undocumented)
 		m_opcodes[0x39] = [=]() { RTS(); }; // RTS
 		m_opcodes[0x3A] = [=]() { m_reg.X += m_reg.ab.B; }; // ABX
 		m_opcodes[0x3B] = [=]() { RTI(); }; // RTI
@@ -391,7 +371,7 @@ namespace emul
 
 	void CPU6809::Reset()
 	{
-		CPU::Reset();
+		CPU6800::Reset();
 
 		// TODO: Check if values are reset
 		m_reg.D = 0;
@@ -400,39 +380,7 @@ namespace emul
 		m_reg.X = 0;
 		m_reg.Y = 0;
 
-		m_nmiEnabled = false;
-		m_nmi.ResetLatch();
-		m_irq = false;
 		m_firq = false;
-
-		ADDRESS resetAddr = m_memory.Read16be(ADDR_RESET);
-
-		m_programCounter = resetAddr;
-
-		ClearFlags(m_reg.flags);
-	}
-
-	void CPU6809::Reset(ADDRESS overrideAddress)
-	{
-		Reset();
-		m_programCounter = overrideAddress;
-	}
-
-	BYTE CPU6809::FetchByte()
-	{
-		BYTE b = m_memory.Read8(GetCurrentAddress());
-		++m_programCounter;
-		m_programCounter &= 0xFFFF;
-		return b;
-	}
-
-	WORD CPU6809::FetchWord()
-	{
-		// Big endian
-		BYTE h = FetchByte();
-		BYTE l = FetchByte();
-
-		return MakeWord(h, l);
 	}
 
 	void CPU6809::MEMDirectOp(std::function<void(CPU6809*, BYTE&)> func)
@@ -539,71 +487,18 @@ namespace emul
 		return ea;
 	}
 
-	bool CPU6809::Step()
-	{
-		bool ret = true;
-		if (m_state != CPUState::HALT)
-		{
-			ret = CPU::Step();
-		}
-
-		if (m_state == CPUState::HALT)
-		{
-			Halt();
-			m_opTicks = 1;
-			ret = true;
-		}
-
-		if (ret)
-		{
-			Interrupt();
-		}
-
-		return ret;
-	}
-
 	void CPU6809::Dump()
 	{
 		LogPrintf(LOG_ERROR, "AB = %04X", m_reg.D);
 		LogPrintf(LOG_ERROR, "X  = %04X", m_reg.X);
 		LogPrintf(LOG_ERROR, "Y  = %04X", m_reg.Y);
 		LogPrintf(LOG_ERROR, "Flags EFHINZVC");
-		LogPrintf(LOG_ERROR, "      "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(m_reg.flags));
+		LogPrintf(LOG_ERROR, "      "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(m_flags));
 		LogPrintf(LOG_ERROR, "S  = %04X", m_reg.S);
 		LogPrintf(LOG_ERROR, "U  = %04X", m_reg.U);
 		LogPrintf(LOG_ERROR, "DP = %02X", m_reg.DP);
 		LogPrintf(LOG_ERROR, "PC = %04X", m_programCounter);
 		LogPrintf(LOG_ERROR, "");
-	}
-
-	void CPU6809::UnknownOpcode()
-	{
-		LogPrintf(LOG_ERROR, "CPU: Unknown Opcode (0x%02X) at address 0x%04X", m_opcode, m_programCounter);
-		Dump();
-		throw std::exception("Unknown opcode");
-	}
-
-	void CPU6809::Exec(BYTE opcode)
-	{
-		m_opcode = opcode;
-
-		m_currTiming = &m_info.GetOpcodeTiming(opcode);
-
-		try
-		{
-			// Fetch the function corresponding to the opcode and run it
-			{
-				auto& opFunc = m_opcodes[opcode];
-				opFunc();
-			}
-
-			TICK();
-		}
-		catch (std::exception e)
-		{
-			LogPrintf(LOG_ERROR, "CPU: Exception at address 0x%04X! Stopping CPU", m_programCounter);
-			m_state = CPUState::STOP;
-		}
 	}
 
 	// TODO: handle: - multiples prefixes
@@ -733,7 +628,7 @@ namespace emul
 		}
 		if (GetBit(regs, 0))
 		{
-			push(m_reg.flags);
+			push(m_flags);
 		}
 	}
 	void CPU6809::PUL(STACK s, BYTE regs)
@@ -742,7 +637,7 @@ namespace emul
 
 		if (GetBit(regs, 0))
 		{
-			m_reg.flags = pop();
+			m_flags = pop();
 		}
 		if (GetBit(regs, 1))
 		{
@@ -782,16 +677,6 @@ namespace emul
 	}
 
 	// Branching
-	void CPU6809::BRA(bool condition)
-	{
-		SBYTE rel = FetchSignedByte();
-		if (condition == true)
-		{
-			m_PC += rel;
-			// No time penalty for short branches
-		}
-	}
-
 	void CPU6809::LBRA(bool condition)
 	{
 		SWORD rel = FetchSignedWord();
@@ -825,7 +710,6 @@ namespace emul
 
 		m_PC += rel;
 	}
-
 
 	void CPU6809::RTS()
 	{
@@ -874,18 +758,6 @@ namespace emul
 		m_PC = m_memory.Read16be(ADDR_SWI2);
 	}
 
-	void CPU6809::AdjustNZ(BYTE val)
-	{
-		SetFlag(FLAG_N, GetBit(val, 7));
-		SetFlag(FLAG_Z, val == 0);
-	}
-
-	void CPU6809::AdjustNZ(WORD val)
-	{
-		SetFlag(FLAG_N, GetBit(val, 15));
-		SetFlag(FLAG_Z, val == 0);
-	}
-
 	void CPU6809::LEA(WORD& dest, bool setZero)
 	{
 		dest = GetIndexed();
@@ -894,36 +766,6 @@ namespace emul
 		{
 			SetFlag(FLAG_Z, dest == 0);
 		}
-	}
-
-	void CPU6809::LD8(BYTE& dest, BYTE src)
-	{
-		dest = src;
-		AdjustNZ(dest);
-		SetFlag(FLAG::FLAG_V, false);
-	}
-
-	void CPU6809::LD16(WORD& dest, WORD src)
-	{
-		dest = src;
-		AdjustNZ(dest);
-		SetFlag(FLAG::FLAG_V, false);
-	}
-
-	void CPU6809::ST8(ADDRESS dest, BYTE src)
-	{
-		m_memory.Write8(dest, src);
-
-		AdjustNZ(src);
-		SetFlag(FLAG::FLAG_V, false);
-	}
-
-	void CPU6809::ST16(ADDRESS dest, WORD src)
-	{
-		m_memory.Write16be(dest, src);
-
-		AdjustNZ(src);
-		SetFlag(FLAG::FLAG_V, false);
 	}
 
 	WORD CPU6809::GetReg(RegCode code) const
@@ -939,7 +781,7 @@ namespace emul
 
 		case RegCode::A: return MakeWord(0xFF, m_reg.ab.A);
 		case RegCode::B: return MakeWord(0xFF, m_reg.ab.B);
-		case RegCode::CC: return MakeWord(m_reg.flags, m_reg.flags);
+		case RegCode::CC: return MakeWord(m_flags, m_flags);
 		case RegCode::DP: return MakeWord(m_reg.DP, m_reg.DP);
 
 		default: return 0xFFFF;
@@ -954,7 +796,7 @@ namespace emul
 		{
 		case RegCode::A:  return m_reg.ab.A;
 		case RegCode::B:  return m_reg.ab.B;
-		case RegCode::CC: return m_reg.flags;
+		case RegCode::CC: return m_flags;
 		case RegCode::DP: return m_reg.DP;
 
 		default: return m_reg.void8;
@@ -1045,116 +887,11 @@ namespace emul
 		}
 	}
 
-	void CPU6809::COM(BYTE& dest)
-	{
-		dest = ~dest;
-		AdjustNZ(dest);
-		SetFlag(FLAG_V, false);
-		SetFlag(FLAG_C, true);
-	}
-
-	void CPU6809::CLR(BYTE& dest)
-	{
-		dest = 0;
-		AdjustNZ(dest);
-		SetFlag(FLAG_V, false);
-		SetFlag(FLAG_C, false);
-	}
-
 	void CPU6809::XCLR(BYTE& dest)
 	{
 		dest = 0;
 		AdjustNZ(dest);
 		SetFlag(FLAG_V, false);
-	}
-
-	void CPU6809::ASL(BYTE& dest)
-	{
-		bool carry = GetMSB(dest);
-		SetFlag(FLAG_V, GetBit(dest, 6) ^ carry);
-		SetFlag(FLAG_C, carry);
-
-		dest <<= 1;
-
-		AdjustNZ(dest);
-	}
-
-	void CPU6809::ASR(BYTE& dest)
-	{
-		bool sign = GetMSB(dest);
-		bool carry = GetLSB(dest);
-		SetFlag(FLAG_C, carry);
-
-		dest >>= 1;
-		SetBit(dest, 7, sign);
-
-		AdjustNZ(dest);
-	}
-
-	void CPU6809::LSR(BYTE& dest)
-	{
-		bool lsb = GetLSB(dest);
-		dest >>= 1;
-
-		SetFlag(FLAG_C, lsb);
-		AdjustNZ(dest);
-	}
-
-	void CPU6809::ROL(BYTE& dest)
-	{
-		bool oldCarry = GetFlag(FLAG_C);
-		bool msb = GetMSB(dest);
-		SetFlag(FLAG_V, GetBit(dest, 6) ^ msb);
-		SetFlag(FLAG_C, msb);
-
-		dest <<= 1;
-		SetBit(dest, 0, oldCarry);
-
-		AdjustNZ(dest);
-	}
-
-	void CPU6809::ROR(BYTE& dest)
-	{
-		bool oldCarry = GetFlag(FLAG_C);
-		SetFlag(FLAG_C, GetLSB(dest));
-
-		dest >>= 1;
-		SetBit(dest, 7, oldCarry);
-
-		AdjustNZ(dest);
-	}
-
-	void CPU6809::EOR(BYTE& dest, BYTE src)
-	{
-		dest ^= src;
-		AdjustNZ(dest);
-		SetFlag(FLAG_V, false);
-	}
-	void CPU6809::OR(BYTE& dest, BYTE src)
-	{
-		dest |= src;
-		AdjustNZ(dest);
-		SetFlag(FLAG_V, false);
-	}
-	void CPU6809::AND(BYTE& dest, BYTE src)
-	{
-		dest &= src;
-		AdjustNZ(dest);
-		SetFlag(FLAG_V, false);
-	}
-
-	void CPU6809::INC(BYTE& dest)
-	{
-		SetFlag(FLAG_V, dest == 0b01111111);
-		++dest;
-		AdjustNZ(dest);
-	}
-
-	void CPU6809::DEC(BYTE& dest)
-	{
-		SetFlag(FLAG_V, dest == 0b10000000);
-		--dest;
-		AdjustNZ(dest);
 	}
 
 	void CPU6809::XDEC(BYTE& dest)
@@ -1163,81 +900,10 @@ namespace emul
 		DEC(dest);
 	}
 
-	void CPU6809::TST(const BYTE dest)
-	{
-		AdjustNZ(dest);
-		SetFlag(FLAG_V, false);
-	}
-
 	void CPU6809::SEX()
 	{
 		m_reg.ab.A = GetMSB(m_reg.ab.B) ? 0xFF : 0;
 		AdjustNZ(m_reg.D);
-	}
-
-	void CPU6809::ADD8(BYTE& dest, BYTE src, bool carry)
-	{
-		BYTE oldDest = dest;
-
-		// Half carry flag
-		BYTE loNibble = (dest & 0x0F) + (src & 0x0F) + carry;
-		SetFlag(FLAG_H, (loNibble > 0x0F));
-
-		WORD temp = dest + src + carry;
-
-		dest = (BYTE)temp;
-
-		AdjustNZ(dest);
-		SetFlag(FLAG_C, (temp > 0xFF));
-		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
-	}
-
-	void CPU6809::ADD16(WORD& dest, WORD src, bool carry)
-	{
-		WORD oldDest = dest;
-
-		DWORD temp = dest + src + carry;
-
-		dest = (WORD)temp;
-
-		AdjustNZ(dest);
-		SetFlag(FLAG_C, (temp > 0xFFFF));
-		SetFlag(FLAG_V, (GetMSB(oldDest) == GetMSB(src)) && (GetMSB(dest) != GetMSB(src)));
-	}
-
-	// TODO: Validate flags
-	void CPU6809::SUB8(BYTE& dest, BYTE src, bool borrow)
-	{
-		BYTE oldDest = dest;
-
-		WORD temp = dest - src - borrow;
-
-		dest = (BYTE)temp;
-
-		AdjustNZ(dest);
-		SetFlag(FLAG_C, (temp > 0xFF));
-		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
-	}
-
-	// TODO: Validate flags
-	void CPU6809::SUB16(WORD& dest, WORD src, bool borrow)
-	{
-		WORD oldDest = dest;
-
-		DWORD temp = dest - src - borrow;
-
-		dest = (WORD)temp;
-
-		AdjustNZ(dest);
-		SetFlag(FLAG_C, (temp > 0xFFFF));
-		SetFlag(FLAG_V, (GetMSB(oldDest) != GetMSB(src)) && (GetMSB(dest) == GetMSB(src)));
-	}
-
-	void CPU6809::NEG(BYTE& dest)
-	{
-		BYTE tempDest = 0;
-		SUB8(tempDest, dest);
-		dest = tempDest;
 	}
 
 	void CPU6809::MUL()
@@ -1268,7 +934,7 @@ namespace emul
 		to["y"] = m_reg.Y;
 
 		to["dp"] = m_reg.DP;
-		to["flags"] = m_reg.flags;
+		to["flags"] = m_flags;
 	}
 	void CPU6809::Deserialize(const json& from)
 	{
@@ -1288,7 +954,6 @@ namespace emul
 		m_reg.Y = from["y"];
 
 		m_reg.DP = from["dp"];
-		m_reg.flags = from["flags"];
-
+		m_flags = from["flags"];
 	}
 }

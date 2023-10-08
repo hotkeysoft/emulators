@@ -39,7 +39,7 @@ namespace emul
 		m_opcodes[0x01] = [=]() { }; // NOP
 
 		m_opcodes[0x06] = [=]() { SetFlags(m_reg.A); }; // TAP
-		m_opcodes[0x07] = [=]() { m_reg.A = m_reg.flags; }; // TPA
+		m_opcodes[0x07] = [=]() { m_reg.A = m_flags; }; // TPA
 
 		m_opcodes[0x30] = [=]() { m_reg.IX = m_reg.SP + 1; }; // TSX
 		m_opcodes[0x35] = [=]() { m_reg.SP = m_reg.IX - 1; }; // TXS
@@ -159,7 +159,7 @@ namespace emul
 		// BIT/CLR/COM/INC/DEC/TST
 
 		// COM
-		m_opcodes[0x43] = [=]() { COM(m_reg.A); }; // CLR A
+		m_opcodes[0x43] = [=]() { COM(m_reg.A); }; // COM A
 		m_opcodes[0x53] = [=]() { COM(m_reg.B); }; // COM B
 		m_opcodes[0x63] = [=]() { MEMIndexedOp(&CPU6800::COM); }; // COM idx
 		m_opcodes[0x73] = [=]() { MEMExtendedOp(&CPU6800::COM); }; // COM ext
@@ -361,11 +361,11 @@ namespace emul
 		CPU::Reset();
 
 		// Read reset vector
-		ADDRESS resetVector = m_memory.Read16(ADDR_RESET);
+		ADDRESS resetVector = m_memory.Read16be(ADDR_RESET);
 		LogPrintf(LOG_INFO, "Reset vector: %04X", resetVector);
 		m_programCounter = resetVector;
 
-		ClearFlags(m_reg.flags);
+		ClearFlags(m_flags);
 		SetFlag(FLAG_I, true);
 
 		m_clearIntMask = false;
@@ -385,7 +385,7 @@ namespace emul
 	void CPU6800::SetFlags(BYTE f)
 	{
 		SetBitMask(f, FLAG_RESERVED_ON, true);
-		m_reg.flags = f;
+		m_flags = f;
 	}
 
 	BYTE CPU6800::FetchByte()
@@ -458,7 +458,7 @@ namespace emul
 		LogPrintf(LOG_ERROR, "B = %02X", m_reg.B);
 		LogPrintf(LOG_ERROR, "X = %02X", m_reg.IX);
 		LogPrintf(LOG_ERROR, "Flags --HINZVC");
-		LogPrintf(LOG_ERROR, "      "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(m_reg.flags));
+		LogPrintf(LOG_ERROR, "      "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(m_flags));
 		LogPrintf(LOG_ERROR, "SP = %04X", m_reg.SP);
 		LogPrintf(LOG_ERROR, "PC = %04X", m_programCounter);
 		LogPrintf(LOG_ERROR, "");
@@ -494,7 +494,7 @@ namespace emul
 			LogPrintf(LOG_ERROR, "CPU: Exception at address 0x%04X! Stopping CPU", m_programCounter);
 			m_state = CPUState::STOP;
 		}
-		
+
 		if (clearIntMask)
 		{
 			m_clearIntMask = false;
@@ -543,7 +543,7 @@ namespace emul
 		pushW(m_reg.IX);
 		pushB(m_reg.A);
 		pushB(m_reg.B);
-		pushB(m_reg.flags);
+		pushB(m_flags);
 	}
 
 	void CPU6800::popAll()
@@ -630,14 +630,14 @@ namespace emul
 	{
 		dest = src;
 		AdjustNZ(dest);
-		SetFlag(FLAG::FLAG_V, false);
+		SetFlag(FLAG_V, false);
 	}
 
 	void CPU6800::LD16(WORD& dest, WORD src)
 	{
 		dest = src;
 		AdjustNZ(dest);
-		SetFlag(FLAG::FLAG_V, false);
+		SetFlag(FLAG_V, false);
 	}
 
 	void CPU6800::ST8(ADDRESS dest, BYTE src)
@@ -645,7 +645,7 @@ namespace emul
 		m_memory.Write8(dest, src);
 
 		AdjustNZ(src);
-		SetFlag(FLAG::FLAG_V, false);
+		SetFlag(FLAG_V, false);
 	}
 
 	void CPU6800::ST16(ADDRESS dest, WORD src)
@@ -653,7 +653,7 @@ namespace emul
 		m_memory.Write16be(dest, src);
 
 		AdjustNZ(src);
-		SetFlag(FLAG::FLAG_V, false);
+		SetFlag(FLAG_V, false);
 	}
 
 	void CPU6800::COM(BYTE& dest)
@@ -774,7 +774,7 @@ namespace emul
 	{
 		BYTE res = dest + src + carry;
 
-		AdjustNZ(dest);
+		AdjustNZ(res);
 		SetFlag(FLAG_C, (GetMSB(dest) && GetMSB(src)) || (!GetMSB(res) && (GetMSB(src) || GetMSB(dest))));
 		SetFlag(FLAG_H, (GetHMSB(dest) && GetHMSB(src)) || (!GetHMSB(res) && (GetHMSB(src) || GetHMSB(dest))));
 		SetFlag(FLAG_V, (GetMSB(dest) == GetMSB(src)) && (GetMSB(res) != GetMSB(src)));
@@ -786,7 +786,7 @@ namespace emul
 	{
 		WORD res = dest + src + carry;
 
-		AdjustNZ(dest);
+		AdjustNZ(res);
 		SetFlag(FLAG_C, (GetMSB(dest) && GetMSB(src)) || (!GetMSB(res) && (GetMSB(src) || GetMSB(dest))));
 		SetFlag(FLAG_V, (GetMSB(dest) == GetMSB(src)) && (GetMSB(res) != GetMSB(src)));
 
@@ -797,7 +797,7 @@ namespace emul
 	{
 		BYTE res = dest - src - borrow;
 
-		AdjustNZ(dest);
+		AdjustNZ(res);
 		SetFlag(FLAG_C, (GetMSB(res) && GetMSB(src)) || (!GetMSB(dest) && (GetMSB(src) || GetMSB(res))));
 		SetFlag(FLAG_V, (GetMSB(dest) != GetMSB(src)) && (GetMSB(res) == GetMSB(src)));
 
@@ -808,7 +808,7 @@ namespace emul
 	{
 		WORD res = dest - src - borrow;
 
-		AdjustNZ(dest);
+		AdjustNZ(res);
 		SetFlag(FLAG_C, (GetMSB(res) && GetMSB(src)) || (!GetMSB(dest) && (GetMSB(src) || GetMSB(res))));
 		SetFlag(FLAG_V, (GetMSB(dest) != GetMSB(src)) && (GetMSB(res) == GetMSB(src)));
 
@@ -834,7 +834,7 @@ namespace emul
 		to["ix"] = m_reg.IX;
 		to["sp"] = m_reg.SP;
 		to["pc"] = m_programCounter;
-		to["flags"] = m_reg.flags;
+		to["flags"] = m_flags;
 	}
 	void CPU6800::Deserialize(const json& from)
 	{
@@ -848,6 +848,6 @@ namespace emul
 		m_reg.IX = from["ix"];
 		m_reg.SP = from["sp"];
 		m_programCounter = from["pc"];
-		m_reg.flags = from["flags"];
+		m_flags = from["flags"];
 	}
 }

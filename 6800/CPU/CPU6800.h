@@ -22,7 +22,7 @@ namespace emul
 
 		virtual void Init();
 
-		void Dump();
+		virtual void Dump();
 
 		virtual void Reset();
 		virtual void Reset(ADDRESS overrideAddress);
@@ -46,7 +46,6 @@ namespace emul
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-
 		CPU6800(const char* cpuid, Memory& memory);
 
 		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
@@ -105,20 +104,21 @@ namespace emul
 			WORD IX; // Index Register
 			WORD SP; // Stack Pointer
 
-			BYTE flags = 0;
 		} m_reg;
+
+		// Flags
+		BYTE m_flags = 0;
 
 		void ClearFlags(BYTE& flags);
 		void SetFlags(BYTE f);
 
-		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; };
-		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); };
-		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
+		bool GetFlag(FLAG f) { return (m_flags & f) ? true : false; };
+		void SetFlag(FLAG f, bool v) { SetBitMask(m_flags, f, v); };
 
 		// Misc helpers
-		ADDRESS GetDirect() { return FetchByte(); }
-		ADDRESS GetIndexed() { return m_reg.IX + FetchByte(); }
-		ADDRESS GetExtended() { return FetchWord(); }
+		virtual ADDRESS GetDirect() { return FetchByte(); }
+		virtual ADDRESS GetIndexed() { return m_reg.IX + FetchByte(); }
+		virtual ADDRESS GetExtended() { return FetchWord(); }
 
 		virtual BYTE FetchByte() override;
 		virtual WORD FetchWord() override;

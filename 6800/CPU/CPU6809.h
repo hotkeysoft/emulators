@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Serializable.h>
-#include <CPU/CPU.h>
+#include "CPU/CPU6800.h"
 #include <CPU/PortConnector.h>
 #include <CPU/CPUInfo.h>
 #include <EdgeDetectLatch.h>
@@ -14,7 +13,7 @@ namespace emul
 	static const size_t CPU6809_ADDRESS_BITS = 16;
 	static const char* CPUID_6809 = "6809";
 
-	class CPU6809 : public CPU, public PortConnector
+	class CPU6809 : public CPU6800
 	{
 	public:
 		enum class RegCode {
@@ -42,7 +41,7 @@ namespace emul
 			_MASK = 0b10001000
 		};
 
-		enum FLAG : BYTE
+		enum FLAG6809 : BYTE
 		{
 			FLAG_E = 128, // 1 when Entire machine state was stacked
 			FLAG_F = 64,  // 1 with FIRQ line is ignored
@@ -57,89 +56,50 @@ namespace emul
 		CPU6809(Memory& memory);
 		virtual ~CPU6809() {};
 
-		virtual void Init();
+		virtual void Init() override;
 
-		void Dump();
+		virtual void Dump() override;
 
-		virtual void Reset();
-		virtual void Reset(ADDRESS overrideAddress);
-
-		virtual bool Step();
-
-		virtual void Exec(BYTE opcode) override;
-
-		virtual const std::string GetID() const override { return m_info.GetId(); };
-		virtual size_t GetAddressBits() const override { return CPU6809_ADDRESS_BITS; };
-		virtual ADDRESS GetCurrentAddress() const override { return m_programCounter; }
-
-		const cpuInfo::CPUInfo& GetInfo() const { return m_info; }
+		virtual void Reset() override;
 
 		WORD GetReg(RegCode reg) const;
-		bool GetFlag(FLAG f) { return (m_reg.flags & f) ? true : false; }
 
 		// Interrupts
-		void SetNMI(bool nmi) { m_nmi.Set(nmi); }
 		void SetFIRQ(bool firq) { m_firq = firq; }
-		void SetIRQ(bool irq) { m_irq = irq; }
 
 		// emul::Serializable
 		virtual void Serialize(json& to) override;
 		virtual void Deserialize(const json& from) override;
 
 	protected:
-		CPU6809(const char* cpuid, Memory& memory);
-
 		void InitPage2();
 		void InitPage3();
 
 		inline void TICK1() { ++m_opTicks; }
 		inline void TICKn(int n) { m_opTicks += n; }
-		inline void TICK() { m_opTicks += (*m_currTiming)[(int)cpuInfo::OpcodeTimingType::BASE]; };
-		// Use third timing conditional penalty (2nd value not used)
-		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
-		inline void TICKINT() { CPU::TICK(m_info.GetMiscTiming(cpuInfo::MiscTiming::TRAP)[0]); }
 
 		// Vectors
 		static const ADDRESS _ADDR_RSV  = 0xFFF0; // Reserved by Motorola
 		static const ADDRESS ADDR_SWI3  = 0xFFF2; // SWI3 instruction interrupt vector
 		static const ADDRESS ADDR_SWI2  = 0xFFF4; // SWI2 instruction interrupt vector
 		static const ADDRESS ADDR_FIRQ  = 0xFFF6; // Fast hardware interrupt vector (FIRQ)
-		static const ADDRESS ADDR_IRQ   = 0xFFF8; // Hardware interrupt vector (IRQ)
 		static const ADDRESS ADDR_SWI   = 0xFFFA; // SWI instruction interrupt vector
-		static const ADDRESS ADDR_NMI   = 0xFFFC; // Non-maskable interrupt vector (NMI)
-		static const ADDRESS ADDR_RESET = 0xFFFE; // Reset vector
 
-		using OpcodeTable = std::vector<std::function<void()>>;
-		OpcodeTable m_opcodes;
 		OpcodeTable m_opcodesPage2;
 		OpcodeTable m_opcodesPage3;
-		void UnknownOpcode();
-
-		cpuInfo::CPUInfo m_info;
-		const cpuInfo::OpcodeTiming* m_currTiming = nullptr;
-		BYTE m_opcode = 0;
-
-		// NMI is edge sensitive
-		hscommon::EdgeDetectLatch m_nmi;
 
 		// NMI is disabled on Reset until the S stack pointer is set
 		bool m_nmiEnabled = false;
 
-		// IRQ and FIRQ are level sensitive
+		// FIRQ is level sensitive
 		bool m_firq = false;
-		bool m_irq = false;
 
-		virtual void Interrupt();
+		virtual void Interrupt() override;
 
 		enum class STACK
 		{
 			S, U
 		};
-
-		ADDRESS m_programCounter = 0;
-
-		// Alias when we need a WORD version of the program counter
-		WORD& m_PC = *((WORD*)&m_programCounter);
 
 		struct Registers
 		{
@@ -160,7 +120,6 @@ namespace emul
 			WORD Y = 0; // Index Register
 
 			BYTE DP = 0; // Direct Page Register
-			BYTE flags = 0;
 
 			// For invalid destinations;
 			BYTE void8;
@@ -170,15 +129,8 @@ namespace emul
 		bool IsStackRegister(const WORD& reg) const { return &reg == &m_reg.S; }
 
 		// Flags
-		void ClearFlags(BYTE& flags) { flags = 0; }
-		void SetFlags(BYTE f) { m_reg.flags = f; }
-
-		void SetFlag(FLAG f, bool v) { SetBitMask(m_reg.flags, f, v); }
-		void ComplementFlag(FLAG f) { m_reg.flags ^= f; }
-
-		// Adjust negative and zero flag
-		void AdjustNZ(BYTE val);
-		void AdjustNZ(WORD val);
+		bool GetFlag(FLAG6809 f) { return (m_flags & f) ? true : false; };
+		void SetFlag(FLAG6809 f, bool v) { SetBitMask(m_flags, f, v); };
 
 		// Sub Opcode Tables
 		void ExecPage2(BYTE opcode);
@@ -186,25 +138,9 @@ namespace emul
 		void exec(OpcodeTable& table, BYTE opcode);
 
 		// Misc helpers
-		ADDRESS GetDirect() { return MakeWord(m_reg.DP, FetchByte()); }
-		ADDRESS GetIndexed();
-		ADDRESS GetExtended() { return FetchWord(); }
+		virtual ADDRESS GetDirect() override { return MakeWord(m_reg.DP, FetchByte()); }
+		virtual ADDRESS GetIndexed() override;
 		WORD& GetIndexedRegister(BYTE idx);
-
-		virtual BYTE FetchByte() override;
-		virtual WORD FetchWord() override;
-
-		SBYTE FetchSignedByte() { return (SBYTE)FetchByte(); }
-		SWORD FetchSignedWord() { return (SWORD)FetchWord(); }
-
-		BYTE GetMemDirectByte() { return m_memory.Read8(GetDirect()); }
-		WORD GetMemDirectWord() { return m_memory.Read16be(GetDirect()); }
-
-		BYTE GetMemIndexedByte() { return m_memory.Read8(GetIndexed()); }
-		WORD GetMemIndexedWord() { return m_memory.Read16be(GetIndexed()); }
-
-		BYTE GetMemExtendedByte() { return m_memory.Read8(GetExtended()); }
-		WORD GetMemExtendedWord() { return m_memory.Read16be(GetExtended()); }
 
 		// Register helpers
 		//
@@ -231,10 +167,8 @@ namespace emul
 		void LEA(WORD& dest, bool setZero);
 
 		// Branching
-		void BRA(bool condition);
 		void LBRA(bool condition);
 
-		void JMP(ADDRESS dest) { m_programCounter = dest; }
 		void BSR();
 		void LBSR();
 		void JSR(ADDRESS dest);
@@ -242,14 +176,6 @@ namespace emul
 
 		void SWI(BYTE swi);
 		void RTI();
-
-		// Load
-		void LD8(BYTE& dest, BYTE src);
-		void LD16(WORD& dest, WORD src);
-
-		// Store
-		void ST8(ADDRESS dest, BYTE src);
-		void ST16(ADDRESS dest, WORD src);
 
 		// Transfer register to register
 		void TFR(BYTE sd);
@@ -276,44 +202,9 @@ namespace emul
 		WORD* m_currStack = &m_reg.S;
 		void SetStack(STACK s) { m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U; }
 
-		// Logical
-		void ASL(BYTE& dest); // Arithmetic Shift Left
-		void ASR(BYTE& dest); // Arithmetic Shift Right
-		void LSR(BYTE& dest); // Logical Shift Right
-		void ROL(BYTE& dest); // Rotate Left Through Carry
-		void ROR(BYTE& dest); // Rotate Right Through Carry
-		void EOR(BYTE& dest, BYTE src); // Logical XOR
-		void OR(BYTE& dest, BYTE src); // Logical OR
-		void AND(BYTE& dest, BYTE src); // Logical AND
-
-		// dest by value so it's not modified
-		void BIT(BYTE dest, BYTE src) { return AND(dest, src); }
-
-		void CLR(BYTE& dest); // Clear
-		void COM(BYTE& dest); // Complement
-		void INC(BYTE& dest); // Increment
-		void DEC(BYTE& dest); // Decrement
-		void TST(const BYTE dest); // Sets N & Z flags
 		void SEX(); // Sign Extend B to D
 
 		// Arithmetic
-
-		// dest' <- dest + src (+ carry)
-		void ADD8(BYTE& dest, BYTE src, bool carry = false);
-		void ADD16(WORD& dest, WORD src, bool carry = false);
-
-		// dest' <- dest - src (- borrow)
-		void SUB8(BYTE& dest, BYTE src, bool borrow = false);
-		void SUB16(WORD& dest, WORD src, bool borrow = false);
-
-		// dest by value so it's not modified
-		// (void) <- dest - src
-		void CMP8(BYTE dest, BYTE src) { return SUB8(dest, src); }
-		void CMP16(WORD dest, WORD src) { return SUB16(dest, src); }
-
-		// Negate operand, dest' <- (0 - dest)
-		void NEG(BYTE& dest);
-
 		void MUL(); // D' = A * B
 
 		// Undocumented
