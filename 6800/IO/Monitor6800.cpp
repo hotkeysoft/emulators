@@ -206,9 +206,9 @@ namespace emul
 		static Coord regPC = GetCPU()->GetInfo().GetCoord("PC");
 		static Coord regSP = GetCPU()->GetInfo().GetCoord("SP");
 
-		WriteValueHex(GetCPU()->m_reg.A, regA);
-		WriteValueHex(GetCPU()->m_reg.B, regB);
-		WriteValueHex(GetCPU()->m_reg.IX, regIX);
+		WriteValueHex(GetCPU()->m_reg.ab.A, regA);
+		WriteValueHex(GetCPU()->m_reg.ab.B, regB);
+		WriteValueHex(GetCPU()->m_reg.X, regIX);
 
 		WriteValueHex((WORD)GetCPU()->m_reg.SP, regSP);
 		WriteValueHex((WORD)GetCPU()->GetCurrentAddress(), regPC);

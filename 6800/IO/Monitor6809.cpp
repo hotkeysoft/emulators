@@ -228,10 +228,10 @@ namespace emul
 	{
 		WriteValueHex(GetCPU()->m_reg.D, GetCPU()->GetInfo().GetCoord("D"));
 		WriteValueHex(GetCPU()->m_reg.X, GetCPU()->GetInfo().GetCoord("X"));
-		WriteValueHex(GetCPU()->m_reg.Y, GetCPU()->GetInfo().GetCoord("Y"));
-		WriteValueHex(GetCPU()->m_reg.S, GetCPU()->GetInfo().GetCoord("S"));
-		WriteValueHex(GetCPU()->m_reg.U, GetCPU()->GetInfo().GetCoord("U"));
-		WriteValueHex(GetCPU()->m_reg.DP, GetCPU()->GetInfo().GetCoord("DP"));
+		WriteValueHex(GetCPU()->m_reg6809.Y, GetCPU()->GetInfo().GetCoord("Y"));
+		WriteValueHex(GetCPU()->m_reg.SP, GetCPU()->GetInfo().GetCoord("S"));
+		WriteValueHex(GetCPU()->m_reg6809.USP, GetCPU()->GetInfo().GetCoord("U"));
+		WriteValueHex(GetCPU()->m_reg6809.DP, GetCPU()->GetInfo().GetCoord("DP"));
 
 		WriteValueHex((WORD)GetCPU()->GetCurrentAddress(), GetCPU()->GetInfo().GetCoord("PC"));
 	}
@@ -267,15 +267,15 @@ namespace emul
 		switch (m_ramMode)
 		{
 		case RAMMode::DP:
-			return (GetCPU()->m_reg.DP << 8);
+			return (GetCPU()->m_reg6809.DP << 8);
 		case RAMMode::X:
 			return  GetCPU()->m_reg.X;
 		case RAMMode::Y:
-			return  GetCPU()->m_reg.Y;
+			return  GetCPU()->m_reg6809.Y;
 		case RAMMode::SP:
-			return  GetCPU()->m_reg.S;
+			return  GetCPU()->m_reg.SP;
 		case RAMMode::USP:
-			return  GetCPU()->m_reg.U;
+			return  GetCPU()->m_reg6809.USP;
 		case RAMMode::PC:
 			return  GetCPU()->GetCurrentAddress();
 		case RAMMode::CUSTOM:

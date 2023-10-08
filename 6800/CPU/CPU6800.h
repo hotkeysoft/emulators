@@ -98,12 +98,20 @@ namespace emul
 
 		struct Registers
 		{
-			BYTE A; // Accumulator A
-			BYTE B; // Accumulator B
+#pragma pack(push, 1)
+			union
+			{
+				WORD D = 0;	// Accumulators
+				struct {
+					BYTE B;
+					BYTE A;
+				} ab;
+			};
+#pragma pack(pop)
 
-			WORD IX; // Index Register
+			WORD X; // Index Register
+
 			WORD SP; // Stack Pointer
-
 		} m_reg;
 
 		// Flags
@@ -117,7 +125,7 @@ namespace emul
 
 		// Misc helpers
 		virtual ADDRESS GetDirect() { return FetchByte(); }
-		virtual ADDRESS GetIndexed() { return m_reg.IX + FetchByte(); }
+		virtual ADDRESS GetIndexed() { return m_reg.X + FetchByte(); }
 		virtual ADDRESS GetExtended() { return FetchWord(); }
 
 		virtual BYTE FetchByte() override;

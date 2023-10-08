@@ -7,9 +7,6 @@ namespace emul
 {
 	CPU6809::CPU6809(Memory& memory) : CPU6800("6809", memory), Logger("6809")
 	{
-		static_assert(sizeof(m_reg.D) == 2);
-		static_assert(sizeof(m_reg.ab.A) == 1);
-		static_assert(sizeof(m_reg.ab.B) == 1);
 		FLAG_RESERVED_ON = (FLAG)0;
 	}
 
@@ -65,13 +62,13 @@ namespace emul
 		m_opcodes[0x2F] = [=]() { BRA((GetFlag(FLAG_N) != GetFlag(FLAG_V)) || (GetFlag(FLAG_Z) == true)); }; // BLE
 
 		m_opcodes[0x30] = [=]() { LEA(m_reg.X, true); }; // LEAX
-		m_opcodes[0x31] = [=]() { LEA(m_reg.Y, true); }; // LEAY
-		m_opcodes[0x32] = [=]() { LEA(m_reg.S, false); m_nmiEnabled = true; }; // LEAS
-		m_opcodes[0x33] = [=]() { LEA(m_reg.U, false); }; // LEAU
-		m_opcodes[0x34] = [=]() { PSH(STACK::S, FetchByte()); }; // PSHS
-		m_opcodes[0x35] = [=]() { PUL(STACK::S, FetchByte()); }; // PULS
-		m_opcodes[0x36] = [=]() { PSH(STACK::U, FetchByte()); }; // PSHU
-		m_opcodes[0x37] = [=]() { PUL(STACK::U, FetchByte()); }; // PULU
+		m_opcodes[0x31] = [=]() { LEA(m_reg6809.Y, true); }; // LEAY
+		m_opcodes[0x32] = [=]() { LEA(m_reg.SP, false); m_nmiEnabled = true; }; // LEAS
+		m_opcodes[0x33] = [=]() { LEA(m_reg6809.USP, false); }; // LEAU
+		m_opcodes[0x34] = [=]() { PSH(STACK::SSP, FetchByte()); }; // PSHS
+		m_opcodes[0x35] = [=]() { PUL(STACK::SSP, FetchByte()); }; // PULS
+		m_opcodes[0x36] = [=]() { PSH(STACK::USP, FetchByte()); }; // PSHU
+		m_opcodes[0x37] = [=]() { PUL(STACK::USP, FetchByte()); }; // PULU
 		m_opcodes[0x38] = [=]() { m_flags &= FetchByte(); }; // ANDCC imm (undocumented)
 		m_opcodes[0x39] = [=]() { RTS(); }; // RTS
 		m_opcodes[0x3A] = [=]() { m_reg.X += m_reg.ab.B; }; // ABX
@@ -225,7 +222,7 @@ namespace emul
 		m_opcodes[0xCA] = [=]() { OR(m_reg.ab.B, FetchByte()); }; // EORB imm
 		m_opcodes[0xCB] = [=]() { ADD8(m_reg.ab.B, FetchByte()); }; // ADDB imm
 		m_opcodes[0xCC] = [=]() { LD16(m_reg.D, FetchWord()); }; // LDD imm
-		m_opcodes[0xCE] = [=]() { LD16(m_reg.U, FetchWord()); }; // LDU imm
+		m_opcodes[0xCE] = [=]() { LD16(m_reg6809.USP, FetchWord()); }; // LDU imm
 
 		m_opcodes[0xD0] = [=]() { SUB8(m_reg.ab.B, GetMemDirectByte()); }; // SUBB direct
 		m_opcodes[0xD1] = [=]() { CMP8(m_reg.ab.B, GetMemDirectByte()); }; // CMPB direct
@@ -241,8 +238,8 @@ namespace emul
 		m_opcodes[0xDB] = [=]() { ADD8(m_reg.ab.B, GetMemDirectByte()); }; // ADDB direct
 		m_opcodes[0xDC] = [=]() { LD16(m_reg.D, GetMemDirectWord()); }; // LDD direct
 		m_opcodes[0xDD] = [=]() { ST16(GetDirect(), m_reg.D); }; // STD direct
-		m_opcodes[0xDE] = [=]() { LD16(m_reg.U, GetMemDirectWord()); }; // LDU direct
-		m_opcodes[0xDF] = [=]() { ST16(GetDirect(), m_reg.U); }; // STU direct
+		m_opcodes[0xDE] = [=]() { LD16(m_reg6809.USP, GetMemDirectWord()); }; // LDU direct
+		m_opcodes[0xDF] = [=]() { ST16(GetDirect(), m_reg6809.USP); }; // STU direct
 
 		m_opcodes[0xE0] = [=]() { SUB8(m_reg.ab.B, GetMemIndexedByte()); }; // SUBB indexed
 		m_opcodes[0xE1] = [=]() { CMP8(m_reg.ab.B, GetMemIndexedByte()); }; // CMPB indexed
@@ -258,8 +255,8 @@ namespace emul
 		m_opcodes[0xEB] = [=]() { ADD8(m_reg.ab.B, GetMemIndexedByte()); }; // ADDB indexed
 		m_opcodes[0xEC] = [=]() { LD16(m_reg.D, GetMemIndexedWord()); }; // LDD indexed
 		m_opcodes[0xED] = [=]() { ST16(GetIndexed(), m_reg.D); }; // STD indexed
-		m_opcodes[0xEE] = [=]() { LD16(m_reg.U, GetMemIndexedWord()); }; // LDU indexed
-		m_opcodes[0xEF] = [=]() { ST16(GetIndexed(), m_reg.U); }; // STU indexed
+		m_opcodes[0xEE] = [=]() { LD16(m_reg6809.USP, GetMemIndexedWord()); }; // LDU indexed
+		m_opcodes[0xEF] = [=]() { ST16(GetIndexed(), m_reg6809.USP); }; // STU indexed
 
 		m_opcodes[0xF0] = [=]() { SUB8(m_reg.ab.B, GetMemExtendedByte()); }; // SUBB extended
 		m_opcodes[0xF1] = [=]() { CMP8(m_reg.ab.B, GetMemExtendedByte()); }; // CMPB extended
@@ -275,8 +272,8 @@ namespace emul
 		m_opcodes[0xFB] = [=]() { ADD8(m_reg.ab.B, GetMemExtendedByte()); }; // ADDB extended
 		m_opcodes[0xFC] = [=]() { LD16(m_reg.D, GetMemExtendedWord()); }; // LDD extended
 		m_opcodes[0xFD] = [=]() { ST16(GetExtended(), m_reg.D); }; // STD extended
-		m_opcodes[0xFE] = [=]() { LD16(m_reg.U, GetMemExtendedWord()); }; // LDU extended
-		m_opcodes[0xFF] = [=]() { ST16(GetExtended(), m_reg.U); }; // STU extended
+		m_opcodes[0xFE] = [=]() { LD16(m_reg6809.USP, GetMemExtendedWord()); }; // LDU extended
+		m_opcodes[0xFF] = [=]() { ST16(GetExtended(), m_reg6809.USP); }; // STU extended
 
 		InitPage2(); // Prefix 0x10
 		InitPage3(); // Prefix 0x11
@@ -317,33 +314,33 @@ namespace emul
 		m_opcodesPage2[0x3F] = [=]() { SWI(2); };
 
 		m_opcodesPage2[0x83] = [=]() { CMP16(m_reg.D, FetchWord()); }; // CMPD imm
-		m_opcodesPage2[0x8C] = [=]() { CMP16(m_reg.Y, FetchWord()); }; // CMPY imm
-		m_opcodesPage2[0x8E] = [=]() { LD16(m_reg.Y, FetchWord()); }; // LDY imm
+		m_opcodesPage2[0x8C] = [=]() { CMP16(m_reg6809.Y, FetchWord()); }; // CMPY imm
+		m_opcodesPage2[0x8E] = [=]() { LD16(m_reg6809.Y, FetchWord()); }; // LDY imm
 
 		m_opcodesPage2[0x93] = [=]() { CMP16(m_reg.D, GetMemDirectWord()); }; // CMPD direct
-		m_opcodesPage2[0x9C] = [=]() { CMP16(m_reg.Y, GetMemDirectWord()); }; // CMPY direct
-		m_opcodesPage2[0x9E] = [=]() { LD16(m_reg.Y, GetMemDirectWord()); }; // LDY direct
-		m_opcodesPage2[0x9F] = [=]() { ST16(GetDirect(), m_reg.Y); }; // STY direct
+		m_opcodesPage2[0x9C] = [=]() { CMP16(m_reg6809.Y, GetMemDirectWord()); }; // CMPY direct
+		m_opcodesPage2[0x9E] = [=]() { LD16(m_reg6809.Y, GetMemDirectWord()); }; // LDY direct
+		m_opcodesPage2[0x9F] = [=]() { ST16(GetDirect(), m_reg6809.Y); }; // STY direct
 
 		m_opcodesPage2[0xA3] = [=]() { CMP16(m_reg.D, GetMemIndexedWord()); }; // CMPD indexed
-		m_opcodesPage2[0xAC] = [=]() { CMP16(m_reg.Y, GetMemIndexedWord()); }; // CMPY indexed
-		m_opcodesPage2[0xAE] = [=]() { LD16(m_reg.Y, GetMemIndexedWord()); }; // LDY indexed
-		m_opcodesPage2[0xAF] = [=]() { ST16(GetIndexed(), m_reg.Y); }; // STY indexed
+		m_opcodesPage2[0xAC] = [=]() { CMP16(m_reg6809.Y, GetMemIndexedWord()); }; // CMPY indexed
+		m_opcodesPage2[0xAE] = [=]() { LD16(m_reg6809.Y, GetMemIndexedWord()); }; // LDY indexed
+		m_opcodesPage2[0xAF] = [=]() { ST16(GetIndexed(), m_reg6809.Y); }; // STY indexed
 
 		m_opcodesPage2[0xB3] = [=]() { CMP16(m_reg.D, GetMemExtendedWord()); }; // CMPD extended
-		m_opcodesPage2[0xBC] = [=]() { CMP16(m_reg.Y, GetMemExtendedWord()); }; // CMPY extended
-		m_opcodesPage2[0xBE] = [=]() { LD16(m_reg.Y, GetMemExtendedWord()); }; // LDY extended
-		m_opcodesPage2[0xBF] = [=]() { ST16(GetExtended(), m_reg.Y); }; // STY extended
+		m_opcodesPage2[0xBC] = [=]() { CMP16(m_reg6809.Y, GetMemExtendedWord()); }; // CMPY extended
+		m_opcodesPage2[0xBE] = [=]() { LD16(m_reg6809.Y, GetMemExtendedWord()); }; // LDY extended
+		m_opcodesPage2[0xBF] = [=]() { ST16(GetExtended(), m_reg6809.Y); }; // STY extended
 
-		m_opcodesPage2[0xCE] = [=]() { LD16(m_reg.S, FetchWord()); m_nmiEnabled = true; }; // LDS imm
-		m_opcodesPage2[0xDE] = [=]() { LD16(m_reg.S, GetMemDirectWord()); m_nmiEnabled = true; }; // LDS direct
-		m_opcodesPage2[0xDF] = [=]() { ST16(GetDirect(), m_reg.S); }; // STS direct
+		m_opcodesPage2[0xCE] = [=]() { LD16(m_reg.SP, FetchWord()); m_nmiEnabled = true; }; // LDS imm
+		m_opcodesPage2[0xDE] = [=]() { LD16(m_reg.SP, GetMemDirectWord()); m_nmiEnabled = true; }; // LDS direct
+		m_opcodesPage2[0xDF] = [=]() { ST16(GetDirect(), m_reg.SP); }; // STS direct
 
-		m_opcodesPage2[0xEE] = [=]() { LD16(m_reg.S, GetMemIndexedWord()); m_nmiEnabled = true; }; // LDS indexed
-		m_opcodesPage2[0xEF] = [=]() { ST16(GetIndexed(), m_reg.S); }; // STS indexed
+		m_opcodesPage2[0xEE] = [=]() { LD16(m_reg.SP, GetMemIndexedWord()); m_nmiEnabled = true; }; // LDS indexed
+		m_opcodesPage2[0xEF] = [=]() { ST16(GetIndexed(), m_reg.SP); }; // STS indexed
 
-		m_opcodesPage2[0xFE] = [=]() { LD16(m_reg.S, GetMemExtendedWord()); m_nmiEnabled = true; }; // LDS extended
-		m_opcodesPage2[0xFF] = [=]() { ST16(GetExtended(), m_reg.S); }; // STS extended
+		m_opcodesPage2[0xFE] = [=]() { LD16(m_reg.SP, GetMemExtendedWord()); m_nmiEnabled = true; }; // LDS extended
+		m_opcodesPage2[0xFF] = [=]() { ST16(GetExtended(), m_reg.SP); }; // STS extended
 	}
 
 	// Prefix 0x11
@@ -356,29 +353,22 @@ namespace emul
 
 		m_opcodesPage3[0x3F] = [=]() { SWI(3); };
 
-		m_opcodesPage3[0x83] = [=]() { CMP16(m_reg.U, FetchWord()); }; // CMPU imm
-		m_opcodesPage3[0x8C] = [=]() { CMP16(m_reg.S, FetchWord()); }; // CMPS imm
+		m_opcodesPage3[0x83] = [=]() { CMP16(m_reg6809.USP, FetchWord()); }; // CMPU imm
+		m_opcodesPage3[0x8C] = [=]() { CMP16(m_reg.SP, FetchWord()); }; // CMPS imm
 
-		m_opcodesPage3[0x93] = [=]() { CMP16(m_reg.U, GetMemDirectWord()); }; // CMPU direct
-		m_opcodesPage3[0x9C] = [=]() { CMP16(m_reg.S, GetMemDirectWord()); }; // CMPS direct
+		m_opcodesPage3[0x93] = [=]() { CMP16(m_reg6809.USP, GetMemDirectWord()); }; // CMPU direct
+		m_opcodesPage3[0x9C] = [=]() { CMP16(m_reg.SP, GetMemDirectWord()); }; // CMPS direct
 
-		m_opcodesPage3[0xA3] = [=]() { CMP16(m_reg.U, GetMemIndexedWord()); }; // CMPU indexed
-		m_opcodesPage3[0xAC] = [=]() { CMP16(m_reg.S, GetMemIndexedWord()); }; // CMPS indexed
+		m_opcodesPage3[0xA3] = [=]() { CMP16(m_reg6809.USP, GetMemIndexedWord()); }; // CMPU indexed
+		m_opcodesPage3[0xAC] = [=]() { CMP16(m_reg.SP, GetMemIndexedWord()); }; // CMPS indexed
 
-		m_opcodesPage3[0xB3] = [=]() { CMP16(m_reg.U, GetMemExtendedWord()); }; // CMPU extended
-		m_opcodesPage3[0xBC] = [=]() { CMP16(m_reg.S, GetMemExtendedWord()); }; // CMPS extended
+		m_opcodesPage3[0xB3] = [=]() { CMP16(m_reg6809.USP, GetMemExtendedWord()); }; // CMPU extended
+		m_opcodesPage3[0xBC] = [=]() { CMP16(m_reg.SP, GetMemExtendedWord()); }; // CMPS extended
 	}
 
 	void CPU6809::Reset()
 	{
 		CPU6800::Reset();
-
-		// TODO: Check if values are reset
-		m_reg.D = 0;
-		m_reg.S = 0;
-		m_reg.U = 0;
-		m_reg.X = 0;
-		m_reg.Y = 0;
 
 		m_firq = false;
 	}
@@ -412,9 +402,9 @@ namespace emul
 		switch ((idx >> 5) & 3)
 		{
 		case 0: return m_reg.X;
-		case 1: return m_reg.Y;
-		case 2: return m_reg.U;
-		case 3: return m_reg.S;
+		case 1: return m_reg6809.Y;
+		case 2: return m_reg6809.USP;
+		case 3: return m_reg.SP;
 		default:
 			throw std::exception("not possible");
 		}
@@ -491,12 +481,12 @@ namespace emul
 	{
 		LogPrintf(LOG_ERROR, "AB = %04X", m_reg.D);
 		LogPrintf(LOG_ERROR, "X  = %04X", m_reg.X);
-		LogPrintf(LOG_ERROR, "Y  = %04X", m_reg.Y);
+		LogPrintf(LOG_ERROR, "Y  = %04X", m_reg6809.Y);
 		LogPrintf(LOG_ERROR, "Flags EFHINZVC");
 		LogPrintf(LOG_ERROR, "      "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(m_flags));
-		LogPrintf(LOG_ERROR, "S  = %04X", m_reg.S);
-		LogPrintf(LOG_ERROR, "U  = %04X", m_reg.U);
-		LogPrintf(LOG_ERROR, "DP = %02X", m_reg.DP);
+		LogPrintf(LOG_ERROR, "S  = %04X", m_reg.SP);
+		LogPrintf(LOG_ERROR, "U  = %04X", m_reg6809.USP);
+		LogPrintf(LOG_ERROR, "DP = %02X", m_reg6809.DP);
 		LogPrintf(LOG_ERROR, "PC = %04X", m_programCounter);
 		LogPrintf(LOG_ERROR, "");
 	}
@@ -540,7 +530,7 @@ namespace emul
 			LogPrintf(LOG_INFO, "[%zu] NMI", emul::g_ticks);
 
 			SetFlag(FLAG_E, true);   // Complete state saved
-			PSH(STACK::S, REGS_ALL); // Save all registers
+			PSH(STACK::SSP, REGS_ALL); // Save all registers
 			SetFlag(FLAG_F, true);   // Disable FIRQ
 			SetFlag(FLAG_I, true);   // Disable IRQ
 
@@ -551,9 +541,9 @@ namespace emul
 		{
 			LogPrintf(LOG_INFO, "[%zu] FIRQ", emul::g_ticks);
 
-			PSH(STACK::S, REGS_PC); // Save program counter
+			PSH(STACK::SSP, REGS_PC); // Save program counter
 			SetFlag(FLAG_E, false); // Incomplete state saved
-			PSH(STACK::S, REGS_CC); // Save flags
+			PSH(STACK::SSP, REGS_CC); // Save flags
 			SetFlag(FLAG_F, true);  // Disable FIRQ
 			SetFlag(FLAG_I, true);  // Disable IRQ
 
@@ -564,7 +554,7 @@ namespace emul
 			LogPrintf(LOG_INFO, "[%zu] IRQ", emul::g_ticks);
 
 			SetFlag(FLAG_E, true);   // Complete state saved
-			PSH(STACK::S, REGS_ALL); // Save all registers
+			PSH(STACK::SSP, REGS_ALL); // Save all registers
 			SetFlag(FLAG_I, true);   // Disable IRQ
 
 			m_PC = m_memory.Read16be(ADDR_IRQ);
@@ -599,15 +589,15 @@ namespace emul
 		if (GetBit(regs, 6))
 		{
 			// Select the 'other' stack
-			const WORD& sp = (s == STACK::S) ? m_reg.U : m_reg.S;
+			const WORD& sp = (s == STACK::SSP) ? m_reg6809.USP : m_reg.SP;
 
 			push(GetLByte(sp));
 			push(GetHByte(sp));
 		}
 		if (GetBit(regs, 5))
 		{
-			push(GetLByte(m_reg.Y));
-			push(GetHByte(m_reg.Y));
+			push(GetLByte(m_reg6809.Y));
+			push(GetHByte(m_reg6809.Y));
 		}
 		if (GetBit(regs, 4))
 		{
@@ -616,7 +606,7 @@ namespace emul
 		}
 		if (GetBit(regs, 3))
 		{
-			push(m_reg.DP);
+			push(m_reg6809.DP);
 		}
 		if (GetBit(regs, 2))
 		{
@@ -649,7 +639,7 @@ namespace emul
 		}
 		if (GetBit(regs, 3))
 		{
-			m_reg.DP = pop();
+			m_reg6809.DP = pop();
 		}
 		if (GetBit(regs, 4))
 		{
@@ -658,13 +648,13 @@ namespace emul
 		}
 		if (GetBit(regs, 5))
 		{
-			SetHByte(m_reg.Y, pop());
-			SetLByte(m_reg.Y, pop());
+			SetHByte(m_reg6809.Y, pop());
+			SetLByte(m_reg6809.Y, pop());
 		}
 		if (GetBit(regs, 6))
 		{
 			// Select the 'other' stack
-			WORD& sp = (s == STACK::S) ? m_reg.U : m_reg.S;
+			WORD& sp = (s == STACK::SSP) ? m_reg6809.USP : m_reg.SP;
 
 			SetHByte(sp, pop());
 			SetLByte(sp, pop());
@@ -689,7 +679,7 @@ namespace emul
 
 	void CPU6809::JSR(ADDRESS dest)
 	{
-		PSH(STACK::S, REGS_PC);
+		PSH(STACK::SSP, REGS_PC);
 		m_programCounter = dest;
 	}
 
@@ -697,7 +687,7 @@ namespace emul
 	{
 		SBYTE rel = FetchSignedByte();
 
-		PSH(STACK::S, REGS_PC);
+		PSH(STACK::SSP, REGS_PC);
 
 		m_PC += rel;
 	}
@@ -706,20 +696,20 @@ namespace emul
 	{
 		SWORD rel = FetchSignedWord();
 
-		PSH(STACK::S, REGS_PC);
+		PSH(STACK::SSP, REGS_PC);
 
 		m_PC += rel;
 	}
 
 	void CPU6809::RTS()
 	{
-		PUL(STACK::S, REGS_PC);
+		PUL(STACK::SSP, REGS_PC);
 	}
 
 	void CPU6809::RTI()
 	{
 		// Depending on E flag, pop either all registers or just CC + PC
-		PUL(STACK::S, GetFlag(FLAG_E) ? REGS_ALL : REGS_RTI);
+		PUL(STACK::SSP, GetFlag(FLAG_E) ? REGS_ALL : REGS_RTI);
 	}
 
 	void CPU6809::SWI(BYTE swi)
@@ -727,7 +717,7 @@ namespace emul
 		SetFlag(FLAG_E, true);
 
 		// Push all registers on the system stack
-		PSH(STACK::S, REGS_ALL);
+		PSH(STACK::SSP, REGS_ALL);
 
 		ADDRESS vect;
 		switch (swi)
@@ -753,7 +743,7 @@ namespace emul
 	void CPU6809::XRES()
 	{
 		// Push all registers on the system stack
-		PSH(STACK::S, REGS_ALL);
+		PSH(STACK::SSP, REGS_ALL);
 
 		m_PC = m_memory.Read16be(ADDR_SWI2);
 	}
@@ -774,15 +764,15 @@ namespace emul
 		{
 		case RegCode::D: return m_reg.D;
 		case RegCode::X: return m_reg.X;
-		case RegCode::Y: return m_reg.Y;
-		case RegCode::U: return m_reg.U;
-		case RegCode::S: return m_reg.S;
+		case RegCode::Y: return m_reg6809.Y;
+		case RegCode::U: return m_reg6809.USP;
+		case RegCode::S: return m_reg.SP;
 		case RegCode::PC: return m_programCounter;
 
 		case RegCode::A: return MakeWord(0xFF, m_reg.ab.A);
 		case RegCode::B: return MakeWord(0xFF, m_reg.ab.B);
 		case RegCode::CC: return MakeWord(m_flags, m_flags);
-		case RegCode::DP: return MakeWord(m_reg.DP, m_reg.DP);
+		case RegCode::DP: return MakeWord(m_reg6809.DP, m_reg6809.DP);
 
 		default: return 0xFFFF;
 		}
@@ -797,9 +787,9 @@ namespace emul
 		case RegCode::A:  return m_reg.ab.A;
 		case RegCode::B:  return m_reg.ab.B;
 		case RegCode::CC: return m_flags;
-		case RegCode::DP: return m_reg.DP;
+		case RegCode::DP: return m_reg6809.DP;
 
-		default: return m_reg.void8;
+		default: return m_reg6809.void8;
 		}
 	}
 
@@ -811,12 +801,12 @@ namespace emul
 		{
 		case RegCode::D:  return m_reg.D;
 		case RegCode::X:  return m_reg.X;
-		case RegCode::Y:  return m_reg.Y;
-		case RegCode::U:  return m_reg.U;
-		case RegCode::S:  return m_reg.S;
+		case RegCode::Y:  return m_reg6809.Y;
+		case RegCode::U:  return m_reg6809.USP;
+		case RegCode::S:  return m_reg.SP;
 		case RegCode::PC: return m_PC;
 
-		default: return m_reg.void16;
+		default: return m_reg6809.void16;
 		}
 	}
 
@@ -928,12 +918,12 @@ namespace emul
 		to["pc"] = m_programCounter;
 
 		to["d"] = m_reg.D;
-		to["s"] = m_reg.S;
-		to["u"] = m_reg.U;
+		to["s"] = m_reg.SP;
+		to["u"] = m_reg6809.USP;
 		to["x"] = m_reg.X;
-		to["y"] = m_reg.Y;
+		to["y"] = m_reg6809.Y;
 
-		to["dp"] = m_reg.DP;
+		to["dp"] = m_reg6809.DP;
 		to["flags"] = m_flags;
 	}
 	void CPU6809::Deserialize(const json& from)
@@ -948,12 +938,12 @@ namespace emul
 		m_programCounter = from["pc"];
 
 		m_reg.D = from["d"];
-		m_reg.S = from["s"];
-		m_reg.U = from["u"];
+		m_reg.SP = from["s"];
+		m_reg6809.USP = from["u"];
 		m_reg.X = from["x"];
-		m_reg.Y = from["y"];
+		m_reg6809.Y = from["y"];
 
-		m_reg.DP = from["dp"];
+		m_reg6809.DP = from["dp"];
 		m_flags = from["flags"];
 	}
 }

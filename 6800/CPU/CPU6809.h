@@ -98,25 +98,13 @@ namespace emul
 
 		enum class STACK
 		{
-			S, U
+			SSP, USP
 		};
 
-		struct Registers
+		struct Registers6809
 		{
-#pragma pack(push, 1)
-			union
-			{
-				WORD D = 0;	// Accumulators
-				struct {
-					BYTE B;
-					BYTE A;
-				} ab;
-			};
-#pragma pack(pop)
+			WORD USP = 0; // User Stack Pointer
 
-			WORD S = 0; // Hardware Stack Pointer
-			WORD U = 0; // User Stack Pointer
-			WORD X = 0; // Index Register
 			WORD Y = 0; // Index Register
 
 			BYTE DP = 0; // Direct Page Register
@@ -124,9 +112,9 @@ namespace emul
 			// For invalid destinations;
 			BYTE void8;
 			WORD void16;
-		} m_reg;
+		} m_reg6809;
 
-		bool IsStackRegister(const WORD& reg) const { return &reg == &m_reg.S; }
+		bool IsStackRegister(const WORD& reg) const { return &reg == &m_reg.SP; }
 
 		// Flags
 		bool GetFlag(FLAG6809 f) { return (m_flags & f) ? true : false; };
@@ -138,7 +126,7 @@ namespace emul
 		void exec(OpcodeTable& table, BYTE opcode);
 
 		// Misc helpers
-		virtual ADDRESS GetDirect() override { return MakeWord(m_reg.DP, FetchByte()); }
+		virtual ADDRESS GetDirect() override { return MakeWord(m_reg6809.DP, FetchByte()); }
 		virtual ADDRESS GetIndexed() override;
 		WORD& GetIndexedRegister(BYTE idx);
 
@@ -199,8 +187,8 @@ namespace emul
 
 		// Active stack, used by push/pull
 		// (always set before call, no need to serialize)
-		WORD* m_currStack = &m_reg.S;
-		void SetStack(STACK s) { m_currStack = (s == STACK::S) ? &m_reg.S : &m_reg.U; }
+		WORD* m_currStack = &m_reg.SP;
+		void SetStack(STACK s) { m_currStack = (s == STACK::SSP) ? &m_reg.SP : &m_reg6809.USP; }
 
 		void SEX(); // Sign Extend B to D
 
