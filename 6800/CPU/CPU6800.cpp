@@ -5,10 +5,9 @@ using cpuInfo::Opcode;
 
 namespace emul
 {
-	CPU6800::CPU6800(Memory& memory) : CPU6800("6800", memory)
+	CPU6800::CPU6800(Memory& memory) : CPU6800(CPUID_6800, memory)
 	{
 	}
-
 
 	CPU6800::CPU6800(const char* cpuid, Memory& memory) :
 		CPU(CPU6800_ADDRESS_BITS, memory),
@@ -264,7 +263,7 @@ namespace emul
 		CPU::Reset();
 
 		// Read reset vector
-		ADDRESS resetVector = m_memory.Read16be(ADDR_RESET);
+		ADDRESS resetVector = MemRead16(ADDR_RESET);
 		LogPrintf(LOG_INFO, "Reset vector: %04X", resetVector);
 		m_programCounter = resetVector;
 
@@ -293,7 +292,7 @@ namespace emul
 
 	BYTE CPU6800::FetchByte()
 	{
-		BYTE b = m_memory.Read8(GetCurrentAddress());
+		BYTE b = MemRead8(GetCurrentAddress());
 		++m_programCounter;
 		m_programCounter &= 0xFFFF;
 		return b;
@@ -311,25 +310,25 @@ namespace emul
 	void CPU6800::MEMDirectOp(std::function<void(CPU6800*, BYTE&)> func)
 	{
 		const ADDRESS dest = GetDirect();
-		BYTE value = m_memory.Read8(dest);
+		BYTE value = MemRead8(dest);
 		func(this, value);
-		m_memory.Write8(dest, value);
+		MemWrite8(dest, value);
 	}
 
 	void CPU6800::MEMIndexedOp(std::function<void(CPU6800*, BYTE&)> func)
 	{
 		const ADDRESS dest = GetIndexed();
-		BYTE value = m_memory.Read8(dest);
+		BYTE value = MemRead8(dest);
 		func(this, value);
-		m_memory.Write8(dest, value);
+		MemWrite8(dest, value);
 	}
 
 	void CPU6800::MEMExtendedOp(std::function<void(CPU6800*, BYTE&)> func)
 	{
 		const ADDRESS dest = GetExtended();
-		BYTE value = m_memory.Read8(dest);
+		BYTE value = MemRead8(dest);
 		func(this, value);
-		m_memory.Write8(dest, value);
+		MemWrite8(dest, value);
 	}
 
 	bool CPU6800::Step()
@@ -424,7 +423,7 @@ namespace emul
 		if (vector != 0xFFFF)
 		{
 			SetFlag(FLAG_I, true);   // Disable IRQ
-			m_programCounter = m_memory.Read16be(vector);
+			m_programCounter = MemRead16(vector);
 		}
 	}
 
@@ -460,7 +459,7 @@ namespace emul
 
 	void CPU6800::pushB(BYTE value)
 	{
-		m_memory.Write8(--m_reg.SP, value);
+		MemWrite8(--m_reg.SP, value);
 	}
 
 	void CPU6800::pushW(WORD value)
@@ -471,7 +470,7 @@ namespace emul
 
 	BYTE CPU6800::popB()
 	{
-		return m_memory.Read8(m_reg.SP++);
+		return MemRead8(m_reg.SP++);
 	}
 
 	WORD CPU6800::popW()
@@ -526,7 +525,7 @@ namespace emul
 	{
 		pushAll();
 		SetFlag(FLAG_I, true);   // Disable IRQ
-		m_programCounter = m_memory.Read16be(ADDR_SWI);
+		m_programCounter = MemRead16(ADDR_SWI);
 	}
 
 	void CPU6800::LD8(BYTE& dest, BYTE src)
@@ -545,7 +544,7 @@ namespace emul
 
 	void CPU6800::ST8(ADDRESS dest, BYTE src)
 	{
-		m_memory.Write8(dest, src);
+		MemWrite8(dest, src);
 
 		AdjustNZ(src);
 		SetFlag(FLAG_V, false);
@@ -553,7 +552,7 @@ namespace emul
 
 	void CPU6800::ST16(ADDRESS dest, WORD src)
 	{
-		m_memory.Write16be(dest, src);
+		MemWrite16(dest, src);
 
 		AdjustNZ(src);
 		SetFlag(FLAG_V, false);
@@ -712,7 +711,11 @@ namespace emul
 		WORD res = dest - src - borrow;
 
 		AdjustNZ(res);
-		SetFlag(FLAG_C, (GetMSB(res) && GetMSB(src)) || (!GetMSB(dest) && (GetMSB(src) || GetMSB(res))));
+
+		if (m_sub16SetCarry)
+		{
+			SetFlag(FLAG_C, (GetMSB(res) && GetMSB(src)) || (!GetMSB(dest) && (GetMSB(src) || GetMSB(res))));
+		}
 		SetFlag(FLAG_V, (GetMSB(dest) != GetMSB(src)) && (GetMSB(res) == GetMSB(src)));
 
 		dest = res;

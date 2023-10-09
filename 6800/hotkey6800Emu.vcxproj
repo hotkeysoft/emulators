@@ -55,9 +55,11 @@
     <ClInclude Include="..\Common\Video\VideoEvents.h" />
     <ClInclude Include="..\Common\Video\VideoNull.h" />
     <ClInclude Include="Computer6800.h" />
+    <ClInclude Include="Computer6803.h" />
     <ClInclude Include="Computer6809.h" />
     <ClInclude Include="ComputerThomson.h" />
     <ClInclude Include="CPU\CPU6800.h" />
+    <ClInclude Include="CPU\CPU6803.h" />
     <ClInclude Include="CPU\CPU6809.h" />
     <ClInclude Include="Hardware\Device6520TO7_PIA.h" />
     <ClInclude Include="Hardware\Device6846.h" />
@@ -103,9 +105,11 @@
     <ClCompile Include="..\Common\UI\TimeFormatter.cpp" />
     <ClCompile Include="..\Common\Video\Video.cpp" />
     <ClCompile Include="Computer6800.cpp" />
+    <ClCompile Include="Computer6803.cpp" />
     <ClCompile Include="Computer6809.cpp" />
     <ClCompile Include="ComputerThomson.cpp" />
     <ClCompile Include="CPU\CPU6800.cpp" />
+    <ClCompile Include="CPU\CPU6803.cpp" />
     <ClCompile Include="CPU\CPU6809.cpp" />
     <ClCompile Include="Hardware\Device6520TO7_PIA.cpp" />
     <ClCompile Include="Hardware\Device6846.cpp" />

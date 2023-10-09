@@ -246,6 +246,8 @@ namespace emul
 		{
 		case RAMMode::ZP:
 			return 0;
+		case RAMMode::IX:
+			return  GetCPU()->m_reg.X;
 		case RAMMode::SP:
 			return  GetCPU()->m_reg.SP;
 		case RAMMode::PC:

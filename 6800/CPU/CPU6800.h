@@ -53,6 +53,11 @@ namespace emul
 		inline void TICKT3() { CPU::TICK((*m_currTiming)[(int)cpuInfo::OpcodeTimingType::T3]); }
 		inline void TICKINT() { CPU::TICK(m_info.GetMiscTiming(cpuInfo::MiscTiming::TRAP)[0]); }
 
+		virtual BYTE MemRead8(ADDRESS address) { return m_memory.Read8(address); }
+		virtual WORD MemRead16(ADDRESS address) { return m_memory.Read16be(address); }
+		virtual void MemWrite8(ADDRESS address, BYTE value) { m_memory.Write8(address, value); }
+		virtual void MemWrite16(ADDRESS address, WORD value) { m_memory.Write16be(address, value); }
+
 		// Hardware vectors
 		static constexpr ADDRESS ADDR_IRQ = 0xFFF8; // Hardware interrupt vector (IRQ)
 		static constexpr ADDRESS ADDR_SWI = 0xFFFA; // Software interrupt vector (SWI)
@@ -74,6 +79,8 @@ namespace emul
 		bool m_irq = false;
 
 		bool m_clearIntMask = false;
+
+		bool m_sub16SetCarry = false;
 
 		virtual void Interrupt();
 

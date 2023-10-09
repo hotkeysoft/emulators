@@ -255,6 +255,12 @@
     <ClInclude Include="IO\MonitorBase.h">
       <Filter>Header Files\IO</Filter>
     </ClInclude>
+    <ClInclude Include="CPU\CPU6803.h">
+      <Filter>Header Files\CPU</Filter>
+    </ClInclude>
+    <ClInclude Include="Computer6803.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -400,6 +406,12 @@
     </ClCompile>
     <ClCompile Include="IO\MonitorBase.cpp">
       <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="CPU\CPU6803.cpp">
+      <Filter>Source Files\CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="Computer6803.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

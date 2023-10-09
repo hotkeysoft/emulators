@@ -16,6 +16,7 @@
 
 #include <Computer/ComputerBase.h>
 #include "Computer6800.h"
+#include "Computer6803.h"
 #include "Computer6809.h"
 #include "ComputerThomson.h"
 
@@ -142,6 +143,10 @@ ComputerBase* CreateComputer(std::string arch)
 	{
 		computer = new emul::Computer6800();
 	}
+	else if (arch == "6803")
+	{
+		computer = new emul::Computer6803();
+	}
 	else if (arch == "6809")
 	{
 		computer = new emul::Computer6809();
@@ -165,14 +170,14 @@ void InitPC(ComputerBase* pc, Overlay& overlay, bool reset = true)
 	delete monitor;
 
 	std::string cpuID = pc->GetCPU()->GetID();
-	if (cpuID == "6800")
+	if (cpuID == "6800" || cpuID == "6803")
 	{
 		monitor = new emul::Monitor6800(console);
 	}
 	else if (cpuID == "6809")
 	{
 		monitor = new emul::Monitor6809(console);
-	}	
+	}
 	else
 	{
 		throw std::exception("Unknown cpuID");

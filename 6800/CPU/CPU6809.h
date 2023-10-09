@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CPU/CPU6800.h"
-#include <CPU/PortConnector.h>
 #include <CPU/CPUInfo.h>
 #include <EdgeDetectLatch.h>
 
@@ -10,7 +9,6 @@
 
 namespace emul
 {
-	static const size_t CPU6809_ADDRESS_BITS = 16;
 	static const char* CPUID_6809 = "6809";
 
 	class CPU6809 : public CPU6800

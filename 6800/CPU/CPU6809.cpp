@@ -5,9 +5,10 @@ using cpuInfo::Opcode;
 
 namespace emul
 {
-	CPU6809::CPU6809(Memory& memory) : CPU6800("6809", memory), Logger("6809")
+	CPU6809::CPU6809(Memory& memory) : CPU6800(CPUID_6809, memory), Logger(CPUID_6809)
 	{
 		FLAG_RESERVED_ON = (FLAG)0;
+		m_sub16SetCarry = true;
 	}
 
 	void CPU6809::Init()
@@ -223,25 +224,25 @@ namespace emul
 	void CPU6809::MEMDirectOp(std::function<void(CPU6809*, BYTE&)> func)
 	{
 		const ADDRESS dest = GetDirect();
-		BYTE value = m_memory.Read8(dest);
+		BYTE value = MemRead8(dest);
 		func(this, value);
-		m_memory.Write8(dest, value);
+		MemWrite8(dest, value);
 	}
 
 	void CPU6809::MEMIndexedOp(std::function<void(CPU6809*, BYTE&)> func)
 	{
 		const ADDRESS dest = GetIndexed();
-		BYTE value = m_memory.Read8(dest);
+		BYTE value = MemRead8(dest);
 		func(this, value);
-		m_memory.Write8(dest, value);
+		MemWrite8(dest, value);
 	}
 
 	void CPU6809::MEMExtendedOp(std::function<void(CPU6809*, BYTE&)> func)
 	{
 		const ADDRESS dest = GetExtended();
-		BYTE value = m_memory.Read8(dest);
+		BYTE value = MemRead8(dest);
 		func(this, value);
-		m_memory.Write8(dest, value);
+		MemWrite8(dest, value);
 	}
 
 	WORD& CPU6809::GetIndexedRegister(BYTE idx)
@@ -318,7 +319,7 @@ namespace emul
 		{
 			// TODO: 'illegal' modes
 			TICKn(3);
-			return m_memory.Read16be(ea);
+			return MemRead16(ea);
 		}
 
 		return ea;
@@ -381,7 +382,7 @@ namespace emul
 			SetFlag(FLAG_F, true);   // Disable FIRQ
 			SetFlag(FLAG_I, true);   // Disable IRQ
 
-			m_PC = m_memory.Read16be(ADDR_NMI);
+			m_PC = MemRead16(ADDR_NMI);
 			m_nmi.ResetLatch();
 		}
 		else if (m_firq && !GetFlag(FLAG_F))
@@ -394,7 +395,7 @@ namespace emul
 			SetFlag(FLAG_F, true);  // Disable FIRQ
 			SetFlag(FLAG_I, true);  // Disable IRQ
 
-			m_PC = m_memory.Read16be(ADDR_FIRQ);
+			m_PC = MemRead16(ADDR_FIRQ);
 		}
 		else if (m_irq && !GetFlag(FLAG_I))
 		{
@@ -404,7 +405,7 @@ namespace emul
 			PSH(STACK::SSP, REGS_ALL); // Save all registers
 			SetFlag(FLAG_I, true);   // Disable IRQ
 
-			m_PC = m_memory.Read16be(ADDR_IRQ);
+			m_PC = MemRead16(ADDR_IRQ);
 		}
 	}
 
@@ -413,7 +414,7 @@ namespace emul
 		TICK1();
 		WORD& sp = *m_currStack;
 
-		m_memory.Write8(--sp, value);
+		MemWrite8(--sp, value);
 	}
 
 	BYTE CPU6809::pop()
@@ -421,7 +422,7 @@ namespace emul
 		TICK1();
 		WORD& sp = *m_currStack;
 
-		return m_memory.Read8(sp++);
+		return MemRead8(sp++);
 	}
 
 	void CPU6809::PSH(STACK s, BYTE regs)
@@ -584,7 +585,7 @@ namespace emul
 			throw("Not possible");
 		}
 
-		m_PC = m_memory.Read16be(vect);
+		m_PC = MemRead16(vect);
 	}
 
 	void CPU6809::XRES()
@@ -592,7 +593,7 @@ namespace emul
 		// Push all registers on the system stack
 		PSH(STACK::SSP, REGS_ALL);
 
-		m_PC = m_memory.Read16be(ADDR_SWI2);
+		m_PC = MemRead16(ADDR_SWI2);
 	}
 
 	void CPU6809::LEA(WORD& dest, bool setZero)
