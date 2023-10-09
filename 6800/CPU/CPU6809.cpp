@@ -12,8 +12,7 @@ namespace emul
 
 	void CPU6809::Init()
 	{
-		m_opcodes.resize(256);
-		std::fill(m_opcodes.begin(), m_opcodes.end(), [=]() { UnknownOpcode(); });
+		CPU6800::Init();
 
 		m_opcodes[0x00] = [=]() { MEMDirectOp(&CPU6809::NEG); }; // NEG direct
 		m_opcodes[0x01] = [=]() { MEMDirectOp(&CPU6809::NEG); }; // NEG direct (undocumented)
@@ -44,22 +43,7 @@ namespace emul
 		m_opcodes[0x1E] = [=]() { EXG(FetchByte()); }; // EXG r0,r1
 		m_opcodes[0x1F] = [=]() { TFR(FetchByte()); }; // TFR r0,r1
 
-		m_opcodes[0x20] = [=]() { BRA(true); }; // BRA
 		m_opcodes[0x21] = [=]() { BRA(false); }; // BRN
-		m_opcodes[0x22] = [=]() { BRA((GetFlag(FLAG_Z) == false) && (GetFlag(FLAG_C) == false)); }; // BHI
-		m_opcodes[0x23] = [=]() { BRA((GetFlag(FLAG_Z) == true) || (GetFlag(FLAG_C) == true)); }; // BLS
-		m_opcodes[0x24] = [=]() { BRA(GetFlag(FLAG_C) == false); }; // BCC / BHS
-		m_opcodes[0x25] = [=]() { BRA(GetFlag(FLAG_C) == true); }; // BCS / BLO
-		m_opcodes[0x26] = [=]() { BRA(GetFlag(FLAG_Z) == false); }; // BNE
-		m_opcodes[0x27] = [=]() { BRA(GetFlag(FLAG_Z) == true); }; // BEQ
-		m_opcodes[0x28] = [=]() { BRA(GetFlag(FLAG_V) == false); }; // BVC
-		m_opcodes[0x29] = [=]() { BRA(GetFlag(FLAG_V) == true); }; // BVS
-		m_opcodes[0x2A] = [=]() { BRA(GetFlag(FLAG_N) == false); }; // BPL
-		m_opcodes[0x2B] = [=]() { BRA(GetFlag(FLAG_N) == true); }; // BMI
-		m_opcodes[0x2C] = [=]() { BRA(GetFlag(FLAG_N) == GetFlag(FLAG_V)); }; // BGE
-		m_opcodes[0x2D] = [=]() { BRA(GetFlag(FLAG_N) != GetFlag(FLAG_V)); }; // BLT
-		m_opcodes[0x2E] = [=]() { BRA((GetFlag(FLAG_N) == GetFlag(FLAG_V)) && (GetFlag(FLAG_Z) == false)); }; // BGT
-		m_opcodes[0x2F] = [=]() { BRA((GetFlag(FLAG_N) != GetFlag(FLAG_V)) || (GetFlag(FLAG_Z) == true)); }; // BLE
 
 		m_opcodes[0x30] = [=]() { LEA(m_reg.X, true); }; // LEAX
 		m_opcodes[0x31] = [=]() { LEA(m_reg6809.Y, true); }; // LEAY
@@ -77,199 +61,62 @@ namespace emul
 		m_opcodes[0x3E] = [=]() { XRES(); }; // XRES (undocumented)
 		m_opcodes[0x3F] = [=]() { SWI(1); }; // SWI
 
-		m_opcodes[0x40] = [=]() { NEG(m_reg.ab.A); }; // NEGA
 		m_opcodes[0x41] = [=]() { NEG(m_reg.ab.A); }; // NEGA (undocumented)
 		m_opcodes[0x42] = [=]() { XNC(m_reg.ab.A); }; // XNCA (undocumented)
-		m_opcodes[0x43] = [=]() { COM(m_reg.ab.A); }; // COMA
-		m_opcodes[0x44] = [=]() { LSR(m_reg.ab.A); }; // LSRA
 		m_opcodes[0x45] = [=]() { LSR(m_reg.ab.A); }; // LSRA (undocumented)
-		m_opcodes[0x46] = [=]() { ROR(m_reg.ab.A); }; // RORA
-		m_opcodes[0x47] = [=]() { ASR(m_reg.ab.A); }; // ASRA
-		m_opcodes[0x48] = [=]() { ASL(m_reg.ab.A); }; // ASLA
-		m_opcodes[0x49] = [=]() { ROL(m_reg.ab.A); }; // ROLA
-		m_opcodes[0x4A] = [=]() { DEC(m_reg.ab.A); }; // DECA
 		m_opcodes[0x4B] = [=]() { XDEC(m_reg.ab.A); }; // XDECA (undocumented)
-		m_opcodes[0x4C] = [=]() { INC(m_reg.ab.A); }; // INCA
-		m_opcodes[0x4D] = [=]() { TST(m_reg.ab.A); }; // TSTA
 		m_opcodes[0x4E] = [=]() { XCLR(m_reg.ab.A); }; // XCLRA (undocumented)
-		m_opcodes[0x4F] = [=]() { CLR(m_reg.ab.A); }; // CLRA
 
-		m_opcodes[0x50] = [=]() { NEG(m_reg.ab.B); }; // NEGB
 		m_opcodes[0x51] = [=]() { NEG(m_reg.ab.B); }; // NEGA (undocumented)
 		m_opcodes[0x52] = [=]() { XNC(m_reg.ab.B); }; // XNCB (undocumented)
-		m_opcodes[0x53] = [=]() { COM(m_reg.ab.B); }; // COMB
-		m_opcodes[0x54] = [=]() { LSR(m_reg.ab.B); }; // LSRB
 		m_opcodes[0x55] = [=]() { LSR(m_reg.ab.B); }; // LSRB (undocumented)
-		m_opcodes[0x56] = [=]() { ROR(m_reg.ab.B); }; // RORB
-		m_opcodes[0x57] = [=]() { ASR(m_reg.ab.B); }; // ASRB
-		m_opcodes[0x58] = [=]() { ASL(m_reg.ab.B); }; // ASLB
-		m_opcodes[0x59] = [=]() { ROL(m_reg.ab.B); }; // ROLB
-		m_opcodes[0x5A] = [=]() { DEC(m_reg.ab.B); }; // DECB
 		m_opcodes[0x5B] = [=]() { XDEC(m_reg.ab.B); }; // XDECB (undocumented)
-		m_opcodes[0x5C] = [=]() { INC(m_reg.ab.B); }; // INCB
-		m_opcodes[0x5D] = [=]() { TST(m_reg.ab.B); }; // TSTB
 		m_opcodes[0x5E] = [=]() { XCLR(m_reg.ab.B); }; // XCLRB (undocumented)
-		m_opcodes[0x5F] = [=]() { CLR(m_reg.ab.B); }; // CLRB
 
-		m_opcodes[0x60] = [=]() { MEMIndexedOp(&CPU6809::NEG); }; // NEG indexed
 		m_opcodes[0x61] = [=]() { MEMIndexedOp(&CPU6809::NEG); }; // NEG indexed (undocumented)
 		m_opcodes[0x62] = [=]() { MEMIndexedOp(&CPU6809::XNC); }; // XNC indexed (undocumented)
-		m_opcodes[0x63] = [=]() { MEMIndexedOp(&CPU6809::COM); }; // COM indexed
-		m_opcodes[0x64] = [=]() { MEMIndexedOp(&CPU6809::LSR); }; // LSR indexed
 		m_opcodes[0x65] = [=]() { MEMIndexedOp(&CPU6809::LSR); }; // LSR indexed (undocumented)
-		m_opcodes[0x66] = [=]() { MEMIndexedOp(&CPU6809::ROR); }; // ROR indexed
-		m_opcodes[0x67] = [=]() { MEMIndexedOp(&CPU6809::ASR); }; // ASR indexed
-		m_opcodes[0x68] = [=]() { MEMIndexedOp(&CPU6809::ASL); }; // ASL indexed
-		m_opcodes[0x69] = [=]() { MEMIndexedOp(&CPU6809::ROL); }; // ROL indexed
-		m_opcodes[0x6A] = [=]() { MEMIndexedOp(&CPU6809::DEC); }; // DEC indexed
 		m_opcodes[0x6B] = [=]() { MEMIndexedOp(&CPU6809::XDEC); }; // XDEC indexed (undocumented)
-		m_opcodes[0x6C] = [=]() { MEMIndexedOp(&CPU6809::INC); }; // INC indexed
 		m_opcodes[0x6D] = [=]() { TST(GetMemIndexedByte()); }; // TST indirect
 		m_opcodes[0x6E] = [=]() { JMP(GetIndexed()); }; // JMP indexed
-		m_opcodes[0x6F] = [=]() { MEMIndexedOp(&CPU6809::CLR); }; // CLR indexed
 
-		m_opcodes[0x70] = [=]() { MEMExtendedOp(&CPU6809::NEG); }; // NEG extended
 		m_opcodes[0x71] = [=]() { MEMExtendedOp(&CPU6809::NEG); }; // NEG extended (undocumented)
 		m_opcodes[0x72] = [=]() { MEMExtendedOp(&CPU6809::XNC); }; // NEG extended (undocumented)
-		m_opcodes[0x73] = [=]() { MEMExtendedOp(&CPU6809::COM); }; // COM extended
-		m_opcodes[0x74] = [=]() { MEMExtendedOp(&CPU6809::LSR); }; // LSR extended
-		m_opcodes[0x76] = [=]() { MEMExtendedOp(&CPU6809::ROR); }; // ROR extended
-		m_opcodes[0x77] = [=]() { MEMExtendedOp(&CPU6809::ASR); }; // ASR extended
-		m_opcodes[0x78] = [=]() { MEMExtendedOp(&CPU6809::ASL); }; // ASL extended
-		m_opcodes[0x79] = [=]() { MEMExtendedOp(&CPU6809::ROL); }; // ROL extended
-		m_opcodes[0x7A] = [=]() { MEMExtendedOp(&CPU6809::DEC); }; // DEC extended
 		m_opcodes[0x7B] = [=]() { MEMExtendedOp(&CPU6809::XDEC); }; // XDEC extended (undocumented)
-		m_opcodes[0x7C] = [=]() { MEMExtendedOp(&CPU6809::INC); }; // INC extended
-		m_opcodes[0x7D] = [=]() { TST(GetMemExtendedByte()); }; // TST extended
-		m_opcodes[0x7E] = [=]() { JMP(GetExtended()); }; // JMP extended
-		m_opcodes[0x7F] = [=]() { MEMExtendedOp(&CPU6809::CLR); }; // CLR extended
 
-		m_opcodes[0x80] = [=]() { SUB8(m_reg.ab.A, FetchByte()); }; // SUBA imm
-		m_opcodes[0x81] = [=]() { CMP8(m_reg.ab.A, FetchByte()); }; // CMPA imm
-		m_opcodes[0x82] = [=]() { SUB8(m_reg.ab.A, FetchByte(), GetFlag(FLAG_C)); }; // SBCA imm
 		m_opcodes[0x83] = [=]() { SUB16(m_reg.D, FetchWord()); }; // SUBD imm
-		m_opcodes[0x84] = [=]() { AND(m_reg.ab.A, FetchByte()); }; // ANDA imm
-		m_opcodes[0x85] = [=]() { BIT(m_reg.ab.A, FetchByte()); }; // BITA imm
-		m_opcodes[0x86] = [=]() { LD8(m_reg.ab.A, FetchByte()); }; // LDA imm
-		m_opcodes[0x88] = [=]() { EOR(m_reg.ab.A, FetchByte()); }; // EORA imm
-		m_opcodes[0x89] = [=]() { ADD8(m_reg.ab.A, FetchByte(), GetFlag(FLAG_C)); }; // ADCA imm
-		m_opcodes[0x8A] = [=]() { OR(m_reg.ab.A, FetchByte()); }; // ORA imm
-		m_opcodes[0x8B] = [=]() { ADD8(m_reg.ab.A, FetchByte()); }; // ADDA imm
-		m_opcodes[0x8C] = [=]() { CMP16(m_reg.X, FetchWord()); }; // CMPX imm
-		m_opcodes[0x8D] = [=]() { BSR(); }; // BSR rel
 		m_opcodes[0x8E] = [=]() { LD16(m_reg.X, FetchWord()); }; // LDX imm
 
-		m_opcodes[0x90] = [=]() { SUB8(m_reg.ab.A, GetMemDirectByte()); }; // SUBA direct
-		m_opcodes[0x91] = [=]() { CMP8(m_reg.ab.A, GetMemDirectByte()); }; // CMPA direct
-		m_opcodes[0x92] = [=]() { SUB8(m_reg.ab.A, GetMemDirectByte(), GetFlag(FLAG_C)); }; // SBCA direct
 		m_opcodes[0x93] = [=]() { SUB16(m_reg.D, GetMemDirectWord()); }; // SUBD direct
-		m_opcodes[0x94] = [=]() { AND(m_reg.ab.A, GetMemDirectByte()); }; // ANDA direct
-		m_opcodes[0x95] = [=]() { BIT(m_reg.ab.A, GetMemDirectByte()); }; // BITA direct
-		m_opcodes[0x96] = [=]() { LD8(m_reg.ab.A, GetMemDirectByte()); }; // LDA direct
-		m_opcodes[0x97] = [=]() { ST8(GetDirect(), m_reg.ab.A); }; // STA direct
-		m_opcodes[0x98] = [=]() { EOR(m_reg.ab.A, GetMemDirectByte()); }; // EORA direct
-		m_opcodes[0x99] = [=]() { ADD8(m_reg.ab.A, GetMemDirectByte(), GetFlag(FLAG_C)); }; // ADCA direct
-		m_opcodes[0x9A] = [=]() { OR(m_reg.ab.A, GetMemDirectByte()); }; // EORA direct
-		m_opcodes[0x9B] = [=]() { ADD8(m_reg.ab.A, GetMemDirectByte()); }; // ADDA direct
-		m_opcodes[0x9C] = [=]() { CMP16(m_reg.X, GetMemDirectWord()); }; // CMPX direct
 		m_opcodes[0x9D] = [=]() { JSR(GetDirect()); }; // JSR direct
 		m_opcodes[0x9E] = [=]() { LD16(m_reg.X, GetMemDirectWord()); }; // LDX direct
 		m_opcodes[0x9F] = [=]() { ST16(GetDirect(),m_reg.X); }; // STU direct
 
-		m_opcodes[0xA0] = [=]() { SUB8(m_reg.ab.A, GetMemIndexedByte()); }; // SUBA indexed
-		m_opcodes[0xA1] = [=]() { CMP8(m_reg.ab.A, GetMemIndexedByte()); }; // CMPA indexed
-		m_opcodes[0xA2] = [=]() { SUB8(m_reg.ab.A, GetMemIndexedByte(), GetFlag(FLAG_C)); }; // SBCA indexed
 		m_opcodes[0xA3] = [=]() { SUB16(m_reg.D, GetMemIndexedWord()); }; // SUBD indexed
-		m_opcodes[0xA4] = [=]() { AND(m_reg.ab.A, GetMemIndexedByte()); }; // AND indexed
-		m_opcodes[0xA5] = [=]() { BIT(m_reg.ab.A, GetMemIndexedByte()); }; // BIT indexed
-		m_opcodes[0xA6] = [=]() { LD8(m_reg.ab.A, GetMemIndexedByte()); }; // LDA indexed
-		m_opcodes[0xA7] = [=]() { ST8(GetIndexed(), m_reg.ab.A); }; // STA indexed
-		m_opcodes[0xA8] = [=]() { EOR(m_reg.ab.A, GetMemIndexedByte()); }; // EORA indexed
-		m_opcodes[0xA9] = [=]() { ADD8(m_reg.ab.A, GetMemIndexedByte(), GetFlag(FLAG_C)); }; // ADCA indexed
-		m_opcodes[0xAA] = [=]() { OR(m_reg.ab.A, GetMemIndexedByte()); }; // EORA indexed
-		m_opcodes[0xAB] = [=]() { ADD8(m_reg.ab.A, GetMemIndexedByte()); }; // ADDA indexed
-		m_opcodes[0xAC] = [=]() { CMP16(m_reg.X, GetMemIndexedWord()); }; // CMPX indexed
-		m_opcodes[0xAD] = [=]() { JSR(GetIndexed()); }; // JSR indexed
 		m_opcodes[0xAE] = [=]() { LD16(m_reg.X, GetMemIndexedWord()); }; // LDX indexed
 		m_opcodes[0xAF] = [=]() { ST16(GetIndexed(), m_reg.X); }; // STU indexed
 
-		m_opcodes[0xB0] = [=]() { SUB8(m_reg.ab.A, GetMemExtendedByte()); }; // SUBA extended
-		m_opcodes[0xB1] = [=]() { CMP8(m_reg.ab.A, GetMemExtendedByte()); }; // CMPA extended
-		m_opcodes[0xB2] = [=]() { SUB8(m_reg.ab.A, GetMemExtendedByte(), GetFlag(FLAG_C)); }; // SBCA extended
 		m_opcodes[0xB3] = [=]() { SUB16(m_reg.D, GetMemExtendedWord()); }; // SUBD extended
-		m_opcodes[0xB4] = [=]() { AND(m_reg.ab.A, GetMemExtendedByte()); }; // ANDA extended
-		m_opcodes[0xB5] = [=]() { BIT(m_reg.ab.A, GetMemExtendedByte()); }; // BITA extended
-		m_opcodes[0xB6] = [=]() { LD8(m_reg.ab.A, GetMemExtendedByte()); }; // LDA extended
-		m_opcodes[0xB7] = [=]() { ST8(GetExtended(), m_reg.ab.A); }; // STA extended
-		m_opcodes[0xB8] = [=]() { EOR(m_reg.ab.A, GetMemExtendedByte()); }; // EORA extended
-		m_opcodes[0xB9] = [=]() { ADD8(m_reg.ab.A, GetMemExtendedByte(), GetFlag(FLAG_C)); }; // ADCA extended
-		m_opcodes[0xBA] = [=]() { OR(m_reg.ab.A, GetMemExtendedByte()); }; // EORA extended
-		m_opcodes[0xBB] = [=]() { ADD8(m_reg.ab.A, GetMemExtendedByte()); }; // ADDA extended
-		m_opcodes[0xBC] = [=]() { CMP16(m_reg.X, GetMemExtendedWord()); }; // CMPX extended
-		m_opcodes[0xBD] = [=]() { JSR(GetExtended()); }; // JSR extended
 		m_opcodes[0xBE] = [=]() { LD16(m_reg.X, GetMemExtendedWord()); }; // LDX extended
 		m_opcodes[0xBF] = [=]() { ST16(GetExtended(), m_reg.X); }; // STU extended
 
-		m_opcodes[0xC0] = [=]() { SUB8(m_reg.ab.B, FetchByte()); }; // SUBB imm
-		m_opcodes[0xC1] = [=]() { CMP8(m_reg.ab.B, FetchByte()); }; // CMPB imm
-		m_opcodes[0xC2] = [=]() { SUB8(m_reg.ab.B, FetchByte(), GetFlag(FLAG_C)); }; // SBCB imm
 		m_opcodes[0xC3] = [=]() { ADD16(m_reg.D, FetchWord()); }; // ADDD imm
-		m_opcodes[0xC4] = [=]() { AND(m_reg.ab.B, FetchByte()); }; // ANDB imm
-		m_opcodes[0xC5] = [=]() { BIT(m_reg.ab.B, FetchByte()); }; // BITB imm
-		m_opcodes[0xC6] = [=]() { LD8(m_reg.ab.B, FetchByte()); }; // LDB imm
-		m_opcodes[0xC8] = [=]() { EOR(m_reg.ab.B, FetchByte()); }; // EORB imm
-		m_opcodes[0xC9] = [=]() { ADD8(m_reg.ab.B, FetchByte(), GetFlag(FLAG_C)); }; // ADCB imm
-		m_opcodes[0xCA] = [=]() { OR(m_reg.ab.B, FetchByte()); }; // EORB imm
-		m_opcodes[0xCB] = [=]() { ADD8(m_reg.ab.B, FetchByte()); }; // ADDB imm
 		m_opcodes[0xCC] = [=]() { LD16(m_reg.D, FetchWord()); }; // LDD imm
 		m_opcodes[0xCE] = [=]() { LD16(m_reg6809.USP, FetchWord()); }; // LDU imm
 
-		m_opcodes[0xD0] = [=]() { SUB8(m_reg.ab.B, GetMemDirectByte()); }; // SUBB direct
-		m_opcodes[0xD1] = [=]() { CMP8(m_reg.ab.B, GetMemDirectByte()); }; // CMPB direct
-		m_opcodes[0xD2] = [=]() { SUB8(m_reg.ab.B, GetMemDirectByte(), GetFlag(FLAG_C)); }; // SBCB direct
 		m_opcodes[0xD3] = [=]() { ADD16(m_reg.D, GetMemDirectWord()); }; // ADDD direct
-		m_opcodes[0xD4] = [=]() { AND(m_reg.ab.B, GetMemDirectByte()); }; // ANDB direct
-		m_opcodes[0xD5] = [=]() { BIT(m_reg.ab.B, GetMemDirectByte()); }; // BITB direct
-		m_opcodes[0xD6] = [=]() { LD8(m_reg.ab.B, GetMemDirectByte()); }; // LDB direct
-		m_opcodes[0xD7] = [=]() { ST8(GetDirect(), m_reg.ab.B); }; // STB direct
-		m_opcodes[0xD8] = [=]() { EOR(m_reg.ab.B, GetMemDirectByte()); }; // EORB direct
-		m_opcodes[0xD9] = [=]() { ADD8(m_reg.ab.B, GetMemDirectByte(), GetFlag(FLAG_C)); }; // ADCB direct
-		m_opcodes[0xDA] = [=]() { OR(m_reg.ab.B, GetMemDirectByte()); }; // EORB direct
-		m_opcodes[0xDB] = [=]() { ADD8(m_reg.ab.B, GetMemDirectByte()); }; // ADDB direct
 		m_opcodes[0xDC] = [=]() { LD16(m_reg.D, GetMemDirectWord()); }; // LDD direct
 		m_opcodes[0xDD] = [=]() { ST16(GetDirect(), m_reg.D); }; // STD direct
 		m_opcodes[0xDE] = [=]() { LD16(m_reg6809.USP, GetMemDirectWord()); }; // LDU direct
 		m_opcodes[0xDF] = [=]() { ST16(GetDirect(), m_reg6809.USP); }; // STU direct
 
-		m_opcodes[0xE0] = [=]() { SUB8(m_reg.ab.B, GetMemIndexedByte()); }; // SUBB indexed
-		m_opcodes[0xE1] = [=]() { CMP8(m_reg.ab.B, GetMemIndexedByte()); }; // CMPB indexed
-		m_opcodes[0xE2] = [=]() { SUB8(m_reg.ab.B, GetMemIndexedByte(), GetFlag(FLAG_C)); }; // SBCB indexed
 		m_opcodes[0xE3] = [=]() { ADD16(m_reg.D, GetMemIndexedWord()); }; // ADDD indexed
-		m_opcodes[0xE4] = [=]() { AND(m_reg.ab.B, GetMemIndexedByte()); }; // ANDB indexed
-		m_opcodes[0xE5] = [=]() { BIT(m_reg.ab.B, GetMemIndexedByte()); }; // BITB indexed
-		m_opcodes[0xE6] = [=]() { LD8(m_reg.ab.B, GetMemIndexedByte()); }; // LDB indexed
-		m_opcodes[0xE7] = [=]() { ST8(GetIndexed(), m_reg.ab.B); }; // STB indexed
-		m_opcodes[0xE8] = [=]() { EOR(m_reg.ab.B, GetMemIndexedByte()); }; // EORB indexed
-		m_opcodes[0xE9] = [=]() { ADD8(m_reg.ab.B, GetMemIndexedByte(), GetFlag(FLAG_C)); }; // ADCB indexed
-		m_opcodes[0xEA] = [=]() { OR(m_reg.ab.B, GetMemIndexedByte()); }; // EORB indexed
-		m_opcodes[0xEB] = [=]() { ADD8(m_reg.ab.B, GetMemIndexedByte()); }; // ADDB indexed
 		m_opcodes[0xEC] = [=]() { LD16(m_reg.D, GetMemIndexedWord()); }; // LDD indexed
 		m_opcodes[0xED] = [=]() { ST16(GetIndexed(), m_reg.D); }; // STD indexed
 		m_opcodes[0xEE] = [=]() { LD16(m_reg6809.USP, GetMemIndexedWord()); }; // LDU indexed
 		m_opcodes[0xEF] = [=]() { ST16(GetIndexed(), m_reg6809.USP); }; // STU indexed
 
-		m_opcodes[0xF0] = [=]() { SUB8(m_reg.ab.B, GetMemExtendedByte()); }; // SUBB extended
-		m_opcodes[0xF1] = [=]() { CMP8(m_reg.ab.B, GetMemExtendedByte()); }; // CMPB extended
-		m_opcodes[0xF2] = [=]() { SUB8(m_reg.ab.B, GetMemExtendedByte(), GetFlag(FLAG_C)); }; // SBCB extended
 		m_opcodes[0xF3] = [=]() { ADD16(m_reg.D, GetMemExtendedWord()); }; // ADDD extended
-		m_opcodes[0xF4] = [=]() { AND(m_reg.ab.B, GetMemExtendedByte()); }; // ANDB extended
-		m_opcodes[0xF5] = [=]() { BIT(m_reg.ab.B, GetMemExtendedByte()); }; // BITB extended
-		m_opcodes[0xF6] = [=]() { LD8(m_reg.ab.B, GetMemExtendedByte()); }; // LDB extended
-		m_opcodes[0xF7] = [=]() { ST8(GetExtended(), m_reg.ab.B); }; // STB extended
-		m_opcodes[0xF8] = [=]() { EOR(m_reg.ab.B, GetMemExtendedByte()); }; // EORB extended
-		m_opcodes[0xF9] = [=]() { ADD8(m_reg.ab.B, GetMemExtendedByte(), GetFlag(FLAG_C)); }; // ADCB extended
-		m_opcodes[0xFA] = [=]() { OR(m_reg.ab.B, GetMemExtendedByte()); }; // EORB extended
-		m_opcodes[0xFB] = [=]() { ADD8(m_reg.ab.B, GetMemExtendedByte()); }; // ADDB extended
 		m_opcodes[0xFC] = [=]() { LD16(m_reg.D, GetMemExtendedWord()); }; // LDD extended
 		m_opcodes[0xFD] = [=]() { ST16(GetExtended(), m_reg.D); }; // STD extended
 		m_opcodes[0xFE] = [=]() { LD16(m_reg6809.USP, GetMemExtendedWord()); }; // LDU extended
