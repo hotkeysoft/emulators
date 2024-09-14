@@ -8,6 +8,18 @@ namespace emul
 {
 	WORD Memory::s_uninitialized = 0xF00F;
 
+	static const char* GetAllocateModeStr(AllocateMode mode)
+	{
+		switch (mode)
+		{
+		case AllocateMode::READ: return "R";
+		case AllocateMode::WRITE: return "W";
+		case AllocateMode::READ_WRITE: return "R/W";
+		default: return "invalid AllocateMode";
+		}
+	}
+
+
 	Memory::Memory(WORD blockGranularity) : Logger("MEM"), m_blockGranularity(blockGranularity)
 	{
 		assert(IsPowerOf2(blockGranularity));
@@ -54,7 +66,11 @@ namespace emul
 			len = block->GetSize();
 		}
 
-		LogPrintf(LOG_INFO, "Request to allocate block [%s] at %X, size = %d bytes", block->GetId().c_str(), base, block->GetSize());
+		LogPrintf(LOG_INFO, "Request to allocate block [%s][%s] at %X, size = %d bytes",
+			block->GetId().c_str(),
+			GetAllocateModeStr(mode),
+			base,
+			block->GetSize());
 
 		if (len % m_blockGranularity != 0)
 		{
@@ -123,7 +139,7 @@ namespace emul
 				slot.baseW = base;
 				break;
 			default:
-				throw std::exception("not possible");
+				throw std::exception("invalid mode");
 			}
 		}
 
@@ -144,7 +160,7 @@ namespace emul
 			LogPrintf(LOG_ERROR, "Invalid AllocateMode (only READ|WRITE allowed)");
 			return false;
 		}
-		LogPrintf(LOG_INFO, "Restore [%s] @ %X, size = %d bytes", (mode == AllocateMode::READ) ? "READ" : "WRITE", base, len);
+		LogPrintf(LOG_INFO, "Restore [%s] @ %X, size = %d bytes", GetAllocateModeStr(mode), base, len);
 
 		if (len % m_blockGranularity != 0)
 		{
@@ -218,12 +234,13 @@ namespace emul
 		}
 	}
 
-	bool Memory::MapWindow(ADDRESS source, ADDRESS window, DWORD len)
+	bool Memory::MapWindow(ADDRESS source, ADDRESS window, DWORD len, AllocateMode mode)
 	{
-		LogPrintf(LOG_INFO, "Request to map memory [%X]-[%X] to window [%X]-[%X], window size: %d bytes",
+		LogPrintf(LOG_INFO, "Request to map memory [%X]-[%X] to window [%X]-[%X], window size: %d bytes, alloc mode: [%s]",
 			source, source + len - 1,
 			window, window + len - 1,
-			len);
+			len,
+			GetAllocateModeStr(mode));
 
 		if (len % m_blockGranularity != 0)
 		{
@@ -267,8 +284,26 @@ namespace emul
 		for (size_t i = 0; i < nbSlots; ++i)
 		{
 			MemorySlot slot = m_memory[sourceBaseSlot + i];
+
 			slot.baseR += (window - source);
 			slot.baseW += (window - source);
+
+			switch (mode)
+			{
+			case AllocateMode::READ:
+				slot.blockW = nullptr;
+				slot.baseW = 0;
+				break;
+			case AllocateMode::WRITE:
+				slot.blockR = nullptr;
+				slot.baseR = 0;
+				break;
+			case AllocateMode::READ_WRITE:
+				// Nothing to do
+				break;
+			default:
+				throw std::exception("invalid mode");
+			}
 
 			m_memory[windowBaseSlot + i] = slot;
 		}

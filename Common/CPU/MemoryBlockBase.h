@@ -24,6 +24,7 @@ namespace emul
 		virtual void write(ADDRESS offset, BYTE data) = 0;
 
 		static void SetBlockGranularity(WORD blockGranularity);
+		static WORD GetBlockGranularity() { return s_blockGranularity; }
 
 	protected:
 		DWORD RoundBlockSize(DWORD size);

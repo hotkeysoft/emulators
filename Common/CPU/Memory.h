@@ -47,7 +47,7 @@ namespace emul
 
 		bool Free(MemoryBlockBase* block);
 
-		bool MapWindow(ADDRESS source, ADDRESS window, DWORD len);
+		bool MapWindow(ADDRESS source, ADDRESS window, DWORD len, AllocateMode mode = AllocateMode::READ_WRITE);
 
 		const MemorySlot& FindBlock(ADDRESS address) const { return m_memory[address / m_blockGranularity]; }
 
