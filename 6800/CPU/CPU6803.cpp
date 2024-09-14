@@ -11,7 +11,7 @@ namespace emul
 	{
 		if (internalRAM)
 		{
-			m_internalRAM = new MemoryBlock("INT_RAM", 128);
+			m_internalRAM = new MemoryBlock("INT_RAM", RAM_SIZE);
 		}
 		m_sub16SetCarry = true;
 	}
@@ -63,8 +63,12 @@ namespace emul
 		if (m_internalRAM)
 		{
 			LogPrintf(LOG_INFO, "Enable 128 bytes RAM block at 0x0080");
-
-			m_memory.Allocate(m_internalRAM, 0x80);
+			if (m_internalRAM->GetBlockGranularity() > RAM_SIZE)
+			{
+				LogPrintf(LOG_ERROR, "Internal RAM: Block granularity > 128");
+				throw std::exception("Internal RAM: Block granularity > 128");
+			}
+			m_memory.Allocate(m_internalRAM, RAM_BASE);
 		}
 	}
 

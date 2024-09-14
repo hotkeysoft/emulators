@@ -19,6 +19,7 @@
 #include "Computer6803.h"
 #include "Computer6809.h"
 #include "ComputerThomson.h"
+#include "ComputerMC10.h"
 
 #include <conio.h>
 #include <vector>
@@ -32,10 +33,6 @@
 
 const short CONSOLE_FONT_SIZE = 22;
 const short CONSOLE_COLS = 80;
-
-#ifdef CPU_TEST
-#include "CPU/CPU6809Test.h"
-#endif
 
 namespace fs = std::filesystem;
 
@@ -154,6 +151,10 @@ ComputerBase* CreateComputer(std::string arch)
 	else if (arch == "thomson")
 	{
 		computer = new emul::ComputerThomson();
+	}
+	else if (arch == "trs80")
+	{
+		computer = new emul::ComputerMC10();
 	}
 
 	return computer;
@@ -479,7 +480,7 @@ int main(int argc, char* args[])
 							char buf[128];
 							sprintf(buf, "dump/RAM_%zu.bin", time(nullptr));
 							fprintf(stderr, "Dump RAM to %s\n", buf);
-							pc->GetMemory().Dump(0x0000, 0, buf);
+							pc->GetMemory().Dump(0x4000, 0x1000, buf);
 							break;
 						}
 						case FKEY + 6:

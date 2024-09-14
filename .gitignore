@@ -21,9 +21,9 @@ packages/**/*
 /6502/*.bin
 /6502/dump
 /6502/snapshots
-/6809/*.bin
-/6809/dump
-/6809/snapshots
+/6800/*.bin
+/6800/dump
+/6800/snapshots
 /68000/*.bin
 /68000/dump
 /68000/snapshots

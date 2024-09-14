@@ -141,14 +141,14 @@ namespace emul
 		SBYTE FetchSignedByte() { return (SBYTE)FetchByte(); }
 		SWORD FetchSignedWord() { return (SWORD)FetchWord(); }
 
-		BYTE GetMemDirectByte() { return m_memory.Read8(GetDirect()); }
-		WORD GetMemDirectWord() { return m_memory.Read16be(GetDirect()); }
+		BYTE GetMemDirectByte() { return MemRead8(GetDirect()); }
+		WORD GetMemDirectWord() { return MemRead16(GetDirect()); }
 
-		BYTE GetMemIndexedByte() { return m_memory.Read8(GetIndexed()); }
-		WORD GetMemIndexedWord() { return m_memory.Read16be(GetIndexed()); }
+		BYTE GetMemIndexedByte() { return MemRead8(GetIndexed()); }
+		WORD GetMemIndexedWord() { return MemRead16(GetIndexed()); }
 
-		BYTE GetMemExtendedByte() { return m_memory.Read8(GetExtended()); }
-		WORD GetMemExtendedWord() { return m_memory.Read16be(GetExtended()); }
+		BYTE GetMemExtendedByte() { return MemRead8(GetExtended()); }
+		WORD GetMemExtendedWord() { return MemRead16(GetExtended()); }
 
 		void MEMDirectOp(std::function<void(CPU6800*, BYTE&)> func);
 		void MEMIndexedOp(std::function<void(CPU6800*, BYTE&)> func);

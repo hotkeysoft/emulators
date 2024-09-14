@@ -27,6 +27,9 @@ namespace emul
 	protected:
 		MemoryBlock* m_internalRAM = nullptr;
 
+		static constexpr ADDRESS RAM_SIZE = 0x80;
+		static constexpr ADDRESS RAM_BASE = 0x80;
+
 		enum class IORegister
 		{
 			Port1DataDirection = 0x00,

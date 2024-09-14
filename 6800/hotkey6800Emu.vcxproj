@@ -57,6 +57,7 @@
     <ClInclude Include="Computer6800.h" />
     <ClInclude Include="Computer6803.h" />
     <ClInclude Include="Computer6809.h" />
+    <ClInclude Include="ComputerMC10.h" />
     <ClInclude Include="ComputerThomson.h" />
     <ClInclude Include="CPU\CPU6800.h" />
     <ClInclude Include="CPU\CPU6803.h" />
@@ -66,6 +67,7 @@
     <ClInclude Include="Hardware\Device6846TO7_PIA.h" />
     <ClInclude Include="Hardware\DevicePIAThomson.h" />
     <ClInclude Include="Hardware\DevicePIAThomsonTO7.h" />
+    <ClInclude Include="Hardware\IOBlockMC10.h" />
     <ClInclude Include="Hardware\PIAEventsThomson.h" />
     <ClInclude Include="IO\DeviceLightpenThomson.h" />
     <ClInclude Include="Hardware\Device6520MO5_PIA.h" />
@@ -75,6 +77,7 @@
     <ClInclude Include="IO\MonitorBase.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="ThomsonModel.h" />
+    <ClInclude Include="Video\VideoMC10.h" />
     <ClInclude Include="Video\VideoThomson.h" />
   </ItemGroup>
   <ItemGroup>
@@ -107,6 +110,7 @@
     <ClCompile Include="Computer6800.cpp" />
     <ClCompile Include="Computer6803.cpp" />
     <ClCompile Include="Computer6809.cpp" />
+    <ClCompile Include="ComputerMC10.cpp" />
     <ClCompile Include="ComputerThomson.cpp" />
     <ClCompile Include="CPU\CPU6800.cpp" />
     <ClCompile Include="CPU\CPU6803.cpp" />
@@ -128,6 +132,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Video\VideoMC10.cpp" />
     <ClCompile Include="Video\VideoThomson.cpp" />
   </ItemGroup>
   <ItemGroup>
