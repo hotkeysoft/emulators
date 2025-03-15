@@ -18,8 +18,8 @@ namespace video
 		m_charROM("char", 64*7, emul::MemoryType::ROM)
 	{
 		// These shouldn't change
-		static_assert(H_TOTAL == 64);
-		static_assert(V_TOTAL == 312);
+		static_assert(H_TOTAL == 48);
+		static_assert(V_TOTAL == 262);
 
 		static_assert(H_DISPLAY + H_BLANK + H_SYNC == H_TOTAL);
 		static_assert(V_DISPLAY + V_BLANK + V_SYNC == V_TOTAL);
@@ -42,7 +42,7 @@ namespace video
 
 		if (m_currX == LEFT_BORDER)
 		{
-			m_currChar = H_DISPLAY * (m_currY - TOP_BORDER);
+			m_currChar = H_DISPLAY * ((m_currY - TOP_BORDER) / 12);
 		}
 		else if (m_currX == H_TOTAL)
 		{
@@ -63,8 +63,8 @@ namespace video
 
 		if (IsDisplayArea())
 		{
-			//Draw();
-			DrawBackground(8, 0xFF000080);
+			Draw();
+//			DrawBackground(8, 0xFF000080);
 		}
 		else
 		{
@@ -78,30 +78,43 @@ namespace video
 
 	SDL_Rect VideoMC10::GetDisplayRect(BYTE border, WORD xMultiplier) const
 	{
-		//return SDL_Rect {
-		//	(int)(LEFT_BORDER_PX - border),
-		//	(int)(TOP_BORDER - border),
-		//	(int)(H_DISPLAY_PX + (2 * border)),
-		//	(int)(V_DISPLAY + (2 * border))
-		//};
-
-		return SDL_Rect{
-			0, 0, H_TOTAL_PX, V_TOTAL
+		border = 16;
+		return SDL_Rect {
+			(int)(LEFT_BORDER_PX - border),
+			(int)(TOP_BORDER - border),
+			(int)(H_DISPLAY_PX + (2 * border)),
+			(int)(V_DISPLAY + (2 * border))
 		};
+
+		//return SDL_Rect {
+		//	0, 0, H_TOTAL_PX, V_TOTAL
+		//};
 	}
 
 	void VideoMC10::Draw()
 	{
-		//const BYTE pixels = m_pixelRAM->read(m_currChar);
-		//const BYTE attr = m_attributeRAM->read(m_currChar);
+		// TEMP
+		const int currRow = ((m_currY - TOP_BORDER) % 12) - 3;
+		const BYTE currChar = m_memory->Read8(0x4000 + m_currChar) & 0b111111;
 
 		//AttributeColors colors = GetAttributeColors(attr);
-		//const uint32_t fg = std::get<0>(colors);
-		//const uint32_t bg = std::get<1>(colors);
+		const uint32_t fg = 0xFF00FF00;
+		const uint32_t bg = 0xFF000000;
 
-		//for (int i = 0; i < 8; ++i)
-		//{
-		//	DrawPixel(GetBit(pixels, 7 - i) ? fg : bg);
-		//}
+		if (currRow < 0 || currRow > 6)
+		{
+			DrawBackground(8);
+		}
+		else
+		{
+			const BYTE pixels = m_charROM.read(currChar * 7 + currRow);
+
+			DrawBackground(2);
+			for (int i = 0; i < 5; ++i)
+			{
+				DrawPixel(GetBit(pixels, i) ? fg : bg);
+			}
+			DrawBackground(1);
+		}
 	}
 }

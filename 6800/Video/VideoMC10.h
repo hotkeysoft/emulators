@@ -54,27 +54,26 @@ namespace video
         static const uint32_t CHAR_WIDTH = 8;
 
         // Number of lines displayed
-        static const uint32_t V_DISPLAY = 200;
-        // Total number of lines (including borders)
-        static const uint32_t V_TOTAL = 312;
+        static const uint32_t V_DISPLAY = 192;
+        // Total number of lines (including borders + blank)
+        static const uint32_t V_TOTAL = 262;
 
         // Vertical Blanking
-        // TODO: Check values, those are random
-        static const uint32_t V_BLANK = 100; // 50 lines on top, 50 on bottom
-        static const uint32_t V_SYNC = 12;
+        static const uint32_t V_BLANK = 25 + 26; // 25 top, 26 bottom
+        static const uint32_t V_SYNC = 13 + 6; // V Blanking + V Retrace
         static const uint32_t V_SYNC_START = V_DISPLAY + V_BLANK;
 
         // Number of characters per line (displayed)
-        static const uint32_t H_DISPLAY = 40;
+        static const uint32_t H_DISPLAY = 32;
         static const uint32_t H_DISPLAY_PX = H_DISPLAY * CHAR_WIDTH;
 
         // Total number of characters per line (including borders)
-        static const uint32_t H_TOTAL = 64;
+        static const uint32_t H_TOTAL = 48;
         static const uint32_t H_TOTAL_PX = H_TOTAL * CHAR_WIDTH;
 
         // Horizontal blanking
-        static const uint32_t H_BLANK = 14; // 7 on each side
-        static const uint32_t H_SYNC = 10;
+        static const uint32_t H_BLANK = 10;
+        static const uint32_t H_SYNC = 6;
         static const uint32_t H_SYNC_START = H_DISPLAY + H_BLANK;
 
         // Borders
@@ -83,7 +82,7 @@ namespace video
         static const uint32_t RIGHT_BORDER = H_DISPLAY + LEFT_BORDER;
         static const uint32_t RIGHT_BORDER_PX = RIGHT_BORDER * CHAR_WIDTH;
 
-        static const uint32_t TOP_BORDER = V_BLANK / 2;
+        static const uint32_t TOP_BORDER = 25;
         static const uint32_t BOTTOM_BORDER = V_DISPLAY + TOP_BORDER;
 
         uint32_t m_currX = 0;
