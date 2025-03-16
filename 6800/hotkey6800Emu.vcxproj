@@ -142,6 +142,8 @@
     <None Include="config\6800.json">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="config\6803.ans" />
+    <None Include="config\6803.json" />
     <None Include="config\6809.ans">
       <DeploymentContent>true</DeploymentContent>
     </None>

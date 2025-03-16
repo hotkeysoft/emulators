@@ -446,6 +446,12 @@
     <None Include="config\6809.json">
       <Filter>config</Filter>
     </None>
+    <None Include="config\6803.ans">
+      <Filter>config</Filter>
+    </None>
+    <None Include="config\6803.json">
+      <Filter>config</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\overlay16.png">
