@@ -6,12 +6,31 @@ using emul::SetBit;
 
 namespace video
 {
-	//static const uint32_t s_palette[16] = {
-	//	0xFF000000, 0xFFFF0000, 0xFF00FF00, 0xFFFFFF00,
-	//	0xFF0000FF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFFFFFF,
-	//	0xFFBBBBBB, 0xFFDD7777, 0xFF77DD77, 0xFFDDDD77,
-	//	0xFF7777DD, 0xFFDD77EE, 0xFFBBFFFF, 0xFFEEBB00,
-	//};
+	static constexpr uint32_t s_palette[] = {
+		0xFF00FF00,  // Green
+		0xFFFFFF00,  // Yellow
+		0xFF0000FF,  // Blue
+		0xFFFF0000,  // Red
+		0xFFEEE4B6,  // Buff
+		0xFF00FFFF,  // Cyan
+		0xFFFF00FF,  // Magenta
+		0xFFFFA500,  // Orange
+		//
+	    0xFF000000,  // Black (graphics mode)
+		0xFF004000,  // Dark Green (alphanumeric mode)
+		0xFF804000,  // Dark Orange (alphanumeric mode)
+	};
+
+	enum class PaletteMC6847 {
+		GREEN, YELLOW, BLUE, RED,
+		BUFF, CYAN, MAGENTA, ORANGE,
+		BLACK,
+		DARK_GREEN,
+		DARK_ORANGE,
+	};
+
+	constexpr uint32_t GetPalette(int index) { return s_palette[index]; }
+	constexpr uint32_t GetPalette(PaletteMC6847 index) { return GetPalette((int)index); }
 
 	VideoMC10::VideoMC10() :
 		Logger("vidMC10"),
@@ -64,14 +83,12 @@ namespace video
 		if (IsDisplayArea())
 		{
 			Draw();
-//			DrawBackground(8, 0xFF000080);
 		}
 		else
 		{
 			if (!IsHSync())
 			{
-				//DrawBackground(8, m_borderColor);
-				DrawBackground(8, 0xFF008000);
+				DrawBackground(8, m_borderColor);
 			}
 		}
 	}
@@ -93,28 +110,71 @@ namespace video
 
 	void VideoMC10::Draw()
 	{
-		// TEMP
-		const int currRow = ((m_currY - TOP_BORDER) % 12) - 3;
-		const BYTE currChar = m_memory->Read8(0x4000 + m_currChar) & 0b111111;
+		const BYTE currChar = m_memory->Read8(0x4000 + m_currChar);
 
-		//AttributeColors colors = GetAttributeColors(attr);
-		const uint32_t fg = 0xFF00FF00;
-		const uint32_t bg = 0xFF000000;
+		// TEMP, MC10/Alice specific
+		SetInverse(GetBit(currChar, 6));
+		SetAlphaSemigraph(GetBit(currChar, 7));
 
-		if (currRow < 0 || currRow > 6)
+		if (!m_alphaGraph)
 		{
-			DrawBackground(8);
+			m_alphaSemigraph ? DrawSemigraph4(currChar) : DrawAlpha4(currChar);
 		}
 		else
 		{
-			const BYTE pixels = m_charROM.read(currChar * 7 + currRow);
+			LogPrintf(LOG_ERROR, "Graphics mode not implemented");
+		}
+	}
 
-			DrawBackground(2);
+	void VideoMC10::DrawAlpha4(BYTE currChar)
+	{
+		const int currRow = ((m_currY - TOP_BORDER) % 12) - 3;
+
+		uint32_t fg = m_css ? GetPalette(PaletteMC6847::ORANGE) : GetPalette(PaletteMC6847::GREEN);
+		uint32_t bg = m_css ? GetPalette(PaletteMC6847::DARK_ORANGE) : GetPalette(PaletteMC6847::DARK_GREEN);
+
+		if (m_inverse)
+		{
+			emul::Swap(fg, bg);
+		}
+
+		if (currRow < 0 || currRow > 6)
+		{
+			DrawBackground(8, bg);
+		}
+		else
+		{
+			const BYTE pixels = m_charROM.read((currChar& 0b111111) * 7 + currRow);
+
+			DrawPixel2(bg);
+
 			for (int i = 0; i < 5; ++i)
 			{
 				DrawPixel(GetBit(pixels, i) ? fg : bg);
 			}
-			DrawBackground(1);
+			DrawPixel(bg);
 		}
 	}
+
+	void VideoMC10::DrawSemigraph4(BYTE currChar)
+	{
+		// 12 pixel vertical block is divided in two 6 pixel 'rows'
+		const int currRow = ((m_currY - TOP_BORDER) / 6) % 2;
+
+		// Extract foreground colour (bits 4-6)
+		const int colourIndex = (currChar >> 4) & 7;
+		const uint32_t fg = GetPalette(colourIndex);
+		const uint32_t bg = m_css ? GetPalette(PaletteMC6847::DARK_ORANGE) : GetPalette(PaletteMC6847::DARK_GREEN);
+
+		// Two by two 'pixels':
+		// -----------
+		// | D3 | D2 | (currRow == 0)
+		// -----------
+		// | D1 | D0 | (currRow == 1)
+		// -----------
+		DrawPixel4(GetBit(currChar, 3 - (2 * currRow)) ? fg : bg);
+		DrawPixel4(GetBit(currChar, 2 - (2 * currRow)) ? fg : bg);
+	}
+
+
 }

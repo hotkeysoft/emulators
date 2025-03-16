@@ -185,7 +185,8 @@ namespace emul
 	inline bool IsParityEven(BYTE b) { return !IsParityOdd(b); }
 
 	// Doesn't work if a and b point to same memory location
-	inline void Swap(BYTE& a, BYTE& b)
+	template <typename T>
+	inline void Swap(T& a, T& b)
 	{
 		a ^= b;
 		b ^= a;

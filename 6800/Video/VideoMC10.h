@@ -30,15 +30,29 @@ namespace video
 
         virtual uint32_t GetBackgroundColor() const override { return m_borderColor; }
 
-        void SetCSS(bool set) { LogPrintf(LOG_DEBUG, "SetCSS(%d)", set); }
-        void SetAlphaGraph(bool set) { LogPrintf(LOG_DEBUG, "SetAlphaGraph(%d)", set); }
-        void SetGM0(bool set) { LogPrintf(LOG_DEBUG, "SetGM0(%d)", set); }
-        void SetGM1(bool set) { LogPrintf(LOG_DEBUG, "SetGM1(%d)", set); }
-        void SetGM2(bool set) { LogPrintf(LOG_DEBUG, "SetGM2(%d)", set); }
-        void SetIntExt(bool set) { LogPrintf(LOG_DEBUG, "SetIntExt(%d)", set); }
+        void SetAlphaGraph(bool graph) { m_alphaGraph = graph; }
+        void SetAlphaSemigraph(bool semigraph) { m_alphaSemigraph = semigraph; }
+        void SetIntExt(bool ext) { m_intExt = ext; }
+        void SetGM0(bool set) { m_gm0 = set; }
+        void SetGM1(bool set) { m_gm1 = set; }
+        void SetGM2(bool set) { m_gm2 = set; }
+        void SetCSS(bool set) { m_css = set; }
+        void SetInverse(bool set) { m_inverse = set; }
 
     protected:
+        bool m_alphaGraph = false;
+        bool m_alphaSemigraph = false;
+        bool m_intExt = false;
+        bool m_gm0 = false;
+        bool m_gm1 = false;
+        bool m_gm2 = false;
+        bool m_css = false;
+        bool m_inverse = false;
+
+
         void Draw();
+        void DrawAlpha4(BYTE currChar);
+        void DrawSemigraph4(BYTE currChar);
 
         // TODO: UPDATE
         //
