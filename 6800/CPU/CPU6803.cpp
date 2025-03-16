@@ -5,8 +5,11 @@ using cpuInfo::Opcode;
 
 namespace emul
 {
+	static CPU6803::IOEventHandler s_defaultHandler;
+
 	CPU6803::CPU6803(Memory& memory, bool internalRAM) :
 		CPU6800(CPUID_6803, memory),
+		m_ioEventHandler(&s_defaultHandler),
 		Logger(CPUID_6803)
 	{
 		if (internalRAM)
@@ -21,12 +24,17 @@ namespace emul
 		delete m_internalRAM;
 	};
 
+	void CPU6803::SetIOEventHandler(IOEventHandler* handler)
+	{
+		m_ioEventHandler = handler ? handler : &s_defaultHandler;
+	}
+
 	void CPU6803::Init()
 	{
 		CPU6800::Init();
 
 		m_opcodes[0x04] = [=]() { UnknownOpcode(); }; // LSRD
-		m_opcodes[0x05] = [=]() { UnknownOpcode(); }; // ASLD
+		m_opcodes[0x05] = [=]() { ASL(m_reg.D); }; // ASLD
 
 		m_opcodes[0x21] = [=]() { BRA(false); }; // BRN
 
@@ -115,6 +123,17 @@ namespace emul
 		m_reg.D = res;
 	}
 
+	void CPU6803::ASL(WORD& dest)
+	{
+		bool carry = GetMSB(dest);
+		SetFlag(FLAG_V, GetBit(dest, 6 + 8) ^ carry);
+		SetFlag(FLAG_C, carry);
+
+		dest <<= 1;
+
+		AdjustNZ(dest);
+	}
+
 	BYTE CPU6803::IORead(IORegister reg)
 	{
 		switch (reg)
@@ -177,13 +196,17 @@ namespace emul
 		switch (reg)
 		{
 		case IORegister::Port1DataDirection:
-			LogPrintf(LOG_ERROR, "IOWrite(Port1DataDirection, %02X): Not implemented", value); break;
+			LogPrintf(LOG_WARNING, "IOWrite(Port1DataDirection, %02X): Not implemented", value); break;
 		case IORegister::Port2DataDirection:
-			LogPrintf(LOG_ERROR, "IOWrite(Port2DataDirection, %02X): Not implemented", value); break;
+			LogPrintf(LOG_WARNING, "IOWrite(Port2DataDirection, %02X): Not implemented", value); break;
 		case IORegister::Port1Data:
-			LogPrintf(LOG_ERROR, "IOWrite(Port1Data, %02X): Not implemented", value); break;
+			LogPrintf(LOG_DEBUG, "IOWrite(Port1Data, %02X)", value);
+			m_ioEventHandler->OnWritePort1(value);
+			break;
 		case IORegister::Port2Data:
-			LogPrintf(LOG_ERROR, "IOWrite(Port2Data, %02X): Not implemented", value); break;
+			LogPrintf(LOG_DEBUG, "IOWrite(Port2Data, %02X)", value);
+			m_ioEventHandler->OnWritePort2(value);
+			break;
 		case IORegister::TimerControlStatus:
 			LogPrintf(LOG_ERROR, "IOWrite(TimerControlStatus, %02X): Not implemented", value); break;
 		case IORegister::CounterHigh:

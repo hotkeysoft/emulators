@@ -2,13 +2,17 @@
 
 #include <Computer/ComputerBase.h>
 #include "IO/InputEvents.h"
+#include "IO/DeviceKeyboardMC10.h"
 #include "Hardware/IOBlockMC10.h"
+#include "CPU/CPU6803.h"
 
 namespace emul
 {
 	class CPU6803;
 
-	class ComputerMC10 : public ComputerBase
+	class ComputerMC10 :
+		public ComputerBase,
+		public CPU6803::IOEventHandler
 	{
 	public:
 		ComputerMC10();
@@ -33,6 +37,8 @@ namespace emul
 		void InitKeyboard();
 		void InitVideo();
 
+		virtual void OnWritePort1(BYTE value) override;
+
 		static constexpr DWORD   MAIN_CLOCK = 3579545;
 		static constexpr DWORD   CPU_CLOCK = MAIN_CLOCK / 4;
 		static constexpr DWORD   INPUT_REFRESH_HZ = 60;
@@ -50,7 +56,10 @@ namespace emul
 		emul::MemoryBlock m_rom;
 
 		bool m_soundData = false;
+		int m_currentScanRow = 0;
 
 		io::mc10::IOBlockMC10 m_io;
+
+		kbd::DeviceKeyboardMC10 m_keyboard;
 	};
 }

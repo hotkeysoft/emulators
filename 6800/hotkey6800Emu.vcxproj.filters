@@ -270,6 +270,9 @@
     <ClInclude Include="Video\VideoMC10.h">
       <Filter>Header Files\Video</Filter>
     </ClInclude>
+    <ClInclude Include="IO\DeviceKeyboardMC10.h">
+      <Filter>Header Files\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -427,6 +430,9 @@
     </ClCompile>
     <ClCompile Include="Video\VideoMC10.cpp">
       <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\DeviceKeyboardMC10.cpp">
+      <Filter>Source Files\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

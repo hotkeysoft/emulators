@@ -31,15 +31,11 @@ namespace emul
 
 		InitROM();
 		InitRAM(baseRAM);
-
 		InitInputs(CPU_CLOCK, INPUT_REFRESH_PERIOD);
 		InitKeyboard();
 		InitVideo();
 		InitIO();
-
 		SOUND().SetBaseClock(CPU_CLOCK);
-
-		InitInputs(CPU_CLOCK, INPUT_REFRESH_PERIOD);
 		InitVideo();
 	}
 
@@ -77,7 +73,7 @@ namespace emul
 
 	void ComputerMC10::InitKeyboard()
 	{
-
+		GetInputs().InitKeyboard(&m_keyboard);
 	}
 
 	void ComputerMC10::InitVideo()
@@ -91,9 +87,16 @@ namespace emul
 
 	void ComputerMC10::InitIO()
 	{
-		m_io.Init(&m_soundData, m_video);
-		m_io.EnableLog(LOG_DEBUG);
+		m_io.Init(&m_soundData, m_video, &m_keyboard);
+		m_io.EnableLog(CONFIG().GetLogLevel("io"));
 		m_memory.Allocate(&m_io, IO_BASE);
+
+		GetCPU().SetIOEventHandler(this);
+	}
+
+	void ComputerMC10::OnWritePort1(BYTE value)
+	{
+		m_io.SetKeyboardScanRow(emul::LogBase2(~value));
 	}
 
 	bool ComputerMC10::Step()

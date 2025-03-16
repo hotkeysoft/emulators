@@ -69,6 +69,7 @@
     <ClInclude Include="Hardware\DevicePIAThomsonTO7.h" />
     <ClInclude Include="Hardware\IOBlockMC10.h" />
     <ClInclude Include="Hardware\PIAEventsThomson.h" />
+    <ClInclude Include="IO\DeviceKeyboardMC10.h" />
     <ClInclude Include="IO\DeviceLightpenThomson.h" />
     <ClInclude Include="Hardware\Device6520MO5_PIA.h" />
     <ClInclude Include="IO\DeviceKeyboardThomson.h" />
@@ -119,6 +120,7 @@
     <ClCompile Include="Hardware\Device6846.cpp" />
     <ClCompile Include="Hardware\Device6846TO7_PIA.cpp" />
     <ClCompile Include="Hardware\DevicePIAThomsonTO7.cpp" />
+    <ClCompile Include="IO\DeviceKeyboardMC10.cpp" />
     <ClCompile Include="IO\DeviceLightpenThomson.cpp" />
     <ClCompile Include="Hardware\Device6520MO5_PIA.cpp" />
     <ClCompile Include="IO\DeviceKeyboardThomson.cpp" />

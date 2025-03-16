@@ -14,6 +14,13 @@ namespace emul
 	class CPU6803 : public CPU6800
 	{
 	public:
+		class IOEventHandler
+		{
+		public:
+			virtual void OnWritePort1(BYTE value) {};
+			virtual void OnWritePort2(BYTE value) {};
+		};
+
 		CPU6803(Memory& memory, bool internalRAM);
 		virtual ~CPU6803();
 
@@ -24,8 +31,11 @@ namespace emul
 		virtual void Reset() override;
 		virtual void Reset(ADDRESS overrideAddress) override { CPU6800::Reset(overrideAddress); }
 
+		void SetIOEventHandler(IOEventHandler* handler);
+
 	protected:
 		MemoryBlock* m_internalRAM = nullptr;
+		IOEventHandler* m_ioEventHandler = nullptr;
 
 		static constexpr ADDRESS RAM_SIZE = 0x80;
 		static constexpr ADDRESS RAM_BASE = 0x80;
@@ -74,6 +84,8 @@ namespace emul
 		static constexpr ADDRESS ADDR_SCI = 0xFFF0; // Serial Communication Interface
 
 		void MUL();
+		void ASL(WORD& dest);
+		void LSL(WORD& dest);
 
 		friend class Monitor6800;
 	};
