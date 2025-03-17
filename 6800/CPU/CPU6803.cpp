@@ -118,7 +118,7 @@ namespace emul
 	{
 		WORD res = m_reg.ab.A * m_reg.ab.B;
 
-		SetFlag(FLAG_C, GetBit(res, 7));
+		SetFlag(FLAG_C, res > 255);
 
 		m_reg.D = res;
 	}
@@ -126,11 +126,10 @@ namespace emul
 	void CPU6803::ASL(WORD& dest)
 	{
 		bool carry = GetMSB(dest);
-		SetFlag(FLAG_V, GetBit(dest, 6 + 8) ^ carry);
-		SetFlag(FLAG_C, carry);
-
 		dest <<= 1;
 
+		SetFlag(FLAG_V, GetMSB(dest) ^ carry);
+		SetFlag(FLAG_C, carry);
 		AdjustNZ(dest);
 	}
 

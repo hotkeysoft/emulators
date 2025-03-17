@@ -250,8 +250,6 @@ namespace emul
 		m_opcodes[0xFB] = [=]() { ADD8(m_reg.ab.B, GetMemExtendedByte()); }; // ADD B ext
 		m_opcodes[0xFE] = [=]() { LD16(m_reg.X, GetMemExtendedWord()); }; // LDX ext
 		m_opcodes[0xFF] = [=]() { ST16(GetExtended(), m_reg.X); }; // STX ext
-
-
 	}
 
 	CPU6800::~CPU6800()
@@ -569,19 +567,18 @@ namespace emul
 	void CPU6800::CLR(BYTE& dest)
 	{
 		dest = 0;
-		AdjustNZ(dest);
-		SetFlag(FLAG_V, false);
 		SetFlag(FLAG_C, false);
+		SetFlag(FLAG_V, false);
+		AdjustNZ(dest);
 	}
 
 	void CPU6800::ASL(BYTE& dest)
 	{
 		bool carry = GetMSB(dest);
-		SetFlag(FLAG_V, GetBit(dest, 6) ^ carry);
-		SetFlag(FLAG_C, carry);
-
 		dest <<= 1;
 
+		SetFlag(FLAG_C, carry);
+		SetFlag(FLAG_V, GetMSB(dest) ^ carry);
 		AdjustNZ(dest);
 	}
 
@@ -589,43 +586,44 @@ namespace emul
 	{
 		bool sign = GetMSB(dest);
 		bool carry = GetLSB(dest);
-		SetFlag(FLAG_C, carry);
-
 		dest >>= 1;
 		SetBit(dest, 7, sign);
 
+		SetFlag(FLAG_C, carry);
+		SetFlag(FLAG_V, GetMSB(dest) ^ carry);
 		AdjustNZ(dest);
 	}
 
 	void CPU6800::LSR(BYTE& dest)
 	{
-		bool lsb = GetLSB(dest);
+		bool carry = GetLSB(dest);
 		dest >>= 1;
 
-		SetFlag(FLAG_C, lsb);
+		SetFlag(FLAG_C, carry);
+		SetFlag(FLAG_V, GetMSB(dest) ^ carry);
 		AdjustNZ(dest);
 	}
 
 	void CPU6800::ROL(BYTE& dest)
 	{
 		bool oldCarry = GetFlag(FLAG_C);
-		bool msb = GetMSB(dest);
-		SetFlag(FLAG_V, GetBit(dest, 6) ^ msb);
-		SetFlag(FLAG_C, msb);
-
+		bool carry = GetMSB(dest);
 		dest <<= 1;
 		SetBit(dest, 0, oldCarry);
 
+		SetFlag(FLAG_C, carry);
+		SetFlag(FLAG_V, GetMSB(dest) ^ carry);
 		AdjustNZ(dest);
 	}
 
 	void CPU6800::ROR(BYTE& dest)
 	{
 		bool oldCarry = GetFlag(FLAG_C);
-		SetFlag(FLAG_C, GetLSB(dest));
-
+		bool carry = GetLSB(dest);
 		dest >>= 1;
+		SetFlag(FLAG_C, carry);
 		SetBit(dest, 7, oldCarry);
+		SetFlag(FLAG_V, GetMSB(dest) ^ carry);
 
 		AdjustNZ(dest);
 	}
