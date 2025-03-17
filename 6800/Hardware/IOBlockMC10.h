@@ -24,6 +24,7 @@ namespace io::mc10
 			m_keyboard = keyboard;
 		}
 
+		int GetKeyboardScanRow() const { return m_keyboardScanRow; }
 		void SetKeyboardScanRow(int row) { m_keyboardScanRow = row; }
 
 	protected:

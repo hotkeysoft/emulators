@@ -38,6 +38,7 @@ namespace emul
 		void InitVideo();
 
 		virtual void OnWritePort1(BYTE value) override;
+		virtual BYTE OnReadPort2() override;
 
 		static constexpr DWORD   MAIN_CLOCK = 3579545;
 		static constexpr DWORD   CPU_CLOCK = MAIN_CLOCK / 4;

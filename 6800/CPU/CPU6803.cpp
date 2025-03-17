@@ -139,13 +139,15 @@ namespace emul
 		switch (reg)
 		{
 		case IORegister::Port1DataDirection:
-			LogPrintf(LOG_ERROR, "IORead(Port1DataDirection): Not implemented"); return 0xFF;
+			LogPrintf(LOG_WARNING, "IORead(Port1DataDirection): Not implemented"); return 0xFF;
 		case IORegister::Port2DataDirection:
-			LogPrintf(LOG_ERROR, "IORead(Port2DataDirection): Not implemented"); return 0xFF;
+			LogPrintf(LOG_WARNING, "IORead(Port2DataDirection): Not implemented"); return 0xFF;
 		case IORegister::Port1Data:
-			LogPrintf(LOG_ERROR, "IORead(Port1Data): Not implemented"); return 0xFF;
+			LogPrintf(LOG_DEBUG, "IORead(Port1Data)");
+			return m_ioEventHandler->OnReadPort1();
 		case IORegister::Port2Data:
-			LogPrintf(LOG_ERROR, "IORead(Port2Data): Not implemented"); return 0xFF;
+			LogPrintf(LOG_DEBUG, "IORead(Port2Data)");
+			return m_ioEventHandler->OnReadPort2();
 		case IORegister::TimerControlStatus:
 			LogPrintf(LOG_ERROR, "IORead(TimerControlStatus): Not implemented"); return 0xFF;
 		case IORegister::CounterHigh:

@@ -19,6 +19,9 @@ namespace emul
 		public:
 			virtual void OnWritePort1(BYTE value) {};
 			virtual void OnWritePort2(BYTE value) {};
+
+			virtual BYTE OnReadPort1() { return 0xFF; };
+			virtual BYTE OnReadPort2() { return 0xFF; };
 		};
 
 		CPU6803(Memory& memory, bool internalRAM);

@@ -5,7 +5,7 @@
 #include <Sound/Sound.h>
 #include "IO/Console.h"
 #include "CPU/CPU6803.h"
-#include <Video/VideoMC10.h>
+#include "Video/VideoMC10.h"
 
 using cfg::CONFIG;
 using sound::SOUND;
@@ -22,6 +22,7 @@ namespace emul
 
 	void ComputerMC10::Reset()
 	{
+		GetVideo().Reset();
 		ComputerBase::Reset();
 	}
 
@@ -36,7 +37,6 @@ namespace emul
 		InitVideo();
 		InitIO();
 		SOUND().SetBaseClock(CPU_CLOCK);
-		InitVideo();
 	}
 
 	void ComputerMC10::InitCPU(const char* cpuid)
@@ -78,8 +78,8 @@ namespace emul
 
 	void ComputerMC10::InitVideo()
 	{
-		// Dummy video card
 		video::VideoMC10* video = new video::VideoMC10();
+
 		video->EnableLog(CONFIG().GetLogLevel("video"));
 		video->Init(&m_memory, "./data/Tandy/trs80.mc10.char.bin");
 		m_video = video;
@@ -96,7 +96,17 @@ namespace emul
 
 	void ComputerMC10::OnWritePort1(BYTE value)
 	{
+		LogPrintf(LOG_TRACE, "OnWritePort1: Set Keyboard Scan Row "PRINTF_BIN_PATTERN_INT8, PRINTF_BYTE_TO_BIN_INT8(value));
 		m_io.SetKeyboardScanRow(emul::LogBase2(~value));
+	}
+
+	// TODO: Shortcut, we only care about shift line (P2.1) for now
+	BYTE ComputerMC10::OnReadPort2()
+	{
+		const int scanRow = m_io.GetKeyboardScanRow();
+		const BYTE val = GetBit(m_keyboard.GetRowData(scanRow), 6);
+		LogPrintf(LOG_TRACE, "OnReadPort2: Read keyboard SHIFT line (row=%d): %d", scanRow, val);
+		return val << 1;
 	}
 
 	bool ComputerMC10::Step()
