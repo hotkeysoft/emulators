@@ -457,7 +457,7 @@ namespace emul
 
 	void CPU6800::pushB(BYTE value)
 	{
-		MemWrite8(--m_reg.SP, value);
+		MemWrite8(m_reg.SP--, value);
 	}
 
 	void CPU6800::pushW(WORD value)
@@ -468,7 +468,7 @@ namespace emul
 
 	BYTE CPU6800::popB()
 	{
-		return MemRead8(m_reg.SP++);
+		return MemRead8(++m_reg.SP);
 	}
 
 	WORD CPU6800::popW()
@@ -664,6 +664,7 @@ namespace emul
 	void CPU6800::TST(const BYTE dest)
 	{
 		AdjustNZ(dest);
+		SetFlag(FLAG_C, false);
 		SetFlag(FLAG_V, false);
 	}
 
