@@ -25,7 +25,17 @@ All components/modules/projects are a work in progress and by no means feature c
     - Load/Save to tape (barely, see PET)
     - Compatibility
       - Tested with multiples game cartridges, a lot of games seem to work fine
-- 6809 (wip)
+- **6800/6803** (wip)
+  - CPU Mostly complete (a few missing opcodes such as DAA)
+    - 6803 timers/ports/serial io not implemented
+  - TRS-80 MC-10 Emulation (wip)
+    - BASIC working
+    - MC6847 Video
+      - Only alpha4 and semigraphics4 modes implemented 
+      - Probably wrong timings
+    - Sound (1 bit square wave)
+    - No tape support
+- 6809
   - CPU Mostly complete (a few missing opcodes such as DAA)
   - Thomson Computers Emulation
       - Thomson MO5
@@ -38,11 +48,11 @@ All components/modules/projects are a work in progress and by no means feature c
           - Pretty much same features implemented as MO5
           - 8 KB + optional 16KB RAM extension
           - Light pen *not* working (yet)
-- 🆕**68000** (wip)
+- 68000
   - CPU Instructions mostly complete
     - Next to no timings 
     - Very not cycle accurate
-  - 🆕**Macintosh 128k** (wip)
+  - Macintosh 128k
     - Completely boots to desktop with stock ROM
     - Some apps work
       - A lot crash with an address error... (including MacPaint)

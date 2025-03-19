@@ -175,6 +175,4 @@ namespace video
 		DrawPixel4(GetBit(currChar, 3 - (2 * currRow)) ? fg : bg);
 		DrawPixel4(GetBit(currChar, 2 - (2 * currRow)) ? fg : bg);
 	}
-
-
 }

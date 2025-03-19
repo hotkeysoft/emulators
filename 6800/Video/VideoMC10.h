@@ -49,20 +49,12 @@ namespace video
         bool m_css = false;
         bool m_inverse = false;
 
-
         void Draw();
         void DrawAlpha4(BYTE currChar);
         void DrawSemigraph4(BYTE currChar);
 
-        // TODO: UPDATE
-        //
-        // DOT Clock it 8MHz, CPU Clock is 1MHz. Tick() is called at CPU clock rate (1MHz)
-        // so we draw 8 pixels for each tick.
-        // 64 characters per line: 40(display) + 14(blank) + 20(hsync)
-        // 312 lines (PAL)
-        // with 200 lines in display area (25 characters * 8 pixels height) 112 lines blank+vsync)
-        // 64 * 312 = 19968 ticks / frame
-        // @1MHz we get 50.08 frames / second.
+        // TODO: Update timing info
+
 
         // Pixels per character
         static const uint32_t CHAR_WIDTH = 8;
